@@ -19,6 +19,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { buildCaseTable, caseAnswer, stemsFromParts } from "./derive";
+import { PRINCIPAL_FORM_TYPES } from "./types";
 import { HARVESTED } from "../../prisma/data/harvested";
 
 interface SeedEntry {
@@ -117,4 +118,90 @@ describe("the shipped dictionary", () => {
       expect(caseAnswer(stems, "COMITATIVE")?.value).toBe(`${w.parts.GEN_SG}ga`);
     }
   });
+
+  /*
+    AND THE TWELFTH IS NOT A SUFFIX, WHICH IS THE SAME FAULT AS THE ILLATIVE.
+
+    The nominative plural was `genSg + d`, and `npm run audit:cases` put that
+    to the Institute for all 5,143 nominals the dictionary ships. Right for
+    5,098, and the ones it is wrong about are a category rather than a scatter:
+    a pronoun is suppletive there, so `see` goes to `need` and this printed
+    `selled`, `too` goes to `nood` and this printed `tolled`, and `kes` and
+    `mis` do not change at all and were printed as `kelled` and `milled`.
+    Thirty-three mass nouns have no plural at all and were being handed one.
+
+    So it is stored, like the two plural principal parts beside it, and these
+    are the checks that can fail on a word the way an invariant reading the
+    source cannot.
+  */
+  const WITH_PLURAL = WORDS.filter((w) => w.parts.NOM_PL && w.parts.GEN_SG);
+
+  it("holds a nominative plural for nearly everything it holds a genitive for", () => {
+    expect(WITH_PLURAL.length).toBeGreaterThan(4500);
+  });
+
+  it("never prints an ending where the dictionary holds no plural", () => {
+    const invented = WORDS.filter(
+      (w) => w.parts.GEN_SG && !w.parts.NOM_PL,
+    ).filter((w) => plural(w.parts) !== undefined);
+    expect(invented.map((w) => w.lemma)).toEqual([]);
+  });
+
+  it("gets the pronouns right, which the ending got wrong every time", () => {
+    const expected: Record<string, string> = {
+      see: "need", too: "nood", kes: "kes", mis: "mis", kõik: "kõik",
+    };
+    for (const [lemma, want] of Object.entries(expected)) {
+      const word = WORDS.find((w) => w.lemma === lemma && w.pos === "PRONOUN" && w.parts.NOM_PL);
+      if (!word) continue;
+      expect(`${lemma} → ${plural(word.parts)}`).toBe(`${lemma} → ${want}`);
+      // The line that proves the check bites: the ending would have said this.
+      expect(plural(word.parts)).not.toBe(`${word.parts.GEN_SG}d`);
+    }
+  });
 });
+
+describe("a principal part", () => {
+  /*
+    IS ONE FORM, AND 2,029 SHIPPED ENTRIES CARRIED TWO.
+
+    `Form`'s unique key includes the value, deliberately, because Estonian has
+    genuine parallel forms and a key without it would drop one. That is right
+    for the whole retrieved table and wrong for the six a learner memorises:
+    Ekilex gives two partitive plurals for most nouns and both were written
+    down as `PART_PL`, so which the app used was decided by whoever read the
+    rows. `stemsFrom` takes the first it finds, in whatever order the database
+    returns them; every caller building a record with `Object.fromEntries`
+    takes the last. The dictionary entry for `aadress` and the flashcard behind
+    it could disagree, and neither answer was a decision.
+  */
+  it("has one value in the shipped file, so both readers agree", () => {
+    const doubled: string[] = [];
+    for (const e of EXPANDED) {
+      const seen = new Set<string>();
+      for (const f of e.forms) {
+        if (!PRINCIPAL_FORM_TYPES.includes(f.formType as never)) continue;
+        if (seen.has(f.formType)) doubled.push(`${e.lemma} ${f.formType}`);
+        seen.add(f.formType);
+      }
+    }
+    expect(doubled).toEqual([]);
+  });
+
+  it("is the one Ekilex lists first, which is the one a course teaches", () => {
+    const expected: Record<string, string> = {
+      asi: "asju", aeg: "aegu", aadress: "aadresse", buss: "busse", arst: "arste",
+    };
+    for (const [lemma, partPl] of Object.entries(expected)) {
+      const word = EXPANDED.find((e) => e.lemma === lemma);
+      if (!word) continue;
+      const held = word.forms.filter((f) => f.formType === "PART_PL").map((f) => f.value);
+      expect(`${lemma} → ${held.join(" / ")}`).toBe(`${lemma} → ${partPl}`);
+    }
+  });
+});
+
+/** What the case table prints in the nominative plural row. */
+function plural(parts: Record<string, string>): string | undefined {
+  return buildCaseTable(stemsFromParts(parts)).find((r) => r.spec.key === "NOMINATIVE")?.plural;
+}

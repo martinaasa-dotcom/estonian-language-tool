@@ -1,5 +1,42 @@
 import { describe, expect, it } from "vitest";
-import { BLANK, buildCloze, isBuildable, naturalSentence, sentenceMatches, sentenceTiles } from "./cloze";
+import { BLANK, buildCloze, isBuildable, naturalSentence, sentenceMatches, sentenceTiles, mentions } from "./cloze";
+
+describe("a gap that leaves its own answer standing", () => {
+  /*
+    Only one occurrence is blanked, the longest match, so a sentence that says
+    the word twice gave it away: `Poisid läksid ____ (= hakkasid kaklema).` had
+    `kaklema` on the back and `kaklema` four words along. Fifteen cards across
+    the shipped dictionary, and the exam and the level check build from the
+    same function.
+  */
+  it("is refused, so the caller can try another sentence", () => {
+    expect(buildCloze("Poisid läksid kaklema (= hakkasid kaklema).", ["kaklema"])).toBeNull();
+    expect(buildCloze("Mõista, mõista, mis see on.", ["mõista"])).toBeNull();
+  });
+
+  it("still builds where the word appears once", () => {
+    const cloze = buildCloze("Poisid läksid kaklema.", ["kaklema"]);
+    expect(cloze?.answer).toBe("kaklema");
+    expect(cloze?.text).toBe("Poisid läksid ____.");
+  });
+
+  it("reads a whole word, not a substring", () => {
+    // `kaklemas` is a different form and does not give `kaklema` away.
+    const cloze = buildCloze("Poisid on kaklema läinud kaklemas.", ["kaklema"]);
+    expect(cloze?.answer).toBe("kaklema");
+  });
+});
+
+describe("mentions", () => {
+  it("matches a whole word, ignoring case and Estonian's own letters", () => {
+    expect(mentions("Õun on laual.", "õun")).toBe(true);
+    expect(mentions("Õunad on laual.", "õun")).toBe(false);
+    expect(mentions("üle-eestiline üritus", "üle-eestiline")).toBe(true);
+    expect(mentions("kohv, coffee", "kohv")).toBe(true);
+    expect(mentions("coffee", "kohv")).toBe(false);
+    expect(mentions("anything", "")).toBe(false);
+  });
+});
 
 describe("buildCloze", () => {
   it("blanks the form that appears in the sentence", () => {

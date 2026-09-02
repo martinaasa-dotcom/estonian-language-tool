@@ -22,12 +22,13 @@
     "build:ci": "prisma generate && next build",
     "check:secrets": "node scripts/check-secrets.mjs",
     "test:db": "vitest run --config vitest.integration.config.ts",
-    "test:browser": "node scripts/smoke-new.mjs && node scripts/smoke-interact.mjs && node scripts/smoke-offline.mjs && node scripts/test-assess.mjs && node scripts/test-scan.mjs && node scripts/test-exam.mjs && node scripts/test-suggestions.mjs && node scripts/test-error.mjs && node scripts/test-signin.mjs && node scripts/test-containment.mjs && node scripts/a11y-check.mjs",
+    "test:browser": "node scripts/test-first-day.mjs && node scripts/smoke-new.mjs && node scripts/smoke-interact.mjs && node scripts/smoke-offline.mjs && node scripts/test-assess.mjs && node scripts/test-scan.mjs && node scripts/test-exam.mjs && node scripts/test-suggestions.mjs && node scripts/test-error.mjs && node scripts/test-signin.mjs && node scripts/test-containment.mjs && node scripts/a11y-check.mjs",
     "test:invariants": "tsx scripts/test-invariants.ts",
     "audit:merge": "node scripts/audit-merge.mjs",
     "audit:glosses": "tsx scripts/audit-glosses.ts",
     "audit:pos": "tsx scripts/audit-pos.ts",
     "audit:verbs": "tsx scripts/audit-verbs.ts",
+    "audit:cases": "tsx scripts/audit-cases.ts",
     "test:mobile": "node scripts/test-mobile.mjs",
     "test:containment": "node scripts/test-containment.mjs",
     "wordlist": "tsx scripts/build-wordlist.ts",
@@ -37,7 +38,9 @@
     "scenes:import": "tsx scripts/import-scene-answers.ts",
     "test:load": "tsx scripts/load-test.mjs",
     "fixture:load": "tsx scripts/load-fixture.ts",
-    "measure:asr": "node scripts/measure-asr.mjs"
+    "measure:asr": "node scripts/measure-asr.mjs",
+    "audit:questions": "tsx scripts/audit-questions.ts",
+    "audit:decks": "tsx scripts/audit-decks.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

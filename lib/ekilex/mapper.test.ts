@@ -106,4 +106,22 @@ describe("what the mapper carries across", () => {
   it("returns null for a word with no usable form set", () => {
     expect(mapEkilexDetails(verb([], { formSets: [] }))).toBeNull();
   });
+
+  /*
+    Ekilex explains a word in Estonian and gives no English on a reader key, so
+    what comes back here is an Estonian sentence. It used to be returned as
+    `notes`, which is the column holding the English senses the builder stored,
+    and a live lookup overwrote them with it. The name is the fix: a caller
+    cannot put this in the English column by mistake.
+  */
+  it("returns Ekilex's Estonian explanation as a definition, not as a note", () => {
+    const explanation = "kelle või mille juurde või sisse minemist väljendav sõna";
+    const mapped = mapEkilexDetails(verb(["keda/mida*"], { definitions: [explanation] }));
+    expect(mapped?.definition).toBe(explanation);
+    expect(mapped).not.toHaveProperty("notes");
+  });
+
+  it("holds no definition where Ekilex records none", () => {
+    expect(mapEkilexDetails(verb(["keda/mida*"]))?.definition).toBeNull();
+  });
 });

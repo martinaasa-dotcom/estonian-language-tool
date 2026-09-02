@@ -7,7 +7,8 @@ import { Card, Chip, Empty, Page, SectionTitle, Stack } from "@/components/ui";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { PlanPanel, levelLabel } from "@/components/assessment/PlanPanel";
 import { ResultPanel } from "@/components/assessment/ResultPanel";
-import { formatDateTime } from "@/lib/time/clock";
+import { learnerDayClock } from "@/lib/progress/dayClock";
+import { DATE_AND_TIME, DateText } from "@/components/DateText";
 
 export const metadata = { title: "Level check" };
 
@@ -49,10 +50,11 @@ export default async function AssessPage({
     return <AssessmentRunner items={paper.items} missing={paper.missing} />;
   }
 
-  const [latest, history, goals] = await Promise.all([
+  const [latest, history, goals, clock] = await Promise.all([
     latestFor(ownerId),
     historyFor(ownerId, 10),
     goalsFor(ownerId),
+    learnerDayClock(ownerId),
   ]);
 
   const result: Placement | null = latest
@@ -92,7 +94,12 @@ export default async function AssessPage({
         {result ? (
           <ResultPanel
             result={result}
-            heading={latest ? `Measured ${formatDateTime(latest.takenAt)}` : "Where you are"}
+            heading={latest ? (
+              <>
+                Measured{" "}
+                <DateText iso={latest.takenAt.toISOString()} zone={clock.zone} options={DATE_AND_TIME} />
+              </>
+            ) : "Where you are"}
           />
         ) : (
           <Empty
@@ -121,7 +128,9 @@ export default async function AssessPage({
                     className="flex flex-wrap items-baseline justify-between gap-3 border-t py-3 first:border-t-0"
                     style={{ borderColor: "var(--rule)" }}
                   >
-                    <span className="text-sm" style={{ color: "var(--ink-2)" }}>{formatDateTime(row.takenAt)}</span>
+                    <span className="text-sm" style={{ color: "var(--ink-2)" }}>
+                      <DateText iso={row.takenAt.toISOString()} zone={clock.zone} options={DATE_AND_TIME} />
+                    </span>
                     <span className="flex flex-wrap items-center gap-2">
                       <Chip tone="accent">
                         {row.overall === PRE_A1 ? "below A1" : (row.overall ?? "not measured")}

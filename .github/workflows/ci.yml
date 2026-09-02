@@ -76,6 +76,30 @@ jobs:
       # push, and they run in about eight seconds.
       - run: npm test
 
+  questions:
+    name: No question prints its own answer
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      # No database and no key: it reads prisma/data/expanded.json, which is
+      # what `npm run db:seed` loads, and builds every card, paper and clue the
+      # app can make out of it.
+      #
+      # Here rather than in the drift workflow, because this is a fact about
+      # our own code rather than about anything upstream: the generators are
+      # each correct on the word a fixture picks and wrong on a handful
+      # somewhere in five thousand, which is the one shape no unit test can
+      # see. It found four separate faults the day it was written, one of them
+      # in the rule that had been written to fix the first three.
+      #
+      # 44,818 questions in about ninety seconds, most of it the deck.
+      - run: npm run audit:questions
+
   invariants:
     name: Invariants
     runs-on: ubuntu-latest
@@ -277,6 +301,17 @@ jobs:
       # it, because an ordering that matters and is only written in a comment
       # is an ordering that drifts. See the note above about `test-exam.mjs`
       # sitting in `test:browser` unrun for two builds.
+      #
+      # AND A SECOND SUITE WANTS THE SAME STATE, FIRST. Every screen in this
+      # app has a branch for a learner with no cards and no history, and every
+      # browser suite runs after the fixture, so that branch was rendered by
+      # nothing: half of this app is a figure computed from a review log, and
+      # on an empty one every panel takes a path nobody had looked at. It walks
+      # every route the filesystem has, so a route added without an empty state
+      # fails here rather than being found by a learner on their first evening.
+      # It refuses to run against a deck with cards in it, because every check
+      # would pass while testing the wrong app.
+      - run: node scripts/test-first-day.mjs
       - run: node scripts/test-assess.mjs
       # A deck with something in it, so the review screen has cards and the
       # phone bar has a page under it to scroll.

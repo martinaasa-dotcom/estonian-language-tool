@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { Check } from "lucide-react";
 import { toggleTask } from "@/app/actions";
-import { bucketFor } from "@/lib/ux/agenda";
+import { TASK_TAGS, bucketFor } from "@/lib/ux/agenda";
 import { dayClock } from "@/lib/time/day";
 
 export interface TaskView {
@@ -13,14 +13,6 @@ export interface TaskView {
   completed: boolean;
   dueAt: string | null;
 }
-
-const TAG_LABEL: Record<string, string> = {
-  HOMEWORK: "Homework",
-  GRAMMAR: "Grammar",
-  VOCABULARY: "Vocabulary",
-  LISTENING: "Listening",
-  SPEAKING: "Speaking",
-};
 
 export function TaskRow({ task }: { task: TaskView }) {
   const [pending, start] = useTransition();
@@ -72,7 +64,10 @@ export function TaskRow({ task }: { task: TaskView }) {
           {task.title}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ color: "var(--ink-3)" }}>
-          <span>{TAG_LABEL[task.tag] ?? task.tag}</span>
+          {/* The tag a deployment can actually write, from the one table.
+              A row restored from an old backup may carry a kind that was cut,
+              and printing it as it stands is better than printing nothing. */}
+          <span>{TASK_TAGS[task.tag] ?? task.tag}</span>
           {due && (
             <span style={{ color: overdue ? "var(--again-ink)" : undefined }}>
               {overdue ? "Overdue · " : "Due "}

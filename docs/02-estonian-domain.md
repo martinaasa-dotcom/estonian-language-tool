@@ -26,7 +26,7 @@ Estonian has 14 cases. Only a handful of forms are unpredictable; the rest are r
 known stem. The unpredictable ones are the **principal parts** (*põhivormid*), and they are the only
 thing worth memorising.
 
-### 1.1 The five noun principal parts
+### 1.1 The six noun principal parts
 
 | # | Form | Estonian name | `raamat` (book) | `tuba` (room) | Why it must be stored |
 |---|---|---|---|---|---|
@@ -34,10 +34,19 @@ thing worth memorising.
 | 2 | **Genitive sg** | *ainsuse omastav* | raamatu | toa | **Stem for 10 other cases** |
 | 3 | Partitive sg | *ainsuse osastav* | raamatut | tuba | Irregular; required for objects, numbers, quantities |
 | 4 | Short illative sg | *lühike sisseütlev* | n/a | tuppa | Exists for some words only; unpredictable |
-| 5 | Partitive pl | *mitmuse osastav* | raamatuid | tube | Highly irregular; stem for the plural |
+| 5 | Nominative pl | *mitmuse nimetav* | raamatud | toad | Suppletive for pronouns; absent for mass nouns |
+| 6 | Partitive pl | *mitmuse osastav* | raamatuid | tube | Highly irregular; stem for the plural |
 
-v4.0 stored only #1-3. #4 and #5 cannot be derived, so a three-form model silently teaches an
-incomplete set of forms. All five are stored; #4 is nullable.
+v4.0 stored only #1-3. #4 and #6 cannot be derived, so a three-form model silently teaches an
+incomplete set of forms. #4 is nullable, and so is #5.
+
+#5 was the last one to arrive and it arrived by measurement. It was written as a rule, genitive
+plus `-d`, and `npm run audit:cases` put that to the Institute of the Estonian Language for every
+nominal in the dictionary: right for 5,098 of 5,143 words and wrong for a whole category. A pronoun
+is suppletive there and no ending reaches it, so `see` goes to **need** and the rule gave `selled`,
+`too` to **nood** and it gave `tolled`, while `kes` and `mis` do not change at all and were given
+`kelled` and `milled`. Thirty-three mass nouns (`sealiha`, `sularaha`) have no plural for a
+lexicographer to record and were being handed one.
 
 ### 1.2 What the genitive buys you
 
@@ -57,8 +66,9 @@ genitive and ten cases fall out as regular suffixes.
 | Abessive | *ilmaütlev* | `-ta` | raamatuta | without the book |
 | Comitative | *kaasaütlev* | `-ga` | raamatuga | with the book |
 
-Nominative plural is also regular: genitive + `-d` (`raamatud`). The oblique plural is built on the
-genitive plural, which is itself derived from the partitive plural, which is why #5 is stored.
+The oblique plural is built on the genitive plural, which is itself derived from the partitive
+plural, which is why #6 is stored. The nominative plural looks like a rule and is not one, which is
+why it is #5 and stored rather than derived: see §1.1.
 
 The dictionary UI renders this as a **generated table clearly marked as derived**, alongside the
 five stored forms marked as authoritative. The learner sees which forms they must memorise and which

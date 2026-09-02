@@ -34,7 +34,7 @@ export const VERBS: readonly VerbSeed[] = [
   ["rääkima", "to speak, to talk", "A1", "rääkima", "rääkida", "räägin", "rääkisin", "räägitud"],
   ["ütlema", "to say", "A1", "ütlema", "öelda", "ütlen", "ütlesin", "öeldud"],
   ["küsima", "to ask", "A1", "küsima", "küsida", "küsin", "küsisin", "küsitud"],
-  ["vastama", "to answer", "A1", "vastama", "vastata", "vastan", "vastasin", "vastatud", "allative — vastan küsimusele (I answer the question)"],
+  ["vastama", "to answer", "A1", "vastama", "vastata", "vastan", "vastasin", "vastatud", "allative: vastan küsimusele (I answer the question)"],
   ["lugema", "to read, to count", "A1", "lugema", "lugeda", "loen", "lugesin", "loetud"],
   ["kirjutama", "to write", "A1", "kirjutama", "kirjutada", "kirjutan", "kirjutasin", "kirjutatud"],
   ["õppima", "to learn, to study", "A1", "õppima", "õppida", "õpin", "õppisin", "õpitud"],
@@ -65,15 +65,15 @@ export const VERBS: readonly VerbSeed[] = [
   ["mängima", "to play", "A1", "mängima", "mängida", "mängin", "mängisin", "mängitud"],
 
   // ── Verbs whose government trips English speakers up ────────────────────
-  ["aitama", "to help", "A1", "aitama", "aidata", "aitan", "aitasin", "aidatud", "partitive — aitan sind (I help you), not 'to you'"],
-  ["helistama", "to phone, to call", "A1", "helistama", "helistada", "helistan", "helistasin", "helistatud", "allative — helistan sulle (I call you), literally 'to you'"],
-  ["meeldima", "to please, to be liked", "A1", "meeldima", "meeldida", "meeldin", "meeldisin", undefined, "allative experiencer — mulle meeldib see (I like it), literally 'to me it pleases'"],
-  ["mõtlema", "to think", "A1", "mõtlema", "mõelda", "mõtlen", "mõtlesin", "mõeldud", "allative or -le peale — mõtlen sinule (I think of you)"],
-  ["ootama", "to wait", "A1", "ootama", "oodata", "ootan", "ootasin", "oodatud", "partitive — ootan sind (I wait for you), no preposition"],
-  ["armastama", "to love", "A1", "armastama", "armastada", "armastan", "armastasin", "armastatud", "partitive — armastan sind"],
-  ["uskuma", "to believe", "A2", "uskuma", "uskuda", "usun", "uskusin", "usutud", "partitive — usun sind (I believe you)"],
-  ["kartma", "to fear, to be afraid", "A2", "kartma", "karta", "kardan", "kartsin", "kardetud", "partitive — kardan koera (I fear the dog)"],
-  ["vajama", "to need", "A2", "vajama", "vajada", "vajan", "vajasin", "vajatud", "partitive — vajan abi (I need help)"],
+  ["aitama", "to help", "A1", "aitama", "aidata", "aitan", "aitasin", "aidatud", "partitive: aitan sind (I help you), not 'to you'"],
+  ["helistama", "to phone, to call", "A1", "helistama", "helistada", "helistan", "helistasin", "helistatud", "allative: helistan sulle (I call you), literally 'to you'"],
+  ["meeldima", "to please, to be liked", "A1", "meeldima", "meeldida", "meeldin", "meeldisin", undefined, "allative experiencer: mulle meeldib see (I like it), literally 'to me it pleases'"],
+  ["mõtlema", "to think", "A1", "mõtlema", "mõelda", "mõtlen", "mõtlesin", "mõeldud", "allative or -le peale: mõtlen sinule (I think of you)"],
+  ["ootama", "to wait", "A1", "ootama", "oodata", "ootan", "ootasin", "oodatud", "partitive: ootan sind (I wait for you), no preposition"],
+  ["armastama", "to love", "A1", "armastama", "armastada", "armastan", "armastasin", "armastatud", "partitive: armastan sind"],
+  ["uskuma", "to believe", "A2", "uskuma", "uskuda", "usun", "uskusin", "usutud", "partitive: usun sind (I believe you)"],
+  ["kartma", "to fear, to be afraid", "A2", "kartma", "karta", "kardan", "kartsin", "kardetud", "partitive: kardan koera (I fear the dog)"],
+  ["vajama", "to need", "A2", "vajama", "vajada", "vajan", "vajasin", "vajatud", "partitive: vajan abi (I need help)"],
 
   // ── B1–B2 ───────────────────────────────────────────────────────────────
   ["mäletama", "to remember", "A2", "mäletama", "mäletada", "mäletan", "mäletasin", "mäletatud"],

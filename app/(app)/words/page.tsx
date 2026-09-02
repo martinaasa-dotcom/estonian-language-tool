@@ -28,7 +28,16 @@ export default async function WordsPage() {
     prisma.card.count({ where: { ownerId } }),
     prisma.card.findMany({
       where: { ownerId },
-      orderBy: [{ suspended: "asc" }, { due: "asc" }],
+      /*
+        Ending on the id, because `(suspended, due)` is not a total order and
+        the tie here is the whole deck rather than a corner of it: every card
+        in one `addUnitsToDeck` call is written with the same `due`, so first
+        run leaves 982 cards sharing both keys. Which 400 of them this table
+        listed was the query plan's answer and could differ between two
+        identical requests. The rows are the same rows; what changes is that
+        they are the same rows twice.
+      */
+      orderBy: [{ suspended: "asc" }, { due: "asc" }, { id: "asc" }],
       take: 400,
       include: { lexeme: { select: { lemma: true, cefr: true } } },
     }),

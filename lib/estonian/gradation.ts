@@ -1,5 +1,23 @@
 import type { GradationType } from "./types";
 
+/**
+ * ONLY TWO OF THE THREE VALUES ARE EVER ASSIGNED, AND THAT IS THE LANGUAGE
+ * RATHER THAN AN OMISSION.
+ *
+ * `GradationType` allows `QUANTITATIVE` and nothing here returns it, on any of
+ * the 5,363 entries the dictionary ships. Estonian's third quantity is not
+ * written down: `kooli` the genitive and `kooli` the partitive are the same
+ * letters in the same order and differ in how long the vowel is held, so a
+ * classifier reading principal parts as strings cannot see it, and neither can
+ * a learner reading a page. What is spelled is the consonant centre changing,
+ * which is qualitative gradation, and that is what this returns.
+ *
+ * The value stays in the type because it is a true category a person editing an
+ * entry by hand may want, and because `Lexeme.gradation` is a string column a
+ * future Ekilex field could fill. What may not happen is a screen or a dataset
+ * claiming the app classifies three ways when it classifies two:
+ * `lib/research/sections.ts` says which two, out loud, for that reason.
+ */
 export interface GradationResult {
   readonly type: GradationType;
   /** Human-readable alternation, e.g. "b : ∅". Undefined when there is none. */

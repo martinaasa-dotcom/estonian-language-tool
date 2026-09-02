@@ -58,10 +58,10 @@ async function main() {
   if (process.argv.includes("--only-if-empty")) {
     const existing = await prisma.lexeme.count();
     if (existing > 0) {
-      console.log(`Dictionary already has ${existing} entries — leaving it alone.`);
+      console.log(`Dictionary already has ${existing} entries. Leaving it alone.`);
       return;
     }
-    console.log("Dictionary is empty — seeding it.");
+    console.log("Dictionary is empty. Seeding it.");
   }
 
   const entries: SeedEntry[] = [];
@@ -146,6 +146,19 @@ async function main() {
       gradationNote: gradation.note ?? null,
       government: word.government,
       examples: JSON.stringify(word.usages.map((et) => ({ et, source: "EKILEX" }))),
+      /*
+        Ekilex's own Estonian explanation. The harvest has been fetching this
+        since the syllabus existed and the seed dropped every one, because the
+        column is written only for entries that carry its key and this path
+        never did. 1,359 of them.
+
+        Spread rather than set, so a word Ekilex has no explanation for does
+        not claim the column at all. Written as `definition: word.note` it
+        would hand `null` to the update for those, and a reseed would erase a
+        definition the live lookup had fetched for the same word, which is the
+        exact thing `onlyWhenOwned` exists to stop.
+      */
+      ...(word.note ? { definition: word.note } : {}),
       forms: forms(p),
     });
   }
@@ -173,6 +186,35 @@ async function main() {
   if (expanded.added > 0) {
     console.log(`Added ${expanded.added} entries and ${expanded.forms} forms from Ekilex and Wiktionary.`);
   }
+
+  /*
+    AFTER THE WRITES, BECAUSE IT COMPARES AGAINST WHAT THEY WROTE.
+
+    `notes` held two languages until Ekilex's Estonian explanation was given a
+    column of its own, and the live lookup wrote the Estonian into the English
+    one. So every word anybody had looked up on an existing deployment carries
+    that sentence in `notes`, and the entry would print it twice: once as the
+    definition and once under a heading saying "other meanings".
+
+    Written above the early return first, which is where a correction that has
+    to reach an already-seeded database belongs, and it was a deploy behind:
+    the definitions it compares against are written by the lines above it, so
+    on the first run it matched nothing and the duplicates showed until the
+    next one. A run that writes definitions cleans up after itself instead, and
+    a run that writes none has nothing to clean.
+
+    The rule is exactly the rows the old code made and no others. Where the two
+    columns hold the same sentence, the note is that copy. A real English note
+    is never equal to an Estonian definition, so nothing a person wrote and
+    nothing the builder stored can be caught by this.
+  */
+  const duplicated = await prisma.$executeRaw`
+    UPDATE "Lexeme" SET notes = NULL
+    WHERE notes IS NOT NULL AND notes = definition
+  `;
+  if (duplicated > 0) {
+    console.log(`Cleared ${duplicated} notes that were a copy of the Estonian definition.`);
+  }
 }
 
 /** The level of the unit that introduces each course word, as a CEFR fallback. */
@@ -194,9 +236,24 @@ const courseLevel = new Map(courseWords().map((w) => [`${w.lemma}|${w.pos}`, w.l
 async function write(entries: SeedEntry[]) {
   return prisma.$transaction(async (tx) => {
     const ids = new Map<string, string>();
-    // Two statements, because the update differs: only entries carrying a
-    // `notes` key hand ownership of that column to the seed.
-    for (const group of [entries.filter(ownsNote), entries.filter((e) => !ownsNote(e))]) {
+    /*
+      A statement per ownership shape, because the update differs.
+
+      A column marked `onlyWhenOwned` is written only for entries whose payload
+      carries its key: the phrases own their English note and the harvested
+      words own their Estonian definition, and everything else must leave both
+      alone, since the dictionary editor and the live Ekilex lookup write them
+      too. This was one hardcoded test for `notes`; a second such column made
+      the shape a set rather than a boolean.
+    */
+    const groups = new Map<string, SeedEntry[]>();
+    for (const entry of entries) {
+      const shape = ownedBy(entry).join("|");
+      const group = groups.get(shape) ?? [];
+      group.push(entry);
+      groups.set(shape, group);
+    }
+    for (const group of groups.values()) {
       for (const batch of chunks(group, 500)) {
         for (const row of await upsertLexemes(tx, batch)) ids.set(key(row), row.id);
       }
@@ -219,8 +276,9 @@ async function write(entries: SeedEntry[]) {
  * are literals from that table — every value is still a bound parameter.
  */
 async function upsertLexemes(tx: Prisma.TransactionClient, batch: SeedEntry[]) {
-  const owned = batch.some(ownsNote);
-  const columns = LEXEME_COLUMNS.filter((c) => owned || !c.onlyWhenOwned);
+  // Every entry in a batch has the same shape: `write` grouped them by it.
+  const owned = new Set(batch[0] ? ownedBy(batch[0]) : []);
+  const columns = LEXEME_COLUMNS.filter((c) => !c.onlyWhenOwned || owned.has(c.name));
   const quoted = (name: string) => Prisma.raw(`"${name}"`);
 
   const values = batch.map((e) => Prisma.sql`(${Prisma.join([
@@ -245,7 +303,9 @@ async function upsertLexemes(tx: Prisma.TransactionClient, batch: SeedEntry[]) {
 
 const key = (e: { lemma: string; pos: string }) => `${e.lemma} ${e.pos}`;
 
-const ownsNote = (e: SeedEntry) => Object.hasOwn(e, "notes");
+/** Which of the owned columns this entry hands to the seed, in table order. */
+const ownedBy = (e: SeedEntry) =>
+  LEXEME_COLUMNS.filter((c) => c.onlyWhenOwned && Object.hasOwn(e, c.name)).map((c) => c.name);
 
 /**
  * `ON CONFLICT DO UPDATE` refuses to touch the same row twice in one statement,
@@ -256,7 +316,7 @@ const ownsNote = (e: SeedEntry) => Object.hasOwn(e, "notes");
 function dedupe(entries: SeedEntry[]) {
   const byKey = new Map<string, SeedEntry>();
   for (const e of entries) {
-    if (byKey.has(key(e))) console.warn(`  duplicate seed entry: ${e.lemma} (${e.pos}) — keeping the last one`);
+    if (byKey.has(key(e))) console.warn(`  duplicate seed entry: ${e.lemma} (${e.pos}). Keeping the last one.`);
     byKey.set(key(e), e);
   }
   return [...byKey.values()];

@@ -29,8 +29,8 @@ import { extractEstonianEntries } from "../lib/dict/wiktionary";
 import { HARVESTED } from "../prisma/data/harvested";
 import { resolvePos } from "../lib/dict/pos";
 import type { ExpandedEntry } from "./expand-seed";
+import { EXPANDED_PATH, writeExpanded } from "./lib/expandedFile";
 
-const OUT = "prisma/data/expanded.json";
 const CORRECTIONS = "prisma/data/pos-corrections.json";
 const CACHE = "prisma/data/.cache/audit-pages.json";
 const UA = "Kodukeel/0.1 (Estonian learning tool; part-of-speech audit)";
@@ -207,7 +207,7 @@ async function main() {
   const cefrArg = process.argv.indexOf("--cefr");
   const levels = cefrArg > 0 ? new Set(process.argv[cefrArg + 1]?.split(",")) : null;
 
-  const entries = JSON.parse(readFileSync(OUT, "utf8")) as ExpandedEntry[];
+  const entries = JSON.parse(readFileSync(EXPANDED_PATH, "utf8")) as ExpandedEntry[];
   const scope = entries.filter((e) => !levels || levels.has(e.cefr ?? ""));
   console.log(`${entries.length} entries, ${scope.length} in scope.`);
 
@@ -293,7 +293,7 @@ async function main() {
   }
 
   for (const c of corrected) c.entry.pos = c.to;
-  writeFileSync(OUT, `${JSON.stringify(entries, null, 0)}\n`);
+  writeExpanded(entries);
 
   /*
     The corrections are written down as well as applied, because `pos` is half
@@ -313,7 +313,7 @@ async function main() {
   ];
   writeFileSync(CORRECTIONS, `${JSON.stringify(ledger, null, 0)}\n`);
 
-  console.log(`\nWrote ${entries.length} entries to ${OUT} (${corrected.length} relabelled).`);
+  console.log(`\nWrote ${entries.length} entries to ${EXPANDED_PATH} (${corrected.length} relabelled).`);
   console.log(`Recorded ${ledger.length} correction${ledger.length === 1 ? "" : "s"} in ${CORRECTIONS}.`);
 }
 

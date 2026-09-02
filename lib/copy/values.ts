@@ -21,6 +21,34 @@
 export const NO_VALUE = "n/a";
 
 /**
+ * A word whose English is the very same string, and what to say instead.
+ *
+ * Thirty entries in the shipped dictionary are spelled identically in both
+ * languages, twelve of them taught by the course: `film`, `number`, `park`,
+ * `sport`, `stress`, `argument`, `minister`, `risk`. Every screen that prints
+ * a word above its meaning printed those twice, which reads as the app having
+ * rendered something wrong rather than as a fact about the word. The first
+ * meeting is the worst of them, since it is a screen whose whole job is to
+ * teach the word and it appeared to be stuttering.
+ *
+ * EXACT, NOT CASE-INSENSITIVE, and that is the whole of the care needed here.
+ * `august` is `August`, `november` is `November`, and the capital letter is
+ * the lesson: Estonian writes its months in lower case and English does not.
+ * Folding case would delete the one thing those five cards teach.
+ *
+ * The sentence says "spelled" rather than "the same word" because it is not
+ * said the same: `sport` and `stress` are Estonian words with Estonian
+ * quantity and an Estonian vowel in them, and the audio beside it is the point.
+ */
+export function sameSpelling(estonian: string, english: string): boolean {
+  const a = estonian.trim();
+  const b = english.trim();
+  return a.length > 0 && a === b;
+}
+
+export const SAME_SPELLING = "Spelled the same in English.";
+
+/**
  * What a word's English says when nothing has supplied one yet.
  *
  * An instruction rather than a marker, because the person reading it is the

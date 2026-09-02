@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { parseExamples, teachingSentence } from "@/lib/dict/examples";
+import { isPhrase } from "@/lib/dict/pos";
 import { equivalentIn, type GlossLanguage } from "@/lib/collections/glossLanguage";
 import { isStillLearning } from "@/lib/srs/scheduler";
 import { unitIntroducing } from "@/lib/collections/syllabus";
@@ -88,6 +89,7 @@ function introFor(c: CardRow, glossLanguage: GlossLanguage): ReviewCard["intro"]
     sentence: found
       ? { et: found.example.et, en: found.example.en ?? null, form: found.form }
       : null,
+    isPhrase: isPhrase(c.lexeme.pos),
   };
 }
 

@@ -91,8 +91,10 @@ export const SECTIONS: readonly SectionSpec[] = [
       "The one crosstab this app was built to be able to draw. Estonian errors do not " +
       "cluster by case alone, they cluster by a case meeting a stem that changes under " +
       "it, and a learner comfortable with the osastav of raamat can miss it every time on " +
-      "tuba. NONE, QUALITATIVE and QUANTITATIVE are the app's own classification of the " +
-      "word, from the principal parts the Institute records.",
+      "tuba. NONE and QUALITATIVE are the app's own classification of the word, from the " +
+      "principal parts the Institute records. The column allows a third value, " +
+      "QUANTITATIVE, and no row carries it: Estonian's third quantity is not spelled, so " +
+      "a classifier reading forms as strings cannot see it. Read the field as two values.",
   },
   {
     id: "gradation_pattern",

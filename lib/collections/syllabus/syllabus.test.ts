@@ -8,6 +8,7 @@ import { RETIRED_WORDS } from "./retired";
 import { inferPos } from "./types";
 import { PHRASES } from "@/prisma/data/other";
 import { grammarPoint } from "@/lib/estonian/grammar";
+import { PRINCIPAL_FORM_TYPES } from "@/lib/estonian/types";
 
 /**
  * The course references the dictionary by lemma, and a typo would silently
@@ -300,10 +301,12 @@ describe("the harvested dictionary behind the course", () => {
   it("holds principal parts, never a derived case", () => {
     // Storing a derived case would create the second source of truth the schema
     // notes forbid. Only the unpredictable forms belong here.
-    const allowed = new Set([
-      "NOM_SG", "GEN_SG", "PART_SG", "ILL_SG_SHORT", "PART_PL", "GEN_PL",
-      "INF_MA", "INF_DA", "PRES_1SG", "PAST_1SG", "PART_TUD",
-    ]);
+    //
+    // Read off `PRINCIPAL_FORM_TYPES` rather than retyped, because a copy here
+    // is a copy that falls behind: this test failed on `NOM_PL` the day the
+    // nominative plural stopped being derivable, correctly reporting a form the
+    // harvest was right to have started storing.
+    const allowed = new Set<string>(PRINCIPAL_FORM_TYPES);
     for (const w of HARVESTED) {
       for (const formType of Object.keys(w.parts)) {
         expect(allowed.has(formType), `${w.lemma}: ${formType}`).toBe(true);

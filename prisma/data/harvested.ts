@@ -47,7 +47,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aadress", gloss: "address", pos: "NOUN", cefr: "A1",
     ekilexWordId: 154495,
-    parts: { NOM_SG: "aadress", GEN_SG: "aadressi", PART_SG: "aadressi", ILL_SG_SHORT: "aadressi", PART_PL: "aadresse", GEN_PL: "aadresside" },
+    parts: { NOM_SG: "aadress", GEN_SG: "aadressi", PART_SG: "aadressi", ILL_SG_SHORT: "aadressi", NOM_PL: "aadressid", PART_PL: "aadresse", GEN_PL: "aadresside" },
     government: null,
     usages: ["Kodune aadress.", "Mis su aadress on?", "Kirjutasin ümbrikule aadressi: Ehitajate tee 102–60, 13517, Tallinn, Eesti.", "Kodulehekülje aadress."],
     note: "inimese elupaiga või asutuse asukoha andmed (nt postisaadetise sihtkohana)",
@@ -56,7 +56,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aasta", gloss: "year", pos: "NOUN", cefr: "A1",
     ekilexWordId: 154561,
-    parts: { NOM_SG: "aasta", GEN_SG: "aasta", PART_SG: "aastat", PART_PL: "aastaid", GEN_PL: "aastate" },
+    parts: { NOM_SG: "aasta", GEN_SG: "aasta", PART_SG: "aastat", NOM_PL: "aastad", PART_PL: "aastaid", GEN_PL: "aastate" },
     government: null,
     usages: ["Olen sündinud 1991. aastal.", "Kohtusime viimati möödunud aastal.", "Mis aastal sa sündinud oled? – 1975. aastal.", "Käisin eelmisel aastal Itaalias."],
     note: "365 või 366 päeva pikkune periood, mis on jagatud 12 kuuks ja algab 1. jaanuaril ning lõpeb 31. detsembril",
@@ -65,7 +65,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "abi", gloss: "help", pos: "NOUN", cefr: "A1",
     ekilexWordId: 154673,
-    parts: { NOM_SG: "abi", GEN_SG: "abi", PART_SG: "abi", ILL_SG_SHORT: "appi", PART_PL: "abisid", GEN_PL: "abide" },
+    parts: { NOM_SG: "abi", GEN_SG: "abi", PART_SG: "abi", ILL_SG_SHORT: "appi", NOM_PL: "abid", PART_PL: "abisid", GEN_PL: "abide" },
     government: null,
     usages: ["Ilma kõrvalise abita ta igapäevaeluga hakkama ei saa.", "Uus fond pakub tagastamatut abi alustavatele ettevõtjatele.", "Vajan dokumentide vormistamisel abi.", "Teiste abile ei saa loota, teen parem ise ära."],
     note: "aitamine, abistamine",
@@ -74,7 +74,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "abielu", gloss: "marriage", pos: "NOUN", cefr: "A2",
     ekilexWordId: 154683,
-    parts: { NOM_SG: "abielu", GEN_SG: "abielu", PART_SG: "abielu", ILL_SG_SHORT: "abiellu", PART_PL: "abielusid", GEN_PL: "abielude" },
+    parts: { NOM_SG: "abielu", GEN_SG: "abielu", PART_SG: "abielu", ILL_SG_SHORT: "abiellu", NOM_PL: "abielud", PART_PL: "abielusid", GEN_PL: "abielude" },
     government: null,
     usages: ["Abielu sõlmiti Inglismaal, mis tõi endaga kaasa hulga paberlikke toiminguid.", "Milles peitub pika ja õnneliku abielu saladus?", "USAs arutab samasooliste abielude legaliseerimist Massachusettsi ülemkohus.", "Pooled inimesed on elu jooksul kogenud abielu või kooselu purunemist."],
     note: "kahe inimese ametlikult registreeritud perekondlik liit ning kooselu",
@@ -83,7 +83,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "abstraktne", gloss: "abstract", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 154876,
-    parts: { NOM_SG: "abstraktne", GEN_SG: "abstraktse", PART_SG: "abstraktset", PART_PL: "abstraktseid", GEN_PL: "abstraktsete" },
+    parts: { NOM_SG: "abstraktne", GEN_SG: "abstraktse", PART_SG: "abstraktset", NOM_PL: "abstraktsed", PART_PL: "abstraktseid", GEN_PL: "abstraktsete" },
     government: null,
     usages: ["Abstraktne idee.", "Prints pole abstraktne prints, vaid luust ja lihast poiss.", "Mulle meeldivad abstraktsed arutlused.", "Abstraktsed nimisõnad nagu inimkond, ilu, minevik."],
     note: "mõttes eksisteeriv, mõtlemisega tajutav, abstraktsioonidega seotud",
@@ -92,7 +92,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "advokaat", gloss: "lawyer", pos: "NOUN", cefr: "B1",
     ekilexWordId: 155012,
-    parts: { NOM_SG: "advokaat", GEN_SG: "advokaadi", PART_SG: "advokaati", ILL_SG_SHORT: "advokaati", PART_PL: "advokaate", GEN_PL: "advokaatide" },
+    parts: { NOM_SG: "advokaat", GEN_SG: "advokaadi", PART_SG: "advokaati", ILL_SG_SHORT: "advokaati", NOM_PL: "advokaadid", PART_PL: "advokaate", GEN_PL: "advokaatide" },
     government: null,
     usages: ["Võtsin endale advokaadi.", "Advokaat on kohustatud läbima perioodilise õigusalase täiendusõppe."],
     note: "õigusabi osutav, kedagi kohtus esindav ning kaitsev jurist",
@@ -101,7 +101,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aeg", gloss: "time", pos: "NOUN", cefr: "A1",
     ekilexWordId: 155047,
-    parts: { NOM_SG: "aeg", GEN_SG: "aja", PART_SG: "aega", ILL_SG_SHORT: "aega", PART_PL: "aegu", GEN_PL: "aegade" },
+    parts: { NOM_SG: "aeg", GEN_SG: "aja", PART_SG: "aega", ILL_SG_SHORT: "aega", NOM_PL: "ajad", PART_PL: "aegu", GEN_PL: "aegade" },
     government: null,
     usages: ["Aeg lendab kiiresti.", "Aeg ei peatu.", "Puhkus algab kuu aja pärast.", "Kevadeni on veel palju aega."],
     note: "lõputu, piiramatu kestus, lõputult voolavad tunnid, päevad, aastad vms",
@@ -110,7 +110,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aeglane", gloss: "slow", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 155064,
-    parts: { NOM_SG: "aeglane", GEN_SG: "aeglase", PART_SG: "aeglast", ILL_SG_SHORT: "aeglasse", PART_PL: "aeglasi", GEN_PL: "aeglaste" },
+    parts: { NOM_SG: "aeglane", GEN_SG: "aeglase", PART_SG: "aeglast", ILL_SG_SHORT: "aeglasse", NOM_PL: "aeglased", PART_PL: "aeglasi", GEN_PL: "aeglaste" },
     government: null,
     usages: ["Majanduse aeglane areng.", "Aeglase vooluga jõgi.", "Lapse areng on aeglane.", "Ta teeb korralikku tööd, aga on väga aeglane."],
     note: "aegamööda, pikkamööda toimuv, kulgev või arenev",
@@ -155,7 +155,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ajakiri", gloss: "magazine", pos: "NOUN", cefr: "A2",
     ekilexWordId: 155630,
-    parts: { NOM_SG: "ajakiri", GEN_SG: "ajakirja", PART_SG: "ajakirja", ILL_SG_SHORT: "ajakirja", PART_PL: "ajakirju", GEN_PL: "ajakirjade" },
+    parts: { NOM_SG: "ajakiri", GEN_SG: "ajakirja", PART_SG: "ajakirja", ILL_SG_SHORT: "ajakirja", NOM_PL: "ajakirjad", PART_PL: "ajakirju", GEN_PL: "ajakirjade" },
     government: null,
     usages: ["Ajakiri Keel ja Kirjandus.", "Lugesin täna ajakirjast ühte huvitavat artiklit.", "Arheoloogiat aitab populariseerida meie ajakiri Tutulus."],
     note: "pikema ajavahemiku järel (nt kord kuus) ilmuv kindla teemaringi või käsitluslaadiga perioodikaväljaanne",
@@ -164,7 +164,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ajakirjanik", gloss: "journalist", pos: "NOUN", cefr: "A2",
     ekilexWordId: 155637,
-    parts: { NOM_SG: "ajakirjanik", GEN_SG: "ajakirjaniku", PART_SG: "ajakirjanikku", ILL_SG_SHORT: "ajakirjanikku", PART_PL: "ajakirjanikke", GEN_PL: "ajakirjanike" },
+    parts: { NOM_SG: "ajakirjanik", GEN_SG: "ajakirjaniku", PART_SG: "ajakirjanikku", ILL_SG_SHORT: "ajakirjanikku", NOM_PL: "ajakirjanikud", PART_PL: "ajakirjanikke", GEN_PL: "ajakirjanike" },
     government: null,
     usages: ["Ta töötab Postimehe ajakirjanikuna.", "Tahan saada ajakirjanikuks."],
     note: "inimene, kes kirjutab ajalehtedele, ajakirjadele ja veebiväljaannetele artikleid või valmistab ette saateid televisioonis ja raadios",
@@ -173,7 +173,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ajaleht", gloss: "newspaper", pos: "NOUN", cefr: "A2",
     ekilexWordId: 155662,
-    parts: { NOM_SG: "ajaleht", GEN_SG: "ajalehe", PART_SG: "ajalehte", ILL_SG_SHORT: "ajalehte", PART_PL: "ajalehti", GEN_PL: "ajalehtede" },
+    parts: { NOM_SG: "ajaleht", GEN_SG: "ajalehe", PART_SG: "ajalehte", ILL_SG_SHORT: "ajalehte", NOM_PL: "ajalehed", PART_PL: "ajalehti", GEN_PL: "ajalehtede" },
     government: null,
     usages: ["Ta loeb igal hommikul värsked ajalehed läbi.", "Kas teile tuleb ajaleht postkasti?", "Ajalehe The Times lugemine veebis muutus tasuliseks 2010. aastal.", "Online-uudised Eesti ajalehtedes."],
     note: "lühikese ajavahemiku järel (nt iga päev või kord nädalas) ilmuv, päevasündmusi käsitlev ning meelelahutust pakkuv väljaanne (paberil, veebis)",
@@ -182,7 +182,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ajalugu", gloss: "history", pos: "NOUN", cefr: "A2",
     ekilexWordId: 155694,
-    parts: { NOM_SG: "ajalugu", GEN_SG: "ajaloo", PART_SG: "ajalugu", ILL_SG_SHORT: "ajalukku", PART_PL: "ajalugusid", GEN_PL: "ajalugude" },
+    parts: { NOM_SG: "ajalugu", GEN_SG: "ajaloo", PART_SG: "ajalugu", ILL_SG_SHORT: "ajalukku", NOM_PL: "ajalood", PART_PL: "ajalugusid", GEN_PL: "ajalugude" },
     government: null,
     usages: ["Eesti ilmaennustuse ajalugu algab tsaariaja Tartu ülikoolist.", "Maiasmoka kohvikul on väärikas ajalugu.", "Kelle meetod oli tulemuslikum, sellest ajalugu vaikib.", "See oli maailma ajaloos oluline hetk."],
     note: "ühiskonna, rahva vm minevikus toimunud järjestikused sündmused tervikuna",
@@ -191,7 +191,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ajastu", gloss: "era", pos: "NOUN", cefr: "B2",
     ekilexWordId: 155736,
-    parts: { NOM_SG: "ajastu", GEN_SG: "ajastu", PART_SG: "ajastut", PART_PL: "ajastuid", GEN_PL: "ajastute" },
+    parts: { NOM_SG: "ajastu", GEN_SG: "ajastu", PART_SG: "ajastut", NOM_PL: "ajastud", PART_PL: "ajastuid", GEN_PL: "ajastute" },
     government: null,
     usages: ["Leiutaja ideed on sageli oma ajastust ees.", "Barokiajastu.", "Renessansiajastu.", "Digiajastu."],
     note: "pikem, teatavate iseloomulike tunnustega ajalõik või periood",
@@ -200,7 +200,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aken", gloss: "window", pos: "NOUN", cefr: "A1",
     ekilexWordId: 155888,
-    parts: { NOM_SG: "aken", GEN_SG: "akna", PART_SG: "akent", PART_PL: "aknaid", GEN_PL: "akende" },
+    parts: { NOM_SG: "aken", GEN_SG: "akna", PART_SG: "akent", NOM_PL: "aknad", PART_PL: "aknaid", GEN_PL: "akende" },
     government: null,
     usages: ["Bussiaken.", "Keldriaken.", "Papagoi pääses lahtise akna kaudu välja.", "Kass istus aknal ja jälgis mööduvaid inimesi."],
     note: "hrl raamitud klaasiga avaus valguse ja õhu sissepääsuks hoone, sõiduki vms seinas või laes",
@@ -209,7 +209,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aktsent", gloss: "accent", pos: "NOUN", cefr: "B2",
     ekilexWordId: 156008,
-    parts: { NOM_SG: "aktsent", GEN_SG: "aktsendi", PART_SG: "aktsenti", ILL_SG_SHORT: "aktsenti", PART_PL: "aktsente", GEN_PL: "aktsentide" },
+    parts: { NOM_SG: "aktsent", GEN_SG: "aktsendi", PART_SG: "aktsenti", ILL_SG_SHORT: "aktsenti", NOM_PL: "aktsendid", PART_PL: "aktsente", GEN_PL: "aktsentide" },
     government: null,
     usages: ["Turist küsis teed saksa aktsendiga eesti keeles.", "Kalle kõneleb kerge aktsendiga.", "Ta räägib mingi huvitava aktsendiga inglise keelt.", "Uus kõrghoone annab piirkonnale erilise aktsendi."],
     note: "võõrapärane hääldusviis",
@@ -218,7 +218,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "alapealkiri", gloss: "subheading", pos: "NOUN", cefr: null,
     ekilexWordId: 156205,
-    parts: { NOM_SG: "alapealkiri", GEN_SG: "alapealkirja", PART_SG: "alapealkirja", ILL_SG_SHORT: "alapealkirja", PART_PL: "alapealkirju", GEN_PL: "alapealkirjade" },
+    parts: { NOM_SG: "alapealkiri", GEN_SG: "alapealkirja", PART_SG: "alapealkirja", ILL_SG_SHORT: "alapealkirja", NOM_PL: "alapealkirjad", PART_PL: "alapealkirju", GEN_PL: "alapealkirjade" },
     government: null,
     usages: [],
     note: "(üld)pealkirja järele või alla paigutatud (hrl väiksemas kirjas) täpsustav, lisainformatsiooni pakkuv pealkiri",
@@ -254,7 +254,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "algoritm", gloss: "algorithm", pos: "NOUN", cefr: "B2",
     ekilexWordId: 156382,
-    parts: { NOM_SG: "algoritm", GEN_SG: "algoritmi", PART_SG: "algoritmi", ILL_SG_SHORT: "algoritmi", PART_PL: "algoritme", GEN_PL: "algoritmide" },
+    parts: { NOM_SG: "algoritm", GEN_SG: "algoritmi", PART_SG: "algoritmi", ILL_SG_SHORT: "algoritmi", NOM_PL: "algoritmid", PART_PL: "algoritme", GEN_PL: "algoritmide" },
     government: null,
     usages: ["Pakume välja autorituvastuse algoritmi eestikeelsete arvamusartiklite jaoks.", "Kui muidu teada ei saa, siis kirjuta algoritmile vastav programm ning proovi järele."],
     note: "sammsammuline tegevusjuhis, eeskiri mingi tegevuse sooritamiseks või mingit kindlat tüüpi ülesannete lahendamiseks",
@@ -272,7 +272,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "allikas", gloss: "source", pos: "NOUN", cefr: "B1",
     ekilexWordId: 156628,
-    parts: { NOM_SG: "allikas", GEN_SG: "allika", PART_SG: "allikat", PART_PL: "allikaid", GEN_PL: "allikate" },
+    parts: { NOM_SG: "allikas", GEN_SG: "allika", PART_SG: "allikat", NOM_PL: "allikad", PART_PL: "allikaid", GEN_PL: "allikate" },
     government: null,
     usages: ["Kaljude vahel voolav selgeveeline allikas.", "Allikate vesi on külm ja puhas.", "Jõgi lättest suudmeni.", "Moseli jõe lätted asuvad Prantsusmaal."],
     note: "põhjavee loodusliku väljavoolu koht maapinnal (hrl veega täitunud süvendina) või veekogu põhjas",
@@ -281,7 +281,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "alliteratsioon", gloss: "alliteration", pos: "NOUN", cefr: null,
     ekilexWordId: 156635,
-    parts: { NOM_SG: "alliteratsioon", GEN_SG: "alliteratsiooni", PART_SG: "alliteratsiooni", ILL_SG_SHORT: "alliteratsiooni", PART_PL: "alliteratsioone", GEN_PL: "alliteratsioonide" },
+    parts: { NOM_SG: "alliteratsioon", GEN_SG: "alliteratsiooni", PART_SG: "alliteratsiooni", ILL_SG_SHORT: "alliteratsiooni", NOM_PL: "alliteratsioonid", PART_PL: "alliteratsioone", GEN_PL: "alliteratsioonide" },
     government: null,
     usages: ["Koerakoonlaste kollaborandid, milline ilus alliteratsioon!"],
     note: "(stiilivõte:) sama kaashääliku kordumine kahe või enama sõna algul värsis või lauses (nt maal ja merel)",
@@ -290,7 +290,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "allkiri", gloss: "signature", pos: "NOUN", cefr: "A2",
     ekilexWordId: 156642,
-    parts: { NOM_SG: "allkiri", GEN_SG: "allkirja", PART_SG: "allkirja", ILL_SG_SHORT: "allkirja", PART_PL: "allkirju", GEN_PL: "allkirjade" },
+    parts: { NOM_SG: "allkiri", GEN_SG: "allkirja", PART_SG: "allkirja", ILL_SG_SHORT: "allkirja", NOM_PL: "allkirjad", PART_PL: "allkirju", GEN_PL: "allkirjade" },
     government: null,
     usages: ["Direktor pani vallandamisotsusele allkirja.", "Võltsitud allkirjaga dokument.", "Lepingule on vaja direktori allkirja.", "Foto allkiri viitab sündmuse toimumiskohale."],
     note: "omakäeliselt kirjatähtedega kirjutatud nimi teksti all",
@@ -299,7 +299,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "alltekst", gloss: "subtext", pos: "NOUN", cefr: null,
     ekilexWordId: 156681,
-    parts: { NOM_SG: "alltekst", GEN_SG: "allteksti", PART_SG: "allteksti", ILL_SG_SHORT: "allteksti", PART_PL: "alltekste", GEN_PL: "alltekstide" },
+    parts: { NOM_SG: "alltekst", GEN_SG: "allteksti", PART_SG: "allteksti", ILL_SG_SHORT: "allteksti", NOM_PL: "alltekstid", PART_PL: "alltekste", GEN_PL: "alltekstide" },
     government: null,
     usages: ["Sõnadega loed välja üht, aga alltekst on hoopis teine.", "Maali läbivaks motiiviks on tuvid ning nendega seonduvad alltekstid.", "Väärikas suhtlus sisaldab pigem alltekstina edastatavaid hoiakuid, mitte otse välja öeldavaid sõnumeid."],
     note: "teksti vm väljenduse sisemine varjatud mõte",
@@ -317,7 +317,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Ameerika", gloss: "America", pos: "NOUN", cefr: null,
     ekilexWordId: 156936,
-    parts: { NOM_SG: "Ameerika", GEN_SG: "Ameerika", PART_SG: "Ameerikat", ILL_SG_SHORT: "Ameerika", PART_PL: "Ameerikaid", GEN_PL: "Ameerikate" },
+    parts: { NOM_SG: "Ameerika", GEN_SG: "Ameerika", PART_SG: "Ameerikat", ILL_SG_SHORT: "Ameerika", NOM_PL: "Ameerikad", PART_PL: "Ameerikaid", GEN_PL: "Ameerikate" },
     government: null,
     usages: [],
     note: "maailmajagu läänepoolkeral Vaikse ja Atlandi ookeani vahel, mille moodustavad Põhja- ja Lõuna-Ameerika mander",
@@ -326,7 +326,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ameeriklane", gloss: "an American", pos: "NOUN", cefr: "A2",
     ekilexWordId: 156948,
-    parts: { NOM_SG: "ameeriklane", GEN_SG: "ameeriklase", PART_SG: "ameeriklast", ILL_SG_SHORT: "ameeriklasse", PART_PL: "ameeriklasi", GEN_PL: "ameeriklaste" },
+    parts: { NOM_SG: "ameeriklane", GEN_SG: "ameeriklase", PART_SG: "ameeriklast", ILL_SG_SHORT: "ameeriklasse", NOM_PL: "ameeriklased", PART_PL: "ameeriklasi", GEN_PL: "ameeriklaste" },
     government: null,
     usages: ["USA valimistepäeval välismaal viibivad ameeriklased hääletavad posti teel, mitte oma saatkonnas.", "President kutsus ameeriklasi üles ühtsusele.", "Eesti keele kursusel käib ka kaks ameeriklast."],
     note: "Ameerika Ühendriikide kodanik või elanik",
@@ -335,7 +335,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "amet", gloss: "office, profession", pos: "NOUN", cefr: "A2",
     ekilexWordId: 156956,
-    parts: { NOM_SG: "amet", GEN_SG: "ameti", PART_SG: "ametit", PART_PL: "ameteid", GEN_PL: "ametite" },
+    parts: { NOM_SG: "amet", GEN_SG: "ameti", PART_SG: "ametit", NOM_PL: "ametid", PART_PL: "ameteid", GEN_PL: "ametite" },
     government: null,
     usages: ["Isa viibib oma ameti tõttu tihti välismaal.", "Ema on ametilt õpetaja.", "President nimetas ametisse kolm kohtunikku.", "Ta on ameti poolest rätsep."],
     note: "ülesanded, mida keegi oma töökohal täidab ja mille eest ta tasu saab, tasustatav töö",
@@ -344,7 +344,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ametikoht", gloss: "position, post", pos: "NOUN", cefr: "B1",
     ekilexWordId: 156974,
-    parts: { NOM_SG: "ametikoht", GEN_SG: "ametikoha", PART_SG: "ametikohta", ILL_SG_SHORT: "ametikohta", PART_PL: "ametikohti", GEN_PL: "ametikohtade" },
+    parts: { NOM_SG: "ametikoht", GEN_SG: "ametikoha", PART_SG: "ametikohta", ILL_SG_SHORT: "ametikohta", NOM_PL: "ametikohad", PART_PL: "ametikohti", GEN_PL: "ametikohtade" },
     government: null,
     usages: ["Valitsus on otsustanud kaotada euroministri ametikoha.", "Direktori ametikohale kandideerib neli inimest.", "Ametikohad riigiasutustes ja kohalikes omavalitsustes täidetakse seaduse alusel ja korras Eesti kodanikega."],
     note: "asutuse, organisatsiooni vms struktuuris ettenähtud töökoht",
@@ -353,7 +353,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ametlik", gloss: "official", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 157026,
-    parts: { NOM_SG: "ametlik", GEN_SG: "ametliku", PART_SG: "ametlikku", ILL_SG_SHORT: "ametlikku", PART_PL: "ametlikke", GEN_PL: "ametlike" },
+    parts: { NOM_SG: "ametlik", GEN_SG: "ametliku", PART_SG: "ametlikku", ILL_SG_SHORT: "ametlikku", NOM_PL: "ametlikud", PART_PL: "ametlikke", GEN_PL: "ametlike" },
     government: null,
     usages: ["Ametlik välispoliitika.", "Võimudelt ei tulnud ühtki ametlikku teadet.", "Ametlik dokument.", "Wales'i printsi esimene ametlik visiit Balti regiooni."],
     note: "ametivõimu poolt, riiklikult kehtestatud või korraldatud",
@@ -362,7 +362,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ammendav", gloss: "exhaustive", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 157061,
-    parts: { NOM_SG: "ammendav", GEN_SG: "ammendava", PART_SG: "ammendavat", PART_PL: "ammendavaid", GEN_PL: "ammendavate" },
+    parts: { NOM_SG: "ammendav", GEN_SG: "ammendava", PART_SG: "ammendavat", NOM_PL: "ammendavad", PART_PL: "ammendavaid", GEN_PL: "ammendavate" },
     government: null,
     usages: ["Teadlased on sellele nähtusele üsna ammendava seletuse leidnud.", "Seletusi võib ju leida, kuid ammendavat vastust pole."],
     note: "põhjalik, midagi täielikult, igakülgselt käsitlev, kõiki asju sisaldav",
@@ -380,7 +380,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "analüüs", gloss: "analysis", pos: "NOUN", cefr: null,
     ekilexWordId: 157198,
-    parts: { NOM_SG: "analüüs", GEN_SG: "analüüsi", PART_SG: "analüüsi", ILL_SG_SHORT: "analüüsi", PART_PL: "analüüse", GEN_PL: "analüüside" },
+    parts: { NOM_SG: "analüüs", GEN_SG: "analüüsi", PART_SG: "analüüsi", ILL_SG_SHORT: "analüüsi", NOM_PL: "analüüsid", PART_PL: "analüüse", GEN_PL: "analüüside" },
     government: null,
     usages: ["Statistiline analüüs.", "Otsusele eelnes olukorra igakülgne analüüs.", "Turuanalüüs.", "Andmeanalüüs."],
     note: "põhjalik, üksikasju arvesse võttev uurimine, algosade vm koostisosade kindlaksmääramine",
@@ -398,7 +398,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "andekas", gloss: "talented", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 157231,
-    parts: { NOM_SG: "andekas", GEN_SG: "andeka", PART_SG: "andekat", PART_PL: "andekaid", GEN_PL: "andekate" },
+    parts: { NOM_SG: "andekas", GEN_SG: "andeka", PART_SG: "andekat", NOM_PL: "andekad", PART_PL: "andekaid", GEN_PL: "andekate" },
     government: null,
     usages: ["Noor andekas teadlane.", "Ta on klassi kõige andekam õpilane."],
     note: "annet, talenti omav või seda väljendav",
@@ -416,7 +416,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "andmebaas", gloss: "database", pos: "NOUN", cefr: "B2",
     ekilexWordId: 157253,
-    parts: { NOM_SG: "andmebaas", GEN_SG: "andmebaasi", PART_SG: "andmebaasi", ILL_SG_SHORT: "andmebaasi", PART_PL: "andmebaase", GEN_PL: "andmebaaside" },
+    parts: { NOM_SG: "andmebaas", GEN_SG: "andmebaasi", PART_SG: "andmebaasi", ILL_SG_SHORT: "andmebaasi", NOM_PL: "andmebaasid", PART_PL: "andmebaase", GEN_PL: "andmebaaside" },
     government: null,
     usages: ["Eesti kohanimede andmebaas.", "Politsei kasutab liikluskindlustuse andmebaasi sõiduki kohustusliku liikluskindlustuse kontrollimiseks.", "Teadusinfo andmebaas ISI Web of Science jälgib 8700 teadusajakirja.", "Keskandmebaas."],
     note: "korrastatud ülesehitusega elektrooniline andmekogu, mis võimaldab andmeid otsida, sortida vm viisil töödelda",
@@ -425,7 +425,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "andmed", gloss: "data", pos: "NOUN", cefr: "A2",
     ekilexWordId: 157254,
-    parts: { NOM_SG: "anne", GEN_SG: "andme", PART_SG: "annet", PART_PL: "andmeid", GEN_PL: "andmete" },
+    parts: { NOM_SG: "anne", GEN_SG: "andme", PART_SG: "annet", NOM_PL: "andmed", PART_PL: "andmeid", GEN_PL: "andmete" },
     government: null,
     usages: ["Esialgsete andmete põhjal tuleb starti üle tuhande jooksja.", "Elanikkonna küsitluse andmed kinnitavad olukorra paranemist.", "Auto tehnilised andmed.", "Aadressiandmed."],
     note: "faktid, mida kellegi või millegi kohta teada saadakse või teatakse, informatsioon kellegi või millegi kohta",
@@ -434,7 +434,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "andmekaitse", gloss: "data protection", pos: "NOUN", cefr: null,
     ekilexWordId: 157259,
-    parts: { NOM_SG: "andmekaitse", GEN_SG: "andmekaitse", PART_SG: "andmekaitset", PART_PL: "andmekaitseid", GEN_PL: "andmekaitsete" },
+    parts: { NOM_SG: "andmekaitse", GEN_SG: "andmekaitse", PART_SG: "andmekaitset", NOM_PL: "andmekaitsed", PART_PL: "andmekaitseid", GEN_PL: "andmekaitsete" },
     government: null,
     usages: ["Töötajat kahtlustatakse andmekaitse nõuete rikkumises."],
     note: "isikuandmete kaitsmine avalikustamise, moonutamise või hävitamise eest",
@@ -443,7 +443,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "andmestik", gloss: "dataset", pos: "NOUN", cefr: null,
     ekilexWordId: 157273,
-    parts: { NOM_SG: "andmestik", GEN_SG: "andmestiku", PART_SG: "andmestikku", ILL_SG_SHORT: "andmestikku", PART_PL: "andmestikke", GEN_PL: "andmestike" },
+    parts: { NOM_SG: "andmestik", GEN_SG: "andmestiku", PART_SG: "andmestikku", ILL_SG_SHORT: "andmestikku", NOM_PL: "andmestikud", PART_PL: "andmestikke", GEN_PL: "andmestike" },
     government: null,
     usages: ["Kogutud andmestik võimaldab hinnata Eesti järvede seisundit."],
     note: "andmed, andmete (korrastatud) kogum",
@@ -452,7 +452,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "annus", gloss: "dose", pos: "NOUN", cefr: "B1",
     ekilexWordId: 157440,
-    parts: { NOM_SG: "annus", GEN_SG: "annuse", PART_SG: "annust", PART_PL: "annuseid", GEN_PL: "annuste" },
+    parts: { NOM_SG: "annus", GEN_SG: "annuse", PART_SG: "annust", NOM_PL: "annused", PART_PL: "annuseid", GEN_PL: "annuste" },
     government: null,
     usages: ["Ravimi annuse määrab arst.", "Päevane joodi annus.", "Ärge ületage ravimi ettenähtud annust.", "Ühekordne annus soola."],
     note: "kindlamõõduline kogus ravimit vm keemilist ainet, mida korraga tarbitakse",
@@ -461,7 +461,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aprill", gloss: "April", pos: "NOUN", cefr: "A1",
     ekilexWordId: 157735,
-    parts: { NOM_SG: "aprill", GEN_SG: "aprilli", PART_SG: "aprilli", ILL_SG_SHORT: "aprilli", PART_PL: "aprille", GEN_PL: "aprillide" },
+    parts: { NOM_SG: "aprill", GEN_SG: "aprilli", PART_SG: "aprilli", ILL_SG_SHORT: "aprilli", NOM_PL: "aprillid", PART_PL: "aprille", GEN_PL: "aprillide" },
     government: null,
     usages: ["Lähen aprilli lõpus reisile.", "Ema tegi aprilli, et vaata, mis sul pükste peal on!", "Aprill!"],
     note: "aasta 4. kuu, põhjapoolkeral teine kevadkuu",
@@ -470,7 +470,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arendus", gloss: "development", pos: "NOUN", cefr: "B2",
     ekilexWordId: 157828,
-    parts: { NOM_SG: "arendus", GEN_SG: "arenduse", PART_SG: "arendust", ILL_SG_SHORT: "arendusse", PART_PL: "arendusi", GEN_PL: "arenduste" },
+    parts: { NOM_SG: "arendus", GEN_SG: "arenduse", PART_SG: "arendust", ILL_SG_SHORT: "arendusse", NOM_PL: "arendused", PART_PL: "arendusi", GEN_PL: "arenduste" },
     government: null,
     usages: ["Telliskivi 60 arenduse projektijuht.", "Püramiidiküla arendus leidis mitte just väga õnneliku lõpu.", "Põhirõhk on nüüd õppekava arendusel, eelkõige õppesuundade osas.", "Kui see idee arendus on huvipakkuv, siis võib edasi mõelda."],
     note: "mingi maa-ala ja hoonestuse terviklik projekteerimine ja väljaehitamine (koos tänavate, veevärgi ja muude rajatistega) või mingi hoone(rühma) renoveerimine",
@@ -488,7 +488,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "areng", gloss: "development", pos: "NOUN", cefr: "A2",
     ekilexWordId: 157843,
-    parts: { NOM_SG: "areng", GEN_SG: "arengu", PART_SG: "arengut", PART_PL: "arenguid", GEN_PL: "arengute" },
+    parts: { NOM_SG: "areng", GEN_SG: "arengu", PART_SG: "arengut", NOM_PL: "arengud", PART_PL: "arenguid", GEN_PL: "arengute" },
     government: null,
     usages: ["Majanduse areng.", "Eesti regionaalne areng.", "Interneti kiire areng.", "Laps vajab normaalseks arenguks õiget toitu."],
     note: "kindla seesmise suunaga muutumine, hrl edenemine tõusujoones, madalamalt kõrgemale või lihtsamalt keerukamale",
@@ -497,7 +497,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "argine", gloss: "everyday", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 157911,
-    parts: { NOM_SG: "argine", GEN_SG: "argise", PART_SG: "argist", PART_PL: "argiseid", GEN_PL: "argiste" },
+    parts: { NOM_SG: "argine", GEN_SG: "argise", PART_SG: "argist", NOM_PL: "argised", PART_PL: "argiseid", GEN_PL: "argiste" },
     government: null,
     usages: ["Kõik selles muusikas on keskpärane ja argine.", "Korralik ja argine vein."],
     note: "ilma erilisuse ja särata, alati ühtmoodi (ja töiselt) esinev, toimiv või toimuv (vastandatuna nt pühapäevasele)",
@@ -506,7 +506,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arglik", gloss: "timid", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 157923,
-    parts: { NOM_SG: "arglik", GEN_SG: "argliku", PART_SG: "arglikku", ILL_SG_SHORT: "arglikku", PART_PL: "arglikke", GEN_PL: "arglike" },
+    parts: { NOM_SG: "arglik", GEN_SG: "argliku", PART_SG: "arglikku", ILL_SG_SHORT: "arglikku", NOM_PL: "arglikud", PART_PL: "arglikke", GEN_PL: "arglike" },
     government: null,
     usages: ["Kõlas arglik koputus.", "Esimesed arglikud sammud teadusmaailmas.", "Algul olin natukene arglik ja hoidsin omaette.", "End halvasti tundvad kassid on sageli kas arglikud või liiga agressiivsed."],
     note: "ülearu tagasihoidlik, end häbenev, kohmetunud, natuke arg",
@@ -515,7 +515,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "argument", gloss: "argument", pos: "NOUN", cefr: "B2",
     ekilexWordId: 157931,
-    parts: { NOM_SG: "argument", GEN_SG: "argumendi", PART_SG: "argumenti", ILL_SG_SHORT: "argumenti", PART_PL: "argumente", GEN_PL: "argumentide" },
+    parts: { NOM_SG: "argument", GEN_SG: "argumendi", PART_SG: "argumenti", ILL_SG_SHORT: "argumenti", NOM_PL: "argumendid", PART_PL: "argumente", GEN_PL: "argumentide" },
     government: null,
     usages: ["Võta või jäta – argumendid on veenvad.", "Minu argument on, et ..", "Neil pole ühtki mõistlikku argumenti.", "Lähtuda ei tohiks ainult majanduslikest argumentidest."],
     note: "põhjendatud seisukoht, väide tõestusvahendina (nt arutluses, väitluses)",
@@ -524,7 +524,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arhailine", gloss: "archaic", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 157938,
-    parts: { NOM_SG: "arhailine", GEN_SG: "arhailise", PART_SG: "arhailist", ILL_SG_SHORT: "arhailisse", PART_PL: "arhailisi", GEN_PL: "arhailiste" },
+    parts: { NOM_SG: "arhailine", GEN_SG: "arhailise", PART_SG: "arhailist", ILL_SG_SHORT: "arhailisse", NOM_PL: "arhailised", PART_PL: "arhailisi", GEN_PL: "arhailiste" },
     government: null,
     usages: ["Müüakse arhailise tikandiga linaseid riideid.", "Arhailine eluviis.", "Arhailise ladekonna kivimid."],
     note: "kaugemasse minevikku kuuluv, möödunud ajale omane",
@@ -542,7 +542,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "armastus", gloss: "love", pos: "NOUN", cefr: "A1",
     ekilexWordId: 158024,
-    parts: { NOM_SG: "armastus", GEN_SG: "armastuse", PART_SG: "armastust", ILL_SG_SHORT: "armastusse", PART_PL: "armastusi", GEN_PL: "armastuste" },
+    parts: { NOM_SG: "armastus", GEN_SG: "armastuse", PART_SG: "armastust", ILL_SG_SHORT: "armastusse", NOM_PL: "armastused", PART_PL: "armastusi", GEN_PL: "armastuste" },
     government: null,
     usages: ["Võib-olla pole sa tundnud tõelist armastust?", "Neid seob armastus muusika vastu.", "Lauluarmastus.", "Loodusearmastus."],
     note: "sügav kiindumus kellessegi või millessegi",
@@ -551,7 +551,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arst", gloss: "doctor", pos: "NOUN", cefr: "A1",
     ekilexWordId: 158176,
-    parts: { NOM_SG: "arst", GEN_SG: "arsti", PART_SG: "arsti", ILL_SG_SHORT: "arsti", PART_PL: "arste", GEN_PL: "arstide" },
+    parts: { NOM_SG: "arst", GEN_SG: "arsti", PART_SG: "arsti", ILL_SG_SHORT: "arsti", NOM_PL: "arstid", PART_PL: "arste", GEN_PL: "arstide" },
     government: null,
     usages: ["Läksin arsti juurde.", "Arst pani diagnoosi ja kirjutas retsepti.", "Külaarst.", "Lähen homme polikliinikusse arsti juurde."],
     note: "kõrgema meditsiinilise haridusega inimene, kellele on antud õigus haigeid uurida ja ravi määrata",
@@ -560,7 +560,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "artikkel", gloss: "article", pos: "NOUN", cefr: "A2",
     ekilexWordId: 158212,
-    parts: { NOM_SG: "artikkel", GEN_SG: "artikli", PART_SG: "artiklit", PART_PL: "artikleid", GEN_PL: "artiklite" },
+    parts: { NOM_SG: "artikkel", GEN_SG: "artikli", PART_SG: "artiklit", NOM_PL: "artiklid", PART_PL: "artikleid", GEN_PL: "artiklite" },
     government: null,
     usages: ["Tippteadlase artikleid on avaldatud paljudes teadusajakirjades üle maailma.", "Erialased artiklid.", "Artikkel sisaldab palju faktivigu.", "Ajaleheartikkel."],
     note: "arutlev kirjutis ajakirjanduses",
@@ -569,7 +569,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aruanne", gloss: "report", pos: "NOUN", cefr: "B1",
     ekilexWordId: 158239,
-    parts: { NOM_SG: "aruanne", GEN_SG: "aruande", PART_SG: "aruannet", PART_PL: "aruandeid", GEN_PL: "aruannete" },
+    parts: { NOM_SG: "aruanne", GEN_SG: "aruande", PART_SG: "aruannet", NOM_PL: "aruanded", PART_PL: "aruandeid", GEN_PL: "aruannete" },
     government: null,
     usages: ["Uus väljaanne sisaldab üksikasjalikke aruandeid riikide kohta.", "Ettevõttel on kohustus esitada aruanded ettenähtud ajaks.", "Tootmisaruanne.", "Praktikast esitatakse kirjalik aruanne."],
     note: "dokument, mis käsitleb ettevõtte, asutuse vm majandusüksuse tegevuse tulemust",
@@ -578,7 +578,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arusaam", gloss: "understanding, notion", pos: "NOUN", cefr: "B1",
     ekilexWordId: 158270,
-    parts: { NOM_SG: "arusaam", GEN_SG: "arusaama", PART_SG: "arusaama", ILL_SG_SHORT: "arusaama", PART_PL: "arusaamu", GEN_PL: "arusaamade" },
+    parts: { NOM_SG: "arusaam", GEN_SG: "arusaama", PART_SG: "arusaama", ILL_SG_SHORT: "arusaama", NOM_PL: "arusaamad", PART_PL: "arusaamu", GEN_PL: "arusaamade" },
     government: null,
     usages: ["Muutuvad ajad, muutuvad arusaamad.", "Inimeste arusaam õigusest ja õiglusest on erinev.", "Meil on elust erinevad arusaamad."],
     note: "milleski selgusele jõudmine, millegi mõistmine, teadlik suhtumine millessegi",
@@ -587,7 +587,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arusaamatus", gloss: "misunderstanding", pos: "NOUN", cefr: "B2",
     ekilexWordId: 158273,
-    parts: { NOM_SG: "arusaamatus", GEN_SG: "arusaamatuse", PART_SG: "arusaamatust", ILL_SG_SHORT: "arusaamatusse", PART_PL: "arusaamatusi", GEN_PL: "arusaamatuste" },
+    parts: { NOM_SG: "arusaamatus", GEN_SG: "arusaamatuse", PART_SG: "arusaamatust", ILL_SG_SHORT: "arusaamatusse", NOM_PL: "arusaamatused", PART_PL: "arusaamatusi", GEN_PL: "arusaamatuste" },
     government: null,
     usages: ["Tüdruk vaatas arusaamatuses mulle otsa.", "Tegemist on arusaamatusega: ma tellisin kohvi, mitte mahla.", "Mitmed kuulsused klaarivad omavahelisi arusaamatusi ajaleheveergudel.", "Kord tekkis meil arusaamatus raha pärast."],
     note: "segadust tekitav mittemõistmine või valesti mõistmine",
@@ -596,7 +596,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arusaamine", gloss: "understanding", pos: "NOUN", cefr: null,
     ekilexWordId: 158274,
-    parts: { NOM_SG: "arusaamine", GEN_SG: "arusaamise", PART_SG: "arusaamist", ILL_SG_SHORT: "arusaamisse", PART_PL: "arusaamisi", GEN_PL: "arusaamiste" },
+    parts: { NOM_SG: "arusaamine", GEN_SG: "arusaamise", PART_SG: "arusaamist", ILL_SG_SHORT: "arusaamisse", NOM_PL: "arusaamised", PART_PL: "arusaamisi", GEN_PL: "arusaamiste" },
     government: null,
     usages: ["Jõuti vastastikusele arusaamisele.", "Minu arusaamist mööda on hakkama saadud sigadusega.", "Ta üritas väljendada oma arusaamist altruismist."],
     note: "mõistmine",
@@ -614,7 +614,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arutlus", gloss: "reasoning, discussion", pos: "NOUN", cefr: "B1",
     ekilexWordId: 158282,
-    parts: { NOM_SG: "arutlus", GEN_SG: "arutluse", PART_SG: "arutlust", ILL_SG_SHORT: "arutlusse", PART_PL: "arutlusi", GEN_PL: "arutluste" },
+    parts: { NOM_SG: "arutlus", GEN_SG: "arutluse", PART_SG: "arutlust", ILL_SG_SHORT: "arutlusse", NOM_PL: "arutlused", PART_PL: "arutlusi", GEN_PL: "arutluste" },
     government: null,
     usages: ["Teema tuleb uuesti arutlusele paari kuu pärast.", "Seminaris käis arutlus Eesti kunsti üle."],
     note: "mitmeid osalisi hõlmav mõtete ja arvamuste vahetus, ühine arutamine millegi üle",
@@ -632,7 +632,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arvamus", gloss: "opinion", pos: "NOUN", cefr: "A2",
     ekilexWordId: 158301,
-    parts: { NOM_SG: "arvamus", GEN_SG: "arvamuse", PART_SG: "arvamust", ILL_SG_SHORT: "arvamusse", PART_PL: "arvamusi", GEN_PL: "arvamuste" },
+    parts: { NOM_SG: "arvamus", GEN_SG: "arvamuse", PART_SG: "arvamust", ILL_SG_SHORT: "arvamusse", NOM_PL: "arvamused", PART_PL: "arvamusi", GEN_PL: "arvamuste" },
     government: null,
     usages: ["Üleminek suveajale on avalikkuses tekitanud vastakaid arvamusi.", "Eri pooltel on erinevad arvamused.", "Ta on sinust väga heal arvamusel.", "Jään oma arvamuse juurde (= ei muuda arvamust)."],
     note: "oletus, (esialgne) suhtumine või hinnang kellegi või millegi kohta",
@@ -641,7 +641,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arvamuslugu", gloss: "opinion piece", pos: "NOUN", cefr: null,
     ekilexWordId: 158307,
-    parts: { NOM_SG: "arvamuslugu", GEN_SG: "arvamusloo", PART_SG: "arvamuslugu", ILL_SG_SHORT: "arvamuslukku", PART_PL: "arvamuslugusid", GEN_PL: "arvamuslugude" },
+    parts: { NOM_SG: "arvamuslugu", GEN_SG: "arvamusloo", PART_SG: "arvamuslugu", ILL_SG_SHORT: "arvamuslukku", NOM_PL: "arvamuslood", PART_PL: "arvamuslugusid", GEN_PL: "arvamuslugude" },
     government: null,
     usages: ["Seekordne arvamuslugu pärineb peatoimetaja sulest.", "Päevaleht Times reageeris Jokela veresaunale arvamuslooga."],
     note: "kellegi hrl isiklikku seisukohta või hinnangut väljendav kirjutis meedias",
@@ -650,7 +650,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arve", gloss: "bill, invoice", pos: "NOUN", cefr: "A2",
     ekilexWordId: 158318,
-    parts: { NOM_SG: "arve", GEN_SG: "arve", PART_SG: "arvet", PART_PL: "arveid", GEN_PL: "arvete" },
+    parts: { NOM_SG: "arve", GEN_SG: "arve", PART_SG: "arvet", NOM_PL: "arved", PART_PL: "arveid", GEN_PL: "arvete" },
     government: null,
     usages: ["Laual on kuhi maksmata arveid.", "Elektrooniline arve.", "Telefoniarve.", "Küttearve."],
     note: "müüja poolt ostjale esitatav dokument kauba või teenuse maksumuse, tasumise tähtaja ja tingimuste kohta",
@@ -668,7 +668,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "arvuti", gloss: "computer", pos: "NOUN", cefr: "A1",
     ekilexWordId: 158370,
-    parts: { NOM_SG: "arvuti", GEN_SG: "arvuti", PART_SG: "arvutit", PART_PL: "arvuteid", GEN_PL: "arvutite" },
+    parts: { NOM_SG: "arvuti", GEN_SG: "arvuti", PART_SG: "arvutit", NOM_PL: "arvutid", PART_PL: "arvuteid", GEN_PL: "arvutite" },
     government: null,
     usages: ["Istusin arvuti taga terve päeva.", "Andmetele saab ligi nutitelefoni või arvutit kasutades.", "Lülitan arvuti sisse.", "Töötan arvutiga iga päev."],
     note: "elektrooniline seade, mida kasutatakse info säilitamiseks, otsimiseks, töötlemiseks ja väljastamiseks, tehete sooritamiseks ning mitmesuguste rakenduste loomiseks ja kasutamiseks",
@@ -686,7 +686,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "asjakohane", gloss: "relevant", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 158548,
-    parts: { NOM_SG: "asjakohane", GEN_SG: "asjakohase", PART_SG: "asjakohast", PART_PL: "asjakohaseid", GEN_PL: "asjakohaste" },
+    parts: { NOM_SG: "asjakohane", GEN_SG: "asjakohase", PART_SG: "asjakohast", NOM_PL: "asjakohased", PART_PL: "asjakohaseid", GEN_PL: "asjakohaste" },
     government: null,
     usages: ["Kuulajad esitasid enamasti ainult asjakohaseid küsimusi, niisama tühjast-tähjast ei räägitud.", "Hetkeolukorras tundus eelarve kärpimine igati asjakohane."],
     note: "teatud asja, küsimuse kohta käiv, seda puudutav",
@@ -695,7 +695,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aspekt", gloss: "aspect", pos: "NOUN", cefr: "B2",
     ekilexWordId: 158607,
-    parts: { NOM_SG: "aspekt", GEN_SG: "aspekti", PART_SG: "aspekti", ILL_SG_SHORT: "aspekti", PART_PL: "aspekte", GEN_PL: "aspektide" },
+    parts: { NOM_SG: "aspekt", GEN_SG: "aspekti", PART_SG: "aspekti", ILL_SG_SHORT: "aspekti", NOM_PL: "aspektid", PART_PL: "aspekte", GEN_PL: "aspektide" },
     government: null,
     usages: ["Uurimus lähtus ajaloolisest aspektist.", "Probleemil on nii majanduslik kui eetiline aspekt.", "Verbi aspektid."],
     note: "vaate- või seisukoht, millest lähtudes midagi hinnatakse",
@@ -704,7 +704,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "august", gloss: "August", pos: "NOUN", cefr: "A1",
     ekilexWordId: 158925,
-    parts: { NOM_SG: "august", GEN_SG: "augusti", PART_SG: "augustit", PART_PL: "augusteid", GEN_PL: "augustite" },
+    parts: { NOM_SG: "august", GEN_SG: "augusti", PART_SG: "augustit", NOM_PL: "augustid", PART_PL: "augusteid", GEN_PL: "augustite" },
     government: null,
     usages: ["Tulen tööle tagasi augusti lõpus."],
     note: "aasta 8. kuu, põhjapoolkeral kolmas suvekuu",
@@ -713,7 +713,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "aus", gloss: "honest", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 159043,
-    parts: { NOM_SG: "aus", GEN_SG: "ausa", PART_SG: "ausat", PART_PL: "ausaid", GEN_PL: "ausate" },
+    parts: { NOM_SG: "aus", GEN_SG: "ausa", PART_SG: "ausat", NOM_PL: "ausad", PART_PL: "ausaid", GEN_PL: "ausate" },
     government: null,
     usages: ["Aus ülestunnistus pidavat karistust kergendama.", "Sahkerdamine ja altkäemaksud ei kuulu ausa äri juurde.", "Seda kohtunikku peetakse üdini ausaks.", "Ta on väga aus inimene."],
     note: "tõest ja õiglusest juhinduv, ebaõiglust, pettust mittesalliv",
@@ -722,7 +722,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ausus", gloss: "honesty", pos: "NOUN", cefr: "B2",
     ekilexWordId: 159082,
-    parts: { NOM_SG: "ausus", GEN_SG: "aususe", PART_SG: "ausust", ILL_SG_SHORT: "aususse", PART_PL: "aususi", GEN_PL: "aususte" },
+    parts: { NOM_SG: "ausus", GEN_SG: "aususe", PART_SG: "ausust", ILL_SG_SHORT: "aususse", NOM_PL: "ausused", PART_PL: "aususi", GEN_PL: "aususte" },
     government: null,
     usages: ["Tõele näkku vaatamine nõuab julgust ja ausust.", "Minu isa oli ausus ise.", "Lubage, teie ausus!"],
     note: "aus olek, käitumine või tegutsemine, mitte valetamine",
@@ -731,7 +731,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "auto", gloss: "car", pos: "NOUN", cefr: "A1",
     ekilexWordId: 159100,
-    parts: { NOM_SG: "auto", GEN_SG: "auto", PART_SG: "autot", PART_PL: "autosid", GEN_PL: "autode" },
+    parts: { NOM_SG: "auto", GEN_SG: "auto", PART_SG: "autot", NOM_PL: "autod", PART_PL: "autosid", GEN_PL: "autode" },
     government: null,
     usages: ["Kaunitar sõidab lahtise autoga, juuksed tuules lehvimas.", "Jalakäija jäi auto alla.", "Istusime autosse."],
     note: "sõitjate või veose veoks mõeldud vähemalt neljarattaline mootorsõiduk",
@@ -740,7 +740,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "automatiseerimine", gloss: "automation", pos: "NOUN", cefr: null,
     ekilexWordId: 334096,
-    parts: { NOM_SG: "automatiseerimine", GEN_SG: "automatiseerimise", PART_SG: "automatiseerimist", ILL_SG_SHORT: "automatiseerimisse", PART_PL: "automatiseerimisi", GEN_PL: "automatiseerimiste" },
+    parts: { NOM_SG: "automatiseerimine", GEN_SG: "automatiseerimise", PART_SG: "automatiseerimist", ILL_SG_SHORT: "automatiseerimisse", NOM_PL: "automatiseerimised", PART_PL: "automatiseerimisi", GEN_PL: "automatiseerimiste" },
     government: null,
     usages: [],
     note: "protsesside ja seadmete teostamine tehniliste süsteemide abil ilma pideva inimsekkumiseta",
@@ -749,7 +749,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "autor", gloss: "author", pos: "NOUN", cefr: "A2",
     ekilexWordId: 159224,
-    parts: { NOM_SG: "autor", GEN_SG: "autori", PART_SG: "autorit", PART_PL: "autoreid", GEN_PL: "autorite" },
+    parts: { NOM_SG: "autor", GEN_SG: "autori", PART_SG: "autorit", NOM_PL: "autorid", PART_PL: "autoreid", GEN_PL: "autorite" },
     government: null,
     usages: ["Autori pühendusega eksemplar.", "Ta on nii sõnade kui viisi autor.", "Kes selle artikli autor on?", "Penaltit asus lööma esimese värava autor."],
     note: "artikli, raamatu vms kirjutaja, kirjandus- või kunstiteose looja",
@@ -767,7 +767,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "avaldus", gloss: "application", pos: "NOUN", cefr: "A2",
     ekilexWordId: 159344,
-    parts: { NOM_SG: "avaldus", GEN_SG: "avalduse", PART_SG: "avaldust", ILL_SG_SHORT: "avaldusse", PART_PL: "avaldusi", GEN_PL: "avalduste" },
+    parts: { NOM_SG: "avaldus", GEN_SG: "avalduse", PART_SG: "avaldust", ILL_SG_SHORT: "avaldusse", NOM_PL: "avaldused", PART_PL: "avaldusi", GEN_PL: "avalduste" },
     government: null,
     usages: ["Ühingu liikmeks astumiseks on vaja esitada kirjalik avaldus.", "Kui soovid töölt lahkuda, kirjuta avaldus.", "Saatsin ära avalduse toetuse saamiseks.", "Minister on teinud mitu julget avaldust."],
     note: "dokument või suuline ütlus, millega inimene pöördub ametiasutuse või -isiku poole, hrl ta endaga seotud asjus",
@@ -776,7 +776,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "avalikkus", gloss: "the public sphere", pos: "NOUN", cefr: "B2",
     ekilexWordId: 159350,
-    parts: { NOM_SG: "avalikkus", GEN_SG: "avalikkuse", PART_SG: "avalikkust", ILL_SG_SHORT: "avalikkusse", PART_PL: "avalikkusi", GEN_PL: "avalikkuste" },
+    parts: { NOM_SG: "avalikkus", GEN_SG: "avalikkuse", PART_SG: "avalikkust", ILL_SG_SHORT: "avalikkusse", NOM_PL: "avalikkused", PART_PL: "avalikkusi", GEN_PL: "avalikkuste" },
     government: null,
     usages: ["Ta on avalikkuse tähelepanuga harjunud.", "Kirjanik ei salli avalikkuse tähelepanu.", "Ta ei tahtnud avalikkuse ees esineda.", "Mõnikord lubatakse kohtuistungi avalikkust piirata."],
     note: "rahvas, ühiskonnaliikmed kõige üldisemas mõttes",
@@ -812,7 +812,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "buss", gloss: "bus", pos: "NOUN", cefr: "A1",
     ekilexWordId: 160557,
-    parts: { NOM_SG: "buss", GEN_SG: "bussi", PART_SG: "bussi", ILL_SG_SHORT: "bussi", PART_PL: "busse", GEN_PL: "busside" },
+    parts: { NOM_SG: "buss", GEN_SG: "bussi", PART_SG: "bussi", ILL_SG_SHORT: "bussi", NOM_PL: "bussid", PART_PL: "busse", GEN_PL: "busside" },
     government: null,
     usages: ["Buss väljub keskväljakult.", "Randa sõitsime bussiga nr 1.", "Mis kell järgmine buss väljub?", "Me jäime bussist maha."],
     note: "paljuistmeline sõiduk inimeste veoks",
@@ -839,7 +839,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "detsember", gloss: "December", pos: "NOUN", cefr: "A1",
     ekilexWordId: 161213,
-    parts: { NOM_SG: "detsember", GEN_SG: "detsembri", PART_SG: "detsembrit", PART_PL: "detsembreid", GEN_PL: "detsembrite" },
+    parts: { NOM_SG: "detsember", GEN_SG: "detsembri", PART_SG: "detsembrit", NOM_PL: "detsembrid", PART_PL: "detsembreid", GEN_PL: "detsembrite" },
     government: null,
     usages: ["Detsembris on jõulud."],
     note: "aasta 12. kuu, põhjapoolkeral esimene talvekuu",
@@ -848,7 +848,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "diagnoos", gloss: "diagnosis", pos: "NOUN", cefr: "B2",
     ekilexWordId: 161252,
-    parts: { NOM_SG: "diagnoos", GEN_SG: "diagnoosi", PART_SG: "diagnoosi", ILL_SG_SHORT: "diagnoosi", PART_PL: "diagnoose", GEN_PL: "diagnooside" },
+    parts: { NOM_SG: "diagnoos", GEN_SG: "diagnoosi", PART_SG: "diagnoosi", ILL_SG_SHORT: "diagnoosi", NOM_PL: "diagnoosid", PART_PL: "diagnoose", GEN_PL: "diagnooside" },
     government: null,
     usages: ["Vilunud raviarst pani kohe õige diagnoosi.", "Täpsem diagnoos selgus ultraheliuuringul.", "Selgus, et diagnoos oli vale.", "Gripidiagnoos."],
     note: "arstlik otsus haiguse olemasolu ja patsiendi seisundi kohta",
@@ -866,7 +866,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "digitaliseerimine", gloss: "digitalisation", pos: "NOUN", cefr: null,
     ekilexWordId: 630734,
-    parts: { NOM_SG: "digitaliseerimine", GEN_SG: "digitaliseerimise", PART_SG: "digitaliseerimist", ILL_SG_SHORT: "digitaliseerimisse", PART_PL: "digitaliseerimisi", GEN_PL: "digitaliseerimiste" },
+    parts: { NOM_SG: "digitaliseerimine", GEN_SG: "digitaliseerimise", PART_SG: "digitaliseerimist", ILL_SG_SHORT: "digitaliseerimisse", NOM_PL: "digitaliseerimised", PART_PL: "digitaliseerimisi", GEN_PL: "digitaliseerimiste" },
     government: null,
     usages: ["Dokumentide digitaliseerimisega tegeleb rahvusarhiiv.", "Kultuuripärandi digitaliseerimise sümpoosion.", "Kuidas muudab digitaliseerimine teie äri kahe aasta jooksul?"],
     note: "andmete (nt kujutiste, helide, signaalide) digitaalkujule teisendamine",
@@ -875,7 +875,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "dilemma", gloss: "dilemma", pos: "NOUN", cefr: "B2",
     ekilexWordId: 161460,
-    parts: { NOM_SG: "dilemma", GEN_SG: "dilemma", PART_SG: "dilemmat", PART_PL: "dilemmasid", GEN_PL: "dilemmade" },
+    parts: { NOM_SG: "dilemma", GEN_SG: "dilemma", PART_SG: "dilemmat", NOM_PL: "dilemmad", PART_PL: "dilemmasid", GEN_PL: "dilemmade" },
     government: null,
     usages: ["Tahan kirjutada minu jaoks tõsisest dilemmast.", "Vaimsete omaduste arenguga kaasnevad eetilised dilemmad."],
     note: "vajadus valida kahe enam-vähem võrdse, hrl ebasoovitava võimaluse vahel",
@@ -884,7 +884,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "diplomaatia", gloss: "diplomacy", pos: "NOUN", cefr: "B2",
     ekilexWordId: 161501,
-    parts: { NOM_SG: "diplomaatia", GEN_SG: "diplomaatia", PART_SG: "diplomaatiat", PART_PL: "diplomaatiaid", GEN_PL: "diplomaatiate" },
+    parts: { NOM_SG: "diplomaatia", GEN_SG: "diplomaatia", PART_SG: "diplomaatiat", NOM_PL: "diplomaatiad", PART_PL: "diplomaatiaid", GEN_PL: "diplomaatiate" },
     government: null,
     usages: ["Kolleegidega läbisaamine nõudis üksjagu diplomaatiat."],
     note: "välisriikidega suhtlemise viis",
@@ -893,7 +893,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "dokument", gloss: "document", pos: "NOUN", cefr: "A2",
     ekilexWordId: 161711,
-    parts: { NOM_SG: "dokument", GEN_SG: "dokumendi", PART_SG: "dokumenti", ILL_SG_SHORT: "dokumenti", PART_PL: "dokumente", GEN_PL: "dokumentide" },
+    parts: { NOM_SG: "dokument", GEN_SG: "dokumendi", PART_SG: "dokumenti", ILL_SG_SHORT: "dokumenti", NOM_PL: "dokumendid", PART_PL: "dokumente", GEN_PL: "dokumentide" },
     government: null,
     usages: ["Reisil peab kaasas olema isikut tõendav dokument: pass või ID-kaart.", "Piiripunktis tehti peatus dokumentide kontrolliks.", "Varastati kohver, mis sisaldas salajasi dokumente.", "Leiti rahakott koos dokumentidega."],
     note: "ametlik paber, kirjalikus vormis teade millegi tõendamiseks, õiguste kinnitamiseks vms",
@@ -920,7 +920,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "edutamine", gloss: "promotion", pos: "NOUN", cefr: null,
     ekilexWordId: 338817,
-    parts: { NOM_SG: "edutamine", GEN_SG: "edutamise", PART_SG: "edutamist", ILL_SG_SHORT: "edutamisse", PART_PL: "edutamisi", GEN_PL: "edutamiste" },
+    parts: { NOM_SG: "edutamine", GEN_SG: "edutamise", PART_SG: "edutamist", ILL_SG_SHORT: "edutamisse", NOM_PL: "edutamised", PART_PL: "edutamisi", GEN_PL: "edutamiste" },
     government: null,
     usages: ["Käskkiri edutamise kohta.", "Ta edutati kantsleriks.", "Edutamiseks peab töötaja täitma kõrgema ametikoha nõuded, mida hinnatakse atesteerimise käigus.", "Vanglaametniku edutamine on vanglaametniku nimetamine kõrgemale ametiastmele vastavale ametikohale."],
     note: "vastutusrikkamale tööle või kõrgemale ametikohale paigutamine",
@@ -929,7 +929,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eelarve", gloss: "budget", pos: "NOUN", cefr: "B1",
     ekilexWordId: 162361,
-    parts: { NOM_SG: "eelarve", GEN_SG: "eelarve", PART_SG: "eelarvet", PART_PL: "eelarveid", GEN_PL: "eelarvete" },
+    parts: { NOM_SG: "eelarve", GEN_SG: "eelarve", PART_SG: "eelarvet", NOM_PL: "eelarved", PART_PL: "eelarveid", GEN_PL: "eelarvete" },
     government: null,
     usages: ["Linn eraldas aasta eelarvest 12% lasteaedadele.", "Valitsus kinnitas järgmise aasta eelarve.", "Ettenägematud kulutused lõid pere eelarve sassi.", "Tartu linna kaasav eelarve."],
     note: "kulude ja tulude arvestus eelseisval ajavahemikul, raha kasutamise plaan teatavaks perioodiks (nt aastaks)",
@@ -947,7 +947,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eeldus", gloss: "premise, assumption", pos: "NOUN", cefr: "B1",
     ekilexWordId: 162378,
-    parts: { NOM_SG: "eeldus", GEN_SG: "eelduse", PART_SG: "eeldust", ILL_SG_SHORT: "eeldusse", PART_PL: "eeldusi", GEN_PL: "eelduste" },
+    parts: { NOM_SG: "eeldus", GEN_SG: "eelduse", PART_SG: "eeldust", ILL_SG_SHORT: "eeldusse", NOM_PL: "eeldused", PART_PL: "eeldusi", GEN_PL: "eelduste" },
     government: null,
     usages: ["Hea rünnaku eeldus on kiire esimene sööt.", "Ilmatarkade eksimise põhjus peitus valedes eeldustes.", "Tubli töö on edu eeldus.", "Matk toimub eeldusel, et vihma ei saja."],
     note: "aluseks võetav (tõeseks peetav) asjaolu, millest oleneb mingi muu asjaolu või nähtuse tekkimine või olemasolu",
@@ -965,7 +965,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eelnõu", gloss: "draft bill", pos: "NOUN", cefr: "B2",
     ekilexWordId: 162441,
-    parts: { NOM_SG: "eelnõu", GEN_SG: "eelnõu", PART_SG: "eelnõu", PART_PL: "eelnõusid", GEN_PL: "eelnõude" },
+    parts: { NOM_SG: "eelnõu", GEN_SG: "eelnõu", PART_SG: "eelnõu", NOM_PL: "eelnõud", PART_PL: "eelnõusid", GEN_PL: "eelnõude" },
     government: null,
     usages: ["Jahiseaduse eelnõu suunati teisele lugemisele.", "Määruse eelnõu sätestab muudatused riiklikus õppekavas.", "Eelnõud, arupärimised ja muud dokumendid esitatakse eesti keeles."],
     note: "riigiorganile või rahvale esitatud seaduse, määruse, rahvusvahelise kokkuleppe vms projekt",
@@ -974,7 +974,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eelroog", gloss: "starter", pos: "NOUN", cefr: "B1",
     ekilexWordId: 162459,
-    parts: { NOM_SG: "eelroog", GEN_SG: "eelroa", PART_SG: "eelrooga", ILL_SG_SHORT: "eelrooga", PART_PL: "eelroogi", GEN_PL: "eelroogade" },
+    parts: { NOM_SG: "eelroog", GEN_SG: "eelroa", PART_SG: "eelrooga", ILL_SG_SHORT: "eelrooga", NOM_PL: "eelroad", PART_PL: "eelroogi", GEN_PL: "eelroogade" },
     government: null,
     usages: ["Eelroad olid selles restoranis kallimad kui pearoad.", "Eelroaks olid oliivid ja juust."],
     note: "toit, mida pakutakse enne esimest sooja rooga",
@@ -992,7 +992,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eesmärk", gloss: "goal", pos: "NOUN", cefr: "A2",
     ekilexWordId: 162576,
-    parts: { NOM_SG: "eesmärk", GEN_SG: "eesmärgi", PART_SG: "eesmärki", ILL_SG_SHORT: "eesmärki", PART_PL: "eesmärke", GEN_PL: "eesmärkide" },
+    parts: { NOM_SG: "eesmärk", GEN_SG: "eesmärgi", PART_SG: "eesmärki", ILL_SG_SHORT: "eesmärki", NOM_PL: "eesmärgid", PART_PL: "eesmärke", GEN_PL: "eesmärkide" },
     government: null,
     usages: ["Uuringu eesmärgiks oli teada saada, kuidas teismelised käituvad interneti jututubades.", "Sportlane püstitas üha uusi eesmärke.", "Tema eesmärk on lõpetada ülikool.", "Tal ei ole elus kindlat eesmärki."],
     note: "see, mille poole püütakse, mida tahetakse saavutada",
@@ -1001,7 +1001,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Eesti", gloss: "Estonia", pos: "NOUN", cefr: null,
     ekilexWordId: 162599,
-    parts: { NOM_SG: "Eesti", GEN_SG: "Eesti", PART_SG: "Eestit", PART_PL: "Eestisid", GEN_PL: "Eestide" },
+    parts: { NOM_SG: "Eesti", GEN_SG: "Eesti", PART_SG: "Eestit", NOM_PL: "Eestid", PART_PL: "Eestisid", GEN_PL: "Eestide" },
     government: null,
     usages: ["Eesti kaitseväe ohvitser.", "Eesti koondise kodumänge käis vaatamas suur hulk fänne.", "Olen sündinud 1956. aastal Eestis."],
     note: "riik Euroopas Läänemere ääres",
@@ -1010,7 +1010,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eestlane", gloss: "an Estonian", pos: "NOUN", cefr: "A1",
     ekilexWordId: 162636,
-    parts: { NOM_SG: "eestlane", GEN_SG: "eestlase", PART_SG: "eestlast", ILL_SG_SHORT: "eestlasse", PART_PL: "eestlasi", GEN_PL: "eestlaste" },
+    parts: { NOM_SG: "eestlane", GEN_SG: "eestlase", PART_SG: "eestlast", ILL_SG_SHORT: "eestlasse", NOM_PL: "eestlased", PART_PL: "eestlasi", GEN_PL: "eestlaste" },
     government: null,
     usages: ["Eestlaste osa ülikooli ajaloos jäi 19. sajandi esimesel poolel siiski tagasihoidlikuks.", "„Jaapani inimesed on rikkamad kui eestlased, aga see ei tähenda õnnelikku elu,“ tõdeb jaapanlasest õpetaja.", "Homme võõrustavad eestlased Lilleküla staadionil Läti koondist.", "Uhke on olla eestlane."],
     note: "Eesti põhirahva liige",
@@ -1019,7 +1019,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eetika", gloss: "ethics", pos: "NOUN", cefr: null,
     ekilexWordId: 162675,
-    parts: { NOM_SG: "eetika", GEN_SG: "eetika", PART_SG: "eetikat", PART_PL: "eetikaid", GEN_PL: "eetikate" },
+    parts: { NOM_SG: "eetika", GEN_SG: "eetika", PART_SG: "eetikat", NOM_PL: "eetikad", PART_PL: "eetikaid", GEN_PL: "eetikate" },
     government: null,
     usages: ["Eetikat õpetatakse paljudes kõrgkoolides.", "Moraali ja eetika kategooriad.", "Kristlik eetika.", "Jahieetika."],
     note: "väärtusõpetus, mis käsitleb õiglus- ja moraalinorme ning hea ja õigega kooskõlas olevat käitumist",
@@ -1073,7 +1073,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ekraan", gloss: "screen", pos: "NOUN", cefr: "A2",
     ekilexWordId: 162986,
-    parts: { NOM_SG: "ekraan", GEN_SG: "ekraani", PART_SG: "ekraani", ILL_SG_SHORT: "ekraani", PART_PL: "ekraane", GEN_PL: "ekraanide" },
+    parts: { NOM_SG: "ekraan", GEN_SG: "ekraani", PART_SG: "ekraani", ILL_SG_SHORT: "ekraani", NOM_PL: "ekraanid", PART_PL: "ekraane", GEN_PL: "ekraanide" },
     government: null,
     usages: ["Puutetundlik ekraan.", "5-tollise ekraaniga telefon.", "Radariekraan.", "LCD-ekraan."],
     note: "kiirgust peegeldav, muundav või neelav pind nähtava kujutise saamiseks, hrl mingi seadme osana",
@@ -1091,7 +1091,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eksam", gloss: "exam", pos: "NOUN", cefr: "A2",
     ekilexWordId: 163006,
-    parts: { NOM_SG: "eksam", GEN_SG: "eksami", PART_SG: "eksamit", PART_PL: "eksameid", GEN_PL: "eksamite" },
+    parts: { NOM_SG: "eksam", GEN_SG: "eksami", PART_SG: "eksamit", NOM_PL: "eksamid", PART_PL: "eksameid", GEN_PL: "eksamite" },
     government: null,
     usages: ["Põhikooli riiklik eksam.", "Eksam toimus kahes jaos.", "Matemaatika eksam toimub aprillis.", "Poiss kukkus eksamil läbi."],
     note: "teadmiste või praktiliste oskuste kontrollimiseks sooritatav katse",
@@ -1100,7 +1100,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eksperiment", gloss: "experiment", pos: "NOUN", cefr: "B2",
     ekilexWordId: 163120,
-    parts: { NOM_SG: "eksperiment", GEN_SG: "eksperimendi", PART_SG: "eksperimenti", ILL_SG_SHORT: "eksperimenti", PART_PL: "eksperimente", GEN_PL: "eksperimentide" },
+    parts: { NOM_SG: "eksperiment", GEN_SG: "eksperimendi", PART_SG: "eksperimenti", ILL_SG_SHORT: "eksperimenti", NOM_PL: "eksperimendid", PART_PL: "eksperimente", GEN_PL: "eksperimentide" },
     government: null,
     usages: ["Mitmete teaduslike eksperimentidega on võimalik demonstreerida magnetväljade olemasolu.", "Eksperimendis osales 76 vabatahtlikku.", "Teaduseksperiment.", "Ajakirjanduslik eksperiment paljastas kesklinnas tegutseva põrandaaluse kliiniku."],
     note: "uurimise eesmärgil mingi nähtuse esilekutsumine või mõjustamine",
@@ -1109,7 +1109,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ekvivalent", gloss: "equivalent", pos: "NOUN", cefr: null,
     ekilexWordId: 163239,
-    parts: { NOM_SG: "ekvivalent", GEN_SG: "ekvivalendi", PART_SG: "ekvivalenti", ILL_SG_SHORT: "ekvivalenti", PART_PL: "ekvivalente", GEN_PL: "ekvivalentide" },
+    parts: { NOM_SG: "ekvivalent", GEN_SG: "ekvivalendi", PART_SG: "ekvivalenti", ILL_SG_SHORT: "ekvivalenti", NOM_PL: "ekvivalendid", PART_PL: "ekvivalente", GEN_PL: "ekvivalentide" },
     government: null,
     usages: ["Rahulolu on õnne ekvivalent argielus.", "Jalgpallist on kujunenud sõja kaasaegne ekvivalent.", "Algklassides hinnatakse õpilasi sõnaliste hinnangutega, millel puudub numbriline ekvivalent.", "Kuld oli kõige sobivam raha ekvivalent."],
     note: "asi või suurus, mis asendab või väljendab teist, sama väärtusega asja",
@@ -1127,7 +1127,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "elegantne", gloss: "elegant", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 163343,
-    parts: { NOM_SG: "elegantne", GEN_SG: "elegantse", PART_SG: "elegantset", PART_PL: "elegantseid", GEN_PL: "elegantsete" },
+    parts: { NOM_SG: "elegantne", GEN_SG: "elegantse", PART_SG: "elegantset", NOM_PL: "elegantsed", PART_PL: "elegantseid", GEN_PL: "elegantsete" },
     government: null,
     usages: ["Alati elegantne daam.", "Elegantne ülikond.", "Elegantne disain.", "Moodsas lilleseades valitseb elegantne lohakus."],
     note: "head stiilitunnet väljendav, esteetiliselt nauditav",
@@ -1136,7 +1136,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "elekter", gloss: "electricity", pos: "NOUN", cefr: "A2",
     ekilexWordId: 163346,
-    parts: { NOM_SG: "elekter", GEN_SG: "elektri", PART_SG: "elektrit", PART_PL: "elektreid", GEN_PL: "elektrite" },
+    parts: { NOM_SG: "elekter", GEN_SG: "elektri", PART_SG: "elektrit", NOM_PL: "elektrid", PART_PL: "elektreid", GEN_PL: "elektrite" },
     government: null,
     usages: ["Ma kütan oma maja elektriga.", "Vahel kadus elekter kolmeks tunniks.", "Masin töötab elektriga.", "Lülita elekter enne välja, kui midagi parandama hakkad."],
     note: "energia, mis tekib elektromagnetvälja laengute liikumise ja vastastikuse toime tõttu ning mille abil saab masinaid tööle panna ning soojust ja valgust tekitada",
@@ -1145,7 +1145,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ema", gloss: "mother", pos: "NOUN", cefr: "A1",
     ekilexWordId: 163835,
-    parts: { NOM_SG: "ema", GEN_SG: "ema", PART_SG: "ema", PART_PL: "emasid", GEN_PL: "emade" },
+    parts: { NOM_SG: "ema", GEN_SG: "ema", PART_SG: "ema", NOM_PL: "emad", PART_PL: "emasid", GEN_PL: "emade" },
     government: null,
     usages: ["Kolme lapse ema.", "Kellena su ema ja isa töötavad?", "Kassipoegade ema.", "Linnuema."],
     note: "naissoost vanem, naine oma lapse või laste suhtes",
@@ -1154,7 +1154,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "emakeel", gloss: "native language", pos: "NOUN", cefr: "A1",
     ekilexWordId: 163879,
-    parts: { NOM_SG: "emakeel", GEN_SG: "emakeele", PART_SG: "emakeelt", ILL_SG_SHORT: "emakeelde", PART_PL: "emakeeli", GEN_PL: "emakeelte" },
+    parts: { NOM_SG: "emakeel", GEN_SG: "emakeele", PART_SG: "emakeelt", ILL_SG_SHORT: "emakeelde", NOM_PL: "emakeeled", PART_PL: "emakeeli", GEN_PL: "emakeelte" },
     government: null,
     usages: ["Ta räägib ainult oma emakeelt."],
     note: "esimese keelena kõige varasemas lapsepõlves vanemailt või kasvatajailt omandatud keel, mida inimene hrl kõige paremini oskab",
@@ -1172,7 +1172,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "energia", gloss: "energy", pos: "NOUN", cefr: "A2",
     ekilexWordId: 164151,
-    parts: { NOM_SG: "energia", GEN_SG: "energia", PART_SG: "energiat", PART_PL: "energiaid", GEN_PL: "energiate" },
+    parts: { NOM_SG: "energia", GEN_SG: "energia", PART_SG: "energiat", NOM_PL: "energiad", PART_PL: "energiaid", GEN_PL: "energiate" },
     government: null,
     usages: ["Talupidaja aeg ja energia kulub maale ja perele.", "Seksuaalne energia.", "Tunnen, et rohkem pole energiat.", "Organism vajab lõunasööki energia hoidmiseks."],
     note: "eluks, toimimiseks vajalik tegutsemisaktiivsus ja jõud",
@@ -1181,7 +1181,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "enesehinnang", gloss: "self-esteem", pos: "NOUN", cefr: "B2",
     ekilexWordId: 164210,
-    parts: { NOM_SG: "enesehinnang", GEN_SG: "enesehinnangu", PART_SG: "enesehinnangut", PART_PL: "enesehinnanguid", GEN_PL: "enesehinnangute" },
+    parts: { NOM_SG: "enesehinnang", GEN_SG: "enesehinnangu", PART_SG: "enesehinnangut", NOM_PL: "enesehinnangud", PART_PL: "enesehinnanguid", GEN_PL: "enesehinnangute" },
     government: null,
     usages: ["Tema kena välimuse taga peitub madal enesehinnang."],
     note: "see, mida inimene arvab enda ja oma hakkamasaamise kohta",
@@ -1190,7 +1190,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "enesekindel", gloss: "self-confident", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 164223,
-    parts: { NOM_SG: "enesekindel", GEN_SG: "enesekindla", PART_SG: "enesekindlat", PART_PL: "enesekindlaid", GEN_PL: "enesekindlate" },
+    parts: { NOM_SG: "enesekindel", GEN_SG: "enesekindla", PART_SG: "enesekindlat", NOM_PL: "enesekindlad", PART_PL: "enesekindlaid", GEN_PL: "enesekindlate" },
     government: null,
     usages: ["Ta rabas naist oma laia naeratuse ja enesekindla käitumisega.", "Ta on väga enesekindel esineja."],
     note: "(liiga) kindel iseeneses, oma võimetes ja jõus",
@@ -1199,7 +1199,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "enesekindlus", gloss: "self-assurance", pos: "NOUN", cefr: "B1",
     ekilexWordId: 164224,
-    parts: { NOM_SG: "enesekindlus", GEN_SG: "enesekindluse", PART_SG: "enesekindlust", ILL_SG_SHORT: "enesekindlusse", PART_PL: "enesekindlusi", GEN_PL: "enesekindluste" },
+    parts: { NOM_SG: "enesekindlus", GEN_SG: "enesekindluse", PART_SG: "enesekindlust", ILL_SG_SHORT: "enesekindlusse", NOM_PL: "enesekindlused", PART_PL: "enesekindlusi", GEN_PL: "enesekindluste" },
     government: null,
     usages: ["Minu enesekindlus kasvab iga päevaga.", "Võit andis meeskonnale enesekindlust."],
     note: "usk iseendasse (oma võimetesse, jõusse, edukusse vms)",
@@ -1226,7 +1226,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ennetus", gloss: "prevention", pos: "NOUN", cefr: "B2",
     ekilexWordId: 164389,
-    parts: { NOM_SG: "ennetus", GEN_SG: "ennetuse", PART_SG: "ennetust", ILL_SG_SHORT: "ennetusse", PART_PL: "ennetusi", GEN_PL: "ennetuste" },
+    parts: { NOM_SG: "ennetus", GEN_SG: "ennetuse", PART_SG: "ennetust", ILL_SG_SHORT: "ennetusse", NOM_PL: "ennetused", PART_PL: "ennetusi", GEN_PL: "ennetuste" },
     government: null,
     usages: ["Haiguste ennetus.", "Kuriteoennetus."],
     note: "millegi soovimatu ärahoidmine",
@@ -1235,7 +1235,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "epideemia", gloss: "epidemic", pos: "NOUN", cefr: "B2",
     ekilexWordId: 164459,
-    parts: { NOM_SG: "epideemia", GEN_SG: "epideemia", PART_SG: "epideemiat", PART_PL: "epideemiaid", GEN_PL: "epideemiate" },
+    parts: { NOM_SG: "epideemia", GEN_SG: "epideemia", PART_SG: "epideemiat", NOM_PL: "epideemiad", PART_PL: "epideemiaid", GEN_PL: "epideemiate" },
     government: null,
     usages: ["Katastroofi järel vallanduvad epideemiad võivad nõuda teist sama palju ohvreid.", "Gripiepideemia.", "Aidsiepideemia.", "Rasvumisepideemia."],
     note: "inimeste hulgaline haigestumine mingisse nakkushaigusse, ulatuslik nakkushaiguse puhang",
@@ -1244,7 +1244,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "erakond", gloss: "political party", pos: "NOUN", cefr: "B1",
     ekilexWordId: 164563,
-    parts: { NOM_SG: "erakond", GEN_SG: "erakonna", PART_SG: "erakonda", ILL_SG_SHORT: "erakonda", PART_PL: "erakondi", GEN_PL: "erakondade" },
+    parts: { NOM_SG: "erakond", GEN_SG: "erakonna", PART_SG: "erakonda", ILL_SG_SHORT: "erakonda", NOM_PL: "erakonnad", PART_PL: "erakondi", GEN_PL: "erakondade" },
     government: null,
     usages: ["Mis erakonna poolt sa hääletasid?"],
     note: "poliitiline organisatsioon, mis ühendab sarnase maailmavaate ja ühiskondlike huvidega inimesi",
@@ -1262,7 +1262,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "erand", gloss: "exception", pos: "NOUN", cefr: "B1",
     ekilexWordId: 164611,
-    parts: { NOM_SG: "erand", GEN_SG: "erandi", PART_SG: "erandit", PART_PL: "erandeid", GEN_PL: "erandite" },
+    parts: { NOM_SG: "erand", GEN_SG: "erandi", PART_SG: "erandit", NOM_PL: "erandid", PART_PL: "erandeid", GEN_PL: "erandite" },
     government: null,
     usages: ["Ilma ühegi erandita olid kõik plaaniga nõus.", "Naissoost mehaanik on pigem erand kui reegel.", "Sellest reeglist on erandeid."],
     note: "milleski üldisest või normaalsest kõrvalekalduv või erinev nähtus, omadus, asi, isik vms",
@@ -1271,7 +1271,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "erapooletu", gloss: "impartial", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 164625,
-    parts: { NOM_SG: "erapooletu", GEN_SG: "erapooletu", PART_SG: "erapooletut", PART_PL: "erapooletuid", GEN_PL: "erapooletute" },
+    parts: { NOM_SG: "erapooletu", GEN_SG: "erapooletu", PART_SG: "erapooletut", NOM_PL: "erapooletud", PART_PL: "erapooletuid", GEN_PL: "erapooletute" },
     government: null,
     usages: ["Aus ja erapooletu kriitika.", "Üritasin jääda erapooletuks ja olukorda kõrvaltvaatajana jälgida.", "Erapooletu ekspertiis.", "Kriitika oli erapooletu ja õiglane."],
     note: "mitte kumbagi poolt, mitte kedagi eelistav, teiste asjadesse mitte vahelesegav",
@@ -1280,7 +1280,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eriala", gloss: "field of study", pos: "NOUN", cefr: "A2",
     ekilexWordId: 164694,
-    parts: { NOM_SG: "eriala", GEN_SG: "eriala", PART_SG: "eriala", PART_PL: "erialu", GEN_PL: "erialade" },
+    parts: { NOM_SG: "eriala", GEN_SG: "eriala", PART_SG: "eriala", NOM_PL: "erialad", PART_PL: "erialu", GEN_PL: "erialade" },
     government: null,
     usages: ["Olen tegutsenud oma erialal kümme aastat.", "Ärijuhtimise eriala.", "Minu eriala on inglise keel.", "Ta on erialalt ajaloolane."],
     note: "kitsamalt piiritletud tehnika, teaduse, kunsti vm ainevaldkond, tegevusala, mille teadmised ja oskused omandatakse hrl õppimise teel",
@@ -1289,7 +1289,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "erialane", gloss: "specialist", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 164698,
-    parts: { NOM_SG: "erialane", GEN_SG: "erialase", PART_SG: "erialast", PART_PL: "erialaseid", GEN_PL: "erialaste" },
+    parts: { NOM_SG: "erialane", GEN_SG: "erialase", PART_SG: "erialast", NOM_PL: "erialased", PART_PL: "erialaseid", GEN_PL: "erialaste" },
     government: null,
     usages: ["Ta hakkas otsima võimalusi erialaseks väljaõppeks.", "Tööle võetakse erialase haridusega sotsiaaltöötaja.", "Leidsin kohe pärast ülikooli erialase töö."],
     note: "erialaga seotud, sellele kuuluv",
@@ -1298,7 +1298,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "erinev", gloss: "different", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 164753,
-    parts: { NOM_SG: "erinev", GEN_SG: "erineva", PART_SG: "erinevat", PART_PL: "erinevaid", GEN_PL: "erinevate" },
+    parts: { NOM_SG: "erinev", GEN_SG: "erineva", PART_SG: "erinevat", NOM_PL: "erinevad", PART_PL: "erinevaid", GEN_PL: "erinevate" },
     government: null,
     usages: ["Värvitoon võiks seinast erinev olla.", "Inimesed on väga erinevad.", "Oodatust erinevad tulemused.", "Need on tõesti täiesti erinevad eluetapid."],
     note: "mingil viisil teistest, muust eristuv",
@@ -1307,7 +1307,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "erinevus", gloss: "difference", pos: "NOUN", cefr: "B1",
     ekilexWordId: 164755,
-    parts: { NOM_SG: "erinevus", GEN_SG: "erinevuse", PART_SG: "erinevust", ILL_SG_SHORT: "erinevusse", PART_PL: "erinevusi", GEN_PL: "erinevuste" },
+    parts: { NOM_SG: "erinevus", GEN_SG: "erinevuse", PART_SG: "erinevust", ILL_SG_SHORT: "erinevusse", NOM_PL: "erinevused", PART_PL: "erinevusi", GEN_PL: "erinevuste" },
     government: null,
     usages: ["Naiste ja meeste erinevused.", "Mis on peamine erinevus kristliku demokraatia ja sotsiaaldemokraatia vahel?", "Õpilaste vahel on palju erinevusi.", "Erinevus maa ja linna vahel väheneb."],
     note: "erinevaks tegev omadus, iseloomulik joon vms",
@@ -1334,7 +1334,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "eristus", gloss: "distinction", pos: "NOUN", cefr: null,
     ekilexWordId: 164794,
-    parts: { NOM_SG: "eristus", GEN_SG: "eristuse", PART_SG: "eristust", ILL_SG_SHORT: "eristusse", PART_PL: "eristusi", GEN_PL: "eristuste" },
+    parts: { NOM_SG: "eristus", GEN_SG: "eristuse", PART_SG: "eristust", ILL_SG_SHORT: "eristusse", NOM_PL: "eristused", PART_PL: "eristusi", GEN_PL: "eristuste" },
     government: null,
     usages: ["Tema maailmavaadet iseloomustab selge eristus hea ja kurja vahel.", "Firma küsitles 2000 inimest, et teha eristusi maakondade lõikes.", "Kõnede eristus saadetakse kliendile koju koos arvega."],
     note: "vahetegemine millegi vahel, üksteisest lahus hoidmine",
@@ -1361,7 +1361,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "esimene", gloss: "first", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 164968,
-    parts: { NOM_SG: "esimene", GEN_SG: "esimese", PART_SG: "esimest", ILL_SG_SHORT: "esimesse", PART_PL: "esimesi", GEN_PL: "esimeste" },
+    parts: { NOM_SG: "esimene", GEN_SG: "esimese", PART_SG: "esimest", ILL_SG_SHORT: "esimesse", NOM_PL: "esimesed", PART_PL: "esimesi", GEN_PL: "esimeste" },
     government: null,
     usages: ["Poiss käib esimeses klassis.", "Käisin täna esimest korda elus jõusaalis.", "Istusime kinos esimesse ritta.", "1. märts."],
     note: "(järgarv:) järjestuses või järjekorras 1.",
@@ -1379,7 +1379,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "esinemine", gloss: "performance, appearance", pos: "NOUN", cefr: "B1",
     ekilexWordId: 165012,
-    parts: { NOM_SG: "esinemine", GEN_SG: "esinemise", PART_SG: "esinemist", ILL_SG_SHORT: "esinemisse", PART_PL: "esinemisi", GEN_PL: "esinemiste" },
+    parts: { NOM_SG: "esinemine", GEN_SG: "esinemise", PART_SG: "esinemist", ILL_SG_SHORT: "esinemisse", NOM_PL: "esinemised", PART_PL: "esinemisi", GEN_PL: "esinemiste" },
     government: null,
     usages: ["Enne esinemist olin närvis.", "President ütles oma esinemises, et ...", "Väljakuulutatud esinemist ei saanud ära jätta.", "Ta kardab avalikku esinemist."],
     note: "ülesastumine avalikkuse ees, avalik etteaste (nt kõnena, rollisooritusena)",
@@ -1389,7 +1389,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     lemma: "esitama", gloss: "to present, to put forward", pos: "VERB", cefr: "B1",
     ekilexWordId: 165049,
     parts: { INF_MA: "esitama", INF_DA: "esitada", PRES_1SG: "esitan", PAST_1SG: "esitasin", PART_TUD: "esitatud" },
-    government: "keda* (partitive) · kellele (allative) · kellena",
+    government: "keda* (partitive) · kellele (allative) · kellena (essive)",
     usages: ["Ajakirjanikud esitasid linnapeale ebameeldivaid küsimusi.", "Õpetaja esitas tööde vormistamisele ranged nõuded.", "Esitasin kõnelejale mitu küsimust.", "Esitasin oma seisukoha."],
     note: "arvamust, seisukohta avaldama, väljendama, ette või esile tooma",
     rus: ["излагать", "изложить"], ukr: ["викладати", "викласти"],
@@ -1406,7 +1406,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "esmaspäev", gloss: "Monday", pos: "NOUN", cefr: "A1",
     ekilexWordId: 165123,
-    parts: { NOM_SG: "esmaspäev", GEN_SG: "esmaspäeva", PART_SG: "esmaspäeva", ILL_SG_SHORT: "esmaspäeva", PART_PL: "esmaspäevi", GEN_PL: "esmaspäevade" },
+    parts: { NOM_SG: "esmaspäev", GEN_SG: "esmaspäeva", PART_SG: "esmaspäeva", ILL_SG_SHORT: "esmaspäeva", NOM_PL: "esmaspäevad", PART_PL: "esmaspäevi", GEN_PL: "esmaspäevade" },
     government: null,
     usages: ["Käin tööl esmaspäevast reedeni.", "Piletid on müügil alates esmaspäevast, 23. maist."],
     note: "nädala 1. päev, pühapäevale järgnev ja teisipäevale eelnev päev",
@@ -1415,7 +1415,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "essee", gloss: "essay", pos: "NOUN", cefr: "B2",
     ekilexWordId: 165158,
-    parts: { NOM_SG: "essee", GEN_SG: "essee", PART_SG: "esseed", PART_PL: "esseid", GEN_PL: "esseede" },
+    parts: { NOM_SG: "essee", GEN_SG: "essee", PART_SG: "esseed", NOM_PL: "esseed", PART_PL: "esseid", GEN_PL: "esseede" },
     government: null,
     usages: [],
     note: "lühem subjektiivses laadis kunstipärane teadusliku, ühiskondliku või kirjanduskriitilise sisuga kirjutis",
@@ -1451,7 +1451,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "etteheide", gloss: "reproach", pos: "NOUN", cefr: "B2",
     ekilexWordId: 165282,
-    parts: { NOM_SG: "etteheide", GEN_SG: "etteheite", PART_SG: "etteheidet", PART_PL: "etteheiteid", GEN_PL: "etteheidete" },
+    parts: { NOM_SG: "etteheide", GEN_SG: "etteheite", PART_SG: "etteheidet", NOM_PL: "etteheited", PART_PL: "etteheiteid", GEN_PL: "etteheidete" },
     government: null,
     usages: ["Ministrile tehti etteheiteid asjatus raharaiskamises.", "Kellele meeldiks pidevalt alusetuid etteheiteid kuulata?", "Ema tegi pojale etteheiteid, et ta korralikult ei õpi."],
     note: "millegi või kellegi taunimine, süüdistus või märkus",
@@ -1460,7 +1460,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ettekanne", gloss: "presentation", pos: "NOUN", cefr: "A2",
     ekilexWordId: 165298,
-    parts: { NOM_SG: "ettekanne", GEN_SG: "ettekande", PART_SG: "ettekannet", PART_PL: "ettekandeid", GEN_PL: "ettekannete" },
+    parts: { NOM_SG: "ettekanne", GEN_SG: "ettekande", PART_SG: "ettekannet", NOM_PL: "ettekanded", PART_PL: "ettekandeid", GEN_PL: "ettekannete" },
     government: null,
     usages: ["Kontserdil tuleb ettekandele helilooja viimase aja looming.", "Laulupeol tuleb ettekandele mitu uut teost.", "Ettekanded keelpilliorkestrilt.", "Konverentsil kõlas õige mitu väga huvitavat ettekannet."],
     note: "mingi kunstiteose esitamine vaatajas- või kuulajaskonnale",
@@ -1469,7 +1469,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ettevõte", gloss: "company, enterprise", pos: "NOUN", cefr: "A2",
     ekilexWordId: 165389,
-    parts: { NOM_SG: "ettevõte", GEN_SG: "ettevõtte", PART_SG: "ettevõtet", PART_PL: "ettevõtteid", GEN_PL: "ettevõtete" },
+    parts: { NOM_SG: "ettevõte", GEN_SG: "ettevõtte", PART_SG: "ettevõtet", NOM_PL: "ettevõtted", PART_PL: "ettevõtteid", GEN_PL: "ettevõtete" },
     government: null,
     usages: ["Monopoolne ettevõte.", "Ettevõte läks pankrotti.", "Töötan ettevõttes, mis tegeleb autode remondiga.", "Kellele see ettevõte kuulub?"],
     note: "mis tahes majandusharus tegutsev iseseisev majandusüksus",
@@ -1478,7 +1478,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Euroopa", gloss: "Europe", pos: "NOUN", cefr: null,
     ekilexWordId: 165461,
-    parts: { NOM_SG: "Euroopa", GEN_SG: "Euroopa", PART_SG: "Euroopat", ILL_SG_SHORT: "Euroopa", PART_PL: "Euroopaid", GEN_PL: "Euroopate" },
+    parts: { NOM_SG: "Euroopa", GEN_SG: "Euroopa", PART_SG: "Euroopat", ILL_SG_SHORT: "Euroopa", NOM_PL: "Euroopad", PART_PL: "Euroopaid", GEN_PL: "Euroopate" },
     government: null,
     usages: [],
     note: "maailmajagu, mis hõlmab Euraasia mandri lääneosa",
@@ -1487,7 +1487,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "fail", gloss: "file", pos: "NOUN", cefr: "B1",
     ekilexWordId: 165588,
-    parts: { NOM_SG: "fail", GEN_SG: "faili", PART_SG: "faili", ILL_SG_SHORT: "faili", PART_PL: "faile", GEN_PL: "failide" },
+    parts: { NOM_SG: "fail", GEN_SG: "faili", PART_SG: "faili", ILL_SG_SHORT: "faili", NOM_PL: "failid", PART_PL: "faile", GEN_PL: "failide" },
     government: null,
     usages: ["Ühingu muutmiskandeavaldusele tuleb failina lisada muudetud või uus põhikiri.", "Trükikotta jõudis vigane fail.", "See fail on meiliga saatmiseks liiga suur.", "Andmefail."],
     note: "elektrooniline andmekogum (nt dokument, pilt, video)",
@@ -1496,7 +1496,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "familiaarne", gloss: "familiar", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 165632,
-    parts: { NOM_SG: "familiaarne", GEN_SG: "familiaarse", PART_SG: "familiaarset", PART_PL: "familiaarseid", GEN_PL: "familiaarsete" },
+    parts: { NOM_SG: "familiaarne", GEN_SG: "familiaarse", PART_SG: "familiaarset", NOM_PL: "familiaarsed", PART_PL: "familiaarseid", GEN_PL: "familiaarsete" },
     government: null,
     usages: ["Rõhutatult familiaarne käitumine."],
     note: "pealetükkivalt sõbralik, liiga semutsev",
@@ -1505,7 +1505,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "film", gloss: "film", pos: "NOUN", cefr: "A1",
     ekilexWordId: 165901,
-    parts: { NOM_SG: "film", GEN_SG: "filmi", PART_SG: "filmi", ILL_SG_SHORT: "filmi", PART_PL: "filme", GEN_PL: "filmide" },
+    parts: { NOM_SG: "film", GEN_SG: "filmi", PART_SG: "filmi", ILL_SG_SHORT: "filmi", NOM_PL: "filmid", PART_PL: "filme", GEN_PL: "filmide" },
     government: null,
     usages: ["Fellini filmide nädal.", "Uus kodumaine täispikk film.", "Lähme kinno, täna on üks hea film.", "Millest see film rääkis?"],
     note: "kino- või teleekraanil demonstreerimiseks mõeldud teos",
@@ -1514,7 +1514,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hageja", gloss: "plaintiff", pos: "NOUN", cefr: null,
     ekilexWordId: 167643,
-    parts: { NOM_SG: "hageja", GEN_SG: "hageja", PART_SG: "hagejat", PART_PL: "hagejaid", GEN_PL: "hagejate" },
+    parts: { NOM_SG: "hageja", GEN_SG: "hageja", PART_SG: "hagejat", NOM_PL: "hagejad", PART_PL: "hagejaid", GEN_PL: "hagejate" },
     government: null,
     usages: ["Enne kohtusse pöördumist püüdsid hagejad probleemi lahendada kohtuväliselt.", "Kohus mõistis hageja kasuks välja 3840 eurot."],
     note: "tsiviilkohtumenetluses pool, kes esitab kahju hüvitamise nõude, hagi esitaja",
@@ -1523,7 +1523,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hagi", gloss: "lawsuit", pos: "NOUN", cefr: "B2",
     ekilexWordId: 167646,
-    parts: { NOM_SG: "hagi", GEN_SG: "hagi", PART_SG: "hagi", PART_PL: "hagisid", GEN_PL: "hagide" },
+    parts: { NOM_SG: "hagi", GEN_SG: "hagi", PART_SG: "hagi", NOM_PL: "hagid", PART_PL: "hagisid", GEN_PL: "hagide" },
     government: null,
     usages: ["Linn esitas firma vastu hagi.", "Kohtuhagi.", "Füüsilise isiku vastu võib hagi esitada tema elukoha järgi ja juriidilise isiku vastu tema asukoha järgi.", "Hagi menetletakse poolte esitatud asjaolude ja taotluste alusel, lähtudes nõudest."],
     note: "isiku pöördumine tsiviilkohtu poole menetluse alustamiseks, kahju hüvitamise nõue",
@@ -1532,7 +1532,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hagiavaldus", gloss: "statement of claim", pos: "NOUN", cefr: null,
     ekilexWordId: 167647,
-    parts: { NOM_SG: "hagiavaldus", GEN_SG: "hagiavalduse", PART_SG: "hagiavaldust", ILL_SG_SHORT: "hagiavaldusse", PART_PL: "hagiavaldusi", GEN_PL: "hagiavalduste" },
+    parts: { NOM_SG: "hagiavaldus", GEN_SG: "hagiavalduse", PART_SG: "hagiavaldust", ILL_SG_SHORT: "hagiavaldusse", NOM_PL: "hagiavaldused", PART_PL: "hagiavaldusi", GEN_PL: "hagiavalduste" },
     government: null,
     usages: ["Ametlik hagiavaldus sadama vastu esitatakse kahe kuu jooksul.", "Koos hagiavaldusega oli vaja tasuda riigilõiv."],
     note: "isiku pöördumine tsiviilkohtu poole menetluse alustamiseks, kahju hüvitamise nõue",
@@ -1541,7 +1541,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "haige", gloss: "ill, sick", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 167670,
-    parts: { NOM_SG: "haige", GEN_SG: "haige", PART_SG: "haiget", PART_PL: "haigeid", GEN_PL: "haigete" },
+    parts: { NOM_SG: "haige", GEN_SG: "haige", PART_SG: "haiget", NOM_PL: "haiged", PART_PL: "haigeid", GEN_PL: "haigete" },
     government: null,
     usages: ["Vanaisa on juba vana ja haige.", "Kopsud on haiged.", "Ta on väga haige.", "Selg on kummardamisest haige."],
     note: "mingit haigust põdev või halvas tervislikus seisundis olev, mitteterve",
@@ -1550,7 +1550,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "haigla", gloss: "hospital", pos: "NOUN", cefr: "A2",
     ekilexWordId: 167688,
-    parts: { NOM_SG: "haigla", GEN_SG: "haigla", PART_SG: "haiglat", PART_PL: "haiglaid", GEN_PL: "haiglate" },
+    parts: { NOM_SG: "haigla", GEN_SG: "haigla", PART_SG: "haiglat", NOM_PL: "haiglad", PART_PL: "haiglaid", GEN_PL: "haiglate" },
     government: null,
     usages: ["Vanaisa ei sattunud oma pika elu jooksul kordagi haiglasse.", "Mu vend on kopsupõletikuga haiglas.", "Ta viidi kiirabiga haiglasse.", "Haigla liigid on piirkondlik haigla, keskhaigla, erihaigla, üldhaigla, taastusravihaigla ja hooldushaigla."],
     note: "asutus (ka hoone või hooned), kus haigeid uuritakse ja ravitakse",
@@ -1559,7 +1559,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "haigus", gloss: "illness", pos: "NOUN", cefr: "A2",
     ekilexWordId: 167698,
-    parts: { NOM_SG: "haigus", GEN_SG: "haiguse", PART_SG: "haigust", ILL_SG_SHORT: "haigusse", PART_PL: "haigusi", GEN_PL: "haiguste" },
+    parts: { NOM_SG: "haigus", GEN_SG: "haiguse", PART_SG: "haigust", ILL_SG_SHORT: "haigusse", NOM_PL: "haigused", PART_PL: "haigusi", GEN_PL: "haiguste" },
     government: null,
     usages: ["Õpilane puudub haiguse tõttu.", "Punast päevakübarat kasutatakse mitmete haiguste raviks.", "Suu- ja sõrataud on väga nakkav sõralistel leviv haigus.", "See haigus levib vere kaudu."],
     note: "organismi normaalse elutegevuse häire",
@@ -1568,7 +1568,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "halb", gloss: "bad", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 167826,
-    parts: { NOM_SG: "halb", GEN_SG: "halva", PART_SG: "halba", ILL_SG_SHORT: "halba", PART_PL: "halbu", GEN_PL: "halbade" },
+    parts: { NOM_SG: "halb", GEN_SG: "halva", PART_SG: "halba", ILL_SG_SHORT: "halba", NOM_PL: "halvad", PART_PL: "halbu", GEN_PL: "halbade" },
     government: null,
     usages: ["Halvad teated rikkusid kõigi meeleolu.", "Kandidaat jättis halva mulje.", "Halva ilma tõttu jäeti võistlused ära.", "Kõval toolil oli halb istuda."],
     note: "ebameeldivat tunnet tekitav, rahulolematust või pahameelt esile kutsuv",
@@ -1577,7 +1577,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hall", gloss: "grey", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 167909,
-    parts: { NOM_SG: "hall", GEN_SG: "halli", PART_SG: "halli", ILL_SG_SHORT: "halli", PART_PL: "halle", GEN_PL: "hallide" },
+    parts: { NOM_SG: "hall", GEN_SG: "halli", PART_SG: "halli", ILL_SG_SHORT: "halli", NOM_PL: "hallid", PART_PL: "halle", GEN_PL: "hallide" },
     government: null,
     usages: ["Taevas on hall ja vihma sajab.", "Hallid juuksed.", "Tumehall.", "Helehall."],
     note: "tuha, hiire värvi, musta ja valge vahepealne",
@@ -1595,7 +1595,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "haridus", gloss: "education", pos: "NOUN", cefr: "A2",
     ekilexWordId: 168274,
-    parts: { NOM_SG: "haridus", GEN_SG: "hariduse", PART_SG: "haridust", ILL_SG_SHORT: "haridusse", PART_PL: "haridusi", GEN_PL: "hariduste" },
+    parts: { NOM_SG: "haridus", GEN_SG: "hariduse", PART_SG: "haridust", ILL_SG_SHORT: "haridusse", NOM_PL: "haridused", PART_PL: "haridusi", GEN_PL: "hariduste" },
     government: null,
     usages: ["Poeg läks linna haridust nõutama.", "Kehva haridusega töömehed.", "Ta on hariduselt arst.", "Kunstiharidus."],
     note: "õppimise kaudu omandatud teadmised, oskused ja vilumused",
@@ -1613,7 +1613,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "harjumus", gloss: "habit", pos: "NOUN", cefr: "B1",
     ekilexWordId: 168359,
-    parts: { NOM_SG: "harjumus", GEN_SG: "harjumuse", PART_SG: "harjumust", ILL_SG_SHORT: "harjumusse", PART_PL: "harjumusi", GEN_PL: "harjumuste" },
+    parts: { NOM_SG: "harjumus", GEN_SG: "harjumuse", PART_SG: "harjumust", ILL_SG_SHORT: "harjumusse", NOM_PL: "harjumused", PART_PL: "harjumusi", GEN_PL: "harjumuste" },
     government: null,
     usages: ["Kas alkoholism on haigus või kahjulik harjumus?", "Vahemeres ujumine sai Küprosel olles igapäevaseks harjumuseks.", "Suitsetamisharjumus.", "Suitsetamine on kahjulik harjumus."],
     note: "kordamise ja õppimise teel tavaks, kombeks või automaatseks kujunenud tegevus, mille sooritamine muutub hrl vajaduseks",
@@ -1622,7 +1622,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "harjumuspärane", gloss: "habitual", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 168361,
-    parts: { NOM_SG: "harjumuspärane", GEN_SG: "harjumuspärase", PART_SG: "harjumuspärast", PART_PL: "harjumuspäraseid", GEN_PL: "harjumuspäraste" },
+    parts: { NOM_SG: "harjumuspärane", GEN_SG: "harjumuspärase", PART_SG: "harjumuspärast", NOM_PL: "harjumuspärased", PART_PL: "harjumuspäraseid", GEN_PL: "harjumuspäraste" },
     government: null,
     usages: ["Harjumuspärases keskkonnas on lihtsam toime tulla.", "Harjumuspäraseks muutunud toimingud."],
     note: "kindlaks kujunenud, selline, millega ollakse harjunud",
@@ -1631,7 +1631,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "harjutus", gloss: "exercise", pos: "NOUN", cefr: "A2",
     ekilexWordId: 168369,
-    parts: { NOM_SG: "harjutus", GEN_SG: "harjutuse", PART_SG: "harjutust", ILL_SG_SHORT: "harjutusse", PART_PL: "harjutusi", GEN_PL: "harjutuste" },
+    parts: { NOM_SG: "harjutus", GEN_SG: "harjutuse", PART_SG: "harjutust", ILL_SG_SHORT: "harjutusse", NOM_PL: "harjutused", PART_PL: "harjutusi", GEN_PL: "harjutuste" },
     government: null,
     usages: ["Ma teen vähemalt kord päevas harjutusi säärelihastele.", "Parim meeskonnatöö harjutus on kärestikuparvega sõitmine.", "Võimlemisharjutus.", "Klaveriharjutus."],
     note: "liigutuste, võtete vms kogum võimete arendamiseks ja treenimiseks või milleski vilumuste omandamiseks või nende näitamiseks",
@@ -1649,7 +1649,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hea", gloss: "good", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 168578,
-    parts: { NOM_SG: "hea", GEN_SG: "hea", PART_SG: "head", PART_PL: "häid", GEN_PL: "heade" },
+    parts: { NOM_SG: "hea", GEN_SG: "hea", PART_SG: "head", NOM_PL: "head", PART_PL: "häid", GEN_PL: "heade" },
     government: null,
     usages: ["Mõni päev toob halbu, teine häid uudiseid.", "Selles restoranis on alati head söögid-joogid.", "Emal on poja edusammude üle hea meel.", "Mu enesetunne on hea."],
     note: "meeldivat tunnet tekitav, rõõmu või rahulolu esile kutsuv",
@@ -1667,7 +1667,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "helde", gloss: "generous", pos: "ADJECTIVE", cefr: "C1",
     ekilexWordId: 168804,
-    parts: { NOM_SG: "helde", GEN_SG: "helde", PART_SG: "heldet", PART_PL: "heldeid", GEN_PL: "heldete" },
+    parts: { NOM_SG: "helde", GEN_SG: "helde", PART_SG: "heldet", NOM_PL: "helded", PART_PL: "heldeid", GEN_PL: "heldete" },
     government: null,
     usages: ["Külaskäikudega kaasnesid tavaliselt helded annetused.", "Hea isu ja helde käega klient on igas restoranis teretulnud.", "Helde südamega inimene.", "Olgem siis helded ning ärgem küsigem esinemise eest tasu!"],
     note: "oma osast teistele meelsasti, ohtrasti andev",
@@ -1676,7 +1676,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hele", gloss: "light, pale", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 168815,
-    parts: { NOM_SG: "hele", GEN_SG: "heleda", PART_SG: "heledat", PART_PL: "heledaid", GEN_PL: "heledate" },
+    parts: { NOM_SG: "hele", GEN_SG: "heleda", PART_SG: "heledat", NOM_PL: "heledad", PART_PL: "heledaid", GEN_PL: "heledate" },
     government: null,
     usages: ["Kaminas põlesid halud heleda leegiga.", "Hele täht põhjataevas.", "Keldrist tulijat pimestas hele päevavalgus.", "Avar ja hele kabinet."],
     note: "tugevat valgust kiirgav",
@@ -1685,7 +1685,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "heli", gloss: "sound", pos: "NOUN", cefr: "B1",
     ekilexWordId: 168841,
-    parts: { NOM_SG: "heli", GEN_SG: "heli", PART_SG: "heli", PART_PL: "helisid", GEN_PL: "helide" },
+    parts: { NOM_SG: "heli", GEN_SG: "heli", PART_SG: "heli", NOM_PL: "helid", PART_PL: "helisid", GEN_PL: "helide" },
     government: null,
     usages: ["Valgus liigub kiiremini kui heli.", "Õuest kostis mingi kahtlane heli.", "Flöödiheli.", "Kitarriheli."],
     note: "elastses keskkonnas lainena leviv võnkumine, mida on võimalik kuulda",
@@ -1712,7 +1712,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hind", gloss: "price", pos: "NOUN", cefr: "A1",
     ekilexWordId: 169356,
-    parts: { NOM_SG: "hind", GEN_SG: "hinna", PART_SG: "hinda", ILL_SG_SHORT: "hinda", PART_PL: "hindu", GEN_PL: "hindade" },
+    parts: { NOM_SG: "hind", GEN_SG: "hinna", PART_SG: "hinda", ILL_SG_SHORT: "hinda", NOM_PL: "hinnad", PART_PL: "hindu", GEN_PL: "hindade" },
     government: null,
     usages: ["Kinnisvara hinnad langevad.", "Ma olen nõus küsitud hinda maksma.", "Kolm ühe hinnaga.", "Ostsin korteri soodsa hinnaga / hinna eest."],
     note: "kauba väärtuse rahaline väljendus, rahasumma või mingi muu materiaalne väärtus, mis millegi ostmisel vastu antakse või mida millegi müümisel nõutakse",
@@ -1730,7 +1730,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hindamine", gloss: "assessment", pos: "NOUN", cefr: null,
     ekilexWordId: 265294,
-    parts: { NOM_SG: "hindamine", GEN_SG: "hindamise", PART_SG: "hindamist", ILL_SG_SHORT: "hindamisse", PART_PL: "hindamisi", GEN_PL: "hindamiste" },
+    parts: { NOM_SG: "hindamine", GEN_SG: "hindamise", PART_SG: "hindamist", ILL_SG_SHORT: "hindamisse", NOM_PL: "hindamised", PART_PL: "hindamisi", GEN_PL: "hindamiste" },
     government: null,
     usages: ["Kandidaatide hindamine toimub kahes voorus.", "Kogu vara on panditud, käimas on varade hindamine.", "Metsahindamine.", "Mõnes valdkonnas (nt mikrobioloogia) on hindamine mitmete katsete, vaatluste või mõõtmiste kogutegevus."],
     note: "punktide, hinde andmine mingi soorituse eest",
@@ -1739,7 +1739,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hinnatõus", gloss: "price rise", pos: "NOUN", cefr: null,
     ekilexWordId: 169556,
-    parts: { NOM_SG: "hinnatõus", GEN_SG: "hinnatõusu", PART_SG: "hinnatõusu", ILL_SG_SHORT: "hinnatõusu", PART_PL: "hinnatõuse", GEN_PL: "hinnatõusude" },
+    parts: { NOM_SG: "hinnatõus", GEN_SG: "hinnatõusu", PART_SG: "hinnatõusu", ILL_SG_SHORT: "hinnatõusu", NOM_PL: "hinnatõusud", PART_PL: "hinnatõuse", GEN_PL: "hinnatõusude" },
     government: null,
     usages: [],
     note: "kauba või teenuse eest küsitava rahasumma suurenemine või lisandumine",
@@ -1748,7 +1748,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hinne", gloss: "grade, mark", pos: "NOUN", cefr: "B1",
     ekilexWordId: 169561,
-    parts: { NOM_SG: "hinne", GEN_SG: "hinde", PART_SG: "hinnet", PART_PL: "hindeid", GEN_PL: "hinnete" },
+    parts: { NOM_SG: "hinne", GEN_SG: "hinde", PART_SG: "hinnet", NOM_PL: "hinded", PART_PL: "hindeid", GEN_PL: "hinnete" },
     government: null,
     usages: ["Tema kümne põhiaine keskmine hinne on 4,2.", "Priit sai koolis kontrolltöö eest hea hinde.", "Tal on matemaatikas head hinded."],
     note: "kellegi teadmistele, oskustele, võimetele, töötulemustele antud hinnang, mida väljendatakse numbrites, tähtedes, punktides vm hindamisühikutes",
@@ -1757,7 +1757,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hirm", gloss: "fear", pos: "NOUN", cefr: "B1",
     ekilexWordId: 169573,
-    parts: { NOM_SG: "hirm", GEN_SG: "hirmu", PART_SG: "hirmu", ILL_SG_SHORT: "hirmu", PART_PL: "hirme", GEN_PL: "hirmude" },
+    parts: { NOM_SG: "hirm", GEN_SG: "hirmu", PART_SG: "hirmu", ILL_SG_SHORT: "hirmu", NOM_PL: "hirmud", PART_PL: "hirme", GEN_PL: "hirmude" },
     government: null,
     usages: ["Mind valdas halvav hirm.", "Kaunitar tundis kohutavat hirmu vananemise ees.", "Tal pidi hirmust süda seisma jääma.", "Sõjahirm."],
     note: "erutusseisund, mida põhjustab selgesti tajutav oht, suur kartus",
@@ -1766,7 +1766,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hobune", gloss: "horse", pos: "NOUN", cefr: "A2",
     ekilexWordId: 169689,
-    parts: { NOM_SG: "hobune", GEN_SG: "hobuse", PART_SG: "hobust", PART_PL: "hobuseid", GEN_PL: "hobuste" },
+    parts: { NOM_SG: "hobune", GEN_SG: "hobuse", PART_SG: "hobust", NOM_PL: "hobused", PART_PL: "hobuseid", GEN_PL: "hobuste" },
     government: null,
     usages: ["Hobune sööb kaera.", "Mulle meeldib hobusega ratsutada.", "Vahus hobused korskasid ja tõusid tagajalgadele.", "Võistlustele on registreerunud 45 sportlast ligi 70 hobusel."],
     note: "suur koduloom, kes hirnub, kelle seljas ratsutatakse ning keda kasutatakse veoloomana",
@@ -1775,7 +1775,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hoiak", gloss: "attitude", pos: "NOUN", cefr: "B1",
     ekilexWordId: 169752,
-    parts: { NOM_SG: "hoiak", GEN_SG: "hoiaku", PART_SG: "hoiakut", PART_PL: "hoiakuid", GEN_PL: "hoiakute" },
+    parts: { NOM_SG: "hoiak", GEN_SG: "hoiaku", PART_SG: "hoiakut", NOM_PL: "hoiakud", PART_PL: "hoiakuid", GEN_PL: "hoiakute" },
     government: null,
     usages: ["Mõnede ametite esindajad on ametiühingute suhtes pigem tõrjuva hoiakuga.", "Ta peaks muutma oma hoiakut vähemuste suhtes.", "Harjutusi tehes tuleks jälgida keha hoiakut.", "Peahoiak."],
     note: "kellegi suhtumine millessegi, arvamus millegi kohta",
@@ -1793,7 +1793,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hoiatus", gloss: "warning", pos: "NOUN", cefr: "B1",
     ekilexWordId: 169756,
-    parts: { NOM_SG: "hoiatus", GEN_SG: "hoiatuse", PART_SG: "hoiatust", ILL_SG_SHORT: "hoiatusse", PART_PL: "hoiatusi", GEN_PL: "hoiatuste" },
+    parts: { NOM_SG: "hoiatus", GEN_SG: "hoiatuse", PART_SG: "hoiatust", ILL_SG_SHORT: "hoiatusse", NOM_PL: "hoiatused", PART_PL: "hoiatusi", GEN_PL: "hoiatuste" },
     government: null,
     usages: ["Arvutiteemaline blogi avaldas hoiatuse uut tüüpi viiruste levimise kohta.", "Ta ei hoolinud teiste hoiatustest.", "Olgu see kurb kogemus kõigile hoiatuseks.", "Suulisi hoiatusi tehti 21 ettevõttele."],
     note: "märkus, mis juhib tähelepanu võimalikele halbadele tagajärgedele või ohtudele",
@@ -1820,7 +1820,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hommik", gloss: "morning", pos: "NOUN", cefr: "A1",
     ekilexWordId: 169839,
-    parts: { NOM_SG: "hommik", GEN_SG: "hommiku", PART_SG: "hommikut", PART_PL: "hommikuid", GEN_PL: "hommikute" },
+    parts: { NOM_SG: "hommik", GEN_SG: "hommiku", PART_SG: "hommikut", NOM_PL: "hommikud", PART_PL: "hommikuid", GEN_PL: "hommikute" },
     government: null,
     usages: ["Ärkasin kell viis hommikul.", "Töö käis hommikust õhtuni.", "Kevadhommik.", "Ärkasin täna hommikul kell 7."],
     note: "päeva algusosa",
@@ -1829,7 +1829,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hoolas", gloss: "diligent", pos: "ADJECTIVE", cefr: "C1",
     ekilexWordId: 169944,
-    parts: { NOM_SG: "hoolas", GEN_SG: "hoolsa", PART_SG: "hoolast", PART_PL: "hoolsaid", GEN_PL: "hoolsate" },
+    parts: { NOM_SG: "hoolas", GEN_SG: "hoolsa", PART_SG: "hoolast", NOM_PL: "hoolsad", PART_PL: "hoolsaid", GEN_PL: "hoolsate" },
     government: null,
     usages: ["Hoolas aednik alustas oksalõikusega kohe, kui ilmad soojenesid.", "Hoolsa perenaise käe all on kodu korras.", "Hoolsa harjutamise järel võisid poisid maratonile minna."],
     note: "oma tööd püüdlikult, kohusetundlikult tegev, oma tegemistes tähelepanelikult täpne ja korralik",
@@ -1847,7 +1847,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hotell", gloss: "hotel", pos: "NOUN", cefr: "A2",
     ekilexWordId: 170092,
-    parts: { NOM_SG: "hotell", GEN_SG: "hotelli", PART_SG: "hotelli", ILL_SG_SHORT: "hotelli", PART_PL: "hotelle", GEN_PL: "hotellide" },
+    parts: { NOM_SG: "hotell", GEN_SG: "hotelli", PART_SG: "hotelli", ILL_SG_SHORT: "hotelli", NOM_PL: "hotellid", PART_PL: "hotelle", GEN_PL: "hotellide" },
     government: null,
     usages: ["Lennujaamast hotelli sõitsime taksoga.", "Peatusime ühes uhkes hotellis.", "Hotelli administraator ütles, et vabu tube ei ole."],
     note: "hrl suurem ja esinduslikum ajutist majutust pakkuv asutus",
@@ -1865,7 +1865,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "huumor", gloss: "humour", pos: "NOUN", cefr: "B1",
     ekilexWordId: 170368,
-    parts: { NOM_SG: "huumor", GEN_SG: "huumori", PART_SG: "huumorit", PART_PL: "huumoreid", GEN_PL: "huumorite" },
+    parts: { NOM_SG: "huumor", GEN_SG: "huumori", PART_SG: "huumorit", NOM_PL: "huumorid", PART_PL: "huumoreid", GEN_PL: "huumorite" },
     government: null,
     usages: ["See oli öeldud kerge huumoriga.", "Film oli tõsine, aga seal oli ka huumorit.", "Ta hindab head huumorit.", "Võtan selliseid jutte huumoriga."],
     note: "heatahtlik nali, koomiliste elunähtuste, sündmuste või inimeste puuduste ja nõrkuste heatahtlik naeruvääristamine",
@@ -1892,7 +1892,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "häbistav", gloss: "shaming", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 170629,
-    parts: { NOM_SG: "häbistav", GEN_SG: "häbistava", PART_SG: "häbistavat", PART_PL: "häbistavaid", GEN_PL: "häbistavate" },
+    parts: { NOM_SG: "häbistav", GEN_SG: "häbistava", PART_SG: "häbistavat", NOM_PL: "häbistavad", PART_PL: "häbistavaid", GEN_PL: "häbistavate" },
     government: null,
     usages: ["Minu jaoks oli see kogemus alandav ja häbistav.", "Häbistav lüüasaamine."],
     note: "(hrl teo, sündmuse vm asjaolu kohta:) häbi, piinlikkust põhjustav, (avalikku) hukkamõistu pälviv",
@@ -1910,7 +1910,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hääldus", gloss: "pronunciation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 170870,
-    parts: { NOM_SG: "hääldus", GEN_SG: "häälduse", PART_SG: "hääldust", ILL_SG_SHORT: "hääldusse", PART_PL: "hääldusi", GEN_PL: "häälduste" },
+    parts: { NOM_SG: "hääldus", GEN_SG: "häälduse", PART_SG: "hääldust", ILL_SG_SHORT: "hääldusse", NOM_PL: "hääldused", PART_PL: "hääldusi", GEN_PL: "häälduste" },
     government: null,
     usages: ["Logopeed juhtis tähelepanu s-hääliku valele hääldusele.", "Kirjutasin ta nime häälduse järgi üles.", "Arvutis saab kuulata ka sõnade hääldust.", "Diktori hääldus olgu selge ja tämber meeldiv."],
     note: "häälikute (ja sõnade, fraaside vm) moodustamine kõneelundite abil",
@@ -1928,7 +1928,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hääletus", gloss: "vote, ballot", pos: "NOUN", cefr: "B1",
     ekilexWordId: 170918,
-    parts: { NOM_SG: "hääletus", GEN_SG: "hääletuse", PART_SG: "hääletust", ILL_SG_SHORT: "hääletusse", PART_PL: "hääletusi", GEN_PL: "hääletuste" },
+    parts: { NOM_SG: "hääletus", GEN_SG: "hääletuse", PART_SG: "hääletust", ILL_SG_SHORT: "hääletusse", NOM_PL: "hääletused", PART_PL: "hääletusi", GEN_PL: "hääletuste" },
     government: null,
     usages: ["Ettepanek pandi hääletusele.", "Hääletuse tulemused selguvad õhtuks."],
     note: "seisukoha avaldamine mingi küsimuse otsustamisel, oma poolt- või vastuhääle andmine nt valimistel",
@@ -1937,7 +1937,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hüpotees", gloss: "hypothesis", pos: "NOUN", cefr: "B2",
     ekilexWordId: 171165,
-    parts: { NOM_SG: "hüpotees", GEN_SG: "hüpoteesi", PART_SG: "hüpoteesi", ILL_SG_SHORT: "hüpoteesi", PART_PL: "hüpoteese", GEN_PL: "hüpoteeside" },
+    parts: { NOM_SG: "hüpotees", GEN_SG: "hüpoteesi", PART_SG: "hüpoteesi", ILL_SG_SHORT: "hüpoteesi", NOM_PL: "hüpoteesid", PART_PL: "hüpoteese", GEN_PL: "hüpoteeside" },
     government: null,
     usages: [],
     note: "mingi nähtuse seletamiseks esitatud tõestamata, ent ka kummutamata teaduslik oletus",
@@ -1946,7 +1946,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hüve", gloss: "benefit, good", pos: "NOUN", cefr: "B2",
     ekilexWordId: 795049,
-    parts: { NOM_SG: "hüve", GEN_SG: "hüve", PART_SG: "hüvet", PART_PL: "hüvesid", GEN_PL: "hüvede" },
+    parts: { NOM_SG: "hüve", GEN_SG: "hüve", PART_SG: "hüvet", NOM_PL: "hüved", PART_PL: "hüvesid", GEN_PL: "hüvede" },
     government: null,
     usages: ["Tema liikumapanevaks jõuks on materiaalsed hüved.", "Metsast saadavad hüved.", "Süsteemi hüveks on lihtsus.", "President ei või oma ametivolituste kestel saada riigilt selles seaduses käsitlemata hüvesid."],
     note: "see, mis on vajalik ja kasulik",
@@ -1955,7 +1955,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "hüvitis", gloss: "compensation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 171226,
-    parts: { NOM_SG: "hüvitis", GEN_SG: "hüvitise", PART_SG: "hüvitist", ILL_SG_SHORT: "hüvitisse", PART_PL: "hüvitisi", GEN_PL: "hüvitiste" },
+    parts: { NOM_SG: "hüvitis", GEN_SG: "hüvitise", PART_SG: "hüvitist", ILL_SG_SHORT: "hüvitisse", NOM_PL: "hüvitised", PART_PL: "hüvitisi", GEN_PL: "hüvitiste" },
     government: null,
     usages: ["Hüvitisteks on välja makstud üle 100 000 euro.", "Ajutise töövõimetuse hüvitis.", "Isikliku sõiduauto hüvitis.", "Kahjuhüvitis."],
     note: "kellelegi makstav rahasumma majandusliku kaotuse, varanduse vähenemise vm kahju eest",
@@ -1964,7 +1964,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "iga", gloss: "every, each", pos: "PRONOUN", cefr: "A1",
     ekilexWordId: 171378,
-    parts: { NOM_SG: "iga", GEN_SG: "iga", PART_SG: "iga", PART_PL: "igasid", GEN_PL: "igade" },
+    parts: { NOM_SG: "iga", GEN_SG: "iga", PART_SG: "iga", NOM_PL: "igad", PART_PL: "igasid", GEN_PL: "igade" },
     government: null,
     usages: ["Igas peres on omad kombed.", "Buss väljub igal täistunnil.", "Ta võib iga hetk tulla.", "Iga viimane kui sõna oli meile kuulda."],
     note: "(üksiku kohta kogumis:) teatav kindel, määratud",
@@ -1973,7 +1973,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "igapäevane", gloss: "everyday", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 171411,
-    parts: { NOM_SG: "igapäevane", GEN_SG: "igapäevase", PART_SG: "igapäevast", PART_PL: "igapäevaseid", GEN_PL: "igapäevaste" },
+    parts: { NOM_SG: "igapäevane", GEN_SG: "igapäevase", PART_SG: "igapäevast", NOM_PL: "igapäevased", PART_PL: "igapäevaseid", GEN_PL: "igapäevaste" },
     government: null,
     usages: ["Igapäevane kontoritöö tundus igav ja hall.", "Mees nõudis oma igapäevast õllelonksu.", "Puuetega laste igapäevane toimetulek.", "Ta on meie peres igapäevane külaline."],
     note: "iga päev, päevast päeva toimuv, esinev vms",
@@ -1982,7 +1982,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "igaüks", gloss: "everyone, each one", pos: "PRONOUN", cefr: "A2",
     ekilexWordId: 171462,
-    parts: { NOM_SG: "igaüks", GEN_SG: "igaühe", PART_SG: "igaüht", ILL_SG_SHORT: "igaühte", PART_PL: "igaühtesid", GEN_PL: "igaühtede" },
+    parts: { NOM_SG: "igaüks", GEN_SG: "igaühe", PART_SG: "igaüht", ILL_SG_SHORT: "igaühte", NOM_PL: "igaühed", PART_PL: "igaühtesid", GEN_PL: "igaühtede" },
     government: null,
     usages: ["Ega ma igaüht ka ei usalda.", "Õnnetus võib juhtuda igaühega.", "Igaüks ostis pudeli veini.", "Igaühele, kel pole interneti kasutamise võimalust, peab looma vaba ja avaliku juurdepääsu internetile."],
     note: "(möönvalt:) ükskõik kes, iga inimene",
@@ -1991,7 +1991,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ihne", gloss: "stingy", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 171520,
-    parts: { NOM_SG: "ihne", GEN_SG: "ihne", PART_SG: "ihnet", PART_PL: "ihneid", GEN_PL: "ihnete" },
+    parts: { NOM_SG: "ihne", GEN_SG: "ihne", PART_SG: "ihnet", NOM_PL: "ihned", PART_PL: "ihneid", GEN_PL: "ihnete" },
     government: null,
     usages: ["Rikas ja ihne Veneetsia kaupmees Pantalone."],
     note: "raha mitte kulutada raatsiv, ülemäära kokkuhoidlik",
@@ -2009,7 +2009,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ilm", gloss: "weather", pos: "NOUN", cefr: "A1",
     ekilexWordId: 171672,
-    parts: { NOM_SG: "ilm", GEN_SG: "ilma", PART_SG: "ilma", ILL_SG_SHORT: "ilma", PART_PL: "ilmu", GEN_PL: "ilmade" },
+    parts: { NOM_SG: "ilm", GEN_SG: "ilma", PART_SG: "ilma", ILL_SG_SHORT: "ilma", NOM_PL: "ilmad", PART_PL: "ilmu", GEN_PL: "ilmade" },
     government: null,
     usages: ["Vihmase ilmaga pole lastel õues midagi teha.", "Ilm püsis kuiv.", "Tormiilm.", "Täna on halb ilm – külm ja tuuline."],
     note: "pidevalt muutuv atmosfääri olek (temperatuur, sademed, tuul, pilvitus), hrl lühema aja jooksul",
@@ -2027,7 +2027,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ilmne", gloss: "evident", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 171776,
-    parts: { NOM_SG: "ilmne", GEN_SG: "ilmse", PART_SG: "ilmset", PART_PL: "ilmseid", GEN_PL: "ilmsete" },
+    parts: { NOM_SG: "ilmne", GEN_SG: "ilmse", PART_SG: "ilmset", NOM_PL: "ilmsed", PART_PL: "ilmseid", GEN_PL: "ilmsete" },
     government: null,
     usages: ["Tema kohta biokeemik öelda on ilmne liialdus.", "Jaansoni võit sai ilmseks ammu enne finišit.", "Ta jälgis ettekannet ilmse huviga.", "On täiesti ilmne, keda ta eelistab."],
     note: "täiesti selge, väga selgelt märgatav",
@@ -2045,7 +2045,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ilus", gloss: "beautiful", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 171855,
-    parts: { NOM_SG: "ilus", GEN_SG: "ilusa", PART_SG: "ilusat", PART_PL: "ilusaid", GEN_PL: "ilusate" },
+    parts: { NOM_SG: "ilus", GEN_SG: "ilusa", PART_SG: "ilusat", NOM_PL: "ilusad", PART_PL: "ilusaid", GEN_PL: "ilusate" },
     government: null,
     usages: ["Ta on tark ja ilus naine.", "Ilmajaam lubab ilusat ilma.", "Temast on kõikjal palju ilusaid pilte, aga intervjuusid mõni üksik.", "Ta on kõige ilusam naine, keda ma näinud olen."],
     note: "välimuselt meeldiv, vaadates rahuldust pakkuv, väga kena",
@@ -2054,7 +2054,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "inflatsioon", gloss: "inflation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 172251,
-    parts: { NOM_SG: "inflatsioon", GEN_SG: "inflatsiooni", PART_SG: "inflatsiooni", ILL_SG_SHORT: "inflatsiooni", PART_PL: "inflatsioone", GEN_PL: "inflatsioonide" },
+    parts: { NOM_SG: "inflatsioon", GEN_SG: "inflatsiooni", PART_SG: "inflatsiooni", ILL_SG_SHORT: "inflatsiooni", NOM_PL: "inflatsioonid", PART_PL: "inflatsioone", GEN_PL: "inflatsioonide" },
     government: null,
     usages: ["Maailmamajanduses ilmnevad taas tendentsid, kus kasv aeglustub ja inflatsioon kiireneb."],
     note: "raha ostujõu vähenemine, mis väljendub üldises hinnataseme tõusus",
@@ -2063,7 +2063,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "inglane", gloss: "an English person", pos: "NOUN", cefr: "A2",
     ekilexWordId: 172346,
-    parts: { NOM_SG: "inglane", GEN_SG: "inglase", PART_SG: "inglast", ILL_SG_SHORT: "inglasse", PART_PL: "inglasi", GEN_PL: "inglaste" },
+    parts: { NOM_SG: "inglane", GEN_SG: "inglase", PART_SG: "inglast", ILL_SG_SHORT: "inglasse", NOM_PL: "inglased", PART_PL: "inglasi", GEN_PL: "inglaste" },
     government: null,
     usages: ["Briti traditsioonis on nn kolme rahva anekdootides tegelasteks inglane, iirlane ja šotlane."],
     note: "Inglismaa põhirahva liige",
@@ -2072,7 +2072,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Inglismaa", gloss: "England", pos: "NOUN", cefr: null,
     ekilexWordId: 172369,
-    parts: { NOM_SG: "Inglismaa", GEN_SG: "Inglismaa", PART_SG: "Inglismaad", ILL_SG_SHORT: "Inglismaa", PART_PL: "Inglismaid", GEN_PL: "Inglismaade" },
+    parts: { NOM_SG: "Inglismaa", GEN_SG: "Inglismaa", PART_SG: "Inglismaad", ILL_SG_SHORT: "Inglismaa", NOM_PL: "Inglismaad", PART_PL: "Inglismaid", GEN_PL: "Inglismaade" },
     government: null,
     usages: ["Inglismaa kuninganna."],
     note: "Ühendkuningriigi suurim koostisosa Suurbritannia saarel (ilma Šotimaata ja Walesita)",
@@ -2081,7 +2081,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "inimene", gloss: "person, human", pos: "NOUN", cefr: "A1",
     ekilexWordId: 172397,
-    parts: { NOM_SG: "inimene", GEN_SG: "inimese", PART_SG: "inimest", ILL_SG_SHORT: "inimesse", PART_PL: "inimesi", GEN_PL: "inimeste" },
+    parts: { NOM_SG: "inimene", GEN_SG: "inimese", PART_SG: "inimest", ILL_SG_SHORT: "inimesse", NOM_PL: "inimesed", PART_PL: "inimesi", GEN_PL: "inimeste" },
     government: null,
     usages: ["Saarel sai selgemaks looduse ja inimese vaheline suhe.", "See ei ole viimane kord, kui viirus hüppab loomalt inimesele.", "Ma olen täiesti tavaline inimene.", "Noored ja haritud inimesed."],
     note: "mõtlemis- ja kõnelemisvõimeline ühiskondlik olend, mees, naine või laps",
@@ -2090,7 +2090,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "intervjuu", gloss: "interview", pos: "NOUN", cefr: "A2",
     ekilexWordId: 172774,
-    parts: { NOM_SG: "intervjuu", GEN_SG: "intervjuu", PART_SG: "intervjuud", PART_PL: "intervjuusid", GEN_PL: "intervjuude" },
+    parts: { NOM_SG: "intervjuu", GEN_SG: "intervjuu", PART_SG: "intervjuud", NOM_PL: "intervjuud", PART_PL: "intervjuusid", GEN_PL: "intervjuude" },
     government: null,
     usages: ["Rahandusminister annab intervjuu Saksa päevalehele Der Spiegel.", "Paar lahutas mõni kuu pärast skandaalset intervjuud.", "Peaministri intervjuu ilmub homses ajalehes.", "Lugesin intervjuud etenduse lavastajaga."],
     note: "küsitlus hrl ajakirjanduses, raadios, televisioonis avaldamise eesmärgil",
@@ -2099,7 +2099,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "investeering", gloss: "investment", pos: "NOUN", cefr: "B2",
     ekilexWordId: 172861,
-    parts: { NOM_SG: "investeering", GEN_SG: "investeeringu", PART_SG: "investeeringut", PART_PL: "investeeringuid", GEN_PL: "investeeringute" },
+    parts: { NOM_SG: "investeering", GEN_SG: "investeeringu", PART_SG: "investeeringut", NOM_PL: "investeeringud", PART_PL: "investeeringuid", GEN_PL: "investeeringute" },
     government: null,
     usages: ["Riskantsemate investeeringutega võib teenida terve varanduse, kuigi risk kõigest ilma jääda on suurem.", "Investeeringud kinnisvarasse on viimasel aastal kasvanud."],
     note: "pikaajalise kasusaamise eesmärgil tehtav rahapaigutus väärtpaberitesse, kinnisvarasse, kunsti vm",
@@ -2108,7 +2108,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "iroonia", gloss: "irony", pos: "NOUN", cefr: "B2",
     ekilexWordId: 172906,
-    parts: { NOM_SG: "iroonia", GEN_SG: "iroonia", PART_SG: "irooniat", PART_PL: "irooniaid", GEN_PL: "irooniate" },
+    parts: { NOM_SG: "iroonia", GEN_SG: "iroonia", PART_SG: "irooniat", NOM_PL: "irooniad", PART_PL: "irooniaid", GEN_PL: "irooniate" },
     government: null,
     usages: ["Elu ja inimesi tuleb vahel võtta huumoriga, eluterve irooniaga.", "Lõikava irooniaga pikitud, samas ääretult siiras teos.", "Sergejevi häälest kostis varjamatut irooniat."],
     note: "peen, varjatud pilge, võte, kus millestki kõneldakse pilkeks teadlikult vastupidiselt sellele, mida mõeldakse",
@@ -2126,7 +2126,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "isa", gloss: "father", pos: "NOUN", cefr: "A1",
     ekilexWordId: 172931,
-    parts: { NOM_SG: "isa", GEN_SG: "isa", PART_SG: "isa", PART_PL: "isasid", GEN_PL: "isade" },
+    parts: { NOM_SG: "isa", GEN_SG: "isa", PART_SG: "isa", NOM_PL: "isad", PART_PL: "isasid", GEN_PL: "isade" },
     government: null,
     usages: ["Isa ja ema ei olnud kodus.", "Minu isa ja ema elavad Tallinnas.", "Pääsukesepoegadele toovad toitu nii isa kui ka ema.", "Pärast pikki rännuaastaid tekkis soov tulla tagasi isade maale."],
     note: "meessoost vanem, mees oma lapse või laste suhtes",
@@ -2135,7 +2135,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ise", gloss: "self, myself, yourself", pos: "PRONOUN", cefr: "A1",
     ekilexWordId: 172994,
-    parts: { NOM_SG: "ise", GEN_SG: "enese", PART_SG: "ennast", PART_PL: "endid", GEN_PL: "eneste" },
+    parts: { NOM_SG: "ise", GEN_SG: "enese", PART_SG: "ennast", NOM_PL: "ise", PART_PL: "endid", GEN_PL: "eneste" },
     government: null,
     usages: ["Ta on selles jamas ise süüdi.", "Hiljem sai ta sellest ise ka aru.", "Uisutada soovijail tuleks uisud endal kaasa võtta.", "See pole mulle endalegi veel selge."],
     note: "(rõhutab põhisõnaga väljendatut, tõstab seda mingil moel esile:) just see, mitte keegi või miski muu",
@@ -2153,7 +2153,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "iseloom", gloss: "character", pos: "NOUN", cefr: "A2",
     ekilexWordId: 173031,
-    parts: { NOM_SG: "iseloom", GEN_SG: "iseloomu", PART_SG: "iseloomu", ILL_SG_SHORT: "iseloomu", PART_PL: "iseloome", GEN_PL: "iseloomude" },
+    parts: { NOM_SG: "iseloom", GEN_SG: "iseloomu", PART_SG: "iseloomu", ILL_SG_SHORT: "iseloomu", NOM_PL: "iseloomud", PART_PL: "iseloome", GEN_PL: "iseloomude" },
     government: null,
     usages: ["Ühegi inimese halb iseloom pole ravitav.", "Eestlased on iseloomult kinnised ja individualistlikud.", "Tõsine sporditegemine noorpõlves kasvatab iseloomu.", "Õde ja vend on iseloomult väga erinevad."],
     note: "inimese või looma käitumises ja suhtumises ilmnevad põhilised, püsivamad psüühilised omadused",
@@ -2162,7 +2162,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "iseseisvus", gloss: "independence", pos: "NOUN", cefr: "B1",
     ekilexWordId: 265594,
-    parts: { NOM_SG: "iseseisvus", GEN_SG: "iseseisvuse", PART_SG: "iseseisvust", ILL_SG_SHORT: "iseseisvusse", PART_PL: "iseseisvusi", GEN_PL: "iseseisvuste" },
+    parts: { NOM_SG: "iseseisvus", GEN_SG: "iseseisvuse", PART_SG: "iseseisvust", ILL_SG_SHORT: "iseseisvusse", NOM_PL: "iseseisvused", PART_PL: "iseseisvusi", GEN_PL: "iseseisvuste" },
     government: null,
     usages: ["Eesti iseseisvuse manifest.", "1991. aastal taastati veretult Eesti riigi iseseisvus.", "Laps kasvab, tema mõtlemine ja vajadused muutuvad, ta vajab üha suuremat iseseisvust.", "Tegusad päevad kodust eemal eakaaslaste keskel kasvatavad laste iseseisvust."],
     note: "riigi täielik sise- ja välispoliitiline sõltumatus teistest riikidest",
@@ -2171,7 +2171,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "isiksus", gloss: "personality", pos: "NOUN", cefr: "B1",
     ekilexWordId: 173127,
-    parts: { NOM_SG: "isiksus", GEN_SG: "isiksuse", PART_SG: "isiksust", ILL_SG_SHORT: "isiksusse", PART_PL: "isiksusi", GEN_PL: "isiksuste" },
+    parts: { NOM_SG: "isiksus", GEN_SG: "isiksuse", PART_SG: "isiksust", ILL_SG_SHORT: "isiksusse", NOM_PL: "isiksused", PART_PL: "isiksusi", GEN_PL: "isiksuste" },
     government: null,
     usages: ["Mitmed isiksuse omadused on pärilikud.", "Isiksuse kahestumine.", "Kodus kujuneb välja lapse isiksus.", "Ta on kindlasti üks eesti muusikaloo eredamaid isiksusi."],
     note: "inimese eriomane (vaimne) olemus või laad",
@@ -2198,7 +2198,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jaam", gloss: "station", pos: "NOUN", cefr: "A2",
     ekilexWordId: 173337,
-    parts: { NOM_SG: "jaam", GEN_SG: "jaama", PART_SG: "jaama", ILL_SG_SHORT: "jaama", PART_PL: "jaamu", GEN_PL: "jaamade" },
+    parts: { NOM_SG: "jaam", GEN_SG: "jaama", PART_SG: "jaama", ILL_SG_SHORT: "jaama", NOM_PL: "jaamad", PART_PL: "jaamu", GEN_PL: "jaamade" },
     government: null,
     usages: ["Rong saabus jaama.", "Rong väljub Tapa jaamast kell 12.00.", "Jaama ootesaalist pääses edasi kohvikusse.", "Kunstliku seemenduse jaam."],
     note: "spetsiaalsete hoonetega koht raudteel, kus rongid peatuvad ja reisijad saavad rongile ja rongilt maha minna",
@@ -2207,7 +2207,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jaanipäev", gloss: "Midsummer Day", pos: "NOUN", cefr: "A2",
     ekilexWordId: 173371,
-    parts: { NOM_SG: "jaanipäev", GEN_SG: "jaanipäeva", PART_SG: "jaanipäeva", ILL_SG_SHORT: "jaanipäeva", PART_PL: "jaanipäevi", GEN_PL: "jaanipäevade" },
+    parts: { NOM_SG: "jaanipäev", GEN_SG: "jaanipäeva", PART_SG: "jaanipäeva", ILL_SG_SHORT: "jaanipäeva", NOM_PL: "jaanipäevad", PART_PL: "jaanipäevi", GEN_PL: "jaanipäevade" },
     government: null,
     usages: ["Jaanipäevaks sõitsime maale."],
     note: "24. juuni, eesti rahvakalendris suvist pööripäeva ja kevadiste põllutööde lõppu tähistav püha",
@@ -2216,7 +2216,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jaanuar", gloss: "January", pos: "NOUN", cefr: "A1",
     ekilexWordId: 173380,
-    parts: { NOM_SG: "jaanuar", GEN_SG: "jaanuari", PART_SG: "jaanuari", ILL_SG_SHORT: "jaanuari", PART_PL: "jaanuare", GEN_PL: "jaanuaride" },
+    parts: { NOM_SG: "jaanuar", GEN_SG: "jaanuari", PART_SG: "jaanuari", ILL_SG_SHORT: "jaanuari", NOM_PL: "jaanuarid", PART_PL: "jaanuare", GEN_PL: "jaanuaride" },
     government: null,
     usages: ["Tema sünnipäev on 3. jaanuaril."],
     note: "aasta 1. kuu, põhjapoolkeral teine talvekuu",
@@ -2234,7 +2234,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jalg", gloss: "leg, foot", pos: "NOUN", cefr: "A1",
     ekilexWordId: 173648,
-    parts: { NOM_SG: "jalg", GEN_SG: "jala", PART_SG: "jalga", ILL_SG_SHORT: "jalga", PART_PL: "jalgu", GEN_PL: "jalgade" },
+    parts: { NOM_SG: "jalg", GEN_SG: "jala", PART_SG: "jalga", ILL_SG_SHORT: "jalga", NOM_PL: "jalad", PART_PL: "jalgu", GEN_PL: "jalgade" },
     government: null,
     usages: ["Lühikesed kõverad jalad.", "Nikastasin vasaku jala.", "Andres tukub toolil, jalg üle põlve.", "Lehma tagumised jalad."],
     note: "inimese või looma kehaosa, millele toetutakse ja mille abil liigutakse",
@@ -2243,7 +2243,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jalgratas", gloss: "bicycle", pos: "NOUN", cefr: "A1",
     ekilexWordId: 173688,
-    parts: { NOM_SG: "jalgratas", GEN_SG: "jalgratta", PART_SG: "jalgratast", PART_PL: "jalgrattaid", GEN_PL: "jalgrataste" },
+    parts: { NOM_SG: "jalgratas", GEN_SG: "jalgratta", PART_SG: "jalgratast", NOM_PL: "jalgrattad", PART_PL: "jalgrattaid", GEN_PL: "jalgrataste" },
     government: null,
     usages: ["Istusin jalgratta selga ja sõitsin koju.", "Käin tööl jalgrattaga.", "Jalgratast võib iseseisvalt sõiduteel juhtida vähemalt 10-aastane isik, kes on omandanud jalgratturi kvalifikatsiooni."],
     note: "jalgade abil liikuma pandav kahe-, harva kolmerattaline sõiduk",
@@ -2252,7 +2252,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jook", gloss: "drink", pos: "NOUN", cefr: "A2",
     ekilexWordId: 173970,
-    parts: { NOM_SG: "jook", GEN_SG: "joogi", PART_SG: "jooki", ILL_SG_SHORT: "jooki", PART_PL: "jooke", GEN_PL: "jookide" },
+    parts: { NOM_SG: "jook", GEN_SG: "joogi", PART_SG: "jooki", ILL_SG_SHORT: "jooki", NOM_PL: "joogid", PART_PL: "jooke", GEN_PL: "jookide" },
     government: null,
     usages: ["Suvisel ajal võtab kõige paremini janu ära kihisev jook.", "Kohapeal pakutakse kerget kõhutäidet ja kuumi jooke.", "Kange alkohoolne jook.", "Teravamaid jooke müüakse 2 cl kaupa."],
     note: "vedelik joomiseks (nt kohv, piim, mahl), ka alkohol (nt vein, konjak)",
@@ -2279,7 +2279,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jope", gloss: "jacket", pos: "NOUN", cefr: "A2",
     ekilexWordId: 174139,
-    parts: { NOM_SG: "jope", GEN_SG: "jope", PART_SG: "jopet", PART_PL: "jopesid", GEN_PL: "jopede" },
+    parts: { NOM_SG: "jope", GEN_SG: "jope", PART_SG: "jopet", NOM_PL: "joped", PART_PL: "jopesid", GEN_PL: "jopede" },
     government: null,
     usages: ["Tuult pidav kapuutsiga jope.", "Nahkjope.", "Mul oli seljas soe jope, mis kaitses tuule eest.", "Ta kandis heledat kapuutsiga jopet."],
     note: "lühem sportlik ülerõivas",
@@ -2306,7 +2306,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "juhend", gloss: "instruction, guide", pos: "NOUN", cefr: "B1",
     ekilexWordId: 174211,
-    parts: { NOM_SG: "juhend", GEN_SG: "juhendi", PART_SG: "juhendit", PART_PL: "juhendeid", GEN_PL: "juhendite" },
+    parts: { NOM_SG: "juhend", GEN_SG: "juhendi", PART_SG: "juhendit", NOM_PL: "juhendid", PART_PL: "juhendeid", GEN_PL: "juhendite" },
     government: null,
     usages: ["Ohutustehnika juhend.", "Hindamisjuhend.", "Karbis polnud kaamera kasutamise juhendit.", "Katse viidi läbi juhendi järgi."],
     note: "kirjalik juhis, eeskiri või õpetus mingis olukorras käitumiseks, millegi tegemiseks",
@@ -2324,7 +2324,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "juhtkiri", gloss: "editorial", pos: "NOUN", cefr: "B2",
     ekilexWordId: 174272,
-    parts: { NOM_SG: "juhtkiri", GEN_SG: "juhtkirja", PART_SG: "juhtkirja", ILL_SG_SHORT: "juhtkirja", PART_PL: "juhtkirju", GEN_PL: "juhtkirjade" },
+    parts: { NOM_SG: "juhtkiri", GEN_SG: "juhtkirja", PART_SG: "juhtkirja", ILL_SG_SHORT: "juhtkirja", NOM_PL: "juhtkirjad", PART_PL: "juhtkirju", GEN_PL: "juhtkirjade" },
     government: null,
     usages: [],
     note: "päevaprobleemi käsitlev, hrl esikülgedel avaldatud toimetuse artikkel ajalehes või ajakirjas",
@@ -2342,7 +2342,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "juhus", gloss: "chance, occasion", pos: "NOUN", cefr: "B1",
     ekilexWordId: 174318,
-    parts: { NOM_SG: "juhus", GEN_SG: "juhuse", PART_SG: "juhust", PART_PL: "juhuseid", GEN_PL: "juhuste" },
+    parts: { NOM_SG: "juhus", GEN_SG: "juhuse", PART_SG: "juhust", NOM_PL: "juhused", PART_PL: "juhuseid", GEN_PL: "juhuste" },
     government: null,
     usages: ["Tubased kassid kasutasid juhust ja lipsasid õue.", "See oli tegelikult juhus, et teatrisse tööle sattusin.", "Ta ei jätnud midagi juhuse hooleks.", "Tutvusime tänu õnnelikule juhusele."],
     note: "ettearvamatu, plaanitsematu sündmus või olukord (tihti millekski soodus, millekski võimalust andev)",
@@ -2351,7 +2351,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "julge", gloss: "brave", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 174346,
-    parts: { NOM_SG: "julge", GEN_SG: "julge", PART_SG: "julget", PART_PL: "julgeid", GEN_PL: "julgete" },
+    parts: { NOM_SG: "julge", GEN_SG: "julge", PART_SG: "julget", NOM_PL: "julged", PART_PL: "julgeid", GEN_PL: "julgete" },
     government: null,
     usages: ["Politseinikke autasustati julge tegutsemise eest.", "Julged seiklejad sõitsid Pärnust Peipsi poole ise tahutud paatidega.", "Mine üksi, kui sa nii julge oled!", "Esimesed julged käisid eile juba meres ujumas."],
     note: "selline, kes ei karda, ei tunne hirmu midagi teha",
@@ -2360,7 +2360,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "julgeolek", gloss: "security", pos: "NOUN", cefr: "B2",
     ekilexWordId: 174350,
-    parts: { NOM_SG: "julgeolek", GEN_SG: "julgeoleku", PART_SG: "julgeolekut", PART_PL: "julgeolekuid", GEN_PL: "julgeolekute" },
+    parts: { NOM_SG: "julgeolek", GEN_SG: "julgeoleku", PART_SG: "julgeolekut", NOM_PL: "julgeolekud", PART_PL: "julgeolekuid", GEN_PL: "julgeolekute" },
     government: null,
     usages: ["Komisjon arutas Balti riikide julgeoleku küsimust.", "Välisjulgeolek.", "Isa käis mul kommunismi ajal iga kuu julgeolekus aru andmas."],
     note: "riigi vm piirkonna kaitstus ohtude, nt sõjalise ohu, looduskatastroofi, terrorismi vastu, varustatus hädavajalike vahenditega",
@@ -2378,7 +2378,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jutustaja", gloss: "narrator", pos: "NOUN", cefr: null,
     ekilexWordId: 174564,
-    parts: { NOM_SG: "jutustaja", GEN_SG: "jutustaja", PART_SG: "jutustajat", PART_PL: "jutustajaid", GEN_PL: "jutustajate" },
+    parts: { NOM_SG: "jutustaja", GEN_SG: "jutustaja", PART_SG: "jutustajat", NOM_PL: "jutustajad", PART_PL: "jutustajaid", GEN_PL: "jutustajate" },
     government: null,
     usages: ["Muhu rahvalaulikute ja jutustajate salvestamine."],
     note: "inimene, kes millestki räägib",
@@ -2396,7 +2396,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "juuli", gloss: "July", pos: "NOUN", cefr: "A1",
     ekilexWordId: 174688,
-    parts: { NOM_SG: "juuli", GEN_SG: "juuli", PART_SG: "juulit", PART_PL: "juulisid", GEN_PL: "juulide" },
+    parts: { NOM_SG: "juuli", GEN_SG: "juuli", PART_SG: "juulit", NOM_PL: "juulid", PART_PL: "juulisid", GEN_PL: "juulide" },
     government: null,
     usages: ["Lähen juulis puhkusele."],
     note: "aasta 7. kuu, põhjapoolkeral teine suvekuu",
@@ -2405,7 +2405,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "juuni", gloss: "June", pos: "NOUN", cefr: "A1",
     ekilexWordId: 174691,
-    parts: { NOM_SG: "juuni", GEN_SG: "juuni", PART_SG: "juunit", PART_PL: "juunisid", GEN_PL: "juunide" },
+    parts: { NOM_SG: "juuni", GEN_SG: "juuni", PART_SG: "juunit", NOM_PL: "juunid", PART_PL: "juunisid", GEN_PL: "juunide" },
     government: null,
     usages: ["Jaanipäev on 24. juunil."],
     note: "aasta 6. kuu, põhjapoolkeral esimene suvekuu",
@@ -2432,7 +2432,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "juust", gloss: "cheese", pos: "NOUN", cefr: "A1",
     ekilexWordId: 174817,
-    parts: { NOM_SG: "juust", GEN_SG: "juustu", PART_SG: "juustu", ILL_SG_SHORT: "juustu", PART_PL: "juuste", GEN_PL: "juustude" },
+    parts: { NOM_SG: "juust", GEN_SG: "juustu", PART_SG: "juustu", ILL_SG_SHORT: "juustu", NOM_PL: "juustud", PART_PL: "juuste", GEN_PL: "juustude" },
     government: null,
     usages: ["Pehmed ja kõvad juustud.", "Õhtusöögiks on makaronid juustuga.", "Kas sa soovid juustu või vorstiga võileiba?", "Ostsin pool kilo juustu."],
     note: "valgurikas toiduaine, mida saadakse piimast kalgendamise ja vedeliku eraldamise teel",
@@ -2441,7 +2441,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jõgi", gloss: "river", pos: "NOUN", cefr: "A1",
     ekilexWordId: 174889,
-    parts: { NOM_SG: "jõgi", GEN_SG: "jõe", PART_SG: "jõge", ILL_SG_SHORT: "jõkke", PART_PL: "jõgesid", GEN_PL: "jõgede" },
+    parts: { NOM_SG: "jõgi", GEN_SG: "jõe", PART_SG: "jõge", ILL_SG_SHORT: "jõkke", NOM_PL: "jõed", PART_PL: "jõgesid", GEN_PL: "jõgede" },
     government: null,
     usages: ["Sügaval oru põhjas lookleb jõgi.", "Laevatatav jõgi.", "Amazonas on üks maailma pikimaid jõgesid.", "Käisime jõe ääres kala püüdmas."],
     note: "mööda pikka kitsast süvendit voolav veekogu",
@@ -2468,7 +2468,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jõustumine", gloss: "entry into force", pos: "NOUN", cefr: null,
     ekilexWordId: 265672,
-    parts: { NOM_SG: "jõustumine", GEN_SG: "jõustumise", PART_SG: "jõustumist", ILL_SG_SHORT: "jõustumisse", PART_PL: "jõustumisi", GEN_PL: "jõustumiste" },
+    parts: { NOM_SG: "jõustumine", GEN_SG: "jõustumise", PART_SG: "jõustumist", ILL_SG_SHORT: "jõustumisse", NOM_PL: "jõustumised", PART_PL: "jõustumisi", GEN_PL: "jõustumiste" },
     government: null,
     usages: [],
     note: "kehtima hakkamine, juriidilise jõu omandamine",
@@ -2504,7 +2504,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "järeldus", gloss: "conclusion", pos: "NOUN", cefr: "B1",
     ekilexWordId: 175203,
-    parts: { NOM_SG: "järeldus", GEN_SG: "järelduse", PART_SG: "järeldust", ILL_SG_SHORT: "järeldusse", PART_PL: "järeldusi", GEN_PL: "järelduste" },
+    parts: { NOM_SG: "järeldus", GEN_SG: "järelduse", PART_SG: "järeldust", ILL_SG_SHORT: "järeldusse", NOM_PL: "järeldused", PART_PL: "järeldusi", GEN_PL: "järelduste" },
     government: null,
     usages: ["Võiks teha järelduse, et kasulik on süüa ainult rasvata piimatooteid.", "Võrdle vastuseid ning tee järeldused.", "Komisjon jõudis järeldusele, et ..", "Olin teinud täiesti vale järelduse."],
     note: "andmete, faktide vm põhjal tehtav (loogiline) otsustus",
@@ -2522,7 +2522,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "järgnevus", gloss: "sequence", pos: "NOUN", cefr: null,
     ekilexWordId: 175332,
-    parts: { NOM_SG: "järgnevus", GEN_SG: "järgnevuse", PART_SG: "järgnevust", ILL_SG_SHORT: "järgnevusse", PART_PL: "järgnevusi", GEN_PL: "järgnevuste" },
+    parts: { NOM_SG: "järgnevus", GEN_SG: "järgnevuse", PART_SG: "järgnevust", ILL_SG_SHORT: "järgnevusse", NOM_PL: "järgnevused", PART_PL: "järgnevusi", GEN_PL: "järgnevuste" },
     government: null,
     usages: ["Faktide esitamine nende kronoloogilises järgnevuses.", "Pilvede järgnevus sõltub aastaajast."],
     note: "üksteise järel kindla vastastikuse seose alusel ilmnemine, paiknemine vms",
@@ -2531,7 +2531,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "järjekindel", gloss: "consistent", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 175339,
-    parts: { NOM_SG: "järjekindel", GEN_SG: "järjekindla", PART_SG: "järjekindlat", PART_PL: "järjekindlaid", GEN_PL: "järjekindlate" },
+    parts: { NOM_SG: "järjekindel", GEN_SG: "järjekindla", PART_SG: "järjekindlat", NOM_PL: "järjekindlad", PART_PL: "järjekindlaid", GEN_PL: "järjekindlate" },
     government: null,
     usages: ["Õpetaja peab olema kannatlik ja järjekindel."],
     note: "tegutsemises kindlat sihti järgiv, visa ja kõrvalekaldumatu",
@@ -2540,7 +2540,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "järjekord", gloss: "queue, order", pos: "NOUN", cefr: "A2",
     ekilexWordId: 175341,
-    parts: { NOM_SG: "järjekord", GEN_SG: "järjekorra", PART_SG: "järjekorda", ILL_SG_SHORT: "järjekorda", PART_PL: "järjekordi", GEN_PL: "järjekordade" },
+    parts: { NOM_SG: "järjekord", GEN_SG: "järjekorra", PART_SG: "järjekorda", ILL_SG_SHORT: "järjekorda", NOM_PL: "järjekorrad", PART_PL: "järjekordi", GEN_PL: "järjekordade" },
     government: null,
     usages: ["Nimed on tähestikulises järjekorras.", "Õmbles vales järjekorras, harutas lahti ja õmbles uuesti.", "Esinemisjärjekord.", "Sõnade järjekord lauses on vale."],
     note: "järgnemise, reastumise kord või süsteem, kus igal asjal, nähtusel vm on oma kindel koht",
@@ -2549,7 +2549,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "järv", gloss: "lake", pos: "NOUN", cefr: "A1",
     ekilexWordId: 175379,
-    parts: { NOM_SG: "järv", GEN_SG: "järve", PART_SG: "järve", ILL_SG_SHORT: "järve", PART_PL: "järvi", GEN_PL: "järvede" },
+    parts: { NOM_SG: "järv", GEN_SG: "järve", PART_SG: "järve", ILL_SG_SHORT: "järve", NOM_PL: "järved", PART_PL: "järvi", GEN_PL: "järvede" },
     government: null,
     usages: ["Käisime järves ujumas.", "Kalamehed sõitsid paadiga järvele.", "Maja ehitati järve kaldale."],
     note: "suurem veega täitunud maismaanõgu, mis ei ole otseses ühenduses merega",
@@ -2576,7 +2576,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jätkusuutlik", gloss: "sustainable", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 175430,
-    parts: { NOM_SG: "jätkusuutlik", GEN_SG: "jätkusuutliku", PART_SG: "jätkusuutlikku", ILL_SG_SHORT: "jätkusuutlikku", PART_PL: "jätkusuutlikke", GEN_PL: "jätkusuutlike" },
+    parts: { NOM_SG: "jätkusuutlik", GEN_SG: "jätkusuutliku", PART_SG: "jätkusuutlikku", ILL_SG_SHORT: "jätkusuutlikku", NOM_PL: "jätkusuutlikud", PART_PL: "jätkusuutlikke", GEN_PL: "jätkusuutlike" },
     government: null,
     usages: ["Jätkusuutlik turism.", "Eesti maakinode võrgustik pole praegusel kujul jätkusuutlik."],
     note: "edasiseks tegevuseks, toimimiseks võimeline, suuteline oma tegevust jätkama",
@@ -2585,7 +2585,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jää", gloss: "ice", pos: "NOUN", cefr: "A1",
     ekilexWordId: 175439,
-    parts: { NOM_SG: "jää", GEN_SG: "jää", PART_SG: "jääd", PART_PL: "jääsid", GEN_PL: "jääde" },
+    parts: { NOM_SG: "jää", GEN_SG: "jää", PART_SG: "jääd", NOM_PL: "jääd", PART_PL: "jääsid", GEN_PL: "jääde" },
     government: null,
     usages: ["Lisas kokteiliklaasi ohtralt jääd.", "Autoaknad tuli jääst ja lumest puhtaks kraapida.", "Jää sulab.", "Kas sa soovid oma kokteili sisse jääd ka?"],
     note: "külmunud, tahkes olekus vesi",
@@ -2603,7 +2603,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "jäätmed", gloss: "waste", pos: "NOUN", cefr: "B2",
     ekilexWordId: 175581,
-    parts: { NOM_SG: "jääde", GEN_SG: "jäätme", PART_SG: "jäädet", PART_PL: "jäätmeid", GEN_PL: "jäätmete" },
+    parts: { NOM_SG: "jääde", GEN_SG: "jäätme", PART_SG: "jäädet", NOM_PL: "jäätmed", PART_PL: "jäätmeid", GEN_PL: "jäätmete" },
     government: null,
     usages: ["Radioaktiivsed jäätmed.", "Koduses majapidamises sorteeritakse jäätmeid.", "Kas patareid kuuluvad ohtlike jäätmete hulka?", "Jäätmed liigitatakse ohtlikeks ja tavajäätmeteks jäätmenimistu alusel."],
     note: "kasutuselt kõrvaldatud ained, esemed või nende jäägid",
@@ -2621,7 +2621,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaalukas", gloss: "weighty", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 175728,
-    parts: { NOM_SG: "kaalukas", GEN_SG: "kaaluka", PART_SG: "kaalukat", PART_PL: "kaalukaid", GEN_PL: "kaalukate" },
+    parts: { NOM_SG: "kaalukas", GEN_SG: "kaaluka", PART_SG: "kaalukat", NOM_PL: "kaalukad", PART_PL: "kaalukaid", GEN_PL: "kaalukate" },
     government: null,
     usages: ["Sel hooajal on kergejõustiklastel olnud rohkesti kaalukaid võistlusi.", "Tal ei olnud oma käitumise põhjenduseks tuua ühtegi kaalukat argumenti.", "Kaalukamad kohvrid asetati pagasiruumi."],
     note: "(mõju, tähtsuse kohta:) väga oluline, määrava tähtsusega, selline, mis nõuab keskendumist või järelemõtlemist, mitte kergelt võetav",
@@ -2648,7 +2648,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaart", gloss: "map, card", pos: "NOUN", cefr: "A1",
     ekilexWordId: 175871,
-    parts: { NOM_SG: "kaart", GEN_SG: "kaardi", PART_SG: "kaarti", ILL_SG_SHORT: "kaarti", PART_PL: "kaarte", GEN_PL: "kaartide" },
+    parts: { NOM_SG: "kaart", GEN_SG: "kaardi", PART_SG: "kaarti", ILL_SG_SHORT: "kaarti", NOM_PL: "kaardid", PART_PL: "kaarte", GEN_PL: "kaartide" },
     government: null,
     usages: ["Õpilased uurisid tunnis Euroopa kaarti.", "Ma ei leia meie maja kaardilt üles.", "Näita kaardi pealt, kus asub Itaalia.", "Lapsed saatsid vanaemale sünnipäevaks isetehtud kaardi."],
     note: "maapinna vähendatud ja üldistatud tasapinnaline kujutis, mis näitab mitmesuguste objektide ja nähtuste paiknemist",
@@ -2675,7 +2675,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaebus", gloss: "complaint", pos: "NOUN", cefr: "B2",
     ekilexWordId: 176212,
-    parts: { NOM_SG: "kaebus", GEN_SG: "kaebuse", PART_SG: "kaebust", ILL_SG_SHORT: "kaebusse", PART_PL: "kaebusi", GEN_PL: "kaebuste" },
+    parts: { NOM_SG: "kaebus", GEN_SG: "kaebuse", PART_SG: "kaebust", ILL_SG_SHORT: "kaebusse", NOM_PL: "kaebused", PART_PL: "kaebusi", GEN_PL: "kaebuste" },
     government: null,
     usages: ["Saabumisel ta kaebusi ei esitanud.", "Korduvad kaebused sundisid komisjoni küsimuse siiski üles võtma.", "Ta pöördus kaebusega politseisse.", "Kirjutasin kaebuse halva teeninduse kohta."],
     note: "milleski esinevatele puudustele ja eksimustele tähelepanu juhtiv, hrl süüdistav avaldus",
@@ -2684,7 +2684,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaheksa", gloss: "eight", pos: "NOUN", cefr: "A1",
     ekilexWordId: 176412,
-    parts: { NOM_SG: "kaheksa", GEN_SG: "kaheksa", PART_SG: "kaheksat", PART_PL: "kaheksaid", GEN_PL: "kaheksate" },
+    parts: { NOM_SG: "kaheksa", GEN_SG: "kaheksa", PART_SG: "kaheksat", NOM_PL: "kaheksad", PART_PL: "kaheksaid", GEN_PL: "kaheksate" },
     government: null,
     usages: ["Kakskümmend kaheksa.", "Tööpäev kestab kaheksa tundi.", "Kell on kaheksa.", "Jõudsin tööle kell kaheksa."],
     note: "põhiarv 8",
@@ -2693,7 +2693,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaheldav", gloss: "questionable", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 299159,
-    parts: { NOM_SG: "kaheldav", GEN_SG: "kaheldava", PART_SG: "kaheldavat", PART_PL: "kaheldavaid", GEN_PL: "kaheldavate" },
+    parts: { NOM_SG: "kaheldav", GEN_SG: "kaheldava", PART_SG: "kaheldavat", NOM_PL: "kaheldavad", PART_PL: "kaheldavaid", GEN_PL: "kaheldavate" },
     government: null,
     usages: ["Presidendile on antud kaheldava väärtusega nõu.", "Väga kaheldav otsus."],
     note: "kahtlusi äratav, kahtlema või kahtlustama panev",
@@ -2702,7 +2702,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kahemõtteline", gloss: "ambiguous", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 176468,
-    parts: { NOM_SG: "kahemõtteline", GEN_SG: "kahemõttelise", PART_SG: "kahemõttelist", ILL_SG_SHORT: "kahemõttelisse", PART_PL: "kahemõttelisi", GEN_PL: "kahemõtteliste" },
+    parts: { NOM_SG: "kahemõtteline", GEN_SG: "kahemõttelise", PART_SG: "kahemõttelist", ILL_SG_SHORT: "kahemõttelisse", NOM_PL: "kahemõttelised", PART_PL: "kahemõttelisi", GEN_PL: "kahemõtteliste" },
     government: null,
     usages: ["Kahemõttelised reklaamid ei üllata enam ammu.", "Tegijad on lubanud, et film ei sisalda kahemõttelisi stseene."],
     note: "kahesugust mõistmist või tõlgendamist võimaldav, hrl sündsusetut vihjet sisaldav",
@@ -2711,7 +2711,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kahju", gloss: "damage, pity", pos: "NOUN", cefr: "A2",
     ekilexWordId: 176563,
-    parts: { NOM_SG: "kahju", GEN_SG: "kahju", PART_SG: "kahju", PART_PL: "kahjusid", GEN_PL: "kahjude" },
+    parts: { NOM_SG: "kahju", GEN_SG: "kahju", PART_SG: "kahju", NOM_PL: "kahjud", PART_PL: "kahjusid", GEN_PL: "kahjude" },
     government: null,
     usages: ["Temast on rohkem kahju kui kasu.", "Vale ravi võib tervisele kahju teha.", "Ta teeb raske tööga oma tervisele kahju.", "Haigena tööle tulekust on rohkem kahju kui kasu."],
     note: "häda tekitav, kahjustav nähtus või olukord, miski halb",
@@ -2720,7 +2720,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kahjulik", gloss: "harmful", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 176571,
-    parts: { NOM_SG: "kahjulik", GEN_SG: "kahjuliku", PART_SG: "kahjulikku", ILL_SG_SHORT: "kahjulikku", PART_PL: "kahjulikke", GEN_PL: "kahjulike" },
+    parts: { NOM_SG: "kahjulik", GEN_SG: "kahjuliku", PART_SG: "kahjulikku", ILL_SG_SHORT: "kahjulikku", NOM_PL: "kahjulikud", PART_PL: "kahjulikke", GEN_PL: "kahjulike" },
     government: null,
     usages: ["Kahjulike kõrvalmõjudega ravim.", "Kahjulikud ja kasulikud bakterid.", "Kahjulikud ained kosmeetikas.", "Hiljutine investeering osutus majanduslikult kahjulikuks."],
     note: "kahjustav, viga või kahju tegev",
@@ -2729,7 +2729,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kahjum", gloss: "loss", pos: "NOUN", cefr: "B1",
     ekilexWordId: 176572,
-    parts: { NOM_SG: "kahjum", GEN_SG: "kahjumi", PART_SG: "kahjumit", PART_PL: "kahjumeid", GEN_PL: "kahjumite" },
+    parts: { NOM_SG: "kahjum", GEN_SG: "kahjumi", PART_SG: "kahjumit", NOM_PL: "kahjumid", PART_PL: "kahjumeid", GEN_PL: "kahjumite" },
     government: null,
     usages: [],
     note: "rahasumma, mille võrra ettevõtte kulud ületavad tulusid",
@@ -2747,7 +2747,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kahtlus", gloss: "doubt", pos: "NOUN", cefr: "B1",
     ekilexWordId: 176621,
-    parts: { NOM_SG: "kahtlus", GEN_SG: "kahtluse", PART_SG: "kahtlust", ILL_SG_SHORT: "kahtlusse", PART_PL: "kahtlusi", GEN_PL: "kahtluste" },
+    parts: { NOM_SG: "kahtlus", GEN_SG: "kahtluse", PART_SG: "kahtlust", ILL_SG_SHORT: "kahtlusse", NOM_PL: "kahtlused", PART_PL: "kahtlusi", GEN_PL: "kahtluste" },
     government: null,
     usages: ["Katsun oma kahtlusi põhjendada.", "Mul on kuri kahtlus, et täna õhtul ma nälga jäängi.", "Ebaõnnestumised seavad kogu projekti kahtluse alla.", "Kahtluse all on ka projekti tasuvus."],
     note: "arvamine, et miski ei pruugi tõele vastata, millegi küsitavaks, ebakindlaks pidamine",
@@ -2756,7 +2756,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kahtlustatav", gloss: "suspect", pos: "NOUN", cefr: null,
     ekilexWordId: 176627,
-    parts: { NOM_SG: "kahtlustatav", GEN_SG: "kahtlustatava", PART_SG: "kahtlustatavat", PART_PL: "kahtlustatavaid", GEN_PL: "kahtlustatavate" },
+    parts: { NOM_SG: "kahtlustatav", GEN_SG: "kahtlustatava", PART_SG: "kahtlustatavat", NOM_PL: "kahtlustatavad", PART_PL: "kahtlustatavaid", GEN_PL: "kahtlustatavate" },
     government: null,
     usages: ["Kahtlustatavale selgitatakse viivitamata tema õigusi ja kohustusi ning ta kuulatakse üle kahtlustuse sisu kohta.", "Politsei pidas kohapeal kinni süütamises kahtlustava mehe."],
     note: "isik, kes on kuriteos kahtlustatavana kinni peetud, või isik, keda on piisav alus kahtlustada kuriteo toimepanemises",
@@ -2765,7 +2765,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaitse", gloss: "protection", pos: "NOUN", cefr: "A2",
     ekilexWordId: 176710,
-    parts: { NOM_SG: "kaitse", GEN_SG: "kaitse", PART_SG: "kaitset", PART_PL: "kaitseid", GEN_PL: "kaitsete" },
+    parts: { NOM_SG: "kaitse", GEN_SG: "kaitse", PART_SG: "kaitset", NOM_PL: "kaitsed", PART_PL: "kaitseid", GEN_PL: "kaitsete" },
     government: null,
     usages: ["Loodusvarade kaitse.", "Gea astus minu kaitseks välja.", "Kate pakub tõhusat kaitset tuisklume eest.", "Lisakaitse."],
     note: "millegi kindlustamine ohu, kahju vm vastu, kellegi või millegi kaitsmine millegi eest",
@@ -2801,7 +2801,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaks", gloss: "two", pos: "NOUN", cefr: "A1",
     ekilexWordId: 176864,
-    parts: { NOM_SG: "kaks", GEN_SG: "kahe", PART_SG: "kaht", ILL_SG_SHORT: "kahte", PART_PL: "kahtesid", GEN_PL: "kahtede" },
+    parts: { NOM_SG: "kaks", GEN_SG: "kahe", PART_SG: "kaht", ILL_SG_SHORT: "kahte", NOM_PL: "kahed", PART_PL: "kahtesid", GEN_PL: "kahtede" },
     government: null,
     usages: ["Kakskümmend kaks.", "Kaks pluss kaks.", "Peres on kaks last.", "Kell saab varsti kaks."],
     note: "põhiarv 2",
@@ -2810,7 +2810,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kakskümmend", gloss: "twenty", pos: "NOUN", cefr: "A1",
     ekilexWordId: 176917,
-    parts: { NOM_SG: "kakskümmend", GEN_SG: "kahekümne", PART_SG: "kahtekümmend", PART_PL: "kahekümneid", GEN_PL: "kahekümnete" },
+    parts: { NOM_SG: "kakskümmend", GEN_SG: "kahekümne", PART_SG: "kahtekümmend", NOM_PL: "kahekümned", PART_PL: "kahekümneid", GEN_PL: "kahekümnete" },
     government: null,
     usages: ["Arvutamine ühest kahekümneni.", "Buss nr 20.", "Hilinesin kakskümmend minutit.", "Raamat koosneb kahekümnest peatükist."],
     note: "põhiarv 20",
@@ -2819,7 +2819,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaksteist", gloss: "twelve", pos: "NOUN", cefr: "A1",
     ekilexWordId: 176923,
-    parts: { NOM_SG: "kaksteist", GEN_SG: "kaheteistkümne", PART_SG: "kahteteist", PART_PL: "kaheteistkümneid", GEN_PL: "kaheteistkümnete" },
+    parts: { NOM_SG: "kaksteist", GEN_SG: "kaheteistkümne", PART_SG: "kahteteist", NOM_PL: "kaheteistkümned", PART_PL: "kaheteistkümneid", GEN_PL: "kaheteistkümnete" },
     government: null,
     usages: ["Kaksteist pluss üks.", "Buss nr 12.", "Osales kaksteist veinitootjat.", "Aastas on kaksteist kuud."],
     note: "arv 12",
@@ -2828,7 +2828,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kala", gloss: "fish", pos: "NOUN", cefr: "A1",
     ekilexWordId: 176939,
-    parts: { NOM_SG: "kala", GEN_SG: "kala", PART_SG: "kala", PART_PL: "kalu", GEN_PL: "kalade" },
+    parts: { NOM_SG: "kala", GEN_SG: "kala", PART_SG: "kala", NOM_PL: "kalad", PART_PL: "kalu", GEN_PL: "kalade" },
     government: null,
     usages: ["Vana kalur püüdis hiiglasliku kala.", "Ootasin, et kala näkkaks.", "Kala ujus sügavamale.", "Akvaariumis ujusid värvilised kalad."],
     note: "vees elav kõigusoojane selgroogne, kes hingab lõpustega, liigub uimede ja saba abil ning on hrl kaetud soomustega",
@@ -2837,7 +2837,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kalambuur", gloss: "pun", pos: "NOUN", cefr: null,
     ekilexWordId: 176979,
-    parts: { NOM_SG: "kalambuur", GEN_SG: "kalambuuri", PART_SG: "kalambuuri", ILL_SG_SHORT: "kalambuuri", PART_PL: "kalambuure", GEN_PL: "kalambuuride" },
+    parts: { NOM_SG: "kalambuur", GEN_SG: "kalambuuri", PART_SG: "kalambuuri", ILL_SG_SHORT: "kalambuuri", NOM_PL: "kalambuurid", PART_PL: "kalambuure", GEN_PL: "kalambuuride" },
     government: null,
     usages: ["Mees pildus kalambuure viies keeles."],
     note: "sõnade ootamatutel seostel, hrl tähendustel rajanev vaimukas väljendus, nali vm",
@@ -2846,7 +2846,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kallis", gloss: "expensive, dear", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 177257,
-    parts: { NOM_SG: "kallis", GEN_SG: "kalli", PART_SG: "kallist", PART_PL: "kalleid", GEN_PL: "kalliste" },
+    parts: { NOM_SG: "kallis", GEN_SG: "kalli", PART_SG: "kallist", NOM_PL: "kallid", PART_PL: "kalleid", GEN_PL: "kalliste" },
     government: null,
     usages: ["Kallis ülikond.", "Uhke ja kallis auto.", "Ta sõidab kalli autoga.", "Pilet oli liiga kallis."],
     note: "palju raha maksev, kõrge hinnaga",
@@ -2855,7 +2855,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kampaania", gloss: "campaign", pos: "NOUN", cefr: "A2",
     ekilexWordId: 177458,
-    parts: { NOM_SG: "kampaania", GEN_SG: "kampaania", PART_SG: "kampaaniat", PART_PL: "kampaaniaid", GEN_PL: "kampaaniate" },
+    parts: { NOM_SG: "kampaania", GEN_SG: "kampaania", PART_SG: "kampaaniat", NOM_PL: "kampaaniad", PART_PL: "kampaaniaid", GEN_PL: "kampaaniate" },
     government: null,
     usages: ["Edukas allkirjade kogumise kampaania.", "Suitsetamisvastane kampaania.", "Kampaania „Osta kolm, maksa kahe eest”.", "Teavituskampaania."],
     note: "sihipärane (lühiajaline) tegevus mingi eesmärgi saavutamiseks ning osalejate või ostjate ligimeelitamiseks (nt et midagi reklaamida ja müüa, valimistel hääli saada)",
@@ -2864,7 +2864,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kampsun", gloss: "jumper, sweater", pos: "NOUN", cefr: "A2",
     ekilexWordId: 177475,
-    parts: { NOM_SG: "kampsun", GEN_SG: "kampsuni", PART_SG: "kampsunit", PART_PL: "kampsuneid", GEN_PL: "kampsunite" },
+    parts: { NOM_SG: "kampsun", GEN_SG: "kampsuni", PART_SG: "kampsunit", NOM_PL: "kampsunid", PART_PL: "kampsuneid", GEN_PL: "kampsunite" },
     government: null,
     usages: ["Mõni eelistab sooja villast kampsunit pintsakule.", "Abikaasa on mulle kudunud hulga kampsuneid.", "Kootud kampsuneid Ruthi garderoobis ei leidu.", "Ta kannab villast kampsunit."],
     note: "varrukatega, üle pea selga tõmmatav või eest lahti käiv silmkoeese",
@@ -2873,7 +2873,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kandidaat", gloss: "candidate", pos: "NOUN", cefr: "A2",
     ekilexWordId: 177589,
-    parts: { NOM_SG: "kandidaat", GEN_SG: "kandidaadi", PART_SG: "kandidaati", ILL_SG_SHORT: "kandidaati", PART_PL: "kandidaate", GEN_PL: "kandidaatide" },
+    parts: { NOM_SG: "kandidaat", GEN_SG: "kandidaadi", PART_SG: "kandidaati", ILL_SG_SHORT: "kandidaati", NOM_PL: "kandidaadid", PART_PL: "kandidaate", GEN_PL: "kandidaatide" },
     government: null,
     usages: ["Detsembris saab esitada kandidaate Läänemaa parima sportlase tiitlile.", "Harju maavanema kandidaat.", "Linnapeakandidaat.", "Missikandidaat."],
     note: "inimene, kes on esitatud valimiseks mingile (ameti)kohale, vastuvõtmiseks mingisse organisatsiooni, mingi auhinna saamiseks või kes taotleb mingit kohta, tiitlit vms",
@@ -2900,7 +2900,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kannatlik", gloss: "patient", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 177720,
-    parts: { NOM_SG: "kannatlik", GEN_SG: "kannatliku", PART_SG: "kannatlikku", ILL_SG_SHORT: "kannatlikku", PART_PL: "kannatlikke", GEN_PL: "kannatlike" },
+    parts: { NOM_SG: "kannatlik", GEN_SG: "kannatliku", PART_SG: "kannatlikku", ILL_SG_SHORT: "kannatlikku", NOM_PL: "kannatlikud", PART_PL: "kannatlikke", GEN_PL: "kannatlike" },
     government: null,
     usages: ["Õpetaja oli lastega väga kannatlik.", "Selle muusikateose kuulamine nõuab kannatlikku meelt.", "Kannatlik ootamine tasus end ära.", "Ta on väga lahke ja kannatlik õpetaja."],
     note: "kõike rahulikult taluv, närviliseks või kärsituks muutumatu",
@@ -2909,7 +2909,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kantseliitlik", gloss: "bureaucratic", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 177795,
-    parts: { NOM_SG: "kantseliitlik", GEN_SG: "kantseliitliku", PART_SG: "kantseliitlikku", ILL_SG_SHORT: "kantseliitlikku", PART_PL: "kantseliitlikke", GEN_PL: "kantseliitlike" },
+    parts: { NOM_SG: "kantseliitlik", GEN_SG: "kantseliitliku", PART_SG: "kantseliitlikku", ILL_SG_SHORT: "kantseliitlikku", NOM_PL: "kantseliitlikud", PART_PL: "kantseliitlikke", GEN_PL: "kantseliitlike" },
     government: null,
     usages: ["Võib-olla on kantseliitliku väljendusviisi põhjus selles, et tegemist on juristiharidusega inimesega?", "Hoidkem mõtted, sõnad ja kirjaviis selged ning ärgem matkem seda kohati kantseliitlikku kõnepruuki."],
     note: "(keelepruugi kohta:) kuivalt ametlik, puine, vahel ka ülemäära keerukas või kohmakas",
@@ -2936,7 +2936,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "karistus", gloss: "punishment", pos: "NOUN", cefr: "B1",
     ekilexWordId: 178156,
-    parts: { NOM_SG: "karistus", GEN_SG: "karistuse", PART_SG: "karistust", ILL_SG_SHORT: "karistusse", PART_PL: "karistusi", GEN_PL: "karistuste" },
+    parts: { NOM_SG: "karistus", GEN_SG: "karistuse", PART_SG: "karistust", ILL_SG_SHORT: "karistusse", NOM_PL: "karistused", PART_PL: "karistusi", GEN_PL: "karistuste" },
     government: null,
     usages: ["Kohus mõistis talle rahalise karistuse.", "Elu näitab, et igale kuriteole järgneb karistus.", "Kuriteo osalised langevad karistuse alla.", "Maksimumkaristus."],
     note: "kasvatus- või mõjutusvahend, mida rakendatakse kuriteo, üleastumise, halva käitumise vms puhul",
@@ -2954,7 +2954,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kartul", gloss: "potato", pos: "NOUN", cefr: "A1",
     ekilexWordId: 178381,
-    parts: { NOM_SG: "kartul", GEN_SG: "kartuli", PART_SG: "kartulit", PART_PL: "kartuleid", GEN_PL: "kartulite" },
+    parts: { NOM_SG: "kartul", GEN_SG: "kartuli", PART_SG: "kartulit", NOM_PL: "kartulid", PART_PL: "kartuleid", GEN_PL: "kartulite" },
     government: null,
     usages: ["Värskeid kartuleid süüakse sageli koos koorega.", "Praetud kartulid.", "Palun koori kartulid ära.", "Kas sa soovid liha kõrvale kartuleid või riisi?"],
     note: "köögiviljana kasvatatav mugulaid moodustav üheaastane taim",
@@ -2972,7 +2972,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kass", gloss: "cat", pos: "NOUN", cefr: "A1",
     ekilexWordId: 178622,
-    parts: { NOM_SG: "kass", GEN_SG: "kassi", PART_SG: "kassi", ILL_SG_SHORT: "kassi", PART_PL: "kasse", GEN_PL: "kasside" },
+    parts: { NOM_SG: "kass", GEN_SG: "kassi", PART_SG: "kassi", ILL_SG_SHORT: "kassi", NOM_PL: "kassid", PART_PL: "kasse", GEN_PL: "kasside" },
     government: null,
     usages: ["Kass oli jälle hiirejahil käinud.", "Kass ja koer said omavahel hästi läbi.", "Kassil on teravad küüned.", "Meie kassil on pojad."],
     note: "metskassist põlvnev pehme karvaga koduloom",
@@ -2981,7 +2981,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaste", gloss: "sauce", pos: "NOUN", cefr: "A2",
     ekilexWordId: 178715,
-    parts: { NOM_SG: "kaste", GEN_SG: "kastme", PART_SG: "kastet", PART_PL: "kastmeid", GEN_PL: "kastmete" },
+    parts: { NOM_SG: "kaste", GEN_SG: "kastme", PART_SG: "kastet", NOM_PL: "kastmed", PART_PL: "kastmeid", GEN_PL: "kastmete" },
     government: null,
     usages: ["Vasikakarree suitsuploomi kastmes.", "Kuumad ja külmad kastmed.", "Magus kaste.", "Tõsta kartulite peale kastet ka."],
     note: "vedel või poolvedel lisand, mis muudab toidu mahlasemaks ja maitsvamaks",
@@ -2990,7 +2990,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kasum", gloss: "profit", pos: "NOUN", cefr: "B2",
     ekilexWordId: 178778,
-    parts: { NOM_SG: "kasum", GEN_SG: "kasumi", PART_SG: "kasumit", PART_PL: "kasumeid", GEN_PL: "kasumite" },
+    parts: { NOM_SG: "kasum", GEN_SG: "kasumi", PART_SG: "kasumit", NOM_PL: "kasumid", PART_PL: "kasumeid", GEN_PL: "kasumite" },
     government: null,
     usages: ["Pank teenis esimeses kvartalis 20 miljonit eurot kasumit.", "Ärikasum.", "Hiigelkasum."],
     note: "rahasumma, mille võrra ettevõtte tulud ületavad kulusid",
@@ -2999,7 +2999,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kasutajakogemus", gloss: "user experience", pos: "NOUN", cefr: null,
     ekilexWordId: 1468455,
-    parts: { NOM_SG: "kasutajakogemus", GEN_SG: "kasutajakogemuse", PART_SG: "kasutajakogemust", ILL_SG_SHORT: "kasutajakogemusse", PART_PL: "kasutajakogemusi", GEN_PL: "kasutajakogemuste" },
+    parts: { NOM_SG: "kasutajakogemus", GEN_SG: "kasutajakogemuse", PART_SG: "kasutajakogemust", ILL_SG_SHORT: "kasutajakogemusse", NOM_PL: "kasutajakogemused", PART_PL: "kasutajakogemusi", GEN_PL: "kasutajakogemuste" },
     government: null,
     usages: ["IT, andmeteadus, ärianalüütika, tehisintellekt ja kasutajakogemuse disain on osa tulevikupangandusest.", "Parima kasutajakogemuse jaoks tuleb leida ruuterile sobivaim võimalik asukoht.", "Täname teid jagatud kasutajakogemuse eest!", "Ühe panga kasutajakogemus mobiilis on palju parem kui teise oma."],
     note: "see, mida inimene kogeb mingi toote, süsteemi või teenuse kasutamisel (hõlmab nt kasutaja emotsioone, käitumist, reaktsioone)",
@@ -3017,7 +3017,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kasutu", gloss: "useless", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 178812,
-    parts: { NOM_SG: "kasutu", GEN_SG: "kasutu", PART_SG: "kasutut", PART_PL: "kasutuid", GEN_PL: "kasutute" },
+    parts: { NOM_SG: "kasutu", GEN_SG: "kasutu", PART_SG: "kasutut", NOM_PL: "kasutud", PART_PL: "kasutuid", GEN_PL: "kasutute" },
     government: null,
     usages: ["Minu jaoks on tegu järjekordse kasutu vidinaga.", "Käib vilgas, ent kasutu vaidlus.", "Kasutuks muutunud seade."],
     note: "selline, mida pole vaja, millest pole kasu",
@@ -3026,7 +3026,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kasv", gloss: "growth", pos: "NOUN", cefr: "A2",
     ekilexWordId: 178836,
-    parts: { NOM_SG: "kasv", GEN_SG: "kasvu", PART_SG: "kasvu", ILL_SG_SHORT: "kasvu", PART_PL: "kasve", GEN_PL: "kasvude" },
+    parts: { NOM_SG: "kasv", GEN_SG: "kasvu", PART_SG: "kasvu", ILL_SG_SHORT: "kasvu", NOM_PL: "kasvud", PART_PL: "kasve", GEN_PL: "kasvude" },
     government: null,
     usages: ["Taliviljade kevadine kasv on kiire.", "Silmaga nähtav kasv.", "Taimekasv.", "Rohukasv."],
     note: "kasvamine, organismi ja ta osade massi ja mõõtmete suurenemine",
@@ -3044,7 +3044,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kasvutempo", gloss: "growth rate", pos: "NOUN", cefr: null,
     ekilexWordId: 178895,
-    parts: { NOM_SG: "kasvutempo", GEN_SG: "kasvutempo", PART_SG: "kasvutempot", PART_PL: "kasvutemposid", GEN_PL: "kasvutempode" },
+    parts: { NOM_SG: "kasvutempo", GEN_SG: "kasvutempo", PART_SG: "kasvutempot", NOM_PL: "kasvutempod", PART_PL: "kasvutemposid", GEN_PL: "kasvutempode" },
     government: null,
     usages: ["Majanduse kasvutempo aeglustus."],
     note: "hrl millegi suurenemise, lisandumise või laienemise kiirus",
@@ -3071,7 +3071,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "katse", gloss: "experiment, attempt", pos: "NOUN", cefr: "B1",
     ekilexWordId: 179036,
-    parts: { NOM_SG: "katse", GEN_SG: "katse", PART_SG: "katset", PART_PL: "katseid", GEN_PL: "katsete" },
+    parts: { NOM_SG: "katse", GEN_SG: "katse", PART_SG: "katset", NOM_PL: "katsed", PART_PL: "katseid", GEN_PL: "katsete" },
     government: null,
     usages: ["Sõjalise riigipöörde katse.", "Täna ei tehtud küll mingit katset kompromissi saavutada.", "Hüpe õnnestus esimesel katsel.", "Ta ei teinud katsetki vastu hakata."],
     note: "püüe midagi teha, sooritada või saavutada",
@@ -3080,7 +3080,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kattuvus", gloss: "overlap", pos: "NOUN", cefr: null,
     ekilexWordId: 1020389,
-    parts: { NOM_SG: "kattuvus", GEN_SG: "kattuvuse", PART_SG: "kattuvust", ILL_SG_SHORT: "kattuvusse", PART_PL: "kattuvusi", GEN_PL: "kattuvuste" },
+    parts: { NOM_SG: "kattuvus", GEN_SG: "kattuvuse", PART_SG: "kattuvust", ILL_SG_SHORT: "kattuvusse", NOM_PL: "kattuvused", PART_PL: "kattuvusi", GEN_PL: "kattuvuste" },
     government: null,
     usages: ["Nende töös on vähe kattuvust ja rollid on selgelt jagatud."],
     note: "(juhuslik, ootamatu) kattumine, kokku sattumine",
@@ -3098,7 +3098,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaudne", gloss: "indirect", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 179276,
-    parts: { NOM_SG: "kaudne", GEN_SG: "kaudse", PART_SG: "kaudset", PART_PL: "kaudseid", GEN_PL: "kaudsete" },
+    parts: { NOM_SG: "kaudne", GEN_SG: "kaudse", PART_SG: "kaudset", NOM_PL: "kaudsed", PART_PL: "kaudseid", GEN_PL: "kaudsete" },
     government: null,
     usages: ["Tervislike eluviiside kaudne mõju vere kolesteroolile.", "Saime uudisest teada kaudseid teid pidi.", "Jutus leidus kaudseid vihjeid toimunule.", "Kahe juhtumi vahel on kaudne seos."],
     note: "millegi vahendusel või kaudu toimuv või väljenduv",
@@ -3107,7 +3107,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaup", gloss: "goods", pos: "NOUN", cefr: "A2",
     ekilexWordId: 179385,
-    parts: { NOM_SG: "kaup", GEN_SG: "kauba", PART_SG: "kaupa", ILL_SG_SHORT: "kaupa", PART_PL: "kaupu", GEN_PL: "kaupade" },
+    parts: { NOM_SG: "kaup", GEN_SG: "kauba", PART_SG: "kaupa", ILL_SG_SHORT: "kaupa", NOM_PL: "kaubad", PART_PL: "kaupu", GEN_PL: "kaupade" },
     government: null,
     usages: ["Turul müüdav kaup.", "Minev kaup.", "Kauba hinnale lisandub käibemaks.", "Poodi toodi uut kaupa."],
     note: "asjad, mida ostetakse või müüakse",
@@ -3116,7 +3116,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kaust", gloss: "folder", pos: "NOUN", cefr: "B2",
     ekilexWordId: 179413,
-    parts: { NOM_SG: "kaust", GEN_SG: "kausta", PART_SG: "kausta", ILL_SG_SHORT: "kausta", PART_PL: "kaustu", GEN_PL: "kaustade" },
+    parts: { NOM_SG: "kaust", GEN_SG: "kausta", PART_SG: "kausta", ILL_SG_SHORT: "kausta", NOM_PL: "kaustad", PART_PL: "kaustu", GEN_PL: "kaustade" },
     government: null,
     usages: ["Naine võttis kausta ja lehitses pisut.", "Riiulil on mõned raamatud ja palju kaustu paberitega.", "Suure kaustaga raamat."],
     note: "(plastist, papist) kaaned koos nende vahel olevate paberitega",
@@ -3134,7 +3134,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kavatsus", gloss: "intention", pos: "NOUN", cefr: "B2",
     ekilexWordId: 179442,
-    parts: { NOM_SG: "kavatsus", GEN_SG: "kavatsuse", PART_SG: "kavatsust", ILL_SG_SHORT: "kavatsusse", PART_PL: "kavatsusi", GEN_PL: "kavatsuste" },
+    parts: { NOM_SG: "kavatsus", GEN_SG: "kavatsuse", PART_SG: "kavatsust", ILL_SG_SHORT: "kavatsusse", NOM_PL: "kavatsused", PART_PL: "kavatsusi", GEN_PL: "kavatsuste" },
     government: null,
     usages: ["Loobusin oma esialgsest kavatsusest.", "Tõsiste kavatsustega investoreid oodatakse avasüli.", "Tal olid kindlasti kõige paremad kavatsused, aga läks nii nagu alati.", "Tulevikukavatsus."],
     note: "mõte midagi teha, mõttes olev otsus",
@@ -3152,7 +3152,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keel", gloss: "language, tongue", pos: "NOUN", cefr: "A1",
     ekilexWordId: 179500,
-    parts: { NOM_SG: "keel", GEN_SG: "keele", PART_SG: "keelt", ILL_SG_SHORT: "keelde", PART_PL: "keeli", GEN_PL: "keelte" },
+    parts: { NOM_SG: "keel", GEN_SG: "keele", PART_SG: "keelt", ILL_SG_SHORT: "keelde", NOM_PL: "keeled", PART_PL: "keeli", GEN_PL: "keelte" },
     government: null,
     usages: ["Soome-ugri keeled.", "Paula valdab vabalt mitut keelt.", "Rootsi keelt õpitakse selles koolis alates 7. klassist.", "Ma õpin koolis inglise, vene, saksa ja prantsuse keelt."],
     note: "inimese olulisim suhtlemisvahend, mis mõtete ja tunnete väljendamiseks kasutab sõnu ja väljendeid ning mida hoiab koos teatav struktuur ehk grammatika",
@@ -3170,7 +3170,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keelekasutaja", gloss: "language user", pos: "NOUN", cefr: null,
     ekilexWordId: 949451,
-    parts: { NOM_SG: "keelekasutaja", GEN_SG: "keelekasutaja", PART_SG: "keelekasutajat", PART_PL: "keelekasutajaid", GEN_PL: "keelekasutajate" },
+    parts: { NOM_SG: "keelekasutaja", GEN_SG: "keelekasutaja", PART_SG: "keelekasutajat", NOM_PL: "keelekasutajad", PART_PL: "keelekasutajaid", GEN_PL: "keelekasutajate" },
     government: null,
     usages: ["Keele püsimine sõltub eelkõige keelekasutajatest.", "Õpiku abil on võimalik jõuda iseseisva keelekasutaja tasemele."],
     note: "teatud keelt kõnes ja kirjas kasutav isik",
@@ -3179,7 +3179,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keelekasutus", gloss: "language use", pos: "NOUN", cefr: null,
     ekilexWordId: 179537,
-    parts: { NOM_SG: "keelekasutus", GEN_SG: "keelekasutuse", PART_SG: "keelekasutust", ILL_SG_SHORT: "keelekasutusse", PART_PL: "keelekasutusi", GEN_PL: "keelekasutuste" },
+    parts: { NOM_SG: "keelekasutus", GEN_SG: "keelekasutuse", PART_SG: "keelekasutust", ILL_SG_SHORT: "keelekasutusse", NOM_PL: "keelekasutused", PART_PL: "keelekasutusi", GEN_PL: "keelekasutuste" },
     government: null,
     usages: ["Ametlik keelekasutus.", "Korrektne keelekasutus.", "Lohakas keelekasutus."],
     note: "teatud inimrühmale või üksikisikule omane väljendusviis kõnes ja kirjas",
@@ -3188,7 +3188,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keelekeskkond", gloss: "language environment", pos: "NOUN", cefr: null,
     ekilexWordId: 736464,
-    parts: { NOM_SG: "keelekeskkond", GEN_SG: "keelekeskkonna", PART_SG: "keelekeskkonda", ILL_SG_SHORT: "keelekeskkonda", PART_PL: "keelekeskkondi", GEN_PL: "keelekeskkondade" },
+    parts: { NOM_SG: "keelekeskkond", GEN_SG: "keelekeskkonna", PART_SG: "keelekeskkonda", ILL_SG_SHORT: "keelekeskkonda", NOM_PL: "keelekeskkonnad", PART_PL: "keelekeskkondi", GEN_PL: "keelekeskkondade" },
     government: null,
     usages: ["Keelt pole üldse kerge väljaspool keelekeskkonda elavana hoida.", "Katrini arvates tuleb võõras keelekeskkond tema lastele ainult kasuks.", "Kunagi varem pole Eesti keelekeskkond nii mitmekesine olnud kui praegu."],
     note: "teatavat keelt kõnelevate inimeste kogukond, keskkond, kus see keel on esil nii kõnes kui kirjas",
@@ -3197,7 +3197,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keelenorm", gloss: "language norm", pos: "NOUN", cefr: null,
     ekilexWordId: 179565,
-    parts: { NOM_SG: "keelenorm", GEN_SG: "keelenormi", PART_SG: "keelenormi", ILL_SG_SHORT: "keelenormi", PART_PL: "keelenorme", GEN_PL: "keelenormide" },
+    parts: { NOM_SG: "keelenorm", GEN_SG: "keelenormi", PART_SG: "keelenormi", ILL_SG_SHORT: "keelenormi", NOM_PL: "keelenormid", PART_PL: "keelenorme", GEN_PL: "keelenormide" },
     government: null,
     usages: ["Keelekorraldaja rääkis intervjuus, kuidas endistest keelevigadest saavad uued keelenormid.", "Lapse kõne vastab keelenormile: kirjeldamisel, jutustamisel on järjest täpsem, mõistab mitmetähenduslikke sõnu.", "Ametlikus keelekasutuses on keelenormi järgimine kohustuslik.", "Keelenormide vastavust võib kontrollida õigekeelsussõnaraamatust."],
     note: "üldtarvitatav, üldtunnustatuks peetav keelekuju või keelekasutus",
@@ -3206,7 +3206,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keeleoskus", gloss: "language skill", pos: "NOUN", cefr: "B1",
     ekilexWordId: 179575,
-    parts: { NOM_SG: "keeleoskus", GEN_SG: "keeleoskuse", PART_SG: "keeleoskust", ILL_SG_SHORT: "keeleoskusse", PART_PL: "keeleoskusi", GEN_PL: "keeleoskuste" },
+    parts: { NOM_SG: "keeleoskus", GEN_SG: "keeleoskuse", PART_SG: "keeleoskust", ILL_SG_SHORT: "keeleoskusse", NOM_PL: "keeleoskused", PART_PL: "keeleoskusi", GEN_PL: "keeleoskuste" },
     government: null,
     usages: ["Suhtlus takerdus puuduliku keeleoskuse taha.", "Ta läheb välismaale oma keeleoskust täiendama."],
     note: "teatud keele oskamine",
@@ -3215,7 +3215,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keelevahetus", gloss: "language switching", pos: "NOUN", cefr: null,
     ekilexWordId: 1177735,
-    parts: { NOM_SG: "keelevahetus", GEN_SG: "keelevahetuse", PART_SG: "keelevahetust", ILL_SG_SHORT: "keelevahetusse", PART_PL: "keelevahetusi", GEN_PL: "keelevahetuste" },
+    parts: { NOM_SG: "keelevahetus", GEN_SG: "keelevahetuse", PART_SG: "keelevahetust", ILL_SG_SHORT: "keelevahetusse", NOM_PL: "keelevahetused", PART_PL: "keelevahetusi", GEN_PL: "keelevahetuste" },
     government: null,
     usages: ["Keelevahetus ohustab vähemuskeeli."],
     note: "sotsiaalpsühholoogiline nähtus, kus teisele keelele ülemineku tõttu katkeb keele põlvkonnaülene edasiandmine",
@@ -3233,7 +3233,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keha", gloss: "body", pos: "NOUN", cefr: "A2",
     ekilexWordId: 179805,
-    parts: { NOM_SG: "keha", GEN_SG: "keha", PART_SG: "keha", ILL_SG_SHORT: "kehha", PART_PL: "kehi", GEN_PL: "kehade" },
+    parts: { NOM_SG: "keha", GEN_SG: "keha", PART_SG: "keha", ILL_SG_SHORT: "kehha", NOM_PL: "kehad", PART_PL: "kehi", GEN_PL: "kehade" },
     government: null,
     usages: ["Päike suurendab keha vastupanuvõimet haigustele.", "Hirmujutt käis kehast läbi.", "Kehale tekkis punane lööve.", "Oli tunne, nagu kukuksid käed keha küljest ära."],
     note: "inimese või looma kogu organism",
@@ -3251,7 +3251,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kehtivus", gloss: "validity", pos: "NOUN", cefr: "B2",
     ekilexWordId: 179876,
-    parts: { NOM_SG: "kehtivus", GEN_SG: "kehtivuse", PART_SG: "kehtivust", ILL_SG_SHORT: "kehtivusse", PART_PL: "kehtivusi", GEN_PL: "kehtivuste" },
+    parts: { NOM_SG: "kehtivus", GEN_SG: "kehtivuse", PART_SG: "kehtivust", ILL_SG_SHORT: "kehtivusse", NOM_PL: "kehtivused", PART_PL: "kehtivusi", GEN_PL: "kehtivuste" },
     government: null,
     usages: ["Kehtivuse kaotanud dokument.", "Allkirja kehtivus.", "Otsuse kuulutamise kehtivus ei sõltu menetlusosaliste kohalolekust."],
     note: "jõusolek, millegi kehtimine",
@@ -3260,7 +3260,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kell", gloss: "clock, o'clock", pos: "NOUN", cefr: "A1",
     ekilexWordId: 179946,
-    parts: { NOM_SG: "kell", GEN_SG: "kella", PART_SG: "kella", ILL_SG_SHORT: "kella", PART_PL: "kelli", GEN_PL: "kellade" },
+    parts: { NOM_SG: "kell", GEN_SG: "kella", PART_SG: "kella", ILL_SG_SHORT: "kella", NOM_PL: "kellad", PART_PL: "kelli", GEN_PL: "kellade" },
     government: null,
     usages: ["Head Šveitsi kellad.", "Raekoja kell lõi kaks.", "Kuldkell.", "Kell käib täpselt."],
     note: "mehaaniline või elektrooniline seade aja mõõtmiseks, mis hrl näitab tunde ja minuteid (nt osutitega numbrilaual või vahelduvate numbritega elektroonilisel ekraanil)",
@@ -3269,7 +3269,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kerge", gloss: "easy, light", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 180090,
-    parts: { NOM_SG: "kerge", GEN_SG: "kerge", PART_SG: "kerget", PART_PL: "kergeid", GEN_PL: "kergete" },
+    parts: { NOM_SG: "kerge", GEN_SG: "kerge", PART_SG: "kerget", NOM_PL: "kerged", PART_PL: "kergeid", GEN_PL: "kergete" },
     government: null,
     usages: ["Kerge koorem.", "Kerged gaasid.", "Kerge kohvriga on mugav reisida.", "Soe õhk on külmast kergem."],
     note: "vähe kaaluv, väikese kaaluga",
@@ -3278,7 +3278,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kes", gloss: "who", pos: "PRONOUN", cefr: "A1",
     ekilexWordId: 180177,
-    parts: { NOM_SG: "kes", GEN_SG: "kelle", PART_SG: "keda", PART_PL: "keda", GEN_PL: "kellede" },
+    parts: { NOM_SG: "kes", GEN_SG: "kelle", PART_SG: "keda", NOM_PL: "kes", PART_PL: "keda", GEN_PL: "kellede" },
     government: null,
     usages: ["Kes see on?", "Kelleks sa tahad saada?", "Tal oli klassiõde, keda ta meeletult armastas.", "Kes otsib, see leiab."],
     note: "küsiv-siduv sõna isikute, elusolendite kohta",
@@ -3305,7 +3305,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keskkond", gloss: "environment", pos: "NOUN", cefr: "B1",
     ekilexWordId: 180245,
-    parts: { NOM_SG: "keskkond", GEN_SG: "keskkonna", PART_SG: "keskkonda", ILL_SG_SHORT: "keskkonda", PART_PL: "keskkondi", GEN_PL: "keskkondade" },
+    parts: { NOM_SG: "keskkond", GEN_SG: "keskkonna", PART_SG: "keskkonda", ILL_SG_SHORT: "keskkonda", NOM_PL: "keskkonnad", PART_PL: "keskkondi", GEN_PL: "keskkondade" },
     government: null,
     usages: ["Ema igatsuseks on tagada lapsele armastav kodune keskkond.", "Tudeng otsis võimalust õppida ja töötada ingliskeelses keskkonnas.", "Lapsed vajavad turvalist keskkonda.", "Ta laadis video YouTube'i keskkonda."],
     note: "olud, milles inimene elab, kasvab ja areneb või millega ta kokku puutub",
@@ -3314,7 +3314,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kesklinn", gloss: "town centre", pos: "NOUN", cefr: "A2",
     ekilexWordId: 180295,
-    parts: { NOM_SG: "kesklinn", GEN_SG: "kesklinna", PART_SG: "kesklinna", ILL_SG_SHORT: "kesklinna", PART_PL: "kesklinnu", GEN_PL: "kesklinnade" },
+    parts: { NOM_SG: "kesklinn", GEN_SG: "kesklinna", PART_SG: "kesklinna", ILL_SG_SHORT: "kesklinna", NOM_PL: "kesklinnad", PART_PL: "kesklinnu", GEN_PL: "kesklinnade" },
     government: null,
     usages: ["Kesklinnas on tööpäeva õhtul ummikud."],
     note: "linna keskosa, hrl vilgas äri- ja meelelahutuskeskus",
@@ -3323,7 +3323,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "keskmine", gloss: "average", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 180305,
-    parts: { NOM_SG: "keskmine", GEN_SG: "keskmise", PART_SG: "keskmist", ILL_SG_SHORT: "keskmisse", PART_PL: "keskmisi", GEN_PL: "keskmiste" },
+    parts: { NOM_SG: "keskmine", GEN_SG: "keskmise", PART_SG: "keskmist", ILL_SG_SHORT: "keskmisse", NOM_PL: "keskmised", PART_PL: "keskmisi", GEN_PL: "keskmiste" },
     government: null,
     usages: ["Keskmine aken on veidi laiem kui äärmised.", "Keskmine poeg läks ülikooli.", "Ma elan keskmises trepikojas.", "Vigastasin parema käe keskmist sõrme."],
     note: "ruumiliselt või ajaliselt, vanuseliselt vahepeal olev, keskkohas, keskel või vahel paiknev",
@@ -3332,7 +3332,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kevad", gloss: "spring", pos: "NOUN", cefr: "A1",
     ekilexWordId: 180466,
-    parts: { NOM_SG: "kevad", GEN_SG: "kevade", PART_SG: "kevadet", PART_PL: "kevadeid", GEN_PL: "kevadete" },
+    parts: { NOM_SG: "kevad", GEN_SG: "kevade", PART_SG: "kevadet", NOM_PL: "kevaded", PART_PL: "kevadeid", GEN_PL: "kevadete" },
     government: null,
     usages: ["Kevadel pestakse aknaid, armutakse, istutatakse lilli ja ollakse rahutud.", "Isa suri 1940. aasta kevadel.", "Madli sündis kevade poole talve.", "Kevad saabus sel aastal vara."],
     note: "looduse tärkamise aeg, talve ja suve vaheline aastaaeg",
@@ -3341,7 +3341,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kiire", gloss: "fast, quick", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 180770,
-    parts: { NOM_SG: "kiire", GEN_SG: "kiire", PART_SG: "kiiret", PART_PL: "kiireid", GEN_PL: "kiirete" },
+    parts: { NOM_SG: "kiire", GEN_SG: "kiire", PART_SG: "kiiret", NOM_PL: "kiired", PART_PL: "kiireid", GEN_PL: "kiirete" },
     government: null,
     usages: ["Kiire jooks.", "Kiire vooluga jõgi.", "Majanduse kiire areng.", "Lapse areng on väga kiire."],
     note: "ruttu, suure hooga, hoogsalt toimuv või kulgev",
@@ -3359,7 +3359,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kindlustus", gloss: "insurance", pos: "NOUN", cefr: "B1",
     ekilexWordId: 181204,
-    parts: { NOM_SG: "kindlustus", GEN_SG: "kindlustuse", PART_SG: "kindlustust", ILL_SG_SHORT: "kindlustusse", PART_PL: "kindlustusi", GEN_PL: "kindlustuste" },
+    parts: { NOM_SG: "kindlustus", GEN_SG: "kindlustuse", PART_SG: "kindlustust", ILL_SG_SHORT: "kindlustusse", NOM_PL: "kindlustused", PART_PL: "kindlustusi", GEN_PL: "kindlustuste" },
     government: null,
     usages: ["Avarii teinud autol puudus kehtiv kindlustus.", "Autokindlustus.", "Kindlustus ei kompenseerinud rõdul tekkinud kahju.", "Kindlustus maksis auto parandamise kinni."],
     note: "kindlustusfondi summadel põhinev rahaline kaitse ootamatute sündmuste puhuks",
@@ -3368,7 +3368,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "king", gloss: "shoe", pos: "NOUN", cefr: "A2",
     ekilexWordId: 181255,
-    parts: { NOM_SG: "king", GEN_SG: "kinga", PART_SG: "kinga", ILL_SG_SHORT: "kinga", PART_PL: "kingi", GEN_PL: "kingade" },
+    parts: { NOM_SG: "king", GEN_SG: "kinga", PART_SG: "kinga", ILL_SG_SHORT: "kinga", NOM_PL: "kingad", PART_PL: "kingi", GEN_PL: "kingade" },
     government: null,
     usages: ["Terava nina ja kõrge kontsaga kingad.", "Nahkking.", "Meesteking.", "Naisteking."],
     note: "jalalaba kattev (kontsaga) jalats, mis ei ulatu pahkluust kõrgemale",
@@ -3377,7 +3377,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kinnas", gloss: "glove", pos: "NOUN", cefr: "A2",
     ekilexWordId: 181309,
-    parts: { NOM_SG: "kinnas", GEN_SG: "kinda", PART_SG: "kinnast", PART_PL: "kindaid", GEN_PL: "kinnaste" },
+    parts: { NOM_SG: "kinnas", GEN_SG: "kinda", PART_SG: "kinnast", NOM_PL: "kindad", PART_PL: "kindaid", GEN_PL: "kinnaste" },
     government: null,
     usages: ["Vanaema kootud villased kindad.", "Poiss tõmbas kinda käest ja pühkis käeseljaga nina.", "Kannan talvel sooje kindaid."],
     note: "kätt välismõjude eest kaitsev, seda kaunistav või selle steriilsust tagav, hrl randmeni ulatuv riietusese, millel on pöidla (sõrmkindal iga sõrme) jaoks omaette haru",
@@ -3395,7 +3395,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kinnitus", gloss: "confirmation", pos: "NOUN", cefr: "B1",
     ekilexWordId: 181422,
-    parts: { NOM_SG: "kinnitus", GEN_SG: "kinnituse", PART_SG: "kinnitust", ILL_SG_SHORT: "kinnitusse", PART_PL: "kinnitusi", GEN_PL: "kinnituste" },
+    parts: { NOM_SG: "kinnitus", GEN_SG: "kinnituse", PART_SG: "kinnitust", ILL_SG_SHORT: "kinnitusse", NOM_PL: "kinnitused", PART_PL: "kinnitusi", GEN_PL: "kinnituste" },
     government: null,
     usages: ["Taas kord leiab kinnitust tõsiasi, et raha eest ei saa osta kõike.", "Küsitlused andsid kinnituse, et ..", "Oma väite kinnituseks viisin läbi uuringu.", "Tema jutt ei leidnud kinnitust."],
     note: "asjaolu, avaldus või muu, millega näidatakse, et miski on tõsi või õige",
@@ -3404,7 +3404,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kiri", gloss: "letter", pos: "NOUN", cefr: "A1",
     ekilexWordId: 181557,
-    parts: { NOM_SG: "kiri", GEN_SG: "kirja", PART_SG: "kirja", ILL_SG_SHORT: "kirja", PART_PL: "kirju", GEN_PL: "kirjade" },
+    parts: { NOM_SG: "kiri", GEN_SG: "kirja", PART_SG: "kirja", ILL_SG_SHORT: "kirja", NOM_PL: "kirjad", PART_PL: "kirju", GEN_PL: "kirjade" },
     government: null,
     usages: ["Ma pole oma kirjale veel vastust saanud.", "Ta saatis mulle väga vihase kirja.", "Taat pani kirja ümbrikusse ja viis postkasti.", "Kõiki asju sai ajada kirja teel."],
     note: "(posti teel, ümbrikusse panduna saadetav) paberile kirjutatud tekst, mis sisaldab sõnumit kellelegi",
@@ -3413,7 +3413,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kirik", gloss: "church", pos: "NOUN", cefr: "A2",
     ekilexWordId: 181561,
-    parts: { NOM_SG: "kirik", GEN_SG: "kiriku", PART_SG: "kirikut", PART_PL: "kirikuid", GEN_PL: "kirikute" },
+    parts: { NOM_SG: "kirik", GEN_SG: "kiriku", PART_SG: "kirikut", NOM_PL: "kirikud", PART_PL: "kirikuid", GEN_PL: "kirikute" },
     government: null,
     usages: ["Kaitseväes teenivad vaimulikena eri kirikute esindajad.", "Kaarli kirik on ehitatud neoromaani stiilis.", "Me käime igal pühapäeval kirikus.", "Täna kirikut ei ole."],
     note: "kristlikke kogudusi ühendav organisatsioon või koguduseliit",
@@ -3422,7 +3422,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kirjakeel", gloss: "standard written language", pos: "NOUN", cefr: "B2",
     ekilexWordId: 181674,
-    parts: { NOM_SG: "kirjakeel", GEN_SG: "kirjakeele", PART_SG: "kirjakeelt", ILL_SG_SHORT: "kirjakeelde", PART_PL: "kirjakeeli", GEN_PL: "kirjakeelte" },
+    parts: { NOM_SG: "kirjakeel", GEN_SG: "kirjakeele", PART_SG: "kirjakeelt", ILL_SG_SHORT: "kirjakeelde", NOM_PL: "kirjakeeled", PART_PL: "kirjakeeli", GEN_PL: "kirjakeelte" },
     government: null,
     usages: ["Vanamees rääkis kirjakeelt, mitte murret.", "Itaalias tekkis ühtne kirjakeel alles möödunud sajandi 50-ndatel aastatel.", "Soome kirjakeele rajaja Mikael Agricola.", "Ametlik keelekasutus peab vastama eesti kirjakeele normile."],
     note: "ühtne, asjaajamises, kirjanduses, ajakirjanduses, suhtluses ja mujal kõnes ja kirjas avalikult kasutatav keelekuju",
@@ -3431,7 +3431,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kirjandus", gloss: "literature", pos: "NOUN", cefr: "A2",
     ekilexWordId: 181695,
-    parts: { NOM_SG: "kirjandus", GEN_SG: "kirjanduse", PART_SG: "kirjandust", ILL_SG_SHORT: "kirjandusse", PART_PL: "kirjandusi", GEN_PL: "kirjanduste" },
+    parts: { NOM_SG: "kirjandus", GEN_SG: "kirjanduse", PART_SG: "kirjandust", ILL_SG_SHORT: "kirjandusse", NOM_PL: "kirjandused", PART_PL: "kirjandusi", GEN_PL: "kirjanduste" },
     government: null,
     usages: ["Võõrkeelset kirjandust olen ostnud ka välismaa lennujaamadest.", "Ma hakkasin lugema kirjandust Kabuli ajaloo kohta.", "Meditsiinikirjandus.", "Erialakirjandus."],
     note: "kirjutatud sõnaline looming, hrl ilukirjandus, aga ka muud teosed",
@@ -3440,7 +3440,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kirjanik", gloss: "writer", pos: "NOUN", cefr: "A2",
     ekilexWordId: 181735,
-    parts: { NOM_SG: "kirjanik", GEN_SG: "kirjaniku", PART_SG: "kirjanikku", ILL_SG_SHORT: "kirjanikku", PART_PL: "kirjanikke", GEN_PL: "kirjanike" },
+    parts: { NOM_SG: "kirjanik", GEN_SG: "kirjaniku", PART_SG: "kirjanikku", ILL_SG_SHORT: "kirjanikku", NOM_PL: "kirjanikud", PART_PL: "kirjanikke", GEN_PL: "kirjanike" },
     government: null,
     usages: ["Kirjanik kirjutab pikka romaani.", "Kirjanikul sai valmis uus teos."],
     note: "ilukirjanduslikke teoseid kirjutav inimene",
@@ -3449,7 +3449,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kirjaviis", gloss: "orthography, spelling", pos: "NOUN", cefr: null,
     ekilexWordId: 181798,
-    parts: { NOM_SG: "kirjaviis", GEN_SG: "kirjaviisi", PART_SG: "kirjaviisi", ILL_SG_SHORT: "kirjaviisi", PART_PL: "kirjaviise", GEN_PL: "kirjaviiside" },
+    parts: { NOM_SG: "kirjaviis", GEN_SG: "kirjaviisi", PART_SG: "kirjaviisi", ILL_SG_SHORT: "kirjaviisi", NOM_PL: "kirjaviisid", PART_PL: "kirjaviise", GEN_PL: "kirjaviiside" },
     government: null,
     usages: ["Küla nime kirjaviis on korduvalt muutunud.", "Autori kirjaviis on jäetud muutmata."],
     note: "ajalooliselt kujunenud või teatud inimesele omane õigekirjutustava",
@@ -3476,7 +3476,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kitsas", gloss: "narrow", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 181962,
-    parts: { NOM_SG: "kitsas", GEN_SG: "kitsa", PART_SG: "kitsast", PART_PL: "kitsaid", GEN_PL: "kitsaste" },
+    parts: { NOM_SG: "kitsas", GEN_SG: "kitsa", PART_SG: "kitsast", NOM_PL: "kitsad", PART_PL: "kitsaid", GEN_PL: "kitsaste" },
     government: null,
     usages: ["Kitsas ja käänuline mägitee.", "Pikk ja kitsas ruum.", "Vanalinna kitsad tänavad.", "Pika nina ja kitsaste huultega noor kutt."],
     note: "(ruumi, maa-ala, pikliku asja kohta:) ristsuunas, laiuselt väikese ulatusega",
@@ -3485,7 +3485,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kitsendus", gloss: "restriction", pos: "NOUN", cefr: null,
     ekilexWordId: 181986,
-    parts: { NOM_SG: "kitsendus", GEN_SG: "kitsenduse", PART_SG: "kitsendust", ILL_SG_SHORT: "kitsendusse", PART_PL: "kitsendusi", GEN_PL: "kitsenduste" },
+    parts: { NOM_SG: "kitsendus", GEN_SG: "kitsenduse", PART_SG: "kitsendust", ILL_SG_SHORT: "kitsendusse", NOM_PL: "kitsendused", PART_PL: "kitsendusi", GEN_PL: "kitsenduste" },
     government: null,
     usages: ["Kalapüügi kitsendused.", "Nende paikapanemiseks on soovitav kasutada kuupäevalisi kitsendusi", "Igaühel on õigus enda omandit vabalt vallata, kasutada ja käsutada. Kitsendused sätestab seadus."],
     note: "midagi piirav, kitsendav tingimus",
@@ -3494,7 +3494,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "klaas", gloss: "glass", pos: "NOUN", cefr: "A1",
     ekilexWordId: 182194,
-    parts: { NOM_SG: "klaas", GEN_SG: "klaasi", PART_SG: "klaasi", ILL_SG_SHORT: "klaasi", PART_PL: "klaase", GEN_PL: "klaaside" },
+    parts: { NOM_SG: "klaas", GEN_SG: "klaasi", PART_SG: "klaasi", ILL_SG_SHORT: "klaasi", NOM_PL: "klaasid", PART_PL: "klaase", GEN_PL: "klaaside" },
     government: null,
     usages: ["Klaasi tootmine.", "Värvilisest klaasist vitraaž.", "Klaasist seintega fuajee.", "Klaas purunes."],
     note: "valgust läbilaskev habras tahke materjal",
@@ -3503,7 +3503,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "klassifikatsioon", gloss: "classification", pos: "NOUN", cefr: "B2",
     ekilexWordId: 182327,
-    parts: { NOM_SG: "klassifikatsioon", GEN_SG: "klassifikatsiooni", PART_SG: "klassifikatsiooni", ILL_SG_SHORT: "klassifikatsiooni", PART_PL: "klassifikatsioone", GEN_PL: "klassifikatsioonide" },
+    parts: { NOM_SG: "klassifikatsioon", GEN_SG: "klassifikatsiooni", PART_SG: "klassifikatsiooni", ILL_SG_SHORT: "klassifikatsiooni", NOM_PL: "klassifikatsioonid", PART_PL: "klassifikatsioone", GEN_PL: "klassifikatsioonide" },
     government: null,
     usages: ["Rahvusvaheline haiguste klassifikatsioon.", "Kaupade ja teenuste klassifikatsioon.", "pr - protsess"],
     note: "mingite tunnuste alusel liikideks või rühmadeks jaotamine, teatud liiki või rühma paigutamine",
@@ -3512,7 +3512,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "klaviatuur", gloss: "keyboard", pos: "NOUN", cefr: "A2",
     ekilexWordId: 182427,
-    parts: { NOM_SG: "klaviatuur", GEN_SG: "klaviatuuri", PART_SG: "klaviatuuri", ILL_SG_SHORT: "klaviatuuri", PART_PL: "klaviatuure", GEN_PL: "klaviatuuride" },
+    parts: { NOM_SG: "klaviatuur", GEN_SG: "klaviatuuri", PART_SG: "klaviatuuri", ILL_SG_SHORT: "klaviatuuri", NOM_PL: "klaviatuurid", PART_PL: "klaviatuure", GEN_PL: "klaviatuuride" },
     government: null,
     usages: ["Menüüs saab liikuda ja valikuid teha telefoni klaviatuuri abil.", "Klaveri klaviatuur koosneb tavaliselt valgetest ja mustadest klahvidest, mis on järjestatud helikõrguse järjekorras.", "Mu kass hüppas klaviatuurile ja nüüd on mul dokumendis kolm lehekülge s-tähte."],
     note: "klahvide kogum klahvpillidel, arvutil vms",
@@ -3521,7 +3521,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kleit", gloss: "dress", pos: "NOUN", cefr: "A2",
     ekilexWordId: 182455,
-    parts: { NOM_SG: "kleit", GEN_SG: "kleidi", PART_SG: "kleiti", ILL_SG_SHORT: "kleiti", PART_PL: "kleite", GEN_PL: "kleitide" },
+    parts: { NOM_SG: "kleit", GEN_SG: "kleidi", PART_SG: "kleiti", ILL_SG_SHORT: "kleiti", NOM_PL: "kleidid", PART_PL: "kleite", GEN_PL: "kleitide" },
     government: null,
     usages: ["Pruudil oli pikk valge kleit seljas.", "Neiu kandis lühikest musta kleiti."],
     note: "keha ja osaliselt jalgu kattev naise või tütarlapse enamasti üheosaline riideese",
@@ -3530,7 +3530,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "klient", gloss: "client, customer", pos: "NOUN", cefr: "A1",
     ekilexWordId: 182477,
-    parts: { NOM_SG: "klient", GEN_SG: "kliendi", PART_SG: "klienti", ILL_SG_SHORT: "klienti", PART_PL: "kliente", GEN_PL: "klientide" },
+    parts: { NOM_SG: "klient", GEN_SG: "kliendi", PART_SG: "klienti", ILL_SG_SHORT: "klienti", NOM_PL: "kliendid", PART_PL: "kliente", GEN_PL: "klientide" },
     government: null,
     usages: ["Rahulolev klient on iga firma unistus.", "Advokaat ajas oma kliendi asju väga osavalt.", "Selle juuksuri kliendid on tema tööga väga rahul.", "Pangaklient."],
     note: "teatud asutuse, ettevõtja või isiku teenuseid kasutav isik",
@@ -3539,7 +3539,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kliima", gloss: "climate", pos: "NOUN", cefr: "B1",
     ekilexWordId: 182483,
-    parts: { NOM_SG: "kliima", GEN_SG: "kliima", PART_SG: "kliimat", PART_PL: "kliimasid", GEN_PL: "kliimade" },
+    parts: { NOM_SG: "kliima", GEN_SG: "kliima", PART_SG: "kliimat", NOM_PL: "kliimad", PART_PL: "kliimasid", GEN_PL: "kliimade" },
     government: null,
     usages: ["Kaktused kasvavad kuivas kliimas.", "Põhjamaa kliimas ei tea kunagi ette, millal tuleb see õige suvi.", "Poliitiline kliima."],
     note: "mingi paikkonna geograafilisest asendist tingitud pikaajaline ilmade laad ja rütm",
@@ -3548,7 +3548,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "koalitsioon", gloss: "coalition", pos: "NOUN", cefr: "B2",
     ekilexWordId: 182719,
-    parts: { NOM_SG: "koalitsioon", GEN_SG: "koalitsiooni", PART_SG: "koalitsiooni", ILL_SG_SHORT: "koalitsiooni", PART_PL: "koalitsioone", GEN_PL: "koalitsioonide" },
+    parts: { NOM_SG: "koalitsioon", GEN_SG: "koalitsiooni", PART_SG: "koalitsiooni", ILL_SG_SHORT: "koalitsiooni", NOM_PL: "koalitsioonid", PART_PL: "koalitsioone", GEN_PL: "koalitsioonide" },
     government: null,
     usages: ["Kolmeparteiline koalitsioon.", "Võimukoalitsioon."],
     note: "riikide või parteide (ajutine) liit ühiste eesmärkide saavutamiseks",
@@ -3557,7 +3557,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kodanik", gloss: "citizen", pos: "NOUN", cefr: "B1",
     ekilexWordId: 182782,
-    parts: { NOM_SG: "kodanik", GEN_SG: "kodaniku", PART_SG: "kodanikku", ILL_SG_SHORT: "kodanikku", PART_PL: "kodanikke", GEN_PL: "kodanike" },
+    parts: { NOM_SG: "kodanik", GEN_SG: "kodaniku", PART_SG: "kodanikku", ILL_SG_SHORT: "kodanikku", NOM_PL: "kodanikud", PART_PL: "kodanikke", GEN_PL: "kodanike" },
     government: null,
     usages: ["Olen Eesti kodanik.", "Euroopa Liidu kodanikud.", "Ta on Eesti Vabariigi kodanik.", "Palume varga leidmisel kõigi kodanike abi."],
     note: "teatud riigi elanikkonda kuuluv inimene, kel on selle riigi põhiseaduses ettenähtud õigused ja kohustused",
@@ -3566,7 +3566,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kodu", gloss: "home", pos: "NOUN", cefr: "A1",
     ekilexWordId: 182828,
-    parts: { NOM_SG: "kodu", GEN_SG: "kodu", PART_SG: "kodu", ILL_SG_SHORT: "koju", PART_PL: "kodusid", GEN_PL: "kodude" },
+    parts: { NOM_SG: "kodu", GEN_SG: "kodu", PART_SG: "kodu", ILL_SG_SHORT: "koju", NOM_PL: "kodud", PART_PL: "kodusid", GEN_PL: "kodude" },
     government: null,
     usages: ["Oma kätega rajatud kodu.", "Sõja ajal jäeti kodud maha.", "Koduga suhtlen Skype'i teel.", "Tule ruttu koju!"],
     note: "kellegi püsiv elupaik (ja seal elavad inimesed)",
@@ -3575,7 +3575,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kodumaa", gloss: "homeland", pos: "NOUN", cefr: "A2",
     ekilexWordId: 182905,
-    parts: { NOM_SG: "kodumaa", GEN_SG: "kodumaa", PART_SG: "kodumaad", PART_PL: "kodumaid", GEN_PL: "kodumaade" },
+    parts: { NOM_SG: "kodumaa", GEN_SG: "kodumaa", PART_SG: "kodumaad", NOM_PL: "kodumaad", PART_PL: "kodumaid", GEN_PL: "kodumaade" },
     government: null,
     usages: ["Sõja puhkedes tulid Kaukaasia eestlased tagasi kodumaale.", "Ameerika on ta teine kodumaa.", "Minu kodumaa on Eesti.", "Ta on nii kodumaal kui välismaal tunnustatud teadlane."],
     note: "maa, riik, kust keegi on pärit või kus ta püsivalt elab ja mida omaks peab",
@@ -3584,7 +3584,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "koer", gloss: "dog", pos: "NOUN", cefr: "A1",
     ekilexWordId: 183007,
-    parts: { NOM_SG: "koer", GEN_SG: "koera", PART_SG: "koera", ILL_SG_SHORT: "koera", PART_PL: "koeri", GEN_PL: "koerade" },
+    parts: { NOM_SG: "koer", GEN_SG: "koera", PART_SG: "koera", ILL_SG_SHORT: "koera", NOM_PL: "koerad", PART_PL: "koeri", GEN_PL: "koerade" },
     government: null,
     usages: ["See koer ainult haugub, ta ei hammusta.", "Koerte varjupaiga töötajad soovitavad panna koera kaelarihma külge omaniku telefoninumbri.", "Truu nagu koer.", "Käin iga hommik koeraga jalutamas."],
     note: "peamiselt hundist põlvnev koduloom, keda peetakse majavalvurina ja lemmikloomana",
@@ -3593,7 +3593,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kogemus", gloss: "experience", pos: "NOUN", cefr: "B1",
     ekilexWordId: 183087,
-    parts: { NOM_SG: "kogemus", GEN_SG: "kogemuse", PART_SG: "kogemust", ILL_SG_SHORT: "kogemusse", PART_PL: "kogemusi", GEN_PL: "kogemuste" },
+    parts: { NOM_SG: "kogemus", GEN_SG: "kogemuse", PART_SG: "kogemust", ILL_SG_SHORT: "kogemusse", NOM_PL: "kogemused", PART_PL: "kogemusi", GEN_PL: "kogemuste" },
     government: null,
     usages: ["Aastatepikkused kogemused terapeudina.", "Eelkäijate kogemused on mind palju aidanud.", "Mul on koertega halbu kogemusi.", "Rahvusvahelise kogemusega tippjuht."],
     note: "elus, tegevuses kogetu põhjal omandatud teadmine või oskus",
@@ -3602,7 +3602,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kogenud", gloss: "experienced", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 183094,
-    parts: { NOM_SG: "kogenud", GEN_SG: "kogenu", PART_SG: "kogenut", PART_PL: "kogenuid", GEN_PL: "kogenute" },
+    parts: { NOM_SG: "kogenud", GEN_SG: "kogenu", PART_SG: "kogenut", NOM_PL: "kogenud", PART_PL: "kogenuid", GEN_PL: "kogenute" },
     government: null,
     usages: ["Pakutakse tööd kogenud veebiarendajale.", "Kogenud pilk märkas viga kohe.", "Jäime ilma kogenud töötajast."],
     note: "kogemusi omav, rohkete kogemustega",
@@ -3611,7 +3611,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kogukond", gloss: "community", pos: "NOUN", cefr: "B2",
     ekilexWordId: 183121,
-    parts: { NOM_SG: "kogukond", GEN_SG: "kogukonna", PART_SG: "kogukonda", ILL_SG_SHORT: "kogukonda", PART_PL: "kogukondi", GEN_PL: "kogukondade" },
+    parts: { NOM_SG: "kogukond", GEN_SG: "kogukonna", PART_SG: "kogukonda", ILL_SG_SHORT: "kogukonda", NOM_PL: "kogukonnad", PART_PL: "kogukondi", GEN_PL: "kogukondade" },
     government: null,
     usages: ["Euroopa koolide virtuaalne kogukond.", "Ameerikas on väga suur vene kogukond.", "Viljandimaal pöörasid tülli kohalik kogukond ja kirikuõpetaja.", "Riigigümnaasiumi rajamisel on kohalikel kogukondadel erinevad tahtmised."],
     note: "inimrühm, kes on omavahel seotud nt ühise asuala, päritolu, ühiste huvide vm sotsiaalsete suhetega ning kes sellega eristub teistest rühmadest",
@@ -3665,7 +3665,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohmakas", gloss: "clumsy", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 183278,
-    parts: { NOM_SG: "kohmakas", GEN_SG: "kohmaka", PART_SG: "kohmakat", PART_PL: "kohmakaid", GEN_PL: "kohmakate" },
+    parts: { NOM_SG: "kohmakas", GEN_SG: "kohmaka", PART_SG: "kohmakat", NOM_PL: "kohmakad", PART_PL: "kohmakaid", GEN_PL: "kohmakate" },
     government: null,
     usages: ["Algajad tegid jääl esimesi kohmakaid liigutusi.", "Poiss tegi kohmaka kummarduse.", "Joonistasin oma kohmaka käega ühe kujundi.", "Kohmakad pikad laused."],
     note: "kehalise osavuseta, nurgeliste liigutustega, oma keha halvasti valitsev",
@@ -3674,7 +3674,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "koht", gloss: "place", pos: "NOUN", cefr: "A1",
     ekilexWordId: 183295,
-    parts: { NOM_SG: "koht", GEN_SG: "koha", PART_SG: "kohta", ILL_SG_SHORT: "kohta", PART_PL: "kohti", GEN_PL: "kohtade" },
+    parts: { NOM_SG: "koht", GEN_SG: "koha", PART_SG: "kohta", ILL_SG_SHORT: "kohta", NOM_PL: "kohad", PART_PL: "kohti", GEN_PL: "kohtade" },
     government: null,
     usages: ["Eestis on palju ilusaid kohti.", "Otsisime telkimiseks sobivat kohta.", "Hotell oli hea koha peal.", "Kust kohast sa sõrmuse leidsid?"],
     note: "maa-ala, piirkond üldiselt",
@@ -3692,7 +3692,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohtumine", gloss: "meeting", pos: "NOUN", cefr: "A2",
     ekilexWordId: 183344,
-    parts: { NOM_SG: "kohtumine", GEN_SG: "kohtumise", PART_SG: "kohtumist", ILL_SG_SHORT: "kohtumisse", PART_PL: "kohtumisi", GEN_PL: "kohtumiste" },
+    parts: { NOM_SG: "kohtumine", GEN_SG: "kohtumise", PART_SG: "kohtumist", ILL_SG_SHORT: "kohtumisse", NOM_PL: "kohtumised", PART_PL: "kohtumisi", GEN_PL: "kohtumiste" },
     government: null,
     usages: ["Presidentide kohtumine.", "Kohtumine valijatega.", "See oli täiesti juhuslik kohtumine.", "Seisuni 6 : 6 arenes kohtumine tasavägiselt."],
     note: "kokkusaamine (nt nõupidamine, koosolek)",
@@ -3701,7 +3701,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohtunik", gloss: "judge", pos: "NOUN", cefr: "B1",
     ekilexWordId: 183352,
-    parts: { NOM_SG: "kohtunik", GEN_SG: "kohtuniku", PART_SG: "kohtunikku", ILL_SG_SHORT: "kohtunikku", PART_PL: "kohtunikke", GEN_PL: "kohtunike" },
+    parts: { NOM_SG: "kohtunik", GEN_SG: "kohtuniku", PART_SG: "kohtunikku", ILL_SG_SHORT: "kohtunikku", NOM_PL: "kohtunikud", PART_PL: "kohtunikke", GEN_PL: "kohtunike" },
     government: null,
     usages: ["Tartu maakohtu kohtunik.", "Euroopa inimõiguste kohtu kohtunik.", "Eeluurimiskohtunik.", "Kohtunik määras mehe neljaks kuuks vangi."],
     note: "kohtuasju arutav ja otsustav, õiguse mõistmise pädevusega ametiisik kohtuasutustes",
@@ -3710,7 +3710,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohus", gloss: "court", pos: "NOUN", cefr: null,
     ekilexWordId: 283694,
-    parts: { NOM_SG: "kohus", GEN_SG: "kohtu", PART_SG: "kohut", PART_PL: "kohtuid", GEN_PL: "kohtute" },
+    parts: { NOM_SG: "kohus", GEN_SG: "kohtu", PART_SG: "kohut", NOM_PL: "kohtud", PART_PL: "kohtuid", GEN_PL: "kohtute" },
     government: null,
     usages: ["Kaebasin asja kohtusse.", "Kohus mõistis mehe kolmeks aastaks vangi.", "Auto peatus kohtu ees.", "Püsti, kohus tuleb!"],
     note: "kohtuasju läbivaatav ja lahendav, kohtuvõimu teostav riigiasutus",
@@ -3719,7 +3719,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohusetunne", gloss: "sense of duty", pos: "NOUN", cefr: "B2",
     ekilexWordId: 183405,
-    parts: { NOM_SG: "kohusetunne", GEN_SG: "kohusetunde", PART_SG: "kohusetunnet", PART_PL: "kohusetundeid", GEN_PL: "kohusetunnete" },
+    parts: { NOM_SG: "kohusetunne", GEN_SG: "kohusetunde", PART_SG: "kohusetunnet", NOM_PL: "kohusetunded", PART_PL: "kohusetundeid", GEN_PL: "kohusetunnete" },
     government: null,
     usages: ["Meeskonnasport õpetab kohusetunnet ja enesedistsipliini.", "Tegin kohusetundest töö lõpuni."],
     note: "oma kohustuste tunnetamine, moraalne vajadus neid täita",
@@ -3737,7 +3737,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohustus", gloss: "obligation", pos: "NOUN", cefr: "B1",
     ekilexWordId: 183412,
-    parts: { NOM_SG: "kohustus", GEN_SG: "kohustuse", PART_SG: "kohustust", ILL_SG_SHORT: "kohustusse", PART_PL: "kohustusi", GEN_PL: "kohustuste" },
+    parts: { NOM_SG: "kohustus", GEN_SG: "kohustuse", PART_SG: "kohustust", ILL_SG_SHORT: "kohustusse", NOM_PL: "kohustused", PART_PL: "kohustusi", GEN_PL: "kohustuste" },
     government: null,
     usages: ["Töötajad peavad teadma oma õigusi ja kohustusi.", "Ära üritagi oma kohustusi teiste kaela veeretada.", "Näib, et riik on endalt maha raputanud kõik kohustused riigialamate vastu.", "Inimesed ei suuda enam täita oma kohustusi pankade ees."],
     note: "ülesanne või toiming, mis tuleb vältimatult täita (kellegi korralduse, kellelegi antud lubaduse või sisetunde ajel)",
@@ -3746,7 +3746,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohustuslik", gloss: "obligatory", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 183414,
-    parts: { NOM_SG: "kohustuslik", GEN_SG: "kohustusliku", PART_SG: "kohustuslikku", ILL_SG_SHORT: "kohustuslikku", PART_PL: "kohustuslikke", GEN_PL: "kohustuslike" },
+    parts: { NOM_SG: "kohustuslik", GEN_SG: "kohustusliku", PART_SG: "kohustuslikku", ILL_SG_SHORT: "kohustuslikku", NOM_PL: "kohustuslikud", PART_PL: "kohustuslikke", GEN_PL: "kohustuslike" },
     government: null,
     usages: ["Kiiver on kohustuslik.", "Kohustuslik kogumispension.", "Koosolekul osalemine on kohustuslik.", "1. Rahvahääletuse otsus on riigiorganitele kohustuslik."],
     note: "tingimata, alati tarvilik või ettenähtud, rangelt, kohustusena esinev või toimiv",
@@ -3755,7 +3755,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohustuslikkus", gloss: "obligatoriness", pos: "NOUN", cefr: null,
     ekilexWordId: 266138,
-    parts: { NOM_SG: "kohustuslikkus", GEN_SG: "kohustuslikkuse", PART_SG: "kohustuslikkust", ILL_SG_SHORT: "kohustuslikkusse", PART_PL: "kohustuslikkusi", GEN_PL: "kohustuslikkuste" },
+    parts: { NOM_SG: "kohustuslikkus", GEN_SG: "kohustuslikkuse", PART_SG: "kohustuslikkust", ILL_SG_SHORT: "kohustuslikkusse", NOM_PL: "kohustuslikkused", PART_PL: "kohustuslikkusi", GEN_PL: "kohustuslikkuste" },
     government: null,
     usages: [],
     note: null,
@@ -3764,7 +3764,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohv", gloss: "coffee", pos: "NOUN", cefr: "A1",
     ekilexWordId: 183420,
-    parts: { NOM_SG: "kohv", GEN_SG: "kohvi", PART_SG: "kohvi", ILL_SG_SHORT: "kohvi", PART_PL: "kohve", GEN_PL: "kohvide" },
+    parts: { NOM_SG: "kohv", GEN_SG: "kohvi", PART_SG: "kohvi", ILL_SG_SHORT: "kohvi", NOM_PL: "kohvid", PART_PL: "kohve", GEN_PL: "kohvide" },
     government: null,
     usages: ["Ostsin paar pakki kohvi.", "Ostsin paki kohvi.", "Tellisime kaks koorega kohvi.", "Kas te soovite teed või kohvi?"],
     note: "kohvioad",
@@ -3773,7 +3773,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohver", gloss: "suitcase", pos: "NOUN", cefr: "B1",
     ekilexWordId: 183421,
-    parts: { NOM_SG: "kohver", GEN_SG: "kohvri", PART_SG: "kohvrit", PART_PL: "kohvreid", GEN_PL: "kohvrite" },
+    parts: { NOM_SG: "kohver", GEN_SG: "kohvri", PART_SG: "kohvrit", NOM_PL: "kohvrid", PART_PL: "kohvreid", GEN_PL: "kohvrite" },
     government: null,
     usages: ["Pakkisime kohvrid ja sõitsime lennujaama.", "Abivalmis tundmatu aitas vanamemme kohvreid tassida.", "Reisikohver.", "Tööriistakohver."],
     note: "käepideme ning kaanega varustatud nahast või muust materjalist kastilaadne kott asjade kaasavõtmiseks (nt reisile)",
@@ -3782,7 +3782,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kohvik", gloss: "café", pos: "NOUN", cefr: "A1",
     ekilexWordId: 183434,
-    parts: { NOM_SG: "kohvik", GEN_SG: "kohviku", PART_SG: "kohvikut", PART_PL: "kohvikuid", GEN_PL: "kohvikute" },
+    parts: { NOM_SG: "kohvik", GEN_SG: "kohviku", PART_SG: "kohvikut", NOM_PL: "kohvikud", PART_PL: "kohvikuid", GEN_PL: "kohvikute" },
     government: null,
     usages: ["Pannkoogikohvik.", "Käisin sõbrannaga kohvikus.", "Selles majas asub väike kohvik."],
     note: "söögi- ja ajaviitekoht, kus pakutakse kohvi, küpsetisi ja ka muid sööke-jooke",
@@ -3800,7 +3800,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kokkulepe", gloss: "agreement", pos: "NOUN", cefr: "B1",
     ekilexWordId: 183616,
-    parts: { NOM_SG: "kokkulepe", GEN_SG: "kokkuleppe", PART_SG: "kokkulepet", PART_PL: "kokkuleppeid", GEN_PL: "kokkulepete" },
+    parts: { NOM_SG: "kokkulepe", GEN_SG: "kokkuleppe", PART_SG: "kokkulepet", NOM_PL: "kokkulepped", PART_PL: "kokkuleppeid", GEN_PL: "kokkulepete" },
     government: null,
     usages: ["Viimaks jõuti kokkuleppele.", "Meeste koostöö põhines suulisel kokkuleppel.", "Tarnija ei täitnud kokkulepet.", "Ta ei pea meie kokkuleppest kinni."],
     note: "kellegi vahel tehtud otsus millegi kohta",
@@ -3809,7 +3809,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kokkuvõte", gloss: "summary", pos: "NOUN", cefr: "B1",
     ekilexWordId: 183721,
-    parts: { NOM_SG: "kokkuvõte", GEN_SG: "kokkuvõtte", PART_SG: "kokkuvõtet", PART_PL: "kokkuvõtteid", GEN_PL: "kokkuvõtete" },
+    parts: { NOM_SG: "kokkuvõte", GEN_SG: "kokkuvõtte", PART_SG: "kokkuvõtet", NOM_PL: "kokkuvõtted", PART_PL: "kokkuvõtteid", GEN_PL: "kokkuvõtete" },
     government: null,
     usages: ["Õpilased pidid esitama õppekäigust kirjaliku kokkuvõtte.", "Kirjutasin artiklist kokkuvõtte.", "Kokkuvõte moodustab umbes 10-15 protsenti töö sisulise osa mahust.", "Esimese veerandaasta kokkuvõte."],
     note: "millegi lühike, ainult kõige tähtsamat sisaldav esitus",
@@ -3836,7 +3836,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kolimine", gloss: "moving house", pos: "NOUN", cefr: null,
     ekilexWordId: 266158,
-    parts: { NOM_SG: "kolimine", GEN_SG: "kolimise", PART_SG: "kolimist", ILL_SG_SHORT: "kolimisse", PART_PL: "kolimisi", GEN_PL: "kolimiste" },
+    parts: { NOM_SG: "kolimine", GEN_SG: "kolimise", PART_SG: "kolimist", ILL_SG_SHORT: "kolimisse", NOM_PL: "kolimised", PART_PL: "kolimisi", GEN_PL: "kolimiste" },
     government: null,
     usages: ["Kolimine läks kiiresti.", "Uude korterisse kolimine lõppes peoga.", "Andmete kolimine vanalt serverilt uuele ei olnud keeruline.", "Firma korralise koosoleku üks päevakorrapunkt oli peakorteri Tartusse kolimine."],
     note: "endisest elukohast uude siirdumine",
@@ -3845,7 +3845,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kollane", gloss: "yellow", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 183876,
-    parts: { NOM_SG: "kollane", GEN_SG: "kollase", PART_SG: "kollast", PART_PL: "kollaseid", GEN_PL: "kollaste" },
+    parts: { NOM_SG: "kollane", GEN_SG: "kollase", PART_SG: "kollast", NOM_PL: "kollased", PART_PL: "kollaseid", GEN_PL: "kollaste" },
     government: null,
     usages: ["Kollane kuu.", "Kollaseks pleekinud foto.", "Helekollane.", "Tumekollane."],
     note: "võililleõie, sidruni, õlgede värvi, spektris rohelise ja oranži vahel",
@@ -3854,7 +3854,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kolm", gloss: "three", pos: "NOUN", cefr: "A1",
     ekilexWordId: 183950,
-    parts: { NOM_SG: "kolm", GEN_SG: "kolme", PART_SG: "kolme", ILL_SG_SHORT: "kolme", PART_PL: "kolmi", GEN_PL: "kolmede" },
+    parts: { NOM_SG: "kolm", GEN_SG: "kolme", PART_SG: "kolme", ILL_SG_SHORT: "kolme", NOM_PL: "kolmed", PART_PL: "kolmi", GEN_PL: "kolmede" },
     government: null,
     usages: ["Kakskümmend kolm.", "Jaga kuus kolmega.", "Süüa pakuti kolm korda päevas.", "Neil on kolm last."],
     note: "põhiarv 3",
@@ -3863,7 +3863,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kolmapäev", gloss: "Wednesday", pos: "NOUN", cefr: "A1",
     ekilexWordId: 183958,
-    parts: { NOM_SG: "kolmapäev", GEN_SG: "kolmapäeva", PART_SG: "kolmapäeva", ILL_SG_SHORT: "kolmapäeva", PART_PL: "kolmapäevi", GEN_PL: "kolmapäevade" },
+    parts: { NOM_SG: "kolmapäev", GEN_SG: "kolmapäeva", PART_SG: "kolmapäeva", ILL_SG_SHORT: "kolmapäeva", NOM_PL: "kolmapäevad", PART_PL: "kolmapäevi", GEN_PL: "kolmapäevade" },
     government: null,
     usages: ["Kohtume kolmapäeval kell 12.", "Kolmapäeval tuleb tavaline sajune sügisilm."],
     note: "nädala 3. päev, teisipäevale järgnev ja neljapäevale eelnev päev",
@@ -3872,7 +3872,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kolmkümmend", gloss: "thirty", pos: "NOUN", cefr: "A1",
     ekilexWordId: 184040,
-    parts: { NOM_SG: "kolmkümmend", GEN_SG: "kolmekümne", PART_SG: "kolmekümmend", PART_PL: "kolmekümneid", GEN_PL: "kolmekümnete" },
+    parts: { NOM_SG: "kolmkümmend", GEN_SG: "kolmekümne", PART_SG: "kolmekümmend", NOM_PL: "kolmekümned", PART_PL: "kolmekümneid", GEN_PL: "kolmekümnete" },
     government: null,
     usages: ["Kolmkümmend kaheksa.", "Buss nr 30.", "Septembris on kolmkümmend päeva.", "Lähim bensiinijaam on siit kolmekümne kilomeetri kaugusel."],
     note: "põhiarv 30",
@@ -3881,7 +3881,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kolumnist", gloss: "columnist", pos: "NOUN", cefr: null,
     ekilexWordId: 184125,
-    parts: { NOM_SG: "kolumnist", GEN_SG: "kolumnisti", PART_SG: "kolumnisti", ILL_SG_SHORT: "kolumnisti", PART_PL: "kolumniste", GEN_PL: "kolumnistide" },
+    parts: { NOM_SG: "kolumnist", GEN_SG: "kolumnisti", PART_SG: "kolumnisti", ILL_SG_SHORT: "kolumnisti", NOM_PL: "kolumnistid", PART_PL: "kolumniste", GEN_PL: "kolumnistide" },
     government: null,
     usages: [],
     note: "ajalehtedes või ajakirjades aeg-ajalt kolumne kirjutav ajakirjanik",
@@ -3890,7 +3890,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "koma", gloss: "comma", pos: "NOUN", cefr: "B1",
     ekilexWordId: 184129,
-    parts: { NOM_SG: "koma", GEN_SG: "koma", PART_SG: "koma", PART_PL: "komasid", GEN_PL: "komade" },
+    parts: { NOM_SG: "koma", GEN_SG: "koma", PART_SG: "koma", NOM_PL: "komad", PART_PL: "komasid", GEN_PL: "komade" },
     government: null,
     usages: ["Võrdluse ette koma ei panda.", "Parandasin ära, lauses oli koma tõesti puudu.", "Kümnendkoha eraldaja võib olla punkt või koma."],
     note: "kirjavahemärk (,), mis eraldab sõnu, sõnarühmi või lauseid",
@@ -3899,7 +3899,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kommentaar", gloss: "commentary", pos: "NOUN", cefr: "A2",
     ekilexWordId: 184233,
-    parts: { NOM_SG: "kommentaar", GEN_SG: "kommentaari", PART_SG: "kommentaari", ILL_SG_SHORT: "kommentaari", PART_PL: "kommentaare", GEN_PL: "kommentaaride" },
+    parts: { NOM_SG: "kommentaar", GEN_SG: "kommentaari", PART_SG: "kommentaari", ILL_SG_SHORT: "kommentaari", NOM_PL: "kommentaarid", PART_PL: "kommentaare", GEN_PL: "kommentaaride" },
     government: null,
     usages: ["Saatesõna ja kommentaarid on kirjutanud Juhan Peegel.", "Peapiiskopilt ei õnnestunud eile kommentaari saada.", "Lisatud on spetsialisti kommentaar.", "Politsei keeldus kommentaaridest."],
     note: "selgitav, täiendav või arvustav märkus mingi teksti kohta",
@@ -3917,7 +3917,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kompromiss", gloss: "compromise", pos: "NOUN", cefr: "B1",
     ekilexWordId: 184412,
-    parts: { NOM_SG: "kompromiss", GEN_SG: "kompromissi", PART_SG: "kompromissi", ILL_SG_SHORT: "kompromissi", PART_PL: "kompromisse", GEN_PL: "kompromisside" },
+    parts: { NOM_SG: "kompromiss", GEN_SG: "kompromissi", PART_SG: "kompromissi", ILL_SG_SHORT: "kompromissi", NOM_PL: "kompromissid", PART_PL: "kompromisse", GEN_PL: "kompromisside" },
     government: null,
     usages: ["Poliitika on kompromisside kunst."],
     note: "vastastikuse järeleandmisega saavutatud kokkulepe",
@@ -3926,7 +3926,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "konflikt", gloss: "conflict", pos: "NOUN", cefr: "A2",
     ekilexWordId: 184517,
-    parts: { NOM_SG: "konflikt", GEN_SG: "konflikti", PART_SG: "konflikti", ILL_SG_SHORT: "konflikti", PART_PL: "konflikte", GEN_PL: "konfliktide" },
+    parts: { NOM_SG: "konflikt", GEN_SG: "konflikti", PART_SG: "konflikti", ILL_SG_SHORT: "konflikti", NOM_PL: "konfliktid", PART_PL: "konflikte", GEN_PL: "konfliktide" },
     government: null,
     usages: ["See, millest sa räägid, on lihtsalt põlvkondadevaheline konflikt.", "Konfliktid õpilaste ja õpetajate vahel.", "Esialgu paistis koostöö sujuvat, aga siis algasid konfliktid.", "Huvide konflikt."],
     note: "kahe vastaspoole vaheline äge, terav vastasseis vastandlike seisukohtade pärast",
@@ -3935,7 +3935,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "konkreetne", gloss: "concrete", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 184580,
-    parts: { NOM_SG: "konkreetne", GEN_SG: "konkreetse", PART_SG: "konkreetset", PART_PL: "konkreetseid", GEN_PL: "konkreetsete" },
+    parts: { NOM_SG: "konkreetne", GEN_SG: "konkreetse", PART_SG: "konkreetset", NOM_PL: "konkreetsed", PART_PL: "konkreetseid", GEN_PL: "konkreetsete" },
     government: null,
     usages: ["Konkreetne tegelikkus.", "Too mõni konkreetne näide.", "Konkreetsed nimisõnad nagu inimene, maja, varvas.", "Arst kutsutakse ikka konkreetse probleemi korral."],
     note: "tegelikult olemasolev, meeltega tajutav, kaemusel põhinev",
@@ -3944,7 +3944,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "konkurents", gloss: "competition", pos: "NOUN", cefr: "A2",
     ekilexWordId: 184604,
-    parts: { NOM_SG: "konkurents", GEN_SG: "konkurentsi", PART_SG: "konkurentsi", ILL_SG_SHORT: "konkurentsi", PART_PL: "konkurentse", GEN_PL: "konkurentside" },
+    parts: { NOM_SG: "konkurents", GEN_SG: "konkurentsi", PART_SG: "konkurentsi", ILL_SG_SHORT: "konkurentsi", NOM_PL: "konkurentsid", PART_PL: "konkurentse", GEN_PL: "konkurentside" },
     government: null,
     usages: ["Tihedas konkurentsis saavutasime II koha.", "Konkurents tihenes meeletu kiirusega.", "Esikohakonkurents.", "Sellele ametikohale oli tihe konkurents."],
     note: "mitme samal alal tegutseva osalise omavaheline võistlus, konkureerimine paremuse, edemuse pärast, püüdlus teisi sama eesmärgi taotlejaid edestada",
@@ -3953,7 +3953,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kontekst", gloss: "context", pos: "NOUN", cefr: "B1",
     ekilexWordId: 184774,
-    parts: { NOM_SG: "kontekst", GEN_SG: "konteksti", PART_SG: "konteksti", ILL_SG_SHORT: "konteksti", PART_PL: "kontekste", GEN_PL: "kontekstide" },
+    parts: { NOM_SG: "kontekst", GEN_SG: "konteksti", PART_SG: "konteksti", ILL_SG_SHORT: "konteksti", NOM_PL: "kontekstid", PART_PL: "kontekste", GEN_PL: "kontekstide" },
     government: null,
     usages: ["Rääkisime Eestist Euroopa kontekstis.", "Olen Võrust pärit, nii et Baltikumi kontekstis olen mägede poeg.", "Rait vaatas etendust isadepäeval koos oma tütrega, see oli eriline kontekst.", "Barokkmuusika toimib ka tänapäeva kontekstis."],
     note: "objekti, tegevust, sündmust ümbritsev üldine taust, mis aitab seda objekti vm mõista",
@@ -3962,7 +3962,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "konto", gloss: "account", pos: "NOUN", cefr: "B1",
     ekilexWordId: 184798,
-    parts: { NOM_SG: "konto", GEN_SG: "konto", PART_SG: "kontot", PART_PL: "kontosid", GEN_PL: "kontode" },
+    parts: { NOM_SG: "konto", GEN_SG: "konto", PART_SG: "kontot", NOM_PL: "kontod", PART_PL: "kontosid", GEN_PL: "kontode" },
     government: null,
     usages: ["Anna mulle oma konto number, teen siis ülekande.", "Kontol pole piisavalt raha.", "Konto väljavõttelt on näha, et raha laekus arvele märtsikuus.", "Kandsin raha firma kontole."],
     note: "teenus raha pangas hoidmiseks ja arvelduste vm tehingute tegemiseks (nt arvelduskonto, hoiuarve)",
@@ -3980,7 +3980,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kool", gloss: "school", pos: "NOUN", cefr: "A1",
     ekilexWordId: 185065,
-    parts: { NOM_SG: "kool", GEN_SG: "kooli", PART_SG: "kooli", ILL_SG_SHORT: "kooli", PART_PL: "koole", GEN_PL: "koolide" },
+    parts: { NOM_SG: "kool", GEN_SG: "kooli", PART_SG: "kooli", ILL_SG_SHORT: "kooli", NOM_PL: "koolid", PART_PL: "koole", GEN_PL: "koolide" },
     government: null,
     usages: ["Tallinna juudi kool on venekeelne kool.", "Kokakool.", "Linnas avati uus kool.", "Ta töötab koolis õpetajana."],
     note: "asutus, kus õpilased õpetaja juhtimisel õpivad",
@@ -3989,7 +3989,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "koomiline", gloss: "comic", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 185246,
-    parts: { NOM_SG: "koomiline", GEN_SG: "koomilise", PART_SG: "koomilist", ILL_SG_SHORT: "koomilisse", PART_PL: "koomilisi", GEN_PL: "koomiliste" },
+    parts: { NOM_SG: "koomiline", GEN_SG: "koomilise", PART_SG: "koomilist", ILL_SG_SHORT: "koomilisse", NOM_PL: "koomilised", PART_PL: "koomilisi", GEN_PL: "koomiliste" },
     government: null,
     usages: ["See oli võrdlemisi koomiline vaatepilt.", "Asi hakkab koomiliseks kiskuma.", "Koomiline ooper.", "Koomiline ajaviiteromaan."],
     note: "naerma ajav, (naljakalt, lõbustavalt) veider või kentsakas",
@@ -3998,7 +3998,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "koondamine", gloss: "redundancy", pos: "NOUN", cefr: null,
     ekilexWordId: 266241,
-    parts: { NOM_SG: "koondamine", GEN_SG: "koondamise", PART_SG: "koondamist", ILL_SG_SHORT: "koondamisse", PART_PL: "koondamisi", GEN_PL: "koondamiste" },
+    parts: { NOM_SG: "koondamine", GEN_SG: "koondamise", PART_SG: "koondamist", ILL_SG_SHORT: "koondamisse", NOM_PL: "koondamised", PART_PL: "koondamisi", GEN_PL: "koondamiste" },
     government: null,
     usages: ["Kui prokurör sellega ei nõustu, vabastab justiitsminister ta teenistusest koondamise tõttu."],
     note: "koondama - töö-, ametikohtade arvu vähendama ning neil töötanud inimesi sellega seoses töölt vabastama",
@@ -4016,7 +4016,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "koosolek", gloss: "meeting", pos: "NOUN", cefr: "B1",
     ekilexWordId: 185443,
-    parts: { NOM_SG: "koosolek", GEN_SG: "koosoleku", PART_SG: "koosolekut", PART_PL: "koosolekuid", GEN_PL: "koosolekute" },
+    parts: { NOM_SG: "koosolek", GEN_SG: "koosoleku", PART_SG: "koosolekut", NOM_PL: "koosolekud", PART_PL: "koosolekuid", GEN_PL: "koosolekute" },
     government: null,
     usages: ["Jäin koosolekule hiljaks.", "Koosolek otsustas juhatuse volitusi pikendada.", "Töökoosolek.", "Parteikoosolek."],
     note: "mingi inimeste rühma kokkutulek ühiste küsimuste arutamiseks, otsuste tegemiseks või ettekannete kuulamiseks",
@@ -4025,7 +4025,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "koostöö", gloss: "cooperation", pos: "NOUN", cefr: "A2",
     ekilexWordId: 185467,
-    parts: { NOM_SG: "koostöö", GEN_SG: "koostöö", PART_SG: "koostööd", ILL_SG_SHORT: "koostöhe", PART_PL: "koostöid", GEN_PL: "koostööde" },
+    parts: { NOM_SG: "koostöö", GEN_SG: "koostöö", PART_SG: "koostööd", ILL_SG_SHORT: "koostöhe", NOM_PL: "koostööd", PART_PL: "koostöid", GEN_PL: "koostööde" },
     government: null,
     usages: ["Oleme lätlastega varemgi koostööd teinud.", "Raamat valmis koostöös dendroloogidega.", "Festival toimub tihedas koostöös kohalike elanikega."],
     note: "mitme isiku, isikute rühma vm üheskoos töötamine või tegutsemine",
@@ -4034,7 +4034,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kord", gloss: "order, time (occasion)", pos: "NOUN", cefr: null,
     ekilexWordId: 185613,
-    parts: { NOM_SG: "kord", GEN_SG: "korra", PART_SG: "korda", ILL_SG_SHORT: "korda", PART_PL: "kordi", GEN_PL: "kordade" },
+    parts: { NOM_SG: "kord", GEN_SG: "korra", PART_SG: "korda", ILL_SG_SHORT: "korda", NOM_PL: "korrad", PART_PL: "kordi", GEN_PL: "kordade" },
     government: null,
     usages: ["Toetuse maksmise kord kehtib sellest aastast.", "Avalik kord.", "Riigi põhiseaduslik kord.", "Milline on toetuste maksmise kord?"],
     note: "õiguslikud ja sotsiaalsed normid, mis on kehtestatud seaduste, eeskirjade või tavadega",
@@ -4052,7 +4052,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kordus", gloss: "replication", pos: "NOUN", cefr: "B2",
     ekilexWordId: 185653,
-    parts: { NOM_SG: "kordus", GEN_SG: "korduse", PART_SG: "kordust", ILL_SG_SHORT: "kordusse", PART_PL: "kordusi", GEN_PL: "korduste" },
+    parts: { NOM_SG: "kordus", GEN_SG: "korduse", PART_SG: "kordust", ILL_SG_SHORT: "kordusse", NOM_PL: "kordused", PART_PL: "kordusi", GEN_PL: "korduste" },
     government: null,
     usages: ["Rütmiliste kordustega muusikapala.", "Oluline on harjutuse suur korduste arv ja rahulik tempo.", "Saadete kordust näeb ETV kodulehelt.", "Värsisisesed kordused."],
     note: "millegi uuesti tegemine, lausumine, toimumine",
@@ -4079,7 +4079,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "korraldus", gloss: "order, arrangement", pos: "NOUN", cefr: "B2",
     ekilexWordId: 185800,
-    parts: { NOM_SG: "korraldus", GEN_SG: "korralduse", PART_SG: "korraldust", ILL_SG_SHORT: "korraldusse", PART_PL: "korraldusi", GEN_PL: "korralduste" },
+    parts: { NOM_SG: "korraldus", GEN_SG: "korralduse", PART_SG: "korraldust", ILL_SG_SHORT: "korraldusse", NOM_PL: "korraldused", PART_PL: "korraldusi", GEN_PL: "korralduste" },
     government: null,
     usages: ["Kirjalik korraldus.", "Kui meile korraldust ei anta, siis me ei räägi.", "Valitsuse korraldus.", "Mees ei allunud politseiniku korraldustele."],
     note: "mingi ülesande täitmisele suunav ettekirjutus (nt käsk, nõue)",
@@ -4088,7 +4088,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "korrelatsioon", gloss: "correlation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 185846,
-    parts: { NOM_SG: "korrelatsioon", GEN_SG: "korrelatsiooni", PART_SG: "korrelatsiooni", ILL_SG_SHORT: "korrelatsiooni", PART_PL: "korrelatsioone", GEN_PL: "korrelatsioonide" },
+    parts: { NOM_SG: "korrelatsioon", GEN_SG: "korrelatsiooni", PART_SG: "korrelatsiooni", ILL_SG_SHORT: "korrelatsiooni", NOM_PL: "korrelatsioonid", PART_PL: "korrelatsioone", GEN_PL: "korrelatsioonide" },
     government: null,
     usages: ["Laias laastus on tõesti rikkus ja õnn positiivses korrelatsioonis.", "Geneetiline korrelatsioon oli tugev kõigi tunnuste vahel.", "Statistiliselt oluline korrelatsioon."],
     note: "vastastikune seotus, hrl põhjuslik suhe kahe või mitme objekti, sündmuse, funktsiooni vm (mõõtmistulemuse) vahel, mis näitab vastastikuse seose tugevust (hrl arvulise korrelatsioonikordajana)",
@@ -4097,7 +4097,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "korter", gloss: "flat, apartment", pos: "NOUN", cefr: "A1",
     ekilexWordId: 185904,
-    parts: { NOM_SG: "korter", GEN_SG: "korteri", PART_SG: "korterit", PART_PL: "kortereid", GEN_PL: "korterite" },
+    parts: { NOM_SG: "korter", GEN_SG: "korteri", PART_SG: "korterit", NOM_PL: "korterid", PART_PL: "kortereid", GEN_PL: "korterite" },
     government: null,
     usages: ["Kümne korteriga maja.", "Üürisin kahetoalise korteri kolmandal korrusel.", "Naaberkorter.", "Kõrvalkorter."],
     note: "ühest või mitmest toast ja hrl kõrvalruumidest koosnev eluruumide kogum",
@@ -4106,7 +4106,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kostja", gloss: "defendant", pos: "NOUN", cefr: null,
     ekilexWordId: 186080,
-    parts: { NOM_SG: "kostja", GEN_SG: "kostja", PART_SG: "kostjat", PART_PL: "kostjaid", GEN_PL: "kostjate" },
+    parts: { NOM_SG: "kostja", GEN_SG: "kostja", PART_SG: "kostjat", NOM_PL: "kostjad", PART_PL: "kostjaid", GEN_PL: "kostjate" },
     government: null,
     usages: ["Kostja vaidles hageja nõudele vastu.", "Kohus määras pensionäridest hagejale ja kostjale esindajad."],
     note: "tsiviilkohtumenetluses pool, kelle vastu on esitatud kahju hüvitamise nõue ehk hagi",
@@ -4115,7 +4115,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kraad", gloss: "degree", pos: "NOUN", cefr: "A2",
     ekilexWordId: 186162,
-    parts: { NOM_SG: "kraad", GEN_SG: "kraadi", PART_SG: "kraadi", ILL_SG_SHORT: "kraadi", PART_PL: "kraade", GEN_PL: "kraadide" },
+    parts: { NOM_SG: "kraad", GEN_SG: "kraadi", PART_SG: "kraadi", ILL_SG_SHORT: "kraadi", NOM_PL: "kraadid", PART_PL: "kraade", GEN_PL: "kraadide" },
     government: null,
     usages: ["Täna on väljas üle 20 kraadi sooja.", "Väljas on 22 kraadi sooja.", "Kolmnurga kolme nurga summa on alati 180 kraadi.", "Veinis on 13 kraadi alkoholi."],
     note: "temperatuuri mõõtühik",
@@ -4124,7 +4124,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kriis", gloss: "crisis", pos: "NOUN", cefr: "B1",
     ekilexWordId: 186450,
-    parts: { NOM_SG: "kriis", GEN_SG: "kriisi", PART_SG: "kriisi", ILL_SG_SHORT: "kriisi", PART_PL: "kriise", GEN_PL: "kriiside" },
+    parts: { NOM_SG: "kriis", GEN_SG: "kriisi", PART_SG: "kriisi", ILL_SG_SHORT: "kriisi", NOM_PL: "kriisid", PART_PL: "kriise", GEN_PL: "kriiside" },
     government: null,
     usages: ["Demograafiline kriis.", "Sisepoliitiline kriis süveneb.", "Hiljuti elas kinnisvaraturg läbi sügava kriisi.", "Kriis lahenes, kuid pinged jäid."],
     note: "vastuoludest lõhestatud pingeline (sotsiaalne, poliitiline) seisund, mille hrl on põhjustanud raskused, ohud, ebastabiilsed olud ning millega võib kaasneda ähvardavalt järsk muutus",
@@ -4133,7 +4133,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kriitika", gloss: "criticism", pos: "NOUN", cefr: "B1",
     ekilexWordId: 186466,
-    parts: { NOM_SG: "kriitika", GEN_SG: "kriitika", PART_SG: "kriitikat", PART_PL: "kriitikaid", GEN_PL: "kriitikate" },
+    parts: { NOM_SG: "kriitika", GEN_SG: "kriitika", PART_SG: "kriitikat", NOM_PL: "kriitikad", PART_PL: "kriitikaid", GEN_PL: "kriitikate" },
     government: null,
     usages: ["Opositsioonilt oodatakse eelkõige konstruktiivset kriitikat.", "Kriitikat lugesin alles pärast näituse vaatamist.", "Kriitika võttis lavastuse väga hästi vastu.", "Valitsuse tegevus sai lahmiva kriitika osaliseks."],
     note: "analüüsiv arvustamine, hindav arvamusavaldus, hinnangud või arvustused kogumina",
@@ -4178,7 +4178,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kuiv", gloss: "dry", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 187077,
-    parts: { NOM_SG: "kuiv", GEN_SG: "kuiva", PART_SG: "kuiva", ILL_SG_SHORT: "kuiva", PART_PL: "kuivi", GEN_PL: "kuivade" },
+    parts: { NOM_SG: "kuiv", GEN_SG: "kuiva", PART_SG: "kuiva", ILL_SG_SHORT: "kuiva", NOM_PL: "kuivad", PART_PL: "kuivi", GEN_PL: "kuivade" },
     government: null,
     usages: ["Pühkisin laua kuivaks.", "Ta vahetas pärast võistlust kuivad riided selga.", "Kraavid on täitsa kuivad.", "Kuiv hein pandi kuhja."],
     note: "niiskuseta, veeta vm vedelikuta",
@@ -4187,7 +4187,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kujund", gloss: "figure of speech", pos: "NOUN", cefr: "B2",
     ekilexWordId: 187167,
-    parts: { NOM_SG: "kujund", GEN_SG: "kujundi", PART_SG: "kujundit", PART_PL: "kujundeid", GEN_PL: "kujundite" },
+    parts: { NOM_SG: "kujund", GEN_SG: "kujundi", PART_SG: "kujundit", NOM_PL: "kujundid", PART_PL: "kujundeid", GEN_PL: "kujundite" },
     government: null,
     usages: ["Geomeetriline kujund.", "Ruumilised kujundid.", "Kujundid tapeedil meenutavad lilli.", "Lõikasime paberist erinevaid kujundeid välja."],
     note: "ühe või mitme joonega esitatud tasandiline kujutis (nt kolmnurk, ring) või ühe või mitme tasapinnaga esitatud ruumiline kujutis (nt kera, kuup), mis tahes punktidest, joontest ja tasapindadest koosnev kujutis",
@@ -4196,7 +4196,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kujundamine", gloss: "shaping", pos: "NOUN", cefr: null,
     ekilexWordId: 266365,
-    parts: { NOM_SG: "kujundamine", GEN_SG: "kujundamise", PART_SG: "kujundamist", ILL_SG_SHORT: "kujundamisse", PART_PL: "kujundamisi", GEN_PL: "kujundamiste" },
+    parts: { NOM_SG: "kujundamine", GEN_SG: "kujundamise", PART_SG: "kujundamist", ILL_SG_SHORT: "kujundamisse", NOM_PL: "kujundamised", PART_PL: "kujundamisi", GEN_PL: "kujundamiste" },
     government: null,
     usages: ["Alustati Eesti maine kujundamise kampaaniat."],
     note: "teadlikult juhitud loov protsess, mis algab probleemi juurte identifitseerimisest ning viib uute ja kvaliteetsete, inimeste vajadustest ja soovidest lähtuvate, majanduslikult ning ökoloogiliselt elujõuliste toodete ja teenuste väljatöötamiseni",
@@ -4205,7 +4205,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kujundlik", gloss: "imagery-rich", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 187176,
-    parts: { NOM_SG: "kujundlik", GEN_SG: "kujundliku", PART_SG: "kujundlikku", ILL_SG_SHORT: "kujundlikku", PART_PL: "kujundlikke", GEN_PL: "kujundlike" },
+    parts: { NOM_SG: "kujundlik", GEN_SG: "kujundliku", PART_SG: "kujundlikku", ILL_SG_SHORT: "kujundlikku", NOM_PL: "kujundlikud", PART_PL: "kujundlikke", GEN_PL: "kujundlike" },
     government: null,
     usages: ["Kujundlik väljend.", "Kujundlik mõtlemine."],
     note: "kujundeid kasutav või sisaldav",
@@ -4214,7 +4214,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kujundlikkus", gloss: "figurativeness", pos: "NOUN", cefr: null,
     ekilexWordId: 266368,
-    parts: { NOM_SG: "kujundlikkus", GEN_SG: "kujundlikkuse", PART_SG: "kujundlikkust", ILL_SG_SHORT: "kujundlikkusse", PART_PL: "kujundlikkusi", GEN_PL: "kujundlikkuste" },
+    parts: { NOM_SG: "kujundlikkus", GEN_SG: "kujundlikkuse", PART_SG: "kujundlikkust", ILL_SG_SHORT: "kujundlikkusse", NOM_PL: "kujundlikkused", PART_PL: "kujundlikkusi", GEN_PL: "kujundlikkuste" },
     government: null,
     usages: [],
     note: null,
@@ -4223,7 +4223,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kujunemine", gloss: "formation, development", pos: "NOUN", cefr: null,
     ekilexWordId: 266370,
-    parts: { NOM_SG: "kujunemine", GEN_SG: "kujunemise", PART_SG: "kujunemist", ILL_SG_SHORT: "kujunemisse", PART_PL: "kujunemisi", GEN_PL: "kujunemiste" },
+    parts: { NOM_SG: "kujunemine", GEN_SG: "kujunemise", PART_SG: "kujunemist", ILL_SG_SHORT: "kujunemisse", NOM_PL: "kujunemised", PART_PL: "kujunemisi", GEN_PL: "kujunemiste" },
     government: null,
     usages: [],
     note: null,
@@ -4241,7 +4241,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kumb", gloss: "which of the two", pos: "PRONOUN", cefr: "B1",
     ekilexWordId: 187660,
-    parts: { NOM_SG: "kumb", GEN_SG: "kumma", PART_SG: "kumba", ILL_SG_SHORT: "kumba", PART_PL: "kumbi", GEN_PL: "kumbade" },
+    parts: { NOM_SG: "kumb", GEN_SG: "kumma", PART_SG: "kumba", ILL_SG_SHORT: "kumba", NOM_PL: "kummad", PART_PL: "kumbi", GEN_PL: "kumbade" },
     government: null,
     usages: ["Kumba lahendust pead paremaks?", "Kumma jalaga seda tantsusammu alustatakse?", "Kumba soovite?", "Las tema ütleb, kummal meist on õigus."],
     note: "osutab kahele inimesele, esemele või nähtusele, mille vahel peab valima",
@@ -4277,7 +4277,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kunst", gloss: "art", pos: "NOUN", cefr: "A2",
     ekilexWordId: 187802,
-    parts: { NOM_SG: "kunst", GEN_SG: "kunsti", PART_SG: "kunsti", ILL_SG_SHORT: "kunsti", PART_PL: "kunste", GEN_PL: "kunstide" },
+    parts: { NOM_SG: "kunst", GEN_SG: "kunsti", PART_SG: "kunsti", ILL_SG_SHORT: "kunsti", NOM_PL: "kunstid", PART_PL: "kunste", GEN_PL: "kunstide" },
     government: null,
     usages: ["Muuseumis on Eesti kunsti näitus.", "Õppisin emalt leivaküpsetamise kunsti.", "Koeraga toimetulemine pole tema jaoks mingi kunst.", "Igasuguseid kunste on proovitud, aga mootor ei käivitu."],
     note: "loov inimtegevus, milles värvi, vormi, heli, sõna vm kaudu ning esteetiliselt mõjusana vahendatakse teistele oma maailmatunnetust",
@@ -4286,7 +4286,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kurb", gloss: "sad", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 188027,
-    parts: { NOM_SG: "kurb", GEN_SG: "kurva", PART_SG: "kurba", ILL_SG_SHORT: "kurba", PART_PL: "kurbi", GEN_PL: "kurbade" },
+    parts: { NOM_SG: "kurb", GEN_SG: "kurva", PART_SG: "kurba", ILL_SG_SHORT: "kurba", NOM_PL: "kurvad", PART_PL: "kurbi", GEN_PL: "kurbade" },
     government: null,
     usages: ["Uudis tegi mind väga kurvaks.", "Koer vaatas peremeest kurva pilguga.", "Teda polnud keegi nii kurvana näinud.", "Olen natuke kurb."],
     note: "(meeleolu, oleku kohta:) õnnetu, rõhutud või rusutud",
@@ -4295,7 +4295,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kuritegu", gloss: "crime", pos: "NOUN", cefr: "B1",
     ekilexWordId: 188120,
-    parts: { NOM_SG: "kuritegu", GEN_SG: "kuriteo", PART_SG: "kuritegu", PART_PL: "kuritegusid", GEN_PL: "kuritegude" },
+    parts: { NOM_SG: "kuritegu", GEN_SG: "kuriteo", PART_SG: "kuritegu", NOM_PL: "kuriteod", PART_PL: "kuritegusid", GEN_PL: "kuritegude" },
     government: null,
     usages: ["Mees tunnistas kuriteo üles.", "Kuriteos kahtlustatavat pole leitud.", "Korruptsioonikuritegu.", "Mõrv ja röövimine on rasked kuriteod."],
     note: "raske õigusrikkumine, mille karistuse üle otsustab kohus",
@@ -4340,7 +4340,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kuu", gloss: "month, moon", pos: "NOUN", cefr: "A1",
     ekilexWordId: 188398,
-    parts: { NOM_SG: "kuu", GEN_SG: "kuu", PART_SG: "kuud", PART_PL: "kuid", GEN_PL: "kuude" },
+    parts: { NOM_SG: "kuu", GEN_SG: "kuu", PART_SG: "kuud", NOM_PL: "kuud", PART_PL: "kuid", GEN_PL: "kuude" },
     government: null,
     usages: ["Kuu siras taevas ning tähed paistsid selgelt.", "Päikesetõusuni on jäänud veel kaks tundi ja ka kuu ei paista, ent ometi pole päris pime.", "Kuu kadus pilve taha.", "Kasvava ja kahaneva kuu mõju taimedele."],
     note: "maakeralt eriti öösiti nähtav suur helendav taevakeha",
@@ -4349,7 +4349,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kuulaja", gloss: "listener", pos: "NOUN", cefr: "B1",
     ekilexWordId: 188461,
-    parts: { NOM_SG: "kuulaja", GEN_SG: "kuulaja", PART_SG: "kuulajat", PART_PL: "kuulajaid", GEN_PL: "kuulajate" },
+    parts: { NOM_SG: "kuulaja", GEN_SG: "kuulaja", PART_SG: "kuulajat", NOM_PL: "kuulajad", PART_PL: "kuulajaid", GEN_PL: "kuulajate" },
     government: null,
     usages: ["Ta ei karda oma mõtteid saalitäie kuulajatega jagada.", "Vikerraadio igapäevased kuulajad.", "Pianist üllatas kuulajaid laia repertuaariga.", "Ta on hea kuulaja."],
     note: "inimene, kes kuulab midagi või kedagi",
@@ -4367,7 +4367,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kuuldus", gloss: "rumour", pos: "NOUN", cefr: "B2",
     ekilexWordId: 188492,
-    parts: { NOM_SG: "kuuldus", GEN_SG: "kuulduse", PART_SG: "kuuldust", ILL_SG_SHORT: "kuuldusse", PART_PL: "kuuldusi", GEN_PL: "kuulduste" },
+    parts: { NOM_SG: "kuuldus", GEN_SG: "kuulduse", PART_SG: "kuuldust", ILL_SG_SHORT: "kuuldusse", NOM_PL: "kuuldused", PART_PL: "kuuldusi", GEN_PL: "kuulduste" },
     government: null,
     usages: ["Kuuldused meteoriidist võisid olla Pythease reisi ajendiks."],
     note: "suust suhu liikuv jutt, sõnum vms, millel ei pruugi tõepõhja olla",
@@ -4394,7 +4394,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kuum", gloss: "hot", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 188568,
-    parts: { NOM_SG: "kuum", GEN_SG: "kuuma", PART_SG: "kuuma", ILL_SG_SHORT: "kuuma", PART_PL: "kuumi", GEN_PL: "kuumade" },
+    parts: { NOM_SG: "kuum", GEN_SG: "kuuma", PART_SG: "kuuma", ILL_SG_SHORT: "kuuma", NOM_PL: "kuumad", PART_PL: "kuumi", GEN_PL: "kuumade" },
     government: null,
     usages: ["Kuum suvepäev.", "Kõrvetasin ennast kuuma teega.", "Haige otsaesine oli kuum.", "Supp on liiga kuum."],
     note: "kõrge temperatuuriga, väga soe",
@@ -4403,7 +4403,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kuupäev", gloss: "date", pos: "NOUN", cefr: "B1",
     ekilexWordId: 188636,
-    parts: { NOM_SG: "kuupäev", GEN_SG: "kuupäeva", PART_SG: "kuupäeva", ILL_SG_SHORT: "kuupäeva", PART_PL: "kuupäevi", GEN_PL: "kuupäevade" },
+    parts: { NOM_SG: "kuupäev", GEN_SG: "kuupäeva", PART_SG: "kuupäeva", ILL_SG_SHORT: "kuupäeva", NOM_PL: "kuupäevad", PART_PL: "kuupäevi", GEN_PL: "kuupäevade" },
     government: null,
     usages: ["Aruanne tuli esitada kümnendaks kuupäevaks.", "Mis kuupäev täna on? – 21. veebruar.", "Dokumendil on allkiri ja kuupäev.", "Mis kuupäev täna on? – 6. juuli."],
     note: "päeva järjekorranumber kuus (sageli koos kuu nimetamisega)",
@@ -4412,7 +4412,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kuus", gloss: "six", pos: "NOUN", cefr: "A1",
     ekilexWordId: 188653,
-    parts: { NOM_SG: "kuus", GEN_SG: "kuue", PART_SG: "kuut", ILL_SG_SHORT: "kuude", PART_PL: "kuusi", GEN_PL: "kuute" },
+    parts: { NOM_SG: "kuus", GEN_SG: "kuue", PART_SG: "kuut", ILL_SG_SHORT: "kuude", NOM_PL: "kuued", PART_PL: "kuusi", GEN_PL: "kuute" },
     government: null,
     usages: ["Kakskümmend kuus.", "Kaheksateist jagub kuuega.", "Kursus kestab kuus kuud.", "Kell on kuus."],
     note: "põhiarv 6",
@@ -4421,7 +4421,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõik", gloss: "all, everything, everybody", pos: "PRONOUN", cefr: "A1",
     ekilexWordId: 188971,
-    parts: { NOM_SG: "kõik", GEN_SG: "kõige", PART_SG: "kõike", ILL_SG_SHORT: "kõike", PART_PL: "kõiki", GEN_PL: "kõikide" },
+    parts: { NOM_SG: "kõik", GEN_SG: "kõige", PART_SG: "kõike", ILL_SG_SHORT: "kõike", NOM_PL: "kõik", PART_PL: "kõiki", GEN_PL: "kõikide" },
     government: null,
     usages: ["Kõik olid kohal.", "Kõik koos asusid teele.", "Rääkis seda kõigi kuuldes.", "Peaaegu kõik õpilased olid ettepanekuga nõus."],
     note: "iga üksik mingist tervikust, viimane kui üks",
@@ -4430,7 +4430,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõla", gloss: "sound, resonance", pos: "NOUN", cefr: "B2",
     ekilexWordId: 189007,
-    parts: { NOM_SG: "kõla", GEN_SG: "kõla", PART_SG: "kõla", ILL_SG_SHORT: "kõlla", PART_PL: "kõlasid", GEN_PL: "kõlade" },
+    parts: { NOM_SG: "kõla", GEN_SG: "kõla", PART_SG: "kõla", ILL_SG_SHORT: "kõlla", NOM_PL: "kõlad", PART_PL: "kõlasid", GEN_PL: "kõlade" },
     government: null,
     usages: ["Kuularist kostev tekst on arusaadav, kuid veidi plekise kõlaga.", "Hämmastas orkestri kordumatult õrn ja õhuline kõla.", "Kannelde kõla sobib kitarriansambliga hästi kokku.", "Töökojas kontrollitakse kella kõla."],
     note: "hääle, heli üldine värving",
@@ -4448,7 +4448,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõne", gloss: "speech", pos: "NOUN", cefr: "A2",
     ekilexWordId: 189116,
-    parts: { NOM_SG: "kõne", GEN_SG: "kõne", PART_SG: "kõnet", ILL_SG_SHORT: "kõnne", PART_PL: "kõnesid", GEN_PL: "kõnede" },
+    parts: { NOM_SG: "kõne", GEN_SG: "kõne", PART_SG: "kõnet", ILL_SG_SHORT: "kõnne", NOM_PL: "kõned", PART_PL: "kõnesid", GEN_PL: "kõnede" },
     government: null,
     usages: ["Kandidaat valdas prantsuse keelt nii kõnes kui kirjas.", "Vanamehel oli vähe hambaid ja seetõttu oli tema kõne ebaselge.", "Lapse kõne areng on aeglane.", "Ma valdan saksa keelt nii kõnes kui kirjas."],
     note: "rääkimine, kõnelemine",
@@ -4457,7 +4457,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõnekeel", gloss: "colloquial speech", pos: "NOUN", cefr: null,
     ekilexWordId: 189135,
-    parts: { NOM_SG: "kõnekeel", GEN_SG: "kõnekeele", PART_SG: "kõnekeelt", ILL_SG_SHORT: "kõnekeelde", PART_PL: "kõnekeeli", GEN_PL: "kõnekeelte" },
+    parts: { NOM_SG: "kõnekeel", GEN_SG: "kõnekeele", PART_SG: "kõnekeelt", ILL_SG_SHORT: "kõnekeelde", NOM_PL: "kõnekeeled", PART_PL: "kõnekeeli", GEN_PL: "kõnekeelte" },
     government: null,
     usages: ["Kirjanik kasutab ohtralt kõnekeelt ja slängi.", "Kursustel õpitakse kõnekeelt, grammatikat ja sõnavara.", "Esseele järgnenud vestluses küsitles Annelit mitu õpetajat, kontrollides tema kõnekeele oskust.", "Vägisõnade kasutamine kõnekeeles ja trükisõnas on inimese alateadvuslike tungide emotsionaalne väljendus."],
     note: "igapäevases suhtluses (nii kirjas kui ka kõnes) kasutatav, ametlikust keelest vabam keel",
@@ -4466,7 +4466,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõnekeelne", gloss: "colloquial", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 266494,
-    parts: { NOM_SG: "kõnekeelne", GEN_SG: "kõnekeelse", PART_SG: "kõnekeelset", PART_PL: "kõnekeelseid", GEN_PL: "kõnekeelsete" },
+    parts: { NOM_SG: "kõnekeelne", GEN_SG: "kõnekeelse", PART_SG: "kõnekeelset", NOM_PL: "kõnekeelsed", PART_PL: "kõnekeelseid", GEN_PL: "kõnekeelsete" },
     government: null,
     usages: ["„Jevgeni Oneginis“ pole murdesõnu ega kõnekeelseid väljendeid.", "Kas „süldimuusika“ on kõnekeelne sõna?", "Erinevalt kõnekeelseks jäänud võru murdest on iiri keel olnud pikki sajandeid kirjakeel."],
     note: "igapäevases suhtluses kasutatav, ametlikust keelekasutusest vabamasse registrisse kuuluv",
@@ -4475,7 +4475,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõnekäänd", gloss: "saying, idiom", pos: "NOUN", cefr: null,
     ekilexWordId: 189145,
-    parts: { NOM_SG: "kõnekäänd", GEN_SG: "kõnekäänu", PART_SG: "kõnekäändu", ILL_SG_SHORT: "kõnekäändu", PART_PL: "kõnekäände", GEN_PL: "kõnekäändude" },
+    parts: { NOM_SG: "kõnekäänd", GEN_SG: "kõnekäänu", PART_SG: "kõnekäändu", ILL_SG_SHORT: "kõnekäändu", NOM_PL: "kõnekäänud", PART_PL: "kõnekäände", GEN_PL: "kõnekäändude" },
     government: null,
     usages: [],
     note: "rahvapärane piltlik ütlus mingi olukorra, nähtuse, eseme, omaduse vm iseloomustamiseks (nt ei liha ega kala; kadus nagu tina tuhka)",
@@ -4484,7 +4484,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõnepruuk", gloss: "way of speaking, parlance", pos: "NOUN", cefr: "B2",
     ekilexWordId: 189166,
-    parts: { NOM_SG: "kõnepruuk", GEN_SG: "kõnepruugi", PART_SG: "kõnepruuki", ILL_SG_SHORT: "kõnepruuki", PART_PL: "kõnepruuke", GEN_PL: "kõnepruukide" },
+    parts: { NOM_SG: "kõnepruuk", GEN_SG: "kõnepruugi", PART_SG: "kõnepruuki", ILL_SG_SHORT: "kõnepruuki", NOM_PL: "kõnepruugid", PART_PL: "kõnepruuke", GEN_PL: "kõnepruukide" },
     government: null,
     usages: ["Diplomaatiline kõnepruuk.", "Vanemas kõnepruugis tähistas sõna „kiri“ ka piiblit."],
     note: "(suuline) keelekasutus, keelelise väljendamise laad ja viis",
@@ -4493,7 +4493,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõrge", gloss: "high", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 189275,
-    parts: { NOM_SG: "kõrge", GEN_SG: "kõrge", PART_SG: "kõrget", PART_PL: "kõrgeid", GEN_PL: "kõrgete" },
+    parts: { NOM_SG: "kõrge", GEN_SG: "kõrge", PART_SG: "kõrget", NOM_PL: "kõrged", PART_PL: "kõrgeid", GEN_PL: "kõrgete" },
     government: null,
     usages: ["Kitsekülla kerkib veel üks kõrge hoone.", "Läks läbi kõrge rohu.", "Kõrge piimakann.", "Kõrge kraega kampsun."],
     note: "püstsuunas (tugevasti) ülespoole ulatuv, alt üles, püstsuunas pikk",
@@ -4502,7 +4502,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõrv", gloss: "ear", pos: "NOUN", cefr: "A1",
     ekilexWordId: 189471,
-    parts: { NOM_SG: "kõrv", GEN_SG: "kõrva", PART_SG: "kõrva", ILL_SG_SHORT: "kõrva", PART_PL: "kõrvu", GEN_PL: "kõrvade" },
+    parts: { NOM_SG: "kõrv", GEN_SG: "kõrva", PART_SG: "kõrva", ILL_SG_SHORT: "kõrva", NOM_PL: "kõrvad", PART_PL: "kõrvu", GEN_PL: "kõrvade" },
     government: null,
     usages: ["Vasak kõrv valutab.", "Ta oskab kõrvu liigutada.", "Poiss sosistas talle midagi kõrva.", "Elevandil on suured kõrvad."],
     note: "inimeste jt imetajate kuulmis- ning tasakaaluelund (sageli ka üksnes selle välise osa kohta)",
@@ -4520,7 +4520,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõrvalekalle", gloss: "deviation", pos: "NOUN", cefr: null,
     ekilexWordId: 189522,
-    parts: { NOM_SG: "kõrvalekalle", GEN_SG: "kõrvalekalde", PART_SG: "kõrvalekallet", PART_PL: "kõrvalekaldeid", GEN_PL: "kõrvalekallete" },
+    parts: { NOM_SG: "kõrvalekalle", GEN_SG: "kõrvalekalde", PART_SG: "kõrvalekallet", NOM_PL: "kõrvalekalded", PART_PL: "kõrvalekaldeid", GEN_PL: "kõrvalekallete" },
     government: null,
     usages: ["Hüperaktiivsus on arenguline kõrvalekalle, mis kimbutab vähemalt nelja protsenti kooliminejaist.", "Kõrvalekalle on tavapäraselt kõrvalekaldumine tavapärasest või ootuspärasest olekust, mis tavaliselt on soovimatu.", "Puue on inimese anatoomilise, füsioloogilise või psüühilise struktuuri või funktsiooni kaotus või kõrvalekalle."],
     note: "(esialgsest) suunast, teemast, normist, eeskirjadest vms eemaldumine",
@@ -4529,7 +4529,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõrvallause", gloss: "subordinate clause", pos: "NOUN", cefr: null,
     ekilexWordId: 189550,
-    parts: { NOM_SG: "kõrvallause", GEN_SG: "kõrvallause", PART_SG: "kõrvallauset", PART_PL: "kõrvallauseid", GEN_PL: "kõrvallausete" },
+    parts: { NOM_SG: "kõrvallause", GEN_SG: "kõrvallause", PART_SG: "kõrvallauset", NOM_PL: "kõrvallaused", PART_PL: "kõrvallauseid", GEN_PL: "kõrvallausete" },
     government: null,
     usages: [],
     note: "(liitlauses:) osalause, mis täpsustab pealauset ning ei saa esineda iseseisvalt (nt osa kas ma täna viitsin lauses Ma ei tea, kas ma täna viitsin)",
@@ -4538,7 +4538,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kõrvaltoime", gloss: "side effect", pos: "NOUN", cefr: "B2",
     ekilexWordId: 189582,
-    parts: { NOM_SG: "kõrvaltoime", GEN_SG: "kõrvaltoime", PART_SG: "kõrvaltoimet", PART_PL: "kõrvaltoimeid", GEN_PL: "kõrvaltoimete" },
+    parts: { NOM_SG: "kõrvaltoime", GEN_SG: "kõrvaltoime", PART_SG: "kõrvaltoimet", NOM_PL: "kõrvaltoimed", PART_PL: "kõrvaltoimeid", GEN_PL: "kõrvaltoimete" },
     government: null,
     usages: ["Uus depressiooniravim on kõrvaltoimete poolest ohutum."],
     note: "(ravimi) peamisest või oodatavast teistsugune mõju, mis kaasneb põhitoimega",
@@ -4547,7 +4547,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "käitumine", gloss: "behaviour", pos: "NOUN", cefr: "B1",
     ekilexWordId: 190001,
-    parts: { NOM_SG: "käitumine", GEN_SG: "käitumise", PART_SG: "käitumist", ILL_SG_SHORT: "käitumisse", PART_PL: "käitumisi", GEN_PL: "käitumiste" },
+    parts: { NOM_SG: "käitumine", GEN_SG: "käitumise", PART_SG: "käitumist", ILL_SG_SHORT: "käitumisse", NOM_PL: "käitumised", PART_PL: "käitumisi", GEN_PL: "käitumiste" },
     government: null,
     usages: ["Tarbijate käitumine on enamasti ennustatav.", "Õpin auto käitumist alles tundma.", "Valimiskäitumine.", "Riina käitumine tundus mulle imelik."],
     note: "viis või laad, kuidas keegi või miski reageerib, teotseb või töötab",
@@ -4556,7 +4556,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "käsi", gloss: "hand, arm", pos: "NOUN", cefr: "A1",
     ekilexWordId: 190275,
-    parts: { NOM_SG: "käsi", GEN_SG: "käe", PART_SG: "kätt", ILL_SG_SHORT: "kätte", PART_PL: "käsi", GEN_PL: "käte" },
+    parts: { NOM_SG: "käsi", GEN_SG: "käe", PART_SG: "kätt", ILL_SG_SHORT: "kätte", NOM_PL: "käed", PART_PL: "käsi", GEN_PL: "käte" },
     government: null,
     usages: ["Murdsin kukkudes vasaku käe.", "Elli seisab, käed puusas, ja jälgib teiste askeldamist.", "Ta on nii haige, et ei suuda lusikatki käes hoida.", "Pese enne sööki käed ära."],
     note: "inimese või ahvi ülajäse randmest sõrmeotsteni",
@@ -4574,7 +4574,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "käsitlus", gloss: "treatment, approach", pos: "NOUN", cefr: "B2",
     ekilexWordId: 190373,
-    parts: { NOM_SG: "käsitlus", GEN_SG: "käsitluse", PART_SG: "käsitlust", ILL_SG_SHORT: "käsitlusse", PART_PL: "käsitlusi", GEN_PL: "käsitluste" },
+    parts: { NOM_SG: "käsitlus", GEN_SG: "käsitluse", PART_SG: "käsitlust", ILL_SG_SHORT: "käsitlusse", NOM_PL: "käsitlused", PART_PL: "käsitlusi", GEN_PL: "käsitluste" },
     government: null,
     usages: ["Ajaliselt hõlmab käsitlus kogu keiserliku ülikooli perioodi 1802–1917.", "Filosoofiline käsitlus.", "Kindlustusjuhtumite käsitlus.", "Ajalookäsitlus."],
     note: "teatud probleemi või uurimisainega tegelemine (hrl teatavaid võtteid, teooriat kasutades)",
@@ -4592,7 +4592,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kättesaadavus", gloss: "availability", pos: "NOUN", cefr: "B2",
     ekilexWordId: 190518,
-    parts: { NOM_SG: "kättesaadavus", GEN_SG: "kättesaadavuse", PART_SG: "kättesaadavust", ILL_SG_SHORT: "kättesaadavusse", PART_PL: "kättesaadavusi", GEN_PL: "kättesaadavuste" },
+    parts: { NOM_SG: "kättesaadavus", GEN_SG: "kättesaadavuse", PART_SG: "kättesaadavust", ILL_SG_SHORT: "kättesaadavusse", NOM_PL: "kättesaadavused", PART_PL: "kättesaadavusi", GEN_PL: "kättesaadavuste" },
     government: null,
     usages: ["Arstiabi kättesaadavus.", "Hariduse võrdne kättesaadavus.", "Tuleb piirata alkoholi laialdast kättesaadavust."],
     note: "võimalus teenusele, kaubale, infole vms ligi pääseda, (hõlpsalt) millegi osaks saada",
@@ -4601,7 +4601,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kättesaamine", gloss: "receipt, obtaining", pos: "NOUN", cefr: null,
     ekilexWordId: 285166,
-    parts: { NOM_SG: "kättesaamine", GEN_SG: "kättesaamise", PART_SG: "kättesaamist", ILL_SG_SHORT: "kättesaamisse", PART_PL: "kättesaamisi", GEN_PL: "kättesaamiste" },
+    parts: { NOM_SG: "kättesaamine", GEN_SG: "kättesaamise", PART_SG: "kättesaamist", ILL_SG_SHORT: "kättesaamisse", NOM_PL: "kättesaamised", PART_PL: "kättesaamisi", GEN_PL: "kättesaamiste" },
     government: null,
     usages: ["Kauba võib tagastada 14 päeva jooksul pärast kauba kättesaamist sama pakiautomaadi kaudu.", "Miks peab jõuluvanale paki kättesaamiseks alati luuletuse või tantsu esitama?", "Juhil kästakse karistuse kättesaamiseks kohtuvälise menetleja juurde ilmuda.", "Loendajal on kohustus iga inimese juures tema kättesaamiseks käia kolm korda."],
     note: "oma valdusse või enda osaks saamine",
@@ -4610,7 +4610,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "köögivili", gloss: "vegetable", pos: "NOUN", cefr: "A2",
     ekilexWordId: 190768,
-    parts: { NOM_SG: "köögivili", GEN_SG: "köögivilja", PART_SG: "köögivilja", ILL_SG_SHORT: "köögivilja", PART_PL: "köögivilju", GEN_PL: "köögiviljade" },
+    parts: { NOM_SG: "köögivili", GEN_SG: "köögivilja", PART_SG: "köögivilja", ILL_SG_SHORT: "köögivilja", NOM_PL: "köögiviljad", PART_PL: "köögivilju", GEN_PL: "köögiviljade" },
     government: null,
     usages: ["Köögivili on tervislik.", "Turul müüakse juba värsket köögivilja.", "Lisasin supile külmutatud köögivilju."],
     note: "hrl kasvatatav taim, mille osi või tervet taime tarvitatakse söögiks, nt kartul, kapsas, porgand, tomat, aedhernes, salat",
@@ -4619,7 +4619,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "köök", gloss: "kitchen", pos: "NOUN", cefr: "A1",
     ekilexWordId: 190773,
-    parts: { NOM_SG: "köök", GEN_SG: "köögi", PART_SG: "kööki", ILL_SG_SHORT: "kööki", PART_PL: "kööke", GEN_PL: "köökide" },
+    parts: { NOM_SG: "köök", GEN_SG: "köögi", PART_SG: "kööki", ILL_SG_SHORT: "kööki", NOM_PL: "köögid", PART_PL: "kööke", GEN_PL: "köökide" },
     government: null,
     usages: ["Ema tegi köögis süüa.", "Ema teeb köögis süüa.", "Korteris on köök, elutuba, magamistuba ja vannituba.", "Meil on avar ja moodne köök."],
     note: "eri sisustusega toiduvalmistusruum, harvemini muu ajutine toiduvalmistuskoht",
@@ -4628,7 +4628,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "küberturvalisus", gloss: "cyber security", pos: "NOUN", cefr: null,
     ekilexWordId: 1063911,
-    parts: { NOM_SG: "küberturvalisus", GEN_SG: "küberturvalisuse", PART_SG: "küberturvalisust", ILL_SG_SHORT: "küberturvalisusse", PART_PL: "küberturvalisusi", GEN_PL: "küberturvalisuste" },
+    parts: { NOM_SG: "küberturvalisus", GEN_SG: "küberturvalisuse", PART_SG: "küberturvalisust", ILL_SG_SHORT: "küberturvalisusse", NOM_PL: "küberturvalisused", PART_PL: "küberturvalisusi", GEN_PL: "küberturvalisuste" },
     government: null,
     usages: ["Küberturvalisus mängib tuleviku ühiskonnas üha olulisemat rolli.", "Riigid saavad küberturvalisuse heaks palju ära teha.", "Ettevõttes küberturvalisuse tagamine on pidev vägikaikavedu mugavuse ja piisava kaitse vahel.", "Eksperdid viisid läbi e-teenuste ja küberturvalisuse koolituse ajakirjanikele."],
     note: "arvutivõrkude keskkonna, küberruumi kaitstus, mis saavutatakse turvameetmete rakendamisega",
@@ -4646,7 +4646,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "külm", gloss: "cold", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 191116,
-    parts: { NOM_SG: "külm", GEN_SG: "külma", PART_SG: "külma", ILL_SG_SHORT: "külma", PART_PL: "külmi", GEN_PL: "külmade" },
+    parts: { NOM_SG: "külm", GEN_SG: "külma", PART_SG: "külma", ILL_SG_SHORT: "külma", NOM_PL: "külmad", PART_PL: "külmi", GEN_PL: "külmade" },
     government: null,
     usages: ["Täna on väljas külm ilm.", "Hommikuti käin külma duši all.", "Palun pane aken kinni, mul on külm.", "Pane uks kinni, külma tuleb sisse."],
     note: "madala temperatuuriga, vähese soojusega või hoopis soojuseta",
@@ -4655,7 +4655,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "kümme", gloss: "ten", pos: "NOUN", cefr: "A1",
     ekilexWordId: 191265,
-    parts: { NOM_SG: "kümme", GEN_SG: "kümne", PART_SG: "kümmet", PART_PL: "kümneid", GEN_PL: "kümnete" },
+    parts: { NOM_SG: "kümme", GEN_SG: "kümne", PART_SG: "kümmet", NOM_PL: "kümned", PART_PL: "kümneid", GEN_PL: "kümnete" },
     government: null,
     usages: ["Kümme tuhat.", "Kümme pluss üks.", "Loe ühest kümneni!", "Kell on pool kümme."],
     note: "põhiarv 10",
@@ -4682,7 +4682,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "küsimus", gloss: "question", pos: "NOUN", cefr: "A1",
     ekilexWordId: 191373,
-    parts: { NOM_SG: "küsimus", GEN_SG: "küsimuse", PART_SG: "küsimust", ILL_SG_SHORT: "küsimusse", PART_PL: "küsimusi", GEN_PL: "küsimuste" },
+    parts: { NOM_SG: "küsimus", GEN_SG: "küsimuse", PART_SG: "küsimust", ILL_SG_SHORT: "küsimusse", NOM_PL: "küsimused", PART_PL: "küsimusi", GEN_PL: "küsimuste" },
     government: null,
     usages: ["Kas kellelgi on ettekande kohta küsimusi?", "Ajakirjanikud esitasid ministrile teravaid küsimusi.", "Peas keerles ainult üks küsimus: miks?", "Õpilane ei osanud õpetaja küsimustele vastata."],
     note: "lausung, millele oodatakse vastust",
@@ -4691,7 +4691,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "küte", gloss: "heating", pos: "NOUN", cefr: "A2",
     ekilexWordId: 191399,
-    parts: { NOM_SG: "küte", GEN_SG: "kütte", PART_SG: "kütet", PART_PL: "kütteid", GEN_PL: "kütete" },
+    parts: { NOM_SG: "küte", GEN_SG: "kütte", PART_SG: "kütet", NOM_PL: "kütted", PART_PL: "kütteid", GEN_PL: "kütete" },
     government: null,
     usages: ["Pere kasutab kütteks puid ja turvast.", "Suvemaja oli kütteta onnike.", "Nad kasutavad kütteks puid.", "Kütte hind tõuseb."],
     note: "hoone soojaga varustamine, hoone kütmine",
@@ -4709,7 +4709,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ladus", gloss: "fluent, smooth", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 191797,
-    parts: { NOM_SG: "ladus", GEN_SG: "ladusa", PART_SG: "ladusat", PART_PL: "ladusaid", GEN_PL: "ladusate" },
+    parts: { NOM_SG: "ladus", GEN_SG: "ladusa", PART_SG: "ladusat", NOM_PL: "ladusad", PART_PL: "ladusaid", GEN_PL: "ladusate" },
     government: null,
     usages: ["Üritus on silma paistnud ka ladusa korralduse poolest.", "Ladus koostöö.", "Ta jätab oma ladusa jutuga väga targa mulje.", "Temast ei saanud ladusate värsside autorit."],
     note: "takistusteta kulgev, hästi edenev, laabuv",
@@ -4718,7 +4718,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "laev", gloss: "ship", pos: "NOUN", cefr: "A1",
     ekilexWordId: 191863,
-    parts: { NOM_SG: "laev", GEN_SG: "laeva", PART_SG: "laeva", ILL_SG_SHORT: "laeva", PART_PL: "laevu", GEN_PL: "laevade" },
+    parts: { NOM_SG: "laev", GEN_SG: "laeva", PART_SG: "laeva", ILL_SG_SHORT: "laeva", NOM_PL: "laevad", PART_PL: "laevu", GEN_PL: "laevade" },
     government: null,
     usages: ["Laev sõidab Eesti lipu all.", "Merearheoloogid otsivad Läänemerest uppunud laevu.", "Lõbusõidulaev.", "Laev väljub sadamast."],
     note: "suur veesõiduk inimeste või kauba vedamiseks",
@@ -4736,7 +4736,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lahendus", gloss: "solution", pos: "NOUN", cefr: "A2",
     ekilexWordId: 191985,
-    parts: { NOM_SG: "lahendus", GEN_SG: "lahenduse", PART_SG: "lahendust", ILL_SG_SHORT: "lahendusse", PART_PL: "lahendusi", GEN_PL: "lahenduste" },
+    parts: { NOM_SG: "lahendus", GEN_SG: "lahenduse", PART_SG: "lahendust", ILL_SG_SHORT: "lahendusse", NOM_PL: "lahendused", PART_PL: "lahendusi", GEN_PL: "lahenduste" },
     government: null,
     usages: ["Tülile otsitakse lahendust kohtus.", "Intriig sai kiire lahenduse.", "Palk jäi samaks ja mure ei leidnud lahendust.", "Hoone arhitektuurne lahendus on põhjustanud suuri vaidlusi."],
     note: "probleemi või keerulise olukorra selgitamisel saadav tulemus, selgus millegi kohta, väljapääs millestki",
@@ -4754,7 +4754,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lai", gloss: "wide", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 192225,
-    parts: { NOM_SG: "lai", GEN_SG: "laia", PART_SG: "laia", ILL_SG_SHORT: "laia", PART_PL: "laiu", GEN_PL: "laiade" },
+    parts: { NOM_SG: "lai", GEN_SG: "laia", PART_SG: "laia", ILL_SG_SHORT: "laia", NOM_PL: "laiad", PART_PL: "laiu", GEN_PL: "laiade" },
     government: null,
     usages: ["Kõrge ja lai trepp.", "Lai voodi.", "Jõgi polnud kuigi lai.", "Mehe lai selg varjas kogu vaate."],
     note: "ristsuunas, ühest küljest või servast teiseni suhteliselt suure ulatusega",
@@ -4763,7 +4763,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "laiendus", gloss: "extension", pos: "NOUN", cefr: "B2",
     ekilexWordId: 192300,
-    parts: { NOM_SG: "laiendus", GEN_SG: "laienduse", PART_SG: "laiendust", ILL_SG_SHORT: "laiendusse", PART_PL: "laiendusi", GEN_PL: "laienduste" },
+    parts: { NOM_SG: "laiendus", GEN_SG: "laienduse", PART_SG: "laiendust", ILL_SG_SHORT: "laiendusse", NOM_PL: "laiendused", PART_PL: "laiendusi", GEN_PL: "laienduste" },
     government: null,
     usages: ["Koidula piirijaama laiendus puudutas rohkem kui 15 maaomandit.", "Tartu maantee laiendus valmib augusti lõpuks.", "Varasemate tekstidega võrreldes on mõningad laiendused."],
     note: "olemasolevale ehitisele (nt hoonele, sõiduteele) juurde ehitatud seda laiendav osa",
@@ -4772,7 +4772,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "laisk", gloss: "lazy", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 192364,
-    parts: { NOM_SG: "laisk", GEN_SG: "laisa", PART_SG: "laiska", ILL_SG_SHORT: "laiska", PART_PL: "laisku", GEN_PL: "laiskade" },
+    parts: { NOM_SG: "laisk", GEN_SG: "laisa", PART_SG: "laiska", ILL_SG_SHORT: "laiska", NOM_PL: "laisad", PART_PL: "laisku", GEN_PL: "laiskade" },
     government: null,
     usages: ["Kuumus teeb laisaks.", "Poiss on laisk õppima.", "Temast laisemat annab otsida.", "Laisk kass ei viitsi hiiri püüda."],
     note: "selline, kellele meeldib tegevuseta olla, kellel pole viitsimist pingutada või tööd teha (ka loomade kohta)",
@@ -4781,7 +4781,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lakooniline", gloss: "laconic", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 192439,
-    parts: { NOM_SG: "lakooniline", GEN_SG: "lakoonilise", PART_SG: "lakoonilist", ILL_SG_SHORT: "lakoonilisse", PART_PL: "lakoonilisi", GEN_PL: "lakooniliste" },
+    parts: { NOM_SG: "lakooniline", GEN_SG: "lakoonilise", PART_SG: "lakoonilist", ILL_SG_SHORT: "lakoonilisse", NOM_PL: "lakoonilised", PART_PL: "lakoonilisi", GEN_PL: "lakooniliste" },
     government: null,
     usages: ["Materjali esitus on lakooniline, antakse üksnes mõned määratlused.", "Selge ja lakooniline ülesehitus."],
     note: "väheste sõnadega väljendatud",
@@ -4799,7 +4799,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "langus", gloss: "decline", pos: "NOUN", cefr: "B2",
     ekilexWordId: 192652,
-    parts: { NOM_SG: "langus", GEN_SG: "languse", PART_SG: "langust", ILL_SG_SHORT: "langusse", PART_PL: "langusi", GEN_PL: "languste" },
+    parts: { NOM_SG: "langus", GEN_SG: "languse", PART_SG: "langust", ILL_SG_SHORT: "langusse", NOM_PL: "langused", PART_PL: "langusi", GEN_PL: "languste" },
     government: null,
     usages: ["Paistab, et Pärnu lahes on merevee langus saavutanud haripunkti.", "Maapinna langus mere poole.", "Emajõe langus on väike.", "Tee kulges vaheldumisi tõusude ja langustega."],
     note: "(veeseisu kohta:) alanemine, madalamale vajumine",
@@ -4808,7 +4808,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "laps", gloss: "child", pos: "NOUN", cefr: "A1",
     ekilexWordId: 192725,
-    parts: { NOM_SG: "laps", GEN_SG: "lapse", PART_SG: "last", PART_PL: "lapsi", GEN_PL: "laste" },
+    parts: { NOM_SG: "laps", GEN_SG: "lapse", PART_SG: "last", NOM_PL: "lapsed", PART_PL: "lapsi", GEN_PL: "laste" },
     government: null,
     usages: ["Film sobib vaatamiseks väiksematele lastele.", "Mõni mees on nagu suur laps.", "Klassis on 25 last.", "Väiksemad lapsed käivad lasteaias ja suuremad lapsed koolis."],
     note: "inimene sündimisest täisealiseks saamiseni",
@@ -4817,7 +4817,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "laud", gloss: "table", pos: "NOUN", cefr: "A1",
     ekilexWordId: 193209,
-    parts: { NOM_SG: "laud", GEN_SG: "laua", PART_SG: "lauda", ILL_SG_SHORT: "lauda", PART_PL: "laudu", GEN_PL: "laudade" },
+    parts: { NOM_SG: "laud", GEN_SG: "laua", PART_SG: "lauda", ILL_SG_SHORT: "lauda", NOM_PL: "lauad", PART_PL: "laudu", GEN_PL: "laudade" },
     government: null,
     usages: ["Hööveldamata lauad.", "Mahajäetud maja uksed-aknad löödi laudadega kinni.", "Sõidutee on sile nagu laud.", "Toas oli laudadest põrand."],
     note: "palgist lõigatud pikk ja suhteliselt õhuke puitmaterjal hrl millegi ehitamiseks (nt põrandalaud, voodrilaud)",
@@ -4826,7 +4826,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "laul", gloss: "song", pos: "NOUN", cefr: "A1",
     ekilexWordId: 193275,
-    parts: { NOM_SG: "laul", GEN_SG: "laulu", PART_SG: "laulu", ILL_SG_SHORT: "laulu", PART_PL: "laule", GEN_PL: "laulude" },
+    parts: { NOM_SG: "laul", GEN_SG: "laulu", PART_SG: "laulu", ILL_SG_SHORT: "laulu", NOM_PL: "laulud", PART_PL: "laule", GEN_PL: "laulude" },
     government: null,
     usages: ["Tantsu ja laulu jagus varaste hommikutundideni.", "Ta õppis muusikakoolis klassikalist laulu.", "Linnuke muudkui laskis oma katkematut laulu.", "Väljast kostab lindude laulu."],
     note: "laulmine, inimese muusikaline eneseväljendus oma hääle abil",
@@ -4844,7 +4844,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "laupäev", gloss: "Saturday", pos: "NOUN", cefr: "A1",
     ekilexWordId: 193354,
-    parts: { NOM_SG: "laupäev", GEN_SG: "laupäeva", PART_SG: "laupäeva", ILL_SG_SHORT: "laupäeva", PART_PL: "laupäevi", GEN_PL: "laupäevade" },
+    parts: { NOM_SG: "laupäev", GEN_SG: "laupäeva", PART_SG: "laupäeva", ILL_SG_SHORT: "laupäeva", NOM_PL: "laupäevad", PART_PL: "laupäevi", GEN_PL: "laupäevade" },
     government: null,
     usages: ["Sõidame laupäeval maale.", "Laupäeval on pilves selgimistega ilm.", "Mardipäeva laupäev."],
     note: "nädala 6. päev, reedele järgnev ja pühapäevale eelnev päev",
@@ -4853,7 +4853,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lause", gloss: "sentence", pos: "NOUN", cefr: "A2",
     ekilexWordId: 193365,
-    parts: { NOM_SG: "lause", GEN_SG: "lause", PART_SG: "lauset", PART_PL: "lauseid", GEN_PL: "lausete" },
+    parts: { NOM_SG: "lause", GEN_SG: "lause", PART_SG: "lauset", NOM_PL: "laused", PART_PL: "lauseid", GEN_PL: "lausete" },
     government: null,
     usages: ["Kõnelejal ei lastud lauset lõpetada.", "Kirjeldage paari lausega Eesti keskklassi kuuluvat inimest.", "Lõpulause.", "Sa ei pea pikka kirja kirjutama, paarist lausest piisab."],
     note: "keelelise suhtluse põhiüksus, mis väljendab terviklikku sõnumit (väidet, küsimust, käsku, soovi vms)",
@@ -4862,7 +4862,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lauseehitus", gloss: "sentence construction", pos: "NOUN", cefr: null,
     ekilexWordId: 193367,
-    parts: { NOM_SG: "lauseehitus", GEN_SG: "lauseehituse", PART_SG: "lauseehitust", ILL_SG_SHORT: "lauseehitusse", PART_PL: "lauseehitusi", GEN_PL: "lauseehituste" },
+    parts: { NOM_SG: "lauseehitus", GEN_SG: "lauseehituse", PART_SG: "lauseehitust", ILL_SG_SHORT: "lauseehitusse", NOM_PL: "lauseehitused", PART_PL: "lauseehitusi", GEN_PL: "lauseehituste" },
     government: null,
     usages: ["Tõlkest jäi mulje, et sõnad on küll eestikeelsed, aga lauseehitus pole eesti oma."],
     note: "lause süntaktiline ülesehitus",
@@ -4871,7 +4871,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lavastus", gloss: "production, staging", pos: "NOUN", cefr: "B1",
     ekilexWordId: 193484,
-    parts: { NOM_SG: "lavastus", GEN_SG: "lavastuse", PART_SG: "lavastust", ILL_SG_SHORT: "lavastusse", PART_PL: "lavastusi", GEN_PL: "lavastuste" },
+    parts: { NOM_SG: "lavastus", GEN_SG: "lavastuse", PART_SG: "lavastust", ILL_SG_SHORT: "lavastusse", NOM_PL: "lavastused", PART_PL: "lavastusi", GEN_PL: "lavastuste" },
     government: null,
     usages: ["Kas oled näinud Madis Kõivu näidendite lavastusi?", "Ooperilavastus.", "Teater alustab hooaega kolme uue lavastusega.", "Seda lavastust mängitakse 10 korda."],
     note: "teatrivahenditega loodud kunstiteos, mis esitatakse etendusena",
@@ -4880,7 +4880,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "leebe", gloss: "gentle, mild", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 193537,
-    parts: { NOM_SG: "leebe", GEN_SG: "leebe", PART_SG: "leebet", PART_PL: "leebeid", GEN_PL: "leebete" },
+    parts: { NOM_SG: "leebe", GEN_SG: "leebe", PART_SG: "leebet", NOM_PL: "leebed", PART_PL: "leebeid", GEN_PL: "leebete" },
     government: null,
     usages: ["Kaine peaga oli ta vaikne, leebe mehike.", "Naine vaatas mind leebe pilguga.", "Leebed seadused.", "Pühapäeval on leebe sügisilm."],
     note: "loomult, olemuselt pehme, heatahtlik, mitte karm või range",
@@ -4889,7 +4889,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "leht", gloss: "page, leaf", pos: "NOUN", cefr: "A1",
     ekilexWordId: 193748,
-    parts: { NOM_SG: "leht", GEN_SG: "lehe", PART_SG: "lehte", ILL_SG_SHORT: "lehte", PART_PL: "lehti", GEN_PL: "lehtede" },
+    parts: { NOM_SG: "leht", GEN_SG: "lehe", PART_SG: "lehte", ILL_SG_SHORT: "lehte", NOM_PL: "lehed", PART_PL: "lehti", GEN_PL: "lehtede" },
     government: null,
     usages: ["Nahkjate lehtedega rododendronid.", "Tuul keerutab langenud lehti.", "Sügisel langevad puudelt lehed.", "Paberipakis on 500 lehte."],
     note: "hrl lame roheline taime osa, mis kinnitub varre või oksa külge",
@@ -4898,7 +4898,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "leib", gloss: "bread (dark)", pos: "NOUN", cefr: "A1",
     ekilexWordId: 193818,
-    parts: { NOM_SG: "leib", GEN_SG: "leiva", PART_SG: "leiba", ILL_SG_SHORT: "leiba", PART_PL: "leibu", GEN_PL: "leibade" },
+    parts: { NOM_SG: "leib", GEN_SG: "leiva", PART_SG: "leiba", ILL_SG_SHORT: "leiba", NOM_PL: "leivad", PART_PL: "leibu", GEN_PL: "leibade" },
     government: null,
     usages: ["Ostsin poest leiba ja saia.", "Ta määris leiva peale võid.", "Määri leivale võid ka.", "Leib sai salve."],
     note: "Eestis (ja mujal Põhja-Euroopas) peamiselt rukki-, mujal eeskätt nisujahust küpsetatud toit",
@@ -4907,7 +4907,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "leidlik", gloss: "inventive", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 193832,
-    parts: { NOM_SG: "leidlik", GEN_SG: "leidliku", PART_SG: "leidlikku", ILL_SG_SHORT: "leidlikku", PART_PL: "leidlikke", GEN_PL: "leidlike" },
+    parts: { NOM_SG: "leidlik", GEN_SG: "leidliku", PART_SG: "leidlikku", ILL_SG_SHORT: "leidlikku", NOM_PL: "leidlikud", PART_PL: "leidlikke", GEN_PL: "leidlike" },
     government: null,
     usages: ["Leidlik lavastaja.", "Leidlik inimene kasutab kilekotti prügikotina.", "Leidlik lahendus."],
     note: "osav lahendust, vastust, olukorrast väljapääsu leidma, sellist osavust ilmutav",
@@ -4943,7 +4943,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lennuk", gloss: "aeroplane", pos: "NOUN", cefr: "A1",
     ekilexWordId: 194122,
-    parts: { NOM_SG: "lennuk", GEN_SG: "lennuki", PART_SG: "lennukit", PART_PL: "lennukeid", GEN_PL: "lennukite" },
+    parts: { NOM_SG: "lennuk", GEN_SG: "lennuki", PART_SG: "lennukit", NOM_PL: "lennukid", PART_PL: "lennukeid", GEN_PL: "lennukite" },
     government: null,
     usages: ["Lennuk tõusis õhku kesköö paiku.", "Laps sõidab lennukiga esimest korda.", "Kaaperdatud lennuk maandus Tallinnas.", "Lennuk väljub Tallinna lennujaamast kell 8.30."],
     note: "õhust raskem tiibadega õhusõiduk, mis lendab jõuseadme abil tekitatud tõstejõu toimel",
@@ -4952,7 +4952,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "leping", gloss: "contract", pos: "NOUN", cefr: "A2",
     ekilexWordId: 194233,
-    parts: { NOM_SG: "leping", GEN_SG: "lepingu", PART_SG: "lepingut", PART_PL: "lepinguid", GEN_PL: "lepingute" },
+    parts: { NOM_SG: "leping", GEN_SG: "lepingu", PART_SG: "lepingut", NOM_PL: "lepingud", PART_PL: "lepinguid", GEN_PL: "lepingute" },
     government: null,
     usages: ["Leping tuli sõlmida notariaalselt.", "Ostu-müügileping.", "Leping kehtib kaks aastat."],
     note: "dokument, mis määrab isikute, asutuste vm vahelise kokkuleppe osaliste kohustused ja õigused",
@@ -4961,7 +4961,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lepitus", gloss: "reconciliation", pos: "NOUN", cefr: "C1",
     ekilexWordId: 194248,
-    parts: { NOM_SG: "lepitus", GEN_SG: "lepituse", PART_SG: "lepitust", ILL_SG_SHORT: "lepitusse", PART_PL: "lepitusi", GEN_PL: "lepituste" },
+    parts: { NOM_SG: "lepitus", GEN_SG: "lepituse", PART_SG: "lepitust", ILL_SG_SHORT: "lepitusse", NOM_PL: "lepitused", PART_PL: "lepitusi", GEN_PL: "lepituste" },
     government: null,
     usages: ["Lepitust otsima.", "Ulatasin lepituseks käe.", "Ega kirik pole teater, kuhu pärast patustamist pattude lepitust tulla otsima.", "Andke endid lepitada Jumalaga!"],
     note: "leppimine, tüli lõpetamine või lahkarvamuse lahendamine",
@@ -4979,7 +4979,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "levinud", gloss: "widespread", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 194349,
-    parts: { NOM_SG: "levinud", GEN_SG: "levinu", PART_SG: "levinut", PART_PL: "levinuid", GEN_PL: "levinute" },
+    parts: { NOM_SG: "levinud", GEN_SG: "levinu", PART_SG: "levinut", NOM_PL: "levinud", PART_PL: "levinuid", GEN_PL: "levinute" },
     government: null,
     usages: ["Seitse levinud viga, mida tehakse dieeti pidades.", "Levinud petuskeem jätab kliendid rahata.", "Punahirv elas Eesti aladel kunagi ka looduslikult, ise siia levinuna."],
     note: "laialdase levikuga, üldiselt tuntud või tarvitatud",
@@ -4988,7 +4988,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ligikaudne", gloss: "approximate", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 194486,
-    parts: { NOM_SG: "ligikaudne", GEN_SG: "ligikaudse", PART_SG: "ligikaudset", PART_PL: "ligikaudseid", GEN_PL: "ligikaudsete" },
+    parts: { NOM_SG: "ligikaudne", GEN_SG: "ligikaudse", PART_SG: "ligikaudset", NOM_PL: "ligikaudsed", PART_PL: "ligikaudseid", GEN_PL: "ligikaudsete" },
     government: null,
     usages: ["Kas ma üldse tahan seda tööd, kui ma isegi ligikaudset palganumbrit ei tea?", "Ligikaudsed arvutused."],
     note: "mitte päris, vaid enam-vähem täpne või õige",
@@ -5015,7 +5015,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "liha", gloss: "meat", pos: "NOUN", cefr: "A1",
     ekilexWordId: 194530,
-    parts: { NOM_SG: "liha", GEN_SG: "liha", PART_SG: "liha", ILL_SG_SHORT: "lihha", PART_PL: "lihasid", GEN_PL: "lihade" },
+    parts: { NOM_SG: "liha", GEN_SG: "liha", PART_SG: "liha", ILL_SG_SHORT: "lihha", NOM_PL: "lihad", PART_PL: "lihasid", GEN_PL: "lihade" },
     government: null,
     usages: ["Pakuti vaheldumisi liha ja kala.", "Oli jooksmist mööda Tallinna turge, et võimalikult värsket liha leida.", "Ostsin turult värsket liha.", "Karpkala kasvab kiiresti ja on maitsva lihaga."],
     note: "looma või linnu keha pehme, luid ümbritsev osa, hrl toiduna",
@@ -5024,7 +5024,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lihtne", gloss: "simple", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 194685,
-    parts: { NOM_SG: "lihtne", GEN_SG: "lihtsa", PART_SG: "lihtsat", PART_PL: "lihtsaid", GEN_PL: "lihtsate" },
+    parts: { NOM_SG: "lihtne", GEN_SG: "lihtsa", PART_SG: "lihtsat", NOM_PL: "lihtsad", PART_PL: "lihtsaid", GEN_PL: "lihtsate" },
     government: null,
     usages: ["Lihtsad organismid.", "Esialgu lihtsana tundunud ülesanne osutus parajaks pähkliks.", "Masinat on lihtne seadistada.", "Kodune ülesanne oli lihtne."],
     note: "ehituselt, vormilt, olemuselt keerukuseta",
@@ -5042,7 +5042,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "liialdus", gloss: "exaggeration", pos: "NOUN", cefr: "B2",
     ekilexWordId: 194745,
-    parts: { NOM_SG: "liialdus", GEN_SG: "liialduse", PART_SG: "liialdust", ILL_SG_SHORT: "liialdusse", PART_PL: "liialdusi", GEN_PL: "liialduste" },
+    parts: { NOM_SG: "liialdus", GEN_SG: "liialduse", PART_SG: "liialdust", ILL_SG_SHORT: "liialdusse", NOM_PL: "liialdused", PART_PL: "liialdusi", GEN_PL: "liialduste" },
     government: null,
     usages: ["See kõlab vaimukalt, kuid on ilmne liialdus.", "Moes on elegantsed liialdused: näiteks luksuslikud detailid käistel ja pluusidel."],
     note: "millegagi liialdamine",
@@ -5060,7 +5060,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "liik", gloss: "species, kind", pos: "NOUN", cefr: "B1",
     ekilexWordId: 194896,
-    parts: { NOM_SG: "liik", GEN_SG: "liigi", PART_SG: "liiki", ILL_SG_SHORT: "liiki", PART_PL: "liike", GEN_PL: "liikide" },
+    parts: { NOM_SG: "liik", GEN_SG: "liigi", PART_SG: "liiki", ILL_SG_SHORT: "liiki", NOM_PL: "liigid", PART_PL: "liike", GEN_PL: "liikide" },
     government: null,
     usages: ["Müügil on 40 liiki tooteid: toidunõud, mänguasjad, padjad ja riided.", "Ta oli seda liiki pühamees, kes võis elada söömata-joomata.", "Kuriteoliik.", "Teenuseliik."],
     note: "toodete, nähtuste vms rühm, millel on sarnane valmistamisviis, sarnased omadused või tunnused ning mis eristub sel viisil teistest rühmadest",
@@ -5069,7 +5069,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "liikmesriik", gloss: "member state", pos: "NOUN", cefr: null,
     ekilexWordId: 194969,
-    parts: { NOM_SG: "liikmesriik", GEN_SG: "liikmesriigi", PART_SG: "liikmesriiki", ILL_SG_SHORT: "liikmesriiki", PART_PL: "liikmesriike", GEN_PL: "liikmesriikide" },
+    parts: { NOM_SG: "liikmesriik", GEN_SG: "liikmesriigi", PART_SG: "liikmesriiki", ILL_SG_SHORT: "liikmesriiki", NOM_PL: "liikmesriigid", PART_PL: "liikmesriike", GEN_PL: "liikmesriikide" },
     government: null,
     usages: ["ÜRO liikmesriigid."],
     note: "riikide ühendusse kuuluv riik",
@@ -5087,7 +5087,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "liit", gloss: "alliance, union", pos: "NOUN", cefr: "A2",
     ekilexWordId: 195089,
-    parts: { NOM_SG: "liit", GEN_SG: "liidu", PART_SG: "liitu", ILL_SG_SHORT: "liitu", PART_PL: "liite", GEN_PL: "liitude" },
+    parts: { NOM_SG: "liit", GEN_SG: "liidu", PART_SG: "liitu", ILL_SG_SHORT: "liitu", NOM_PL: "liidud", PART_PL: "liite", GEN_PL: "liitude" },
     government: null,
     usages: ["Roomlased sõlmisid liidu Kartaagoga.", "Prantsuse kuninga üle võitu ihkav Inglismaa heitis liitu Taani kuningaga.", "Euroopa kujunemine poliitiliseks liiduks.", "Rootsi ei kuulu sõjalistesse liitudesse."],
     note: "sõltumatute osapoolte kokkulepe ühiseks tegevuseks, ühiste eesmärkide saavutamiseks, sel kokkuleppel rajanevad suhted",
@@ -5096,7 +5096,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lill", gloss: "flower", pos: "NOUN", cefr: "A1",
     ekilexWordId: 195265,
-    parts: { NOM_SG: "lill", GEN_SG: "lille", PART_SG: "lille", ILL_SG_SHORT: "lille", PART_PL: "lilli", GEN_PL: "lillede" },
+    parts: { NOM_SG: "lill", GEN_SG: "lille", PART_SG: "lille", ILL_SG_SHORT: "lille", NOM_PL: "lilled", PART_PL: "lilli", GEN_PL: "lillede" },
     government: null,
     usages: ["Aeda on istutatud õunapuid ja põõsaid, lilledest rääkimata.", "Aias õitsevad kaunid lilled.", "Pane lilled vaasi!", "Laulja heldis kingitud lilledest."],
     note: "kaunite õite, lehtede või viljadega rohttaim",
@@ -5105,7 +5105,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lilla", gloss: "purple", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 195266,
-    parts: { NOM_SG: "lilla", GEN_SG: "lilla", PART_SG: "lillat", PART_PL: "lillasid", GEN_PL: "lillade" },
+    parts: { NOM_SG: "lilla", GEN_SG: "lilla", PART_SG: "lillat", NOM_PL: "lillad", PART_PL: "lillasid", GEN_PL: "lillade" },
     government: null,
     usages: ["Lillaks värvitud küüned.", "Käsivarrel oli lilla pigistusjälg.", "Tumelilla.", "Helelilla."],
     note: "sireli-, kannikese-, kanarbikuõie värvi, punakassinine",
@@ -5114,7 +5114,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lind", gloss: "bird", pos: "NOUN", cefr: "A1",
     ekilexWordId: 195397,
-    parts: { NOM_SG: "lind", GEN_SG: "linnu", PART_SG: "lindu", ILL_SG_SHORT: "lindu", PART_PL: "linde", GEN_PL: "lindude" },
+    parts: { NOM_SG: "lind", GEN_SG: "linnu", PART_SG: "lindu", ILL_SG_SHORT: "lindu", NOM_PL: "linnud", PART_PL: "linde", GEN_PL: "lindude" },
     government: null,
     usages: ["Üks lind lendas jõe kohal.", "Lennuvõimetud linnud.", "Lindude ränne.", "Söö korralikult, ära näkitse toitu nagu lind."],
     note: "kahejalgne tiibadega selgroogne, kelle keha katavad suled ja kelle pojad kooruvad munast",
@@ -5123,7 +5123,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "linn", gloss: "town, city", pos: "NOUN", cefr: "A1",
     ekilexWordId: 195441,
-    parts: { NOM_SG: "linn", GEN_SG: "linna", PART_SG: "linna", ILL_SG_SHORT: "linna", PART_PL: "linnu", GEN_PL: "linnade" },
+    parts: { NOM_SG: "linn", GEN_SG: "linna", PART_SG: "linna", ILL_SG_SHORT: "linna", NOM_PL: "linnad", PART_PL: "linnu", GEN_PL: "linnade" },
     government: null,
     usages: ["Tallinn on Eesti suurim linn.", "Paljud noored kolivad maalt ära linna.", "Kogu linn oli leinarongis.", "Linn osales elurajooni rajamisel maaga."],
     note: "suur tihedalt asustatud ja hrl kompaktse hoonestusega asula, mis on ümbruskonna majandus- ja kultuurielu keskus",
@@ -5141,7 +5141,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "loeng", gloss: "lecture", pos: "NOUN", cefr: "B1",
     ekilexWordId: 195965,
-    parts: { NOM_SG: "loeng", GEN_SG: "loengu", PART_SG: "loengut", PART_PL: "loenguid", GEN_PL: "loengute" },
+    parts: { NOM_SG: "loeng", GEN_SG: "loengu", PART_SG: "loengut", NOM_PL: "loengud", PART_PL: "loenguid", GEN_PL: "loengute" },
     government: null,
     usages: ["Ta on pidanud loenguid Harvardi ülikoolis.", "Avalik loeng.", "E-loeng.", "Loengutes käimine võtab oma aja."],
     note: "hrl kindla kestusega õpetav või teavet andev suuline ettekanne",
@@ -5159,7 +5159,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "loodus", gloss: "nature", pos: "NOUN", cefr: "A1",
     ekilexWordId: 196247,
-    parts: { NOM_SG: "loodus", GEN_SG: "looduse", PART_SG: "loodust", ILL_SG_SHORT: "loodusse", PART_PL: "loodusi", GEN_PL: "looduste" },
+    parts: { NOM_SG: "loodus", GEN_SG: "looduse", PART_SG: "loodust", ILL_SG_SHORT: "loodusse", NOM_PL: "loodused", PART_PL: "loodusi", GEN_PL: "looduste" },
     government: null,
     usages: ["Veetsin päeva vabas looduses.", "Plastpudel võib loodust reostada aastakümneid.", "Inimkond on osa loodusest.", "Tutvusime saare kauni loodusega."],
     note: "meid ümbritsev maailm, eriti taimed, loomad ja maastik (vastandatuna inimese loodule)",
@@ -5168,7 +5168,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "loogika", gloss: "logic", pos: "NOUN", cefr: "B2",
     ekilexWordId: 196346,
-    parts: { NOM_SG: "loogika", GEN_SG: "loogika", PART_SG: "loogikat", PART_PL: "loogikaid", GEN_PL: "loogikate" },
+    parts: { NOM_SG: "loogika", GEN_SG: "loogika", PART_SG: "loogikat", NOM_PL: "loogikad", PART_PL: "loogikaid", GEN_PL: "loogikate" },
     government: null,
     usages: ["Lihtne loogika ütleb, et mida madalam BASE-hüpe, seda ohtlikum ta on.", "Raudse loogikaga inimene.", "Tal loogika lonkab.", "Matemaatika põhineb loogikal."],
     note: "mõtlemises esinev korrapära, mis võimaldab teha õigeid järeldusi, võime õigesti mõelda",
@@ -5177,7 +5177,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "loom", gloss: "animal", pos: "NOUN", cefr: "A1",
     ekilexWordId: 196387,
-    parts: { NOM_SG: "loom", GEN_SG: "looma", PART_SG: "looma", ILL_SG_SHORT: "looma", PART_PL: "loomi", GEN_PL: "loomade" },
+    parts: { NOM_SG: "loom", GEN_SG: "looma", PART_SG: "looma", ILL_SG_SHORT: "looma", NOM_PL: "loomad", PART_PL: "loomi", GEN_PL: "loomade" },
     government: null,
     usages: ["Maailmas elab palju huvitavaid linde, loomi ja putukaid.", "Elevandid on ühed vaadatumad loomad loomaaedades.", "Jänes, rebane ja karu on loomad.", "Rott on tark loom."],
     note: "selgrooga elusolend, eelkõige imetaja (välja arvatud inimene)",
@@ -5195,7 +5195,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "loomine", gloss: "creation", pos: "NOUN", cefr: null,
     ekilexWordId: 266882,
-    parts: { NOM_SG: "loomine", GEN_SG: "loomise", PART_SG: "loomist", ILL_SG_SHORT: "loomisse", PART_PL: "loomisi", GEN_PL: "loomiste" },
+    parts: { NOM_SG: "loomine", GEN_SG: "loomise", PART_SG: "loomist", ILL_SG_SHORT: "loomisse", NOM_PL: "loomised", PART_PL: "loomisi", GEN_PL: "loomiste" },
     government: null,
     usages: [],
     note: "millegi uue tekitamine, tegemine või esile kutsumine",
@@ -5204,7 +5204,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "loomulik", gloss: "natural", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 196540,
-    parts: { NOM_SG: "loomulik", GEN_SG: "loomuliku", PART_SG: "loomulikku", ILL_SG_SHORT: "loomulikku", PART_PL: "loomulikke", GEN_PL: "loomulike" },
+    parts: { NOM_SG: "loomulik", GEN_SG: "loomuliku", PART_SG: "loomulikku", ILL_SG_SHORT: "loomulikku", NOM_PL: "loomulikud", PART_PL: "loomulikke", GEN_PL: "loomulike" },
     government: null,
     usages: ["Krokodillid nende loomulikus keskkonnas jäidki nägemata.", "Suurte akendega ruumis on palju loomulikku valgust.", "Kadril on loomulikud lokid.", "Minu juuste loomulik värv on punane."],
     note: "loodusest seatud, looduslikest teguritest johtuv",
@@ -5222,7 +5222,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "luba", gloss: "permit, permission", pos: "NOUN", cefr: "A2",
     ekilexWordId: 196723,
-    parts: { NOM_SG: "luba", GEN_SG: "loa", PART_SG: "luba", PART_PL: "lube", GEN_PL: "lubade" },
+    parts: { NOM_SG: "luba", GEN_SG: "loa", PART_SG: "luba", NOM_PL: "load", PART_PL: "lube", GEN_PL: "lubade" },
     government: null,
     usages: ["Ametlik luba.", "Keskkonnaamet andis loa, et Saaremaal tohib lasta kolm hunti.", "Ilma luba küsimata ma tänaval inimesi ei pildista.", "Mehed jäeti kohtu loal vahi alla."],
     note: "kelleltki saadud suuline või kirjalik nõusolek millekski",
@@ -5240,7 +5240,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lubamatu", gloss: "impermissible", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 196729,
-    parts: { NOM_SG: "lubamatu", GEN_SG: "lubamatu", PART_SG: "lubamatut", PART_PL: "lubamatuid", GEN_PL: "lubamatute" },
+    parts: { NOM_SG: "lubamatu", GEN_SG: "lubamatu", PART_SG: "lubamatut", NOM_PL: "lubamatud", PART_PL: "lubamatuid", GEN_PL: "lubamatute" },
     government: null,
     usages: ["Tänapäeva tippsport toimetab lubatu ja lubamatu piiril.", "Selline käitumine on lubamatu."],
     note: "selline, mis pole lubatud või mis pole vastuvõetav, sallitav",
@@ -5249,7 +5249,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lugejaskond", gloss: "readership", pos: "NOUN", cefr: null,
     ekilexWordId: 196786,
-    parts: { NOM_SG: "lugejaskond", GEN_SG: "lugejaskonna", PART_SG: "lugejaskonda", ILL_SG_SHORT: "lugejaskonda", PART_PL: "lugejaskondi", GEN_PL: "lugejaskondade" },
+    parts: { NOM_SG: "lugejaskond", GEN_SG: "lugejaskonna", PART_SG: "lugejaskonda", ILL_SG_SHORT: "lugejaskonda", NOM_PL: "lugejaskonnad", PART_PL: "lugejaskondi", GEN_PL: "lugejaskondade" },
     government: null,
     usages: ["Võrguväljaannete lugejaskond kasvab paberväljaannete omast kiiremini.", "Blogidel on oma lugejaskond."],
     note: "teatud ajalehe, kellegi teoste vm alalised lugejad",
@@ -5267,7 +5267,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lugu", gloss: "story", pos: "NOUN", cefr: "A1",
     ekilexWordId: 196820,
-    parts: { NOM_SG: "lugu", GEN_SG: "loo", PART_SG: "lugu", ILL_SG_SHORT: "lukku", PART_PL: "lugusid", GEN_PL: "lugude" },
+    parts: { NOM_SG: "lugu", GEN_SG: "loo", PART_SG: "lugu", ILL_SG_SHORT: "lukku", NOM_PL: "lood", PART_PL: "lugusid", GEN_PL: "lugude" },
     government: null,
     usages: ["Minuga juhtus üks kurioosne lugu.", "Kaurist räägitakse igasuguseid lugusid.", "Pane see lugu kirja.", "Kirjutasin oma reisist ajalehele loo."],
     note: "juhtunud asi või omavahel seotud sündmuste kogum (ka suulises või kirjalikus esituses)",
@@ -5276,7 +5276,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lugupidamine", gloss: "respect", pos: "NOUN", cefr: null,
     ekilexWordId: 196827,
-    parts: { NOM_SG: "lugupidamine", GEN_SG: "lugupidamise", PART_SG: "lugupidamist", ILL_SG_SHORT: "lugupidamisse", PART_PL: "lugupidamisi", GEN_PL: "lugupidamiste" },
+    parts: { NOM_SG: "lugupidamine", GEN_SG: "lugupidamise", PART_SG: "lugupidamist", ILL_SG_SHORT: "lugupidamisse", NOM_PL: "lugupidamised", PART_PL: "lugupidamisi", GEN_PL: "lugupidamiste" },
     government: null,
     usages: ["Kes teise vastu käe tõstab, ei vääri lugupidamist.", "Minu lugupidamine!", "Professorisse suhtutakse lugupidamisega."],
     note: "austav suhtumine kellessegi või millessegi, kellegi või millegi kõrgelt hindamine",
@@ -5285,7 +5285,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lumi", gloss: "snow", pos: "NOUN", cefr: "A1",
     ekilexWordId: 197073,
-    parts: { NOM_SG: "lumi", GEN_SG: "lume", PART_SG: "lund", ILL_SG_SHORT: "lumme", PART_PL: "lumesid", GEN_PL: "lumede" },
+    parts: { NOM_SG: "lumi", GEN_SG: "lume", PART_SG: "lund", ILL_SG_SHORT: "lumme", NOM_PL: "lumed", PART_PL: "lumesid", GEN_PL: "lumede" },
     government: null,
     usages: ["Öösel on lund sadanud.", "Lõuna-Eestis on juba lumi maas.", "Lapsed hullasid lumes.", "Öösel sadas lund."],
     note: "peamiselt talvel pilvedest langevad pehmed valged helbed, mis koosnevad jääkristallidest",
@@ -5294,7 +5294,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "luule", gloss: "poetry", pos: "NOUN", cefr: "B2",
     ekilexWordId: 197249,
-    parts: { NOM_SG: "luule", GEN_SG: "luule", PART_SG: "luulet", PART_PL: "luuleid", GEN_PL: "luulete" },
+    parts: { NOM_SG: "luule", GEN_SG: "luule", PART_SG: "luulet", NOM_PL: "luuled", PART_PL: "luuleid", GEN_PL: "luulete" },
     government: null,
     usages: ["Eesti luule nüüdiskaanon.", "Näituse avamisel loeti Doris Kareva luulet.", "Luuletaja esitas üritusel oma uut luulet.", "Poeedid kuulatavad öö luulet."],
     note: "kirjanduse osa, millele on iseloomulik teksti eriline liigendus ning rütmil ja rõhkudel rajanev ülesehitus",
@@ -5303,7 +5303,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "luuletus", gloss: "poem", pos: "NOUN", cefr: "B1",
     ekilexWordId: 197288,
-    parts: { NOM_SG: "luuletus", GEN_SG: "luuletuse", PART_SG: "luuletust", ILL_SG_SHORT: "luuletusse", PART_PL: "luuletusi", GEN_PL: "luuletuste" },
+    parts: { NOM_SG: "luuletus", GEN_SG: "luuletuse", PART_SG: "luuletust", ILL_SG_SHORT: "luuletusse", NOM_PL: "luuletused", PART_PL: "luuletusi", GEN_PL: "luuletuste" },
     government: null,
     usages: ["Kirjutan ka ise luuletusi.", "Juhan Liivi luuletused.", "Ta kirjutab häid luuletusi."],
     note: "kirjandusteos, mis rajaneb värsskõnel ja rütmil (ning riimil), koosnedes hrl ühest või mitmest salmist",
@@ -5312,7 +5312,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lõik", gloss: "paragraph", pos: "NOUN", cefr: "B2",
     ekilexWordId: 197502,
-    parts: { NOM_SG: "lõik", GEN_SG: "lõigu", PART_SG: "lõiku", ILL_SG_SHORT: "lõiku", PART_PL: "lõike", GEN_PL: "lõikude" },
+    parts: { NOM_SG: "lõik", GEN_SG: "lõigu", PART_SG: "lõiku", ILL_SG_SHORT: "lõiku", NOM_PL: "lõigud", PART_PL: "lõike", GEN_PL: "lõikude" },
     government: null,
     usages: ["Vaarikakoogi lõik.", "Lõik sinki.", "Õunalõik.", "Panin võileivale lõigu tomatit."],
     note: "mingist toiduainest lõigatud lapik tükk või sektorina eraldatud osa",
@@ -5330,7 +5330,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lõimumine", gloss: "integration", pos: "NOUN", cefr: null,
     ekilexWordId: 197559,
-    parts: { NOM_SG: "lõimumine", GEN_SG: "lõimumise", PART_SG: "lõimumist", ILL_SG_SHORT: "lõimumisse", PART_PL: "lõimumisi", GEN_PL: "lõimumiste" },
+    parts: { NOM_SG: "lõimumine", GEN_SG: "lõimumise", PART_SG: "lõimumist", ILL_SG_SHORT: "lõimumisse", NOM_PL: "lõimumised", PART_PL: "lõimumisi", GEN_PL: "lõimumiste" },
     government: null,
     usages: ["Kohalike venelaste lõimumine eestlastega.", "Moldova jaoks on lõimumine Euroopasse strateegiline eesmärk."],
     note: "ühe rahvusrühma ühinemine teiste sama ühiskonna rahvusrühmadega",
@@ -5339,7 +5339,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lõpetaja", gloss: "graduate", pos: "NOUN", cefr: "B1",
     ekilexWordId: 197617,
-    parts: { NOM_SG: "lõpetaja", GEN_SG: "lõpetaja", PART_SG: "lõpetajat", PART_PL: "lõpetajaid", GEN_PL: "lõpetajate" },
+    parts: { NOM_SG: "lõpetaja", GEN_SG: "lõpetaja", PART_SG: "lõpetajat", NOM_PL: "lõpetajad", PART_PL: "lõpetajaid", GEN_PL: "lõpetajate" },
     government: null,
     usages: ["Kuldmedaliga lõpetajate seas olid ülekaalus neiud.", "Majandusteaduskonna lõpetajad.", "Keskkoolilõpetaja.", "Lehes ilmus Tartu ülikooli tänavuste lõpetajate nimekiri."],
     note: "mingis õppeasutuses õpingutega või teatud õpinguastmega lõpuni jõudnud inimene",
@@ -5393,7 +5393,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "läbimurre", gloss: "breakthrough", pos: "NOUN", cefr: "B2",
     ekilexWordId: 198012,
-    parts: { NOM_SG: "läbimurre", GEN_SG: "läbimurde", PART_SG: "läbimurret", PART_PL: "läbimurdeid", GEN_PL: "läbimurrete" },
+    parts: { NOM_SG: "läbimurre", GEN_SG: "läbimurde", PART_SG: "läbimurret", NOM_PL: "läbimurded", PART_PL: "läbimurdeid", GEN_PL: "läbimurrete" },
     government: null,
     usages: ["Türgi tegi läbimurde maailma jalgpallis.", "Kulude vähendamiseks on vaja uut tehnoloogilist läbimurret.", "Tuberkuloosiravis võib peagi tulla läbimurre.", "Läbimurde korral oleks vesi katnud tammidetaguse maa mitme meetri kõrguselt."],
     note: "suur saavutus, avastus vm, mis avab võimalused pöördeliseks arenguks või edenemiseks",
@@ -5402,7 +5402,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "läbinägelik", gloss: "perceptive", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 198034,
-    parts: { NOM_SG: "läbinägelik", GEN_SG: "läbinägeliku", PART_SG: "läbinägelikku", ILL_SG_SHORT: "läbinägelikku", PART_PL: "läbinägelikke", GEN_PL: "läbinägelike" },
+    parts: { NOM_SG: "läbinägelik", GEN_SG: "läbinägeliku", PART_SG: "läbinägelikku", ILL_SG_SHORT: "läbinägelikku", NOM_PL: "läbinägelikud", PART_PL: "läbinägelikke", GEN_PL: "läbinägelike" },
     government: null,
     usages: ["Noore inimese kohta on ta hämmastavalt läbinägelik."],
     note: "millestki välisest, näilikust end mitte petta või eksitada laskev",
@@ -5411,7 +5411,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "läbirääkimine", gloss: "negotiation", pos: "NOUN", cefr: null,
     ekilexWordId: 406269,
-    parts: { NOM_SG: "läbirääkimine", GEN_SG: "läbirääkimise", PART_SG: "läbirääkimist", ILL_SG_SHORT: "läbirääkimisse", PART_PL: "läbirääkimisi", GEN_PL: "läbirääkimiste" },
+    parts: { NOM_SG: "läbirääkimine", GEN_SG: "läbirääkimise", PART_SG: "läbirääkimist", ILL_SG_SHORT: "läbirääkimisse", NOM_PL: "läbirääkimised", PART_PL: "läbirääkimisi", GEN_PL: "läbirääkimiste" },
     government: null,
     usages: ["Aluspõhimõtte üle me ei vaidle, kõik ülejäänu on läbirääkimise objekt.", "Pooletunnise läbirääkimise käigus jõudsime kokkuleppele.", "Vallajuhiga läbirääkimisel on saadud nõusolek projekti elluviimiseks lähiaastatel."],
     note: "asja(de) arutamine mingi kokkuleppe saavutamise eesmärgil",
@@ -5420,7 +5420,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "läbirääkimised", gloss: "negotiations", pos: "NOUN", cefr: "B1",
     ekilexWordId: 198074,
-    parts: { NOM_SG: "läbirääkimine", GEN_SG: "läbirääkimise", PART_SG: "läbirääkimist", ILL_SG_SHORT: "läbirääkimisse", PART_PL: "läbirääkimisi", GEN_PL: "läbirääkimiste" },
+    parts: { NOM_SG: "läbirääkimine", GEN_SG: "läbirääkimise", PART_SG: "läbirääkimist", ILL_SG_SHORT: "läbirääkimisse", NOM_PL: "läbirääkimised", PART_PL: "läbirääkimisi", GEN_PL: "läbirääkimiste" },
     government: null,
     usages: ["Iisraeli-Palestiina läbirääkimised alalise rahulepingu sõlmimiseks.", "Euroopa Liit ja Pärsia lahe koostöönõukogu on pidanud umbes kakskümmend aastat läbirääkimisi vabakaubanduslepingu üle.", "Läbirääkimised pangaga on praegu veel pooleli.", "Pidasime eile palga üle läbirääkimisi."],
     note: "eri huvidega osapoolte nõupidamine või nende sari mingis küsimuses mõlemale poolele vastuvõetava lahenduse saavutamiseks (hrl äritegevuses, diplomaatias, juhtimises)",
@@ -5429,7 +5429,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "läbiviimine", gloss: "carrying out", pos: "NOUN", cefr: null,
     ekilexWordId: 198128,
-    parts: { NOM_SG: "läbiviimine", GEN_SG: "läbiviimise", PART_SG: "läbiviimist", ILL_SG_SHORT: "läbiviimisse", PART_PL: "läbiviimisi", GEN_PL: "läbiviimiste" },
+    parts: { NOM_SG: "läbiviimine", GEN_SG: "läbiviimise", PART_SG: "läbiviimist", ILL_SG_SHORT: "läbiviimisse", NOM_PL: "läbiviimised", PART_PL: "läbiviimisi", GEN_PL: "läbiviimiste" },
     government: null,
     usages: ["Uuringute läbiviimiseks polnud raha.", "Usaldushääletuse läbiviimine sõltub opositsioonist."],
     note: "millegi teostamine või korraldamine",
@@ -5447,7 +5447,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lähtekeel", gloss: "source language", pos: "NOUN", cefr: null,
     ekilexWordId: 198240,
-    parts: { NOM_SG: "lähtekeel", GEN_SG: "lähtekeele", PART_SG: "lähtekeelt", ILL_SG_SHORT: "lähtekeelde", PART_PL: "lähtekeeli", GEN_PL: "lähtekeelte" },
+    parts: { NOM_SG: "lähtekeel", GEN_SG: "lähtekeele", PART_SG: "lähtekeelt", ILL_SG_SHORT: "lähtekeelde", NOM_PL: "lähtekeeled", PART_PL: "lähtekeeli", GEN_PL: "lähtekeelte" },
     government: null,
     usages: ["Lähtekeele sõna on võimalik sihtkeelde tõlkida mitmel viisil.", "Õppija lähtekeele ja sihtkeele häälikusüsteemid erinevad vähemalt osaliselt.", "Ühest lähtekeelest hargnes juba Aafrikas mitmeid keeli."],
     note: "(tõlkimisel:) keel, millest sõna, väljend või tekst tõlgitakse teise keelde",
@@ -5456,7 +5456,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lähtekoht", gloss: "starting point", pos: "NOUN", cefr: "B2",
     ekilexWordId: 198242,
-    parts: { NOM_SG: "lähtekoht", GEN_SG: "lähtekoha", PART_SG: "lähtekohta", ILL_SG_SHORT: "lähtekohta", PART_PL: "lähtekohti", GEN_PL: "lähtekohtade" },
+    parts: { NOM_SG: "lähtekoht", GEN_SG: "lähtekoha", PART_SG: "lähtekohta", ILL_SG_SHORT: "lähtekohta", NOM_PL: "lähtekohad", PART_PL: "lähtekohti", GEN_PL: "lähtekohtade" },
     government: null,
     usages: ["Lennu lähte- ja sihtkoht.", "Uurimuse teoreetilised lähtekohad."],
     note: "koht, kust teele asutakse, liikuma hakatakse",
@@ -5474,7 +5474,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Läti", gloss: "Latvia", pos: "NOUN", cefr: null,
     ekilexWordId: 198342,
-    parts: { NOM_SG: "Läti", GEN_SG: "Läti", PART_SG: "Lätit", ILL_SG_SHORT: "Lätti", PART_PL: "Lätisid", GEN_PL: "Lätide" },
+    parts: { NOM_SG: "Läti", GEN_SG: "Läti", PART_SG: "Lätit", ILL_SG_SHORT: "Lätti", NOM_PL: "Lätid", PART_PL: "Lätisid", GEN_PL: "Lätide" },
     government: null,
     usages: [],
     note: "riik Euroopas Läänemere ääres",
@@ -5483,7 +5483,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lätlane", gloss: "a Latvian", pos: "NOUN", cefr: "A2",
     ekilexWordId: 198349,
-    parts: { NOM_SG: "lätlane", GEN_SG: "lätlase", PART_SG: "lätlast", ILL_SG_SHORT: "lätlasse", PART_PL: "lätlasi", GEN_PL: "lätlaste" },
+    parts: { NOM_SG: "lätlane", GEN_SG: "lätlase", PART_SG: "lätlast", ILL_SG_SHORT: "lätlasse", NOM_PL: "lätlased", PART_PL: "lätlasi", GEN_PL: "lätlaste" },
     government: null,
     usages: ["Autor nimetab eestlasi ja lätlasi pisimateks mandrirahvasteks, kel on omaette keelele rajatud kõrgkultuur.", "Läti Vabariigi iseseisvuspäeva tähistavad paljud lätlased mitte kodusel paraadil, vaid hoopis Saaremaa spaades.", "Anett Kontaveidi mäng lätlase Jelena Ostapenkoga algab keskpäeval."],
     note: "Läti põhirahva liige",
@@ -5492,7 +5492,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "lühike", gloss: "short", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 198560,
-    parts: { NOM_SG: "lühike", GEN_SG: "lühikese", PART_SG: "lühikest", ILL_SG_SHORT: "lühikesse", PART_PL: "lühikesi", GEN_PL: "lühikeste" },
+    parts: { NOM_SG: "lühike", GEN_SG: "lühikese", PART_SG: "lühikest", ILL_SG_SHORT: "lühikesse", NOM_PL: "lühikesed", PART_PL: "lühikesi", GEN_PL: "lühikeste" },
     government: null,
     usages: ["Lühike kasv pole teda kunagi seganud.", "Sulle sobib lühike juus väga hästi.", "Isegi lühikest maad ei soovitud jala kõndida.", "Poiss on lühikest kasvu."],
     note: "püst- või rõhtsuunas suhteliselt väikese pikkusega",
@@ -5501,7 +5501,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "maa", gloss: "land, country", pos: "NOUN", cefr: "A1",
     ekilexWordId: 198739,
-    parts: { NOM_SG: "maa", GEN_SG: "maa", PART_SG: "maad", ILL_SG_SHORT: "maha", PART_PL: "maid", GEN_PL: "maade" },
+    parts: { NOM_SG: "maa", GEN_SG: "maa", PART_SG: "maad", ILL_SG_SHORT: "maha", NOM_PL: "maad", PART_PL: "maid", GEN_PL: "maade" },
     government: null,
     usages: ["Eks rahvast ole ju maa peal igasugust.", "Pikk merereis ei ole sellega veel lõppenud, kui maa paistma hakkab.", "Pääsukesed lendasid madalalt maa kohal.", "Laev lähenes maale."],
     note: "maakera kui elukeskkond, maailm",
@@ -5510,7 +5510,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "madal", gloss: "low, shallow", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 199268,
-    parts: { NOM_SG: "madal", GEN_SG: "madala", PART_SG: "madalat", PART_PL: "madalaid", GEN_PL: "madalate" },
+    parts: { NOM_SG: "madal", GEN_SG: "madala", PART_SG: "madalat", NOM_PL: "madalad", PART_PL: "madalaid", GEN_PL: "madalate" },
     government: null,
     usages: ["Madalad majad.", "Sookask on madal puu.", "Madalamad põllud on vee all.", "Madal vaas."],
     note: "väikese kõrgusega, püstsuunas lühike, suhteliselt vähe ülespoole ulatuv",
@@ -5528,7 +5528,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "magustoit", gloss: "dessert", pos: "NOUN", cefr: "A2",
     ekilexWordId: 199510,
-    parts: { NOM_SG: "magustoit", GEN_SG: "magustoidu", PART_SG: "magustoitu", ILL_SG_SHORT: "magustoitu", PART_PL: "magustoite", GEN_PL: "magustoitude" },
+    parts: { NOM_SG: "magustoit", GEN_SG: "magustoidu", PART_SG: "magustoitu", ILL_SG_SHORT: "magustoitu", NOM_PL: "magustoidud", PART_PL: "magustoite", GEN_PL: "magustoitude" },
     government: null,
     usages: ["Dessertveini serveeritakse koos magustoiduga.", "Magustoiduks pakuti küpsetatud banaane.", "Magustoiduks sõime jäätist.", "Lõuna koosnes supist, praest ja magustoidust."],
     note: "lõuna- või õhtusöögi lõpul pakutav magus toit, nt kook, puuvili, jäätis",
@@ -5546,7 +5546,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mahl", gloss: "juice", pos: "NOUN", cefr: "A1",
     ekilexWordId: 199694,
-    parts: { NOM_SG: "mahl", GEN_SG: "mahla", PART_SG: "mahla", ILL_SG_SHORT: "mahla", PART_PL: "mahlu", GEN_PL: "mahlade" },
+    parts: { NOM_SG: "mahl", GEN_SG: "mahla", PART_SG: "mahla", ILL_SG_SHORT: "mahla", NOM_PL: "mahlad", PART_PL: "mahlu", GEN_PL: "mahlade" },
     government: null,
     usages: ["Õunad tehti mahlaks.", "Värskelt pressitud mahl.", "Lapsed armastavad mahla juua.", "Koogi sisse läheb poole sidruni mahl."],
     note: "puuviljadest, marjadest või köögiviljadest välja pressitud või aurutatud (lahjendatud) vedelik joogina",
@@ -5555,7 +5555,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mai", gloss: "May", pos: "NOUN", cefr: "A1",
     ekilexWordId: 199751,
-    parts: { NOM_SG: "mai", GEN_SG: "mai", PART_SG: "maid", PART_PL: "maisid", GEN_PL: "maide" },
+    parts: { NOM_SG: "mai", GEN_SG: "mai", PART_SG: "maid", NOM_PL: "maid", PART_PL: "maisid", GEN_PL: "maide" },
     government: null,
     usages: ["Koosolek toimub 5. mail."],
     note: "aasta 5. kuu, põhjapoolkeral kolmas kevadkuu",
@@ -5573,7 +5573,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "maitse", gloss: "taste, flavour", pos: "NOUN", cefr: "B1",
     ekilexWordId: 199819,
-    parts: { NOM_SG: "maitse", GEN_SG: "maitse", PART_SG: "maitset", PART_PL: "maitseid", GEN_PL: "maitsete" },
+    parts: { NOM_SG: "maitse", GEN_SG: "maitse", PART_SG: "maitset", NOM_PL: "maitsed", PART_PL: "maitseid", GEN_PL: "maitsete" },
     government: null,
     usages: ["Magusa maitsega õunad.", "Pasteedil oli hõrk maitse.", "Peale soola muud maitset ei tundnudki.", "Nohuga ei tunne õiget lõhna ega maitset."],
     note: "toidu, joogi vm aine omadus, mida väljendab süljes lahustunud aineosade toimel suus tekkinud aisting",
@@ -5591,7 +5591,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "maja", gloss: "house", pos: "NOUN", cefr: "A1",
     ekilexWordId: 199880,
-    parts: { NOM_SG: "maja", GEN_SG: "maja", PART_SG: "maja", ILL_SG_SHORT: "majja", PART_PL: "maju", GEN_PL: "majade" },
+    parts: { NOM_SG: "maja", GEN_SG: "maja", PART_SG: "maja", ILL_SG_SHORT: "majja", NOM_PL: "majad", PART_PL: "maju", GEN_PL: "majade" },
     government: null,
     usages: ["Kodumaja.", "Palkmaja.", "Maja taga on kuur ja garaaž.", "Elame ühes majas."],
     note: "hoone inimestele elamiseks, töötamiseks, nende teenindamiseks vms",
@@ -5600,7 +5600,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "majandus", gloss: "economy", pos: "NOUN", cefr: "B1",
     ekilexWordId: 199911,
-    parts: { NOM_SG: "majandus", GEN_SG: "majanduse", PART_SG: "majandust", ILL_SG_SHORT: "majandusse", PART_PL: "majandusi", GEN_PL: "majanduste" },
+    parts: { NOM_SG: "majandus", GEN_SG: "majanduse", PART_SG: "majandust", ILL_SG_SHORT: "majandusse", NOM_PL: "majandused", PART_PL: "majandusi", GEN_PL: "majanduste" },
     government: null,
     usages: ["Majanduse areng.", "Valitsuse istungil arutati riigi majanduse olukorda.", "Teadmistepõhine majandus.", "Liberaalne majandus tähendab õhukest riiki."],
     note: "ühiskonnaelu valdkond, mis hõlmab kaupade ja teenuste tootmist, ostmist, müüki ja tarbimist",
@@ -5609,7 +5609,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "maks", gloss: "tax", pos: "NOUN", cefr: "B1",
     ekilexWordId: 200115,
-    parts: { NOM_SG: "maks", GEN_SG: "maksu", PART_SG: "maksu", ILL_SG_SHORT: "maksu", PART_PL: "makse", GEN_PL: "maksude" },
+    parts: { NOM_SG: "maks", GEN_SG: "maksu", PART_SG: "maksu", ILL_SG_SHORT: "maksu", NOM_PL: "maksud", PART_PL: "makse", GEN_PL: "maksude" },
     government: null,
     usages: ["Palgast võetakse maksud maha.", "Maksudest kõrvalehoidmine.", "Mõned inimesed lihtsalt ei maksa makse.", "Tänavakunstnik tegi soovijaist väikese maksu eest karikatuure."],
     note: "seadusega määratud rahasumma, mille asutused või ettevõtjad peavad maksma ettenähtud tähtpäevadel riigi või kohaliku eelarve tuludesse",
@@ -5627,7 +5627,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mantel", gloss: "coat", pos: "NOUN", cefr: "B1",
     ekilexWordId: 200500,
-    parts: { NOM_SG: "mantel", GEN_SG: "mantli", PART_SG: "mantlit", PART_PL: "mantleid", GEN_PL: "mantlite" },
+    parts: { NOM_SG: "mantel", GEN_SG: "mantli", PART_SG: "mantlit", NOM_PL: "mantlid", PART_PL: "mantleid", GEN_PL: "mantlite" },
     government: null,
     usages: ["Kapuutsiga mantel.", "Mulle meeldib, kui mulle aidatakse mantlit selga.", "Täna panin juba kevadise nahkjope selga, muidu käisin mantliga.", "Mees kandis pikka sinist mantlit."],
     note: "väljas kantav pikk varrukatega ülerõivas",
@@ -5636,7 +5636,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mari", gloss: "berry", pos: "NOUN", cefr: "A2",
     ekilexWordId: 200639,
-    parts: { NOM_SG: "mari", GEN_SG: "marja", PART_SG: "marja", ILL_SG_SHORT: "marja", PART_PL: "marju", GEN_PL: "marjade" },
+    parts: { NOM_SG: "mari", GEN_SG: "marja", PART_SG: "marja", ILL_SG_SHORT: "marja", NOM_PL: "marjad", PART_PL: "marju", GEN_PL: "marjade" },
     government: null,
     usages: ["Eriti hea on jäätis värskete suviste marjadega.", "Need marjad on mürgised.", "Koetud ja viljastatud mari kleepub veetaimedele.", "Lõhed ujuvad pika tee ülespoole, et mari kudeda."],
     note: "taime või puu väike, ühe või mitme seemnega söödav vili (nt maasikal, kirsil, pihlakal)",
@@ -5645,7 +5645,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mastaap", gloss: "scale", pos: "NOUN", cefr: "B2",
     ekilexWordId: 200973,
-    parts: { NOM_SG: "mastaap", GEN_SG: "mastaabi", PART_SG: "mastaapi", ILL_SG_SHORT: "mastaapi", PART_PL: "mastaape", GEN_PL: "mastaapide" },
+    parts: { NOM_SG: "mastaap", GEN_SG: "mastaabi", PART_SG: "mastaapi", ILL_SG_SHORT: "mastaapi", NOM_PL: "mastaabid", PART_PL: "mastaape", GEN_PL: "mastaapide" },
     government: null,
     usages: ["Kaardi mastaap.", "Sellise mastaabiga koolitust pole keegi varem ette võtnud.", "Konflikt on hakanud üha enam saavutama tõelise sõja mastaape."],
     note: "joonisel, kaardil või plaanil oleva lõigu pikkuse ja sama lõigu tegeliku pikkuse suhe",
@@ -5654,7 +5654,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "meel", gloss: "mind, mood", pos: "NOUN", cefr: "B1",
     ekilexWordId: 201252,
-    parts: { NOM_SG: "meel", GEN_SG: "meele", PART_SG: "meelt", ILL_SG_SHORT: "meelde", PART_PL: "meeli", GEN_PL: "meelte" },
+    parts: { NOM_SG: "meel", GEN_SG: "meele", PART_SG: "meelt", ILL_SG_SHORT: "meelde", NOM_PL: "meeled", PART_PL: "meeli", GEN_PL: "meelte" },
     government: null,
     usages: ["Inimese viis meelt.", "Kassidel on meeltest hästi arenenud nägemine ja kuulmine.", "Hiinlased olevat tuntud oma praktilise meele poolest.", "Õiglase meelega inimene."],
     note: "teatud aistingute vastuvõtmise ja eristamise võime (nt kuulmine, nägemine, haistmine)",
@@ -5672,7 +5672,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "meeleolu", gloss: "mood, atmosphere", pos: "NOUN", cefr: "A2",
     ekilexWordId: 201302,
-    parts: { NOM_SG: "meeleolu", GEN_SG: "meeleolu", PART_SG: "meeleolu", ILL_SG_SHORT: "meeleollu", PART_PL: "meeleolusid", GEN_PL: "meeleolude" },
+    parts: { NOM_SG: "meeleolu", GEN_SG: "meeleolu", PART_SG: "meeleolu", ILL_SG_SHORT: "meeleollu", NOM_PL: "meeleolud", PART_PL: "meeleolusid", GEN_PL: "meeleolude" },
     government: null,
     usages: ["Olen nostalgilises meeleolus.", "Süütasime küünlad romantilise meeleolu loomiseks.", "Juhatuses valitseb käegalöömise meeleolu.", "Masendusmeeleolu."],
     note: "muutlik emotsionaalne seisund, mis annab värvingu inimese elamustele ja tegevusele",
@@ -5681,7 +5681,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mees", gloss: "man, husband", pos: "NOUN", cefr: "A1",
     ekilexWordId: 201392,
-    parts: { NOM_SG: "mees", GEN_SG: "mehe", PART_SG: "meest", PART_PL: "mehi", GEN_PL: "meeste" },
+    parts: { NOM_SG: "mees", GEN_SG: "mehe", PART_SG: "meest", NOM_PL: "mehed", PART_PL: "mehi", GEN_PL: "meeste" },
     government: null,
     usages: ["Kui palju on teie kolleegide hulgas mehi?", "Mehed ja naised on juhina erinevad.", "Sirje mees on ohvitser.", "Endine mees ajab kiusu."],
     note: "(hrl täiskasvanud) meessoost inimene",
@@ -5690,7 +5690,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "meeskond", gloss: "team", pos: "NOUN", cefr: "A2",
     ekilexWordId: 201403,
-    parts: { NOM_SG: "meeskond", GEN_SG: "meeskonna", PART_SG: "meeskonda", ILL_SG_SHORT: "meeskonda", PART_PL: "meeskondi", GEN_PL: "meeskondade" },
+    parts: { NOM_SG: "meeskond", GEN_SG: "meeskonna", PART_SG: "meeskonda", ILL_SG_SHORT: "meeskonda", NOM_PL: "meeskonnad", PART_PL: "meeskondi", GEN_PL: "meeskondade" },
     government: null,
     usages: ["Uus direktor loob oma meeskonna.", "Müügimeeskond.", "Korraldusmeeskond.", "Projektimeeskond."],
     note: "kellegi lähimad abilised või mõttekaaslased",
@@ -5699,7 +5699,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "meetod", gloss: "method", pos: "NOUN", cefr: "B1",
     ekilexWordId: 201479,
-    parts: { NOM_SG: "meetod", GEN_SG: "meetodi", PART_SG: "meetodit", PART_PL: "meetodeid", GEN_PL: "meetodite" },
+    parts: { NOM_SG: "meetod", GEN_SG: "meetodi", PART_SG: "meetodit", NOM_PL: "meetodid", PART_PL: "meetodeid", GEN_PL: "meetodite" },
     government: null,
     usages: ["Meetod põhineb eri kaupade ja teenuste hindade võrdlemisel.", "Uued meetodid lubavad isegi pimedal nägijaks saada.", "Kloonimine kui meetod.", "Milline on parim meetod võõrkeele õppimiseks?"],
     note: "sihikindlalt teostatav toimimisviis või menetlus teaduslikuks uurimiseks, haiguse ravimiseks vm eesmärgi saavutamiseks",
@@ -5726,7 +5726,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "menetlus", gloss: "proceedings", pos: "NOUN", cefr: "B2",
     ekilexWordId: 201751,
-    parts: { NOM_SG: "menetlus", GEN_SG: "menetluse", PART_SG: "menetlust", ILL_SG_SHORT: "menetlusse", PART_PL: "menetlusi", GEN_PL: "menetluste" },
+    parts: { NOM_SG: "menetlus", GEN_SG: "menetluse", PART_SG: "menetlust", ILL_SG_SHORT: "menetlusse", NOM_PL: "menetlused", PART_PL: "menetlusi", GEN_PL: "menetluste" },
     government: null,
     usages: ["Eelnõu võetakse riigikogu menetlusest tagasi.", "Nüüd on kohtueelne menetlus lõpule viidud.", "Politsei alustas menetlust kannatanu avalduse alusel.", "Menetlus lõpetati kuriteo aegumise tõttu."],
     note: "kindlas järjekorras õiguslikud toimingud mingi küsimuse lahendamiseks",
@@ -5735,7 +5735,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "menüü", gloss: "menu", pos: "NOUN", cefr: "B1",
     ekilexWordId: 201802,
-    parts: { NOM_SG: "menüü", GEN_SG: "menüü", PART_SG: "menüüd", PART_PL: "menüüsid", GEN_PL: "menüüde" },
+    parts: { NOM_SG: "menüü", GEN_SG: "menüü", PART_SG: "menüüd", NOM_PL: "menüüd", PART_PL: "menüüsid", GEN_PL: "menüüde" },
     government: null,
     usages: ["Rukkitoit peaks oma kasulikkuse tõttu kuuluma laste igapäevasesse menüüsse.", "Õun sobib hästi kehakaalu jälgivate inimeste menüüsse.", "Kassi menüüd ei tohiks sageli vahetada.", "Restoranis on eestipärane menüü."],
     note: "igapäevased või teatava toidukorra toidud ja joogid (liikide järgi), kuskil pakutav toitude ja jookide valik",
@@ -5744,7 +5744,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "meri", gloss: "sea", pos: "NOUN", cefr: "A1",
     ekilexWordId: 202024,
-    parts: { NOM_SG: "meri", GEN_SG: "mere", PART_SG: "merd", ILL_SG_SHORT: "merre", PART_PL: "meresid", GEN_PL: "merede" },
+    parts: { NOM_SG: "meri", GEN_SG: "mere", PART_SG: "merd", ILL_SG_SHORT: "merre", NOM_PL: "mered", PART_PL: "meresid", GEN_PL: "merede" },
     government: null,
     usages: ["Meri on täna tormine.", "Kalurid tulid merelt värske tursaga.", "Külaline on tulnud kauge mere tagant Kanadast.", "Käisin meres ujumas."],
     note: "maismaasse ulatuv või ookeanist saarte või veealuste kõrgendikega eraldatud soolase vee väli",
@@ -5753,7 +5753,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "metoodika", gloss: "methodology", pos: "NOUN", cefr: "B2",
     ekilexWordId: 202335,
-    parts: { NOM_SG: "metoodika", GEN_SG: "metoodika", PART_SG: "metoodikat", PART_PL: "metoodikaid", GEN_PL: "metoodikate" },
+    parts: { NOM_SG: "metoodika", GEN_SG: "metoodika", PART_SG: "metoodikat", NOM_PL: "metoodikad", PART_PL: "metoodikaid", GEN_PL: "metoodikate" },
     government: null,
     usages: ["Töövõime hindamise metoodika.", "Kliiniliste uuringute metoodika.", "Matemaatika metoodika.", "Metoodika, mis sobib nägemispuudega lastele."],
     note: "mingi tegevuse või töö sooritamise meetodite kogum",
@@ -5762,7 +5762,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mets", gloss: "forest", pos: "NOUN", cefr: "A1",
     ekilexWordId: 202351,
-    parts: { NOM_SG: "mets", GEN_SG: "metsa", PART_SG: "metsa", ILL_SG_SHORT: "metsa", PART_PL: "metsi", GEN_PL: "metsade" },
+    parts: { NOM_SG: "mets", GEN_SG: "metsa", PART_SG: "metsa", ILL_SG_SHORT: "metsa", NOM_PL: "metsad", PART_PL: "metsi", GEN_PL: "metsade" },
     government: null,
     usages: ["Mets oli marjulisi täis.", "Praegu on metsad väga tuleohtlikud.", "Käisime metsas seeni ja marju korjamas.", "Eksisin metsa ära."],
     note: "suur ala, mis on kaetud puude ja nende juurde kuuluvate (roht)taimedega",
@@ -5789,7 +5789,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "milline", gloss: "which, what kind of", pos: "PRONOUN", cefr: "A1",
     ekilexWordId: 202909,
-    parts: { NOM_SG: "milline", GEN_SG: "millise", PART_SG: "millist", PART_PL: "milliseid", GEN_PL: "milliste" },
+    parts: { NOM_SG: "milline", GEN_SG: "millise", PART_SG: "millist", NOM_PL: "millised", PART_PL: "milliseid", GEN_PL: "milliste" },
     government: null,
     usages: ["Milline kunst sulle meeldib?", "Millisest ajalehest sa seda lugesid?", "Kes teab, millist elu nad vahepeal on elanud.", "See oli pidu, millist pole siinkandis ammu nähtud."],
     note: "küsiv-siduv sõna: esineb mingi omaduse või valiku täpsustamisel ning täpsustava lauseosa algul",
@@ -5816,7 +5816,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "minister", gloss: "minister", pos: "NOUN", cefr: "B1",
     ekilexWordId: 203036,
-    parts: { NOM_SG: "minister", GEN_SG: "ministri", PART_SG: "ministrit", PART_PL: "ministreid", GEN_PL: "ministrite" },
+    parts: { NOM_SG: "minister", GEN_SG: "ministri", PART_SG: "ministrit", NOM_PL: "ministrid", PART_PL: "ministreid", GEN_PL: "ministrite" },
     government: null,
     usages: ["Skandaali tõttu nõuti ministrilt tagasiastumist.", "Valitsevasse parteisse kuuluvad ministrid.", "Kohtuminister.", "Sõjaminister."],
     note: "valitsuse liige, kes hrl juhib teatud valitsemisala ministeeriumi",
@@ -5825,7 +5825,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "minut", gloss: "minute", pos: "NOUN", cefr: "A1",
     ekilexWordId: 203062,
-    parts: { NOM_SG: "minut", GEN_SG: "minuti", PART_SG: "minutit", PART_PL: "minuteid", GEN_PL: "minutite" },
+    parts: { NOM_SG: "minut", GEN_SG: "minuti", PART_SG: "minutit", NOM_PL: "minutid", PART_PL: "minuteid", GEN_PL: "minutite" },
     government: null,
     usages: ["Kell on viis minutit seitse läbi.", "Buss tuleb viie minuti pärast.", "Kell on kümme minutit kuus läbi.", "Ta jäi paar minutit hiljaks."],
     note: "1/60 tundi, 60 sekundiga võrduv ajaühik",
@@ -5834,7 +5834,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mis", gloss: "what", pos: "PRONOUN", cefr: "A1",
     ekilexWordId: 203081,
-    parts: { NOM_SG: "mis", GEN_SG: "mille", PART_SG: "mida", PART_PL: "mida", GEN_PL: "millede" },
+    parts: { NOM_SG: "mis", GEN_SG: "mille", PART_SG: "mida", NOM_PL: "mis", PART_PL: "mida", GEN_PL: "millede" },
     government: null,
     usages: ["Mis su aadress on?", "Millega te rahul ei ole?", "Ta on mees, kes teab, mida tahab.", "Mis kell on?"],
     note: "küsiv-siduv sõna: esineb mingite asjaolude täpsustamisel otseses või kaudselt väljendatud küsimuses ning täpsustava lauseosa alguses",
@@ -5852,7 +5852,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mitmetähenduslik", gloss: "polysemous", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 203213,
-    parts: { NOM_SG: "mitmetähenduslik", GEN_SG: "mitmetähendusliku", PART_SG: "mitmetähenduslikku", ILL_SG_SHORT: "mitmetähenduslikku", PART_PL: "mitmetähenduslikke", GEN_PL: "mitmetähenduslike" },
+    parts: { NOM_SG: "mitmetähenduslik", GEN_SG: "mitmetähendusliku", PART_SG: "mitmetähenduslikku", ILL_SG_SHORT: "mitmetähenduslikku", NOM_PL: "mitmetähenduslikud", PART_PL: "mitmetähenduslikke", GEN_PL: "mitmetähenduslike" },
     government: null,
     usages: ["Eesti keeles on sõna „rakett\" mitmetähenduslik.", "Tänaõhtune perekonnakontsert Põltsamaal on mitmetähenduslik sündmus."],
     note: "(sõna või väljendi kohta:) mitme eri tähendusega",
@@ -5861,7 +5861,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mitmetähenduslikkus", gloss: "polysemy", pos: "NOUN", cefr: null,
     ekilexWordId: 203214,
-    parts: { NOM_SG: "mitmetähenduslikkus", GEN_SG: "mitmetähenduslikkuse", PART_SG: "mitmetähenduslikkust", ILL_SG_SHORT: "mitmetähenduslikkusse", PART_PL: "mitmetähenduslikkusi", GEN_PL: "mitmetähenduslikkuste" },
+    parts: { NOM_SG: "mitmetähenduslikkus", GEN_SG: "mitmetähenduslikkuse", PART_SG: "mitmetähenduslikkust", ILL_SG_SHORT: "mitmetähenduslikkusse", NOM_PL: "mitmetähenduslikkused", PART_PL: "mitmetähenduslikkusi", GEN_PL: "mitmetähenduslikkuste" },
     government: null,
     usages: ["Olukorra mitmetähenduslikkust oli raske alahinnata.", "Alalise elukoha mitmetähenduslikkus piiriülese pärimise korral Euroopa Liidus.", "Oskuskeeles püütakse mitmetähenduslikkust vältida."],
     note: "mitut moodi tõlgendatavus",
@@ -5879,7 +5879,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mitteametlik", gloss: "informal", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 203254,
-    parts: { NOM_SG: "mitteametlik", GEN_SG: "mitteametliku", PART_SG: "mitteametlikku", ILL_SG_SHORT: "mitteametlikku", PART_PL: "mitteametlikke", GEN_PL: "mitteametlike" },
+    parts: { NOM_SG: "mitteametlik", GEN_SG: "mitteametliku", PART_SG: "mitteametlikku", ILL_SG_SHORT: "mitteametlikku", NOM_PL: "mitteametlikud", PART_PL: "mitteametlikke", GEN_PL: "mitteametlike" },
     government: null,
     usages: ["Need on mitteametlikud andmed.", "Mitteametlik maailmarekord."],
     note: "ametlikult vormistamata, kontrollimata või kinnitamata",
@@ -5888,7 +5888,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mitu", gloss: "how many", pos: "PRONOUN", cefr: "A1",
     ekilexWordId: 203352,
-    parts: { NOM_SG: "mitu", GEN_SG: "mitme", PART_SG: "mitut", PART_PL: "mitmeid", GEN_PL: "mitmete" },
+    parts: { NOM_SG: "mitu", GEN_SG: "mitme", PART_SG: "mitut", NOM_PL: "mitmed", PART_PL: "mitmeid", GEN_PL: "mitmete" },
     government: null,
     usages: ["Seda saab teha mitmel viisil.", "Kool on mitu korda nime vahetanud.", "Mitu aega tagasi olin tubli viskijooja.", "Vahistatud on mitmeid inimesi."],
     note: "märgib umbmäärast arvu (hrl rohkem kui kaks) või hulka",
@@ -5915,7 +5915,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "moraal", gloss: "morality", pos: "NOUN", cefr: "B2",
     ekilexWordId: 203858,
-    parts: { NOM_SG: "moraal", GEN_SG: "moraali", PART_SG: "moraali", ILL_SG_SHORT: "moraali", PART_PL: "moraale", GEN_PL: "moraalide" },
+    parts: { NOM_SG: "moraal", GEN_SG: "moraali", PART_SG: "moraali", ILL_SG_SHORT: "moraali", NOM_PL: "moraalid", PART_PL: "moraale", GEN_PL: "moraalide" },
     government: null,
     usages: ["Kristlik moraal.", "Väikekodanlik moraal.", "Eetilised nõudmised advokaadile on väga kõrged – üliolulised on ausus ja kõrge moraal.", "Vanad kreeklased kurtsid pidevalt, kui lõdva moraaliga on etruski naised."],
     note: "ühiskonnas või mingis kogukonnas kujunenud väärtuste, põhimõtete ja käitumisnormide süsteem, mis võimaldab eristada õiget ja ebaõiget käitumist",
@@ -5924,7 +5924,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "motiiv", gloss: "motif", pos: "NOUN", cefr: "B2",
     ekilexWordId: 203961,
-    parts: { NOM_SG: "motiiv", GEN_SG: "motiivi", PART_SG: "motiivi", ILL_SG_SHORT: "motiivi", PART_PL: "motiive", GEN_PL: "motiivide" },
+    parts: { NOM_SG: "motiiv", GEN_SG: "motiivi", PART_SG: "motiivi", ILL_SG_SHORT: "motiivi", NOM_PL: "motiivid", PART_PL: "motiive", GEN_PL: "motiivide" },
     government: null,
     usages: ["Kuriteo motiiv on esialgu teadmata.", "Teda kiusati taga poliitilistel motiividel.", "Tegutsemismotiiv.", "Käitumismotiiv."],
     note: "(käitumise, tegevuse) ajend või põhjus, tegutsema ergutav jõud või sund",
@@ -5933,7 +5933,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "motivatsioon", gloss: "motivation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 203965,
-    parts: { NOM_SG: "motivatsioon", GEN_SG: "motivatsiooni", PART_SG: "motivatsiooni", ILL_SG_SHORT: "motivatsiooni", PART_PL: "motivatsioone", GEN_PL: "motivatsioonide" },
+    parts: { NOM_SG: "motivatsioon", GEN_SG: "motivatsiooni", PART_SG: "motivatsiooni", ILL_SG_SHORT: "motivatsiooni", NOM_PL: "motivatsioonid", PART_PL: "motivatsioone", GEN_PL: "motivatsioonide" },
     government: null,
     usages: ["Töökeskkonna paranemisega suurenes ka töötajate motivatsioon.", "Õpilasel puudub motivatsioon õppida.", "Kui sul pole motivatsiooni oma tööd teha, siis järelikult oled sa vales kohas.", "Raske on leida motivatsiooni tippspordiga jätkamiseks."],
     note: "huvitatus, mis innustab töötama, õppima vm tegema, asjaolude kogum, mis ajendab inimest teatud viisil toimima",
@@ -5951,7 +5951,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mudel", gloss: "model", pos: "NOUN", cefr: "A2",
     ekilexWordId: 204054,
-    parts: { NOM_SG: "mudel", GEN_SG: "mudeli", PART_SG: "mudelit", PART_PL: "mudeleid", GEN_PL: "mudelite" },
+    parts: { NOM_SG: "mudel", GEN_SG: "mudeli", PART_SG: "mudelit", NOM_PL: "mudelid", PART_PL: "mudeleid", GEN_PL: "mudelite" },
     government: null,
     usages: ["DNA molekuli mudel.", "Kanada füüsik töötab matemaatiliste mudelitega, mille abil ta üritab seletada sulamis- ja külmumisprotsesse Gröönimaal.", "Mandala kui universumi mudel.", "Põhjamaade heaoluriigi mudel."],
     note: "uuritava keerulise objekti või nähtuse lihtsustatud (kolmemõõtmeline) kujutis või selle seoste matemaatiline kirjeldus, teoreetiline mõttekäik, mis aitab uuritavat paremini mõista",
@@ -5960,7 +5960,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mugandus", gloss: "adaptation", pos: "NOUN", cefr: null,
     ekilexWordId: 204085,
-    parts: { NOM_SG: "mugandus", GEN_SG: "muganduse", PART_SG: "mugandust", ILL_SG_SHORT: "mugandusse", PART_PL: "mugandusi", GEN_PL: "muganduste" },
+    parts: { NOM_SG: "mugandus", GEN_SG: "muganduse", PART_SG: "mugandust", ILL_SG_SHORT: "mugandusse", NOM_PL: "mugandused", PART_PL: "mugandusi", GEN_PL: "muganduste" },
     government: null,
     usages: ["See on minu mugandus eri retseptidest.", "Tõnni nimi on mugandus katoliku pühaku Antoniuse nimest."],
     note: "miski, mis on teatud tingimustele, olukorrale vastavaks, sobivaks muudetud",
@@ -5978,7 +5978,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mulje", gloss: "impression", pos: "NOUN", cefr: "B1",
     ekilexWordId: 204273,
-    parts: { NOM_SG: "mulje", GEN_SG: "mulje", PART_SG: "muljet", PART_PL: "muljeid", GEN_PL: "muljete" },
+    parts: { NOM_SG: "mulje", GEN_SG: "mulje", PART_SG: "muljet", NOM_PL: "muljed", PART_PL: "muljeid", GEN_PL: "muljete" },
     government: null,
     usages: ["Soengust jääb mulje, nagu ei peseks ta pead.", "Pärast etendust vahetati muljeid.", "Reisimuljed.", "Kontserdimuljed."],
     note: "tähelepanekute põhjal, sündmuse vms mõjul tekkinud üldine ettekujutus, vaistlik arvamus või vahetu tunne",
@@ -5987,7 +5987,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "muna", gloss: "egg", pos: "NOUN", cefr: "A1",
     ekilexWordId: 204409,
-    parts: { NOM_SG: "muna", GEN_SG: "muna", PART_SG: "muna", PART_PL: "mune", GEN_PL: "munade" },
+    parts: { NOM_SG: "muna", GEN_SG: "muna", PART_SG: "muna", NOM_PL: "munad", PART_PL: "mune", GEN_PL: "munade" },
     government: null,
     usages: ["Munast koorus esimene tibu.", "Tibu tuli munast välja.", "Viljastatud munadest arenevad töömesilased, viljastamata munadest lesed.", "Toores muna."],
     note: "linnu, putuka, roomaja munetav ümar või ovaalne moodustis, milles areneb järglane",
@@ -5996,7 +5996,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "murdesõna", gloss: "dialect word", pos: "NOUN", cefr: null,
     ekilexWordId: 204562,
-    parts: { NOM_SG: "murdesõna", GEN_SG: "murdesõna", PART_SG: "murdesõna", ILL_SG_SHORT: "murdesõnna", PART_PL: "murdesõnu", GEN_PL: "murdesõnade" },
+    parts: { NOM_SG: "murdesõna", GEN_SG: "murdesõna", PART_SG: "murdesõna", ILL_SG_SHORT: "murdesõnna", NOM_PL: "murdesõnad", PART_PL: "murdesõnu", GEN_PL: "murdesõnade" },
     government: null,
     usages: ["J. V. Veski andis paljudele murdesõnadele terminoloogias uue sisu."],
     note: "murdekeeles esinev sõna",
@@ -6005,7 +6005,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mure", gloss: "worry", pos: "NOUN", cefr: "A2",
     ekilexWordId: 204593,
-    parts: { NOM_SG: "mure", GEN_SG: "mure", PART_SG: "muret", PART_PL: "muresid", GEN_PL: "murede" },
+    parts: { NOM_SG: "mure", GEN_SG: "mure", PART_SG: "muret", NOM_PL: "mured", PART_PL: "muresid", GEN_PL: "murede" },
     government: null,
     usages: ["Kas on üldse põhjust muret tunda?", "Olen mures sõbra tervise pärast.", "Mulle teevad muret arengud Vene poliitikas.", "Jagatud mure on pool muret."],
     note: "rõhuv sisemine rahutus ja hirm, mille kutsub esile ebameeldiv asjaolu, raske olukord või kahtlus, kas asjad ikka laabuvad",
@@ -6014,7 +6014,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "murelik", gloss: "worried", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 204606,
-    parts: { NOM_SG: "murelik", GEN_SG: "mureliku", PART_SG: "murelikku", ILL_SG_SHORT: "murelikku", PART_PL: "murelikke", GEN_PL: "murelike" },
+    parts: { NOM_SG: "murelik", GEN_SG: "mureliku", PART_SG: "murelikku", ILL_SG_SHORT: "murelikku", NOM_PL: "murelikud", PART_PL: "murelikke", GEN_PL: "murelike" },
     government: null,
     usages: ["Murelik ema võttis ühendust õpetajaga.", "Uudis tegi majarahva murelikuks.", "Murelik nägu.", "Miks sa nii murelik oled?"],
     note: "mures olev, muretsev",
@@ -6023,7 +6023,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "murrak", gloss: "local dialect", pos: "NOUN", cefr: null,
     ekilexWordId: 204629,
-    parts: { NOM_SG: "murrak", GEN_SG: "murraku", PART_SG: "murrakut", PART_PL: "murrakuid", GEN_PL: "murrakute" },
+    parts: { NOM_SG: "murrak", GEN_SG: "murraku", PART_SG: "murrakut", NOM_PL: "murrakud", PART_PL: "murrakuid", GEN_PL: "murrakute" },
     government: null,
     usages: ["Karksi murrak.", "Kodavere murrak."],
     note: "murde paikkondliku eripäraga alajaotus, väikseim piirkondlik murdekuju",
@@ -6032,7 +6032,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "murre", gloss: "dialect", pos: "NOUN", cefr: "B2",
     ekilexWordId: 204633,
-    parts: { NOM_SG: "murre", GEN_SG: "murde", PART_SG: "murret", PART_PL: "murdeid", GEN_PL: "murrete" },
+    parts: { NOM_SG: "murre", GEN_SG: "murde", PART_SG: "murret", NOM_PL: "murded", PART_PL: "murdeid", GEN_PL: "murrete" },
     government: null,
     usages: ["Mulgi murre.", "Eestirootsi murded."],
     note: "keele piirkondlik eripärane vorm, paikkondlik keelekasutus",
@@ -6041,7 +6041,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "must", gloss: "black", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 204739,
-    parts: { NOM_SG: "must", GEN_SG: "musta", PART_SG: "musta", ILL_SG_SHORT: "musta", PART_PL: "musti", GEN_PL: "mustade" },
+    parts: { NOM_SG: "must", GEN_SG: "musta", PART_SG: "musta", ILL_SG_SHORT: "musta", NOM_PL: "mustad", PART_PL: "musti", GEN_PL: "mustade" },
     government: null,
     usages: ["Must talaar.", "Must kass jooksis üle tee.", "Peigmees kandis musta ülikonda.", "Daam mustas."],
     note: "mulla, tõrva, öise taeva värvi",
@@ -6050,7 +6050,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "muusika", gloss: "music", pos: "NOUN", cefr: "A1",
     ekilexWordId: 204975,
-    parts: { NOM_SG: "muusika", GEN_SG: "muusika", PART_SG: "muusikat", PART_PL: "muusikaid", GEN_PL: "muusikate" },
+    parts: { NOM_SG: "muusika", GEN_SG: "muusika", PART_SG: "muusikat", NOM_PL: "muusikad", PART_PL: "muusikaid", GEN_PL: "muusikate" },
     government: null,
     usages: ["Muusikale pühendatud elu.", "Peol mängis vali muusika.", "Klassikaline muusika.", "Millist muusikat sa kuulad?"],
     note: "kunstiliik, mille kunstilisi kujundeid luuakse helidega ja tajutakse helidena ning mis avaldub loomingu ja interpretatsiooni kujul",
@@ -6068,7 +6068,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "muutuja", gloss: "variable", pos: "NOUN", cefr: null,
     ekilexWordId: 205069,
-    parts: { NOM_SG: "muutuja", GEN_SG: "muutuja", PART_SG: "muutujat", PART_PL: "muutujaid", GEN_PL: "muutujate" },
+    parts: { NOM_SG: "muutuja", GEN_SG: "muutuja", PART_SG: "muutujat", NOM_PL: "muutujad", PART_PL: "muutujaid", GEN_PL: "muutujate" },
     government: null,
     usages: ["Ühiskonnas on liiga palju muutujaid, et reformide tulemusi ette ennustada.", "Eristatakse sõltumatuid ja sõltuvaid muutujaid."],
     note: "matemaatiline objekt (suurus või sümbol), mille väärtus võib muutuda, nt sõltudes ülesandest (nt x võrrandis x + 2 = 5)",
@@ -6086,7 +6086,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "muutus", gloss: "change", pos: "NOUN", cefr: "A2",
     ekilexWordId: 205072,
-    parts: { NOM_SG: "muutus", GEN_SG: "muutuse", PART_SG: "muutust", ILL_SG_SHORT: "muutusse", PART_PL: "muutusi", GEN_PL: "muutuste" },
+    parts: { NOM_SG: "muutus", GEN_SG: "muutuse", PART_SG: "muutust", ILL_SG_SHORT: "muutusse", NOM_PL: "muutused", PART_PL: "muutusi", GEN_PL: "muutuste" },
     government: null,
     usages: ["Tema elus oleks vaja mingit muutust.", "Kõik ei suuda kiirete muutustega sammu pidada.", "Eluviisi muutus.", "Hinnamuutus."],
     note: "senisest erinevaks muutumine (sündmuse või protsessina)",
@@ -6095,7 +6095,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõistatus", gloss: "riddle", pos: "NOUN", cefr: "B1",
     ekilexWordId: 205149,
-    parts: { NOM_SG: "mõistatus", GEN_SG: "mõistatuse", PART_SG: "mõistatust", ILL_SG_SHORT: "mõistatusse", PART_PL: "mõistatusi", GEN_PL: "mõistatuste" },
+    parts: { NOM_SG: "mõistatus", GEN_SG: "mõistatuse", PART_SG: "mõistatust", ILL_SG_SHORT: "mõistatusse", NOM_PL: "mõistatused", PART_PL: "mõistatusi", GEN_PL: "mõistatuste" },
     government: null,
     usages: ["Ma ei tea selle mõistatuse vastust, ütle ise.", "Mõistatuseks jäi, kust jõudsid ookeanile kuldkollased liblikad.", "See mees on mulle mõistatus.", "Ajaloo mõistatused."],
     note: "(küsimusena sõnastatud) teravmeelne, poeetiline kirjeldus, mille järgi tuleb ära arvata, kelle või millega on tegemist (nt Üks hani, neli nina – padi)",
@@ -6104,7 +6104,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõiste", gloss: "concept", pos: "NOUN", cefr: "B2",
     ekilexWordId: 840431,
-    parts: { NOM_SG: "mõiste", GEN_SG: "mõiste", PART_SG: "mõistet", PART_PL: "mõisteid", GEN_PL: "mõistete" },
+    parts: { NOM_SG: "mõiste", GEN_SG: "mõiste", PART_SG: "mõistet", NOM_PL: "mõisted", PART_PL: "mõisteid", GEN_PL: "mõistete" },
     government: null,
     usages: ["Riik on abstraktne mõiste.", "Postmodernismi mõiste tulek Eesti kirjandusruumi.", "Vaesus on suhteline mõiste.", "Arv ja number on mõisted, mis sageli segamini lähevad."],
     note: "mõtlemise üksus, tegelikkuse objektide (asjade ja nähtuste) esitus ideena inimese teadvuses",
@@ -6122,7 +6122,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõistukõne", gloss: "parable, allegory", pos: "NOUN", cefr: null,
     ekilexWordId: 205173,
-    parts: { NOM_SG: "mõistukõne", GEN_SG: "mõistukõne", PART_SG: "mõistukõnet", ILL_SG_SHORT: "mõistukõnne", PART_PL: "mõistukõnesid", GEN_PL: "mõistukõnede" },
+    parts: { NOM_SG: "mõistukõne", GEN_SG: "mõistukõne", PART_SG: "mõistukõnet", ILL_SG_SHORT: "mõistukõnne", NOM_PL: "mõistukõned", PART_PL: "mõistukõnesid", GEN_PL: "mõistukõnede" },
     government: null,
     usages: ["Rahvas eelistab mõistukõnele otsest väljaütlemist."],
     note: "kaudselt, vihjamisi räägitav jutt",
@@ -6131,7 +6131,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõju", gloss: "influence", pos: "NOUN", cefr: "B1",
     ekilexWordId: 205197,
-    parts: { NOM_SG: "mõju", GEN_SG: "mõju", PART_SG: "mõju", PART_PL: "mõjusid", GEN_PL: "mõjude" },
+    parts: { NOM_SG: "mõju", GEN_SG: "mõju", PART_SG: "mõju", NOM_PL: "mõjud", PART_PL: "mõjusid", GEN_PL: "mõjude" },
     government: null,
     usages: ["Narkoosi mõju kestis kaua.", "Ta on kas purjus või mingite ainete mõju all.", "Araabia kultuuri mõjud Euroopa kultuurile.", "Eesti keeles leidub saksa keele mõjusid."],
     note: "see, kui mingi kokkupuude kutsub milleski või kelleski esile füüsilise, füsioloogilise, psüühilise vm muutuse",
@@ -6158,7 +6158,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõjuv", gloss: "powerful, effective", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 205224,
-    parts: { NOM_SG: "mõjuv", GEN_SG: "mõjuva", PART_SG: "mõjuvat", PART_PL: "mõjuvaid", GEN_PL: "mõjuvate" },
+    parts: { NOM_SG: "mõjuv", GEN_SG: "mõjuva", PART_SG: "mõjuvat", NOM_PL: "mõjuvad", PART_PL: "mõjuvaid", GEN_PL: "mõjuvate" },
     government: null,
     usages: ["Pimeduses värelev küünaldemeri oli mõjuv vaatepilt.", "Nime muutmiseks peab olema mõjuv põhjus."],
     note: "tugevat muljet tekitav",
@@ -6167,7 +6167,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõni", gloss: "some, a few", pos: "PRONOUN", cefr: "A2",
     ekilexWordId: 205266,
-    parts: { NOM_SG: "mõni", GEN_SG: "mõne", PART_SG: "mõnd", ILL_SG_SHORT: "mõnda", PART_PL: "mõnesid", GEN_PL: "mõnede" },
+    parts: { NOM_SG: "mõni", GEN_SG: "mõne", PART_SG: "mõnd", ILL_SG_SHORT: "mõnda", NOM_PL: "mõned", PART_PL: "mõnesid", GEN_PL: "mõnede" },
     government: null,
     usages: ["Aga kui mõni tuleb?", "Mõnel teist on veel maksmata.", "Kaua sa valid, osta mõni ära!", "Tuleb mõne muu võimaluse järele vaadata."],
     note: "märgib või osutab lähemalt määratlemata isikut, eset või olukorda",
@@ -6185,7 +6185,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõnitus", gloss: "taunt", pos: "NOUN", cefr: null,
     ekilexWordId: 267434,
-    parts: { NOM_SG: "mõnitus", GEN_SG: "mõnituse", PART_SG: "mõnitust", ILL_SG_SHORT: "mõnitusse", PART_PL: "mõnitusi", GEN_PL: "mõnituste" },
+    parts: { NOM_SG: "mõnitus", GEN_SG: "mõnituse", PART_SG: "mõnitust", ILL_SG_SHORT: "mõnitusse", NOM_PL: "mõnitused", PART_PL: "mõnitusi", GEN_PL: "mõnituste" },
     government: null,
     usages: ["Ta on terve elu pidanud taluma mõnitusi ja narrimist.", "Nagu mõnituseks pidid Saksa sõjaväekalmistu üles kündma saksa sõjavangid ise."],
     note: "alandav, solvav pilge või tegu",
@@ -6203,7 +6203,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõtlemine", gloss: "thinking", pos: "NOUN", cefr: null,
     ekilexWordId: 205356,
-    parts: { NOM_SG: "mõtlemine", GEN_SG: "mõtlemise", PART_SG: "mõtlemist", ILL_SG_SHORT: "mõtlemisse", PART_PL: "mõtlemisi", GEN_PL: "mõtlemiste" },
+    parts: { NOM_SG: "mõtlemine", GEN_SG: "mõtlemise", PART_SG: "mõtlemist", ILL_SG_SHORT: "mõtlemisse", NOM_PL: "mõtlemised", PART_PL: "mõtlemisi", GEN_PL: "mõtlemiste" },
     government: null,
     usages: ["Loogiline mõtlemine.", "Analüütiline mõtlemine.", "Abstraktne mõtlemine.", "Matemaatika arendab loogilist mõtlemist."],
     note: "vaimne protsess, mis seisneb tegelikkuse loogilis-abstraktses tunnetamises mõistete ja kujundite alusel",
@@ -6212,7 +6212,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõttekäik", gloss: "train of thought", pos: "NOUN", cefr: "B2",
     ekilexWordId: 205403,
-    parts: { NOM_SG: "mõttekäik", GEN_SG: "mõttekäigu", PART_SG: "mõttekäiku", ILL_SG_SHORT: "mõttekäiku", PART_PL: "mõttekäike", GEN_PL: "mõttekäikude" },
+    parts: { NOM_SG: "mõttekäik", GEN_SG: "mõttekäigu", PART_SG: "mõttekäiku", ILL_SG_SHORT: "mõttekäiku", NOM_PL: "mõttekäigud", PART_PL: "mõttekäike", GEN_PL: "mõttekäikude" },
     government: null,
     usages: ["Sama mõttekäiku võiks edasi arendada muudelegi valdkondadele.", "Ma ei suutnud kõneleja mõttekäike jälgida.", "Vanemas eas mõttekäik aeglustub."],
     note: "omavahel seostuvad, haakuvad mõtted",
@@ -6221,7 +6221,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mõõde", gloss: "dimension", pos: "NOUN", cefr: "B1",
     ekilexWordId: 205467,
-    parts: { NOM_SG: "mõõde", GEN_SG: "mõõtme", PART_SG: "mõõdet", PART_PL: "mõõtmeid", GEN_PL: "mõõtmete" },
+    parts: { NOM_SG: "mõõde", GEN_SG: "mõõtme", PART_SG: "mõõdet", NOM_PL: "mõõtmed", PART_PL: "mõõtmeid", GEN_PL: "mõõtmete" },
     government: null,
     usages: ["Väljaku mõõtmed on 8 × 16 m.", "Ruumil on kolm mõõdet.", "Minimalistlike mõõtmetega auto.", "Ei ole küll paks telefon, kuid mõõtmetelt ikka väga suur."],
     note: "maa-ala, ruumi või eseme pikkus, laius, kõrgus vm mõõdetav ulatus",
@@ -6239,7 +6239,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mägi", gloss: "hill, mountain", pos: "NOUN", cefr: "A1",
     ekilexWordId: 205676,
-    parts: { NOM_SG: "mägi", GEN_SG: "mäe", PART_SG: "mäge", ILL_SG_SHORT: "mäkke", PART_PL: "mägesid", GEN_PL: "mägede" },
+    parts: { NOM_SG: "mägi", GEN_SG: "mäe", PART_SG: "mäge", ILL_SG_SHORT: "mäkke", NOM_PL: "mäed", PART_PL: "mägesid", GEN_PL: "mägede" },
     government: null,
     usages: ["Otepää ümbruse mäed.", "Mäe otsast avanesid imelised vaated.", "Fuji on jaapanlastele püha mägi.", "Tenerifel üürisime auto ja sõitsime mägedesse."],
     note: "ümbritsevast alast kõrgem pinnamoodustis (ka nt kelgu-, suusamägi)",
@@ -6248,7 +6248,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mälestus", gloss: "memory, remembrance", pos: "NOUN", cefr: "B1",
     ekilexWordId: 205759,
-    parts: { NOM_SG: "mälestus", GEN_SG: "mälestuse", PART_SG: "mälestust", ILL_SG_SHORT: "mälestusse", PART_PL: "mälestusi", GEN_PL: "mälestuste" },
+    parts: { NOM_SG: "mälestus", GEN_SG: "mälestuse", PART_SG: "mälestust", ILL_SG_SHORT: "mälestusse", NOM_PL: "mälestused", PART_PL: "mälestusi", GEN_PL: "mälestuste" },
     government: null,
     usages: ["Lapsepõlvest on mul head mälestused.", "Purunenud armastusest jääb mälestus igaveseks.", "Minevikumälestus.", "Noorusmälestus."],
     note: "mällu jäänud, mälus talletunud elamus või taju",
@@ -6266,7 +6266,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mälu", gloss: "memory", pos: "NOUN", cefr: "A2",
     ekilexWordId: 205796,
-    parts: { NOM_SG: "mälu", GEN_SG: "mälu", PART_SG: "mälu", ILL_SG_SHORT: "mällu", PART_PL: "mälusid", GEN_PL: "mälude" },
+    parts: { NOM_SG: "mälu", GEN_SG: "mälu", PART_SG: "mälu", ILL_SG_SHORT: "mällu", NOM_PL: "mälud", PART_PL: "mälusid", GEN_PL: "mälude" },
     government: null,
     usages: ["Tal on suurepärane mälu.", "Õnnetuse tagajärjel kaotas naine mälu.", "Kui mu mälu ei peta, siis ..", "Raivol on hea mälu – ta ei unusta kunagi inimeste nimesid."],
     note: "inimese võime talletada, säilitada ja taasesitada informatsiooni, kasutada kogemust",
@@ -6275,7 +6275,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mäng", gloss: "game", pos: "NOUN", cefr: "A2",
     ekilexWordId: 205832,
-    parts: { NOM_SG: "mäng", GEN_SG: "mängu", PART_SG: "mängu", ILL_SG_SHORT: "mängu", PART_PL: "mänge", GEN_PL: "mängude" },
+    parts: { NOM_SG: "mäng", GEN_SG: "mängu", PART_SG: "mängu", ILL_SG_SHORT: "mängu", NOM_PL: "mängud", PART_PL: "mänge", GEN_PL: "mängude" },
     government: null,
     usages: ["Vana aja lapsed mängisid teisi mänge.", "Tennist peetakse aristokraatlikuks mänguks.", "Keeletundides käis kogu õppetöö mängu kaudu.", "Võtke mind ka mängu."],
     note: "teatud reeglitega meelelahutuslik või sportlik tegevus",
@@ -6293,7 +6293,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "märg", gloss: "wet", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 206009,
-    parts: { NOM_SG: "märg", GEN_SG: "märja", PART_SG: "märga", ILL_SG_SHORT: "märga", PART_PL: "märgi", GEN_PL: "märgade" },
+    parts: { NOM_SG: "märg", GEN_SG: "märja", PART_SG: "märga", ILL_SG_SHORT: "märga", NOM_PL: "märjad", PART_PL: "märgi", GEN_PL: "märgade" },
     government: null,
     usages: ["Sain vihma käes üleni märjaks.", "Riided kõik higist märjad.", "Metsaalune on väga märg.", "Panin märja pesu kuivama."],
     note: "rohkesti vett vm vedelikku sisaldav, sellest läbi imbunud või sellega pealt kaetud",
@@ -6302,7 +6302,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "märkus", gloss: "remark", pos: "NOUN", cefr: "B1",
     ekilexWordId: 206099,
-    parts: { NOM_SG: "märkus", GEN_SG: "märkuse", PART_SG: "märkust", ILL_SG_SHORT: "märkusse", PART_PL: "märkusi", GEN_PL: "märkuste" },
+    parts: { NOM_SG: "märkus", GEN_SG: "märkuse", PART_SG: "märkust", ILL_SG_SHORT: "märkusse", NOM_PL: "märkused", PART_PL: "märkusi", GEN_PL: "märkuste" },
     government: null,
     usages: ["Juhendaja märkustest oli palju abi.", "Joonealune märkus.", "Autor on tänulik kõigi asjakohaste märkuste eest.", "Kolleeg pillas esineja kohta paar sapist märkust."],
     note: "lühike suuline või kirjalik selgitus või arvamusavaldus",
@@ -6311,7 +6311,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "märts", gloss: "March", pos: "NOUN", cefr: "A1",
     ekilexWordId: 206108,
-    parts: { NOM_SG: "märts", GEN_SG: "märtsi", PART_SG: "märtsi", ILL_SG_SHORT: "märtsi", PART_PL: "märtse", GEN_PL: "märtside" },
+    parts: { NOM_SG: "märts", GEN_SG: "märtsi", PART_SG: "märtsi", ILL_SG_SHORT: "märtsi", NOM_PL: "märtsid", PART_PL: "märtse", GEN_PL: "märtside" },
     government: null,
     usages: ["Märts on kevade esimene kuu."],
     note: "aasta 3. kuu, põhjapoolkeral esimene kevadkuu",
@@ -6320,7 +6320,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "määr", gloss: "rate, degree", pos: "NOUN", cefr: "B1",
     ekilexWordId: 206165,
-    parts: { NOM_SG: "määr", GEN_SG: "määra", PART_SG: "määra", ILL_SG_SHORT: "määra", PART_PL: "määri", GEN_PL: "määrade" },
+    parts: { NOM_SG: "määr", GEN_SG: "määra", PART_SG: "määra", ILL_SG_SHORT: "määra", NOM_PL: "määrad", PART_PL: "määri", GEN_PL: "määrade" },
     government: null,
     usages: ["Töötasu viidi vastavusse vastutuse määraga.", "Joogi valitseb oma mõtteid sellise määrani, et tal neid enam ei olegi.", "See ei huvita mind vähimalgi määral.", "Kompaktlambid sisaldavad vähesel määral elavhõbedat."],
     note: "millegi hulk või tase",
@@ -6347,7 +6347,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "määratlemine", gloss: "definition, delimitation", pos: "NOUN", cefr: null,
     ekilexWordId: 267506,
-    parts: { NOM_SG: "määratlemine", GEN_SG: "määratlemise", PART_SG: "määratlemist", ILL_SG_SHORT: "määratlemisse", PART_PL: "määratlemisi", GEN_PL: "määratlemiste" },
+    parts: { NOM_SG: "määratlemine", GEN_SG: "määratlemise", PART_SG: "määratlemist", ILL_SG_SHORT: "määratlemisse", NOM_PL: "määratlemised", PART_PL: "määratlemisi", GEN_PL: "määratlemiste" },
     government: null,
     usages: [],
     note: null,
@@ -6356,7 +6356,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "määratlus", gloss: "definition", pos: "NOUN", cefr: "B2",
     ekilexWordId: 206179,
-    parts: { NOM_SG: "määratlus", GEN_SG: "määratluse", PART_SG: "määratlust", ILL_SG_SHORT: "määratlusse", PART_PL: "määratlusi", GEN_PL: "määratluste" },
+    parts: { NOM_SG: "määratlus", GEN_SG: "määratluse", PART_SG: "määratlust", ILL_SG_SHORT: "määratlusse", NOM_PL: "määratlused", PART_PL: "määratlusi", GEN_PL: "määratluste" },
     government: null,
     usages: ["Uuele nähtusele polnud veel keegi täpset määratlust andnud.", "Mõiste määratlus oli pisut ebaselge."],
     note: "mõiste esitus lühikese kirjeldava lausungina, hrl sisaldades lähimat üldisemat mõistet (ülemmõistet) ja olulisi eritunnuseid",
@@ -6365,7 +6365,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "määrdunud", gloss: "dirty", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 1103865,
-    parts: { NOM_SG: "määrdunud", GEN_SG: "määrdunu", PART_SG: "määrdunut", PART_PL: "määrdunuid", GEN_PL: "määrdunute" },
+    parts: { NOM_SG: "määrdunud", GEN_SG: "määrdunu", PART_SG: "määrdunut", NOM_PL: "määrdunud", PART_PL: "määrdunuid", GEN_PL: "määrdunute" },
     government: null,
     usages: ["Määrdunud jalatsid jäta esikusse.", "Sain määrdunud numbrimärgi eest trahvi.", "Kokk tuli jalgu lohistades uksele, valge põll ees ja määrdunud lontis kokamüts peas.", "Kui pakend jääb oluliselt määrdunuks, siis tuleb see panna segaolmejäätmete kasti."],
     note: "(mingi ainega kokkupuutumise tõttu) ebapuhas",
@@ -6374,7 +6374,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "määrus", gloss: "regulation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 206207,
-    parts: { NOM_SG: "määrus", GEN_SG: "määruse", PART_SG: "määrust", ILL_SG_SHORT: "määrusse", PART_PL: "määrusi", GEN_PL: "määruste" },
+    parts: { NOM_SG: "määrus", GEN_SG: "määruse", PART_SG: "määrust", ILL_SG_SHORT: "määrusse", NOM_PL: "määrused", PART_PL: "määrusi", GEN_PL: "määruste" },
     government: null,
     usages: ["Sotsiaalministri määrus.", "Maakohtu määrus.", "Seisundimäärus.", "Määrus on siduv õigusakt. Seda tuleb tervikuna kohaldada kogu ELis."],
     note: "täidesaatva võimu poolt välja antav seadusest madalam õigusakt",
@@ -6383,7 +6383,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "mööbel", gloss: "furniture", pos: "NOUN", cefr: "A1",
     ekilexWordId: 206264,
-    parts: { NOM_SG: "mööbel", GEN_SG: "mööbli", PART_SG: "mööblit", PART_PL: "mööbleid", GEN_PL: "mööblite" },
+    parts: { NOM_SG: "mööbel", GEN_SG: "mööbli", PART_SG: "mööblit", NOM_PL: "mööblid", PART_PL: "mööbleid", GEN_PL: "mööblite" },
     government: null,
     usages: ["Vahetasime kodus kogu mööbli välja.", "Ettevõte valmistab täispuidust mööblit.", "Sisseehitatud mööbel.", "Puitmööbel."],
     note: "ruumide, tubade sisustusesemed (nt lauad, toolid, kapid)",
@@ -6410,7 +6410,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "müts", gloss: "hat", pos: "NOUN", cefr: "A2",
     ekilexWordId: 206527,
-    parts: { NOM_SG: "müts", GEN_SG: "mütsi", PART_SG: "mütsi", ILL_SG_SHORT: "mütsi", PART_PL: "mütse", GEN_PL: "mütside" },
+    parts: { NOM_SG: "müts", GEN_SG: "mütsi", PART_SG: "mütsi", ILL_SG_SHORT: "mütsi", NOM_PL: "mütsid", PART_PL: "mütse", GEN_PL: "mütside" },
     government: null,
     usages: ["Võtsin mütsi peast.", "Kootud müts.", "Päkapikumüts.", "Pesapallimüts."],
     note: "hrl pehme (riidest, kootud) peakate",
@@ -6428,7 +6428,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "naaber", gloss: "neighbour", pos: "NOUN", cefr: "A2",
     ekilexWordId: 206644,
-    parts: { NOM_SG: "naaber", GEN_SG: "naabri", PART_SG: "naabrit", PART_PL: "naabreid", GEN_PL: "naabrite" },
+    parts: { NOM_SG: "naaber", GEN_SG: "naabri", PART_SG: "naabrit", NOM_PL: "naabrid", PART_PL: "naabreid", GEN_PL: "naabrite" },
     government: null,
     usages: ["Oleme Mariaga naabrid.", "Meie ülemised naabrid on väga lärmakad.", "Pall lendas naabri aeda.", "Saan oma naabritega hästi läbi."],
     note: "inimene, kes elab kõneleja või kõnealuse isiku kõrval või lähedal",
@@ -6446,7 +6446,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "naine", gloss: "woman, wife", pos: "NOUN", cefr: "A1",
     ekilexWordId: 207120,
-    parts: { NOM_SG: "naine", GEN_SG: "naise", PART_SG: "naist", PART_PL: "naisi", GEN_PL: "naiste" },
+    parts: { NOM_SG: "naine", GEN_SG: "naise", PART_SG: "naist", NOM_PL: "naised", PART_PL: "naisi", GEN_PL: "naiste" },
     government: null,
     usages: ["Praegu pole veel teada, kas hukkunu oli mees või naine.", "Kas meestel ja naistel on tööl võrdsed võimalused?", "Ukse taga seisis võõras naine.", "Antil on naine ja kaheaastane laps."],
     note: "(hrl täiskasvanud) naissoost inimene",
@@ -6464,7 +6464,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nakkus", gloss: "infection", pos: "NOUN", cefr: "B2",
     ekilexWordId: 207277,
-    parts: { NOM_SG: "nakkus", GEN_SG: "nakkuse", PART_SG: "nakkust", ILL_SG_SHORT: "nakkusse", PART_PL: "nakkusi", GEN_PL: "nakkuste" },
+    parts: { NOM_SG: "nakkus", GEN_SG: "nakkuse", PART_SG: "nakkust", ILL_SG_SHORT: "nakkusse", NOM_PL: "nakkused", PART_PL: "nakkusi", GEN_PL: "nakkuste" },
     government: null,
     usages: ["Bakteriaalne nakkus.", "Puukentsefaliit on vere kaudu leviv nakkus."],
     note: "haigustekitajate tungimine organismi ja sellest põhjustatud protsessid organismis",
@@ -6473,7 +6473,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nali", gloss: "joke", pos: "NOUN", cefr: "A1",
     ekilexWordId: 207305,
-    parts: { NOM_SG: "nali", GEN_SG: "nalja", PART_SG: "nalja", ILL_SG_SHORT: "nalja", PART_PL: "nalju", GEN_PL: "naljade" },
+    parts: { NOM_SG: "nali", GEN_SG: "nalja", PART_SG: "nalja", ILL_SG_SHORT: "nalja", NOM_PL: "naljad", PART_PL: "nalju", GEN_PL: "naljade" },
     government: null,
     usages: ["Kas ta tegi nalja või rääkis tõsiselt?", "Habemega nali.", "Vanasti korraldati õpetajatele selliseid nalju nagu knopka toolil või veepang ukse kohal.", "Eile sai kõvasti nalja (= naersime palju)."],
     note: "see, mida keegi ütleb või räägib, et teisi lõbustada ja naerma ajada",
@@ -6482,7 +6482,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "naljakas", gloss: "funny", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 207315,
-    parts: { NOM_SG: "naljakas", GEN_SG: "naljaka", PART_SG: "naljakat", PART_PL: "naljakaid", GEN_PL: "naljakate" },
+    parts: { NOM_SG: "naljakas", GEN_SG: "naljaka", PART_SG: "naljakat", NOM_PL: "naljakad", PART_PL: "naljakaid", GEN_PL: "naljakate" },
     government: null,
     usages: ["Naljakas lugu.", "Ma ei leidnud selles filmis mitte midagi naljakat.", "Üks naljakas asi, mida olen märganud, on meeste pikad küüned.", "Kuulsin täna ühte naljakat lugu."],
     note: "naerma ajav, lõbusat meeleolu tekitav",
@@ -6500,7 +6500,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "napp", gloss: "scant, terse", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 207401,
-    parts: { NOM_SG: "napp", GEN_SG: "napi", PART_SG: "nappi", ILL_SG_SHORT: "nappi", PART_PL: "nappe", GEN_PL: "nappide" },
+    parts: { NOM_SG: "napp", GEN_SG: "napi", PART_SG: "nappi", ILL_SG_SHORT: "nappi", NOM_PL: "napid", PART_PL: "nappe", GEN_PL: "nappide" },
     government: null,
     usages: ["Tema kogemus poliitikuna on üsna napp.", "Nappide sõnadega võib öelda ootamatult palju.", "Valgust jäi napiks.", "Napi ajaga on suudetud küllalt palju ära teha."],
     note: "vähene, (hulgalt, koguselt, mõõtmetelt) vaevalt piisav",
@@ -6518,7 +6518,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "neli", gloss: "four", pos: "NOUN", cefr: "A1",
     ekilexWordId: 207808,
-    parts: { NOM_SG: "neli", GEN_SG: "nelja", PART_SG: "nelja", ILL_SG_SHORT: "nelja", PART_PL: "nelju", GEN_PL: "neljade" },
+    parts: { NOM_SG: "neli", GEN_SG: "nelja", PART_SG: "nelja", ILL_SG_SHORT: "nelja", NOM_PL: "neljad", PART_PL: "nelju", GEN_PL: "neljade" },
     government: null,
     usages: ["Kakskümmend neli.", "Neli pluss neli.", "Autol on neli ratast.", "Kohtume kell neli."],
     note: "põhiarv 4",
@@ -6527,7 +6527,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "neljapäev", gloss: "Thursday", pos: "NOUN", cefr: "A1",
     ekilexWordId: 207860,
-    parts: { NOM_SG: "neljapäev", GEN_SG: "neljapäeva", PART_SG: "neljapäeva", ILL_SG_SHORT: "neljapäeva", PART_PL: "neljapäevi", GEN_PL: "neljapäevade" },
+    parts: { NOM_SG: "neljapäev", GEN_SG: "neljapäeva", PART_SG: "neljapäeva", ILL_SG_SHORT: "neljapäeva", NOM_PL: "neljapäevad", PART_PL: "neljapäevi", GEN_PL: "neljapäevade" },
     government: null,
     usages: ["Töö valmib neljapäevaks.", "Ilmajaam lubab neljapäevaks ja reedeks kohati kuni 25 kraadi sooja."],
     note: "nädala 4. päev, kolmapäevale järgnev ja reedele eelnev päev",
@@ -6545,7 +6545,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "neutraalne", gloss: "neutral", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 208035,
-    parts: { NOM_SG: "neutraalne", GEN_SG: "neutraalse", PART_SG: "neutraalset", PART_PL: "neutraalseid", GEN_PL: "neutraalsete" },
+    parts: { NOM_SG: "neutraalne", GEN_SG: "neutraalse", PART_SG: "neutraalset", NOM_PL: "neutraalsed", PART_PL: "neutraalseid", GEN_PL: "neutraalsete" },
     government: null,
     usages: ["Ajakirjanik ei olnud täiesti neutraalne.", "Rootsi jäi neutraalseks mõlemas maailmasõjas.", "Neutraalne hinnang.", "Ehk tuleks arutelu korraldada neutraalsel pinnal, mitte ühe osapoole peakorteris."],
     note: "mitte kellegi poolt ega vastu, mitte kumbagi poolt eelistav",
@@ -6563,7 +6563,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nimi", gloss: "name", pos: "NOUN", cefr: "A1",
     ekilexWordId: 208341,
-    parts: { NOM_SG: "nimi", GEN_SG: "nime", PART_SG: "nime", PART_PL: "nimesid", GEN_PL: "nimede" },
+    parts: { NOM_SG: "nimi", GEN_SG: "nime", PART_SG: "nime", NOM_PL: "nimed", PART_PL: "nimesid", GEN_PL: "nimede" },
     government: null,
     usages: ["Mis nime te oma lapsele panete?", "Kassipojal ei ole veel nime.", "Hotell nimega Palazzo.", "Mis su nimi on?"],
     note: "sõna või sõnaühend, mis eristab üht konkreetset olendit, kohta vm asja teiste omasarnaste seast (nt Laura, Tartu, Kiek in de Kök, Pärnu laht)",
@@ -6572,7 +6572,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nina", gloss: "nose", pos: "NOUN", cefr: "A1",
     ekilexWordId: 208369,
-    parts: { NOM_SG: "nina", GEN_SG: "nina", PART_SG: "nina", ILL_SG_SHORT: "ninna", PART_PL: "ninu", GEN_PL: "ninade" },
+    parts: { NOM_SG: "nina", GEN_SG: "nina", PART_SG: "nina", ILL_SG_SHORT: "ninna", NOM_PL: "ninad", PART_PL: "ninu", GEN_PL: "ninade" },
     government: null,
     usages: ["Nina nuuskama.", "Kui koera nina on kuiv ja kuum, siis on koer haige.", "Poisil hakkas ninast verd jooksma.", "Lapsel on nina kinni (= tugev nohu, nii et ei saa läbi nina hingata)."],
     note: "suu kohal paiknev väljaulatuv näoosa, mille kaudu toimub hingamine ja haistmine (inimesel ja selgroogsetel loomadel)",
@@ -6590,7 +6590,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "noor", gloss: "young", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 208832,
-    parts: { NOM_SG: "noor", GEN_SG: "noore", PART_SG: "noort", ILL_SG_SHORT: "noorde", PART_PL: "noori", GEN_PL: "noorte" },
+    parts: { NOM_SG: "noor", GEN_SG: "noore", PART_SG: "noort", ILL_SG_SHORT: "noorde", NOM_PL: "noored", PART_PL: "noori", GEN_PL: "noorte" },
     government: null,
     usages: ["Täisjõus noor mees.", "Noor põlvkond.", "Ta on selliste filmide jaoks veel liiga noor.", "Kristjan on alles noor mees."],
     note: "suhteliselt lühikest aega, vähe elanud",
@@ -6599,7 +6599,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "norm", gloss: "norm", pos: "NOUN", cefr: "A2",
     ekilexWordId: 208960,
-    parts: { NOM_SG: "norm", GEN_SG: "normi", PART_SG: "normi", ILL_SG_SHORT: "normi", PART_PL: "norme", GEN_PL: "normide" },
+    parts: { NOM_SG: "norm", GEN_SG: "normi", PART_SG: "normi", ILL_SG_SHORT: "normi", NOM_PL: "normid", PART_PL: "norme", GEN_PL: "normide" },
     government: null,
     usages: ["Töötaja tööaja üldine norm on 40 tundi nädalas.", "Diislikütuse väävlisisaldus ületas normi.", "Vererõhk on normi piirides.", "Tööaja riiklik norm on 8 tundi päevas."],
     note: "ettenähtud või kokkulepitud hulk, kogus, tase, suurus vm",
@@ -6608,7 +6608,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "november", gloss: "November", pos: "NOUN", cefr: "A1",
     ekilexWordId: 209070,
-    parts: { NOM_SG: "november", GEN_SG: "novembri", PART_SG: "novembrit", PART_PL: "novembreid", GEN_PL: "novembrite" },
+    parts: { NOM_SG: "november", GEN_SG: "novembri", PART_SG: "novembrit", NOM_PL: "novembrid", PART_PL: "novembreid", GEN_PL: "novembrite" },
     government: null,
     usages: ["Tema sünnipäev on novembri lõpus."],
     note: "aasta 11. kuu, põhjapoolkeral kolmas sügiskuu",
@@ -6617,7 +6617,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "null", gloss: "zero", pos: "NOUN", cefr: "A1",
     ekilexWordId: 209191,
-    parts: { NOM_SG: "null", GEN_SG: "nulli", PART_SG: "nulli", ILL_SG_SHORT: "nulli", PART_PL: "nulle", GEN_PL: "nullide" },
+    parts: { NOM_SG: "null", GEN_SG: "nulli", PART_SG: "nulli", ILL_SG_SHORT: "nulli", NOM_PL: "nullid", PART_PL: "nulle", GEN_PL: "nullide" },
     government: null,
     usages: ["Mistahes arvu nulliga korrutamine annab vastuseks nulli.", "Mitme nulliga kirjutatakse miljon?", "Viis miinus null on viis (5 – 0 = 5).", "Miljon kirjutatakse kuue nulliga."],
     note: "põhiarv 0",
@@ -6626,7 +6626,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "number", gloss: "number", pos: "NOUN", cefr: "A1",
     ekilexWordId: 209228,
-    parts: { NOM_SG: "number", GEN_SG: "numbri", PART_SG: "numbrit", PART_PL: "numbreid", GEN_PL: "numbrite" },
+    parts: { NOM_SG: "number", GEN_SG: "numbri", PART_SG: "numbrit", NOM_PL: "numbrid", PART_PL: "numbreid", GEN_PL: "numbrite" },
     government: null,
     usages: ["Tähtedest ja numbritest koosnev salasõna.", "Summa numbritega.", "Numbrid ühest kümneni.", "Summa tuli kirjutada nii sõnade kui ka numbritega."],
     note: "arvu tähistav sümbol, selle kirjamärk",
@@ -6635,7 +6635,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nurk", gloss: "corner", pos: "NOUN", cefr: "A1",
     ekilexWordId: 209348,
-    parts: { NOM_SG: "nurk", GEN_SG: "nurga", PART_SG: "nurka", ILL_SG_SHORT: "nurka", PART_PL: "nurki", GEN_PL: "nurkade" },
+    parts: { NOM_SG: "nurk", GEN_SG: "nurga", PART_SG: "nurka", ILL_SG_SHORT: "nurka", NOM_PL: "nurgad", PART_PL: "nurki", GEN_PL: "nurkade" },
     government: null,
     usages: ["Ökodukt ei lähe risti üle tee, vaid on 137-kraadise nurgaga tee telje suhtes.", "Lennuk kukkus alla järsu nurga all.", "Kolmnurga nurkade summa on 180°.", "Igaüks näeb asju oma nurga alt."],
     note: "vahemaa kahe lõikuva joone või pinna vahel, mida mõõdetakse hrl kraadides nende lõikumiskoha lähedalt",
@@ -6644,7 +6644,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nutikas", gloss: "clever", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 209401,
-    parts: { NOM_SG: "nutikas", GEN_SG: "nutika", PART_SG: "nutikat", PART_PL: "nutikaid", GEN_PL: "nutikate" },
+    parts: { NOM_SG: "nutikas", GEN_SG: "nutika", PART_SG: "nutikat", NOM_PL: "nutikad", PART_PL: "nutikaid", GEN_PL: "nutikate" },
     government: null,
     usages: ["Nadja oli nutikas tüdruk.", "Nutikas lahendus.", "Uue põlvkonna nutikad segistid.", "Türgi hävitajad kasutasid nutikaid pomme."],
     note: "hea taibuga, terase aruga, (kavalalt) leidlik",
@@ -6653,7 +6653,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nõrk", gloss: "weak", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 209702,
-    parts: { NOM_SG: "nõrk", GEN_SG: "nõrga", PART_SG: "nõrka", ILL_SG_SHORT: "nõrka", PART_PL: "nõrku", GEN_PL: "nõrkade" },
+    parts: { NOM_SG: "nõrk", GEN_SG: "nõrga", PART_SG: "nõrka", ILL_SG_SHORT: "nõrka", NOM_PL: "nõrgad", PART_PL: "nõrku", GEN_PL: "nõrkade" },
     government: null,
     usages: ["Ründaja otsib nõrku vastaseid.", "Nõrk iseloom.", "Nõrk käepigistus.", "Haige on palavikust nõrk."],
     note: "(inimese, ka looma kohta:) selline, kellel on vähe keha- või vaimujõudu",
@@ -6662,7 +6662,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nõu", gloss: "dish, advice", pos: "NOUN", cefr: "A1",
     ekilexWordId: 209724,
-    parts: { NOM_SG: "nõu", GEN_SG: "nõu", PART_SG: "nõu", PART_PL: "nõusid", GEN_PL: "nõude" },
+    parts: { NOM_SG: "nõu", GEN_SG: "nõu", PART_SG: "nõu", NOM_PL: "nõud", PART_PL: "nõusid", GEN_PL: "nõude" },
     government: null,
     usages: ["Oma nõu peab kaasas olema, kui piima tooma lähed.", "Kaasa pesi köögis nõusid.", "Koorenõu.", "Veenõu."],
     note: "ese millegi mahutamiseks, hoidmiseks või toidu tegemiseks (nt ämber, purk, pott, pann)",
@@ -6671,7 +6671,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nõudlus", gloss: "demand", pos: "NOUN", cefr: "B2",
     ekilexWordId: 209748,
-    parts: { NOM_SG: "nõudlus", GEN_SG: "nõudluse", PART_SG: "nõudlust", ILL_SG_SHORT: "nõudlusse", PART_PL: "nõudlusi", GEN_PL: "nõudluste" },
+    parts: { NOM_SG: "nõudlus", GEN_SG: "nõudluse", PART_SG: "nõudlust", ILL_SG_SHORT: "nõudlusse", NOM_PL: "nõudlused", PART_PL: "nõudlusi", GEN_PL: "nõudluste" },
     government: null,
     usages: ["Hind muutub vastavalt nõudlusele ja pakkumisele.", "Välismaine nõudlus kasvab püsivalt.", "Suurtele kogustele puudub nõudlus.", "Uute korterelamute puhul ületab nõudlus pakkumist."],
     note: "ostujõuline nõudmine mingi toote või teenuse järele, oodatav kogus, mida tarbijad soovivad ja suudavad osta",
@@ -6698,7 +6698,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nädal", gloss: "week", pos: "NOUN", cefr: "A1",
     ekilexWordId: 209794,
-    parts: { NOM_SG: "nädal", GEN_SG: "nädala", PART_SG: "nädalat", PART_PL: "nädalaid", GEN_PL: "nädalate" },
+    parts: { NOM_SG: "nädal", GEN_SG: "nädala", PART_SG: "nädalat", NOM_PL: "nädalad", PART_PL: "nädalaid", GEN_PL: "nädalate" },
     government: null,
     usages: ["Tallinna börsil algas nädal sündmustevaeselt.", "Ma käin kaks korda nädalas trennis.", "Õnnetus juhtus nädala eest.", "Nägin teda viimati paar nädalat tagasi."],
     note: "seitsmepäevane ajavahemik esmaspäevast pühapäevani (ingliskeelsetes maades pühapäevast laupäevani)",
@@ -6707,7 +6707,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nädalavahetus", gloss: "weekend", pos: "NOUN", cefr: "A1",
     ekilexWordId: 209819,
-    parts: { NOM_SG: "nädalavahetus", GEN_SG: "nädalavahetuse", PART_SG: "nädalavahetust", ILL_SG_SHORT: "nädalavahetusse", PART_PL: "nädalavahetusi", GEN_PL: "nädalavahetuste" },
+    parts: { NOM_SG: "nädalavahetus", GEN_SG: "nädalavahetuse", PART_SG: "nädalavahetust", ILL_SG_SHORT: "nädalavahetusse", NOM_PL: "nädalavahetused", PART_PL: "nädalavahetusi", GEN_PL: "nädalavahetuste" },
     government: null,
     usages: ["Mida te nädalavahetusel teete?", "Käisime nädalavahetusel maal."],
     note: "laupäev ja pühapäev (hrl kui puhkepäevad)",
@@ -6725,7 +6725,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "näide", gloss: "example", pos: "NOUN", cefr: "A2",
     ekilexWordId: 209902,
-    parts: { NOM_SG: "näide", GEN_SG: "näite", PART_SG: "näidet", PART_PL: "näiteid", GEN_PL: "näidete" },
+    parts: { NOM_SG: "näide", GEN_SG: "näite", PART_SG: "näidet", NOM_PL: "näited", PART_PL: "näiteid", GEN_PL: "näidete" },
     government: null,
     usages: ["Õpetaja tõi näiteid hariduse kasulikkuse kohta.", "See on silmakirjalikkuse ere näide.", "Projekt „Linn kui elukeskkond Narva linna näitel”.", "See on vaid üks näide ebaõiglase käitumise kohta."],
     note: "üksiknähtus (ese, olend, fakt, sündmus vm) millegi üldisema ilminguna, esinemisjuhuna",
@@ -6734,7 +6734,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "näidend", gloss: "play", pos: "NOUN", cefr: "B1",
     ekilexWordId: 209903,
-    parts: { NOM_SG: "näidend", GEN_SG: "näidendi", PART_SG: "näidendit", PART_PL: "näidendeid", GEN_PL: "näidendite" },
+    parts: { NOM_SG: "näidend", GEN_SG: "näidendi", PART_SG: "näidendit", NOM_PL: "näidendid", PART_PL: "näidendeid", GEN_PL: "näidendite" },
     government: null,
     usages: ["Shakespeare'i näidendid.", "Ta mängib näidendis peaosa."],
     note: "hrl laval esitamiseks mõeldud dialoogivormis kirjandusteos",
@@ -6743,7 +6743,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "näidustus", gloss: "indication", pos: "NOUN", cefr: null,
     ekilexWordId: 209918,
-    parts: { NOM_SG: "näidustus", GEN_SG: "näidustuse", PART_SG: "näidustust", ILL_SG_SHORT: "näidustusse", PART_PL: "näidustusi", GEN_PL: "näidustuste" },
+    parts: { NOM_SG: "näidustus", GEN_SG: "näidustuse", PART_SG: "näidustust", ILL_SG_SHORT: "näidustusse", NOM_PL: "näidustused", PART_PL: "näidustusi", GEN_PL: "näidustuste" },
     government: null,
     usages: ["Eestis on raseduse katkestamine meditsiinilisel näidustusel lubatud 21. rasedusnädala lõpuni."],
     note: "põhjus või tingimus, mille korral mingi ravivõte, ravim või protseduur on vajalik või soovitatav",
@@ -6752,7 +6752,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "näitaja", gloss: "indicator", pos: "NOUN", cefr: null,
     ekilexWordId: 209925,
-    parts: { NOM_SG: "näitaja", GEN_SG: "näitaja", PART_SG: "näitajat", PART_PL: "näitajaid", GEN_PL: "näitajate" },
+    parts: { NOM_SG: "näitaja", GEN_SG: "näitaja", PART_SG: "näitajat", NOM_PL: "näitajad", PART_PL: "näitajaid", GEN_PL: "näitajate" },
     government: null,
     usages: ["Monitori tehnilised näitajad.", "Netikommentaarid on osalt rahva kultuuritaseme näitaja.", "Auto hind sõltub paljudest tehnilistest näitajatest."],
     note: "mingit eset, seadet, nähtust vm iseloomustav suurus, tunnus vm asjaolu",
@@ -6770,7 +6770,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "näitus", gloss: "exhibition", pos: "NOUN", cefr: "A2",
     ekilexWordId: 209959,
-    parts: { NOM_SG: "näitus", GEN_SG: "näituse", PART_SG: "näitust", ILL_SG_SHORT: "näitusse", PART_PL: "näitusi", GEN_PL: "näituste" },
+    parts: { NOM_SG: "näitus", GEN_SG: "näituse", PART_SG: "näitust", ILL_SG_SHORT: "näitusse", NOM_PL: "näitused", PART_PL: "näitusi", GEN_PL: "näituste" },
     government: null,
     usages: ["Õpilastööde näitus.", "Näitus jääb avatuks sügiseni.", "Kas sa Andy Warholi näitusel käisid?", "Käsitöönäitus."],
     note: "vaatamiseks, tutvumiseks väljapandud kunstiteosed vm esemed",
@@ -6779,7 +6779,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "nüansirikas", gloss: "nuanced", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 210406,
-    parts: { NOM_SG: "nüansirikas", GEN_SG: "nüansirikka", PART_SG: "nüansirikast", PART_PL: "nüansirikkaid", GEN_PL: "nüansirikaste" },
+    parts: { NOM_SG: "nüansirikas", GEN_SG: "nüansirikka", PART_SG: "nüansirikast", NOM_PL: "nüansirikkad", PART_PL: "nüansirikkaid", GEN_PL: "nüansirikaste" },
     government: null,
     usages: ["Laia ulatusega nüansirikas hääl."],
     note: "paljude varjunditega, peente erijoontega",
@@ -6797,7 +6797,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "objektiivne", gloss: "objective", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 210475,
-    parts: { NOM_SG: "objektiivne", GEN_SG: "objektiivse", PART_SG: "objektiivset", PART_PL: "objektiivseid", GEN_PL: "objektiivsete" },
+    parts: { NOM_SG: "objektiivne", GEN_SG: "objektiivse", PART_SG: "objektiivset", NOM_PL: "objektiivsed", PART_PL: "objektiivseid", GEN_PL: "objektiivsete" },
     government: null,
     usages: ["Tollide kehtestamine on objektiivne vajadus.", "Mineraalide objektiivne omadus on nende tihedus ja magnetilisus.", "Objektiivsed ja subjektiivsed asjaolud.", "Peegel on objektiivne."],
     note: "reaalsusel, käesoleval olukorral põhinev, sellele vastav või sellest tulenev",
@@ -6806,7 +6806,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "odav", gloss: "cheap", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 210518,
-    parts: { NOM_SG: "odav", GEN_SG: "odava", PART_SG: "odavat", PART_PL: "odavaid", GEN_PL: "odavate" },
+    parts: { NOM_SG: "odav", GEN_SG: "odava", PART_SG: "odavat", NOM_PL: "odavad", PART_PL: "odavaid", GEN_PL: "odavate" },
     government: null,
     usages: ["Ostsin odava auto.", "Elekter on praegu suhteliselt odav.", "Selles poes on väga odavad kaubad.", "Eelistan odavale hinnale kvaliteeti."],
     note: "vähe raha maksev, madala hinnaga",
@@ -6815,7 +6815,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "oht", gloss: "danger", pos: "NOUN", cefr: "A2",
     ekilexWordId: 210636,
-    parts: { NOM_SG: "oht", GEN_SG: "ohu", PART_SG: "ohtu", ILL_SG_SHORT: "ohtu", PART_PL: "ohte", GEN_PL: "ohtude" },
+    parts: { NOM_SG: "oht", GEN_SG: "ohu", PART_SG: "ohtu", ILL_SG_SHORT: "ohtu", NOM_PL: "ohud", PART_PL: "ohte", GEN_PL: "ohtude" },
     government: null,
     usages: ["Taimed istutatakse avamaale, kui öökülmade oht on möödas.", "Arsti sõnul haige elu enam ohus ei ole.", "Mehel on oht kaotada töö.", "Lastele räägiti internetis varitsevatest ohtudest."],
     note: "olukord, kus ähvardab mingi ebaõnn või õnnetus",
@@ -6824,7 +6824,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ohtrasõnaline", gloss: "verbose", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 210645,
-    parts: { NOM_SG: "ohtrasõnaline", GEN_SG: "ohtrasõnalise", PART_SG: "ohtrasõnalist", ILL_SG_SHORT: "ohtrasõnalisse", PART_PL: "ohtrasõnalisi", GEN_PL: "ohtrasõnaliste" },
+    parts: { NOM_SG: "ohtrasõnaline", GEN_SG: "ohtrasõnalise", PART_SG: "ohtrasõnalist", ILL_SG_SHORT: "ohtrasõnalisse", NOM_PL: "ohtrasõnalised", PART_PL: "ohtrasõnalisi", GEN_PL: "ohtrasõnaliste" },
     government: null,
     usages: ["Ohtrasõnaline armutõotus."],
     note: "palju sõnu sisaldav",
@@ -6833,7 +6833,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "oktoober", gloss: "October", pos: "NOUN", cefr: "A1",
     ekilexWordId: 210863,
-    parts: { NOM_SG: "oktoober", GEN_SG: "oktoobri", PART_SG: "oktoobrit", PART_PL: "oktoobreid", GEN_PL: "oktoobrite" },
+    parts: { NOM_SG: "oktoober", GEN_SG: "oktoobri", PART_SG: "oktoobrit", NOM_PL: "oktoobrid", PART_PL: "oktoobreid", GEN_PL: "oktoobrite" },
     government: null,
     usages: ["Oktoober oli külm ja vihmane."],
     note: "aasta 10. kuu, põhjapoolkeral teine sügiskuu",
@@ -6842,7 +6842,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "okupatsioon", gloss: "occupation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 210878,
-    parts: { NOM_SG: "okupatsioon", GEN_SG: "okupatsiooni", PART_SG: "okupatsiooni", ILL_SG_SHORT: "okupatsiooni", PART_PL: "okupatsioone", GEN_PL: "okupatsioonide" },
+    parts: { NOM_SG: "okupatsioon", GEN_SG: "okupatsiooni", PART_SG: "okupatsiooni", ILL_SG_SHORT: "okupatsiooni", NOM_PL: "okupatsioonid", PART_PL: "okupatsioone", GEN_PL: "okupatsioonide" },
     government: null,
     usages: ["Nõukogude okupatsioon.", "Saksa okupatsioon."],
     note: "võõra riigi või selle osa ajutine hõivamine teise riigi relvajõududega",
@@ -6860,7 +6860,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "olemus", gloss: "essence", pos: "NOUN", cefr: "B2",
     ekilexWordId: 210906,
-    parts: { NOM_SG: "olemus", GEN_SG: "olemuse", PART_SG: "olemust", ILL_SG_SHORT: "olemusse", PART_PL: "olemusi", GEN_PL: "olemuste" },
+    parts: { NOM_SG: "olemus", GEN_SG: "olemuse", PART_SG: "olemust", ILL_SG_SHORT: "olemusse", NOM_PL: "olemused", PART_PL: "olemusi", GEN_PL: "olemuste" },
     government: null,
     usages: ["Te vist ei saa probleemi olemusest aru?", "Seksuaalsus on inimese olemuse osa.", "Poiss meenutab välimuselt ja olemuselt oma isa.", "Tunnis selgitati õpilastele demokraatia olemust."],
     note: "seesmine loomus, asja või nähtuse sisu",
@@ -6869,7 +6869,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "olenev", gloss: "depending", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 1471939,
-    parts: { NOM_SG: "olenev", GEN_SG: "oleneva", PART_SG: "olenevat", PART_PL: "olenevaid", GEN_PL: "olenevate" },
+    parts: { NOM_SG: "olenev", GEN_SG: "oleneva", PART_SG: "olenevat", NOM_PL: "olenevad", PART_PL: "olenevaid", GEN_PL: "olenevate" },
     government: null,
     usages: ["Mõistlik oleks määrata lapse vanusest olenev kindel aeg voodisse minekuks.", "Kui koolitus meist oleneval põhjusel ära jääb, tagastame koolitustasu 100%.", "Kustutasin osa teksti, mida pidasin liiga isiklikuks ja meeleolust olenevaks.", "Teeme kõik endast oleneva, et seda ei juhtuks."],
     note: "millestki või kellestki määratav või (oluliselt) mõjutatav",
@@ -6887,7 +6887,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "oletus", gloss: "assumption", pos: "NOUN", cefr: "B2",
     ekilexWordId: 210923,
-    parts: { NOM_SG: "oletus", GEN_SG: "oletuse", PART_SG: "oletust", ILL_SG_SHORT: "oletusse", PART_PL: "oletusi", GEN_PL: "oletuste" },
+    parts: { NOM_SG: "oletus", GEN_SG: "oletuse", PART_SG: "oletust", ILL_SG_SHORT: "oletusse", NOM_PL: "oletused", PART_PL: "oletusi", GEN_PL: "oletuste" },
     government: null,
     usages: ["Esialgse oletuse põhjal süttis maja hooletu suitsetamise tõttu.", "Kõik on vaid teoreetilised oletused!"],
     note: "ebapiisavale teadmisele tuginev, (seni) tõestamata väide või kujutelm",
@@ -6896,7 +6896,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "olukord", gloss: "situation", pos: "NOUN", cefr: "A2",
     ekilexWordId: 210982,
-    parts: { NOM_SG: "olukord", GEN_SG: "olukorra", PART_SG: "olukorda", ILL_SG_SHORT: "olukorda", PART_PL: "olukordi", GEN_PL: "olukordade" },
+    parts: { NOM_SG: "olukord", GEN_SG: "olukorra", PART_SG: "olukorda", ILL_SG_SHORT: "olukorda", NOM_PL: "olukorrad", PART_PL: "olukordi", GEN_PL: "olukordade" },
     government: null,
     usages: ["Olukord muutus kümme aastat tagasi.", "Igatahes tuli olukorrale varsti lahendus leida.", "Majandusolukord.", "Hetkeolukord."],
     note: "asjade üldine olek, seis teatud ajahetkel",
@@ -6932,7 +6932,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "omanik", gloss: "owner", pos: "NOUN", cefr: "A2",
     ekilexWordId: 211161,
-    parts: { NOM_SG: "omanik", GEN_SG: "omaniku", PART_SG: "omanikku", ILL_SG_SHORT: "omanikku", PART_PL: "omanikke", GEN_PL: "omanike" },
+    parts: { NOM_SG: "omanik", GEN_SG: "omaniku", PART_SG: "omanikku", ILL_SG_SHORT: "omanikku", NOM_PL: "omanikud", PART_PL: "omanikke", GEN_PL: "omanike" },
     government: null,
     usages: ["Krundi õigusjärgne omanik.", "Auto vahetas omanikku.", "Koer leidis uue omaniku Soomes.", "Laevaomanik."],
     note: "see, kellele miski omandina kuulub",
@@ -6941,7 +6941,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "omapärane", gloss: "distinctive", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 211184,
-    parts: { NOM_SG: "omapärane", GEN_SG: "omapärase", PART_SG: "omapärast", PART_PL: "omapäraseid", GEN_PL: "omapäraste" },
+    parts: { NOM_SG: "omapärane", GEN_SG: "omapärase", PART_SG: "omapärast", NOM_PL: "omapärased", PART_PL: "omapäraseid", GEN_PL: "omapäraste" },
     government: null,
     usages: ["Vürtsikas ja omapärase maitsega ingver on mitmekülgselt kasulik.", "Väga omapärane ja põnev koht.", "Ta on huvitav ja omapärane inimene.", "Ta on väga omapärase välimusega."],
     note: "oma (kummalise) eripäraga, teistest või tavalisest (tugevasti) erinev, millegi poolest isesugune",
@@ -6968,7 +6968,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ootamatu", gloss: "unexpected", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 211412,
-    parts: { NOM_SG: "ootamatu", GEN_SG: "ootamatu", PART_SG: "ootamatut", PART_PL: "ootamatuid", GEN_PL: "ootamatute" },
+    parts: { NOM_SG: "ootamatu", GEN_SG: "ootamatu", PART_SG: "ootamatut", NOM_PL: "ootamatud", PART_PL: "ootamatuid", GEN_PL: "ootamatute" },
     government: null,
     usages: ["Asi on võtnud minu jaoks ootamatu pöörde.", "Tõnu surm oli ootamatu.", "Kõrvuti on ootamatuid värvikombinatsioone, aga kõik sobib.", "Ootamatute asjaolude tõttu pean kohe ära sõitma."],
     note: "selline, mida (või keda) ei osatud oodata, ette näha või aimata",
@@ -6977,7 +6977,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "opositsioon", gloss: "opposition", pos: "NOUN", cefr: "B2",
     ekilexWordId: 211496,
-    parts: { NOM_SG: "opositsioon", GEN_SG: "opositsiooni", PART_SG: "opositsiooni", ILL_SG_SHORT: "opositsiooni", PART_PL: "opositsioone", GEN_PL: "opositsioonide" },
+    parts: { NOM_SG: "opositsioon", GEN_SG: "opositsiooni", PART_SG: "opositsiooni", ILL_SG_SHORT: "opositsiooni", NOM_PL: "opositsioonid", PART_PL: "opositsioone", GEN_PL: "opositsioonide" },
     government: null,
     usages: ["Riigikogu opositsioon proovis eelnõu teist lugemist katkestada.", "Linnavolikogu opositsioon.", "Valimisliit Vastutus jäi opositsiooni.", "Opositsioonis olevad vabariiklased."],
     note: "(poliitikas:) erakond, poliitikute rühm või poliitik, kes seab oma seisukohti vastu võimul olijate seisukohtadele kas parlamendis või riigis üldisemalt",
@@ -6986,7 +6986,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "originaal", gloss: "original", pos: "NOUN", cefr: "B2",
     ekilexWordId: 211672,
-    parts: { NOM_SG: "originaal", GEN_SG: "originaali", PART_SG: "originaali", ILL_SG_SHORT: "originaali", PART_PL: "originaale", GEN_PL: "originaalide" },
+    parts: { NOM_SG: "originaal", GEN_SG: "originaali", PART_SG: "originaali", ILL_SG_SHORT: "originaali", NOM_PL: "originaalid", PART_PL: "originaale", GEN_PL: "originaalide" },
     government: null,
     usages: ["Gravüüride originaalid asuvad Läänemaa muuseumis.", "Isegi tema positsiooniga meest ei lubatud tutvuda salaprotokollide originaalidega.", "Teose originaal ilmus 2011. aastal."],
     note: "algupärane teos või esialgsel kujul dokument (vastandatult tõlkele, koopiale, reproduktsioonile vms)",
@@ -6995,7 +6995,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "osakaal", gloss: "proportion, share", pos: "NOUN", cefr: "B2",
     ekilexWordId: 211809,
-    parts: { NOM_SG: "osakaal", GEN_SG: "osakaalu", PART_SG: "osakaalu", ILL_SG_SHORT: "osakaalu", PART_PL: "osakaale", GEN_PL: "osakaalude" },
+    parts: { NOM_SG: "osakaal", GEN_SG: "osakaalu", PART_SG: "osakaalu", ILL_SG_SHORT: "osakaalu", NOM_PL: "osakaalud", PART_PL: "osakaale", GEN_PL: "osakaalude" },
     government: null,
     usages: ["Tuuleenergia osakaalult oleme maailmas esikümnes.", "Tööealiste osakaal rahvastikus väheneb 2040. aastaks 160 000 inimese võrra.", "Rahuldavaks võib pidada ettevõtet, mille omakapitali osakaal bilansimahust ületab 30%.", "Aasta tagasi oli välisturgude osakaal müügitulust 2%."],
     note: "kellegi või millegi suhteline tähtsus mingis süsteemis vm tervikus",
@@ -7013,7 +7013,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "oskus", gloss: "skill", pos: "NOUN", cefr: "A2",
     ekilexWordId: 211898,
-    parts: { NOM_SG: "oskus", GEN_SG: "oskuse", PART_SG: "oskust", ILL_SG_SHORT: "oskusse", PART_PL: "oskusi", GEN_PL: "oskuste" },
+    parts: { NOM_SG: "oskus", GEN_SG: "oskuse", PART_SG: "oskust", ILL_SG_SHORT: "oskusse", NOM_PL: "oskused", PART_PL: "oskusi", GEN_PL: "oskuste" },
     government: null,
     usages: ["Sain koolist üsna hea prantsuse keele oskuse.", "Iseseisva mõtlemise oskus.", "Oskus kõigiga hästi läbi saada.", "Ka roostikus ogalike püüdmine nõuab oskusi."],
     note: "õppimise ja harjutamise teel omandatud asjatundlikkus milleski",
@@ -7022,7 +7022,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "oskussõna", gloss: "technical term", pos: "NOUN", cefr: null,
     ekilexWordId: 211901,
-    parts: { NOM_SG: "oskussõna", GEN_SG: "oskussõna", PART_SG: "oskussõna", ILL_SG_SHORT: "oskussõnna", PART_PL: "oskussõnu", GEN_PL: "oskussõnade" },
+    parts: { NOM_SG: "oskussõna", GEN_SG: "oskussõna", PART_SG: "oskussõna", ILL_SG_SHORT: "oskussõnna", NOM_PL: "oskussõnad", PART_PL: "oskussõnu", GEN_PL: "oskussõnade" },
     government: null,
     usages: ["Õigusteaduse oskussõnad.", "Raamatus on esitatud ka rida oskussõnade seletusi, puu- ja põõsaliikide eesti- ning ladinakeelne register."],
     note: "erialast mõistet tähistav, täpselt piiritletud tähendusega sõna või sõnaühend",
@@ -7058,7 +7058,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "otsene", gloss: "direct, literal", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 212117,
-    parts: { NOM_SG: "otsene", GEN_SG: "otsese", PART_SG: "otsest", PART_PL: "otseseid", GEN_PL: "otseste" },
+    parts: { NOM_SG: "otsene", GEN_SG: "otsese", PART_SG: "otsest", NOM_PL: "otsesed", PART_PL: "otseseid", GEN_PL: "otseste" },
     government: null,
     usages: ["Otsitakse sündmuse otseseid tunnistajaid.", "Tal pole otseseid pärijaid.", "Ta on minu otsene ülemus.", "Taimi tuleks hoida otsese päikesevalguse käest."],
     note: "vahendamata, ilma vaheastme vm vahepealseta",
@@ -7076,7 +7076,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "otsus", gloss: "decision", pos: "NOUN", cefr: "A2",
     ekilexWordId: 212206,
-    parts: { NOM_SG: "otsus", GEN_SG: "otsuse", PART_SG: "otsust", PART_PL: "otsuseid", GEN_PL: "otsuste" },
+    parts: { NOM_SG: "otsus", GEN_SG: "otsuse", PART_SG: "otsust", NOM_PL: "otsused", PART_PL: "otsuseid", GEN_PL: "otsuste" },
     government: null,
     usages: ["Peame otsuse langetama veel täna.", "Rikkuse jaotamise põhimõtete ülevaatamine nõuab poliitilisi otsuseid.", "Aasta-paar enne valimisi ei luba ükski valitsus endale ebapopulaarseid otsuseid.", "Žürii üksmeelsel otsusel tunnistati parimaks meesnäitlejaks .."],
     note: "tulemus, millele jõutakse pärast asjaolude, võimaluste läbimõtlemist, kaalumist, arutlemist",
@@ -7094,7 +7094,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "otsustamine", gloss: "decision-making", pos: "NOUN", cefr: null,
     ekilexWordId: 267964,
-    parts: { NOM_SG: "otsustamine", GEN_SG: "otsustamise", PART_SG: "otsustamist", ILL_SG_SHORT: "otsustamisse", PART_PL: "otsustamisi", GEN_PL: "otsustamiste" },
+    parts: { NOM_SG: "otsustamine", GEN_SG: "otsustamise", PART_SG: "otsustamist", ILL_SG_SHORT: "otsustamisse", NOM_PL: "otsustamised", PART_PL: "otsustamisi", GEN_PL: "otsustamiste" },
     government: null,
     usages: ["Otsustamine oli raske."],
     note: "vaimne tegevus, mille käigus inimene kogub informatsiooni, kaalutleb erinevate lahendusviiside vahel valides välja talle sobiva",
@@ -7112,7 +7112,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pakkumine", gloss: "supply, offer", pos: "NOUN", cefr: "B1",
     ekilexWordId: 213024,
-    parts: { NOM_SG: "pakkumine", GEN_SG: "pakkumise", PART_SG: "pakkumist", ILL_SG_SHORT: "pakkumisse", PART_PL: "pakkumisi", GEN_PL: "pakkumiste" },
+    parts: { NOM_SG: "pakkumine", GEN_SG: "pakkumise", PART_SG: "pakkumist", ILL_SG_SHORT: "pakkumisse", NOM_PL: "pakkumised", PART_PL: "pakkumisi", GEN_PL: "pakkumiste" },
     government: null,
     usages: ["Soodsad reisipaketid ning viimase hetke pakkumised.", "Pakkumist tegema.", "Pakkumisest keelduma.", "Ostupakkumine."],
     note: "ettepanek midagi teatud hinna eest osta või müüa või mingit teenust kasutada, konkreetne pakkumine",
@@ -7121,7 +7121,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "paks", gloss: "thick, fat", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 213032,
-    parts: { NOM_SG: "paks", GEN_SG: "paksu", PART_SG: "paksu", ILL_SG_SHORT: "paksu", PART_PL: "pakse", GEN_PL: "paksude" },
+    parts: { NOM_SG: "paks", GEN_SG: "paksu", PART_SG: "paksu", ILL_SG_SHORT: "paksu", NOM_PL: "paksud", PART_PL: "pakse", GEN_PL: "paksude" },
     government: null,
     usages: ["Vanal majal olid paksud seinad.", "Paksude klaasidega prillid.", "Paks lumi on maas.", "Panin jalga paksu tallaga saapad."],
     note: "läbilõikelt, laiuselt suur, suhteliselt suure ümber- või läbimõõduga",
@@ -7130,7 +7130,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "palavik", gloss: "fever", pos: "NOUN", cefr: "B1",
     ekilexWordId: 213083,
-    parts: { NOM_SG: "palavik", GEN_SG: "palaviku", PART_SG: "palavikku", ILL_SG_SHORT: "palavikku", PART_PL: "palavikke", GEN_PL: "palavike" },
+    parts: { NOM_SG: "palavik", GEN_SG: "palaviku", PART_SG: "palavikku", ILL_SG_SHORT: "palavikku", NOM_PL: "palavikud", PART_PL: "palavikke", GEN_PL: "palavike" },
     government: null,
     usages: ["40kraadine palavik.", "Palavik kord tõusis, kord langes.", "Pujutee alandab palavikku.", "Lapsel on kõrge palavik."],
     note: "normaalsest kõrgem kehatemperatuur (hrl haigussümptomina)",
@@ -7148,7 +7148,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "palk", gloss: "wage, salary", pos: "NOUN", cefr: "A2",
     ekilexWordId: 213311,
-    parts: { NOM_SG: "palk", GEN_SG: "palga", PART_SG: "palka", ILL_SG_SHORT: "palka", PART_PL: "palku", GEN_PL: "palkade" },
+    parts: { NOM_SG: "palk", GEN_SG: "palga", PART_SG: "palka", ILL_SG_SHORT: "palka", NOM_PL: "palgad", PART_PL: "palku", GEN_PL: "palkade" },
     government: null,
     usages: ["Eesti keskmine palk on suurem kui Lätis.", "Tema palk on 1800 eurot kuus.", "Võtsin nädalaks palgata puhkuse.", "Palk laekus eile."],
     note: "rahaline tasu tehtud töö eest, hrl palgana kord kuus makstav tasu",
@@ -7175,7 +7175,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pank", gloss: "bank", pos: "NOUN", cefr: "A2",
     ekilexWordId: 213548,
-    parts: { NOM_SG: "pank", GEN_SG: "panga", PART_SG: "panka", ILL_SG_SHORT: "panka", PART_PL: "panku", GEN_PL: "pankade" },
+    parts: { NOM_SG: "pank", GEN_SG: "panga", PART_SG: "panka", ILL_SG_SHORT: "panka", NOM_PL: "pangad", PART_PL: "panku", GEN_PL: "pankade" },
     government: null,
     usages: ["Poeg töötab pangas.", "Lähen homme panka.", "Mart võttis pangast laenu.", "Röövlid sisenesid panka, maskid ees."],
     note: "mitmesuguseid rahaoperatsioone (nt hoiustamist, laenuandmist, arveldamist, valuutavahetust) sooritav ja sellega raharinglust korraldav finantsasutus",
@@ -7184,7 +7184,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "paradoks", gloss: "paradox", pos: "NOUN", cefr: "B2",
     ekilexWordId: 213728,
-    parts: { NOM_SG: "paradoks", GEN_SG: "paradoksi", PART_SG: "paradoksi", ILL_SG_SHORT: "paradoksi", PART_PL: "paradokse", GEN_PL: "paradokside" },
+    parts: { NOM_SG: "paradoks", GEN_SG: "paradoksi", PART_SG: "paradoksi", ILL_SG_SHORT: "paradoksi", NOM_PL: "paradoksid", PART_PL: "paradokse", GEN_PL: "paradokside" },
     government: null,
     usages: ["Tema artiklid on täis sädelevaid paradokse.", "Kvantmehaanika paradoksid.", "Elu kummaline paradoks on, et õnnistus võib vahel osutuda nuhtluseks."],
     note: "näilikult mõistusvastane, vastuolu või vasturääkivust sisaldav väide või nähtus",
@@ -7193,7 +7193,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "paragrahv", gloss: "section, paragraph", pos: "NOUN", cefr: "B1",
     ekilexWordId: 213744,
-    parts: { NOM_SG: "paragrahv", GEN_SG: "paragrahvi", PART_SG: "paragrahvi", ILL_SG_SHORT: "paragrahvi", PART_PL: "paragrahve", GEN_PL: "paragrahvide" },
+    parts: { NOM_SG: "paragrahv", GEN_SG: "paragrahvi", PART_SG: "paragrahvi", ILL_SG_SHORT: "paragrahvi", NOM_PL: "paragrahvid", PART_PL: "paragrahve", GEN_PL: "paragrahvide" },
     government: null,
     usages: ["Põhiseaduse paragrahv 45.", "Mees mõisteti süüdi kelmuse paragrahvi alusel.", "Süüdistuse aluseks on põhiseaduse paragrahv 12.", "Õpiku iga paragrahv algab motiveeriva probleemiga ja lõpeb põhivara meelespeaga."],
     note: "seaduse vm õigusakti nummerdatud alljaotis (tähistatud märgiga § ja vastava numbriga), mis sisaldab õigusnormi või selle osa",
@@ -7220,7 +7220,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "paratamatus", gloss: "inevitability", pos: "NOUN", cefr: "B2",
     ekilexWordId: 213858,
-    parts: { NOM_SG: "paratamatus", GEN_SG: "paratamatuse", PART_SG: "paratamatust", ILL_SG_SHORT: "paratamatusse", PART_PL: "paratamatusi", GEN_PL: "paratamatuste" },
+    parts: { NOM_SG: "paratamatus", GEN_SG: "paratamatuse", PART_SG: "paratamatust", ILL_SG_SHORT: "paratamatusse", NOM_PL: "paratamatused", PART_PL: "paratamatusi", GEN_PL: "paratamatuste" },
     government: null,
     usages: ["Vananemine on elu paratamatus.", "Lapsed peaksid olema elu õied, mitte lihtsalt paratamatus suvalisest ööst."],
     note: "nähtuste olemusest, korrast tulenev vältimatus",
@@ -7238,7 +7238,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "park", gloss: "park", pos: "NOUN", cefr: "A1",
     ekilexWordId: 213988,
-    parts: { NOM_SG: "park", GEN_SG: "pargi", PART_SG: "parki", ILL_SG_SHORT: "parki", PART_PL: "parke", GEN_PL: "parkide" },
+    parts: { NOM_SG: "park", GEN_SG: "pargi", PART_SG: "parki", ILL_SG_SHORT: "parki", NOM_PL: "pargid", PART_PL: "parke", GEN_PL: "parkide" },
     government: null,
     usages: ["Glehni park.", "Pärnu on täis kenasid parke.", "Läksime parki jalutama.", "Lossi ümbritseb kaunis park."],
     note: "suur haljasala jalutusteedega, vahel ka purskkaevude, skulptuuride või paviljonidega",
@@ -7247,7 +7247,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "paroodia", gloss: "parody", pos: "NOUN", cefr: null,
     ekilexWordId: 214080,
-    parts: { NOM_SG: "paroodia", GEN_SG: "paroodia", PART_SG: "paroodiat", PART_PL: "paroodiaid", GEN_PL: "paroodiate" },
+    parts: { NOM_SG: "paroodia", GEN_SG: "paroodia", PART_SG: "paroodiat", NOM_PL: "paroodiad", PART_PL: "paroodiaid", GEN_PL: "paroodiate" },
     government: null,
     usages: ["„Don Quijote” on kirjutatud rüütliromaanide paroodiana.", "Õudusfilm deformeerub pikema aja jooksul tihti komöödiaks, täpsemalt iseenda paroodiaks.", "Annaks taevas, et Eesti riigist ei saaks riigi paroodiat."],
     note: "teose vm pilkav või humoorikas jäljendus",
@@ -7256,7 +7256,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "parool", gloss: "password", pos: "NOUN", cefr: "B1",
     ekilexWordId: 214082,
-    parts: { NOM_SG: "parool", GEN_SG: "parooli", PART_SG: "parooli", ILL_SG_SHORT: "parooli", PART_PL: "paroole", GEN_PL: "paroolide" },
+    parts: { NOM_SG: "parool", GEN_SG: "parooli", PART_SG: "parooli", ILL_SG_SHORT: "parooli", NOM_PL: "paroolid", PART_PL: "paroole", GEN_PL: "paroolide" },
     government: null,
     usages: ["Unustasin oma parooli ja ei saanud meile lugeda.", "Vaheta parool ära.", "„Jääaja“ dialoog koosneb paljudest USA filmidest tuntud paroolidest.", "Minu taga üks proua naeris kogu esimese vaatuse, paroolid olid väga head ja mõjusid värsketena."],
     note: "salajane sõna või väljend, mille abil saab tuvastada isikut (nt konkurssidel hindajate erapooletuse tagamiseks, teatavasse kohta pääsuks)",
@@ -7265,7 +7265,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "patsient", gloss: "patient", pos: "NOUN", cefr: "A2",
     ekilexWordId: 214416,
-    parts: { NOM_SG: "patsient", GEN_SG: "patsiendi", PART_SG: "patsienti", ILL_SG_SHORT: "patsienti", PART_PL: "patsiente", GEN_PL: "patsientide" },
+    parts: { NOM_SG: "patsient", GEN_SG: "patsiendi", PART_SG: "patsienti", ILL_SG_SHORT: "patsienti", NOM_PL: "patsiendid", PART_PL: "patsiente", GEN_PL: "patsientide" },
     government: null,
     usages: ["Patsient saadeti onkoloogi juurde järelkontrolli.", "Loomakliiniku peamised patsiendid on koerad ja kassid.", "Patsiendi seisund on paranenud."],
     note: "arstiabi tarvitaja, ravitav inimene (või loom)",
@@ -7274,7 +7274,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pea", gloss: "head", pos: "NOUN", cefr: "A1",
     ekilexWordId: 214506,
-    parts: { NOM_SG: "pea", GEN_SG: "pea", PART_SG: "pead", ILL_SG_SHORT: "pähe", PART_PL: "päid", GEN_PL: "peade" },
+    parts: { NOM_SG: "pea", GEN_SG: "pea", PART_SG: "pead", ILL_SG_SHORT: "pähe", NOM_PL: "pead", PART_PL: "päid", GEN_PL: "peade" },
     government: null,
     usages: ["Noogutas vastuseks pead.", "Kalle hüppas pea ees vette.", "Kits pööras pead ja vaatas meie poole.", "Mul hakkas pea valutama."],
     note: "inimese ja looma keha ülemine (hrl kerest kaelaga eraldatud) osa, kus paiknevad aju ja meeleelundid",
@@ -7292,7 +7292,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pealause", gloss: "main clause", pos: "NOUN", cefr: null,
     ekilexWordId: 214627,
-    parts: { NOM_SG: "pealause", GEN_SG: "pealause", PART_SG: "pealauset", PART_PL: "pealauseid", GEN_PL: "pealausete" },
+    parts: { NOM_SG: "pealause", GEN_SG: "pealause", PART_SG: "pealauset", NOM_PL: "pealaused", PART_PL: "pealauseid", GEN_PL: "pealausete" },
     government: null,
     usages: [],
     note: "(liitlauses:) osalause, mida täpsustab kõrvallause ning mis saab esineda iseseisva lausena (nt osa Ma ei tea lauses Ma ei tea, kas ma täna viitsin)",
@@ -7301,7 +7301,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pealkiri", gloss: "headline", pos: "NOUN", cefr: "B1",
     ekilexWordId: 214745,
-    parts: { NOM_SG: "pealkiri", GEN_SG: "pealkirja", PART_SG: "pealkirja", ILL_SG_SHORT: "pealkirja", PART_PL: "pealkirju", GEN_PL: "pealkirjade" },
+    parts: { NOM_SG: "pealkiri", GEN_SG: "pealkirja", PART_SG: "pealkirja", ILL_SG_SHORT: "pealkirja", NOM_PL: "pealkirjad", PART_PL: "pealkirju", GEN_PL: "pealkirjade" },
     government: null,
     usages: ["Luuletuse pealkiri on „Roos”.", "Nastja lappab lehti, loeb pealkirju, vaatab pilte."],
     note: "teose, kirjatöö või selle osa nimi või nimetus",
@@ -7319,7 +7319,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "peategelane", gloss: "protagonist", pos: "NOUN", cefr: null,
     ekilexWordId: 214894,
-    parts: { NOM_SG: "peategelane", GEN_SG: "peategelase", PART_SG: "peategelast", ILL_SG_SHORT: "peategelasse", PART_PL: "peategelasi", GEN_PL: "peategelaste" },
+    parts: { NOM_SG: "peategelane", GEN_SG: "peategelase", PART_SG: "peategelast", ILL_SG_SHORT: "peategelasse", NOM_PL: "peategelased", PART_PL: "peategelasi", GEN_PL: "peategelaste" },
     government: null,
     usages: ["Filmi peategelane on ketšua keelt kõnelev tüdruk Fausta."],
     note: "filmi, romaani vm teose olulisim tegelaskuju",
@@ -7337,7 +7337,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "peen", gloss: "subtle, fine", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 215051,
-    parts: { NOM_SG: "peen", GEN_SG: "peene", PART_SG: "peent", ILL_SG_SHORT: "peende", PART_PL: "peeni", GEN_PL: "peente" },
+    parts: { NOM_SG: "peen", GEN_SG: "peene", PART_SG: "peent", ILL_SG_SHORT: "peende", NOM_PL: "peened", PART_PL: "peeni", GEN_PL: "peente" },
     government: null,
     usages: ["Peen õbluke talje.", "Peened veresooned.", "Tükelda kapsas peenteks ribadeks.", "Kandsin peente triipudega pintsakut."],
     note: "suhteliselt väikese läbi- või ümbermõõduga",
@@ -7346,7 +7346,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pere", gloss: "family", pos: "NOUN", cefr: "A1",
     ekilexWordId: 215528,
-    parts: { NOM_SG: "pere", GEN_SG: "pere", PART_SG: "peret", ILL_SG_SHORT: "perre", PART_PL: "peresid", GEN_PL: "perede" },
+    parts: { NOM_SG: "pere", GEN_SG: "pere", PART_SG: "peret", ILL_SG_SHORT: "perre", NOM_PL: "pered", PART_PL: "peresid", GEN_PL: "perede" },
     government: null,
     usages: ["Lasterikkad pered.", "Mitu liiget teie peres on?", "Nende peres on viis last.", "Terve pere jäi haigeks."],
     note: "ühe majandusliku üksusena elavad vanemad ja lapsed",
@@ -7373,7 +7373,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pidu", gloss: "party", pos: "NOUN", cefr: "A1",
     ekilexWordId: 216104,
-    parts: { NOM_SG: "pidu", GEN_SG: "peo", PART_SG: "pidu", ILL_SG_SHORT: "pittu", PART_PL: "pidusid", GEN_PL: "pidude" },
+    parts: { NOM_SG: "pidu", GEN_SG: "peo", PART_SG: "pidu", ILL_SG_SHORT: "pittu", NOM_PL: "peod", PART_PL: "pidusid", GEN_PL: "pidude" },
     government: null,
     usages: ["Aastavahetuse pidu.", "Rannapargis peeti rahvarohkeid pidusid.", "Mis pidu see ilma tantsuta on!", "Peost pittu elulaad."],
     note: "seltskondlik koosviibimine hrl söökide-jookide ja meelelahutusega",
@@ -7382,7 +7382,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pidulik", gloss: "formal, ceremonious", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 216116,
-    parts: { NOM_SG: "pidulik", GEN_SG: "piduliku", PART_SG: "pidulikku", ILL_SG_SHORT: "pidulikku", PART_PL: "pidulikke", GEN_PL: "pidulike" },
+    parts: { NOM_SG: "pidulik", GEN_SG: "piduliku", PART_SG: "pidulikku", ILL_SG_SHORT: "pidulikku", NOM_PL: "pidulikud", PART_PL: "pidulikke", GEN_PL: "pidulike" },
     government: null,
     usages: ["Festivali pidulik avamine.", "Konverentsi lõpetas rektori pidulik vastuvõtt.", "Rahvas oli väga pidulikus meeleolus.", "Külalise auks korraldati pidulik õhtusöök."],
     note: "mingi sündmuse tähistamisega seotud, selle juurde kuuluv",
@@ -7391,7 +7391,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "piim", gloss: "milk", pos: "NOUN", cefr: "A1",
     ekilexWordId: 216378,
-    parts: { NOM_SG: "piim", GEN_SG: "piima", PART_SG: "piima", ILL_SG_SHORT: "piima", PART_PL: "piimu", GEN_PL: "piimade" },
+    parts: { NOM_SG: "piim", GEN_SG: "piima", PART_SG: "piima", ILL_SG_SHORT: "piima", NOM_PL: "piimad", PART_PL: "piimu", GEN_PL: "piimade" },
     government: null,
     usages: ["Vanasti sai laudast kruusiga lüpsisooja piima.", "Lehm annab piima.", "Kitsepiim.", "Pühvlipiim."],
     note: "toiduainena kasutatav valkjas vedelik, mida Eestis saadakse hrl lehmalt, muudel rahvastel ka lambalt, kaamelilt vm loomalt",
@@ -7400,7 +7400,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "piir", gloss: "border", pos: "NOUN", cefr: "A2",
     ekilexWordId: 216535,
-    parts: { NOM_SG: "piir", GEN_SG: "piiri", PART_SG: "piiri", ILL_SG_SHORT: "piiri", PART_PL: "piire", GEN_PL: "piiride" },
+    parts: { NOM_SG: "piir", GEN_SG: "piiri", PART_SG: "piiri", ILL_SG_SHORT: "piiri", NOM_PL: "piirid", PART_PL: "piire", GEN_PL: "piiride" },
     government: null,
     usages: ["Ületasime Saksa-Poola piiri.", "Narva asub Euroopa Liidu piiril.", "Talumaade piirid.", "Ületasime Leedu piiri."],
     note: "territooriume, piirkondi, valdusi vms eraldav kokkuleppeline joon (ja selle lähiala) maastikul või kaardil",
@@ -7409,7 +7409,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "piirang", gloss: "limitation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 216546,
-    parts: { NOM_SG: "piirang", GEN_SG: "piirangu", PART_SG: "piirangut", PART_PL: "piiranguid", GEN_PL: "piirangute" },
+    parts: { NOM_SG: "piirang", GEN_SG: "piirangu", PART_SG: "piirangut", NOM_PL: "piirangud", PART_PL: "piiranguid", GEN_PL: "piirangute" },
     government: null,
     usages: ["Alkoholimüügi piirangud.", "Raha kasutamise osas polnud mingeid piiranguid.", "Piirangud kehtestatakse, sest COVID-19 haigust põhjustava koroonaviiruse SARS-CoV-2 levik on Eestis kiiresti tõusnud.", "Piirangud kitsendavad projekti meeskonna võimalusi (PMBOK 2000, Sillaots, 2004)."],
     note: "midagi piirav, kitsendav tingimus",
@@ -7436,7 +7436,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "piiritletud", gloss: "delimited", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 216619,
-    parts: { NOM_SG: "piiritletud", GEN_SG: "piiritletu", PART_SG: "piiritletut", PART_PL: "piiritletuid", GEN_PL: "piiritletute" },
+    parts: { NOM_SG: "piiritletud", GEN_SG: "piiritletu", PART_SG: "piiritletut", NOM_PL: "piiritletud", PART_PL: "piiritletuid", GEN_PL: "piiritletute" },
     government: null,
     usages: ["Mõrumädaniku korral tekivad õunale teravalt piiritletud tumepruunid laigud."],
     note: "(erineva värvuse tõttu) selgepiiriliselt välja joonistuv",
@@ -7445,7 +7445,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "piirkondlik", gloss: "regional", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 216657,
-    parts: { NOM_SG: "piirkondlik", GEN_SG: "piirkondliku", PART_SG: "piirkondlikku", ILL_SG_SHORT: "piirkondlikku", PART_PL: "piirkondlikke", GEN_PL: "piirkondlike" },
+    parts: { NOM_SG: "piirkondlik", GEN_SG: "piirkondliku", PART_SG: "piirkondlikku", ILL_SG_SHORT: "piirkondlikku", NOM_PL: "piirkondlikud", PART_PL: "piirkondlikke", GEN_PL: "piirkondlike" },
     government: null,
     usages: ["Jõhvi piirkondlik häirekeskus.", "Otepääd esindas puhkpilliõpilaste konkursi piirkondlikus voorus kaheksa õpilast.", "Kesk-Aasia riikide piirkondlik integratsioon on nõrk.", "Piirkondlik erinevus palkade vahel."],
     note: "(mingit) piirkonda, regiooni hõlmav, selle piires toimiv või toimuv",
@@ -7454,7 +7454,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pikk", gloss: "long, tall", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 216842,
-    parts: { NOM_SG: "pikk", GEN_SG: "pika", PART_SG: "pikka", ILL_SG_SHORT: "pikka", PART_PL: "pikki", GEN_PL: "pikkade" },
+    parts: { NOM_SG: "pikk", GEN_SG: "pika", PART_SG: "pikka", ILL_SG_SHORT: "pikka", NOM_PL: "pikad", PART_PL: "pikki", GEN_PL: "pikkade" },
     government: null,
     usages: ["Tüdruk oli minust pool pead pikem.", "Pikad püksid.", "Järjekord pole pikk, aga liigub aeglaselt.", "Võtsime ette pika teekonna."],
     note: "püst- või rõhtsuunas suhteliselt suure ulatusega",
@@ -7463,7 +7463,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pilet", gloss: "ticket", pos: "NOUN", cefr: "A1",
     ekilexWordId: 216990,
-    parts: { NOM_SG: "pilet", GEN_SG: "pileti", PART_SG: "piletit", PART_PL: "pileteid", GEN_PL: "piletite" },
+    parts: { NOM_SG: "pilet", GEN_SG: "pileti", PART_SG: "piletit", NOM_PL: "piletid", PART_PL: "pileteid", GEN_PL: "piletite" },
     government: null,
     usages: ["Piletita sõitmise eest saab trahvi.", "Ühe otsa pilet.", "Kümne korra pilet.", "Äriklassi pilet."],
     note: "sõiduõigust tõendav dokument, millele hrl on märgitud selle kehtivusaeg, hind, koht sõidukis vms",
@@ -7472,7 +7472,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pilge", gloss: "mockery", pos: "NOUN", cefr: null,
     ekilexWordId: 217004,
-    parts: { NOM_SG: "pilge", GEN_SG: "pilke", PART_SG: "pilget", PART_PL: "pilkeid", GEN_PL: "pilgete" },
+    parts: { NOM_SG: "pilge", GEN_SG: "pilke", PART_SG: "pilget", NOM_PL: "pilked", PART_PL: "pilkeid", GEN_PL: "pilgete" },
     government: null,
     usages: ["See ei olnud pilkeks öeldud.", "Ta ei teinud pilgetest ja irvetest väljagi."],
     note: "üleolev, kahjurõõmus naljaheitmine millegi üle, kellegi (häbistav, mõnitav) narrimine",
@@ -7481,7 +7481,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pilt", gloss: "picture", pos: "NOUN", cefr: "A1",
     ekilexWordId: 217110,
-    parts: { NOM_SG: "pilt", GEN_SG: "pildi", PART_SG: "pilti", ILL_SG_SHORT: "pilti", PART_PL: "pilte", GEN_PL: "piltide" },
+    parts: { NOM_SG: "pilt", GEN_SG: "pildi", PART_SG: "pilti", ILL_SG_SHORT: "pilti", NOM_PL: "pildid", PART_PL: "pilte", GEN_PL: "piltide" },
     government: null,
     usages: ["Seinal rippus presidendi pilt.", "Laste joonistatud pildid.", "Värviliste piltidega raamat.", "Turistid klõpsisid pilte teha."],
     note: "käsitsi, optilisel teel või elektrooniliselt loodud tasapinnaline kujutis (nt joonistus, maal, foto)",
@@ -7490,7 +7490,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "piltlik", gloss: "figurative", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 217119,
-    parts: { NOM_SG: "piltlik", GEN_SG: "piltliku", PART_SG: "piltlikku", ILL_SG_SHORT: "piltlikku", PART_PL: "piltlikke", GEN_PL: "piltlike" },
+    parts: { NOM_SG: "piltlik", GEN_SG: "piltliku", PART_SG: "piltlikku", ILL_SG_SHORT: "piltlikku", NOM_PL: "piltlikud", PART_PL: "piltlikke", GEN_PL: "piltlike" },
     government: null,
     usages: ["Piltlik väljend.", "Lõngade värvimise piltlik õpetus."],
     note: "kujundeid kasutav või sisaldav",
@@ -7499,7 +7499,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pilv", gloss: "cloud", pos: "NOUN", cefr: "B1",
     ekilexWordId: 217144,
-    parts: { NOM_SG: "pilv", GEN_SG: "pilve", PART_SG: "pilve", ILL_SG_SHORT: "pilve", PART_PL: "pilvi", GEN_PL: "pilvede" },
+    parts: { NOM_SG: "pilv", GEN_SG: "pilve", PART_SG: "pilve", ILL_SG_SHORT: "pilve", NOM_PL: "pilved", PART_PL: "pilvi", GEN_PL: "pilvede" },
     government: null,
     usages: ["Taevas on kaetud madalate pilvedega.", "Päike kadus pilve taha.", "Tumedad pilved lähenevad, hakkab vihma sadama.", "Lamasin maas ja vaatasin pilvi."],
     note: "taevas nähtav valge või hall kogum, mis koosneb atmosfääris hõljuvatest pisikestest veepiiskadest või jääkristallidest",
@@ -7508,7 +7508,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pingutus", gloss: "effort", pos: "NOUN", cefr: "B2",
     ekilexWordId: 217368,
-    parts: { NOM_SG: "pingutus", GEN_SG: "pingutuse", PART_SG: "pingutust", ILL_SG_SHORT: "pingutusse", PART_PL: "pingutusi", GEN_PL: "pingutuste" },
+    parts: { NOM_SG: "pingutus", GEN_SG: "pingutuse", PART_SG: "pingutust", ILL_SG_SHORT: "pingutusse", NOM_PL: "pingutused", PART_PL: "pingutusi", GEN_PL: "pingutuste" },
     government: null,
     usages: ["Laenu tagasimaksmiseks tuleb teha suuri pingutusi.", "Iga püsivam suhe nõuab pingutust.", "Arstid on tal raske füüsilise pingutuse ära keelanud.", "Haige tõusis suure pingutusega püsti."],
     note: "jõu kokkuvõtmine, vaevanägemine millegi tegemiseks või saavutamiseks",
@@ -7517,7 +7517,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "plaan", gloss: "plan", pos: "NOUN", cefr: "A1",
     ekilexWordId: 217778,
-    parts: { NOM_SG: "plaan", GEN_SG: "plaani", PART_SG: "plaani", ILL_SG_SHORT: "plaani", PART_PL: "plaane", GEN_PL: "plaanide" },
+    parts: { NOM_SG: "plaan", GEN_SG: "plaani", PART_SG: "plaani", ILL_SG_SHORT: "plaani", NOM_PL: "plaanid", PART_PL: "plaane", GEN_PL: "plaanide" },
     government: null,
     usages: ["Mul on täna plaan teha lambalihahautist.", "Suvel on plaanis sõpradega mööda Eestit ringi sõita.", "Ülemusel olid uue töötajaga oma plaanid.", "Noormees on plaani võtnud ajateenistuse."],
     note: "see, mida mõeldakse teha või saavutada, mõttes tehtud otsus selle kohta",
@@ -7535,7 +7535,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "poeg", gloss: "son", pos: "NOUN", cefr: "A1",
     ekilexWordId: 218293,
-    parts: { NOM_SG: "poeg", GEN_SG: "poja", PART_SG: "poega", ILL_SG_SHORT: "poega", PART_PL: "poegi", GEN_PL: "poegade" },
+    parts: { NOM_SG: "poeg", GEN_SG: "poja", PART_SG: "poega", ILL_SG_SHORT: "poega", NOM_PL: "pojad", PART_PL: "poegi", GEN_PL: "poegade" },
     government: null,
     usages: ["Mardi peres on kaks teismelist poega.", "Kuningapoeg.", "Neil on kaks poega ja tütar.", "Paljud Eestimaa pojad ja tütred põgenesid kommunistide eest Läände."],
     note: "meesisik oma vanema(te) suhtes, otsene meessoost järglane",
@@ -7544,7 +7544,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "poleemika", gloss: "polemic", pos: "NOUN", cefr: "B2",
     ekilexWordId: 218460,
-    parts: { NOM_SG: "poleemika", GEN_SG: "poleemika", PART_SG: "poleemikat", PART_PL: "poleemikaid", GEN_PL: "poleemikate" },
+    parts: { NOM_SG: "poleemika", GEN_SG: "poleemika", PART_SG: "poleemikat", NOM_PL: "poleemikad", PART_PL: "poleemikaid", GEN_PL: "poleemikate" },
     government: null,
     usages: ["Relvade müük Soomes on tekitanud poleemikat.", "Omaaegne poleemika kõlblusküsimustes."],
     note: "hrl publitsistlikku või teaduslikku laadi avalik vaidlus, väitlus",
@@ -7553,7 +7553,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "poliitik", gloss: "politician", pos: "NOUN", cefr: "A2",
     ekilexWordId: 218494,
-    parts: { NOM_SG: "poliitik", GEN_SG: "poliitiku", PART_SG: "poliitikut", PART_PL: "poliitikuid", GEN_PL: "poliitikute" },
+    parts: { NOM_SG: "poliitik", GEN_SG: "poliitiku", PART_SG: "poliitikut", NOM_PL: "poliitikud", PART_PL: "poliitikuid", GEN_PL: "poliitikute" },
     government: null,
     usages: ["Jaan Kaplinski tegutses pikka aega poliitikuna, esindas rahvast ka Riigikogus.", "Tänapäeval annavad poliitikute seas tooni inimesed, kes ei ole peale poliitika muud tööd teinudki.", "Naine lausus, et ta ei lahku poliitikast, vaid ainult palgalise poliitiku kohalt.", "Teledebatil läksid poliitikud peaaegu kähmlema."],
     note: "poliitikas tegutsev inimene, kes hrl töötab poliitilisel ametikohal (nt rahvaasemikuna)",
@@ -7562,7 +7562,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pood", gloss: "shop", pos: "NOUN", cefr: "A1",
     ekilexWordId: 218753,
-    parts: { NOM_SG: "pood", GEN_SG: "poe", PART_SG: "poodi", ILL_SG_SHORT: "poodi", PART_PL: "poode", GEN_PL: "poodide" },
+    parts: { NOM_SG: "pood", GEN_SG: "poe", PART_SG: "poodi", ILL_SG_SHORT: "poodi", NOM_PL: "poed", PART_PL: "poode", GEN_PL: "poodide" },
     government: null,
     usages: ["Mindi poodi joogi järele.", "Autopood.", "Suveniiripood.", "Muusikapood."],
     note: "ettevõte, kus müüakse (teatavat liiki) kaupu või teenuseid",
@@ -7571,7 +7571,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pool", gloss: "half", pos: "NOUN", cefr: "A1",
     ekilexWordId: 218778,
-    parts: { NOM_SG: "pool", GEN_SG: "poole", PART_SG: "poolt", ILL_SG_SHORT: "poolde", PART_PL: "pooli", GEN_PL: "poolte" },
+    parts: { NOM_SG: "pool", GEN_SG: "poole", PART_SG: "poolt", ILL_SG_SHORT: "poolde", NOM_PL: "pooled", PART_PL: "pooli", GEN_PL: "poolte" },
     government: null,
     usages: ["Pool miljonit.", "Ostsin pool kilo õunu.", "Koosolek kestis pool tundi (= 30 minutit).", "Müüa pool maja."],
     note: "murdarv 1/2, üks kahest võrdselt jagatud osast",
@@ -7580,7 +7580,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "portsjon", gloss: "portion", pos: "NOUN", cefr: "B2",
     ekilexWordId: 219266,
-    parts: { NOM_SG: "portsjon", GEN_SG: "portsjoni", PART_SG: "portsjonit", PART_PL: "portsjoneid", GEN_PL: "portsjonite" },
+    parts: { NOM_SG: "portsjon", GEN_SG: "portsjoni", PART_SG: "portsjonit", NOM_PL: "portsjonid", PART_PL: "portsjoneid", GEN_PL: "portsjonite" },
     government: null,
     usages: ["Toiduportsjon.", "Kokk lõikab liha portsjoniteks.", "Läänest on siiapoole teel paras portsjon sooja ja niisket õhku."],
     note: "kindlamõõduline kogus toiduainet, mida antakse või kasutatakse korraga",
@@ -7589,7 +7589,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "post", gloss: "post, mail", pos: "NOUN", cefr: "A2",
     ekilexWordId: 219321,
-    parts: { NOM_SG: "post", GEN_SG: "posti", PART_SG: "posti", ILL_SG_SHORT: "posti", PART_PL: "poste", GEN_PL: "postide" },
+    parts: { NOM_SG: "post", GEN_SG: "posti", PART_SG: "posti", ILL_SG_SHORT: "posti", NOM_PL: "postid", PART_PL: "poste", GEN_PL: "postide" },
     government: null,
     usages: ["Diplomaatiline post.", "Posti kojukanne.", "Tänast posti pole ma veel näinud.", "Elektrooniline post."],
     note: "kirjad, ajalehed vm postisaadetised",
@@ -7616,7 +7616,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "privaatsus", gloss: "privacy", pos: "NOUN", cefr: "B2",
     ekilexWordId: 219915,
-    parts: { NOM_SG: "privaatsus", GEN_SG: "privaatsuse", PART_SG: "privaatsust", ILL_SG_SHORT: "privaatsusse", PART_PL: "privaatsusi", GEN_PL: "privaatsuste" },
+    parts: { NOM_SG: "privaatsus", GEN_SG: "privaatsuse", PART_SG: "privaatsust", ILL_SG_SHORT: "privaatsusse", NOM_PL: "privaatsused", PART_PL: "privaatsusi", GEN_PL: "privaatsuste" },
     government: null,
     usages: ["Infoajastul pole kuigipalju privaatsust.", "Privaatsuse ohustajana tajutakse internetis teadmatust, kes mida andmetega teeb."],
     note: "vabadus teha asju, ilma et teised sind jälgiksid või teaksid, mida sa teed",
@@ -7625,7 +7625,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "probleem", gloss: "problem", pos: "NOUN", cefr: "A2",
     ekilexWordId: 219925,
-    parts: { NOM_SG: "probleem", GEN_SG: "probleemi", PART_SG: "probleemi", ILL_SG_SHORT: "probleemi", PART_PL: "probleeme", GEN_PL: "probleemide" },
+    parts: { NOM_SG: "probleem", GEN_SG: "probleemi", PART_SG: "probleemi", ILL_SG_SHORT: "probleemi", NOM_PL: "probleemid", PART_PL: "probleeme", GEN_PL: "probleemide" },
     government: null,
     usages: ["Tehnilised probleemid.", "Tal on suhtlemisega probleeme.", "Naistearsti vahetada pole mingi probleem.", "Keskkonnaprobleemid."],
     note: "midagi takistav, muret tekitav asjaolu või olukord, mis vajab lahendust ja millega tuleb tegelda",
@@ -7634,7 +7634,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "projekt", gloss: "project", pos: "NOUN", cefr: "A2",
     ekilexWordId: 220040,
-    parts: { NOM_SG: "projekt", GEN_SG: "projekti", PART_SG: "projekti", ILL_SG_SHORT: "projekti", PART_PL: "projekte", GEN_PL: "projektide" },
+    parts: { NOM_SG: "projekt", GEN_SG: "projekti", PART_SG: "projekti", ILL_SG_SHORT: "projekti", NOM_PL: "projektid", PART_PL: "projekte", GEN_PL: "projektide" },
     government: null,
     usages: ["Eesti teadlaste edukus rahvusvahelistes projektides.", "Novembris selgub, kas projekti rahastatakse.", "Koostööprojekt.", "Instituut osaleb mitmes rahvusvahelises projektis."],
     note: "hoolikalt planeeritud ja välja töötatud, hrl taotletava rahastusega ettevõtmine mingi konkreetse eesmärgi tähtaegseks saavutamiseks",
@@ -7643,7 +7643,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "proosa", gloss: "prose", pos: "NOUN", cefr: "B2",
     ekilexWordId: 220144,
-    parts: { NOM_SG: "proosa", GEN_SG: "proosa", PART_SG: "proosat", PART_PL: "proosasid", GEN_PL: "proosade" },
+    parts: { NOM_SG: "proosa", GEN_SG: "proosa", PART_SG: "proosat", NOM_PL: "proosad", PART_PL: "proosasid", GEN_PL: "proosade" },
     government: null,
     usages: ["Tegemist on nn autobiograafilise proosaga.", "Ilukirjandusliku proosa aastapreemia.", "Lühiproosa.", "Lasteproosa."],
     note: "kirjanduse osa, millel pole teksti erilist liigendust ning mis hrl on kirjutatud järjestikuse tekstina (nt jutustus, novell, romaan)",
@@ -7661,7 +7661,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "prototüüp", gloss: "prototype", pos: "NOUN", cefr: "B2",
     ekilexWordId: 220350,
-    parts: { NOM_SG: "prototüüp", GEN_SG: "prototüübi", PART_SG: "prototüüpi", ILL_SG_SHORT: "prototüüpi", PART_PL: "prototüüpe", GEN_PL: "prototüüpide" },
+    parts: { NOM_SG: "prototüüp", GEN_SG: "prototüübi", PART_SG: "prototüüpi", ILL_SG_SHORT: "prototüüpi", NOM_PL: "prototüübid", PART_PL: "prototüüpe", GEN_PL: "prototüüpide" },
     government: null,
     usages: ["USAs on valmis saanud esimese lendava auto prototüüp.", "Veebirakenduse prototüüp.", "Uudse jõujaama prototüüp ehitatakse Oslo fjordi lõunaossa.", "Dracula prototüüp on 15 . sajandil tollases Valahhias elanud prints Vlad Tepes."],
     note: "masina, seadme või mingi rakenduse esialgne teostus, algne mudel, mida hrl edasi arendatakse",
@@ -7670,7 +7670,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "protsent", gloss: "per cent", pos: "NOUN", cefr: "A2",
     ekilexWordId: 220366,
-    parts: { NOM_SG: "protsent", GEN_SG: "protsendi", PART_SG: "protsenti", ILL_SG_SHORT: "protsenti", PART_PL: "protsente", GEN_PL: "protsentide" },
+    parts: { NOM_SG: "protsent", GEN_SG: "protsendi", PART_SG: "protsenti", ILL_SG_SHORT: "protsenti", NOM_PL: "protsendid", PART_PL: "protsente", GEN_PL: "protsentide" },
     government: null,
     usages: ["Leib läks viis protsenti kallimaks.", "90% publikust olid mehed.", "Üürivõlgnike protsent on ühe juures.", "Bert laenas talle kümne protsendiga raha."],
     note: "üks sajandik tervikust (nt arvust, kogumist) (tähis %)",
@@ -7679,7 +7679,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "provokatiivne", gloss: "provocative", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 220404,
-    parts: { NOM_SG: "provokatiivne", GEN_SG: "provokatiivse", PART_SG: "provokatiivset", PART_PL: "provokatiivseid", GEN_PL: "provokatiivsete" },
+    parts: { NOM_SG: "provokatiivne", GEN_SG: "provokatiivse", PART_SG: "provokatiivset", NOM_PL: "provokatiivsed", PART_PL: "provokatiivseid", GEN_PL: "provokatiivsete" },
     government: null,
     usages: ["Nii mõnigi patriootlikuna näiv tegu on tehtud provokatiivsel eesmärgil.", "Kumbki pool peab teise käitumist provokatiivseks.", "Ajakirjanik esitas lauljale provokatiivseid küsimusi eraelu kohta."],
     note: "(reetlikult) millelegi õhutav, sihilikult vastaspoole reaktsiooni esile kutsuv",
@@ -7688,7 +7688,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "provokatsioon", gloss: "provocation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 220405,
-    parts: { NOM_SG: "provokatsioon", GEN_SG: "provokatsiooni", PART_SG: "provokatsiooni", ILL_SG_SHORT: "provokatsiooni", PART_PL: "provokatsioone", GEN_PL: "provokatsioonide" },
+    parts: { NOM_SG: "provokatsioon", GEN_SG: "provokatsiooni", PART_SG: "provokatsiooni", ILL_SG_SHORT: "provokatsiooni", NOM_PL: "provokatsioonid", PART_PL: "provokatsioone", GEN_PL: "provokatsioonide" },
     government: null,
     usages: ["Eksperdid soovitavad Vene meedia provokatsioonidele mitte alluda.", "Põhja-Korea sõjalised provokatsioonid."],
     note: "väär info, korraldatud sündmus vm, mille eesmärk on poliitilise vastase reetlik õhutamine tegudele, mis võivad tollele hukatuslikuks saada",
@@ -7697,7 +7697,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pruun", gloss: "brown", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 220446,
-    parts: { NOM_SG: "pruun", GEN_SG: "pruuni", PART_SG: "pruuni", ILL_SG_SHORT: "pruuni", PART_PL: "pruune", GEN_PL: "pruunide" },
+    parts: { NOM_SG: "pruun", GEN_SG: "pruuni", PART_SG: "pruuni", ILL_SG_SHORT: "pruuni", NOM_PL: "pruunid", PART_PL: "pruune", GEN_PL: "pruunide" },
     government: null,
     usages: ["Päike annab nahale kauni pruuni jume.", "Pruun ja valge suhkur.", "Helepruun.", "Tumepruun."],
     note: "kastanimuna, leiva, šokolaadi värvi",
@@ -7706,7 +7706,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "prügi", gloss: "rubbish", pos: "NOUN", cefr: "B1",
     ekilexWordId: 220495,
-    parts: { NOM_SG: "prügi", GEN_SG: "prügi", PART_SG: "prügi", PART_PL: "prügisid", GEN_PL: "prügide" },
+    parts: { NOM_SG: "prügi", GEN_SG: "prügi", PART_SG: "prügi", NOM_PL: "prügid", PART_PL: "prügisid", GEN_PL: "prügide" },
     government: null,
     usages: ["Prügi mahapanek keelatud!", "Kogu seda prügi on liiga palju.", "Vii prügi välja!", "See ämber on prügi jaoks."],
     note: "millegi räpased, reostavad jäätmed, tarbetu kraam või koli",
@@ -7715,7 +7715,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "publik", gloss: "audience", pos: "NOUN", cefr: "A2",
     ekilexWordId: 220640,
-    parts: { NOM_SG: "publik", GEN_SG: "publiku", PART_SG: "publikut", PART_PL: "publikuid", GEN_PL: "publikute" },
+    parts: { NOM_SG: "publik", GEN_SG: "publiku", PART_SG: "publikut", NOM_PL: "publikud", PART_PL: "publikuid", GEN_PL: "publikute" },
     government: null,
     usages: ["Etenduse lõppedes seisis publik püsti ja plaksutas ennastunustavalt.", "Teatripublik.", "Kontserdipublik.", "Korvpallipublik."],
     note: "etenduse, kontserdi, võistluse vm ürituse pealtvaatajad",
@@ -7724,7 +7724,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "publikatsioon", gloss: "publication", pos: "NOUN", cefr: "B2",
     ekilexWordId: 220641,
-    parts: { NOM_SG: "publikatsioon", GEN_SG: "publikatsiooni", PART_SG: "publikatsiooni", ILL_SG_SHORT: "publikatsiooni", PART_PL: "publikatsioone", GEN_PL: "publikatsioonide" },
+    parts: { NOM_SG: "publikatsioon", GEN_SG: "publikatsiooni", PART_SG: "publikatsiooni", ILL_SG_SHORT: "publikatsiooni", NOM_PL: "publikatsioonid", PART_PL: "publikatsioone", GEN_PL: "publikatsioonide" },
     government: null,
     usages: ["Teaduslik publikatsioon.", "Töö tulemuseks on kaks publikatsiooni."],
     note: "trükis, internetis vm viisil avaldatud hrl teaduslik tekst (nt artikkel, raamat)",
@@ -7733,7 +7733,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "puhas", gloss: "clean", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 220754,
-    parts: { NOM_SG: "puhas", GEN_SG: "puhta", PART_SG: "puhast", PART_PL: "puhtaid", GEN_PL: "puhaste" },
+    parts: { NOM_SG: "puhas", GEN_SG: "puhta", PART_SG: "puhast", NOM_PL: "puhtad", PART_PL: "puhtaid", GEN_PL: "puhaste" },
     government: null,
     usages: ["Peske käed puhtaks.", "Panin voodisse puhtad linad.", "Puhas õhk, puhas vesi ja vaikus on väärtused omaette.", "Panin puhtad riided selga."],
     note: "selline, kus pole mustust, prahti vms",
@@ -7742,7 +7742,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "puhkepäev", gloss: "day off", pos: "NOUN", cefr: "A2",
     ekilexWordId: 220851,
-    parts: { NOM_SG: "puhkepäev", GEN_SG: "puhkepäeva", PART_SG: "puhkepäeva", ILL_SG_SHORT: "puhkepäeva", PART_PL: "puhkepäevi", GEN_PL: "puhkepäevade" },
+    parts: { NOM_SG: "puhkepäev", GEN_SG: "puhkepäeva", PART_SG: "puhkepäeva", ILL_SG_SHORT: "puhkepäeva", NOM_PL: "puhkepäevad", PART_PL: "puhkepäevi", GEN_PL: "puhkepäevade" },
     government: null,
     usages: ["Üldised puhkepäevad on laupäev ja pühapäev.", "Praegu oleme Rumeenias ja homme plaanime rannikut pidi Varnasse jõuda, kus teeme esimese puhkepäeva.", "Laupäev ja pühapäev on meie firmas puhkepäevad.", "Teenistujal on kahe puhkepäevaga viiepäevane töönädal."],
     note: "(nädala)päev, mil töötaja on tööülesannetest vaba (ja asutus suletud)",
@@ -7751,7 +7751,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "puhkus", gloss: "holiday, leave", pos: "NOUN", cefr: "A1",
     ekilexWordId: 220866,
-    parts: { NOM_SG: "puhkus", GEN_SG: "puhkuse", PART_SG: "puhkust", ILL_SG_SHORT: "puhkusse", PART_PL: "puhkusi", GEN_PL: "puhkuste" },
+    parts: { NOM_SG: "puhkus", GEN_SG: "puhkuse", PART_SG: "puhkust", ILL_SG_SHORT: "puhkusse", NOM_PL: "puhkused", PART_PL: "puhkusi", GEN_PL: "puhkuste" },
     government: null,
     usages: ["Suurimad kinosõbrad võtavad PÖFF-i ajaks puhkuse.", "Palgata puhkus.", "25. juulist 12. augustini olen puhkusel.", "Direktor on puhkusel."],
     note: "ajavahemik, mil töötaja on tööülesannetest vaba ja pole tööl",
@@ -7760,7 +7760,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "punane", gloss: "red", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 221303,
-    parts: { NOM_SG: "punane", GEN_SG: "punase", PART_SG: "punast", PART_PL: "punaseid", GEN_PL: "punaste" },
+    parts: { NOM_SG: "punane", GEN_SG: "punase", PART_SG: "punast", NOM_PL: "punased", PART_PL: "punaseid", GEN_PL: "punaste" },
     government: null,
     usages: ["Punastest tellistest maja.", "Punane vein.", "Poiss läks näost punaseks.", "Tumepunane."],
     note: "maasikate, vere värvi, spektris otsa peal oranži kõrval",
@@ -7769,7 +7769,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "puu", gloss: "tree", pos: "NOUN", cefr: "A1",
     ekilexWordId: 221799,
-    parts: { NOM_SG: "puu", GEN_SG: "puu", PART_SG: "puud", PART_PL: "puid", GEN_PL: "puude" },
+    parts: { NOM_SG: "puu", GEN_SG: "puu", PART_SG: "puud", NOM_PL: "puud", PART_PL: "puid", GEN_PL: "puude" },
     government: null,
     usages: ["Ahvid elavad puu otsas.", "Metsas on kohti, kus puud ei kasva.", "Päike hakkab puude taha vajuma.", "Maja ümber kasvavad kõrged puud."],
     note: "kõva ja jäiga tüve ning hargnevate okstega pikaealine kõrge taim",
@@ -7778,7 +7778,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "puuvili", gloss: "fruit", pos: "NOUN", cefr: "A2",
     ekilexWordId: 222111,
-    parts: { NOM_SG: "puuvili", GEN_SG: "puuvilja", PART_SG: "puuvilja", ILL_SG_SHORT: "puuvilja", PART_PL: "puuvilju", GEN_PL: "puuviljade" },
+    parts: { NOM_SG: "puuvili", GEN_SG: "puuvilja", PART_SG: "puuvilja", ILL_SG_SHORT: "puuvilja", NOM_PL: "puuviljad", PART_PL: "puuvilju", GEN_PL: "puuviljade" },
     government: null,
     usages: ["Puuviljades ja juurviljades on palju vitamiine.", "Eksootilised puuviljad.", "Puuviljadena käsitatakse käesoleva määruse tähenduses ka marju."],
     note: "toiduks tarvitatav viljapuu vili, nt õun, ploom, pirn",
@@ -7787,7 +7787,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "põhimõte", gloss: "principle", pos: "NOUN", cefr: "A2",
     ekilexWordId: 222277,
-    parts: { NOM_SG: "põhimõte", GEN_SG: "põhimõtte", PART_SG: "põhimõtet", PART_PL: "põhimõtteid", GEN_PL: "põhimõtete" },
+    parts: { NOM_SG: "põhimõte", GEN_SG: "põhimõtte", PART_SG: "põhimõtet", NOM_PL: "põhimõtted", PART_PL: "põhimõtteid", GEN_PL: "põhimõtete" },
     government: null,
     usages: ["Tööjõu vaba liikumise põhimõte.", "Sõnaraamatu koostamise põhimõtted.", "Lähtusin põhimõttest, et topelt ei kärise.", "Lähtusin põhimõttest, et ela ise ja lase ka teistel elada."],
     note: "millegi aluseks olev kindel idee, sisemine hoiak või seisukoht",
@@ -7796,7 +7796,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "põhjalik", gloss: "thorough", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 222431,
-    parts: { NOM_SG: "põhjalik", GEN_SG: "põhjaliku", PART_SG: "põhjalikku", ILL_SG_SHORT: "põhjalikku", PART_PL: "põhjalikke", GEN_PL: "põhjalike" },
+    parts: { NOM_SG: "põhjalik", GEN_SG: "põhjaliku", PART_SG: "põhjalikku", ILL_SG_SHORT: "põhjalikku", NOM_PL: "põhjalikud", PART_PL: "põhjalikke", GEN_PL: "põhjalike" },
     government: null,
     usages: ["Kõiges põhjalik inimene.", "Tänan pika ja põhjaliku vastuse eest!", "Hoone vajab põhjalikku renoveerimist.", "Ta andis olukorrast põhjaliku ülevaate."],
     note: "millegi olemusse sügavuti tungiv",
@@ -7814,7 +7814,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "põhjendus", gloss: "justification", pos: "NOUN", cefr: "B1",
     ekilexWordId: 222521,
-    parts: { NOM_SG: "põhjendus", GEN_SG: "põhjenduse", PART_SG: "põhjendust", ILL_SG_SHORT: "põhjendusse", PART_PL: "põhjendusi", GEN_PL: "põhjenduste" },
+    parts: { NOM_SG: "põhjendus", GEN_SG: "põhjenduse", PART_SG: "põhjendust", ILL_SG_SHORT: "põhjendusse", NOM_PL: "põhjendused", PART_PL: "põhjendusi", GEN_PL: "põhjenduste" },
     government: null,
     usages: ["Tal on oma käitumisele alati veenev põhjendus.", "Kehakaalu rubriigist leiab põhjendusi, miks dieedid ei toimi.", "Sellisele teole on raske loogilist põhjendust leida."],
     note: "faktidel või loogikal rajanev seletus või õigustus",
@@ -7823,7 +7823,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "põhjus", gloss: "reason, cause", pos: "NOUN", cefr: "A2",
     ekilexWordId: 222522,
-    parts: { NOM_SG: "põhjus", GEN_SG: "põhjuse", PART_SG: "põhjust", ILL_SG_SHORT: "põhjusse", PART_PL: "põhjusi", GEN_PL: "põhjuste" },
+    parts: { NOM_SG: "põhjus", GEN_SG: "põhjuse", PART_SG: "põhjust", ILL_SG_SHORT: "põhjusse", NOM_PL: "põhjused", PART_PL: "põhjusi", GEN_PL: "põhjuste" },
     government: null,
     usages: ["Surma põhjuse selgitab ekspertiis.", "Usulistel või poliitilistel põhjustel kodumaalt lahkunud inimesed.", "Põhjuseta puudumiste pärast tuli koolis pahandusi.", "Tulekahju põhjus ei ole teada."],
     note: "asjaolu, nähtus, tegu, mis kutsub esile mingi teise asjaolu, nähtuse, teo",
@@ -7841,7 +7841,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "põlvkond", gloss: "generation", pos: "NOUN", cefr: "B1",
     ekilexWordId: 222945,
-    parts: { NOM_SG: "põlvkond", GEN_SG: "põlvkonna", PART_SG: "põlvkonda", ILL_SG_SHORT: "põlvkonda", PART_PL: "põlvkondi", GEN_PL: "põlvkondade" },
+    parts: { NOM_SG: "põlvkond", GEN_SG: "põlvkonna", PART_SG: "põlvkonda", ILL_SG_SHORT: "põlvkonda", NOM_PL: "põlvkonnad", PART_PL: "põlvkondi", GEN_PL: "põlvkondade" },
     government: null,
     usages: ["Sõjajärgne põlvkond.", "Beebibuumi põlvkond.", "Üles on kasvanud uus põlvkond muusikuid.", "Internetipõlvkond."],
     note: "samaaegselt elavad või elanud lähedase vanusega (ja lähedase tegevusala või elukogemusega) inimesed",
@@ -7850,7 +7850,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "põlvkondlik", gloss: "generational", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 222947,
-    parts: { NOM_SG: "põlvkondlik", GEN_SG: "põlvkondliku", PART_SG: "põlvkondlikku", ILL_SG_SHORT: "põlvkondlikku", PART_PL: "põlvkondlikke", GEN_PL: "põlvkondlike" },
+    parts: { NOM_SG: "põlvkondlik", GEN_SG: "põlvkondliku", PART_SG: "põlvkondlikku", ILL_SG_SHORT: "põlvkondlikku", NOM_PL: "põlvkondlikud", PART_PL: "põlvkondlikke", GEN_PL: "põlvkondlike" },
     government: null,
     usages: ["Erineva tausta ja põlvkondliku kuuluvusega kunstnikud."],
     note: "põlvkonnaga või põlvkondadega seotud, põlvkonnas või põlvkondades avalduv",
@@ -7859,7 +7859,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "põrand", gloss: "floor", pos: "NOUN", cefr: "A1",
     ekilexWordId: 223006,
-    parts: { NOM_SG: "põrand", GEN_SG: "põranda", PART_SG: "põrandat", PART_PL: "põrandaid", GEN_PL: "põrandate" },
+    parts: { NOM_SG: "põrand", GEN_SG: "põranda", PART_SG: "põrandat", NOM_PL: "põrandad", PART_PL: "põrandaid", GEN_PL: "põrandate" },
     government: null,
     usages: ["Koristaja peseb põrandat.", "Pesemisruum on köetava põrandaga.", "Puitpõrand.", "Kivipõrand."],
     note: "ruumi või ehitise alumine sisepind, millele toetuvad nt seadmed ja mööbel",
@@ -7868,7 +7868,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "päev", gloss: "day", pos: "NOUN", cefr: "A1",
     ekilexWordId: 223227,
-    parts: { NOM_SG: "päev", GEN_SG: "päeva", PART_SG: "päeva", ILL_SG_SHORT: "päeva", PART_PL: "päevi", GEN_PL: "päevade" },
+    parts: { NOM_SG: "päev", GEN_SG: "päeva", PART_SG: "päeva", ILL_SG_SHORT: "päeva", NOM_PL: "päevad", PART_PL: "päevi", GEN_PL: "päevade" },
     government: null,
     usages: ["Aprillis on 30 päeva.", "Laps on neli päeva vana.", "Põdrakarjustelt kuulsime, et mereni on umbes nelja päeva teekond.", "Aastas on 365 päeva."],
     note: "24 tundi kestev ajavahemik (keskööst keskööni või ebamäärasemalt)",
@@ -7877,7 +7877,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "päike", gloss: "sun", pos: "NOUN", cefr: "A1",
     ekilexWordId: 223416,
-    parts: { NOM_SG: "päike", GEN_SG: "päikese", PART_SG: "päikest", ILL_SG_SHORT: "päikesse", PART_PL: "päikesi", GEN_PL: "päikeste" },
+    parts: { NOM_SG: "päike", GEN_SG: "päikese", PART_SG: "päikest", ILL_SG_SHORT: "päikesse", NOM_PL: "päikesed", PART_PL: "päikesi", GEN_PL: "päikeste" },
     government: null,
     usages: ["Päike hakkas loojuma.", "Mis kell päike tõuseb?", "Vananaistesuve päike laskub kiiresti madalale ega anna enam lagedalgi sooja", "Taevas särab päike."],
     note: "heledaim suur täht, taevakeha, mis annab maakerale valgust ja sooja",
@@ -7886,7 +7886,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pärand", gloss: "heritage", pos: "NOUN", cefr: "B2",
     ekilexWordId: 223604,
-    parts: { NOM_SG: "pärand", GEN_SG: "pärandi", PART_SG: "pärandit", PART_PL: "pärandeid", GEN_PL: "pärandite" },
+    parts: { NOM_SG: "pärand", GEN_SG: "pärandi", PART_SG: "pärandit", NOM_PL: "pärandid", PART_PL: "pärandeid", GEN_PL: "pärandite" },
     government: null,
     usages: ["Steinbergide pärand kuulub mulle.", "Ta sai vanaemalt pärandiks korteri.", "Tütar jäi isa pärandist ilma.", "Mis on Noor-Eesti tõeline pärand?"],
     note: "testamendiga, pärimislepinguga või seadusega kellelegi pärandatud või pärandatav vara, õigused vm",
@@ -7913,7 +7913,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pöördepunkt", gloss: "turning point", pos: "NOUN", cefr: "B2",
     ekilexWordId: 224037,
-    parts: { NOM_SG: "pöördepunkt", GEN_SG: "pöördepunkti", PART_SG: "pöördepunkti", ILL_SG_SHORT: "pöördepunkti", PART_PL: "pöördepunkte", GEN_PL: "pöördepunktide" },
+    parts: { NOM_SG: "pöördepunkt", GEN_SG: "pöördepunkti", PART_SG: "pöördepunkti", ILL_SG_SHORT: "pöördepunkti", NOM_PL: "pöördepunktid", PART_PL: "pöördepunkte", GEN_PL: "pöördepunktide" },
     government: null,
     usages: ["Ajaloo pöördepunktid.", "Lapse sünd oli tema elu pöördepunkt."],
     note: "suurt muutust toov, murranguline ajalõik või sündmus",
@@ -7922,7 +7922,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "pühapäev", gloss: "Sunday", pos: "NOUN", cefr: "A1",
     ekilexWordId: 224184,
-    parts: { NOM_SG: "pühapäev", GEN_SG: "pühapäeva", PART_SG: "pühapäeva", ILL_SG_SHORT: "pühapäeva", PART_PL: "pühapäevi", GEN_PL: "pühapäevade" },
+    parts: { NOM_SG: "pühapäev", GEN_SG: "pühapäeva", PART_SG: "pühapäeva", ILL_SG_SHORT: "pühapäeva", NOM_PL: "pühapäevad", PART_PL: "pühapäevi", GEN_PL: "pühapäevade" },
     government: null,
     usages: ["Pühapäeval saab kauem magada.", "Järgmine mäng leiab aset pühapäeval, 31. mail.", "Vanasti oli iga pühapäev ülestõusmispüha ja iga reede suur reede."],
     note: "nädala 7. päev, laupäevale järgnev ja esmaspäevale eelnev päev",
@@ -7931,7 +7931,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "püksid", gloss: "trousers", pos: "NOUN", cefr: "A2",
     ekilexWordId: 224244,
-    parts: { NOM_SG: "püks", GEN_SG: "püksi", PART_SG: "püksi", ILL_SG_SHORT: "püksi", PART_PL: "pükse", GEN_PL: "pükste" },
+    parts: { NOM_SG: "püks", GEN_SG: "püksi", PART_SG: "püksi", ILL_SG_SHORT: "püksi", NOM_PL: "püksid", PART_PL: "pükse", GEN_PL: "pükste" },
     government: null,
     usages: ["Pikad püksid.", "Lühikesed püksid.", "Tõmbasin püksid jalga.", "Velvetpüksid."],
     note: "vöölt jalgadeni ulatuv, jalgu kahe (pika või lühema) haruna ümbritsev riideese, mida kannavad nii mehed kui naised",
@@ -7940,7 +7940,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "püsiühend", gloss: "fixed expression", pos: "NOUN", cefr: null,
     ekilexWordId: 224390,
-    parts: { NOM_SG: "püsiühend", GEN_SG: "püsiühendi", PART_SG: "püsiühendit", PART_PL: "püsiühendeid", GEN_PL: "püsiühendite" },
+    parts: { NOM_SG: "püsiühend", GEN_SG: "püsiühendi", PART_SG: "püsiühendit", NOM_PL: "püsiühendid", PART_PL: "püsiühendeid", GEN_PL: "püsiühendite" },
     government: null,
     usages: ["Kadri on uurinud verbi ja noomeni püsiühendeid eesti keeles."],
     note: "püsiv tavapärane sõnade ühend keeles (nt avalik õigus, muljet avaldama)",
@@ -7976,7 +7976,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "raamat", gloss: "book", pos: "NOUN", cefr: "A1",
     ekilexWordId: 224712,
-    parts: { NOM_SG: "raamat", GEN_SG: "raamatu", PART_SG: "raamatut", PART_PL: "raamatuid", GEN_PL: "raamatute" },
+    parts: { NOM_SG: "raamat", GEN_SG: "raamatu", PART_SG: "raamatut", NOM_PL: "raamatud", PART_PL: "raamatuid", GEN_PL: "raamatute" },
     government: null,
     usages: ["Käsikiri ilmus raamatuna alles pärast autori surma.", "Mulle meeldib raamatuid lugeda.", "Ta on kirjutanud mitu raamatut.", "Väga igav raamat."],
     note: "trükitud lehekülgedest koosnev terviklik, ühest küljest köidetud väljaanne, mida katavad kaaned",
@@ -7985,7 +7985,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "raamatukogu", gloss: "library", pos: "NOUN", cefr: "A2",
     ekilexWordId: 224725,
-    parts: { NOM_SG: "raamatukogu", GEN_SG: "raamatukogu", PART_SG: "raamatukogu", ILL_SG_SHORT: "raamatukokku", PART_PL: "raamatukogusid", GEN_PL: "raamatukogude" },
+    parts: { NOM_SG: "raamatukogu", GEN_SG: "raamatukogu", PART_SG: "raamatukogu", ILL_SG_SHORT: "raamatukokku", NOM_PL: "raamatukogud", PART_PL: "raamatukogusid", GEN_PL: "raamatukogude" },
     government: null,
     usages: ["Ülikooli raamatukogu.", "Võtsin raamatukogust õpiku.", "Raamatukogu koosnes heebrea-, kreeka ja ladinakeelsetest raamatutest.", "Kirjanikust jäi järele suur raamatukogu."],
     note: "koht või hoone, kus säilitatakse (üldiseks kasutamiseks ettenähtud) raamatuid, käsikirju vms materjali",
@@ -7994,7 +7994,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "raamistik", gloss: "framework", pos: "NOUN", cefr: "B2",
     ekilexWordId: 224762,
-    parts: { NOM_SG: "raamistik", GEN_SG: "raamistiku", PART_SG: "raamistikku", ILL_SG_SHORT: "raamistikku", PART_PL: "raamistikke", GEN_PL: "raamistike" },
+    parts: { NOM_SG: "raamistik", GEN_SG: "raamistiku", PART_SG: "raamistikku", ILL_SG_SHORT: "raamistikku", NOM_PL: "raamistikud", PART_PL: "raamistikke", GEN_PL: "raamistike" },
     government: null,
     usages: ["Puudub igasugune õiguslik raamistik.", "Teoreetiline raamistik.", "Piibli ajaline raamistik.", "Eelarve raamistik aastateks 2012–2016."],
     note: "mingit valdkonda hõlmav üldistus, üldpõhimõtted või kokkuvõte, millegi mõtteline raam",
@@ -8003,7 +8003,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "raha", gloss: "money", pos: "NOUN", cefr: "A1",
     ekilexWordId: 224949,
-    parts: { NOM_SG: "raha", GEN_SG: "raha", PART_SG: "raha", PART_PL: "rahasid", GEN_PL: "rahade" },
+    parts: { NOM_SG: "raha", GEN_SG: "raha", PART_SG: "raha", NOM_PL: "rahad", PART_PL: "rahasid", GEN_PL: "rahade" },
     government: null,
     usages: ["Poiss luges oma raha üle.", "Eesti esimene oma raha oli mark.", "Kui te pole tootega rahul, saate raha tagasi.", "Laena mulle veidi raha."],
     note: "üldine ametlik maksevahend müntide ja rahatähtede kujul",
@@ -8012,7 +8012,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rahu", gloss: "peace, calm", pos: "NOUN", cefr: "A2",
     ekilexWordId: 225099,
-    parts: { NOM_SG: "rahu", GEN_SG: "rahu", PART_SG: "rahu", PART_PL: "rahusid", GEN_PL: "rahude" },
+    parts: { NOM_SG: "rahu", GEN_SG: "rahu", PART_SG: "rahu", NOM_PL: "rahud", PART_PL: "rahusid", GEN_PL: "rahude" },
     government: null,
     usages: ["Soovin, et kogu maailmas valitseks rahu.", "Rahu kestis 50 aastat.", "Rahu sõlmima.", "Tartu rahu."],
     note: "vägivalla, relvastatud võitluse puudumine riigis vm piirkonnas",
@@ -8021,7 +8021,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rahulik", gloss: "calm", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 225134,
-    parts: { NOM_SG: "rahulik", GEN_SG: "rahuliku", PART_SG: "rahulikku", ILL_SG_SHORT: "rahulikku", PART_PL: "rahulikke", GEN_PL: "rahulike" },
+    parts: { NOM_SG: "rahulik", GEN_SG: "rahuliku", PART_SG: "rahulikku", ILL_SG_SHORT: "rahulikku", NOM_PL: "rahulikud", PART_PL: "rahulikke", GEN_PL: "rahulike" },
     government: null,
     usages: ["Võimu üleminek riigis toimus rahulikul teel.", "Islamimaailma mõõdukad kutsusid üles rahulikule kooselule kristlastega.", "Loodetavasti leiab konflikt rahuliku lahenduse.", "Hea rahulik laps."],
     note: "mittesõjaline, vaenutegevuseta",
@@ -8030,7 +8030,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rahvas", gloss: "people, nation", pos: "NOUN", cefr: "A1",
     ekilexWordId: 225295,
-    parts: { NOM_SG: "rahvas", GEN_SG: "rahva", PART_SG: "rahvast", PART_PL: "rahvaid", GEN_PL: "rahvaste" },
+    parts: { NOM_SG: "rahvas", GEN_SG: "rahva", PART_SG: "rahvast", NOM_PL: "rahvad", PART_PL: "rahvaid", GEN_PL: "rahvaste" },
     government: null,
     usages: ["Eesti rahvas.", "Soome-ugri rahvad.", "Eestlased on väike rahvas.", "Me oleme vaba rahvas vabal maal."],
     note: "inimrühm, keda hrl piiritletakse teatud riigis elamisega, keeleliste, kultuuriliste vm territoriaalsete tunnuste alusel",
@@ -8039,7 +8039,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rahvastik", gloss: "population", pos: "NOUN", cefr: "B2",
     ekilexWordId: 225302,
-    parts: { NOM_SG: "rahvastik", GEN_SG: "rahvastiku", PART_SG: "rahvastikku", ILL_SG_SHORT: "rahvastikku", PART_PL: "rahvastikke", GEN_PL: "rahvastike" },
+    parts: { NOM_SG: "rahvastik", GEN_SG: "rahvastiku", PART_SG: "rahvastikku", ILL_SG_SHORT: "rahvastikku", NOM_PL: "rahvastikud", PART_PL: "rahvastikke", GEN_PL: "rahvastike" },
     government: null,
     usages: ["Eesti alaline rahvastik.", "Maailma rahvastik on kasvanud 7 miljardini."],
     note: "inimeste kogum, kes elab mingis paigas või mingil alal",
@@ -8048,7 +8048,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rahvatarkus", gloss: "folk wisdom", pos: "NOUN", cefr: null,
     ekilexWordId: 225321,
-    parts: { NOM_SG: "rahvatarkus", GEN_SG: "rahvatarkuse", PART_SG: "rahvatarkust", ILL_SG_SHORT: "rahvatarkusse", PART_PL: "rahvatarkusi", GEN_PL: "rahvatarkuste" },
+    parts: { NOM_SG: "rahvatarkus", GEN_SG: "rahvatarkuse", PART_SG: "rahvatarkust", ILL_SG_SHORT: "rahvatarkusse", NOM_PL: "rahvatarkused", PART_PL: "rahvatarkusi", GEN_PL: "rahvatarkuste" },
     government: null,
     usages: ["Rahvatarkuse järgi tuleb kartul maha panna toominga või kuuse õitsemise ajal."],
     note: "traditsiooniline rahva (elu)tarkus",
@@ -8057,7 +8057,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rahvus", gloss: "nationality", pos: "NOUN", cefr: "A2",
     ekilexWordId: 225351,
-    parts: { NOM_SG: "rahvus", GEN_SG: "rahvuse", PART_SG: "rahvust", ILL_SG_SHORT: "rahvusse", PART_PL: "rahvusi", GEN_PL: "rahvuste" },
+    parts: { NOM_SG: "rahvus", GEN_SG: "rahvuse", PART_SG: "rahvust", ILL_SG_SHORT: "rahvusse", NOM_PL: "rahvused", PART_PL: "rahvusi", GEN_PL: "rahvuste" },
     government: null,
     usages: ["Rahvuse määratlemisel on igaüks vaba.", "Minu vanemad on eri rahvusest.", "Ta on rahvuselt eestlane.", "Abhaasias elab terve hulk eesti rahvusest isikuid."],
     note: "hrl riiklikult iseseisev, ühtse keelelise ja kultuurilise identiteediga rahvas",
@@ -8075,7 +8075,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rakendamine", gloss: "application, implementation", pos: "NOUN", cefr: null,
     ekilexWordId: 268762,
-    parts: { NOM_SG: "rakendamine", GEN_SG: "rakendamise", PART_SG: "rakendamist", ILL_SG_SHORT: "rakendamisse", PART_PL: "rakendamisi", GEN_PL: "rakendamiste" },
+    parts: { NOM_SG: "rakendamine", GEN_SG: "rakendamise", PART_SG: "rakendamist", ILL_SG_SHORT: "rakendamisse", NOM_PL: "rakendamised", PART_PL: "rakendamisi", GEN_PL: "rakendamiste" },
     government: null,
     usages: ["Menetlustoimingu rakendamine (toimingu, sh ülekuulamise, arutlemise jms sissejuhatamine)"],
     note: "NATO standardimises standardikokkuleppest tulenevate kohustuste täitmine liikmesriigi poolt",
@@ -8084,7 +8084,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rakendus", gloss: "application", pos: "NOUN", cefr: "B2",
     ekilexWordId: 225524,
-    parts: { NOM_SG: "rakendus", GEN_SG: "rakenduse", PART_SG: "rakendust", ILL_SG_SHORT: "rakendusse", PART_PL: "rakendusi", GEN_PL: "rakenduste" },
+    parts: { NOM_SG: "rakendus", GEN_SG: "rakenduse", PART_SG: "rakendust", ILL_SG_SHORT: "rakendusse", NOM_PL: "rakendused", PART_PL: "rakendusi", GEN_PL: "rakenduste" },
     government: null,
     usages: ["Kinokavade ja piletiostu rakendus.", "Parkimise rakendus.", "Mobiilipanga soodustuste rakenduses saab lihtsalt sooritada erinevaid otsinguid.", "Kaardirakendus."],
     note: "terviklik tarkvaraprogramm, mille abil nutiseadmes (nt telefonis, tahvelarvutis, nutikellas) saab traadita sidevõrgus täita kindlat ülesannet (nt mõõta pulssi, kuulata muusikat, õppida keelt, osta-müüa kaupu)",
@@ -8093,7 +8093,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rand", gloss: "beach", pos: "NOUN", cefr: "A2",
     ekilexWordId: 225669,
-    parts: { NOM_SG: "rand", GEN_SG: "ranna", PART_SG: "randa", ILL_SG_SHORT: "randa", PART_PL: "randu", GEN_PL: "randade" },
+    parts: { NOM_SG: "rand", GEN_SG: "ranna", PART_SG: "randa", ILL_SG_SHORT: "randa", NOM_PL: "rannad", PART_PL: "randu", GEN_PL: "randade" },
     government: null,
     usages: ["Õnneks oli kallas lähedal ja laev jõudis randa.", "Siinsetele Vaikse ookeani randadele ronivad munema nelja liiki merekilpkonnad.", "Kas tunned maad, mis Peipsi rannalt / käib Läänemere kaldale ..", "Läksime randa päikest võtma."],
     note: "maa-ala mere, suurema järve vm veekogu ääres, ala rannajoonest kuni tugevaima tormilaine mõjupiirini",
@@ -8102,7 +8102,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "range", gloss: "strict", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 225706,
-    parts: { NOM_SG: "range", GEN_SG: "range", PART_SG: "ranget", PART_PL: "rangeid", GEN_PL: "rangete" },
+    parts: { NOM_SG: "range", GEN_SG: "range", PART_SG: "ranget", NOM_PL: "ranged", PART_PL: "rangeid", GEN_PL: "rangete" },
     government: null,
     usages: ["Ma olen ranget dieeti pidanud neli kuud.", "Range suitsetamiskeeld.", "Keskpanga president soovitab ranget eelarvepoliitikat.", "Range kaitse all olev looduskaitseala."],
     note: "teatavaid põhimõtteid, nõudeid kindlalt järgiv, kõrvalekaldumisi, erandeid mittelubav",
@@ -8111,7 +8111,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "raske", gloss: "difficult, heavy", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 225888,
-    parts: { NOM_SG: "raske", GEN_SG: "raske", PART_SG: "rasket", PART_PL: "raskeid", GEN_PL: "raskete" },
+    parts: { NOM_SG: "raske", GEN_SG: "raske", PART_SG: "rasket", NOM_PL: "rasked", PART_PL: "raskeid", GEN_PL: "raskete" },
     government: null,
     usages: ["Raske kohver.", "Laps käib koolis väga raske kotiga.", "Mees oli naisest poole raskem.", "Kaamera on ainult 100 g raske."],
     note: "palju kaaluv, suure kaaluga",
@@ -8120,7 +8120,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ravi", gloss: "treatment", pos: "NOUN", cefr: "A2",
     ekilexWordId: 226301,
-    parts: { NOM_SG: "ravi", GEN_SG: "ravi", PART_SG: "ravi", PART_PL: "ravisid", GEN_PL: "ravide" },
+    parts: { NOM_SG: "ravi", GEN_SG: "ravi", PART_SG: "ravi", NOM_PL: "ravid", PART_PL: "ravisid", GEN_PL: "ravide" },
     government: null,
     usages: ["Olin nädalapäevad haiglas ravil.", "Raadiumravi.", "Arst tegi vajalikud uuringud ja määras ravi.", "Selle haiguse ravi kestab elu lõpuni."],
     note: "haige tervise taastamiseks või vaevuste vähendamiseks rakendatavad menetlused",
@@ -8129,7 +8129,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ravim", gloss: "medicine", pos: "NOUN", cefr: "B1",
     ekilexWordId: 226317,
-    parts: { NOM_SG: "ravim", GEN_SG: "ravimi", PART_SG: "ravimit", PART_PL: "ravimeid", GEN_PL: "ravimite" },
+    parts: { NOM_SG: "ravim", GEN_SG: "ravimi", PART_SG: "ravimit", NOM_PL: "ravimid", PART_PL: "ravimeid", GEN_PL: "ravimite" },
     government: null,
     usages: ["Ta on elanud nii tervislikult, et ei tarvita ravimeid.", "Kui patsient ei võta ravimeid, siis riskib ta sellega, et haigus ägeneb.", "Võtan ravimit kolm korda päevas.", "Seda ravimit saab apteegist ainult retseptiga."],
     note: "aine, mis on mõeldud haiguse ravimiseks, ärahoidmiseks või haigussümptomite leevendamiseks",
@@ -8156,7 +8156,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "reede", gloss: "Friday", pos: "NOUN", cefr: "A1",
     ekilexWordId: 226530,
-    parts: { NOM_SG: "reede", GEN_SG: "reede", PART_SG: "reedet", PART_PL: "reedeid", GEN_PL: "reedete" },
+    parts: { NOM_SG: "reede", GEN_SG: "reede", PART_SG: "reedet", NOM_PL: "reeded", PART_PL: "reedeid", GEN_PL: "reedete" },
     government: null,
     usages: ["Kontsert toimub reedel.", "Reedel on vahelduva pilvisusega ilm."],
     note: "nädala 5. päev, neljapäevale järgnev ja laupäevale eelnev päev",
@@ -8165,7 +8165,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "reegel", gloss: "rule", pos: "NOUN", cefr: "B1",
     ekilexWordId: 226534,
-    parts: { NOM_SG: "reegel", GEN_SG: "reegli", PART_SG: "reeglit", PART_PL: "reegleid", GEN_PL: "reeglite" },
+    parts: { NOM_SG: "reegel", GEN_SG: "reegli", PART_SG: "reeglit", NOM_PL: "reeglid", PART_PL: "reegleid", GEN_PL: "reeglite" },
     government: null,
     usages: ["Muinsuskaitse ei tohiks reeglitega liiale minna.", "Vabakava kestab reeglite järgi neli minutit.", "Liikluskorralduse reeglid.", "Dopingureegel."],
     note: "ametlik, üldine juhis või eeskiri, mis lubab või keelab mingis olukorras või paigas midagi teha",
@@ -8174,7 +8174,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "reform", gloss: "reform", pos: "NOUN", cefr: "B1",
     ekilexWordId: 226604,
-    parts: { NOM_SG: "reform", GEN_SG: "reformi", PART_SG: "reformi", ILL_SG_SHORT: "reformi", PART_PL: "reforme", GEN_PL: "reformide" },
+    parts: { NOM_SG: "reform", GEN_SG: "reformi", PART_SG: "reformi", ILL_SG_SHORT: "reformi", NOM_PL: "reformid", PART_PL: "reforme", GEN_PL: "reformide" },
     government: null,
     usages: ["1990ndate alguse radikaalsed reformid lõid soodsa keskkonna eraettevõtluse ja turumajanduse arenguks.", "Teaduse ja ülikoolide reform.", "Pärisorjuse kaotamise reform.", "Pensionireform."],
     note: "mingil ühiskonnaelu alal tehtav ümberkorraldus või uuendus, millega soovitakse olemasolevat süsteemi edendada, efektiivsemaks muuta",
@@ -8183,7 +8183,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "reis", gloss: "trip, journey", pos: "NOUN", cefr: "A2",
     ekilexWordId: 226782,
-    parts: { NOM_SG: "reis", GEN_SG: "reisi", PART_SG: "reisi", ILL_SG_SHORT: "reisi", PART_PL: "reise", GEN_PL: "reiside" },
+    parts: { NOM_SG: "reis", GEN_SG: "reisi", PART_SG: "reisi", ILL_SG_SHORT: "reisi", NOM_PL: "reisid", PART_PL: "reise", GEN_PL: "reiside" },
     government: null,
     usages: ["Kirjanik sooritas viimase reisi sünnilinna Taanis.", "Alustasime reisi Bangkokist.", "Puhkusereis.", "Turismireis."],
     note: "mingi sõiduvahendiga sõit, teekond kuhugi kaugemale hrl koos (lühema) kohalviibimisega",
@@ -8192,7 +8192,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "reklaam", gloss: "advertisement", pos: "NOUN", cefr: "A1",
     ekilexWordId: 226857,
-    parts: { NOM_SG: "reklaam", GEN_SG: "reklaami", PART_SG: "reklaami", ILL_SG_SHORT: "reklaami", PART_PL: "reklaame", GEN_PL: "reklaamide" },
+    parts: { NOM_SG: "reklaam", GEN_SG: "reklaami", PART_SG: "reklaami", ILL_SG_SHORT: "reklaami", NOM_PL: "reklaamid", PART_PL: "reklaame", GEN_PL: "reklaamide" },
     government: null,
     usages: ["Maja seinale oli kleebitud panga reklaam.", "Firma plaanis minna Korea turule reklaami tegema.", "Tubakareklaam.", "Alkoholireklaam."],
     note: "kaupade, teenuste, ürituste tutvustamine tarbijate ligimeelitamiseks",
@@ -8201,7 +8201,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "remont", gloss: "renovation", pos: "NOUN", cefr: "A2",
     ekilexWordId: 227040,
-    parts: { NOM_SG: "remont", GEN_SG: "remondi", PART_SG: "remonti", ILL_SG_SHORT: "remonti", PART_PL: "remonte", GEN_PL: "remontide" },
+    parts: { NOM_SG: "remont", GEN_SG: "remondi", PART_SG: "remonti", ILL_SG_SHORT: "remonti", NOM_PL: "remondid", PART_PL: "remonte", GEN_PL: "remontide" },
     government: null,
     usages: ["Esimesel korrusel on tehtud remont, teisel mitte.", "Teeremont.", "Hoone remont lõpeb sügisel.", "Viisin auto remonti."],
     note: "hoonete, seadmete, teede vms parandamine ja uuendamine",
@@ -8219,7 +8219,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "resolutsioon", gloss: "resolution", pos: "NOUN", cefr: "B2",
     ekilexWordId: 227178,
-    parts: { NOM_SG: "resolutsioon", GEN_SG: "resolutsiooni", PART_SG: "resolutsiooni", ILL_SG_SHORT: "resolutsiooni", PART_PL: "resolutsioone", GEN_PL: "resolutsioonide" },
+    parts: { NOM_SG: "resolutsioon", GEN_SG: "resolutsiooni", PART_SG: "resolutsiooni", ILL_SG_SHORT: "resolutsiooni", NOM_PL: "resolutsioonid", PART_PL: "resolutsioone", GEN_PL: "resolutsioonide" },
     government: null,
     usages: ["Läbirääkimiste alustamist toetav resolutsioon võeti vastu 407 poolt- ja 262 vastuhäälega.", "Härra kantsler kirjutas täiesti eitava resolutsiooni.", "Avalik on vaid kohtuotsuse lühike resolutsioon.", "Ekraan on üllatavalt kõrge resolutsiooni ja terava pildiga."],
     note: "koosolekul, kongressil vms vastu võetud otsus, mida järgitakse edaspidises tegevuses",
@@ -8228,7 +8228,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ressurss", gloss: "resource", pos: "NOUN", cefr: "B1",
     ekilexWordId: 227206,
-    parts: { NOM_SG: "ressurss", GEN_SG: "ressursi", PART_SG: "ressurssi", ILL_SG_SHORT: "ressurssi", PART_PL: "ressursse", GEN_PL: "ressursside" },
+    parts: { NOM_SG: "ressurss", GEN_SG: "ressursi", PART_SG: "ressurssi", ILL_SG_SHORT: "ressurssi", NOM_PL: "ressursid", PART_PL: "ressursse", GEN_PL: "ressursside" },
     government: null,
     usages: ["Surm tuleb siis, kui raku ressursid ammenduvad.", "Eestis jätkub ressurssi tselluloositehasele, selleks on vaja vaid investeeringut.", "Inimressurss.", "Loodusressurss."],
     note: "millegi toimimiseks vajalikud (majanduslikud) tingimused, vahendid ja (jõu)varud, sh asjas osalevad inimesed vm osalised",
@@ -8237,7 +8237,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "restoran", gloss: "restaurant", pos: "NOUN", cefr: "A1",
     ekilexWordId: 227219,
-    parts: { NOM_SG: "restoran", GEN_SG: "restorani", PART_SG: "restorani", ILL_SG_SHORT: "restorani", PART_PL: "restorane", GEN_PL: "restoranide" },
+    parts: { NOM_SG: "restoran", GEN_SG: "restorani", PART_SG: "restorani", ILL_SG_SHORT: "restorani", NOM_PL: "restoranid", PART_PL: "restorane", GEN_PL: "restoranide" },
     government: null,
     usages: ["Ta tähistas oma sünnipäeva ühes kallis restoranis.", "Ettekandja tutvustas restorani menüüd.", "Kiirtoidurestoran.", "Pitsarestoran."],
     note: "söögi-, joogi- ja ajaviitekoht, kus hrl toite valmistatakse kohapeal",
@@ -8246,7 +8246,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "revolutsioon", gloss: "revolution", pos: "NOUN", cefr: "B2",
     ekilexWordId: 227356,
-    parts: { NOM_SG: "revolutsioon", GEN_SG: "revolutsiooni", PART_SG: "revolutsiooni", ILL_SG_SHORT: "revolutsiooni", PART_PL: "revolutsioone", GEN_PL: "revolutsioonide" },
+    parts: { NOM_SG: "revolutsioon", GEN_SG: "revolutsiooni", PART_SG: "revolutsiooni", ILL_SG_SHORT: "revolutsiooni", NOM_PL: "revolutsioonid", PART_PL: "revolutsioone", GEN_PL: "revolutsioonide" },
     government: null,
     usages: ["Prantsuse revolutsioon.", "Demokraatlik revolutsioon.", "Kõrgtehnoloogiline revolutsioon.", "Interneti tulek ei ole tehnoloogiline revolutsioon, vaid mõtlemise ja suhtumise revolutsioon."],
     note: "riigipööre, mille tulemusena vana poliitiline kord asendatakse (vägivaldselt) uuega",
@@ -8255,7 +8255,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "riidekapp", gloss: "wardrobe", pos: "NOUN", cefr: "B1",
     ekilexWordId: 227488,
-    parts: { NOM_SG: "riidekapp", GEN_SG: "riidekapi", PART_SG: "riidekappi", ILL_SG_SHORT: "riidekappi", PART_PL: "riidekappe", GEN_PL: "riidekappide" },
+    parts: { NOM_SG: "riidekapp", GEN_SG: "riidekapi", PART_SG: "riidekappi", ILL_SG_SHORT: "riidekappi", NOM_PL: "riidekapid", PART_PL: "riidekappe", GEN_PL: "riidekappide" },
     government: null,
     usages: ["Kahe poolega riidekapp.", "Kass puges riidekappi peitu.", "Magamistoas on suur riidekapp."],
     note: "kapp riiete hoidmiseks",
@@ -8264,7 +8264,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "riie", gloss: "cloth, fabric", pos: "NOUN", cefr: "B1",
     ekilexWordId: 227512,
-    parts: { NOM_SG: "riie", GEN_SG: "riide", PART_SG: "riiet", PART_PL: "riideid", GEN_PL: "riiete" },
+    parts: { NOM_SG: "riie", GEN_SG: "riide", PART_SG: "riiet", NOM_PL: "riided", PART_PL: "riideid", GEN_PL: "riiete" },
     government: null,
     usages: ["Linasest riidest kleit.", "Mantliriie.", "Ostsin ülikonna jaoks riiet.", "Inimesed on šikkidest riietest väsinud."],
     note: "tekstiilmaterjal, mis on valmistatud kangastelgedel või kudumismasinal laia lindina",
@@ -8273,7 +8273,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "riigikogu", gloss: "parliament", pos: "NOUN", cefr: null,
     ekilexWordId: 227558,
-    parts: { NOM_SG: "riigikogu", GEN_SG: "riigikogu", PART_SG: "riigikogu", ILL_SG_SHORT: "riigikokku", PART_PL: "riigikogusid", GEN_PL: "riigikogude" },
+    parts: { NOM_SG: "riigikogu", GEN_SG: "riigikogu", PART_SG: "riigikogu", ILL_SG_SHORT: "riigikokku", NOM_PL: "riigikogud", PART_PL: "riigikogusid", GEN_PL: "riigikogude" },
     government: null,
     usages: ["Istungil osalesid kõik riigikogu liikmed.", "Ta kandideerib riigikogu valimistel."],
     note: "Eesti parlament, kõrgeim seadusandlik esindusorgan",
@@ -8282,7 +8282,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "riik", gloss: "country, state", pos: "NOUN", cefr: "A2",
     ekilexWordId: 227675,
-    parts: { NOM_SG: "riik", GEN_SG: "riigi", PART_SG: "riiki", ILL_SG_SHORT: "riiki", PART_PL: "riike", GEN_PL: "riikide" },
+    parts: { NOM_SG: "riik", GEN_SG: "riigi", PART_SG: "riiki", ILL_SG_SHORT: "riiki", NOM_PL: "riigid", PART_PL: "riike", GEN_PL: "riikide" },
     government: null,
     usages: ["Eesti riik sündis 1918. aastal.", "Naaberriik.", "Eesti on väike riik.", "Mis riigi kodanik ta on?"],
     note: "kindla territooriumiga ja sõltumatu valitsusega ühiskondlik-poliitiline üksus",
@@ -8291,7 +8291,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "riim", gloss: "rhyme", pos: "NOUN", cefr: null,
     ekilexWordId: 227681,
-    parts: { NOM_SG: "riim", GEN_SG: "riimi", PART_SG: "riimi", ILL_SG_SHORT: "riimi", PART_PL: "riime", GEN_PL: "riimide" },
+    parts: { NOM_SG: "riim", GEN_SG: "riimi", PART_SG: "riimi", ILL_SG_SHORT: "riimi", NOM_PL: "riimid", PART_PL: "riime", GEN_PL: "riimide" },
     government: null,
     usages: ["Kui head riimi ei leia, siis on targem teha vabavärss.", "Kui lapsed väikesed olid, siis me rääkisime riimis."],
     note: "(hrl luule vormivõttena:) sõnade või sõnaosade süsteemne, teksti korraldav häälikuline kooskõla",
@@ -8300,7 +8300,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "risk", gloss: "risk", pos: "NOUN", cefr: "A2",
     ekilexWordId: 228122,
-    parts: { NOM_SG: "risk", GEN_SG: "riski", PART_SG: "riski", ILL_SG_SHORT: "riski", PART_PL: "riske", GEN_PL: "riskide" },
+    parts: { NOM_SG: "risk", GEN_SG: "riski", PART_SG: "riski", ILL_SG_SHORT: "riski", NOM_PL: "riskid", PART_PL: "riske", GEN_PL: "riskide" },
     government: null,
     usages: ["Suhkrutõve risk tõuseb vanusega.", "Risk haigestuda.", "Milles näete riski ja kuidas üritate seda vältida?", "Nakatumisrisk."],
     note: "mingi tegevuse, olukorraga vm kaasnev võimalik oht või kahju",
@@ -8309,7 +8309,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "roheline", gloss: "green", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 228454,
-    parts: { NOM_SG: "roheline", GEN_SG: "rohelise", PART_SG: "rohelist", ILL_SG_SHORT: "rohelisse", PART_PL: "rohelisi", GEN_PL: "roheliste" },
+    parts: { NOM_SG: "roheline", GEN_SG: "rohelise", PART_SG: "rohelist", ILL_SG_SHORT: "rohelisse", NOM_PL: "rohelised", PART_PL: "rohelisi", GEN_PL: "roheliste" },
     government: null,
     usages: ["Valgusfoori roheline tuli.", "Roheliste silmadega tüdruk.", "Olin merehaigusest roheline.", "Tumeroheline."],
     note: "muru, lehtede värvi, spektris sinise ja kollase vahel",
@@ -8318,7 +8318,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rohi", gloss: "grass", pos: "NOUN", cefr: "A2",
     ekilexWordId: 228492,
-    parts: { NOM_SG: "rohi", GEN_SG: "rohu", PART_SG: "rohtu", ILL_SG_SHORT: "rohtu", PART_PL: "rohte", GEN_PL: "rohtude" },
+    parts: { NOM_SG: "rohi", GEN_SG: "rohu", PART_SG: "rohtu", ILL_SG_SHORT: "rohtu", NOM_PL: "rohud", PART_PL: "rohte", GEN_PL: "rohtude" },
     government: null,
     usages: ["Astusin paljajalu kastemärjale rohule.", "Lopsaka rohuga karjamaa.", "Karjamaarohi.", "Rohi on juba roheline."],
     note: "maapinnal kasvav madal roheline heintaimedest või rohttaimedest kate",
@@ -8336,7 +8336,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "romaan", gloss: "novel", pos: "NOUN", cefr: "B1",
     ekilexWordId: 228626,
-    parts: { NOM_SG: "romaan", GEN_SG: "romaani", PART_SG: "romaani", ILL_SG_SHORT: "romaani", PART_PL: "romaane", GEN_PL: "romaanide" },
+    parts: { NOM_SG: "romaan", GEN_SG: "romaani", PART_SG: "romaani", ILL_SG_SHORT: "romaani", NOM_PL: "romaanid", PART_PL: "romaane", GEN_PL: "romaanide" },
     government: null,
     usages: ["Dokumentaalromaan.", "Kirjaniku uus romaan ilmub järgmisel aastal.", "Mulle meeldib lugeda romaane.", "Tema elulugu oli terve romaan."],
     note: "ulatuslik jutustav kirjandusteos, mida iseloomustavad probleemiderohkus, suur tegelaste hulk, mitu süžeeliini ja sündmuste pikaajaline kulg",
@@ -8345,7 +8345,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rong", gloss: "train", pos: "NOUN", cefr: "A1",
     ekilexWordId: 228671,
-    parts: { NOM_SG: "rong", GEN_SG: "rongi", PART_SG: "rongi", ILL_SG_SHORT: "rongi", PART_PL: "ronge", GEN_PL: "rongide" },
+    parts: { NOM_SG: "rong", GEN_SG: "rongi", PART_SG: "rongi", ILL_SG_SHORT: "rongi", NOM_PL: "rongid", PART_PL: "ronge", GEN_PL: "rongide" },
     government: null,
     usages: ["See rong veab kaupa, mitte inimesi.", "Rong väljub raudteejaamast kell 14.00 ja jõuab Tallinnasse hilisõhtul.", "Tüdrukud marssisid tihedas rongis, klassijuhataja kõige ees."],
     note: "raudteerööbastel liikuv (vedurist ja) ühest või mitmest kokkuhaagitud vagunist koosnev mootor- või elektrisõiduk reisijate või kauba veoks",
@@ -8354,7 +8354,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "roog", gloss: "dish, course", pos: "NOUN", cefr: "B2",
     ekilexWordId: 228711,
-    parts: { NOM_SG: "roog", GEN_SG: "roa", PART_SG: "rooga", ILL_SG_SHORT: "rooga", PART_PL: "roogi", GEN_PL: "roogade" },
+    parts: { NOM_SG: "roog", GEN_SG: "roa", PART_SG: "rooga", ILL_SG_SHORT: "rooga", NOM_PL: "road", PART_PL: "roogi", GEN_PL: "roogade" },
     government: null,
     usages: ["Istuti, lobiseti ning nauditi hõrgutavaid roogi.", "Liha saab isuäratavaks roaks kas grillil, ahjus või pannil.", "Road olid kirjas prantsuse keeles.", "Külmad road."],
     note: "söömiseks, maitsmiseks valmistatud või seatud toit",
@@ -8363,7 +8363,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "roosa", gloss: "pink", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 228789,
-    parts: { NOM_SG: "roosa", GEN_SG: "roosa", PART_SG: "roosat", PART_PL: "roosasid", GEN_PL: "roosade" },
+    parts: { NOM_SG: "roosa", GEN_SG: "roosa", PART_SG: "roosat", NOM_PL: "roosad", PART_PL: "roosasid", GEN_PL: "roosade" },
     government: null,
     usages: ["Roosa pesu.", "Roosa õhtutaevas.", "Heleroosa.", "Tüdrukul on roosad põsed."],
     note: "kibuvitsaõie värvi, kergelt punetav, kahvatupunane",
@@ -8372,7 +8372,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Rootsi", gloss: "Sweden", pos: "NOUN", cefr: null,
     ekilexWordId: 228854,
-    parts: { NOM_SG: "Rootsi", GEN_SG: "Rootsi", PART_SG: "Rootsit", ILL_SG_SHORT: "Rootsi", PART_PL: "Rootsisid", GEN_PL: "Rootside" },
+    parts: { NOM_SG: "Rootsi", GEN_SG: "Rootsi", PART_SG: "Rootsit", ILL_SG_SHORT: "Rootsi", NOM_PL: "Rootsid", PART_PL: "Rootsisid", GEN_PL: "Rootside" },
     government: null,
     usages: [],
     note: "riik Euroopas Skandinaavia poolsaare idaosas",
@@ -8381,7 +8381,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rootslane", gloss: "a Swede", pos: "NOUN", cefr: "A2",
     ekilexWordId: 228868,
-    parts: { NOM_SG: "rootslane", GEN_SG: "rootslase", PART_SG: "rootslast", ILL_SG_SHORT: "rootslasse", PART_PL: "rootslasi", GEN_PL: "rootslaste" },
+    parts: { NOM_SG: "rootslane", GEN_SG: "rootslase", PART_SG: "rootslast", ILL_SG_SHORT: "rootslasse", NOM_PL: "rootslased", PART_PL: "rootslasi", GEN_PL: "rootslaste" },
     government: null,
     usages: ["Rippsildu armastavad ehitada rootslased ja norralased.", "Kui ma tulen Eestisse, siis ma tunnen ennast rootslasena, sest ma tulen Rootsist.", "1781. aastal sunniti Hiiumaa rootslased oma kodudest lahkuma."],
     note: "Rootsi põhirahva liige",
@@ -8390,7 +8390,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ruum", gloss: "space, room", pos: "NOUN", cefr: "A1",
     ekilexWordId: 229181,
-    parts: { NOM_SG: "ruum", GEN_SG: "ruumi", PART_SG: "ruumi", ILL_SG_SHORT: "ruumi", PART_PL: "ruume", GEN_PL: "ruumide" },
+    parts: { NOM_SG: "ruum", GEN_SG: "ruumi", PART_SG: "ruumi", ILL_SG_SHORT: "ruumi", NOM_PL: "ruumid", PART_PL: "ruume", GEN_PL: "ruumide" },
     government: null,
     usages: ["Avarust ja ruumi on majas palju.", "Taksos ei olnud rohkem ruumi.", "Nii põhjaliku käsitluse jaoks on ajakirja ruum liiga napp.", "Arvutis ei ole enam vaba ruumi."],
     note: "koht, ala või avar pind, mis on vaba või piisav, et miski või keegi kuhugi mahuks",
@@ -8399,7 +8399,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rõhk", gloss: "stress, accent", pos: "NOUN", cefr: "B1",
     ekilexWordId: 229255,
-    parts: { NOM_SG: "rõhk", GEN_SG: "rõhu", PART_SG: "rõhku", ILL_SG_SHORT: "rõhku", PART_PL: "rõhke", GEN_PL: "rõhkude" },
+    parts: { NOM_SG: "rõhk", GEN_SG: "rõhu", PART_SG: "rõhku", ILL_SG_SHORT: "rõhku", NOM_PL: "rõhud", PART_PL: "rõhke", GEN_PL: "rõhkude" },
     government: null,
     usages: ["Vedelikusamba rõhk.", "Aururõhk.", "Rehvide rõhk on jälle langenud.", "Tunneb õlal isa raske käe rõhku."],
     note: "(füüsikaline suurus:) mingile pinnale, pinnaühikule levikusuuna poolest risti mõjuv jõud, mida mõõdetakse paskalites (Pa)",
@@ -8408,7 +8408,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rõhuasetus", gloss: "emphasis", pos: "NOUN", cefr: null,
     ekilexWordId: 229281,
-    parts: { NOM_SG: "rõhuasetus", GEN_SG: "rõhuasetuse", PART_SG: "rõhuasetust", ILL_SG_SHORT: "rõhuasetusse", PART_PL: "rõhuasetusi", GEN_PL: "rõhuasetuste" },
+    parts: { NOM_SG: "rõhuasetus", GEN_SG: "rõhuasetuse", PART_SG: "rõhuasetust", ILL_SG_SHORT: "rõhuasetusse", NOM_PL: "rõhuasetused", PART_PL: "rõhuasetusi", GEN_PL: "rõhuasetuste" },
     government: null,
     usages: ["Rõhuasetus oli aruteludel, mitte ettekannetel.", "Maal on rõhuasetus põllumajandusel."],
     note: "olulise esiletõstmine, millegi väljatoomine, rõhutamine, millelegi tähelepanu pööramine",
@@ -8426,7 +8426,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rõhutus", gloss: "lack of stress", pos: "NOUN", cefr: null,
     ekilexWordId: 459033,
-    parts: { NOM_SG: "rõhutus", GEN_SG: "rõhutuse", PART_SG: "rõhutust", ILL_SG_SHORT: "rõhutusse", PART_PL: "rõhutusi", GEN_PL: "rõhutuste" },
+    parts: { NOM_SG: "rõhutus", GEN_SG: "rõhutuse", PART_SG: "rõhutust", ILL_SG_SHORT: "rõhutusse", NOM_PL: "rõhutused", PART_PL: "rõhutusi", GEN_PL: "rõhutuste" },
     government: null,
     usages: [],
     note: "(sõnas, silbis:) rõhu puudumine",
@@ -8435,7 +8435,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rõõm", gloss: "joy", pos: "NOUN", cefr: "A2",
     ekilexWordId: 229372,
-    parts: { NOM_SG: "rõõm", GEN_SG: "rõõmu", PART_SG: "rõõmu", ILL_SG_SHORT: "rõõmu", PART_PL: "rõõme", GEN_PL: "rõõmude" },
+    parts: { NOM_SG: "rõõm", GEN_SG: "rõõmu", PART_SG: "rõõmu", ILL_SG_SHORT: "rõõmu", NOM_PL: "rõõmud", PART_PL: "rõõme", GEN_PL: "rõõmude" },
     government: null,
     usages: ["Vanahärra tundis külaliste üle siirast rõõmu.", "Ta ei varjanud oma rõõmu.", "Fännide suureks rõõmuks püsib menubänd tänini koos.", "Mure ja rõõm käivad ikka käsikäes."],
     note: "heaolu-, rahuldus-, lõbutundega seotud hingeline seisund, heameel",
@@ -8444,7 +8444,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rõõmus", gloss: "cheerful", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 229391,
-    parts: { NOM_SG: "rõõmus", GEN_SG: "rõõmsa", PART_SG: "rõõmsat", PART_PL: "rõõmsaid", GEN_PL: "rõõmsate" },
+    parts: { NOM_SG: "rõõmus", GEN_SG: "rõõmsa", PART_SG: "rõõmsat", NOM_PL: "rõõmsad", PART_PL: "rõõmsaid", GEN_PL: "rõõmsate" },
     government: null,
     usages: ["Rõõmsa näoga lahke mees.", "Loodetud rõõmsad uudised jäid kuulmata.", "Ülirõõmus.", "Ilus ilm teeb meele rõõmsaks."],
     note: "heameelt, rõõmutunnet väljendav või tekitav",
@@ -8453,7 +8453,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ränne", gloss: "migration", pos: "NOUN", cefr: "B2",
     ekilexWordId: 229580,
-    parts: { NOM_SG: "ränne", GEN_SG: "rände", PART_SG: "rännet", PART_PL: "rändeid", GEN_PL: "rännete" },
+    parts: { NOM_SG: "ränne", GEN_SG: "rände", PART_SG: "rännet", NOM_PL: "ränded", PART_PL: "rändeid", GEN_PL: "rännete" },
     government: null,
     usages: ["Eesti-sisese rände suurimad tõmbekeskused on Tallinn ja Tartu.", "Illegaalne ränne.", "Rahvaste ränne on ikka olnud idast läände.", "Kärnkonn läbib kevadisel rändel kuni 3 kilomeetrit."],
     note: "rahvastiku ümberasumine omal maal või ühelt maalt teisele",
@@ -8471,7 +8471,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rütm", gloss: "rhythm", pos: "NOUN", cefr: "B1",
     ekilexWordId: 229925,
-    parts: { NOM_SG: "rütm", GEN_SG: "rütmi", PART_SG: "rütmi", ILL_SG_SHORT: "rütmi", PART_PL: "rütme", GEN_PL: "rütmide" },
+    parts: { NOM_SG: "rütm", GEN_SG: "rütmi", PART_SG: "rütmi", ILL_SG_SHORT: "rütmi", NOM_PL: "rütmid", PART_PL: "rütme", GEN_PL: "rütmide" },
     government: null,
     usages: ["Rahvas hakkas helide rütmis kaasa hüppama.", "Monotoonne rütm.", "Ma ei muutnud kõnni rütmi.", "Tantsurütm."],
     note: "liikumise, heli vm (tugev) korrapärane vaheldumine või kordumine",
@@ -8480,7 +8480,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "rütmika", gloss: "rhythmics", pos: "NOUN", cefr: null,
     ekilexWordId: 229930,
-    parts: { NOM_SG: "rütmika", GEN_SG: "rütmika", PART_SG: "rütmikat", PART_PL: "rütmikaid", GEN_PL: "rütmikate" },
+    parts: { NOM_SG: "rütmika", GEN_SG: "rütmika", PART_SG: "rütmikat", NOM_PL: "rütmikad", PART_PL: "rütmikaid", GEN_PL: "rütmikate" },
     government: null,
     usages: ["Viisi ta veel ei pea, aga rütmika on tal vinge.", "Linnulaulu rütmikaga tembitud muusika.", "Vitraažis on rütmika kõige tähtsam.", "Hoonel on päris hea rütmika."],
     note: "millegi rütmiline külg, liikumise, heli vm (tugev) korrapärane vaheldumine",
@@ -8489,7 +8489,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "saabas", gloss: "boot", pos: "NOUN", cefr: "A2",
     ekilexWordId: 229992,
-    parts: { NOM_SG: "saabas", GEN_SG: "saapa", PART_SG: "saabast", PART_PL: "saapaid", GEN_PL: "saabaste" },
+    parts: { NOM_SG: "saabas", GEN_SG: "saapa", PART_SG: "saabast", NOM_PL: "saapad", PART_PL: "saapaid", GEN_PL: "saabaste" },
     government: null,
     usages: ["Pika säärega saapad.", "Tõmbasin saapad jalast.", "Tal on uued saapad jalas.", "Ma kannan musti saapaid."],
     note: "jalats, mille sääreosa ulatub üle pahkluu",
@@ -8507,7 +8507,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "saade", gloss: "broadcast, programme", pos: "NOUN", cefr: "A2",
     ekilexWordId: 230008,
-    parts: { NOM_SG: "saade", GEN_SG: "saate", PART_SG: "saadet", PART_PL: "saateid", GEN_PL: "saadete" },
+    parts: { NOM_SG: "saade", GEN_SG: "saate", PART_SG: "saadet", NOM_PL: "saated", PART_PL: "saateid", GEN_PL: "saadete" },
     government: null,
     usages: ["Reisist valmis pooletunnine saade.", "Saade läheb eetrisse salvestisena.", "Järelkuulatav saade.", "Kultuurisaade."],
     note: "raadio või televiisori vahendusel teavet, meelelahutust vm pakkuv jutt, film vms",
@@ -8525,7 +8525,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "saaste", gloss: "pollution", pos: "NOUN", cefr: null,
     ekilexWordId: 230154,
-    parts: { NOM_SG: "saaste", GEN_SG: "saaste", PART_SG: "saastet", PART_PL: "saasteid", GEN_PL: "saastete" },
+    parts: { NOM_SG: "saaste", GEN_SG: "saaste", PART_SG: "saastet", NOM_PL: "saasted", PART_PL: "saasteid", GEN_PL: "saastete" },
     government: null,
     usages: ["Transpordist lähtuv saaste.", "Radioaktiivne saaste.", "Saaste kontrollimiseks tuleb kasutada nelja eraldi tolmupartiid, millest igas on 95 % osakestest.", "Pikkusotsmõõdule pärast kasutamist saastest vältimiseks kantakse mõõtepindadale vastav määre."],
     note: "keskkonna kahjustamine või kahjustumine hrl ohtlike tööstuslike jäätmetega",
@@ -8534,7 +8534,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "saatekiri", gloss: "referral", pos: "NOUN", cefr: "B1",
     ekilexWordId: 230185,
-    parts: { NOM_SG: "saatekiri", GEN_SG: "saatekirja", PART_SG: "saatekirja", ILL_SG_SHORT: "saatekirja", PART_PL: "saatekirju", GEN_PL: "saatekirjade" },
+    parts: { NOM_SG: "saatekiri", GEN_SG: "saatekirja", PART_SG: "saatekirja", ILL_SG_SHORT: "saatekirja", NOM_PL: "saatekirjad", PART_PL: "saatekirju", GEN_PL: "saatekirjade" },
     government: null,
     usages: ["Eriarsti poole pöördumiseks on vaja perearsti saatekirja.", "Lõhkematerjal võetakse laos arvele tarnija saatekirja alusel.", "Saatekirja vorm ning koostamise, käsitlemise ja registreerimise kord kehtestatakse keskkonnaministri määrusega."],
     note: "ametlik dokument kellegi kuhugi suunamiseks",
@@ -8543,7 +8543,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "saatkond", gloss: "embassy", pos: "NOUN", cefr: "B1",
     ekilexWordId: 230205,
-    parts: { NOM_SG: "saatkond", GEN_SG: "saatkonna", PART_SG: "saatkonda", ILL_SG_SHORT: "saatkonda", PART_PL: "saatkondi", GEN_PL: "saatkondade" },
+    parts: { NOM_SG: "saatkond", GEN_SG: "saatkonna", PART_SG: "saatkonda", ILL_SG_SHORT: "saatkonda", NOM_PL: "saatkonnad", PART_PL: "saatkondi", GEN_PL: "saatkondade" },
     government: null,
     usages: ["Viisa saamiseks pöörduge Vene saatkonda.", "Uus saatkond asus teele 1558. aasta lõpul.", "Tartus käis kõrge keiserlik saatkond.", "Välisministeerium seisab hea välissuhtluse eest ning kaitseb Eesti huve välisesinduste ja saatkondade kaudu."],
     note: "riigi alatine diplomaatiline esindus teises riigis",
@@ -8570,7 +8570,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sada", gloss: "hundred", pos: "NOUN", cefr: "A1",
     ekilexWordId: 230290,
-    parts: { NOM_SG: "sada", GEN_SG: "saja", PART_SG: "sada", PART_PL: "sadu", GEN_PL: "sadade" },
+    parts: { NOM_SG: "sada", GEN_SG: "saja", PART_SG: "sada", NOM_PL: "sajad", PART_PL: "sadu", GEN_PL: "sadade" },
     government: null,
     usages: ["Sada tuhat.", "Kirjaniku sünnist möödub sada aastat.", "Näitusel käis sadu inimesi.", "Risk nakatuda on üks sajast."],
     note: "põhiarv 100",
@@ -8579,7 +8579,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sagedus", gloss: "frequency", pos: "NOUN", cefr: "B1",
     ekilexWordId: 230403,
-    parts: { NOM_SG: "sagedus", GEN_SG: "sageduse", PART_SG: "sagedust", ILL_SG_SHORT: "sagedusse", PART_PL: "sagedusi", GEN_PL: "sageduste" },
+    parts: { NOM_SG: "sagedus", GEN_SG: "sageduse", PART_SG: "sagedust", ILL_SG_SHORT: "sagedusse", NOM_PL: "sagedused", PART_PL: "sagedusi", GEN_PL: "sageduste" },
     government: null,
     usages: ["Tööga seotud haigestumiste sagedus on vähenenud kaks korda.", "Trenni tehes pulsi sagedus tõuseb üle 100.", "Südamelöögisagedus.", "Esinemissagedus."],
     note: "millegi korduv esinemus teatavas ajaühikus, mida väljendatakse hrl arvuliselt",
@@ -8597,7 +8597,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sai", gloss: "bread (white)", pos: "NOUN", cefr: "A1",
     ekilexWordId: 230470,
-    parts: { NOM_SG: "sai", GEN_SG: "saia", PART_SG: "saia", ILL_SG_SHORT: "saia", PART_PL: "saiu", GEN_PL: "saiade" },
+    parts: { NOM_SG: "sai", GEN_SG: "saia", PART_SG: "saia", ILL_SG_SHORT: "saia", NOM_PL: "saiad", PART_PL: "saiu", GEN_PL: "saiade" },
     government: null,
     usages: ["Kõik koogid ja saiad on kohapeal tehtud.", "Ostsin poest kaks saia ja võid.", "Sööd sa saia või leiba?", "Panin saiad röstrisse."],
     note: "nisujahutaignast küpsetatud toit (hrl päts või pätsike)",
@@ -8606,7 +8606,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sajand", gloss: "century", pos: "NOUN", cefr: "A2",
     ekilexWordId: 230515,
-    parts: { NOM_SG: "sajand", GEN_SG: "sajandi", PART_SG: "sajandit", PART_PL: "sajandeid", GEN_PL: "sajandite" },
+    parts: { NOM_SG: "sajand", GEN_SG: "sajandi", PART_SG: "sajandit", NOM_PL: "sajandid", PART_PL: "sajandeid", GEN_PL: "sajandite" },
     government: null,
     usages: ["Esimesed koolid rajati Eestis 13. sajandil.", "Sündisin möödunud sajandi teisel poolel.", "See loss on pärit 16. sajandist.", "Olen oma mõtteviisilt eelmises sajandis."],
     note: "(ajaarvamises:) sada aastat kestev ajavahemik",
@@ -8615,7 +8615,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Saksamaa", gloss: "Germany", pos: "NOUN", cefr: null,
     ekilexWordId: 230592,
-    parts: { NOM_SG: "Saksamaa", GEN_SG: "Saksamaa", PART_SG: "Saksamaad", ILL_SG_SHORT: "Saksamaa", PART_PL: "Saksamaid", GEN_PL: "Saksamaade" },
+    parts: { NOM_SG: "Saksamaa", GEN_SG: "Saksamaa", PART_SG: "Saksamaad", ILL_SG_SHORT: "Saksamaa", NOM_PL: "Saksamaad", PART_PL: "Saksamaid", GEN_PL: "Saksamaade" },
     government: null,
     usages: ["Sõitsime treeninglaagrisse Saksamaale."],
     note: "riik Kesk-Euroopas",
@@ -8624,7 +8624,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sakslane", gloss: "a German", pos: "NOUN", cefr: "A2",
     ekilexWordId: 230608,
-    parts: { NOM_SG: "sakslane", GEN_SG: "sakslase", PART_SG: "sakslast", ILL_SG_SHORT: "sakslasse", PART_PL: "sakslasi", GEN_PL: "sakslaste" },
+    parts: { NOM_SG: "sakslane", GEN_SG: "sakslase", PART_SG: "sakslast", ILL_SG_SHORT: "sakslasse", NOM_PL: "sakslased", PART_PL: "sakslasi", GEN_PL: "sakslaste" },
     government: null,
     usages: ["Sakslasi meelitab Eestisse eelkõige loodus ja puhas keskkond."],
     note: "Saksamaa põhirahva liige",
@@ -8633,7 +8633,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "salat", gloss: "salad", pos: "NOUN", cefr: "A1",
     ekilexWordId: 230734,
-    parts: { NOM_SG: "salat", GEN_SG: "salati", PART_SG: "salatit", PART_PL: "salateid", GEN_PL: "salatite" },
+    parts: { NOM_SG: "salat", GEN_SG: "salati", PART_SG: "salatit", NOM_PL: "salatid", PART_PL: "salateid", GEN_PL: "salatite" },
     government: null,
     usages: ["Kasvatan salatit, sibulat ja tilli.", "Ta kasvatab kodus aknalaual tilli, peterselli ja salatit.", "Nirista kalale sidrunimahla, serveeri kohe salatil.", "Punase sibula ja tomati salat."],
     note: "köögiviljana kasvatatav mahlakas väike rohttaim",
@@ -8642,7 +8642,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sall", gloss: "scarf", pos: "NOUN", cefr: "A2",
     ekilexWordId: 230792,
-    parts: { NOM_SG: "sall", GEN_SG: "salli", PART_SG: "salli", ILL_SG_SHORT: "salli", PART_PL: "salle", GEN_PL: "sallide" },
+    parts: { NOM_SG: "sall", GEN_SG: "salli", PART_SG: "salli", ILL_SG_SHORT: "salli", NOM_PL: "sallid", PART_PL: "salle", GEN_PL: "sallide" },
     government: null,
     usages: ["Kootud sall.", "Siidist sall.", "Kašmiirsall.", "Pane sall kaela, õues on külm."],
     note: "kaelas, peas või õlgadel kantav hrl piklik kitsas riietusese",
@@ -8669,7 +8669,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sanktsioon", gloss: "sanction", pos: "NOUN", cefr: "B2",
     ekilexWordId: 231131,
-    parts: { NOM_SG: "sanktsioon", GEN_SG: "sanktsiooni", PART_SG: "sanktsiooni", ILL_SG_SHORT: "sanktsiooni", PART_PL: "sanktsioone", GEN_PL: "sanktsioonide" },
+    parts: { NOM_SG: "sanktsioon", GEN_SG: "sanktsiooni", PART_SG: "sanktsiooni", ILL_SG_SHORT: "sanktsiooni", NOM_PL: "sanktsioonid", PART_PL: "sanktsioone", GEN_PL: "sanktsioonide" },
     government: null,
     usages: ["Ärikeeld on karm sanktsioon, mille kohus mõistab näiteks majanduskuritegude eest.", "Andmete esitamisest keeldumise puhul saab ettevõtjate vastu rakendada sanktsioone.", "Diplomaatide väljasaatmine jt tavapärased diplomaatilised sanktsioonid.", "Euroopa Liit karmistab Birma valitsuse vastu suunatud majanduslikke sanktsioone."],
     note: "õiguslik karistus, sunniabinõu õigusrikkuja vastu",
@@ -8678,7 +8678,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sarkasm", gloss: "sarcasm", pos: "NOUN", cefr: null,
     ekilexWordId: 231248,
-    parts: { NOM_SG: "sarkasm", GEN_SG: "sarkasmi", PART_SG: "sarkasmi", ILL_SG_SHORT: "sarkasmi", PART_PL: "sarkasme", GEN_PL: "sarkasmide" },
+    parts: { NOM_SG: "sarkasm", GEN_SG: "sarkasmi", PART_SG: "sarkasmi", ILL_SG_SHORT: "sarkasmi", NOM_PL: "sarkasmid", PART_PL: "sarkasme", GEN_PL: "sarkasmide" },
     government: null,
     usages: ["Inspektori hääles kõlas varjamatu sarkasm.", "Ta ütles seda talle omase peene sarkasmiga."],
     note: "salvav pilge, äärmiselt terav, üdini lõikav iroonia",
@@ -8687,7 +8687,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sarnane", gloss: "similar", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 231263,
-    parts: { NOM_SG: "sarnane", GEN_SG: "sarnase", PART_SG: "sarnast", PART_PL: "sarnaseid", GEN_PL: "sarnaste" },
+    parts: { NOM_SG: "sarnane", GEN_SG: "sarnase", PART_SG: "sarnast", NOM_PL: "sarnased", PART_PL: "sarnaseid", GEN_PL: "sarnaste" },
     government: null,
     usages: ["Kaks täiesti sarnast hoonet.", "Midagi sarnast neis on.", "Klenskiga sarnane mees.", "Feta juustu sarnane pehme juust."],
     note: "välimuses või mingis muus suhtes rohkete ühetaoliseks tegevate ühisjoontega, millegagi võrreldes samalaadne",
@@ -8696,7 +8696,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sarnasus", gloss: "similarity", pos: "NOUN", cefr: "B2",
     ekilexWordId: 231270,
-    parts: { NOM_SG: "sarnasus", GEN_SG: "sarnasuse", PART_SG: "sarnasust", ILL_SG_SHORT: "sarnasusse", PART_PL: "sarnasusi", GEN_PL: "sarnasuste" },
+    parts: { NOM_SG: "sarnasus", GEN_SG: "sarnasuse", PART_SG: "sarnasust", ILL_SG_SHORT: "sarnasusse", NOM_PL: "sarnasused", PART_PL: "sarnasusi", GEN_PL: "sarnasuste" },
     government: null,
     usages: ["Näojoonte hämmastav sarnasus.", "Keeleline sarnasus.", "Koeral polnud vähimatki sarnasust lubatud tõuga.", "Hulknurkade sarnasus."],
     note: "sarnased, ühised jooned, omadused vms",
@@ -8705,7 +8705,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seade", gloss: "device", pos: "NOUN", cefr: "B1",
     ekilexWordId: 231504,
-    parts: { NOM_SG: "seade", GEN_SG: "seadme", PART_SG: "seadet", PART_PL: "seadmeid", GEN_PL: "seadmete" },
+    parts: { NOM_SG: "seade", GEN_SG: "seadme", PART_SG: "seadet", NOM_PL: "seadmed", PART_PL: "seadmeid", GEN_PL: "seadmete" },
     government: null,
     usages: ["Puutetundliku ekraaniga seade on muutnud väikelapsele arvuti kasutamise lihtsamaks.", "Külmik on varustatud seadmega, mis jahutab pooleliitrise joogipurgi vähem kui viie minutiga.", "Kilekottide sulgemise seade.", "Kompass on lihtne seade, millel on ainult üks liikuv osa – magnetnõel."],
     note: "kindla otstarbega tehniline või elektrooniline vahend või paljude detailidega süsteem",
@@ -8723,7 +8723,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seadus", gloss: "law", pos: "NOUN", cefr: "A2",
     ekilexWordId: 231517,
-    parts: { NOM_SG: "seadus", GEN_SG: "seaduse", PART_SG: "seadust", ILL_SG_SHORT: "seadusse", PART_PL: "seadusi", GEN_PL: "seaduste" },
+    parts: { NOM_SG: "seadus", GEN_SG: "seaduse", PART_SG: "seadust", ILL_SG_SHORT: "seadusse", NOM_PL: "seadused", PART_PL: "seadusi", GEN_PL: "seaduste" },
     government: null,
     usages: ["Eesti Vabariigi seadused.", "Tulumaksuseadus.", "Alkoholi müük alaealistele on seadusega keelatud.", "See seadus enam ei kehti."],
     note: "kõrgeima riigivõimuorgani poolt kehtestatud õigusnorme sisaldav dokument või selles kirja pandud juhised",
@@ -8732,7 +8732,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seaduslik", gloss: "lawful", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 231547,
-    parts: { NOM_SG: "seaduslik", GEN_SG: "seadusliku", PART_SG: "seaduslikku", ILL_SG_SHORT: "seaduslikku", PART_PL: "seaduslikke", GEN_PL: "seaduslike" },
+    parts: { NOM_SG: "seaduslik", GEN_SG: "seadusliku", PART_SG: "seaduslikku", ILL_SG_SHORT: "seaduslikku", NOM_PL: "seaduslikud", PART_PL: "seaduslikke", GEN_PL: "seaduslike" },
     government: null,
     usages: ["Eesti seaduslik maksevahend on euro.", "Presidendi seaduslik abikaasa.", "Mitteseaduslik.", "Tundub, et asi pole seaduslik."],
     note: "kehtiva seadusega kooskõlas olev, ametlikult lubatud, tunnustatud või määratud",
@@ -8741,7 +8741,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seaduspärasus", gloss: "regularity, pattern", pos: "NOUN", cefr: null,
     ekilexWordId: 231551,
-    parts: { NOM_SG: "seaduspärasus", GEN_SG: "seaduspärasuse", PART_SG: "seaduspärasust", ILL_SG_SHORT: "seaduspärasusse", PART_PL: "seaduspärasusi", GEN_PL: "seaduspärasuste" },
+    parts: { NOM_SG: "seaduspärasus", GEN_SG: "seaduspärasuse", PART_SG: "seaduspärasust", ILL_SG_SHORT: "seaduspärasusse", NOM_PL: "seaduspärasused", PART_PL: "seaduspärasusi", GEN_PL: "seaduspärasuste" },
     government: null,
     usages: ["Matemaatiku mõtlemine toetab loogiliste seaduspärasuste otsimist.", "Ametkonna tegevuse seaduspärasuse kontrollimiseks algatati teenistuslik järelevalve.", "Vaidlused jahilubade praegusel viisil väljastamise seaduspärasuse üle võivad kesta veel aastaid."],
     note: "kindlat korda järgiv, teatavatest asjaoludest tingitud (korduv) nähtus, asjaolu vms",
@@ -8750,7 +8750,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "see", gloss: "this, it", pos: "PRONOUN", cefr: "A1",
     ekilexWordId: 231693,
-    parts: { NOM_SG: "see", GEN_SG: "selle", PART_SG: "seda", PART_PL: "neid", GEN_PL: "nende" },
+    parts: { NOM_SG: "see", GEN_SG: "selle", PART_SG: "seda", NOM_PL: "need", PART_PL: "neid", GEN_PL: "nende" },
     government: null,
     usages: ["Kes see on?", "See on minu sõber.", "Mida see peaks tähendama?", "See tüüp tundub kahtlane."],
     note: "(otsesel viitamisel ümbritsevale reaalsusele) osutab lähedal asuvale või muidu tähelepanu objektiks olevale isikule, loomale, esemele või olukorrale",
@@ -8768,7 +8768,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seelik", gloss: "skirt", pos: "NOUN", cefr: "A2",
     ekilexWordId: 231773,
-    parts: { NOM_SG: "seelik", GEN_SG: "seeliku", PART_SG: "seelikut", PART_PL: "seelikuid", GEN_PL: "seelikute" },
+    parts: { NOM_SG: "seelik", GEN_SG: "seeliku", PART_SG: "seelikut", NOM_PL: "seelikud", PART_PL: "seelikuid", GEN_PL: "seelikute" },
     government: null,
     usages: ["Lühike seelik.", "Kahar seelik.", "Siidseelik.", "Sitsiseelik."],
     note: "naiste riideese, mis ulatub vöökohalt allapoole, katab keha alumise osa ja osaliselt ka jalad",
@@ -8777,7 +8777,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seen", gloss: "mushroom", pos: "NOUN", cefr: "A1",
     ekilexWordId: 231841,
-    parts: { NOM_SG: "seen", GEN_SG: "seene", PART_SG: "seent", ILL_SG_SHORT: "seende", PART_PL: "seeni", GEN_PL: "seente" },
+    parts: { NOM_SG: "seen", GEN_SG: "seene", PART_SG: "seent", ILL_SG_SHORT: "seende", NOM_PL: "seened", PART_PL: "seeni", GEN_PL: "seente" },
     government: null,
     usages: ["Mürgised ja söödavad seened.", "Kas see seen on mürgine või söödav?", "Novembris võis veel seenel käia.", "Nikolai oli läinud hommikul metsa seenele ja polnud õhtuks tagasi jõudnud."],
     note: "hrl sügisel metsas kasvav hrl varrest ja kübarast koosneva viljakehaga organism, mille paljusid liike kasutatakse toiduna",
@@ -8813,7 +8813,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sein", gloss: "wall", pos: "NOUN", cefr: "A1",
     ekilexWordId: 232085,
-    parts: { NOM_SG: "sein", GEN_SG: "seina", PART_SG: "seina", ILL_SG_SHORT: "seina", PART_PL: "seinu", GEN_PL: "seinte" },
+    parts: { NOM_SG: "sein", GEN_SG: "seina", PART_SG: "seina", ILL_SG_SHORT: "seina", NOM_PL: "seinad", PART_PL: "seinu", GEN_PL: "seinte" },
     government: null,
     usages: ["Seintelt pudenes krohvi ja kive.", "Ruumi seintel rippus palju pilte.", "Majasein.", "Kirikusein."],
     note: "hoonet, tuba vm ruumi piirav püstine, katuseni või laeni ulatuv osa",
@@ -8831,7 +8831,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seisukohavõtt", gloss: "taking a position", pos: "NOUN", cefr: null,
     ekilexWordId: 232163,
-    parts: { NOM_SG: "seisukohavõtt", GEN_SG: "seisukohavõtu", PART_SG: "seisukohavõttu", ILL_SG_SHORT: "seisukohavõttu", PART_PL: "seisukohavõtte", GEN_PL: "seisukohavõttude" },
+    parts: { NOM_SG: "seisukohavõtt", GEN_SG: "seisukohavõtu", PART_SG: "seisukohavõttu", ILL_SG_SHORT: "seisukohavõttu", NOM_PL: "seisukohavõtud", PART_PL: "seisukohavõtte", GEN_PL: "seisukohavõttude" },
     government: null,
     usages: ["Kaitseminister esines jõulise seisukohavõtuga."],
     note: "omapoolne arvamus, veendumus millegi suhtes",
@@ -8840,7 +8840,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seisukoht", gloss: "standpoint", pos: "NOUN", cefr: "B1",
     ekilexWordId: 232164,
-    parts: { NOM_SG: "seisukoht", GEN_SG: "seisukoha", PART_SG: "seisukohta", ILL_SG_SHORT: "seisukohta", PART_PL: "seisukohti", GEN_PL: "seisukohtade" },
+    parts: { NOM_SG: "seisukoht", GEN_SG: "seisukoha", PART_SG: "seisukohta", ILL_SG_SHORT: "seisukohta", NOM_PL: "seisukohad", PART_PL: "seisukohti", GEN_PL: "seisukohtade" },
     government: null,
     usages: ["Olen seisukohal, et ..", "Kindel seisukoht puudus ligi pooltel küsitletuil.", "Komisjon jõudis eelarve suhtes ühisele seisukohale.", "Mul seisukoht puudub."],
     note: "väljakujunenud arvamus, suhtumine millessegi, kindel veendumus",
@@ -8849,7 +8849,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seitse", gloss: "seven", pos: "NOUN", cefr: "A1",
     ekilexWordId: 232187,
-    parts: { NOM_SG: "seitse", GEN_SG: "seitsme", PART_SG: "seitset", PART_PL: "seitsmeid", GEN_PL: "seitsmete" },
+    parts: { NOM_SG: "seitse", GEN_SG: "seitsme", PART_SG: "seitset", NOM_PL: "seitsmed", PART_PL: "seitsmeid", GEN_PL: "seitsmete" },
     government: null,
     usages: ["Viiskümmend seitse.", "Nädalas on seitse päeva.", "Ärkasin kell seitse.", "Teater algab kell seitse."],
     note: "põhiarv 7",
@@ -8876,7 +8876,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "selg", gloss: "back", pos: "NOUN", cefr: "A1",
     ekilexWordId: 232376,
-    parts: { NOM_SG: "selg", GEN_SG: "selja", PART_SG: "selga", ILL_SG_SHORT: "selga", PART_PL: "selgi", GEN_PL: "selgade" },
+    parts: { NOM_SG: "selg", GEN_SG: "selja", PART_SG: "selga", ILL_SG_SHORT: "selga", NOM_PL: "seljad", PART_PL: "selgi", GEN_PL: "selgade" },
     government: null,
     usages: ["Vanamehe sirge selg vajus kühmu.", "Seisin, käed selja taga.", "Jalad on väsinud ja selg valutab.", "Õpetaja seisis seljaga klassi poole."],
     note: "inimese keha tagaosa õlgadest tuharateni",
@@ -8894,7 +8894,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "selgesõnaline", gloss: "explicit", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 232398,
-    parts: { NOM_SG: "selgesõnaline", GEN_SG: "selgesõnalise", PART_SG: "selgesõnalist", ILL_SG_SHORT: "selgesõnalisse", PART_PL: "selgesõnalisi", GEN_PL: "selgesõnaliste" },
+    parts: { NOM_SG: "selgesõnaline", GEN_SG: "selgesõnalise", PART_SG: "selgesõnalist", ILL_SG_SHORT: "selgesõnalisse", NOM_PL: "selgesõnalised", PART_PL: "selgesõnalisi", GEN_PL: "selgesõnaliste" },
     government: null,
     usages: ["Selgesõnaline programm, ometi võimatu täita."],
     note: "selgesti väljendatud, ühemõtteline, otse öeldud",
@@ -8912,7 +8912,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "selgitus", gloss: "explanation", pos: "NOUN", cefr: "B1",
     ekilexWordId: 232406,
-    parts: { NOM_SG: "selgitus", GEN_SG: "selgituse", PART_SG: "selgitust", ILL_SG_SHORT: "selgitusse", PART_PL: "selgitusi", GEN_PL: "selgituste" },
+    parts: { NOM_SG: "selgitus", GEN_SG: "selgituse", PART_SG: "selgitust", ILL_SG_SHORT: "selgitusse", NOM_PL: "selgitused", PART_PL: "selgitusi", GEN_PL: "selgituste" },
     government: null,
     usages: ["Mõni sõna selgituseks.", "Suur tänu, et saime täpsema selgituse!", "Rahvas nõudis valitsuselt selgitust."],
     note: "põhjendus, täpsustus millegi kohta, selgitamine",
@@ -8921,7 +8921,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "selgus", gloss: "clarity", pos: "NOUN", cefr: "B1",
     ekilexWordId: 232420,
-    parts: { NOM_SG: "selgus", GEN_SG: "selguse", PART_SG: "selgust", ILL_SG_SHORT: "selgusse", PART_PL: "selgusi", GEN_PL: "selguste" },
+    parts: { NOM_SG: "selgus", GEN_SG: "selguse", PART_SG: "selgust", ILL_SG_SHORT: "selgusse", NOM_PL: "selgused", PART_PL: "selgusi", GEN_PL: "selguste" },
     government: null,
     usages: ["Pole selgust, mis on hea, mis halb.", "Järgmised kuus kuud annavad selguse, kellel on õigus.", "Seaduste tõlgendamisel läheb vaja suurt täpsust ja selgust.", "Selguse huvides vältisin ettekandes keerulisi sõnu."],
     note: "arusaadavus, (üheselt) mõistetavus",
@@ -8939,7 +8939,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seminar", gloss: "seminar", pos: "NOUN", cefr: "A2",
     ekilexWordId: 232590,
-    parts: { NOM_SG: "seminar", GEN_SG: "seminari", PART_SG: "seminari", ILL_SG_SHORT: "seminari", PART_PL: "seminare", GEN_PL: "seminaride" },
+    parts: { NOM_SG: "seminar", GEN_SG: "seminari", PART_SG: "seminari", ILL_SG_SHORT: "seminari", NOM_PL: "seminarid", PART_PL: "seminare", GEN_PL: "seminaride" },
     government: null,
     usages: ["Õigusaktides toimunud muudatusi käsitlev seminar.", "Rahvusvaheline seminar.", "Äriseminar.", "Koostööseminar."],
     note: "kitsama teemaga nõupidamine (suhteliselt väikese osavõtjate arvuga)",
@@ -8957,7 +8957,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "seos", gloss: "connection", pos: "NOUN", cefr: "B1",
     ekilexWordId: 232695,
-    parts: { NOM_SG: "seos", GEN_SG: "seose", PART_SG: "seost", PART_PL: "seoseid", GEN_PL: "seoste" },
+    parts: { NOM_SG: "seos", GEN_SG: "seose", PART_SG: "seost", NOM_PL: "seosed", PART_PL: "seoseid", GEN_PL: "seoste" },
     government: null,
     usages: ["Tunded ja energia on tihedas omavahelises seoses.", "Sündmuste ajaline seos võiks olla järgnev.", "Tähendusseos.", "Sugulusseos."],
     note: "vastastikune tingitus või sõltuvus, millestki olenevus või vahekord millegagi",
@@ -8966,7 +8966,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "september", gloss: "September", pos: "NOUN", cefr: "A1",
     ekilexWordId: 232752,
-    parts: { NOM_SG: "september", GEN_SG: "septembri", PART_SG: "septembrit", PART_PL: "septembreid", GEN_PL: "septembrite" },
+    parts: { NOM_SG: "september", GEN_SG: "septembri", PART_SG: "septembrit", NOM_PL: "septembrid", PART_PL: "septembreid", GEN_PL: "septembrite" },
     government: null,
     usages: ["Kool algab 1. septembril."],
     note: "aasta 9. kuu, põhjapoolkeral esimene sügiskuu",
@@ -8984,7 +8984,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sidesõna", gloss: "conjunction", pos: "NOUN", cefr: null,
     ekilexWordId: 233021,
-    parts: { NOM_SG: "sidesõna", GEN_SG: "sidesõna", PART_SG: "sidesõna", ILL_SG_SHORT: "sidesõnna", PART_PL: "sidesõnu", GEN_PL: "sidesõnade" },
+    parts: { NOM_SG: "sidesõna", GEN_SG: "sidesõna", PART_SG: "sidesõna", ILL_SG_SHORT: "sidesõnna", NOM_PL: "sidesõnad", PART_PL: "sidesõnu", GEN_PL: "sidesõnade" },
     government: null,
     usages: ["Sidesõnad on näiteks ja, aga, sest."],
     note: "lauseosi või osalauseid siduv muutumatu sõna (nt ja, või)",
@@ -8993,7 +8993,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sidusus", gloss: "cohesion", pos: "NOUN", cefr: "B2",
     ekilexWordId: 233078,
-    parts: { NOM_SG: "sidusus", GEN_SG: "sidususe", PART_SG: "sidusust", ILL_SG_SHORT: "sidususse", PART_PL: "sidususi", GEN_PL: "sidususte" },
+    parts: { NOM_SG: "sidusus", GEN_SG: "sidususe", PART_SG: "sidusust", ILL_SG_SHORT: "sidususse", NOM_PL: "sidusused", PART_PL: "sidususi", GEN_PL: "sidususte" },
     government: null,
     usages: ["Ühiskonna sidusus.", "Nõrk sotsiaalne sidusus.", "Euroopa Liit liigub suurema sidususe suunas.", "Repliigi sidusus."],
     note: "mitmest osast, kihist vm koosneva nähtuse, asja terviklikkus, mõtteline seostatus",
@@ -9002,7 +9002,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "siduv", gloss: "binding", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 233057,
-    parts: { NOM_SG: "siduv", GEN_SG: "siduva", PART_SG: "siduvat", PART_PL: "siduvaid", GEN_PL: "siduvate" },
+    parts: { NOM_SG: "siduv", GEN_SG: "siduva", PART_SG: "siduvat", NOM_PL: "siduvad", PART_PL: "siduvaid", GEN_PL: "siduvate" },
     government: null,
     usages: ["Rahvusvaheliselt siduv leping.", "Peaasi on mitte anda siduvaid lubadusi."],
     note: "(lepingu, kokkuleppe, kohustuse vms kohta:) kedagi millekski kohustav",
@@ -9011,7 +9011,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sihtkeel", gloss: "target language", pos: "NOUN", cefr: null,
     ekilexWordId: 233213,
-    parts: { NOM_SG: "sihtkeel", GEN_SG: "sihtkeele", PART_SG: "sihtkeelt", ILL_SG_SHORT: "sihtkeelde", PART_PL: "sihtkeeli", GEN_PL: "sihtkeelte" },
+    parts: { NOM_SG: "sihtkeel", GEN_SG: "sihtkeele", PART_SG: "sihtkeelt", ILL_SG_SHORT: "sihtkeelde", NOM_PL: "sihtkeeled", PART_PL: "sihtkeeli", GEN_PL: "sihtkeelte" },
     government: null,
     usages: ["Lähtekeele sõna on võimalik sihtkeelde tõlkida mitmel viisil."],
     note: "keel, millesse sõna, väljend või tekst tõlgitakse",
@@ -9047,7 +9047,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sild", gloss: "bridge", pos: "NOUN", cefr: "A1",
     ekilexWordId: 233473,
-    parts: { NOM_SG: "sild", GEN_SG: "silla", PART_SG: "silda", ILL_SG_SHORT: "silda", PART_PL: "sildu", GEN_PL: "sildade" },
+    parts: { NOM_SG: "sild", GEN_SG: "silla", PART_SG: "silda", ILL_SG_SHORT: "silda", NOM_PL: "sillad", PART_PL: "sildu", GEN_PL: "sildade" },
     government: null,
     usages: ["Pirita jõe sild.", "Elava liiklusega tänavale tehti jalakäijate sild.", "Raudsild.", "Betoonsild."],
     note: "üle veekogu, sõidutee vms ulatuv rajatis, mida mööda kulgeb liiklus",
@@ -9056,7 +9056,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "silm", gloss: "eye", pos: "NOUN", cefr: "A1",
     ekilexWordId: 233583,
-    parts: { NOM_SG: "silm", GEN_SG: "silma", PART_SG: "silma", ILL_SG_SHORT: "silma", PART_PL: "silmi", GEN_PL: "silmade" },
+    parts: { NOM_SG: "silm", GEN_SG: "silma", PART_SG: "silma", ILL_SG_SHORT: "silma", NOM_PL: "silmad", PART_PL: "silmi", GEN_PL: "silmade" },
     government: null,
     usages: ["Tal on lühikesed mustad juuksed ja pruunid silmad.", "Ta vaatas taevasse ja kissitas silmi.", "Tüdrukul on ilusad sinised silmad.", "Tal tulid pisarad silma."],
     note: "inimese ja enamiku loomade paariline nägemiselund",
@@ -9074,7 +9074,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sinine", gloss: "blue", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 233931,
-    parts: { NOM_SG: "sinine", GEN_SG: "sinise", PART_SG: "sinist", PART_PL: "siniseid", GEN_PL: "siniste" },
+    parts: { NOM_SG: "sinine", GEN_SG: "sinise", PART_SG: "sinist", NOM_PL: "sinised", PART_PL: "siniseid", GEN_PL: "siniste" },
     government: null,
     usages: ["Sinised silmad.", "Sinise vilkuriga politseiauto.", "Huuled on külmast sinised.", "Lõke põles sinise leegiga."],
     note: "rukkilille, linaõie, pilvitu taeva värvi, spektris tumesinise ja rohelise vahel",
@@ -9101,7 +9101,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sissejuhatus", gloss: "introduction", pos: "NOUN", cefr: "B2",
     ekilexWordId: 234353,
-    parts: { NOM_SG: "sissejuhatus", GEN_SG: "sissejuhatuse", PART_SG: "sissejuhatust", ILL_SG_SHORT: "sissejuhatusse", PART_PL: "sissejuhatusi", GEN_PL: "sissejuhatuste" },
+    parts: { NOM_SG: "sissejuhatus", GEN_SG: "sissejuhatuse", PART_SG: "sissejuhatust", ILL_SG_SHORT: "sissejuhatusse", NOM_PL: "sissejuhatused", PART_PL: "sissejuhatusi", GEN_PL: "sissejuhatuste" },
     government: null,
     usages: ["Raamatu sissejuhatuses on öeldud, et teos ilmus korraga kahes keeles.", "Põhiseaduse sissejuhatus.", "Lühike sissejuhatus tehtud, võisimegi siiditrükiga ise alustada.", "Kõne algas põhjaliku sissejuhatusega."],
     note: "teose, artikli, ettekande vms algusosa, kus kirjeldatakse lühidalt, millest juttu tuleb või antakse muid üldisi selgitusi",
@@ -9110,7 +9110,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sisu", gloss: "content", pos: "NOUN", cefr: "B1",
     ekilexWordId: 234508,
-    parts: { NOM_SG: "sisu", GEN_SG: "sisu", PART_SG: "sisu", PART_PL: "sisusid", GEN_PL: "sisude" },
+    parts: { NOM_SG: "sisu", GEN_SG: "sisu", PART_SG: "sisu", NOM_PL: "sisud", PART_PL: "sisusid", GEN_PL: "sisude" },
     government: null,
     usages: ["Mehed olid valmis iga vastutulijaga pudeli sisu jagama.", "Arbuusi sisu.", "Paki sisust saavad söönuks neli inimest.", "Saiasisu."],
     note: "see, mis mingi ümbrise, koore, kesta, anuma vm sees leidub",
@@ -9128,7 +9128,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "släng", gloss: "slang", pos: "NOUN", cefr: null,
     ekilexWordId: 234811,
-    parts: { NOM_SG: "släng", GEN_SG: "slängi", PART_SG: "slängi", ILL_SG_SHORT: "slängi", PART_PL: "slänge", GEN_PL: "slängide" },
+    parts: { NOM_SG: "släng", GEN_SG: "slängi", PART_SG: "slängi", ILL_SG_SHORT: "slängi", NOM_PL: "slängid", PART_PL: "slänge", GEN_PL: "slängide" },
     government: null,
     usages: ["Õpilastega ma slängi ei kasuta.", "Relativistliku mudeli alghetk kannab astronoomide slängis nime Suur Pauk.", "Raamatus on rohkesti Ameerika slängi, aga ka Iirimaal, Šotimaal ja Austraalias kasutatavaid idioome.", "Vanglasläng."],
     note: "vabam, mitteametlik omavaheline kõnepruuk mingis inimrühmas, sellele rühmale omane erikeel",
@@ -9137,7 +9137,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "soe", gloss: "warm", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 234888,
-    parts: { NOM_SG: "soe", GEN_SG: "sooja", PART_SG: "sooja", ILL_SG_SHORT: "sooja", PART_PL: "sooje", GEN_PL: "soojade" },
+    parts: { NOM_SG: "soe", GEN_SG: "sooja", PART_SG: "sooja", ILL_SG_SHORT: "sooja", NOM_PL: "soojad", PART_PL: "sooje", GEN_PL: "soojade" },
     government: null,
     usages: ["Väga pehmele talvele järgneb soe suvi.", "Ahjus lõõmav tuli küttis toa soojaks.", "Naudin puhkust mõnel soojal maal.", "Soe plekkahi."],
     note: "mõõdukalt kõrge, hrl inimesele mõnusalt mõjuva, hästi vastuvõetava temperatuuriga",
@@ -9146,7 +9146,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sokk", gloss: "sock", pos: "NOUN", cefr: "A2",
     ekilexWordId: 234953,
-    parts: { NOM_SG: "sokk", GEN_SG: "soki", PART_SG: "sokki", ILL_SG_SHORT: "sokki", PART_PL: "sokke", GEN_PL: "sokkide" },
+    parts: { NOM_SG: "sokk", GEN_SG: "soki", PART_SG: "sokki", ILL_SG_SHORT: "sokki", NOM_PL: "sokid", PART_PL: "sokke", GEN_PL: "sokkide" },
     government: null,
     usages: ["Jalga tuleks panna villased sokid.", "Poe väiksust arvestades üllatas sokkide ja sukkpükste valik.", "Spordisokid.", "Ostsin kaks paari sokke."],
     note: "labajalga ja pahkluud kattev, ka poolde säärde ulatuv silmkoeline riietusese",
@@ -9164,7 +9164,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sool", gloss: "salt", pos: "NOUN", cefr: "A1",
     ekilexWordId: 235271,
-    parts: { NOM_SG: "sool", GEN_SG: "soola", PART_SG: "soola", ILL_SG_SHORT: "soola", PART_PL: "sooli", GEN_PL: "soolade" },
+    parts: { NOM_SG: "sool", GEN_SG: "soola", PART_SG: "soola", ILL_SG_SHORT: "soola", NOM_PL: "soolad", PART_PL: "sooli", GEN_PL: "soolade" },
     government: null,
     usages: ["Lisasin oma praele soola ja pipart.", "Unustasin toidule soola panna.", "Libedatõrjeks puistatakse teele soola, graniiti või liiva.", "Ta lisab oma märkustega jutule soola."],
     note: "valkjas kristalne merevee maitsega aine, mida kasutatakse toidu maitsestamiseks ja konserveerimiseks",
@@ -9173,7 +9173,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Soome", gloss: "Finland", pos: "NOUN", cefr: null,
     ekilexWordId: 235404,
-    parts: { NOM_SG: "Soome", GEN_SG: "Soome", PART_SG: "Soomet", ILL_SG_SHORT: "Soome", PART_PL: "Soomesid", GEN_PL: "Soomede" },
+    parts: { NOM_SG: "Soome", GEN_SG: "Soome", PART_SG: "Soomet", ILL_SG_SHORT: "Soome", NOM_PL: "Soomed", PART_PL: "Soomesid", GEN_PL: "Soomede" },
     government: null,
     usages: ["Endisaegsed Soome mündid."],
     note: "riik Põhja-Euroopas",
@@ -9182,7 +9182,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "soomlane", gloss: "a Finn", pos: "NOUN", cefr: "A2",
     ekilexWordId: 235430,
-    parts: { NOM_SG: "soomlane", GEN_SG: "soomlase", PART_SG: "soomlast", ILL_SG_SHORT: "soomlasse", PART_PL: "soomlasi", GEN_PL: "soomlaste" },
+    parts: { NOM_SG: "soomlane", GEN_SG: "soomlase", PART_SG: "soomlast", ILL_SG_SHORT: "soomlasse", NOM_PL: "soomlased", PART_PL: "soomlasi", GEN_PL: "soomlaste" },
     government: null,
     usages: ["Rohkesti eestlasi on abiellunud soomlastega ja perekonnakeeleks on kujunenud soome keel.", "Enamik soomlasi käib saunas kord nädalas."],
     note: "Soome põhirahva liige",
@@ -9227,7 +9227,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "spetsiifiline", gloss: "specific", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 235902,
-    parts: { NOM_SG: "spetsiifiline", GEN_SG: "spetsiifilise", PART_SG: "spetsiifilist", ILL_SG_SHORT: "spetsiifilisse", PART_PL: "spetsiifilisi", GEN_PL: "spetsiifiliste" },
+    parts: { NOM_SG: "spetsiifiline", GEN_SG: "spetsiifilise", PART_SG: "spetsiifilist", ILL_SG_SHORT: "spetsiifilisse", NOM_PL: "spetsiifilised", PART_PL: "spetsiifilisi", GEN_PL: "spetsiifiliste" },
     government: null,
     usages: ["Vanglal on oma spetsiifiline lõhn.", "Spetsiifilised teadmised."],
     note: "millelegi olemuslikult, tunnuslikult omane",
@@ -9236,7 +9236,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sport", gloss: "sport", pos: "NOUN", cefr: "A2",
     ekilexWordId: 236075,
-    parts: { NOM_SG: "sport", GEN_SG: "spordi", PART_SG: "sporti", ILL_SG_SHORT: "sporti", PART_PL: "sporte", GEN_PL: "sportide" },
+    parts: { NOM_SG: "sport", GEN_SG: "spordi", PART_SG: "sporti", ILL_SG_SHORT: "sporti", NOM_PL: "spordid", PART_PL: "sporte", GEN_PL: "sportide" },
     government: null,
     usages: ["Armastan sporti.", "Mõõdukas sport tuleb alati kasuks.", "Suurt sporti ei tehta igavesti.", "Noortesport."],
     note: "füüsilist pingutust nõudev mänguline või võistluslik kehaline tegevus, sportimine",
@@ -9245,7 +9245,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "standardkeel", gloss: "standard language", pos: "NOUN", cefr: null,
     ekilexWordId: 236190,
-    parts: { NOM_SG: "standardkeel", GEN_SG: "standardkeele", PART_SG: "standardkeelt", ILL_SG_SHORT: "standardkeelde", PART_PL: "standardkeeli", GEN_PL: "standardkeelte" },
+    parts: { NOM_SG: "standardkeel", GEN_SG: "standardkeele", PART_SG: "standardkeelt", ILL_SG_SHORT: "standardkeelde", NOM_PL: "standardkeeled", PART_PL: "standardkeeli", GEN_PL: "standardkeelte" },
     government: null,
     usages: ["Standardkeel, õppijakeel jt keele kasutusvariandid.", "Ametlikuks standardkeeleks on saksa keele Austria variant."],
     note: "ühtne, korrastatud keelekuju, mida kasutatakse eeskätt ameti- ja halduskeeles kirjas ja kõnes",
@@ -9254,7 +9254,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "statistika", gloss: "statistics", pos: "NOUN", cefr: "B1",
     ekilexWordId: 236253,
-    parts: { NOM_SG: "statistika", GEN_SG: "statistika", PART_SG: "statistikat", PART_PL: "statistikaid", GEN_PL: "statistikate" },
+    parts: { NOM_SG: "statistika", GEN_SG: "statistika", PART_SG: "statistikat", NOM_PL: "statistikad", PART_PL: "statistikaid", GEN_PL: "statistikate" },
     government: null,
     usages: ["Matemaatiline statistika.", "Kuritegevuse statistika.", "Depressiooni leviku täpne statistika.", "Statistika näitab, et iga kolmas tänaval vastutulija on suitsetaja."],
     note: "teadus, mis käsitleb arvandmete kogumist, töötlemist ja analüüsimist",
@@ -9263,7 +9263,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "stiil", gloss: "style", pos: "NOUN", cefr: "B1",
     ekilexWordId: 236362,
-    parts: { NOM_SG: "stiil", GEN_SG: "stiili", PART_SG: "stiili", ILL_SG_SHORT: "stiili", PART_PL: "stiile", GEN_PL: "stiilide" },
+    parts: { NOM_SG: "stiil", GEN_SG: "stiili", PART_SG: "stiili", ILL_SG_SHORT: "stiili", NOM_PL: "stiilid", PART_PL: "stiile", GEN_PL: "stiilide" },
     government: null,
     usages: ["1970-ndate stiilis pidu.", "Kirjaniku napp stiil.", "Gooti stiilis sambad.", "Muusikas kohtuvad Kuuba ja Aafrika stiilid."],
     note: "ajastule, autorile, koolkonnale, teosele vm omane väljendus- või kujutuslaad, sellele iseloomulikud ühtsed jooned",
@@ -9272,7 +9272,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "stiilitaju", gloss: "sense of style", pos: "NOUN", cefr: null,
     ekilexWordId: 236374,
-    parts: { NOM_SG: "stiilitaju", GEN_SG: "stiilitaju", PART_SG: "stiilitaju", PART_PL: "stiilitajusid", GEN_PL: "stiilitajude" },
+    parts: { NOM_SG: "stiilitaju", GEN_SG: "stiilitaju", PART_SG: "stiilitaju", NOM_PL: "stiilitajud", PART_PL: "stiilitajusid", GEN_PL: "stiilitajude" },
     government: null,
     usages: ["Disainerina on tal hea stiilitaju ja värvimeel."],
     note: "võime stiili hästi, täpselt tajuda, tunnetada (ja edasi anda)",
@@ -9281,7 +9281,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "stiilivärving", gloss: "stylistic colouring", pos: "NOUN", cefr: null,
     ekilexWordId: 236383,
-    parts: { NOM_SG: "stiilivärving", GEN_SG: "stiilivärvingu", PART_SG: "stiilivärvingut", PART_PL: "stiilivärvinguid", GEN_PL: "stiilivärvingute" },
+    parts: { NOM_SG: "stiilivärving", GEN_SG: "stiilivärvingu", PART_SG: "stiilivärvingut", NOM_PL: "stiilivärvingud", PART_PL: "stiilivärvinguid", GEN_PL: "stiilivärvingute" },
     government: null,
     usages: [],
     note: "keelekasutuse laad, mis näitab väljenduse kuulumist mingisse kindlasse stiili või registrisse",
@@ -9290,7 +9290,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "stipendium", gloss: "scholarship", pos: "NOUN", cefr: "B1",
     ekilexWordId: 236405,
-    parts: { NOM_SG: "stipendium", GEN_SG: "stipendiumi", PART_SG: "stipendiumi", ILL_SG_SHORT: "stipendiumi", PART_PL: "stipendiume", GEN_PL: "stipendiumide" },
+    parts: { NOM_SG: "stipendium", GEN_SG: "stipendiumi", PART_SG: "stipendiumi", ILL_SG_SHORT: "stipendiumi", NOM_PL: "stipendiumid", PART_PL: "stipendiume", GEN_PL: "stipendiumide" },
     government: null,
     usages: ["Koorimuusika edendamise stipendium.", "„Ela ja sära“ stipendium.", "Pandi paika, kes sportlastest stipendiumi saama hakkavad.", "Magistrantide stipendium tõuseb."],
     note: "õpinguiks, teadus- või loometööks (korrapäraselt) makstav abiraha",
@@ -9299,7 +9299,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "stress", gloss: "stress", pos: "NOUN", cefr: "B1",
     ekilexWordId: 236477,
-    parts: { NOM_SG: "stress", GEN_SG: "stressi", PART_SG: "stressi", ILL_SG_SHORT: "stressi", PART_PL: "stresse", GEN_PL: "stresside" },
+    parts: { NOM_SG: "stress", GEN_SG: "stressi", PART_SG: "stressi", ILL_SG_SHORT: "stressi", NOM_PL: "stressid", PART_PL: "stresse", GEN_PL: "stresside" },
     government: null,
     usages: ["Halvad hinded tekitavad õpilastes stressi.", "Ta on stressis."],
     note: "organismi pingeseisund, mis tekib kaitsereaktsioonina teatud tugevate mõjurite (nt vaimse pinge, verekaotuse, hapnikuvaeguse) vastu",
@@ -9308,7 +9308,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "struktuur", gloss: "structure", pos: "NOUN", cefr: "B1",
     ekilexWordId: 236530,
-    parts: { NOM_SG: "struktuur", GEN_SG: "struktuuri", PART_SG: "struktuuri", ILL_SG_SHORT: "struktuuri", PART_PL: "struktuure", GEN_PL: "struktuuride" },
+    parts: { NOM_SG: "struktuur", GEN_SG: "struktuuri", PART_SG: "struktuuri", ILL_SG_SHORT: "struktuuri", NOM_PL: "struktuurid", PART_PL: "struktuure", GEN_PL: "struktuuride" },
     government: null,
     usages: ["Kirjaniku peas on valmiva romaani struktuur.", "Majanduse struktuur korraldatakse ümber.", "Rahvastiku struktuur.", "Eesti runoviisi struktuur."],
     note: "süsteemi, teose vm keerulise objekti sisemised seosed, koostisosade paigutus ja liitumise või seostumise viis",
@@ -9317,7 +9317,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "subjektiivne", gloss: "subjective", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 236604,
-    parts: { NOM_SG: "subjektiivne", GEN_SG: "subjektiivse", PART_SG: "subjektiivset", PART_PL: "subjektiivseid", GEN_PL: "subjektiivsete" },
+    parts: { NOM_SG: "subjektiivne", GEN_SG: "subjektiivse", PART_SG: "subjektiivset", NOM_PL: "subjektiivsed", PART_PL: "subjektiivseid", GEN_PL: "subjektiivsete" },
     government: null,
     usages: ["Oma subjektiivse hinnangu andsid nii ametnikud kui ka lähedased.", "Lugejate subjektiivsed eelistused on väga erinevad.", "Tõde on siin suhteline, subjektiivne.", "Subjektiivne õigus."],
     note: "isiklikul arvamusel, hinnangul, isiklikel tundmustel põhinev või neid väljendav",
@@ -9326,7 +9326,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suhe", gloss: "relationship", pos: "NOUN", cefr: "B1",
     ekilexWordId: 236774,
-    parts: { NOM_SG: "suhe", GEN_SG: "suhte", PART_SG: "suhet", PART_PL: "suhteid", GEN_PL: "suhete" },
+    parts: { NOM_SG: "suhe", GEN_SG: "suhte", PART_SG: "suhet", NOM_PL: "suhted", PART_PL: "suhteid", GEN_PL: "suhete" },
     government: null,
     usages: ["Pikkuse ja laiuse suhe on 1 : 2.", "Ostjale on oluline hinna ja kvaliteedi suhe.", "Lipu laiuse ja pikkuse suhe on 7 : 11.", "Kiriku ja riigi suhted."],
     note: "võrdlusel põhinev arvuline seos mõõdetavate suuruste või hulkade vahel",
@@ -9335,7 +9335,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suhkur", gloss: "sugar", pos: "NOUN", cefr: "A1",
     ekilexWordId: 236830,
-    parts: { NOM_SG: "suhkur", GEN_SG: "suhkru", PART_SG: "suhkrut", PART_PL: "suhkruid", GEN_PL: "suhkrute" },
+    parts: { NOM_SG: "suhkur", GEN_SG: "suhkru", PART_SG: "suhkrut", NOM_PL: "suhkrud", PART_PL: "suhkruid", GEN_PL: "suhkrute" },
     government: null,
     usages: ["Valge suhkru asemel soovitatakse tarvitada pigem pruuni suhkrut.", "Kas sa jood kohvi suhkruga või ilma?"],
     note: "magus kristalne toiduaine, mida saadakse nt suhkruroost või suhkrupeedist",
@@ -9344,7 +9344,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suhtlusolukord", gloss: "communicative situation", pos: "NOUN", cefr: null,
     ekilexWordId: 236877,
-    parts: { NOM_SG: "suhtlusolukord", GEN_SG: "suhtlusolukorra", PART_SG: "suhtlusolukorda", ILL_SG_SHORT: "suhtlusolukorda", PART_PL: "suhtlusolukordi", GEN_PL: "suhtlusolukordade" },
+    parts: { NOM_SG: "suhtlusolukord", GEN_SG: "suhtlusolukorra", PART_SG: "suhtlusolukorda", ILL_SG_SHORT: "suhtlusolukorda", NOM_PL: "suhtlusolukorrad", PART_PL: "suhtlusolukordi", GEN_PL: "suhtlusolukordade" },
     government: null,
     usages: ["Saan hakkama igapäevastes suhtlusolukordades, keerulisemates mitte."],
     note: "olukord, milles toimub teiste inimestega suhtlemine",
@@ -9353,7 +9353,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sujuv", gloss: "smooth", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 237035,
-    parts: { NOM_SG: "sujuv", GEN_SG: "sujuva", PART_SG: "sujuvat", PART_PL: "sujuvaid", GEN_PL: "sujuvate" },
+    parts: { NOM_SG: "sujuv", GEN_SG: "sujuva", PART_SG: "sujuvat", NOM_PL: "sujuvad", PART_PL: "sujuvaid", GEN_PL: "sujuvate" },
     government: null,
     usages: ["Sujuv üleminek ühest olekust teise.", "Mees eemaldus sujuval sammul.", "Tegin käega läbi õhu sujuva kaare.", "Maanteede pindamine segab sujuvat liiklust."],
     note: "ühtlaselt, äkiliste muutusteta, jõnksudeta kulgev, mitte järsk",
@@ -9371,7 +9371,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "supp", gloss: "soup", pos: "NOUN", cefr: "A1",
     ekilexWordId: 237522,
-    parts: { NOM_SG: "supp", GEN_SG: "supi", PART_SG: "suppi", ILL_SG_SHORT: "suppi", PART_PL: "suppe", GEN_PL: "suppide" },
+    parts: { NOM_SG: "supp", GEN_SG: "supi", PART_SG: "suppi", ILL_SG_SHORT: "suppi", NOM_PL: "supid", PART_PL: "suppe", GEN_PL: "suppide" },
     government: null,
     usages: ["Kapsasupp.", "Frikadellisupp.", "Vürtsine supp viib keele alla.", "Vesi on soe nagu supp."],
     note: "hrl keetes valmistatud vedel toit, mis sisaldab liha, kala, köögivilja vm",
@@ -9398,7 +9398,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suu", gloss: "mouth", pos: "NOUN", cefr: "A1",
     ekilexWordId: 237825,
-    parts: { NOM_SG: "suu", GEN_SG: "suu", PART_SG: "suud", ILL_SG_SHORT: "suhu", PART_PL: "suid", GEN_PL: "suude" },
+    parts: { NOM_SG: "suu", GEN_SG: "suu", PART_SG: "suud", ILL_SG_SHORT: "suhu", NOM_PL: "suud", PART_PL: "suid", GEN_PL: "suude" },
     government: null,
     usages: ["Haigutasin laia suuga.", "Lapsel tulid hambad suhu.", "Suus on paha maitse.", "Tüdruk ei teinud hambaarsti juures suud lahti."],
     note: "huultega ääristatud ava näo alumises pooles, elund, mida inimesed kasutavad eeskätt söömiseks ja kõnelemiseks",
@@ -9407,7 +9407,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suundumus", gloss: "trend", pos: "NOUN", cefr: "B2",
     ekilexWordId: 237918,
-    parts: { NOM_SG: "suundumus", GEN_SG: "suundumuse", PART_SG: "suundumust", ILL_SG_SHORT: "suundumusse", PART_PL: "suundumusi", GEN_PL: "suundumuste" },
+    parts: { NOM_SG: "suundumus", GEN_SG: "suundumuse", PART_SG: "suundumust", ILL_SG_SHORT: "suundumusse", NOM_PL: "suundumused", PART_PL: "suundumusi", GEN_PL: "suundumuste" },
     government: null,
     usages: ["Üldised suundumused majanduses."],
     note: "tegevuse siht, teatud püüdlus, pürgimine millegi poole, valitud viis, kuidas midagi teha",
@@ -9416,7 +9416,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suur", gloss: "big, large", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 237939,
-    parts: { NOM_SG: "suur", GEN_SG: "suure", PART_SG: "suurt", ILL_SG_SHORT: "suurde", PART_PL: "suuri", GEN_PL: "suurte" },
+    parts: { NOM_SG: "suur", GEN_SG: "suure", PART_SG: "suurt", ILL_SG_SHORT: "suurde", NOM_PL: "suured", PART_PL: "suuri", GEN_PL: "suurte" },
     government: null,
     usages: ["Suur saal.", "Suur korvitäis seeni.", "Tal on suur ja selge käekiri.", "Suure ninaga mees."],
     note: "kogult, mahult vm mõõtmetelt üle keskmise",
@@ -9425,7 +9425,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suurus", gloss: "size", pos: "NOUN", cefr: "A2",
     ekilexWordId: 238161,
-    parts: { NOM_SG: "suurus", GEN_SG: "suuruse", PART_SG: "suurust", ILL_SG_SHORT: "suurusse", PART_PL: "suurusi", GEN_PL: "suuruste" },
+    parts: { NOM_SG: "suurus", GEN_SG: "suuruse", PART_SG: "suurust", ILL_SG_SHORT: "suurusse", NOM_PL: "suurused", PART_PL: "suurusi", GEN_PL: "suuruste" },
     government: null,
     usages: ["Kannu suurus.", "Õppelaenu suurus on 1000 eurot.", "Keskmise suurusega perearstikeskus.", "Meie leibkonna suurus on kolm inimest."],
     note: "millegi mõõtmed, ulatus, hulk või määr",
@@ -9434,7 +9434,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suveräänsus", gloss: "sovereignty", pos: "NOUN", cefr: "B2",
     ekilexWordId: 238363,
-    parts: { NOM_SG: "suveräänsus", GEN_SG: "suveräänsuse", PART_SG: "suveräänsust", ILL_SG_SHORT: "suveräänsusse", PART_PL: "suveräänsusi", GEN_PL: "suveräänsuste" },
+    parts: { NOM_SG: "suveräänsus", GEN_SG: "suveräänsuse", PART_SG: "suveräänsust", ILL_SG_SHORT: "suveräänsusse", NOM_PL: "suveräänsused", PART_PL: "suveräänsusi", GEN_PL: "suveräänsuste" },
     government: null,
     usages: ["Ülim intellektuaalne suveräänsus.", "Tegevuskunsti suveräänsus.", "Suveräänsus läks pojale üle."],
     note: "riigi täielik sise- ja välispoliitiline sõltumatus teistest riikidest",
@@ -9443,7 +9443,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "suvi", gloss: "summer", pos: "NOUN", cefr: "A1",
     ekilexWordId: 238379,
-    parts: { NOM_SG: "suvi", GEN_SG: "suve", PART_SG: "suve", ILL_SG_SHORT: "suvve", PART_PL: "suvesid", GEN_PL: "suvede" },
+    parts: { NOM_SG: "suvi", GEN_SG: "suve", PART_SG: "suve", ILL_SG_SHORT: "suvve", NOM_PL: "suved", PART_PL: "suvesid", GEN_PL: "suvede" },
     government: null,
     usages: ["Suvi oli väga soe.", "Sõidan suvel reisile.", "Suvi on käes.", "Kaks suve tagasi."],
     note: "kõige soojem, kevade ja sügise vaheline aastaaeg",
@@ -9452,7 +9452,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõber", gloss: "friend", pos: "NOUN", cefr: "A1",
     ekilexWordId: 238431,
-    parts: { NOM_SG: "sõber", GEN_SG: "sõbra", PART_SG: "sõpra", ILL_SG_SHORT: "sõpra", PART_PL: "sõpru", GEN_PL: "sõprade" },
+    parts: { NOM_SG: "sõber", GEN_SG: "sõbra", PART_SG: "sõpra", ILL_SG_SHORT: "sõpra", NOM_PL: "sõbrad", PART_PL: "sõpru", GEN_PL: "sõprade" },
     government: null,
     usages: ["Kutsun sünnipäevale vaid lähedased sõbrad.", "Tahtsin saada uusi sõpru.", "Tõelisi sõpru on väga vähe.", "Oleme ikka sõbrad edasi!"],
     note: "kellegagi vastastikuse usalduse, sümpaatia, kiindumuse alusel seotud inimene vm olend",
@@ -9461,7 +9461,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõbralik", gloss: "friendly", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 238442,
-    parts: { NOM_SG: "sõbralik", GEN_SG: "sõbraliku", PART_SG: "sõbralikku", ILL_SG_SHORT: "sõbralikku", PART_PL: "sõbralikke", GEN_PL: "sõbralike" },
+    parts: { NOM_SG: "sõbralik", GEN_SG: "sõbraliku", PART_SG: "sõbralikku", ILL_SG_SHORT: "sõbralikku", NOM_PL: "sõbralikud", PART_PL: "sõbralikke", GEN_PL: "sõbralike" },
     government: null,
     usages: ["Teda kirjeldatakse kui sõbralikku meest.", "Pubi pakub head ja sõbralikku teenindust.", "Soe ja sõbralik meeleolu.", "Ülisõbralik."],
     note: "olekult lahke, kellegi suhtes heatahtlik, tähelepanelik ja abivalmis",
@@ -9470,7 +9470,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõda", gloss: "war", pos: "NOUN", cefr: "A2",
     ekilexWordId: 238463,
-    parts: { NOM_SG: "sõda", GEN_SG: "sõja", PART_SG: "sõda", ILL_SG_SHORT: "sõtta", PART_PL: "sõdu", GEN_PL: "sõdade" },
+    parts: { NOM_SG: "sõda", GEN_SG: "sõja", PART_SG: "sõda", ILL_SG_SHORT: "sõtta", NOM_PL: "sõjad", PART_PL: "sõdu", GEN_PL: "sõdade" },
     government: null,
     usages: ["1796. aastal kuulutas Hispaania Suurbritanniale sõja.", "Vietnami sõda.", "Riigis käib sõda.", "Mahtra sõda."],
     note: "riikide, rahvaste vm rühmitiste vaheline relvastatud võitlus",
@@ -9497,7 +9497,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõltuvus", gloss: "dependence", pos: "NOUN", cefr: "B1",
     ekilexWordId: 238835,
-    parts: { NOM_SG: "sõltuvus", GEN_SG: "sõltuvuse", PART_SG: "sõltuvust", ILL_SG_SHORT: "sõltuvusse", PART_PL: "sõltuvusi", GEN_PL: "sõltuvuste" },
+    parts: { NOM_SG: "sõltuvus", GEN_SG: "sõltuvuse", PART_SG: "sõltuvust", ILL_SG_SHORT: "sõltuvusse", NOM_PL: "sõltuvused", PART_PL: "sõltuvusi", GEN_PL: "sõltuvuste" },
     government: null,
     usages: ["Armastusest võib sõltuvusse sattuda.", "Saareelanike elu on otseses sõltuvuses ilmastikust.", "Kohv tekitab sõltuvust.", "Seksisõltuvus."],
     note: "millegi või kellegi (ülemäärase) mõju all olemine, (ülemäärane, haiguslik) sõltumine millestki",
@@ -9506,7 +9506,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõna", gloss: "word", pos: "NOUN", cefr: "A1",
     ekilexWordId: 238850,
-    parts: { NOM_SG: "sõna", GEN_SG: "sõna", PART_SG: "sõna", ILL_SG_SHORT: "sõnna", PART_PL: "sõnu", GEN_PL: "sõnade" },
+    parts: { NOM_SG: "sõna", GEN_SG: "sõna", PART_SG: "sõna", ILL_SG_SHORT: "sõnna", NOM_PL: "sõnad", PART_PL: "sõnu", GEN_PL: "sõnade" },
     government: null,
     usages: ["Mis see sõna tähendab?", "Tekstis oli palju võõrkeelseid sõnu.", "Sõnade järjekord lauses.", "Ühesilbiline sõna."],
     note: "iseseisva tähendusega keeleüksus, mida kasutatakse oma mõtete väljendamiseks tekstis ja kõnes (nt maailm, alla kirjutama, Rootsi laud)",
@@ -9515,7 +9515,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõnamäng", gloss: "wordplay, pun", pos: "NOUN", cefr: null,
     ekilexWordId: 238909,
-    parts: { NOM_SG: "sõnamäng", GEN_SG: "sõnamängu", PART_SG: "sõnamängu", ILL_SG_SHORT: "sõnamängu", PART_PL: "sõnamänge", GEN_PL: "sõnamängude" },
+    parts: { NOM_SG: "sõnamäng", GEN_SG: "sõnamängu", PART_SG: "sõnamängu", ILL_SG_SHORT: "sõnamängu", NOM_PL: "sõnamängud", PART_PL: "sõnamänge", GEN_PL: "sõnamängude" },
     government: null,
     usages: ["Kunstnik lõbustas publikut sürrealistlike sõnamängudega nagu „praetud kingad”.", "Tõlkija on püüdnud sõnamängud eesti lugejale ära seletada."],
     note: "sõnade ootamatutel seostel, hrl tähendustel rajanev vaimukas väljendus, nali vm",
@@ -9533,7 +9533,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõnastus", gloss: "wording", pos: "NOUN", cefr: "B2",
     ekilexWordId: 238941,
-    parts: { NOM_SG: "sõnastus", GEN_SG: "sõnastuse", PART_SG: "sõnastust", ILL_SG_SHORT: "sõnastusse", PART_PL: "sõnastusi", GEN_PL: "sõnastuste" },
+    parts: { NOM_SG: "sõnastus", GEN_SG: "sõnastuse", PART_SG: "sõnastust", ILL_SG_SHORT: "sõnastusse", NOM_PL: "sõnastused", PART_PL: "sõnastusi", GEN_PL: "sõnastuste" },
     government: null,
     usages: ["Kunstnik väljendas kaunis sõnastuses omaenda luulelist kujutluspilti.", "Muutsin oma sõnastust ilmselt sinu postituse trükkimise hetkel."],
     note: "millegi sõnaline väljendus",
@@ -9542,7 +9542,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõnasõnaline", gloss: "literal", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 238945,
-    parts: { NOM_SG: "sõnasõnaline", GEN_SG: "sõnasõnalise", PART_SG: "sõnasõnalist", ILL_SG_SHORT: "sõnasõnalisse", PART_PL: "sõnasõnalisi", GEN_PL: "sõnasõnaliste" },
+    parts: { NOM_SG: "sõnasõnaline", GEN_SG: "sõnasõnalise", PART_SG: "sõnasõnalist", ILL_SG_SHORT: "sõnasõnalisse", NOM_PL: "sõnasõnalised", PART_PL: "sõnasõnalisi", GEN_PL: "sõnasõnaliste" },
     government: null,
     usages: ["\"Tiergarten\" on sõnasõnalises tõlkes \"loomaaed\"."],
     note: "sõna-sõnalt toimuv, täpses vastavuses olev",
@@ -9551,7 +9551,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõnavalik", gloss: "word choice", pos: "NOUN", cefr: null,
     ekilexWordId: 238961,
-    parts: { NOM_SG: "sõnavalik", GEN_SG: "sõnavaliku", PART_SG: "sõnavalikut", PART_PL: "sõnavalikuid", GEN_PL: "sõnavalikute" },
+    parts: { NOM_SG: "sõnavalik", GEN_SG: "sõnavaliku", PART_SG: "sõnavalikut", NOM_PL: "sõnavalikud", PART_PL: "sõnavalikuid", GEN_PL: "sõnavalikute" },
     government: null,
     usages: ["Mees on oma sõnavalikus ääretult diplomaatiline."],
     note: "sõnalise väljenduse viis",
@@ -9560,7 +9560,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõnavõtt", gloss: "speech, statement", pos: "NOUN", cefr: "B2",
     ekilexWordId: 238972,
-    parts: { NOM_SG: "sõnavõtt", GEN_SG: "sõnavõtu", PART_SG: "sõnavõttu", ILL_SG_SHORT: "sõnavõttu", PART_PL: "sõnavõtte", GEN_PL: "sõnavõttude" },
+    parts: { NOM_SG: "sõnavõtt", GEN_SG: "sõnavõtu", PART_SG: "sõnavõttu", ILL_SG_SHORT: "sõnavõttu", NOM_PL: "sõnavõtud", PART_PL: "sõnavõtte", GEN_PL: "sõnavõttude" },
     government: null,
     usages: ["Minister keskendus oma sõnavõtus hariduse rahastamise probleemidele.", "Kirglik sõnavõtt."],
     note: "(lühem) suuline või kirjalik esinemine, arvamuseavaldus, seisukohavõtt mingis asjas või millegi puhul",
@@ -9569,7 +9569,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõnum", gloss: "message", pos: "NOUN", cefr: "A2",
     ekilexWordId: 239000,
-    parts: { NOM_SG: "sõnum", GEN_SG: "sõnumi", PART_SG: "sõnumit", PART_PL: "sõnumeid", GEN_PL: "sõnumite" },
+    parts: { NOM_SG: "sõnum", GEN_SG: "sõnumi", PART_SG: "sõnumit", NOM_PL: "sõnumid", PART_PL: "sõnumeid", GEN_PL: "sõnumite" },
     government: null,
     usages: ["Ka bussis oli telefon kõnedest ja sõnumitest punane.", "Saada mulle sõnum, kui koju jõuad.", "Jaanuar algab ärevate sõnumitega sõjatandrilt.", "Mul on teile häid sõnumeid."],
     note: "mobiiltelefoni või arvuti teel saadetud (lühike) tekst",
@@ -9578,7 +9578,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sõprus", gloss: "friendship", pos: "NOUN", cefr: "B1",
     ekilexWordId: 239015,
-    parts: { NOM_SG: "sõprus", GEN_SG: "sõpruse", PART_SG: "sõprust", ILL_SG_SHORT: "sõprusse", PART_PL: "sõprusi", GEN_PL: "sõpruste" },
+    parts: { NOM_SG: "sõprus", GEN_SG: "sõpruse", PART_SG: "sõprust", ILL_SG_SHORT: "sõprusse", NOM_PL: "sõprused", PART_PL: "sõprusi", GEN_PL: "sõpruste" },
     government: null,
     usages: ["Kas meeste ja naiste vahel on siiras sõprus võimalik?", "Meid seob ammune sõprus.", "Neid seob tõeline sõprus.", "Sinu sõprus on mulle väga oluline."],
     note: "lähedane, usalduslik (püsiv) suhe sõprade vahel",
@@ -9605,7 +9605,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "säilitamine", gloss: "preservation", pos: "NOUN", cefr: null,
     ekilexWordId: 269728,
-    parts: { NOM_SG: "säilitamine", GEN_SG: "säilitamise", PART_SG: "säilitamist", ILL_SG_SHORT: "säilitamisse", PART_PL: "säilitamisi", GEN_PL: "säilitamiste" },
+    parts: { NOM_SG: "säilitamine", GEN_SG: "säilitamise", PART_SG: "säilitamist", ILL_SG_SHORT: "säilitamisse", NOM_PL: "säilitamised", PART_PL: "säilitamisi", GEN_PL: "säilitamiste" },
     government: null,
     usages: ["Põhiseaduse järgi on Eesti riigi peaeesmärk eestluse säilitamine.", "Andmete säilitamisel järgime kõiki kohalikke ja rahvusvahelisi nõudeid.", "Sügavkülmiku tulek tähendas uusi mugavusi toidu säilitamisel."],
     note: "millegi alleshoidmine, nt ilmajäämise, kadumise vältimiseks või teatud eesmärgil kasutamiseks",
@@ -9614,7 +9614,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "särk", gloss: "shirt", pos: "NOUN", cefr: "A2",
     ekilexWordId: 239320,
-    parts: { NOM_SG: "särk", GEN_SG: "särgi", PART_SG: "särki", ILL_SG_SHORT: "särki", PART_PL: "särke", GEN_PL: "särkide" },
+    parts: { NOM_SG: "särk", GEN_SG: "särgi", PART_SG: "särki", ILL_SG_SHORT: "särki", NOM_PL: "särgid", PART_PL: "särke", GEN_PL: "särkide" },
     government: null,
     usages: ["Mees kandis kiiskavvalget särki ja peenikest lipsu.", "Jalgpallisärk.", "Valge särk sobib iga ülikonnaga.", "Noormees kandis ruudulist särki."],
     note: "ülakeha kattev hrl lühikeste või pikkade käistega riietusese (nt T-särk, triiksärk)",
@@ -9623,7 +9623,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "säte", gloss: "provision", pos: "NOUN", cefr: "B2",
     ekilexWordId: 239347,
-    parts: { NOM_SG: "säte", GEN_SG: "sätte", PART_SG: "sätet", PART_PL: "sätteid", GEN_PL: "sätete" },
+    parts: { NOM_SG: "säte", GEN_SG: "sätte", PART_SG: "sätet", NOM_PL: "sätted", PART_PL: "sätteid", GEN_PL: "sätete" },
     government: null,
     usages: ["Vastav säte on ka koalitsioonileppes.", "Internet Exploreri sätted.", "Varukoopia sisselülitamine aitab taastada kadunud telefoni sätted ja äpid uude telefoni."],
     note: "õigusnormi kajastav õigusakti teksti osa (nt paragrahv, lõige, punkt)",
@@ -9650,7 +9650,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "söök", gloss: "food, a meal", pos: "NOUN", cefr: "A1",
     ekilexWordId: 239549,
-    parts: { NOM_SG: "söök", GEN_SG: "söögi", PART_SG: "sööki", ILL_SG_SHORT: "sööki", PART_PL: "sööke", GEN_PL: "söökide" },
+    parts: { NOM_SG: "söök", GEN_SG: "söögi", PART_SG: "sööki", ILL_SG_SHORT: "sööki", NOM_PL: "söögid", PART_PL: "sööke", GEN_PL: "söökide" },
     government: null,
     usages: ["Lõuna ajal tuleb süüa sooja sööki.", "Söök ja majutus on hinna sees.", "Kõik söögid olid ise tehtud.", "Söök on laual."],
     note: "see, mida süüakse, et hankida eluspüsimiseks vajalikke aineid",
@@ -9668,7 +9668,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "süda", gloss: "heart", pos: "NOUN", cefr: "A2",
     ekilexWordId: 239607,
-    parts: { NOM_SG: "süda", GEN_SG: "südame", PART_SG: "südant", PART_PL: "südameid", GEN_PL: "südamete" },
+    parts: { NOM_SG: "süda", GEN_SG: "südame", PART_SG: "südant", NOM_PL: "südamed", PART_PL: "südameid", GEN_PL: "südamete" },
     government: null,
     usages: ["Tal on süda haige.", "Süda jäi seisma.", "Mees haaras südamest ja kukkus.", "Hautatud süda tomatikastmes."],
     note: "lihaseline elund, mille kokkutõmbed panevad vere soontes liikuma",
@@ -9677,7 +9677,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sügav", gloss: "deep", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 239758,
-    parts: { NOM_SG: "sügav", GEN_SG: "sügava", PART_SG: "sügavat", PART_PL: "sügavaid", GEN_PL: "sügavate" },
+    parts: { NOM_SG: "sügav", GEN_SG: "sügava", PART_SG: "sügavat", NOM_PL: "sügavad", PART_PL: "sügavaid", GEN_PL: "sügavate" },
     government: null,
     usages: ["Sügav jõgi.", "Kaevas kuni kaelani sügava augu.", "Sügav kauss.", "Sügava dekolteega kostüüm."],
     note: "pealmisest pinnast või ülemisest äärest tugevasti allapoole ulatuv",
@@ -9686,7 +9686,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sügis", gloss: "autumn", pos: "NOUN", cefr: "A1",
     ekilexWordId: 239798,
-    parts: { NOM_SG: "sügis", GEN_SG: "sügise", PART_SG: "sügist", PART_PL: "sügiseid", GEN_PL: "sügiste" },
+    parts: { NOM_SG: "sügis", GEN_SG: "sügise", PART_SG: "sügist", NOM_PL: "sügised", PART_PL: "sügiseid", GEN_PL: "sügiste" },
     government: null,
     usages: ["Värviline sügis on kätte jõudnud.", "Sügis on sel aastal külm ja vihmane.", "Sügisel hakkavad lehed puudelt langema.", "Sügis on käes."],
     note: "jahe, sageli vihmane, suve ja talve vaheline aastaaeg",
@@ -9695,7 +9695,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sümbol", gloss: "symbol", pos: "NOUN", cefr: "A2",
     ekilexWordId: 239932,
-    parts: { NOM_SG: "sümbol", GEN_SG: "sümboli", PART_SG: "sümbolit", PART_PL: "sümboleid", GEN_PL: "sümbolite" },
+    parts: { NOM_SG: "sümbol", GEN_SG: "sümboli", PART_SG: "sümbolit", NOM_PL: "sümbolid", PART_PL: "sümboleid", GEN_PL: "sümbolite" },
     government: null,
     usages: ["Dalai-laama on budistide jaoks usujuht ning muule maailmale pigem vaimsete väärtuste ja vabaduse sümbol.", "Valge tuvi on rahu sümbol.", "Matemaatiline sümbol."],
     note: "miski, mis esindab tajutava seosena mingit ideed või teatavat omadust",
@@ -9704,7 +9704,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sümptom", gloss: "symptom", pos: "NOUN", cefr: "B2",
     ekilexWordId: 239961,
-    parts: { NOM_SG: "sümptom", GEN_SG: "sümptomi", PART_SG: "sümptomit", PART_PL: "sümptomeid", GEN_PL: "sümptomite" },
+    parts: { NOM_SG: "sümptom", GEN_SG: "sümptomi", PART_SG: "sümptomit", NOM_PL: "sümptomid", PART_PL: "sümptomeid", GEN_PL: "sümptomite" },
     government: null,
     usages: ["Kopsupõletiku sümptomid.", "Haigussümptom.", "Gripisümptom.", "Armumise sümptomid on üsna kergesti äratuntavad."],
     note: "haiguse, haigusliku seisundi tunnus (nt palavik, nahalööve)",
@@ -9722,7 +9722,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sündmus", gloss: "event", pos: "NOUN", cefr: "A2",
     ekilexWordId: 239986,
-    parts: { NOM_SG: "sündmus", GEN_SG: "sündmuse", PART_SG: "sündmust", ILL_SG_SHORT: "sündmusse", PART_PL: "sündmusi", GEN_PL: "sündmuste" },
+    parts: { NOM_SG: "sündmus", GEN_SG: "sündmuse", PART_SG: "sündmust", ILL_SG_SHORT: "sündmusse", NOM_PL: "sündmused", PART_PL: "sündmusi", GEN_PL: "sündmuste" },
     government: null,
     usages: ["Viga käivitas sündmuste ahela.", "Pärast nii dramaatilisi sündmusi tundub nüüdne elu lahjana.", "Sündmus tekitas paljudes linnaelanikes pahameelt.", "Muusikasündmus."],
     note: "millegi poolest oluline või eriline asi, nähtus, olukord vm, mis juhtub või toimub",
@@ -9731,7 +9731,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "sünnipäev", gloss: "birthday", pos: "NOUN", cefr: "A1",
     ekilexWordId: 240076,
-    parts: { NOM_SG: "sünnipäev", GEN_SG: "sünnipäeva", PART_SG: "sünnipäeva", ILL_SG_SHORT: "sünnipäeva", PART_PL: "sünnipäevi", GEN_PL: "sünnipäevade" },
+    parts: { NOM_SG: "sünnipäev", GEN_SG: "sünnipäeva", PART_SG: "sünnipäeva", ILL_SG_SHORT: "sünnipäeva", NOM_PL: "sünnipäevad", PART_PL: "sünnipäevi", GEN_PL: "sünnipäevade" },
     government: null,
     usages: ["Mul on täna sünnipäev.", "Palju õnne sünnipäevaks!", "Oma aastasel sünnipäeval kõndis laps kaks korda üle toa.", "Eesti Vabariigi 100. sünnipäev."],
     note: "päev, millal keegi on sündinud või miski on rajatud, loodud",
@@ -9740,7 +9740,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "süžee", gloss: "plot", pos: "NOUN", cefr: "B2",
     ekilexWordId: 240232,
-    parts: { NOM_SG: "süžee", GEN_SG: "süžee", PART_SG: "süžeed", PART_PL: "süžeid", GEN_PL: "süžeede" },
+    parts: { NOM_SG: "süžee", GEN_SG: "süžee", PART_SG: "süžeed", NOM_PL: "süžeed", PART_PL: "süžeid", GEN_PL: "süžeede" },
     government: null,
     usages: ["Haarav süžee ja eluline intriig.", "Erilist sündmustikku või süžeed filmis tegelikult ei olegi.", "Arkadio Laigo eelistas artistlikke süžeesid."],
     note: "kirjandusteose, filmi või lavateose kunstiliselt organiseeritud sündmustiku esitus, sündmustiku kunstiline vorm",
@@ -9758,7 +9758,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "süüdistus", gloss: "accusation", pos: "NOUN", cefr: "B1",
     ekilexWordId: 240329,
-    parts: { NOM_SG: "süüdistus", GEN_SG: "süüdistuse", PART_SG: "süüdistust", ILL_SG_SHORT: "süüdistusse", PART_PL: "süüdistusi", GEN_PL: "süüdistuste" },
+    parts: { NOM_SG: "süüdistus", GEN_SG: "süüdistuse", PART_SG: "süüdistust", ILL_SG_SHORT: "süüdistusse", NOM_PL: "süüdistused", PART_PL: "süüdistusi", GEN_PL: "süüdistuste" },
     government: null,
     usages: ["Olen langenud alusetu süüdistuse ohvriks.", "Kohe tuleb süüdistus laimus ja kõiges muus pahas.", "Ligi sada naisnäitlejat tulid välja süüdistustega filmimoguli vastu.", "Pärast rahutusi esitati meedias mitmeid süüdistusi politseivägivalla kohta."],
     note: "süüdistavad sõnad vms kellegi milleski süüdioleku kohta",
@@ -9767,7 +9767,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "süütu", gloss: "innocent", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 240388,
-    parts: { NOM_SG: "süütu", GEN_SG: "süütu", PART_SG: "süütut", PART_PL: "süütuid", GEN_PL: "süütute" },
+    parts: { NOM_SG: "süütu", GEN_SG: "süütu", PART_SG: "süütut", NOM_PL: "süütud", PART_PL: "süütuid", GEN_PL: "süütute" },
     government: null,
     usages: ["Tapetud on sadu süütuid inimesi.", "Valetada oskavad isegi need, kes näevad süütud tallekesed välja.", "Süütu ilme kadus mehe näolt kohe.", "See oli süütu nali."],
     note: "süü- või pahategu mitte teinud, mitte süüdi olev",
@@ -9776,7 +9776,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "taaskasutus", gloss: "recycling", pos: "NOUN", cefr: "B2",
     ekilexWordId: 240781,
-    parts: { NOM_SG: "taaskasutus", GEN_SG: "taaskasutuse", PART_SG: "taaskasutust", ILL_SG_SHORT: "taaskasutusse", PART_PL: "taaskasutusi", GEN_PL: "taaskasutuste" },
+    parts: { NOM_SG: "taaskasutus", GEN_SG: "taaskasutuse", PART_SG: "taaskasutust", ILL_SG_SHORT: "taaskasutusse", NOM_PL: "taaskasutused", PART_PL: "taaskasutusi", GEN_PL: "taaskasutuste" },
     government: null,
     usages: ["Tähtis on, et vanapaber taaskasutusse jõuaks.", "Energia taaskasutus.", "Korterit sisustades mõtlesime vanaisa mööbli taaskasutusele.", "Maria leidis taaskasutusest halli pitskleidi."],
     note: "pakendite, paberi jt jäätmete ümbertöötamine toormaterjaliks ja seekaudu nende uus kasutussevõtt",
@@ -9794,7 +9794,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "taastusravi", gloss: "rehabilitation", pos: "NOUN", cefr: null,
     ekilexWordId: 240815,
-    parts: { NOM_SG: "taastusravi", GEN_SG: "taastusravi", PART_SG: "taastusravi", PART_PL: "taastusravisid", GEN_PL: "taastusravide" },
+    parts: { NOM_SG: "taastusravi", GEN_SG: "taastusravi", PART_SG: "taastusravi", NOM_PL: "taastusravid", PART_PL: "taastusravisid", GEN_PL: "taastusravide" },
     government: null,
     usages: ["Pean põlvevigastuse tõttu minema taastusravile."],
     note: "töövõimet, toimetulekut taastav ravi",
@@ -9812,7 +9812,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tabav", gloss: "apt, well-aimed", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 240843,
-    parts: { NOM_SG: "tabav", GEN_SG: "tabava", PART_SG: "tabavat", PART_PL: "tabavaid", GEN_PL: "tabavate" },
+    parts: { NOM_SG: "tabav", GEN_SG: "tabava", PART_SG: "tabavat", NOM_PL: "tabavad", PART_PL: "tabavaid", GEN_PL: "tabavate" },
     government: null,
     usages: ["Tabav vise.", "Mõelge oma meeskonnale tabav nimi."],
     note: "märgile pihta saav või minev",
@@ -9821,7 +9821,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tabavus", gloss: "aptness", pos: "NOUN", cefr: null,
     ekilexWordId: 269876,
-    parts: { NOM_SG: "tabavus", GEN_SG: "tabavuse", PART_SG: "tabavust", ILL_SG_SHORT: "tabavusse", PART_PL: "tabavusi", GEN_PL: "tabavuste" },
+    parts: { NOM_SG: "tabavus", GEN_SG: "tabavuse", PART_SG: "tabavust", ILL_SG_SHORT: "tabavusse", NOM_PL: "tabavused", PART_PL: "tabavusi", GEN_PL: "tabavuste" },
     government: null,
     usages: ["Vabavisete tabavus polnud kiita.", "Karlo viskas eestlaste vastu sajaprotsendilise tabavusega 17 punkti.", "Viletsa tabavuse tõttu said pihta ka tsiviilhooned ja hukkusid tsiviilisikud.", "Olin kirjelduse lihtsusest ja tabavusest rabatud."],
     note: "pihtasaamine sihtmärgile viskest, löögist, lasust vms",
@@ -9839,7 +9839,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tagajärg", gloss: "consequence", pos: "NOUN", cefr: "B1",
     ekilexWordId: 240988,
-    parts: { NOM_SG: "tagajärg", GEN_SG: "tagajärje", PART_SG: "tagajärge", ILL_SG_SHORT: "tagajärge", PART_PL: "tagajärgi", GEN_PL: "tagajärgede" },
+    parts: { NOM_SG: "tagajärg", GEN_SG: "tagajärje", PART_SG: "tagajärge", ILL_SG_SHORT: "tagajärge", NOM_PL: "tagajärjed", PART_PL: "tagajärgi", GEN_PL: "tagajärgede" },
     government: null,
     usages: ["Põhjus ja tagajärg.", "Nõukogude okupatsiooni tagajärjed.", "Põhjust ja tagajärge ei tohi segi ajada.", "Fännid ootavad sportlastelt häid tagajärgi."],
     note: "asjaolu, nähtus, tegu, mille on esile kutsunud mingi teine asjaolu, nähtus, tegu",
@@ -9857,7 +9857,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tagasihoidlik", gloss: "modest", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 241105,
-    parts: { NOM_SG: "tagasihoidlik", GEN_SG: "tagasihoidliku", PART_SG: "tagasihoidlikku", ILL_SG_SHORT: "tagasihoidlikku", PART_PL: "tagasihoidlikke", GEN_PL: "tagasihoidlike" },
+    parts: { NOM_SG: "tagasihoidlik", GEN_SG: "tagasihoidliku", PART_SG: "tagasihoidlikku", ILL_SG_SHORT: "tagasihoidlikku", NOM_PL: "tagasihoidlikud", PART_PL: "tagasihoidlikke", GEN_PL: "tagasihoidlike" },
     government: null,
     usages: ["Tagasihoidliku loomuga naine.", "Minister jäi oma ütlemistes tagasihoidlikuks.", "Tagasihoidlikul häälel küsis ta, kas võib suvel mulle külla tulla.", "Ära ole tagasihoidlik, sa oskad ju väga hästi laulda."],
     note: "olemuselt, käitumiselt vaoshoitud, mitte esiletükkiv või pealetükkiv",
@@ -9884,7 +9884,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "taju", gloss: "perception", pos: "NOUN", cefr: "B2",
     ekilexWordId: 241541,
-    parts: { NOM_SG: "taju", GEN_SG: "taju", PART_SG: "taju", PART_PL: "tajusid", GEN_PL: "tajude" },
+    parts: { NOM_SG: "taju", GEN_SG: "taju", PART_SG: "taju", NOM_PL: "tajud", PART_PL: "tajusid", GEN_PL: "tajude" },
     government: null,
     usages: ["Aistingud ja tajud.", "Uinutite pideva kasutamise tagajärjel taju nõrgeneb.", "Kujutad ette, missugune taju – tunda, et sulle lähedane inimene on surnud.", "Ametnikud meie probleeme ei tajunud."],
     note: "(psühholoogias:) esemete ja nähtuste terviklik peegeldus teadvuses meelte kaudu, pertseptsioon",
@@ -9911,7 +9911,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "taluvus", gloss: "tolerance", pos: "NOUN", cefr: null,
     ekilexWordId: 241852,
-    parts: { NOM_SG: "taluvus", GEN_SG: "taluvuse", PART_SG: "taluvust", ILL_SG_SHORT: "taluvusse", PART_PL: "taluvusi", GEN_PL: "taluvuste" },
+    parts: { NOM_SG: "taluvus", GEN_SG: "taluvuse", PART_SG: "taluvust", ILL_SG_SHORT: "taluvusse", NOM_PL: "taluvused", PART_PL: "taluvusi", GEN_PL: "taluvuste" },
     government: null,
     usages: ["Selle looga ületas ta mu taluvuse piiri.", "Ühiskonna taluvus on pandud proovile."],
     note: "võime ebameeldivat olukorda välja kannatada",
@@ -9920,7 +9920,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "talv", gloss: "winter", pos: "NOUN", cefr: "A1",
     ekilexWordId: 241855,
-    parts: { NOM_SG: "talv", GEN_SG: "talve", PART_SG: "talve", ILL_SG_SHORT: "talve", PART_PL: "talvi", GEN_PL: "talvede" },
+    parts: { NOM_SG: "talv", GEN_SG: "talve", PART_SG: "talve", ILL_SG_SHORT: "talve", NOM_PL: "talved", PART_PL: "talvi", GEN_PL: "talvede" },
     government: null,
     usages: ["Talv liigub juba kevade poole.", "Talv oli väga külm.", "Talvel sadas palju lund.", "Talv on käes."],
     note: "kõige külmem, sügise ja kevade vaheline aastaaeg",
@@ -9929,7 +9929,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tants", gloss: "dance", pos: "NOUN", cefr: "A1",
     ekilexWordId: 242075,
-    parts: { NOM_SG: "tants", GEN_SG: "tantsu", PART_SG: "tantsu", ILL_SG_SHORT: "tantsu", PART_PL: "tantse", GEN_PL: "tantsude" },
+    parts: { NOM_SG: "tants", GEN_SG: "tantsu", PART_SG: "tantsu", ILL_SG_SHORT: "tantsu", NOM_PL: "tantsud", PART_PL: "tantse", GEN_PL: "tantsude" },
     government: null,
     usages: ["Tantsuks mängib külakapell.", "Noorpaar lööb tantsu.", "Õppisime uusi tantse.", "Tüdruk tantsis kõik tantsud sama partneriga."],
     note: "rütmiliste kehaliigutuste ja teatavate sammude tegemine hrl muusika saatel",
@@ -9956,7 +9956,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tarbimine", gloss: "consumption", pos: "NOUN", cefr: null,
     ekilexWordId: 269971,
-    parts: { NOM_SG: "tarbimine", GEN_SG: "tarbimise", PART_SG: "tarbimist", ILL_SG_SHORT: "tarbimisse", PART_PL: "tarbimisi", GEN_PL: "tarbimiste" },
+    parts: { NOM_SG: "tarbimine", GEN_SG: "tarbimise", PART_SG: "tarbimist", ILL_SG_SHORT: "tarbimisse", NOM_PL: "tarbimised", PART_PL: "tarbimisi", GEN_PL: "tarbimiste" },
     government: null,
     usages: ["Uuringud näitavad, et alkoholi tarbimine on vähenenud."],
     note: "kaupade ja teenuste ostmise teel vajaduste rahuldamine; (üldisemalt:) millegi tarvitamine (tarvitatavat manustades)",
@@ -9965,7 +9965,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "taristu", gloss: "infrastructure", pos: "NOUN", cefr: "B2",
     ekilexWordId: 242335,
-    parts: { NOM_SG: "taristu", GEN_SG: "taristu", PART_SG: "taristut", PART_PL: "taristuid", GEN_PL: "taristute" },
+    parts: { NOM_SG: "taristu", GEN_SG: "taristu", PART_SG: "taristut", NOM_PL: "taristud", PART_PL: "taristuid", GEN_PL: "taristute" },
     government: null,
     usages: ["Maa on oluline, mitte taristu seal peal.", "Peale ehituslubade väljastamist saab asuda ka vajalikku taristut ehitama."],
     note: "ühiskonna või ettevõtte tööks vajalikud vahendid, tegevused ja teenused (nt internetiühendus, tänavavõrk, veevarustus)",
@@ -9974,7 +9974,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tarkvara", gloss: "software", pos: "NOUN", cefr: "B2",
     ekilexWordId: 242354,
-    parts: { NOM_SG: "tarkvara", GEN_SG: "tarkvara", PART_SG: "tarkvara", ILL_SG_SHORT: "tarkvarra", PART_PL: "tarkvarasid", GEN_PL: "tarkvarade" },
+    parts: { NOM_SG: "tarkvara", GEN_SG: "tarkvara", PART_SG: "tarkvara", ILL_SG_SHORT: "tarkvarra", NOM_PL: "tarkvarad", PART_PL: "tarkvarasid", GEN_PL: "tarkvarade" },
     government: null,
     usages: ["Firma arvutites oli illegaalne tarkvara.", "Nutitelefoni tarkvara tuleb aeg-ajalt uuendada.", "Arvuti tarkvara on vaja uuendada.", "Ostetud arvutiga tuli kaasa palju tarkvara, kellast viirusetõrjeni."],
     note: "infotöötlussüsteemi programmid, protseduurid, reeglid ja nendega seotud dokumentatsioon",
@@ -9983,7 +9983,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tasand", gloss: "level, plane", pos: "NOUN", cefr: "B1",
     ekilexWordId: 242457,
-    parts: { NOM_SG: "tasand", GEN_SG: "tasandi", PART_SG: "tasandit", PART_PL: "tasandeid", GEN_PL: "tasandite" },
+    parts: { NOM_SG: "tasand", GEN_SG: "tasandi", PART_SG: "tasandit", NOM_PL: "tasandid", PART_PL: "tasandeid", GEN_PL: "tasandite" },
     government: null,
     usages: ["Probleemi arutati nii riiklikul kui kohalikul tasandil.", "Ülikoolid tegid koostööd peamiselt doktoriõppe tasandil.", "Inimlik tasand on ta jaoks kõige olulisem.", "Inimesed kapselduvad arvutisse nii suhtluse kui meelelahutuse tasandil."],
     note: "järk hierarhilises süsteemis",
@@ -9992,7 +9992,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "taskurätik", gloss: "handkerchief", pos: "NOUN", cefr: "B1",
     ekilexWordId: 242514,
-    parts: { NOM_SG: "taskurätik", GEN_SG: "taskurätiku", PART_SG: "taskurätikut", PART_PL: "taskurätikuid", GEN_PL: "taskurätikute" },
+    parts: { NOM_SG: "taskurätik", GEN_SG: "taskurätiku", PART_SG: "taskurätikut", NOM_PL: "taskurätikud", PART_PL: "taskurätikuid", GEN_PL: "taskurätikute" },
     government: null,
     usages: ["Ta võtab taskust suure punaseruudulise taskurätiku ja pühib sellega oma nägu."],
     note: "väiksem kaasaskantav rätik nina nuuskamiseks vm puhastamiseks",
@@ -10001,7 +10001,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tass", gloss: "cup", pos: "NOUN", cefr: "A1",
     ekilexWordId: 242527,
-    parts: { NOM_SG: "tass", GEN_SG: "tassi", PART_SG: "tassi", ILL_SG_SHORT: "tassi", PART_PL: "tasse", GEN_PL: "tasside" },
+    parts: { NOM_SG: "tass", GEN_SG: "tassi", PART_SG: "tassi", ILL_SG_SHORT: "tassi", NOM_PL: "tassid", PART_PL: "tasse", GEN_PL: "tasside" },
     government: null,
     usages: ["Panin kohvivee keema ja seadsin tassid lauale.", "Marve kallas kohvi tassidesse.", "Tassis on kuum kohv.", "Valasin tassidesse teed."],
     note: "hrl kõrvaga varustatud (väiksem) jooginõu",
@@ -10010,7 +10010,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teade", gloss: "announcement", pos: "NOUN", cefr: "A2",
     ekilexWordId: 242697,
-    parts: { NOM_SG: "teade", GEN_SG: "teate", PART_SG: "teadet", PART_PL: "teateid", GEN_PL: "teadete" },
+    parts: { NOM_SG: "teade", GEN_SG: "teate", PART_SG: "teadet", NOM_PL: "teated", PART_PL: "teateid", GEN_PL: "teadete" },
     government: null,
     usages: ["Ametlikku teadet veel pole.", "Täna öösel kell 00.22 sai häirekeskus teate tulekahju kohta Lääne-Virumaal.", "Suuline teade.", "Uudised ja teated."],
     note: "see, mis kellelegi (uudisena, kinnitusena) teatatakse, edastatav (lühike) infolõik",
@@ -10019,7 +10019,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teadlane", gloss: "scientist", pos: "NOUN", cefr: "B1",
     ekilexWordId: 242707,
-    parts: { NOM_SG: "teadlane", GEN_SG: "teadlase", PART_SG: "teadlast", ILL_SG_SHORT: "teadlasse", PART_PL: "teadlasi", GEN_PL: "teadlaste" },
+    parts: { NOM_SG: "teadlane", GEN_SG: "teadlase", PART_SG: "teadlast", ILL_SG_SHORT: "teadlasse", NOM_PL: "teadlased", PART_PL: "teadlasi", GEN_PL: "teadlaste" },
     government: null,
     usages: ["Rahvusvahelisse uurimisrühma kuulus kolm Eesti teadlast.", "Mõned teadlased väidavad, et kuna ämblikel ja putukatel pole silmalauge, siis nad ei saa magada.", "Konverentsil kohtusid mitme eriala teadlased."],
     note: "teadustööd tegev inimene, uurija teaduse alal",
@@ -10037,7 +10037,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teadmine", gloss: "knowledge", pos: "NOUN", cefr: null,
     ekilexWordId: 242720,
-    parts: { NOM_SG: "teadmine", GEN_SG: "teadmise", PART_SG: "teadmist", ILL_SG_SHORT: "teadmisse", PART_PL: "teadmisi", GEN_PL: "teadmiste" },
+    parts: { NOM_SG: "teadmine", GEN_SG: "teadmise", PART_SG: "teadmist", ILL_SG_SHORT: "teadmisse", NOM_PL: "teadmised", PART_PL: "teadmisi", GEN_PL: "teadmiste" },
     government: null,
     usages: ["Mõnikord on teadmatus parem kui teadmine.", "Teda oli kasvatatud teadmises, et abielu on igavene.", "Lahkusime politseist igasuguse teadmiseta kadunu kohta.", "Emal on vaja kindlat teadmist, et ta lapsega on kõik korras."],
     note: "milleski selgusel olek, faktidele, traditsioonile, kogemusele vm tuginev põhjendatud uskumus tegelikkuse kohta, info omamine millestki",
@@ -10046,7 +10046,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teadus", gloss: "science", pos: "NOUN", cefr: "B1",
     ekilexWordId: 242741,
-    parts: { NOM_SG: "teadus", GEN_SG: "teaduse", PART_SG: "teadust", ILL_SG_SHORT: "teadusse", PART_PL: "teadusi", GEN_PL: "teaduste" },
+    parts: { NOM_SG: "teadus", GEN_SG: "teaduse", PART_SG: "teadust", ILL_SG_SHORT: "teadusse", NOM_PL: "teadused", PART_PL: "teadusi", GEN_PL: "teaduste" },
     government: null,
     usages: ["Teaduse areng.", "Alternatiivmeditsiin ei allu teaduse reeglitele.", "Raamat käsitleb teaduse ja tehnika arengut.", "Bioloogia on teadus, mis uurib elu."],
     note: "tegevus, mille eesmärk on saada, talletada ja rakendada uusi tõeseid teadmisi ning mis tugineb meetodil, mis tagab teadmiste võimalikult suure objektiivsuse ja kontrollitavuse",
@@ -10055,7 +10055,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teadvus", gloss: "consciousness", pos: "NOUN", cefr: "B1",
     ekilexWordId: 242816,
-    parts: { NOM_SG: "teadvus", GEN_SG: "teadvuse", PART_SG: "teadvust", ILL_SG_SHORT: "teadvusse", PART_PL: "teadvusi", GEN_PL: "teadvuste" },
+    parts: { NOM_SG: "teadvus", GEN_SG: "teadvuse", PART_SG: "teadvust", ILL_SG_SHORT: "teadvusse", NOM_PL: "teadvused", PART_PL: "teadvusi", GEN_PL: "teadvuste" },
     government: null,
     usages: ["Franki teadvuses polnud tapmine patt, vaid lahendus.", "Pajul on kreeklaste teadvuses ka kasinuse tähendus.", "Viimaks jõudis juhtunu mu teadvusesse.", "Ajalooteadvus."],
     note: "mõtete, emotsioonide, tajumuste, mälestuste vms vaimuseisundite omamine ja tundmine, psüühika võime peegeldada psüühikavälist maailma ja iseennast",
@@ -10073,7 +10073,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teater", gloss: "theatre", pos: "NOUN", cefr: "A1",
     ekilexWordId: 242838,
-    parts: { NOM_SG: "teater", GEN_SG: "teatri", PART_SG: "teatrit", PART_PL: "teatreid", GEN_PL: "teatrite" },
+    parts: { NOM_SG: "teater", GEN_SG: "teatri", PART_SG: "teatrit", NOM_PL: "teatrid", PART_PL: "teatreid", GEN_PL: "teatrite" },
     government: null,
     usages: ["Estonia teater.", "Ootan sind teatri ees.", "Ta armastab teatris käia.", "Lähen õhtul teatrisse."],
     note: "hrl sõna-, muusika-, tantsulavastusi esitav kunstiasutus",
@@ -10082,7 +10082,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tee", gloss: "road, tea", pos: "NOUN", cefr: "A1",
     ekilexWordId: 242936,
-    parts: { NOM_SG: "tee", GEN_SG: "tee", PART_SG: "teed", PART_PL: "teid", GEN_PL: "teede" },
+    parts: { NOM_SG: "tee", GEN_SG: "tee", PART_SG: "teed", NOM_PL: "teed", PART_PL: "teid", GEN_PL: "teede" },
     government: null,
     usages: ["Asfalttee.", "Kruusatee.", "Teed on libedad.", "Kuhu see tee viib?"],
     note: "käimiseks ja sõitmiseks kasutatav (ning selleks ettevalmistatud) pinnaseriba",
@@ -10091,7 +10091,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teenus", gloss: "service", pos: "NOUN", cefr: "B1",
     ekilexWordId: 243107,
-    parts: { NOM_SG: "teenus", GEN_SG: "teenuse", PART_SG: "teenust", PART_PL: "teenuseid", GEN_PL: "teenuste" },
+    parts: { NOM_SG: "teenus", GEN_SG: "teenuse", PART_SG: "teenust", NOM_PL: "teenused", PART_PL: "teenuseid", GEN_PL: "teenuste" },
     government: null,
     usages: ["Turvafirma pakub uut teenust.", "Kasutame audiitorfirmade teenuseid.", "Millise panga teenuseid sa kasutad?"],
     note: "(ettevõtluse korras, riigi pakutav) inimese mõnd vajadust rahuldav toiming, tegevus või protsess, mittemateriaalne kaup",
@@ -10100,7 +10100,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tegelane", gloss: "character", pos: "NOUN", cefr: "B1",
     ekilexWordId: 243187,
-    parts: { NOM_SG: "tegelane", GEN_SG: "tegelase", PART_SG: "tegelast", ILL_SG_SHORT: "tegelasse", PART_PL: "tegelasi", GEN_PL: "tegelaste" },
+    parts: { NOM_SG: "tegelane", GEN_SG: "tegelase", PART_SG: "tegelast", ILL_SG_SHORT: "tegelasse", NOM_PL: "tegelased", PART_PL: "tegelasi", GEN_PL: "tegelaste" },
     government: null,
     usages: ["Värvikate tegelastega modernne romaan.", "Muinasjututegelane.", "Meestegelane.", "Romaani tegelased on üliõpilased."],
     note: "autori loodud isik või olend filmis, romaanis vm teoses",
@@ -10136,7 +10136,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tehisintellekt", gloss: "artificial intelligence", pos: "NOUN", cefr: null,
     ekilexWordId: 243306,
-    parts: { NOM_SG: "tehisintellekt", GEN_SG: "tehisintellekti", PART_SG: "tehisintellekti", ILL_SG_SHORT: "tehisintellekti", PART_PL: "tehisintellekte", GEN_PL: "tehisintellektide" },
+    parts: { NOM_SG: "tehisintellekt", GEN_SG: "tehisintellekti", PART_SG: "tehisintellekti", ILL_SG_SHORT: "tehisintellekti", NOM_PL: "tehisintellektid", PART_PL: "tehisintellekte", GEN_PL: "tehisintellektide" },
     government: null,
     usages: ["Tehisintellekti looma.", "Masina tehisintellekt tabas ära võõra sissetungi ja andis häiret.", "Kiirmales võrdles võimeid kaheksa tehisintellekti.", "Eraldi tehisintellekti eriala ei ole plaanis luua, küll aga rohkem keskenduda andmeanalüütika suunale."],
     note: "tarkvara või süsteem, mis suudab andmete ja algoritmide abil iseseisvalt lahendada ülesandeid ja teha otsuseid inimmõtlemist jäljendaval moel",
@@ -10154,7 +10154,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teine", gloss: "second, other", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 243426,
-    parts: { NOM_SG: "teine", GEN_SG: "teise", PART_SG: "teist", ILL_SG_SHORT: "teise", PART_PL: "teisi", GEN_PL: "teiste" },
+    parts: { NOM_SG: "teine", GEN_SG: "teise", PART_SG: "teist", ILL_SG_SHORT: "teise", NOM_PL: "teised", PART_PL: "teisi", GEN_PL: "teiste" },
     government: null,
     usages: ["Puhkan juuli teisel nädalal.", "Elan teisel korrusel.", "Ostsin piletid teise ritta.", "Saime võistlusel teise koha."],
     note: "(järgarv:) järjestuses või järjekorras 2.",
@@ -10172,7 +10172,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teisipäev", gloss: "Tuesday", pos: "NOUN", cefr: "A1",
     ekilexWordId: 243467,
-    parts: { NOM_SG: "teisipäev", GEN_SG: "teisipäeva", PART_SG: "teisipäeva", ILL_SG_SHORT: "teisipäeva", PART_PL: "teisipäevi", GEN_PL: "teisipäevade" },
+    parts: { NOM_SG: "teisipäev", GEN_SG: "teisipäeva", PART_SG: "teisipäeva", ILL_SG_SHORT: "teisipäeva", NOM_PL: "teisipäevad", PART_PL: "teisipäevi", GEN_PL: "teisipäevade" },
     government: null,
     usages: ["Koosolek toimub teisipäeval.", "Teisipäeval on vähese pilvisusega kuiv ilm."],
     note: "nädala 2. päev, esmaspäevale järgnev ja kolmapäevale eelnev päev",
@@ -10190,7 +10190,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tekst", gloss: "text", pos: "NOUN", cefr: "A1",
     ekilexWordId: 243549,
-    parts: { NOM_SG: "tekst", GEN_SG: "teksti", PART_SG: "teksti", ILL_SG_SHORT: "teksti", PART_PL: "tekste", GEN_PL: "tekstide" },
+    parts: { NOM_SG: "tekst", GEN_SG: "teksti", PART_SG: "teksti", ILL_SG_SHORT: "teksti", NOM_PL: "tekstid", PART_PL: "tekste", GEN_PL: "tekstide" },
     government: null,
     usages: ["Ma ei näe teksti lugeda.", "Mees lasi silmadel üle teksti libiseda.", "Raamatus oli vähe teksti ja palju pilte.", "Ta uurib vanu tekste."],
     note: "kirjutatud või trükitud sõnade hrl mõtestatud järjend",
@@ -10199,7 +10199,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "telefon", gloss: "telephone", pos: "NOUN", cefr: "A1",
     ekilexWordId: 243610,
-    parts: { NOM_SG: "telefon", GEN_SG: "telefoni", PART_SG: "telefoni", ILL_SG_SHORT: "telefoni", PART_PL: "telefone", GEN_PL: "telefonide" },
+    parts: { NOM_SG: "telefon", GEN_SG: "telefoni", PART_SG: "telefoni", ILL_SG_SHORT: "telefoni", NOM_PL: "telefonid", PART_PL: "telefone", GEN_PL: "telefonide" },
     government: null,
     usages: ["Emal on telefon välja lülitatud.", "Telefon heliseb.", "Seinatelefon.", "Telefon helises."],
     note: "telefonikõnede edastamiseks ja vastuvõtmiseks kasutatav seade",
@@ -10226,7 +10226,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teooria", gloss: "theory", pos: "NOUN", cefr: "B2",
     ekilexWordId: 244023,
-    parts: { NOM_SG: "teooria", GEN_SG: "teooria", PART_SG: "teooriat", PART_PL: "teooriaid", GEN_PL: "teooriate" },
+    parts: { NOM_SG: "teooria", GEN_SG: "teooria", PART_SG: "teooriat", NOM_PL: "teooriad", PART_PL: "teooriaid", GEN_PL: "teooriate" },
     government: null,
     usages: ["Katsetega tõestatud teooria.", "Teooria lükati ümber.", "Teadusteooria.", "Ühiskonnateooria."],
     note: "teaduslike mõistete, väidete, mõtteliste eksperimentide ja tõestuste terviklik süsteem, mis kirjeldab mingit tegelikkuse valdkonda",
@@ -10235,7 +10235,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teos", gloss: "work (of art)", pos: "NOUN", cefr: "B1",
     ekilexWordId: 244037,
-    parts: { NOM_SG: "teos", GEN_SG: "teose", PART_SG: "teost", PART_PL: "teoseid", GEN_PL: "teoste" },
+    parts: { NOM_SG: "teos", GEN_SG: "teose", PART_SG: "teost", NOM_PL: "teosed", PART_PL: "teoseid", GEN_PL: "teoste" },
     government: null,
     usages: ["Eduard Vilde „Kogutud teosed“.", "„Mona Lisa” on Leonardo da Vinci kõige kuulsam teos.", "Teos on originaalne, kui see on autori enda intellektuaalse loomingu tulemus."],
     note: "loova töö või tegevuse tulemus hrl kirjanduse, kunsti, teaduse valdkonnas (nt raamat, maal, helitöö, film vm)",
@@ -10253,7 +10253,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teostus", gloss: "execution", pos: "NOUN", cefr: null,
     ekilexWordId: 244045,
-    parts: { NOM_SG: "teostus", GEN_SG: "teostuse", PART_SG: "teostust", ILL_SG_SHORT: "teostusse", PART_PL: "teostusi", GEN_PL: "teostuste" },
+    parts: { NOM_SG: "teostus", GEN_SG: "teostuse", PART_SG: "teostust", ILL_SG_SHORT: "teostusse", NOM_PL: "teostused", PART_PL: "teostusi", GEN_PL: "teostuste" },
     government: null,
     usages: ["Mõte on köitev, aga teostus jätab visandi mulje.", "Kehva teostusega dokumentaal.", "Projekti teostus on takerdunud."],
     note: "see, kuidas miski on teoks tehtud, täide viidud",
@@ -10262,7 +10262,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "terav", gloss: "sharp", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 244139,
-    parts: { NOM_SG: "terav", GEN_SG: "terava", PART_SG: "teravat", PART_PL: "teravaid", GEN_PL: "teravate" },
+    parts: { NOM_SG: "terav", GEN_SG: "terava", PART_SG: "teravat", NOM_PL: "teravad", PART_PL: "teravaid", GEN_PL: "teravate" },
     government: null,
     usages: ["Terav nuga.", "Teravad hambad.", "Ettevaatust, nuga on väga terav!", "Kutsikal on teravad hambad."],
     note: "(lõiketera, lõikevahendi kohta:) õhukese servaga ja hästi lõikav",
@@ -10271,7 +10271,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teravmeelne", gloss: "witty", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 244164,
-    parts: { NOM_SG: "teravmeelne", GEN_SG: "teravmeelse", PART_SG: "teravmeelset", PART_PL: "teravmeelseid", GEN_PL: "teravmeelsete" },
+    parts: { NOM_SG: "teravmeelne", GEN_SG: "teravmeelse", PART_SG: "teravmeelset", NOM_PL: "teravmeelsed", PART_PL: "teravmeelseid", GEN_PL: "teravmeelsete" },
     government: null,
     usages: ["Teravmeelne kolumnist.", "Tegid teravmeelse tähelepaneku."],
     note: "vaimukas, nutikas, leidlik",
@@ -10280,7 +10280,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teravmeelsus", gloss: "wit", pos: "NOUN", cefr: null,
     ekilexWordId: 244165,
-    parts: { NOM_SG: "teravmeelsus", GEN_SG: "teravmeelsuse", PART_SG: "teravmeelsust", ILL_SG_SHORT: "teravmeelsusse", PART_PL: "teravmeelsusi", GEN_PL: "teravmeelsuste" },
+    parts: { NOM_SG: "teravmeelsus", GEN_SG: "teravmeelsuse", PART_SG: "teravmeelsust", ILL_SG_SHORT: "teravmeelsusse", NOM_PL: "teravmeelsused", PART_PL: "teravmeelsusi", GEN_PL: "teravmeelsuste" },
     government: null,
     usages: ["Kiideti presidendi teravmeelsust.", "Püüab kõiksugu teravmeelsustega teiste tähelepanu köita."],
     note: "vaimukas-olek, nutikus, leidlikkus",
@@ -10289,7 +10289,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "teravus", gloss: "sharpness, poignancy", pos: "NOUN", cefr: "B2",
     ekilexWordId: 244177,
-    parts: { NOM_SG: "teravus", GEN_SG: "teravuse", PART_SG: "teravust", ILL_SG_SHORT: "teravusse", PART_PL: "teravusi", GEN_PL: "teravuste" },
+    parts: { NOM_SG: "teravus", GEN_SG: "teravuse", PART_SG: "teravust", ILL_SG_SHORT: "teravusse", NOM_PL: "teravused", PART_PL: "teravusi", GEN_PL: "teravuste" },
     government: null,
     usages: ["Tippvormist olen kaugel, teravust napib.", "Vaimne teravus.", "Ta parimaid lavastusi iseloomustab mõtte värskus ja sõnumi teravus.", "Kas saate probleemi teravusest aru?"],
     note: "erksus, hea reageerivus, terasus",
@@ -10307,7 +10307,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "termin", gloss: "term", pos: "NOUN", cefr: "B2",
     ekilexWordId: 244227,
-    parts: { NOM_SG: "termin", GEN_SG: "termini", PART_SG: "terminit", PART_PL: "termineid", GEN_PL: "terminite" },
+    parts: { NOM_SG: "termin", GEN_SG: "termini", PART_SG: "terminit", NOM_PL: "terminid", PART_PL: "termineid", GEN_PL: "terminite" },
     government: null,
     usages: ["Majandustermin.", "Õigustermin.", "Autor kasutab läbivalt terminit „autentne\", kuid ei selgita selle tähendust.", "Eestikeelsed terminid koos seletuste ning ladina, inglise ja soome vastetega."],
     note: "erialast mõistet tähistav, täpselt piiritletud tähendusega sõna või sõnaühend",
@@ -10316,7 +10316,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "terminoloogia", gloss: "terminology", pos: "NOUN", cefr: "B2",
     ekilexWordId: 244235,
-    parts: { NOM_SG: "terminoloogia", GEN_SG: "terminoloogia", PART_SG: "terminoloogiat", PART_PL: "terminoloogiaid", GEN_PL: "terminoloogiate" },
+    parts: { NOM_SG: "terminoloogia", GEN_SG: "terminoloogia", PART_SG: "terminoloogiat", NOM_PL: "terminoloogiad", PART_PL: "terminoloogiaid", GEN_PL: "terminoloogiate" },
     government: null,
     usages: ["NATO terminoloogia sõnastik.", "Eesti keelekorraldajad on omakeelse terminoloogia väljatöötamisel teinud tublit tööd.", "Õigusterminoloogia.", "Meditsiiniterminoloogia."],
     note: "erialaste mõistete ja neid tähistavate terminite kogum, seda hõlmav kirjakeele osa",
@@ -10325,7 +10325,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "terve", gloss: "healthy, whole", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 244350,
-    parts: { NOM_SG: "terve", GEN_SG: "terve", PART_SG: "tervet", PART_PL: "terveid", GEN_PL: "tervete" },
+    parts: { NOM_SG: "terve", GEN_SG: "terve", PART_SG: "tervet", NOM_PL: "terved", PART_PL: "terveid", GEN_PL: "tervete" },
     government: null,
     usages: ["Terve sõdurpoiss.", "Terved hambad.", "Laps on terve kui purikas.", "Majaelanikud pääsesid põlengust tervena."],
     note: "tervise juures olev, mitte haige ega viga saanud",
@@ -10334,7 +10334,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tervis", gloss: "health", pos: "NOUN", cefr: "A1",
     ekilexWordId: 244377,
-    parts: { NOM_SG: "tervis", GEN_SG: "tervise", PART_SG: "tervist", PART_PL: "terviseid", GEN_PL: "terviste" },
+    parts: { NOM_SG: "tervis", GEN_SG: "tervise", PART_SG: "tervist", NOM_PL: "tervised", PART_PL: "terviseid", GEN_PL: "terviste" },
     government: null,
     usages: ["Ta on hea vaimse tervise juures.", "Nõrga tervisega tüdrukud.", "Tulen, kui tervis lubab.", "Tervis vedas alt."],
     note: "organismi normaalne, häireteta elutegevus, sellest johtuv kehaline, sotsiaalne ja vaimne heaolu",
@@ -10343,7 +10343,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tervishoid", gloss: "health care", pos: "NOUN", cefr: "B2",
     ekilexWordId: 244428,
-    parts: { NOM_SG: "tervishoid", GEN_SG: "tervishoiu", PART_SG: "tervishoidu", ILL_SG_SHORT: "tervishoidu", PART_PL: "tervishoide", GEN_PL: "tervishoidude" },
+    parts: { NOM_SG: "tervishoid", GEN_SG: "tervishoiu", PART_SG: "tervishoidu", ILL_SG_SHORT: "tervishoidu", NOM_PL: "tervishoiud", PART_PL: "tervishoide", GEN_PL: "tervishoidude" },
     government: null,
     usages: ["Tervishoiu rahastamist reguleerib ravikindlustuse seadus.", "Tartu Tervishoiu Kõrgkool.", "Hammaste tervishoius on väga tähtis pesemisharjumuse tekkimine.", "Kuidas värvimine juuste tervishoiule mõjub?"],
     note: "tegevusvaldkond, mis hõlmab inimeste tervise edendamist, hoidmist ja taastamist",
@@ -10370,7 +10370,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tihedus", gloss: "density", pos: "NOUN", cefr: "B2",
     ekilexWordId: 244566,
-    parts: { NOM_SG: "tihedus", GEN_SG: "tiheduse", PART_SG: "tihedust", ILL_SG_SHORT: "tihedusse", PART_PL: "tihedusi", GEN_PL: "tiheduste" },
+    parts: { NOM_SG: "tihedus", GEN_SG: "tiheduse", PART_SG: "tihedust", ILL_SG_SHORT: "tihedusse", NOM_PL: "tihedused", PART_PL: "tihedusi", GEN_PL: "tiheduste" },
     government: null,
     usages: ["Liikluse üha kasvav tihedus tegi linnaelanikud pahaseks.", "Kas juuste tihedus on päritav?", "Rabaturba tahke osa tihedus varieerub vahemikus 1,5–1,6 Mg m3 ning tema üldine poorsus on suur (95–98%).", "Puidu põlemise kiirus oleneb puidu tihedusest."],
     note: "millegi hulk või kogus pinna-, ruumi-, pikkus- või harvemini ajaühiku kohta",
@@ -10388,7 +10388,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tingimus", gloss: "condition", pos: "NOUN", cefr: "B1",
     ekilexWordId: 244918,
-    parts: { NOM_SG: "tingimus", GEN_SG: "tingimuse", PART_SG: "tingimust", ILL_SG_SHORT: "tingimusse", PART_PL: "tingimusi", GEN_PL: "tingimuste" },
+    parts: { NOM_SG: "tingimus", GEN_SG: "tingimuse", PART_SG: "tingimust", ILL_SG_SHORT: "tingimusse", NOM_PL: "tingimused", PART_PL: "tingimusi", GEN_PL: "tingimuste" },
     government: null,
     usages: ["Töölepingus kokkulepitud tingimused.", "Esimene tingimus on, et ..", "Konkursi tingimused.", "Trass ei vasta tehnilistele tingimustele."],
     note: "(määratud, seatud) asjaolu, millest oleneb mingi muu asjaolu või nähtuse tekkimine või olemasolu",
@@ -10415,7 +10415,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "toimetamine", gloss: "editing", pos: "NOUN", cefr: null,
     ekilexWordId: 270150,
-    parts: { NOM_SG: "toimetamine", GEN_SG: "toimetamise", PART_SG: "toimetamist", ILL_SG_SHORT: "toimetamisse", PART_PL: "toimetamisi", GEN_PL: "toimetamiste" },
+    parts: { NOM_SG: "toimetamine", GEN_SG: "toimetamise", PART_SG: "toimetamist", ILL_SG_SHORT: "toimetamisse", NOM_PL: "toimetamised", PART_PL: "toimetamisi", GEN_PL: "toimetamiste" },
     government: null,
     usages: ["Tegelen tõlkimise ja toimetamisega.", "Kas sa politseinike toimetamisi kardad?", "Küll on kokal köögis toimetamist!", "Salakauba Eestisse toomiseks kasutati reisirongi."],
     note: "teksti, väljaande, saate vms avaldamisvalmiks seadmine",
@@ -10424,7 +10424,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "toimimine", gloss: "functioning", pos: "NOUN", cefr: null,
     ekilexWordId: 270152,
-    parts: { NOM_SG: "toimimine", GEN_SG: "toimimise", PART_SG: "toimimist", ILL_SG_SHORT: "toimimisse", PART_PL: "toimimisi", GEN_PL: "toimimiste" },
+    parts: { NOM_SG: "toimimine", GEN_SG: "toimimise", PART_SG: "toimimist", ILL_SG_SHORT: "toimimisse", NOM_PL: "toimimised", PART_PL: "toimimisi", GEN_PL: "toimimiste" },
     government: null,
     usages: [],
     note: null,
@@ -10433,7 +10433,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "toit", gloss: "food", pos: "NOUN", cefr: "A1",
     ekilexWordId: 245343,
-    parts: { NOM_SG: "toit", GEN_SG: "toidu", PART_SG: "toitu", ILL_SG_SHORT: "toitu", PART_PL: "toite", GEN_PL: "toitude" },
+    parts: { NOM_SG: "toit", GEN_SG: "toidu", PART_SG: "toitu", ILL_SG_SHORT: "toitu", NOM_PL: "toidud", PART_PL: "toite", GEN_PL: "toitude" },
     government: null,
     usages: ["Inimene vajab toitu ja kehakatet.", "Tellida saab pitsat või Hiina toitu.", "Toit pandi lauale.", "Vürtsikate toitude juurde sobib punane vahuvein."],
     note: "see, mida süüakse, et hankida eluspüsimiseks vajalikke aineid",
@@ -10442,7 +10442,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "too", gloss: "that (one over there)", pos: "PRONOUN", cefr: "B2",
     ekilexWordId: 245624,
-    parts: { NOM_SG: "too", GEN_SG: "tolle", PART_SG: "toda", PART_PL: "noid", GEN_PL: "nonde" },
+    parts: { NOM_SG: "too", GEN_SG: "tolle", PART_SG: "toda", NOM_PL: "nood", PART_PL: "noid", GEN_PL: "nonde" },
     government: null,
     usages: ["Too seal pildil on minu õde.", "Kes too tüüp oli?", "Vanaisa oli tolle aja kohta haritud mees.", "Küsis poja käest, kelleks too tahab saada."],
     note: "(otsesel viitamisel ümbritsevale reaalsusele) osutab kaugemal asuvale inimesele, esemele või olukorrale",
@@ -10451,7 +10451,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "toode", gloss: "product", pos: "NOUN", cefr: "B1",
     ekilexWordId: 245629,
-    parts: { NOM_SG: "toode", GEN_SG: "toote", PART_SG: "toodet", PART_PL: "tooteid", GEN_PL: "toodete" },
+    parts: { NOM_SG: "toode", GEN_SG: "toote", PART_SG: "toodet", NOM_PL: "tooted", PART_PL: "tooteid", GEN_PL: "toodete" },
     government: null,
     usages: ["Supermarketis on suur valik kodumaiseid tooteid.", "Mesilasvaha sisaldav toode.", "Graafiline disain hõlmab raamatuid, ajalehti, visiitkaarte ja muid tooteid.", "Teraviljatoode."],
     note: "tootmise teel valmistatud asi, tootmise tulemus, materiaalne kaup (nt tarbeese, materjal, tööstusseade)",
@@ -10460,7 +10460,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tool", gloss: "chair", pos: "NOUN", cefr: "A1",
     ekilexWordId: 245635,
-    parts: { NOM_SG: "tool", GEN_SG: "tooli", PART_SG: "tooli", ILL_SG_SHORT: "tooli", PART_PL: "toole", GEN_PL: "toolide" },
+    parts: { NOM_SG: "tool", GEN_SG: "tooli", PART_SG: "tooli", ILL_SG_SHORT: "tooli", NOM_PL: "toolid", PART_PL: "toole", GEN_PL: "toolide" },
     government: null,
     usages: ["Vineertool.", "Pidin üllatusest tooli pealt maha kukkuma.", "Madis tõmbas tooli arvutile ligemale.", "Külaline istus toolile."],
     note: "hrl nelja jalaga ja seljatoega iste ühe inimese jaoks",
@@ -10478,7 +10478,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tore", gloss: "nice, lovely", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 245938,
-    parts: { NOM_SG: "tore", GEN_SG: "toreda", PART_SG: "toredat", PART_PL: "toredaid", GEN_PL: "toredate" },
+    parts: { NOM_SG: "tore", GEN_SG: "toreda", PART_SG: "toredat", NOM_PL: "toredad", PART_PL: "toredaid", GEN_PL: "toredate" },
     government: null,
     usages: ["Küll on tore tüdruk!", "Tegime lastega toredaid asju: joonistasime, meisterdasime, mängisime.", "Oli tore pidu.", "Ta on igati tore inimene."],
     note: "(inimese olemuse, mingi nähtuse, tegevuse vm kohta:) selline, kes või mis kutsub esile poolehoidu, meeldimust, sümpaatiat",
@@ -10487,7 +10487,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "torm", gloss: "storm", pos: "NOUN", cefr: "A2",
     ekilexWordId: 245964,
-    parts: { NOM_SG: "torm", GEN_SG: "tormi", PART_SG: "tormi", ILL_SG_SHORT: "tormi", PART_PL: "torme", GEN_PL: "tormide" },
+    parts: { NOM_SG: "torm", GEN_SG: "tormi", PART_SG: "tormi", ILL_SG_SHORT: "tormi", NOM_PL: "tormid", PART_PL: "torme", GEN_PL: "tormide" },
     government: null,
     usages: ["Tuisk ja torm tekitasid lennujaamas kaose.", "Merel tõusis tugev torm.", "Torm murdis puu maha.", "Kalamehed jäid tormi kätte."],
     note: "väga tugev tuul",
@@ -10496,7 +10496,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tuba", gloss: "room", pos: "NOUN", cefr: "A1",
     ekilexWordId: 247416,
-    parts: { NOM_SG: "tuba", GEN_SG: "toa", PART_SG: "tuba", ILL_SG_SHORT: "tuppa", PART_PL: "tube", GEN_PL: "tubade" },
+    parts: { NOM_SG: "tuba", GEN_SG: "toa", PART_SG: "tuba", ILL_SG_SHORT: "tuppa", NOM_PL: "toad", PART_PL: "tube", GEN_PL: "tubade" },
     government: null,
     usages: ["Oleks mul ometi oma tuba!", "Hotellis on sada tuba.", "Pööningutuba.", "Mitu tuba nende uues korteris on?"],
     note: "elamiseks kasutatav ruum majas või korteris",
@@ -10505,7 +10505,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tugev", gloss: "strong", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 247477,
-    parts: { NOM_SG: "tugev", GEN_SG: "tugeva", PART_SG: "tugevat", PART_PL: "tugevaid", GEN_PL: "tugevate" },
+    parts: { NOM_SG: "tugev", GEN_SG: "tugeva", PART_SG: "tugevat", NOM_PL: "tugevad", PART_PL: "tugevaid", GEN_PL: "tugevate" },
     government: null,
     usages: ["Vanaisa oli tugev nagu karu.", "Kehalt tugev mees.", "Minu isa on väga tugev mees.", "Tugeva jää peal võivad sõita ka autod."],
     note: "(inimese, looma kohta:) suure kehajõuga, suurt füüsilist jõudu omav või ilmutav",
@@ -10523,7 +10523,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tuhat", gloss: "thousand", pos: "NOUN", cefr: "A1",
     ekilexWordId: 247597,
-    parts: { NOM_SG: "tuhat", GEN_SG: "tuhande", PART_SG: "tuhandet", PART_PL: "tuhandeid", GEN_PL: "tuhandete" },
+    parts: { NOM_SG: "tuhat", GEN_SG: "tuhande", PART_SG: "tuhandet", NOM_PL: "tuhanded", PART_PL: "tuhandeid", GEN_PL: "tuhandete" },
     government: null,
     usages: ["Kaks tuhat kolmsada.", "Sain töö eest tuhat eurot.", "Väljakule kogunes tuhandeid inimesi.", "Tuhat autot."],
     note: "põhiarv 1000 (103)",
@@ -10541,7 +10541,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tulemus", gloss: "result", pos: "NOUN", cefr: "A2",
     ekilexWordId: 247811,
-    parts: { NOM_SG: "tulemus", GEN_SG: "tulemuse", PART_SG: "tulemust", ILL_SG_SHORT: "tulemusse", PART_PL: "tulemusi", GEN_PL: "tulemuste" },
+    parts: { NOM_SG: "tulemus", GEN_SG: "tulemuse", PART_SG: "tulemust", ILL_SG_SHORT: "tulemusse", NOM_PL: "tulemused", PART_PL: "tulemusi", GEN_PL: "tulemuste" },
     government: null,
     usages: ["Ravi tulemus on ennustamatu.", "Rõõmu teeb Virgele oma töö juures see, et kohe on näha tulemusi.", "Ravi andis häid tulemusi.", "Sõnaraamat valmis paljude inimeste töö tulemusena."],
     note: "(sihikindla) tegevuse või mingi protsessi tagajärg",
@@ -10559,7 +10559,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tume", gloss: "dark", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 248046,
-    parts: { NOM_SG: "tume", GEN_SG: "tumeda", PART_SG: "tumedat", PART_PL: "tumedaid", GEN_PL: "tumedate" },
+    parts: { NOM_SG: "tume", GEN_SG: "tumeda", PART_SG: "tumedat", NOM_PL: "tumedad", PART_PL: "tumedaid", GEN_PL: "tumedate" },
     government: null,
     usages: ["Tume ülikond.", "Tume ja ähvardav pilv.", "Ta naine on tumeda nahaga.", "Praegu on moes tumedat värvi riided."],
     note: "värvilt, toonilt rohkem musta- kui valgepoolne, mitte palju valgust peegeldav",
@@ -10568,7 +10568,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tund", gloss: "hour, lesson", pos: "NOUN", cefr: "A1",
     ekilexWordId: 248090,
-    parts: { NOM_SG: "tund", GEN_SG: "tunni", PART_SG: "tundi", ILL_SG_SHORT: "tundi", PART_PL: "tunde", GEN_PL: "tundide" },
+    parts: { NOM_SG: "tund", GEN_SG: "tunni", PART_SG: "tundi", ILL_SG_SHORT: "tundi", NOM_PL: "tunnid", PART_PL: "tunde", GEN_PL: "tundide" },
     government: null,
     usages: ["Kursused vältavad 60 tundi.", "Tüdrukud šoppasid tundide viisi poodides.", "Sõit kestis kaks tundi.", "Kontsert algab tunni aja pärast."],
     note: "1/24 ööpäevast, 60 minutiga võrduv ajaühik",
@@ -10586,7 +10586,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tunne", gloss: "feeling", pos: "NOUN", cefr: "A2",
     ekilexWordId: 248192,
-    parts: { NOM_SG: "tunne", GEN_SG: "tunde", PART_SG: "tunnet", PART_PL: "tundeid", GEN_PL: "tunnete" },
+    parts: { NOM_SG: "tunne", GEN_SG: "tunde", PART_SG: "tunnet", NOM_PL: "tunded", PART_PL: "tundeid", GEN_PL: "tunnete" },
     government: null,
     usages: ["Usulised tunded.", "Kõhe tunne oli paksus metsas üksi olla.", "Poisil tekkisid tüdruku vastu tunded.", "Tunded keesid üle."],
     note: "inimese subjektiivne elamus, hingeline läbielamine",
@@ -10595,7 +10595,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tunnistaja", gloss: "witness", pos: "NOUN", cefr: "B1",
     ekilexWordId: 248241,
-    parts: { NOM_SG: "tunnistaja", GEN_SG: "tunnistaja", PART_SG: "tunnistajat", PART_PL: "tunnistajaid", GEN_PL: "tunnistajate" },
+    parts: { NOM_SG: "tunnistaja", GEN_SG: "tunnistaja", PART_SG: "tunnistajat", NOM_PL: "tunnistajad", PART_PL: "tunnistajaid", GEN_PL: "tunnistajate" },
     government: null,
     usages: ["Olime ajaloolise sündmuse tunnistajaks.", "Õnnetuse tunnistaja kutsus kiirabi.", "Politsei otsib avarii tunnistajaid.", "Oluline tunnistaja ei ilmunud kohtusse."],
     note: "inimene, kes ise on mingi sündmuse, nähtuse juures, näeb toimuvat pealt",
@@ -10604,7 +10604,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tunnistus", gloss: "certificate", pos: "NOUN", cefr: "B1",
     ekilexWordId: 248244,
-    parts: { NOM_SG: "tunnistus", GEN_SG: "tunnistuse", PART_SG: "tunnistust", ILL_SG_SHORT: "tunnistusse", PART_PL: "tunnistusi", GEN_PL: "tunnistuste" },
+    parts: { NOM_SG: "tunnistus", GEN_SG: "tunnistuse", PART_SG: "tunnistust", ILL_SG_SHORT: "tunnistusse", NOM_PL: "tunnistused", PART_PL: "tunnistusi", GEN_PL: "tunnistuste" },
     government: null,
     usages: ["Kohtus said määravaks kahe inimese tunnistused.", "Õnnetuse pealtnägijate tunnistused.", "Ta nägi õnnetust pealt ja andis kohtus tunnistuse.", "Aumärgi kandmise õigust tõendav tunnistus."],
     note: "tunnistaja antud seletus mingi sündmuse või teo asjaolude kohta",
@@ -10613,7 +10613,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tunnus", gloss: "feature, characteristic", pos: "NOUN", cefr: "B1",
     ekilexWordId: 248254,
-    parts: { NOM_SG: "tunnus", GEN_SG: "tunnuse", PART_SG: "tunnust", PART_PL: "tunnuseid", GEN_PL: "tunnuste" },
+    parts: { NOM_SG: "tunnus", GEN_SG: "tunnuse", PART_SG: "tunnust", NOM_PL: "tunnused", PART_PL: "tunnuseid", GEN_PL: "tunnuste" },
     government: null,
     usages: ["Stenokardia tunnused.", "Kõik tunnused viitavad, et siin on käinud vargad.", "Kõhklus on intelligentsuse tunnus.", "Naturaalset lambasoolt peetakse hea vorsti tunnuseks."],
     note: "iseloomulik omadus, mille alusel esemed, organismid, nähtused vms on üksteisega võrreldavad ja üksteisest eristatavad",
@@ -10622,7 +10622,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "turg", gloss: "market", pos: "NOUN", cefr: "A1",
     ekilexWordId: 248372,
-    parts: { NOM_SG: "turg", GEN_SG: "turu", PART_SG: "turgu", ILL_SG_SHORT: "turgu", PART_PL: "turge", GEN_PL: "turgude" },
+    parts: { NOM_SG: "turg", GEN_SG: "turu", PART_SG: "turgu", ILL_SG_SHORT: "turgu", NOM_PL: "turud", PART_PL: "turge", GEN_PL: "turgude" },
     government: null,
     usages: ["Isa tõi turult värsket liha.", "Nõmme turg.", "Kalaturg.", "Ostsin turult liha, mune ja piima."],
     note: "müügilaudadega kauplemiskoht (lahtine plats, tänapäeval ka hoone)",
@@ -10631,7 +10631,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "turvalisus", gloss: "security", pos: "NOUN", cefr: "B1",
     ekilexWordId: 248534,
-    parts: { NOM_SG: "turvalisus", GEN_SG: "turvalisuse", PART_SG: "turvalisust", ILL_SG_SHORT: "turvalisusse", PART_PL: "turvalisusi", GEN_PL: "turvalisuste" },
+    parts: { NOM_SG: "turvalisus", GEN_SG: "turvalisuse", PART_SG: "turvalisust", ILL_SG_SHORT: "turvalisusse", NOM_PL: "turvalisused", PART_PL: "turvalisusi", GEN_PL: "turvalisuste" },
     government: null,
     usages: ["Vanad bussid ohustavad reisijate turvalisust.", "Kes vastutab sõitjate turvalisuse eest?", "Turvalisuse huvides kandke rattaga sõites kiivrit.", "Turvalisus on mõõtja kaitstus biotoimeainete, nagu bakterid, seened, viirused, viroidid, endo- ja ektoparasiidid, eest."],
     note: "inimese kaitstus, ohutus teatavas olukorras",
@@ -10640,7 +10640,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tuttav", gloss: "acquaintance", pos: "NOUN", cefr: "A2",
     ekilexWordId: 248609,
-    parts: { NOM_SG: "tuttav", GEN_SG: "tuttava", PART_SG: "tuttavat", PART_PL: "tuttavaid", GEN_PL: "tuttavate" },
+    parts: { NOM_SG: "tuttav", GEN_SG: "tuttava", PART_SG: "tuttavat", NOM_PL: "tuttavad", PART_PL: "tuttavaid", GEN_PL: "tuttavate" },
     government: null,
     usages: ["Püssi hoiti tuttava küti juures.", "See nimi on mulle tuttav.", "Tuttav tunne!", "Külas on kõik omavahel tuttavad."],
     note: "selline, kes või mis on varasemate kokkupuudete põhjal tuntud või teada, varem nähtud, kohatud või kogetud, mitte võõras ega tundmatu",
@@ -10649,7 +10649,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tuul", gloss: "wind", pos: "NOUN", cefr: "A1",
     ekilexWordId: 248661,
-    parts: { NOM_SG: "tuul", GEN_SG: "tuule", PART_SG: "tuult", ILL_SG_SHORT: "tuulde", PART_PL: "tuuli", GEN_PL: "tuulte" },
+    parts: { NOM_SG: "tuul", GEN_SG: "tuule", PART_SG: "tuult", ILL_SG_SHORT: "tuulde", NOM_PL: "tuuled", PART_PL: "tuuli", GEN_PL: "tuulte" },
     government: null,
     usages: ["Väljas tõusis tugev tuul.", "Tuul puhub tormi ajal kuni 30 meetrit sekundis.", "Kael on kange, tuul on vist läbi tõmmanud.", "Tuul pöördus läände (= hakkas puhuma lääne poolt)."],
     note: "õhu tuntav liikumine looduslikel põhjustel",
@@ -10658,7 +10658,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõde", gloss: "truth", pos: "NOUN", cefr: "B1",
     ekilexWordId: 248932,
-    parts: { NOM_SG: "tõde", GEN_SG: "tõe", PART_SG: "tõde", ILL_SG_SHORT: "tõtte", PART_PL: "tõdesid", GEN_PL: "tõdede" },
+    parts: { NOM_SG: "tõde", GEN_SG: "tõe", PART_SG: "tõde", ILL_SG_SHORT: "tõtte", NOM_PL: "tõed", PART_PL: "tõdesid", GEN_PL: "tõdede" },
     government: null,
     usages: ["Tasapisi selgus ka tõde.", "Kogu tõde Amsterdami punaste laternate tänavast.", "Ajaloolise tõega pole siin pistmist.", "Uurija tahab teada tõde."],
     note: "see, mis vastab tegelikkusele, on tõsiasjadega vm viisil tõendatud, tegelikud asjaolud, asjade tegelik seis, hrl vastandatuna kujutletule",
@@ -10667,7 +10667,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõend", gloss: "piece of evidence", pos: "NOUN", cefr: "B1",
     ekilexWordId: 248953,
-    parts: { NOM_SG: "tõend", GEN_SG: "tõendi", PART_SG: "tõendit", PART_PL: "tõendeid", GEN_PL: "tõendite" },
+    parts: { NOM_SG: "tõend", GEN_SG: "tõendi", PART_SG: "tõendit", NOM_PL: "tõendid", PART_PL: "tõendeid", GEN_PL: "tõendite" },
     government: null,
     usages: ["Paleodieedi tõhususe kohta vettpidavaid tõendeid pole.", "Advokaat esitas kohtule uued tõendid.", "Asuti tõendeid koguma.", "Kas see tõend kohut veenab?"],
     note: "millestki tunnistust andev, mingit oletust kinnitav ese, fakt või asjaolu",
@@ -10685,7 +10685,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõendus", gloss: "evidence", pos: "NOUN", cefr: null,
     ekilexWordId: 248958,
-    parts: { NOM_SG: "tõendus", GEN_SG: "tõenduse", PART_SG: "tõendust", ILL_SG_SHORT: "tõendusse", PART_PL: "tõendusi", GEN_PL: "tõenduste" },
+    parts: { NOM_SG: "tõendus", GEN_SG: "tõenduse", PART_SG: "tõendust", ILL_SG_SHORT: "tõendusse", NOM_PL: "tõendused", PART_PL: "tõendusi", GEN_PL: "tõenduste" },
     government: null,
     usages: ["Ta väljanägemine annab tõendust kehvast tervisest.", "Pole ühtki tõendust, et poiss oleks välismaale sõitnud.", "Ilma dokumentaalse tõenduseta ei saa kulutust arvesse võtta.", "Kui oma väidete tõenduseks puuduvad faktid ja argumendid, siis jääbki alles ainult labane sõim."],
     note: "seik, asjaolu vm, mis annab millestki tunnistust, kinnitab millegi paikapidavust",
@@ -10694,7 +10694,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõendusmaterjal", gloss: "body of evidence", pos: "NOUN", cefr: null,
     ekilexWordId: 248959,
-    parts: { NOM_SG: "tõendusmaterjal", GEN_SG: "tõendusmaterjali", PART_SG: "tõendusmaterjali", ILL_SG_SHORT: "tõendusmaterjali", PART_PL: "tõendusmaterjale", GEN_PL: "tõendusmaterjalide" },
+    parts: { NOM_SG: "tõendusmaterjal", GEN_SG: "tõendusmaterjali", PART_SG: "tõendusmaterjali", ILL_SG_SHORT: "tõendusmaterjali", NOM_PL: "tõendusmaterjalid", PART_PL: "tõendusmaterjale", GEN_PL: "tõendusmaterjalide" },
     government: null,
     usages: ["Süüalune tunnistati piisava tõendusmaterjali puudumisel õigeks."],
     note: "millegi tõenduseks olev, midagi tõendav materjal (nt kellegi süüdimõistmise üle otsustamisel)",
@@ -10703,7 +10703,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõenäoline", gloss: "probable", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 248963,
-    parts: { NOM_SG: "tõenäoline", GEN_SG: "tõenäolise", PART_SG: "tõenäolist", ILL_SG_SHORT: "tõenäolisse", PART_PL: "tõenäolisi", GEN_PL: "tõenäoliste" },
+    parts: { NOM_SG: "tõenäoline", GEN_SG: "tõenäolise", PART_SG: "tõenäolist", ILL_SG_SHORT: "tõenäolisse", NOM_PL: "tõenäolised", PART_PL: "tõenäolisi", GEN_PL: "tõenäoliste" },
     government: null,
     usages: ["Kui kiusamine on kord alanud, on tõenäoline, et see ka jätkub.", "Kui tõenäoline on kolmas ilmasõda?", "Tema osalemine ei ole tõenäoline.", "On üsna tõenäoline, et ma kukkusin eksamil läbi."],
     note: "selline, mis arvatavasti toimub või teoks saab, oletatav, usutav, võimalik",
@@ -10730,7 +10730,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõestus", gloss: "proof", pos: "NOUN", cefr: "B2",
     ekilexWordId: 248986,
-    parts: { NOM_SG: "tõestus", GEN_SG: "tõestuse", PART_SG: "tõestust", ILL_SG_SHORT: "tõestusse", PART_PL: "tõestusi", GEN_PL: "tõestuste" },
+    parts: { NOM_SG: "tõestus", GEN_SG: "tõestuse", PART_SG: "tõestust", ILL_SG_SHORT: "tõestusse", NOM_PL: "tõestused", PART_PL: "tõestusi", GEN_PL: "tõestuste" },
     government: null,
     usages: ["Kuum lõunamaalase veri ei ole kuriteo tõestuseks.", "Notariaalset tõestust ei nõuta.", "Ma olen elav tõestus, et inimene võib muutuda.", "Matemaatiline tõestus."],
     note: "millegi olemasolu või tõesuse kinnitamine või veenev põhjendamine, hrl uurimistulemustele, faktidele või loogikale toetudes",
@@ -10739,7 +10739,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõlge", gloss: "translation", pos: "NOUN", cefr: "A2",
     ekilexWordId: 249025,
-    parts: { NOM_SG: "tõlge", GEN_SG: "tõlke", PART_SG: "tõlget", PART_PL: "tõlkeid", GEN_PL: "tõlgete" },
+    parts: { NOM_SG: "tõlge", GEN_SG: "tõlke", PART_SG: "tõlget", NOM_PL: "tõlked", PART_PL: "tõlkeid", GEN_PL: "tõlgete" },
     government: null,
     usages: ["Georg Meri \"Hamleti” tõlge on pisut vananenud.", "Katekismuse tõlge liivi keelde.", "Suuline tõlge.", "Automaatne Google'i tõlge."],
     note: "teise keelde tõlgitud tekst",
@@ -10757,7 +10757,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõlgendus", gloss: "interpretation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 249027,
-    parts: { NOM_SG: "tõlgendus", GEN_SG: "tõlgenduse", PART_SG: "tõlgendust", ILL_SG_SHORT: "tõlgendusse", PART_PL: "tõlgendusi", GEN_PL: "tõlgenduste" },
+    parts: { NOM_SG: "tõlgendus", GEN_SG: "tõlgenduse", PART_SG: "tõlgendust", ILL_SG_SHORT: "tõlgendusse", NOM_PL: "tõlgendused", PART_PL: "tõlgendusi", GEN_PL: "tõlgenduste" },
     government: null,
     usages: ["Faktide väär tõlgendus.", "Seaduse tõlgendust küsiti riigikohtult.", "Laulja pälvis eripreemia Kodaly laulu parima tõlgenduse eest."],
     note: "teatud arusaam millestki, seletus millegi kohta",
@@ -10766,7 +10766,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõlkeviga", gloss: "translation error", pos: "NOUN", cefr: null,
     ekilexWordId: 318580,
-    parts: { NOM_SG: "tõlkeviga", GEN_SG: "tõlkevea", PART_SG: "tõlkeviga", PART_PL: "tõlkevigu", GEN_PL: "tõlkevigade" },
+    parts: { NOM_SG: "tõlkeviga", GEN_SG: "tõlkevea", PART_SG: "tõlkeviga", NOM_PL: "tõlkevead", PART_PL: "tõlkevigu", GEN_PL: "tõlkevigade" },
     government: null,
     usages: [],
     note: null,
@@ -10775,7 +10775,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõlkija", gloss: "translator", pos: "NOUN", cefr: "B1",
     ekilexWordId: 249051,
-    parts: { NOM_SG: "tõlkija", GEN_SG: "tõlkija", PART_SG: "tõlkijat", PART_PL: "tõlkijaid", GEN_PL: "tõlkijate" },
+    parts: { NOM_SG: "tõlkija", GEN_SG: "tõlkija", PART_SG: "tõlkijat", NOM_PL: "tõlkijad", PART_PL: "tõlkijaid", GEN_PL: "tõlkijate" },
     government: null,
     usages: ["Ungari kirjanduse tõlkija.", "Näidendi tõlkija on Anu Lamp.", "Otsin tööd tõlkijana."],
     note: "inimene, kes teksti hrl kirjalikult ühest keelest teise tõlgib",
@@ -10793,7 +10793,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tõus", gloss: "rise", pos: "NOUN", cefr: "B1",
     ekilexWordId: 249269,
-    parts: { NOM_SG: "tõus", GEN_SG: "tõusu", PART_SG: "tõusu", ILL_SG_SHORT: "tõusu", PART_PL: "tõuse", GEN_PL: "tõusude" },
+    parts: { NOM_SG: "tõus", GEN_SG: "tõusu", PART_SG: "tõusu", ILL_SG_SHORT: "tõusu", NOM_PL: "tõusud", PART_PL: "tõuse", GEN_PL: "tõusude" },
     government: null,
     usages: ["Algas tõus Everestile.", "Mäkketõus.", "Alustasime järsku tõusu mäkke.", "Kuutõus."],
     note: "ülespoole, kõrgemale liikumine",
@@ -10802,7 +10802,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tähelepanek", gloss: "observation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 249347,
-    parts: { NOM_SG: "tähelepanek", GEN_SG: "tähelepaneku", PART_SG: "tähelepanekut", PART_PL: "tähelepanekuid", GEN_PL: "tähelepanekute" },
+    parts: { NOM_SG: "tähelepanek", GEN_SG: "tähelepaneku", PART_SG: "tähelepanekut", NOM_PL: "tähelepanekud", PART_PL: "tähelepanekuid", GEN_PL: "tähelepanekute" },
     government: null,
     usages: ["Vanarahval on ilma kohta hulk vanasõnu ja tähelepanekuid."],
     note: "see, mida on märgatud, märkamisel põhinev fakt, arvamus, mulje vm",
@@ -10811,7 +10811,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tähendus", gloss: "meaning", pos: "NOUN", cefr: "B1",
     ekilexWordId: 249370,
-    parts: { NOM_SG: "tähendus", GEN_SG: "tähenduse", PART_SG: "tähendust", ILL_SG_SHORT: "tähendusse", PART_PL: "tähendusi", GEN_PL: "tähenduste" },
+    parts: { NOM_SG: "tähendus", GEN_SG: "tähenduse", PART_SG: "tähendust", ILL_SG_SHORT: "tähendusse", NOM_PL: "tähendused", PART_PL: "tähendusi", GEN_PL: "tähenduste" },
     government: null,
     usages: ["Lause tähendus muutub, kui sellest jätta ära osa sõnu.", "Kõik räägivad, aga keegi ei tea selle mõiste tähendust.", "Sõna tähendust vaata sõnaraamatust.", "Kitsam tähendus."],
     note: "sisu või mõte, millele sõna, sõnaühend või märk osutab, viitab, see, mida ta väljendab",
@@ -10820,7 +10820,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tähenduslik", gloss: "meaningful", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 249372,
-    parts: { NOM_SG: "tähenduslik", GEN_SG: "tähendusliku", PART_SG: "tähenduslikku", ILL_SG_SHORT: "tähenduslikku", PART_PL: "tähenduslikke", GEN_PL: "tähenduslike" },
+    parts: { NOM_SG: "tähenduslik", GEN_SG: "tähendusliku", PART_SG: "tähenduslikku", ILL_SG_SHORT: "tähenduslikku", NOM_PL: "tähenduslikud", PART_PL: "tähenduslikke", GEN_PL: "tähenduslike" },
     government: null,
     usages: ["Hakkasin igal ööl nägema tähenduslikke unenägusid.", "Milline tähenduslik vahe on mõistetel „tühistamine” ja „kehtetuks tunnistamine”?"],
     note: "erilise, eriti olulise tähendusega, selgelt millelegi vihjav või viitav",
@@ -10829,7 +10829,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tähendusrikas", gloss: "meaningful", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 249375,
-    parts: { NOM_SG: "tähendusrikas", GEN_SG: "tähendusrikka", PART_SG: "tähendusrikast", PART_PL: "tähendusrikkaid", GEN_PL: "tähendusrikaste" },
+    parts: { NOM_SG: "tähendusrikas", GEN_SG: "tähendusrikka", PART_SG: "tähendusrikast", NOM_PL: "tähendusrikkad", PART_PL: "tähendusrikkaid", GEN_PL: "tähendusrikaste" },
     government: null,
     usages: ["Esineja pidas tähendusrikka pausi."],
     note: "erilise, eriti olulise tähendusega, selgelt millelegi vihjav või viitav",
@@ -10838,7 +10838,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tähendusvarjund", gloss: "shade of meaning", pos: "NOUN", cefr: null,
     ekilexWordId: 249377,
-    parts: { NOM_SG: "tähendusvarjund", GEN_SG: "tähendusvarjundi", PART_SG: "tähendusvarjundit", PART_PL: "tähendusvarjundeid", GEN_PL: "tähendusvarjundite" },
+    parts: { NOM_SG: "tähendusvarjund", GEN_SG: "tähendusvarjundi", PART_SG: "tähendusvarjundit", NOM_PL: "tähendusvarjundid", PART_PL: "tähendusvarjundeid", GEN_PL: "tähendusvarjundite" },
     government: null,
     usages: ["Sõna esmane tähendus 'vaenlane' omandas hiljem muid tähendusvarjundeid nagu 'teener', 'sulane', 'ori'."],
     note: "sõna või sõnaühendi põhitähendusega seotud, sellest tulenev pisut erinev tähendus",
@@ -10847,7 +10847,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tähtaeg", gloss: "deadline", pos: "NOUN", cefr: "B1",
     ekilexWordId: 249428,
-    parts: { NOM_SG: "tähtaeg", GEN_SG: "tähtaja", PART_SG: "tähtaega", ILL_SG_SHORT: "tähtaega", PART_PL: "tähtaegu", GEN_PL: "tähtaegade" },
+    parts: { NOM_SG: "tähtaeg", GEN_SG: "tähtaja", PART_SG: "tähtaega", ILL_SG_SHORT: "tähtaega", NOM_PL: "tähtajad", PART_PL: "tähtaegu", GEN_PL: "tähtaegade" },
     government: null,
     usages: ["Hoonestusõigus tähtajaga 50 aastat.", "Pärand läheb pärast kolmekuulise tähtaja möödumist pärijale üle.", "Mu passi tähtaeg on läbi.", "Töö esitamise tähtaeg on järgmine esmaspäev kell 12."],
     note: "määratud ajavahemik, mille jooksul miski toimub, kehtib vms",
@@ -10856,7 +10856,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tähtpäev", gloss: "anniversary, special day", pos: "NOUN", cefr: "B1",
     ekilexWordId: 249451,
-    parts: { NOM_SG: "tähtpäev", GEN_SG: "tähtpäeva", PART_SG: "tähtpäeva", ILL_SG_SHORT: "tähtpäeva", PART_PL: "tähtpäevi", GEN_PL: "tähtpäevade" },
+    parts: { NOM_SG: "tähtpäev", GEN_SG: "tähtpäeva", PART_SG: "tähtpäeva", ILL_SG_SHORT: "tähtpäeva", NOM_PL: "tähtpäevad", PART_PL: "tähtpäevi", GEN_PL: "tähtpäevade" },
     government: null,
     usages: ["Onu tähistab sügisel ümmargust tähtpäeva.", "Müügil olid ilusad kaardid pulmadeks, sünnipäevadeks ja teisteks tähtpäevadeks.", "Läheneb laenu tagastamise tähtpäev.", "Aruande esitamise tähtpäev on 15. juuni."],
     note: "tähtis, tähistatav päev, nt mingi sündmuse toimumise aastapäev, kellegi sünnipäev",
@@ -10865,7 +10865,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "täiend", gloss: "attribute, modifier", pos: "NOUN", cefr: null,
     ekilexWordId: 249498,
-    parts: { NOM_SG: "täiend", GEN_SG: "täiendi", PART_SG: "täiendit", PART_PL: "täiendeid", GEN_PL: "täiendite" },
+    parts: { NOM_SG: "täiend", GEN_SG: "täiendi", PART_SG: "täiendit", NOM_PL: "täiendid", PART_PL: "täiendeid", GEN_PL: "täiendite" },
     government: null,
     usages: ["Lauses saab ja-tuletisi kasutada nimisõna iseloomustava täiendina: haukuja koer, muneja kana.", "Liitsõnu moodustatakse ka da-tegevusnimelise täiendiga nimisõnafraasist: kirg mängida &gt; mängukirg, mängimiskirg."],
     note: "(grammatikas:) lauseliige, mis laiendab nimisõna, nimisõnalist asesõna või põhiarvu",
@@ -10874,7 +10874,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "täis", gloss: "full", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 249537,
-    parts: { NOM_SG: "täis", GEN_SG: "täie", PART_SG: "täit", ILL_SG_SHORT: "täide", PART_PL: "täisi", GEN_PL: "täite" },
+    parts: { NOM_SG: "täis", GEN_SG: "täie", PART_SG: "täit", ILL_SG_SHORT: "täide", NOM_PL: "täied", PART_PL: "täisi", GEN_PL: "täite" },
     government: null,
     usages: ["Ta lebas täies riides voodis.", "On ta ikka täie aruga?", "Talle pole vaja täit palka maksta.", "Ülesanne nõudis õpilastelt täit tähelepanu."],
     note: "kogu, terve",
@@ -10892,7 +10892,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "täitmine", gloss: "fulfilment, execution", pos: "NOUN", cefr: null,
     ekilexWordId: 270436,
-    parts: { NOM_SG: "täitmine", GEN_SG: "täitmise", PART_SG: "täitmist", ILL_SG_SHORT: "täitmisse", PART_PL: "täitmisi", GEN_PL: "täitmiste" },
+    parts: { NOM_SG: "täitmine", GEN_SG: "täitmise", PART_SG: "täitmist", ILL_SG_SHORT: "täitmisse", NOM_PL: "täitmised", PART_PL: "täitmisi", GEN_PL: "täitmiste" },
     government: null,
     usages: ["Kuidas tagatakse selle seaduse täitmist?"],
     note: "NATO standardimises standardikokkuleppest tulenevate kohustuste täitmine liikmesriigi poolt",
@@ -10919,7 +10919,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tänav", gloss: "street", pos: "NOUN", cefr: "A1",
     ekilexWordId: 249788,
-    parts: { NOM_SG: "tänav", GEN_SG: "tänava", PART_SG: "tänavat", PART_PL: "tänavaid", GEN_PL: "tänavate" },
+    parts: { NOM_SG: "tänav", GEN_SG: "tänava", PART_SG: "tänavat", NOM_PL: "tänavad", PART_PL: "tänavaid", GEN_PL: "tänavate" },
     government: null,
     usages: ["Elan Palli tänaval.", "Asus elama Toominga tänavasse.", "Suveniiripoed on linna kõige käidavamas tänavas.", "Talvel on tänavad libedad."],
     note: "linnas vm asulas asuv (kõnniteega varustatud) tee",
@@ -10928,7 +10928,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "täpne", gloss: "precise", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 249914,
-    parts: { NOM_SG: "täpne", GEN_SG: "täpse", PART_SG: "täpset", PART_PL: "täpseid", GEN_PL: "täpsete" },
+    parts: { NOM_SG: "täpne", GEN_SG: "täpse", PART_SG: "täpset", NOM_PL: "täpsed", PART_PL: "täpseid", GEN_PL: "täpsete" },
     government: null,
     usages: ["Uurija esitatud andmed peavad olema täpsed.", "GPS näitas kätte meie täpse asukoha.", "Tõlge ei olnud täpne.", "Oled oma ema täpne koopia."],
     note: "täiesti õige, vigadeta, tegelikkusele või eeskujule, millelegi etteantule vastav",
@@ -10955,7 +10955,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "täpsus", gloss: "accuracy", pos: "NOUN", cefr: "B1",
     ekilexWordId: 249935,
-    parts: { NOM_SG: "täpsus", GEN_SG: "täpsuse", PART_SG: "täpsust", ILL_SG_SHORT: "täpsusse", PART_PL: "täpsusi", GEN_PL: "täpsuste" },
+    parts: { NOM_SG: "täpsus", GEN_SG: "täpsuse", PART_SG: "täpsust", ILL_SG_SHORT: "täpsusse", NOM_PL: "täpsused", PART_PL: "täpsusi", GEN_PL: "täpsuste" },
     government: null,
     usages: ["Turvamehed jälgivad sisenejaid piinliku täpsusega.", "Kõik oli organiseeritud väga sujuvalt, saksaliku täpsusega.", "Taktika töötas sajaprotsendilise täpsusega.", "Õpetaja päevaplaan on minutilise täpsusega paigas."],
     note: "tegevuse, soorituse vm täielik vastavus soovitule, nõutule, õigele vms, mitte kõrvalekalle ega segasus",
@@ -10973,7 +10973,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "täpsustus", gloss: "clarification", pos: "NOUN", cefr: "B2",
     ekilexWordId: 249945,
-    parts: { NOM_SG: "täpsustus", GEN_SG: "täpsustuse", PART_SG: "täpsustust", ILL_SG_SHORT: "täpsustusse", PART_PL: "täpsustusi", GEN_PL: "täpsustuste" },
+    parts: { NOM_SG: "täpsustus", GEN_SG: "täpsustuse", PART_SG: "täpsustust", ILL_SG_SHORT: "täpsustusse", NOM_PL: "täpsustused", PART_PL: "täpsustusi", GEN_PL: "täpsustuste" },
     government: null,
     usages: ["Täpsustuseks olgu öeldud, et ..", "Kommentaarid, täpsustused ja vigade parandused tuleb saata projekteerijale.", "Ametinimetusi on lubatud kasutada koos tööülesannet või tegevusala määrava täpsustusega."],
     note: "täpsustamine",
@@ -10982,7 +10982,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "töö", gloss: "work", pos: "NOUN", cefr: "A1",
     ekilexWordId: 250035,
-    parts: { NOM_SG: "töö", GEN_SG: "töö", PART_SG: "tööd", ILL_SG_SHORT: "töhe", PART_PL: "töid", GEN_PL: "tööde" },
+    parts: { NOM_SG: "töö", GEN_SG: "töö", PART_SG: "tööd", ILL_SG_SHORT: "töhe", NOM_PL: "tööd", PART_PL: "töid", GEN_PL: "tööde" },
     government: null,
     usages: ["Füüsiline töö.", "Tööd tehti kõvasti.", "Roosidega on palju tööd.", "Tal on praegu väga palju tööd."],
     note: "inimese vaimset või füüsilist pingutust eeldav tegevus, mille siht on endale elatusvahendeid luua",
@@ -10991,7 +10991,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tööpuudus", gloss: "unemployment", pos: "NOUN", cefr: "B2",
     ekilexWordId: 250222,
-    parts: { NOM_SG: "tööpuudus", GEN_SG: "tööpuuduse", PART_SG: "tööpuudust", ILL_SG_SHORT: "tööpuudusse", PART_PL: "tööpuudusi", GEN_PL: "tööpuuduste" },
+    parts: { NOM_SG: "tööpuudus", GEN_SG: "tööpuuduse", PART_SG: "tööpuudust", ILL_SG_SHORT: "tööpuudusse", NOM_PL: "tööpuudused", PART_PL: "tööpuudusi", GEN_PL: "tööpuuduste" },
     government: null,
     usages: ["Tööpuudus ulatub 11 protsendini."],
     note: "töötamisvõimaluste puudumine inimestel, kes tahavad ja võivad töötada",
@@ -11001,7 +11001,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     lemma: "töötama", gloss: "to work", pos: "VERB", cefr: "A1",
     ekilexWordId: 250316,
     parts: { INF_MA: "töötama", INF_DA: "töötada", PRES_1SG: "töötan", PAST_1SG: "töötasin", PART_TUD: "töötatud" },
-    government: "kus (location) · kellena",
+    government: "kus (location) · kellena (essive)",
     usages: ["Töötati hommikust õhtuni.", "Maakoolis ei saanud täie koormusega töötada.", "Ta ei töötagi kusagil.", "Kus sinu abikaasa töötab? – Ta töötab pangas."],
     note: "vaeva nägema, pingutama selle nimel, et elatusvahendeid luua või midagi ära teha",
     rus: ["работать", "трудиться"], ukr: ["працювати"],
@@ -11009,7 +11009,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tühi", gloss: "empty", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 250437,
-    parts: { NOM_SG: "tühi", GEN_SG: "tühja", PART_SG: "tühja", ILL_SG_SHORT: "tühja", PART_PL: "tühje", GEN_PL: "tühjade" },
+    parts: { NOM_SG: "tühi", GEN_SG: "tühja", PART_SG: "tühja", ILL_SG_SHORT: "tühja", NOM_PL: "tühjad", PART_PL: "tühje", GEN_PL: "tühjade" },
     government: null,
     usages: ["Tühi tass.", "Söö suu tühjaks!", "Põõsad on marjadest tühjaks korjatud.", "Mu pangaarve on tühi mis tühi."],
     note: "mitte millegagi täidetud, mitte midagi sisaldav",
@@ -11018,7 +11018,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tühine", gloss: "void, negligible", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 250453,
-    parts: { NOM_SG: "tühine", GEN_SG: "tühise", PART_SG: "tühist", PART_PL: "tühiseid", GEN_PL: "tühiste" },
+    parts: { NOM_SG: "tühine", GEN_SG: "tühise", PART_SG: "tühist", NOM_PL: "tühised", PART_PL: "tühiseid", GEN_PL: "tühiste" },
     government: null,
     usages: ["Mõnikord vihastan, harilikult tühisel põhjusel.", "37. sünnipäev on nii mõttetu ja tühine asi.", "Tühine eksimus.", "Tühine seiklusjutt."],
     note: "tähtsuselt ebaoluline, suurema mõju, kaalukuse või ulatuseta",
@@ -11036,7 +11036,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tüli", gloss: "quarrel", pos: "NOUN", cefr: "B1",
     ekilexWordId: 250522,
-    parts: { NOM_SG: "tüli", GEN_SG: "tüli", PART_SG: "tüli", ILL_SG_SHORT: "tülli", PART_PL: "tülisid", GEN_PL: "tülide" },
+    parts: { NOM_SG: "tüli", GEN_SG: "tüli", PART_SG: "tüli", ILL_SG_SHORT: "tülli", NOM_PL: "tülid", PART_PL: "tülisid", GEN_PL: "tülide" },
     government: null,
     usages: ["Varem või hiljem lõppeb see suure tüliga.", "Tihti tekib tüli tühiste asjade pärast.", "Kahe õigeusu kiriku tüli Eestis on küdenud aastaid.", "Millest tüli alguse sai?"],
     note: "sõbralike suhete katkemine või katkestamine hrl oma pahameelt (sõnaliselt) väljendades, tülitsemine",
@@ -11054,7 +11054,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "tütar", gloss: "daughter", pos: "NOUN", cefr: "A1",
     ekilexWordId: 250633,
-    parts: { NOM_SG: "tütar", GEN_SG: "tütre", PART_SG: "tütart", PART_PL: "tütreid", GEN_PL: "tütarde" },
+    parts: { NOM_SG: "tütar", GEN_SG: "tütre", PART_SG: "tütart", NOM_PL: "tütred", PART_PL: "tütreid", GEN_PL: "tütarde" },
     government: null,
     usages: ["Perre sündisid kaksikud tütred.", "Kuningatütar.", "Neil on kaks last, poeg ja tütar.", "Füürer kutsus ja kodumaa ausad pojad ja tütred läksid."],
     note: "naisisik oma vanema(te) suhtes, otsene naissoost järglane",
@@ -11063,7 +11063,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "udu", gloss: "fog", pos: "NOUN", cefr: "B1",
     ekilexWordId: 250759,
-    parts: { NOM_SG: "udu", GEN_SG: "udu", PART_SG: "udu", ILL_SG_SHORT: "uttu", PART_PL: "udusid", GEN_PL: "udude" },
+    parts: { NOM_SG: "udu", GEN_SG: "udu", PART_SG: "udu", ILL_SG_SHORT: "uttu", NOM_PL: "udud", PART_PL: "udusid", GEN_PL: "udude" },
     government: null,
     usages: ["Eksisime tihedas udus ära.", "Hommikuudu.", "Mereudu.", "Eksisime tiheda udu tõttu teelt."],
     note: "veepiisakeste või jääkristallide või nende mõlema kogum Maa vm pinna kohal",
@@ -11081,7 +11081,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "uks", gloss: "door", pos: "NOUN", cefr: "A1",
     ekilexWordId: 251031,
-    parts: { NOM_SG: "uks", GEN_SG: "ukse", PART_SG: "ust", PART_PL: "uksi", GEN_PL: "uste" },
+    parts: { NOM_SG: "uks", GEN_SG: "ukse", PART_SG: "ust", NOM_PL: "uksed", PART_PL: "uksi", GEN_PL: "uste" },
     government: null,
     usages: ["Auto juhipoolne uks on mõlkis.", "Ära pauguta ustega!", "Õde tuli uksele.", "Koduuks."],
     note: "hoone, sõiduki vm sisse- ja väljapääsu sulgev hingedel või rullidel liikuv ese",
@@ -11090,7 +11090,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ulatus", gloss: "extent, scope", pos: "NOUN", cefr: "B2",
     ekilexWordId: 251090,
-    parts: { NOM_SG: "ulatus", GEN_SG: "ulatuse", PART_SG: "ulatust", ILL_SG_SHORT: "ulatusse", PART_PL: "ulatusi", GEN_PL: "ulatuste" },
+    parts: { NOM_SG: "ulatus", GEN_SG: "ulatuse", PART_SG: "ulatust", ILL_SG_SHORT: "ulatusse", NOM_PL: "ulatused", PART_PL: "ulatusi", GEN_PL: "ulatuste" },
     government: null,
     usages: ["Suure ulatusega madalrõhuala liigub itta.", "Signaal levib umbes keskmise maja ulatuses.", "Püsime silmside ulatuses!", "Selgitati välja vigastuste ulatus."],
     note: "ala suurus, mida miski hõlmab",
@@ -11099,7 +11099,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ulatuslik", gloss: "extensive", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 251091,
-    parts: { NOM_SG: "ulatuslik", GEN_SG: "ulatusliku", PART_SG: "ulatuslikku", ILL_SG_SHORT: "ulatuslikku", PART_PL: "ulatuslikke", GEN_PL: "ulatuslike" },
+    parts: { NOM_SG: "ulatuslik", GEN_SG: "ulatusliku", PART_SG: "ulatuslikku", ILL_SG_SHORT: "ulatuslikku", NOM_PL: "ulatuslikud", PART_PL: "ulatuslikke", GEN_PL: "ulatuslike" },
     government: null,
     usages: ["Ulatuslik elektrikatkestus.", "Keskaeg on ulatuslik periood inimkonna ajaloos.", "Alustati ulatuslikke ümberehitustöid.", "Eesti maalikunsti ulatuslik ülevaade."],
     note: "suure ulatusega, ruumiliselt laialdane, suurt ala hõlmav",
@@ -11126,7 +11126,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "usaldus", gloss: "trust", pos: "NOUN", cefr: "B2",
     ekilexWordId: 251604,
-    parts: { NOM_SG: "usaldus", GEN_SG: "usalduse", PART_SG: "usaldust", ILL_SG_SHORT: "usaldusse", PART_PL: "usaldusi", GEN_PL: "usalduste" },
+    parts: { NOM_SG: "usaldus", GEN_SG: "usalduse", PART_SG: "usaldust", ILL_SG_SHORT: "usaldusse", NOM_PL: "usaldused", PART_PL: "usaldusi", GEN_PL: "usalduste" },
     government: null,
     usages: ["Ta tark nägu äratas usaldust.", "Uus treener võitis meeskonna usalduse õige pea.", "Ära kuritarvita mu usaldust!", "Sõprus põhineb vastastikusel usaldusel."],
     note: "kindel tunne või teadmine, et kedagi või midagi võib usaldada, et keegi või miski ei peta ootusi ega valmista pettumust",
@@ -11135,7 +11135,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "usaldusväärne", gloss: "reliable", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 251623,
-    parts: { NOM_SG: "usaldusväärne", GEN_SG: "usaldusväärse", PART_SG: "usaldusväärset", PART_PL: "usaldusväärseid", GEN_PL: "usaldusväärsete" },
+    parts: { NOM_SG: "usaldusväärne", GEN_SG: "usaldusväärse", PART_SG: "usaldusväärset", NOM_PL: "usaldusväärsed", PART_PL: "usaldusväärseid", GEN_PL: "usaldusväärsete" },
     government: null,
     usages: ["Usaldusväärsed sõbrad.", "Info pärineb usaldusväärsest allikast.", "Info on pärit usaldusväärsest allikast."],
     note: "selline, kelles või milles on võimalik kindel olla, usaldust vääriv",
@@ -11144,7 +11144,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "usaldusväärsus", gloss: "reliability", pos: "NOUN", cefr: "B2",
     ekilexWordId: 270555,
-    parts: { NOM_SG: "usaldusväärsus", GEN_SG: "usaldusväärsuse", PART_SG: "usaldusväärsust", ILL_SG_SHORT: "usaldusväärsusse", PART_PL: "usaldusväärsusi", GEN_PL: "usaldusväärsuste" },
+    parts: { NOM_SG: "usaldusväärsus", GEN_SG: "usaldusväärsuse", PART_SG: "usaldusväärsust", ILL_SG_SHORT: "usaldusväärsusse", NOM_PL: "usaldusväärsused", PART_PL: "usaldusväärsusi", GEN_PL: "usaldusväärsuste" },
     government: null,
     usages: ["Uurimuse usaldusväärsus on suuresti seotud valimi varieeruvusega.", "peetakse silmas selgust/arusaadavust/täpsust minevikusündmuste kajastamisel"],
     note: "olukord, kus asjaolud (nt andmed, info) on tõesed, mitte juhuslikud või valed ning kus tegevust korrates saadakse sama tulemus",
@@ -11162,7 +11162,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "uudis", gloss: "news item", pos: "NOUN", cefr: "A2",
     ekilexWordId: 251802,
-    parts: { NOM_SG: "uudis", GEN_SG: "uudise", PART_SG: "uudist", PART_PL: "uudiseid", GEN_PL: "uudiste" },
+    parts: { NOM_SG: "uudis", GEN_SG: "uudise", PART_SG: "uudist", NOM_PL: "uudised", PART_PL: "uudiseid", GEN_PL: "uudiste" },
     government: null,
     usages: ["Kuulsime seda kurba uudist juba eile.", "Sain täna rõõmsa uudise: sõbranna ootab last.", "Mis tööl uudist on?", "Talle meeldib hommikul värskeid uudiseid lugeda."],
     note: "uus, märkimist väärt teave millegi hrl äsja toimunu kohta",
@@ -11180,7 +11180,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "uuendus", gloss: "innovation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 251854,
-    parts: { NOM_SG: "uuendus", GEN_SG: "uuenduse", PART_SG: "uuendust", ILL_SG_SHORT: "uuendusse", PART_PL: "uuendusi", GEN_PL: "uuenduste" },
+    parts: { NOM_SG: "uuendus", GEN_SG: "uuenduse", PART_SG: "uuendust", ILL_SG_SHORT: "uuendusse", NOM_PL: "uuendused", PART_PL: "uuendusi", GEN_PL: "uuenduste" },
     government: null,
     usages: ["Uuendused jalgpallireeglistikus.", "Lepingusse pole veel uuendusi sisse viidud.", "Laulupidu on uuenduste teel.", "Ülikool vajab uuendusi."],
     note: "uuenduslik muutus, ümberkorraldus mingis valdkonnas vm",
@@ -11198,7 +11198,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "uurija", gloss: "researcher", pos: "NOUN", cefr: "B2",
     ekilexWordId: 251887,
-    parts: { NOM_SG: "uurija", GEN_SG: "uurija", PART_SG: "uurijat", PART_PL: "uurijaid", GEN_PL: "uurijate" },
+    parts: { NOM_SG: "uurija", GEN_SG: "uurija", PART_SG: "uurijat", NOM_PL: "uurijad", PART_PL: "uurijaid", GEN_PL: "uurijate" },
     government: null,
     usages: ["Ta on tuntud Eesti ajaloo uurija.", "Politseiuurija.", "Töötan politseis uurijana."],
     note: "teadlane, teadustöötaja",
@@ -11216,7 +11216,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "uurimus", gloss: "research study", pos: "NOUN", cefr: "B1",
     ekilexWordId: 251925,
-    parts: { NOM_SG: "uurimus", GEN_SG: "uurimuse", PART_SG: "uurimust", ILL_SG_SHORT: "uurimusse", PART_PL: "uurimusi", GEN_PL: "uurimuste" },
+    parts: { NOM_SG: "uurimus", GEN_SG: "uurimuse", PART_SG: "uurimust", ILL_SG_SHORT: "uurimusse", NOM_PL: "uurimused", PART_PL: "uurimusi", GEN_PL: "uurimuste" },
     government: null,
     usages: ["Uurimus ilmub järgmisel nädalal teadusajakirjas Differentiation.", "Mainekas ajakirjas publitseeritud uurimus.", "Sel teemal on ilmunud mitu põhjalikku uurimust.", "Kanada teadlased korraldasid uurimuse, mille eesmärgiks oli selgitada seost südameasjade ja tervise vahel."],
     note: "teemaga määratud uurimise tulemuste kirjalik jäädvustus (nt artiklina, monograafiana)",
@@ -11225,7 +11225,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "uuring", gloss: "study, survey", pos: "NOUN", cefr: "B1",
     ekilexWordId: 251928,
-    parts: { NOM_SG: "uuring", GEN_SG: "uuringu", PART_SG: "uuringut", PART_PL: "uuringuid", GEN_PL: "uuringute" },
+    parts: { NOM_SG: "uuring", GEN_SG: "uuringu", PART_SG: "uuringut", NOM_PL: "uuringud", PART_PL: "uuringuid", GEN_PL: "uuringute" },
     government: null,
     usages: ["Enne valdade ühinemist tehakse põhjalik uuring.", "Kardioloogi juures tehti täiendavad uuringud.", "Uuring selgitas välja, millist maiust ostjad eelistavad.", "Arheoloogilised uuringud algavad augustis."],
     note: "mingi probleemi lahendust taotlev ajaliselt piiratud tegevus (nt küsitlus, teaduslik analüüs, meditsiiniline protseduur)",
@@ -11234,7 +11234,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "uus", gloss: "new", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 251939,
-    parts: { NOM_SG: "uus", GEN_SG: "uue", PART_SG: "uut", ILL_SG_SHORT: "uude", PART_PL: "uusi", GEN_PL: "uute" },
+    parts: { NOM_SG: "uus", GEN_SG: "uue", PART_SG: "uut", ILL_SG_SHORT: "uude", NOM_PL: "uued", PART_PL: "uusi", GEN_PL: "uute" },
     government: null,
     usages: ["Kuressaares avati uus pood.", "Uue filmi esilinastus.", "Kas sa oled tema uut filmi juba näinud?", "Kalev ostis endale uue ülikonna."],
     note: "selline, mis on hiljaaegu valminud, tehtud, loodud või omandatud",
@@ -11243,7 +11243,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vabadus", gloss: "freedom", pos: "NOUN", cefr: "B1",
     ekilexWordId: 252205,
-    parts: { NOM_SG: "vabadus", GEN_SG: "vabaduse", PART_SG: "vabadust", ILL_SG_SHORT: "vabadusse", PART_PL: "vabadusi", GEN_PL: "vabaduste" },
+    parts: { NOM_SG: "vabadus", GEN_SG: "vabaduse", PART_SG: "vabadust", ILL_SG_SHORT: "vabadusse", NOM_PL: "vabadused", PART_PL: "vabadusi", GEN_PL: "vabaduste" },
     government: null,
     usages: ["Meie reliikvia on vabadus!", "Vabadus, võrdsus, vendlus.", "Riik piiras inimeste isiklikku vabadust.", "Igaühel on vabadus otsustada oma elu üle."],
     note: "olukord, olek, kus saab toimida oma tahte järgi ja ilma sunnita",
@@ -11279,7 +11279,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vabatõlge", gloss: "free translation", pos: "NOUN", cefr: null,
     ekilexWordId: 252336,
-    parts: { NOM_SG: "vabatõlge", GEN_SG: "vabatõlke", PART_SG: "vabatõlget", PART_PL: "vabatõlkeid", GEN_PL: "vabatõlgete" },
+    parts: { NOM_SG: "vabatõlge", GEN_SG: "vabatõlke", PART_SG: "vabatõlget", NOM_PL: "vabatõlked", PART_PL: "vabatõlkeid", GEN_PL: "vabatõlgete" },
     government: null,
     usages: ["Tsitaat kõlab minu vabatõlkes järgmiselt .."],
     note: "umbkaudne, mittetäpne tõlge",
@@ -11324,7 +11324,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vaimukas", gloss: "witty", pos: "ADJECTIVE", cefr: "C1",
     ekilexWordId: 252966,
-    parts: { NOM_SG: "vaimukas", GEN_SG: "vaimuka", PART_SG: "vaimukat", PART_PL: "vaimukaid", GEN_PL: "vaimukate" },
+    parts: { NOM_SG: "vaimukas", GEN_SG: "vaimuka", PART_SG: "vaimukat", NOM_PL: "vaimukad", PART_PL: "vaimukaid", GEN_PL: "vaimukate" },
     government: null,
     usages: ["Film lõppes vaimuka puändiga."],
     note: "teravmeelne, ootamatu ja (väljenduselt) leidlik",
@@ -11342,7 +11342,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vaktsiin", gloss: "vaccine", pos: "NOUN", cefr: "B1",
     ekilexWordId: 253078,
-    parts: { NOM_SG: "vaktsiin", GEN_SG: "vaktsiini", PART_SG: "vaktsiini", ILL_SG_SHORT: "vaktsiini", PART_PL: "vaktsiine", GEN_PL: "vaktsiinide" },
+    parts: { NOM_SG: "vaktsiin", GEN_SG: "vaktsiini", PART_SG: "vaktsiini", ILL_SG_SHORT: "vaktsiini", NOM_PL: "vaktsiinid", PART_PL: "vaktsiine", GEN_PL: "vaktsiinide" },
     government: null,
     usages: ["HI-viiruse vaktsiini väljatöötamiseks on kulunud miljardeid dollareid.", "Sügisel lasen teha vaktsiini gripi vastu.", "Epidemioloogilisel näidustusel vaktsineeritakse noorukeid ja täiskasvanuid vaktsiini ühe doosiga."],
     note: "aine, mis sisaldab haigust tekitava mikroorganismi toimeainet ning mille manustamine organismi tekitab immuunsuse selle haiguse suhtes",
@@ -11360,7 +11360,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "valdamine", gloss: "command, mastery", pos: "NOUN", cefr: null,
     ekilexWordId: 320032,
-    parts: { NOM_SG: "valdamine", GEN_SG: "valdamise", PART_SG: "valdamist", ILL_SG_SHORT: "valdamisse", PART_PL: "valdamisi", GEN_PL: "valdamiste" },
+    parts: { NOM_SG: "valdamine", GEN_SG: "valdamise", PART_SG: "valdamist", ILL_SG_SHORT: "valdamisse", NOM_PL: "valdamised", PART_PL: "valdamisi", GEN_PL: "valdamiste" },
     government: null,
     usages: [],
     note: null,
@@ -11369,7 +11369,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "valge", gloss: "white", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 253189,
-    parts: { NOM_SG: "valge", GEN_SG: "valge", PART_SG: "valget", PART_PL: "valgeid", GEN_PL: "valgete" },
+    parts: { NOM_SG: "valge", GEN_SG: "valge", PART_SG: "valget", NOM_PL: "valged", PART_PL: "valgeid", GEN_PL: "valgete" },
     government: null,
     usages: ["Valge pruutkleit.", "Poiss oli ikka veel näost valge.", "Hallikasvalge.", "Pruut kandis valget kleiti."],
     note: "lume, piima värvi, väga hele või kahvatu",
@@ -11378,7 +11378,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "valik", gloss: "choice", pos: "NOUN", cefr: "A2",
     ekilexWordId: 253414,
-    parts: { NOM_SG: "valik", GEN_SG: "valiku", PART_SG: "valikut", PART_PL: "valikuid", GEN_PL: "valikute" },
+    parts: { NOM_SG: "valik", GEN_SG: "valiku", PART_SG: "valikut", NOM_PL: "valikud", PART_PL: "valikuid", GEN_PL: "valikute" },
     government: null,
     usages: ["Žüriil valiku tegemisega probleeme ei tekkinud.", "Ravi valik sõltub diagnoosist.", "Kodakondsuse valik.", "Valikuga võis rahule jääda."],
     note: "valimine teatud hulgast või mitme võimaluse seast",
@@ -11387,7 +11387,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "valim", gloss: "sample", pos: "NOUN", cefr: "B2",
     ekilexWordId: 253442,
-    parts: { NOM_SG: "valim", GEN_SG: "valimi", PART_SG: "valimit", PART_PL: "valimeid", GEN_PL: "valimite" },
+    parts: { NOM_SG: "valim", GEN_SG: "valimi", PART_SG: "valimit", NOM_PL: "valimid", PART_PL: "valimeid", GEN_PL: "valimite" },
     government: null,
     usages: ["Koostati esinduslik valim Eesti kodanikuühendustest."],
     note: "(statistikas:) üldkogumist juhuslikult valitud osa",
@@ -11405,7 +11405,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "valimised", gloss: "elections", pos: "NOUN", cefr: "B1",
     ekilexWordId: 253450,
-    parts: { NOM_SG: "valimine", GEN_SG: "valimise", PART_SG: "valimist", ILL_SG_SHORT: "valimisse", PART_PL: "valimisi", GEN_PL: "valimiste" },
+    parts: { NOM_SG: "valimine", GEN_SG: "valimise", PART_SG: "valimist", ILL_SG_SHORT: "valimisse", NOM_PL: "valimised", PART_PL: "valimisi", GEN_PL: "valimiste" },
     government: null,
     usages: ["Euroopa Parlamendi valimised.", "Vabariigi Presidendi valimised.", "Ühing lükkas uue esimehe valimised edasi.", "Presidendivalimised."],
     note: "riigi, organisatsiooni vms juhi või esindusorgani liikmete ametisse nimetamine hääletamise teel",
@@ -11414,7 +11414,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "valitsus", gloss: "government", pos: "NOUN", cefr: "B1",
     ekilexWordId: 253500,
-    parts: { NOM_SG: "valitsus", GEN_SG: "valitsuse", PART_SG: "valitsust", ILL_SG_SHORT: "valitsusse", PART_PL: "valitsusi", GEN_PL: "valitsuste" },
+    parts: { NOM_SG: "valitsus", GEN_SG: "valitsuse", PART_SG: "valitsust", ILL_SG_SHORT: "valitsusse", NOM_PL: "valitsused", PART_PL: "valitsusi", GEN_PL: "valitsuste" },
     government: null,
     usages: ["Eesti Vabariigi Valitsus.", "Käib valitsuse istung.", "Moodustati uus valitsus.", "Valitsus arutab seda küsimust järgmisel nädalal."],
     note: "täidesaatva riigivõimu kõrgeim organ",
@@ -11423,7 +11423,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vallatu", gloss: "playful, mischievous", pos: "ADJECTIVE", cefr: "C1",
     ekilexWordId: 253602,
-    parts: { NOM_SG: "vallatu", GEN_SG: "vallatu", PART_SG: "vallatut", PART_PL: "vallatuid", GEN_PL: "vallatute" },
+    parts: { NOM_SG: "vallatu", GEN_SG: "vallatu", PART_SG: "vallatut", NOM_PL: "vallatud", PART_PL: "vallatuid", GEN_PL: "vallatute" },
     government: null,
     usages: ["Toots oli vallatu poiss.", "Poseerisime vallatutel piltidel.", "Kodus tuli meil vallatu mõte vaadata pornofilmi.", "Vaba, vallatu ning kena neiu otsib meeldivat meest."],
     note: "lapselikult tembutav, rõõmus ja ülemeelik",
@@ -11450,7 +11450,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "valu", gloss: "pain", pos: "NOUN", cefr: "A2",
     ekilexWordId: 253685,
-    parts: { NOM_SG: "valu", GEN_SG: "valu", PART_SG: "valu", PART_PL: "valusid", GEN_PL: "valude" },
+    parts: { NOM_SG: "valu", GEN_SG: "valu", PART_SG: "valu", NOM_PL: "valud", PART_PL: "valusid", GEN_PL: "valude" },
     government: null,
     usages: ["Põlv on hakanud valu tegema.", "Tuim valu külje sees.", "Morfium aitas valusid leevendada.", "Hambavalu."],
     note: "mingis kehaosas esinev ebameeldiv, vaeva valmistav tunne, mille on tekitanud närvilõpmete erutus",
@@ -11459,7 +11459,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vana", gloss: "old", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 253806,
-    parts: { NOM_SG: "vana", GEN_SG: "vana", PART_SG: "vana", PART_PL: "vanu", GEN_PL: "vanade" },
+    parts: { NOM_SG: "vana", GEN_SG: "vana", PART_SG: "vana", NOM_PL: "vanad", PART_PL: "vanu", GEN_PL: "vanade" },
     government: null,
     usages: ["Vana mees võttis noore naise.", "Vanu inimesi tuleb aidata.", "Vana kuusk murdub kergesti.", "Mõeldi, kuidas tuua noori kooli ja saada vanad eest ära."],
     note: "kaua elanud, pika eaga",
@@ -11468,7 +11468,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vanaema", gloss: "grandmother", pos: "NOUN", cefr: "A1",
     ekilexWordId: 253832,
-    parts: { NOM_SG: "vanaema", GEN_SG: "vanaema", PART_SG: "vanaema", PART_PL: "vanaemasid", GEN_PL: "vanaemade" },
+    parts: { NOM_SG: "vanaema", GEN_SG: "vanaema", PART_SG: "vanaema", NOM_PL: "vanaemad", PART_PL: "vanaemasid", GEN_PL: "vanaemade" },
     government: null,
     usages: ["Poiss elas isapoolse vanaema juures.", "Ta on juba kolmekordne vanaema.", "Minu vanaema ja vanaisa elavad maal.", "Klubis käib koos vanaemade tantsurühm."],
     note: "isa ema või ema ema",
@@ -11477,7 +11477,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vanaisa", gloss: "grandfather", pos: "NOUN", cefr: "A1",
     ekilexWordId: 253840,
-    parts: { NOM_SG: "vanaisa", GEN_SG: "vanaisa", PART_SG: "vanaisa", PART_PL: "vanaisasid", GEN_PL: "vanaisade" },
+    parts: { NOM_SG: "vanaisa", GEN_SG: "vanaisa", PART_SG: "vanaisa", NOM_PL: "vanaisad", PART_PL: "vanaisasid", GEN_PL: "vanaisade" },
     government: null,
     usages: ["Minul – nagu igal normaalsel inimesel – on kaks vanaisa.", "Ta on oma lapselastele väga hea vanaisa."],
     note: "isa või ema isa",
@@ -11486,7 +11486,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vanasõna", gloss: "proverb", pos: "NOUN", cefr: "B2",
     ekilexWordId: 253914,
-    parts: { NOM_SG: "vanasõna", GEN_SG: "vanasõna", PART_SG: "vanasõna", ILL_SG_SHORT: "vanasõnna", PART_PL: "vanasõnu", GEN_PL: "vanasõnade" },
+    parts: { NOM_SG: "vanasõna", GEN_SG: "vanasõna", PART_SG: "vanasõna", ILL_SG_SHORT: "vanasõnna", NOM_PL: "vanasõnad", PART_PL: "vanasõnu", GEN_PL: "vanasõnade" },
     government: null,
     usages: ["Kus kogu, seal väge, ütleb Jüri kandi vanasõna."],
     note: "lühike rahvapärane õpetliku sisuga ja lõpetatud lause kujuga ütlus",
@@ -11495,7 +11495,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vanus", gloss: "age", pos: "NOUN", cefr: "A2",
     ekilexWordId: 254112,
-    parts: { NOM_SG: "vanus", GEN_SG: "vanuse", PART_SG: "vanust", PART_PL: "vanuseid", GEN_PL: "vanuste" },
+    parts: { NOM_SG: "vanus", GEN_SG: "vanuse", PART_SG: "vanust", NOM_PL: "vanused", PART_PL: "vanuseid", GEN_PL: "vanuste" },
     government: null,
     usages: ["Kirja tuli panna nimi, vanus ja sugu.", "Sünnitajate keskmine vanus kasvab.", "Isa suri kõrges vanuses.", "Ülevaatuse sagedus sõltub auto vanusest."],
     note: "aeg (aastates), mille keegi või miski on käesoleva või mingi teatava hetkeni elanud või olemas olnud",
@@ -11513,7 +11513,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "varjund", gloss: "nuance, shade", pos: "NOUN", cefr: "B2",
     ekilexWordId: 254374,
-    parts: { NOM_SG: "varjund", GEN_SG: "varjundi", PART_SG: "varjundit", PART_PL: "varjundeid", GEN_PL: "varjundite" },
+    parts: { NOM_SG: "varjund", GEN_SG: "varjundi", PART_SG: "varjundit", NOM_PL: "varjundid", PART_PL: "varjundeid", GEN_PL: "varjundite" },
     government: null,
     usages: ["Kollaka varjundiga pärlid.", "Poliitilise varjundiga näidend.", "Veini vürtsine varjund."],
     note: "ühe ja sama põhivärvuse pisut erinev toon",
@@ -11531,7 +11531,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vasak", gloss: "left", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 254485,
-    parts: { NOM_SG: "vasak", GEN_SG: "vasaku", PART_SG: "vasakut", PART_PL: "vasakuid", GEN_PL: "vasakute" },
+    parts: { NOM_SG: "vasak", GEN_SG: "vasaku", PART_SG: "vasakut", NOM_PL: "vasakud", PART_PL: "vasakuid", GEN_PL: "vasakute" },
     government: null,
     usages: ["Vasak põlv valutab.", "Auto vasak suunatuli ei põle.", "Mu vasak silm näeb halvemini kui parem.", "Usutakse, et Niiluse jõe vasak kallas on Surma Org."],
     note: "keha keskjoonest südame pool asuv või selline, mis asetseb vaataja suhtes tema südame pool",
@@ -11567,7 +11567,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vaste", gloss: "equivalent", pos: "NOUN", cefr: "B2",
     ekilexWordId: 254654,
-    parts: { NOM_SG: "vaste", GEN_SG: "vaste", PART_SG: "vastet", PART_PL: "vasteid", GEN_PL: "vastete" },
+    parts: { NOM_SG: "vaste", GEN_SG: "vaste", PART_SG: "vastet", NOM_PL: "vasted", PART_PL: "vasteid", GEN_PL: "vastete" },
     government: null,
     usages: ["Selle sõna täpne vaste ei ole saksakeelne sõna „Nation”.", "Ingliskeelne vaste.", "Rooma jumalanna Minerva Kreeka vaste on Athena."],
     note: "sõna või väljend, mis väljendab sama sisu teises keeles",
@@ -11576,7 +11576,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vastunäidustus", gloss: "contraindication", pos: "NOUN", cefr: null,
     ekilexWordId: 254766,
-    parts: { NOM_SG: "vastunäidustus", GEN_SG: "vastunäidustuse", PART_SG: "vastunäidustust", ILL_SG_SHORT: "vastunäidustusse", PART_PL: "vastunäidustusi", GEN_PL: "vastunäidustuste" },
+    parts: { NOM_SG: "vastunäidustus", GEN_SG: "vastunäidustuse", PART_SG: "vastunäidustust", ILL_SG_SHORT: "vastunäidustusse", NOM_PL: "vastunäidustused", PART_PL: "vastunäidustusi", GEN_PL: "vastunäidustuste" },
     government: null,
     usages: ["Nohune nina ei ole vaktsineerimise vastunäidustus.", "Ravimi infoleht peab sisaldama teavet kõrvaltoimete ja vastunäidustuste kohta.", "Kolmanda ravimina tuleks vastunäidustuste puudumisel lisada beetablokaator.", "Kõigile laste toiduainepakenditele tuleb kirjutada toidu täpne koostis ja kalorsus ning võimalikud vastunäidustused."],
     note: "mingit hrl meditsiinilist toimingut takistav asjaolu või seisund",
@@ -11585,7 +11585,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vastuolu", gloss: "contradiction", pos: "NOUN", cefr: "B2",
     ekilexWordId: 254774,
-    parts: { NOM_SG: "vastuolu", GEN_SG: "vastuolu", PART_SG: "vastuolu", ILL_SG_SHORT: "vastuollu", PART_PL: "vastuolusid", GEN_PL: "vastuolude" },
+    parts: { NOM_SG: "vastuolu", GEN_SG: "vastuolu", PART_SG: "vastuolu", ILL_SG_SHORT: "vastuollu", NOM_PL: "vastuolud", PART_PL: "vastuolusid", GEN_PL: "vastuolude" },
     government: null,
     usages: ["Tekstis leidub mitmeid ilmseid vastuolusid ja põhjendamatuid väiteid.", "Vorm ja sisu on karjuvas vastuolus.", "Seni pole isikutevaheliste vastuolude tõttu suudetud koostööd teha.", "Ajalookirjutuse ja lugejate ootuste vahel on vastuolu."],
     note: "olukord või asjaolu, kus miski ei sobi millegagi kokku või kus valitseb (sisemine) vastasseis millegi või kellegi vahel",
@@ -11594,7 +11594,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vastuoluline", gloss: "contradictory", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 254775,
-    parts: { NOM_SG: "vastuoluline", GEN_SG: "vastuolulise", PART_SG: "vastuolulist", ILL_SG_SHORT: "vastuolulisse", PART_PL: "vastuolulisi", GEN_PL: "vastuoluliste" },
+    parts: { NOM_SG: "vastuoluline", GEN_SG: "vastuolulise", PART_SG: "vastuolulist", ILL_SG_SHORT: "vastuolulisse", NOM_PL: "vastuolulised", PART_PL: "vastuolulisi", GEN_PL: "vastuoluliste" },
     government: null,
     usages: ["Andmed hukkunute ja haavatute kohta on vastuolulised.", "Inimene on üldse üks vastuoluline olevus."],
     note: "teise või teistega mitte kooskõlas olev, ebakõlasid, vastuolusid sisaldav",
@@ -11603,7 +11603,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vastus", gloss: "answer", pos: "NOUN", cefr: "A1",
     ekilexWordId: 254821,
-    parts: { NOM_SG: "vastus", GEN_SG: "vastuse", PART_SG: "vastust", PART_PL: "vastuseid", GEN_PL: "vastuste" },
+    parts: { NOM_SG: "vastus", GEN_SG: "vastuse", PART_SG: "vastust", NOM_PL: "vastused", PART_PL: "vastuseid", GEN_PL: "vastuste" },
     government: null,
     usages: ["„Jah,” kõlas vastus.", "Mees urahtas vastuseks midagi arusaamatut.", "Ma ei tea õiget vastust.", "Ootan kirjale vastust."],
     note: "sõnaline väljendus, liigutus vms märk, millega vastatakse küsimusele, ettepanekule, arvamusele vms",
@@ -11621,7 +11621,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vastutus", gloss: "responsibility", pos: "NOUN", cefr: "B2",
     ekilexWordId: 254863,
-    parts: { NOM_SG: "vastutus", GEN_SG: "vastutuse", PART_SG: "vastutust", ILL_SG_SHORT: "vastutusse", PART_PL: "vastutusi", GEN_PL: "vastutuste" },
+    parts: { NOM_SG: "vastutus", GEN_SG: "vastutuse", PART_SG: "vastutust", ILL_SG_SHORT: "vastutusse", NOM_PL: "vastutused", PART_PL: "vastutusi", GEN_PL: "vastutuste" },
     government: null,
     usages: ["Keegi ei tahtnud endale vastutust võtta.", "Vastne rektor kinnitas, et ametiga kaasnevat vastutust ta ei karda.", "Moraalne vastutus.", "Turistid liiguvad vulkaani ümber omal vastutusel."],
     note: "kohustus tagada millegi ladus toimimine, kellegi hea käekäik, õige käitumine",
@@ -11630,7 +11630,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vastutustunne", gloss: "sense of responsibility", pos: "NOUN", cefr: "B2",
     ekilexWordId: 254872,
-    parts: { NOM_SG: "vastutustunne", GEN_SG: "vastutustunde", PART_SG: "vastutustunnet", PART_PL: "vastutustundeid", GEN_PL: "vastutustunnete" },
+    parts: { NOM_SG: "vastutustunne", GEN_SG: "vastutustunde", PART_SG: "vastutustunnet", NOM_PL: "vastutustunded", PART_PL: "vastutustundeid", GEN_PL: "vastutustunnete" },
     government: null,
     usages: ["Tal pole kübetki vastutustunnet."],
     note: "tunne, et oled vastutav",
@@ -11639,7 +11639,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vastuväide", gloss: "counter-argument", pos: "NOUN", cefr: "B2",
     ekilexWordId: 254916,
-    parts: { NOM_SG: "vastuväide", GEN_SG: "vastuväite", PART_SG: "vastuväidet", PART_PL: "vastuväiteid", GEN_PL: "vastuväidete" },
+    parts: { NOM_SG: "vastuväide", GEN_SG: "vastuväite", PART_SG: "vastuväidet", NOM_PL: "vastuväited", PART_PL: "vastuväiteid", GEN_PL: "vastuväidete" },
     government: null,
     usages: ["Kas alustame kell kaheksa või on vastuväiteid?", "Kaitsja esitas vastuväite kohtu tegevuse kohta.", "Ainus vastuväide tuumajaama rajamisele on Eesti väiksus.", "Kostja on kohustatud kohtule teatama mis vastuväited tal on hagile ja kas ta soovib vastuhagi esitada."],
     note: "millelegi vastuseisu sisaldav väide",
@@ -11648,7 +11648,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "veebruar", gloss: "February", pos: "NOUN", cefr: "A1",
     ekilexWordId: 255097,
-    parts: { NOM_SG: "veebruar", GEN_SG: "veebruari", PART_SG: "veebruari", ILL_SG_SHORT: "veebruari", PART_PL: "veebruare", GEN_PL: "veebruaride" },
+    parts: { NOM_SG: "veebruar", GEN_SG: "veebruari", PART_SG: "veebruari", ILL_SG_SHORT: "veebruari", NOM_PL: "veebruarid", PART_PL: "veebruare", GEN_PL: "veebruaride" },
     government: null,
     usages: ["Veebruar on tavaliselt aasta kõige külmem kuu."],
     note: "aasta 2. kuu, põhjapoolkeral kolmas talvekuu",
@@ -11675,7 +11675,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "veendumus", gloss: "conviction", pos: "NOUN", cefr: "B2",
     ekilexWordId: 255178,
-    parts: { NOM_SG: "veendumus", GEN_SG: "veendumuse", PART_SG: "veendumust", ILL_SG_SHORT: "veendumusse", PART_PL: "veendumusi", GEN_PL: "veendumuste" },
+    parts: { NOM_SG: "veendumus", GEN_SG: "veendumuse", PART_SG: "veendumust", ILL_SG_SHORT: "veendumusse", NOM_PL: "veendumused", PART_PL: "veendumusi", GEN_PL: "veendumuste" },
     government: null,
     usages: ["Ta on kasvatanud oma lapsi veendumuses, et nad on ise oma elu peremehed.", "Jõudsin veendumusele, et tuleb minna õppima.", "Tugeval isiksusel on ka tugevad veendumused.", "Jõudsin veendumusele, et teda ei tasu usaldada."],
     note: "kindel ja kahtluseta arusaam, tõekspidamine, seisukoht",
@@ -11684,7 +11684,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "veenev", gloss: "convincing", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 255180,
-    parts: { NOM_SG: "veenev", GEN_SG: "veenva", PART_SG: "veenvat", PART_PL: "veenvaid", GEN_PL: "veenvate" },
+    parts: { NOM_SG: "veenev", GEN_SG: "veenva", PART_SG: "veenvat", NOM_PL: "veenvad", PART_PL: "veenvaid", GEN_PL: "veenvate" },
     government: null,
     usages: ["Veenvad argumendid.", "Veenev süütõend.", "Võitsime veenva edumaaga."],
     note: "millessegi uskuma panev",
@@ -11702,7 +11702,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "veenmine", gloss: "persuasion", pos: "NOUN", cefr: null,
     ekilexWordId: 320708,
-    parts: { NOM_SG: "veenmine", GEN_SG: "veenmise", PART_SG: "veenmist", ILL_SG_SHORT: "veenmisse", PART_PL: "veenmisi", GEN_PL: "veenmiste" },
+    parts: { NOM_SG: "veenmine", GEN_SG: "veenmise", PART_SG: "veenmist", ILL_SG_SHORT: "veenmisse", NOM_PL: "veenmised", PART_PL: "veenmisi", GEN_PL: "veenmiste" },
     government: null,
     usages: [],
     note: null,
@@ -11711,7 +11711,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "veenvus", gloss: "persuasiveness", pos: "NOUN", cefr: null,
     ekilexWordId: 270782,
-    parts: { NOM_SG: "veenvus", GEN_SG: "veenvuse", PART_SG: "veenvust", ILL_SG_SHORT: "veenvusse", PART_PL: "veenvusi", GEN_PL: "veenvuste" },
+    parts: { NOM_SG: "veenvus", GEN_SG: "veenvuse", PART_SG: "veenvust", ILL_SG_SHORT: "veenvusse", NOM_PL: "veenvused", PART_PL: "veenvusi", GEN_PL: "veenvuste" },
     government: null,
     usages: ["Kirjandusteaduslikku veenvust ja täpsust on essees vähevõitu.", "Kõik argumendid said piisava veenvusega ümber lükatud.", "Karakterosa mängis ta suure veenvusega."],
     note: "veenev-olek, kahtlusi välistav usutavus",
@@ -11720,7 +11720,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vend", gloss: "brother", pos: "NOUN", cefr: "A1",
     ekilexWordId: 255508,
-    parts: { NOM_SG: "vend", GEN_SG: "venna", PART_SG: "venda", ILL_SG_SHORT: "venda", PART_PL: "vendi", GEN_PL: "vendade" },
+    parts: { NOM_SG: "vend", GEN_SG: "venna", PART_SG: "venda", ILL_SG_SHORT: "venda", NOM_PL: "vennad", PART_PL: "vendi", GEN_PL: "vendade" },
     government: null,
     usages: ["Vennad Jürgensonid.", "Mul on oma vennaga telepaatiline side.", "Mul on üks vend ja üks õde.", "Mihkel ja Jaan on vennad."],
     note: "poiss või mees oma vanemate teiste laste suhtes",
@@ -11729,7 +11729,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "venelane", gloss: "a Russian", pos: "NOUN", cefr: "A1",
     ekilexWordId: 255530,
-    parts: { NOM_SG: "venelane", GEN_SG: "venelase", PART_SG: "venelast", ILL_SG_SHORT: "venelasse", PART_PL: "venelasi", GEN_PL: "venelaste" },
+    parts: { NOM_SG: "venelane", GEN_SG: "venelase", PART_SG: "venelast", ILL_SG_SHORT: "venelasse", NOM_PL: "venelased", PART_PL: "venelasi", GEN_PL: "venelaste" },
     government: null,
     usages: ["Muistne Novgorod oli venelaste kaubakoht, mis asus sügaval keset soome-ugri alasid."],
     note: "Venemaa põhirahva liige",
@@ -11738,7 +11738,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "Venemaa", gloss: "Russia", pos: "NOUN", cefr: null,
     ekilexWordId: 255534,
-    parts: { NOM_SG: "Venemaa", GEN_SG: "Venemaa", PART_SG: "Venemaad", ILL_SG_SHORT: "Venemaa", PART_PL: "Venemaid", GEN_PL: "Venemaade" },
+    parts: { NOM_SG: "Venemaa", GEN_SG: "Venemaa", PART_SG: "Venemaad", ILL_SG_SHORT: "Venemaa", NOM_PL: "Venemaad", PART_PL: "Venemaid", GEN_PL: "Venemaade" },
     government: null,
     usages: ["Venemaal vahetus valitsus."],
     note: "riik Euraasia mandri põhjaosas",
@@ -11747,7 +11747,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vesi", gloss: "water", pos: "NOUN", cefr: "A1",
     ekilexWordId: 255899,
-    parts: { NOM_SG: "vesi", GEN_SG: "vee", PART_SG: "vett", ILL_SG_SHORT: "vette", PART_PL: "vesi", GEN_PL: "vete" },
+    parts: { NOM_SG: "vesi", GEN_SG: "vee", PART_SG: "vett", ILL_SG_SHORT: "vette", NOM_PL: "veed", PART_PL: "vesi", GEN_PL: "vete" },
     government: null,
     usages: ["Vee ringkäik looduses.", "Kingad lasevad vett läbi.", "Vanaema majas pole siiani sooja vett.", "Jõin klaasi vett."],
     note: "läbipaistev, värvitu ja lõhnatu looduslik vedelik, mis täidab veekogusid, sajab alla vihmana ning mida kasutatakse joogiks",
@@ -11756,7 +11756,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "viga", gloss: "mistake", pos: "NOUN", cefr: "A1",
     ekilexWordId: 256277,
-    parts: { NOM_SG: "viga", GEN_SG: "vea", PART_SG: "viga", PART_PL: "vigu", GEN_PL: "vigade" },
+    parts: { NOM_SG: "viga", GEN_SG: "vea", PART_SG: "viga", NOM_PL: "vead", PART_PL: "vigu", GEN_PL: "vigade" },
     government: null,
     usages: ["Puhkusepäevade arvestuses on tehtud viga.", "Viie veaga mängija peab platsilt lahkuma.", "Inglise keeles kirjutades teen vigu.", "Oma vigadest õpitakse."],
     note: "eksimus millegi, nt reegli või tõsiasja vastu, kõrvalekaldumine õigest sooritusest",
@@ -11765,7 +11765,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "viha", gloss: "anger", pos: "NOUN", cefr: "A2",
     ekilexWordId: 256315,
-    parts: { NOM_SG: "viha", GEN_SG: "viha", PART_SG: "viha", PART_PL: "vihasid", GEN_PL: "vihade" },
+    parts: { NOM_SG: "viha", GEN_SG: "viha", PART_SG: "viha", NOM_PL: "vihad", PART_PL: "vihasid", GEN_PL: "vihade" },
     government: null,
     usages: ["Naine ladus vihaga kõik välja.", "Küll teeb viha!", "Miks ta peakski meie peale viha kandma.", "Isa pikka viha ei pea."],
     note: "vaenulikkuse ja ärritatusega seotud tugev tunne, äge pahameel või sallimatus",
@@ -11774,7 +11774,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vihane", gloss: "angry", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 256327,
-    parts: { NOM_SG: "vihane", GEN_SG: "vihase", PART_SG: "vihast", PART_PL: "vihaseid", GEN_PL: "vihaste" },
+    parts: { NOM_SG: "vihane", GEN_SG: "vihase", PART_SG: "vihast", NOM_PL: "vihased", PART_PL: "vihaseid", GEN_PL: "vihaste" },
     government: null,
     usages: ["Ema oli minu peale väga vihane.", "Altminek ajas meid vihaseks.", "Vihane pilk.", "Isa sai vihaseks."],
     note: "viha, ägedat pahameelt tundev",
@@ -11792,7 +11792,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vihje", gloss: "hint", pos: "NOUN", cefr: "B2",
     ekilexWordId: 256356,
-    parts: { NOM_SG: "vihje", GEN_SG: "vihje", PART_SG: "vihjet", PART_PL: "vihjeid", GEN_PL: "vihjete" },
+    parts: { NOM_SG: "vihje", GEN_SG: "vihje", PART_SG: "vihjet", NOM_PL: "vihjed", PART_PL: "vihjeid", GEN_PL: "vihjete" },
     government: null,
     usages: ["Jaan ei teinud vihjest välja.", "Tema jutus peitus mingi varjatud vihje."],
     note: "kaudne ütlus või märguanne, aimata laskmine",
@@ -11810,7 +11810,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vihm", gloss: "rain", pos: "NOUN", cefr: "A1",
     ekilexWordId: 256362,
-    parts: { NOM_SG: "vihm", GEN_SG: "vihma", PART_SG: "vihma", ILL_SG_SHORT: "vihma", PART_PL: "vihmu", GEN_PL: "vihmade" },
+    parts: { NOM_SG: "vihm", GEN_SG: "vihma", PART_SG: "vihma", ILL_SG_SHORT: "vihma", NOM_PL: "vihmad", PART_PL: "vihmu", GEN_PL: "vihmade" },
     government: null,
     usages: ["Vihma sadas mitu päeva järjest.", "Ilm kisub vihmale.", "Eile sadas terve päeva vihma.", "Ilmateade ennustab vihma ja tugevat tuult."],
     note: "veepiiskadena langevad sademed",
@@ -11819,7 +11819,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "viide", gloss: "reference", pos: "NOUN", cefr: "B2",
     ekilexWordId: 256438,
-    parts: { NOM_SG: "viide", GEN_SG: "viite", PART_SG: "viidet", PART_PL: "viiteid", GEN_PL: "viidete" },
+    parts: { NOM_SG: "viide", GEN_SG: "viite", PART_SG: "viidet", NOM_PL: "viited", PART_PL: "viiteid", GEN_PL: "viidete" },
     government: null,
     usages: ["Võltsitud allkiri on ju selge viide, et tegemist on petturiga.", "Ehk annad mõned viited, kust edasi otsida.", "Raamatus on palju viiteid autori lapsepõlvele.", "Artiklis polnud ainustki viidet."],
     note: "märk millestki",
@@ -11837,7 +11837,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "viis", gloss: "five", pos: "NOUN", cefr: "A1",
     ekilexWordId: 256707,
-    parts: { NOM_SG: "viis", GEN_SG: "viie", PART_SG: "viit", ILL_SG_SHORT: "viide", PART_PL: "viisi", GEN_PL: "viite" },
+    parts: { NOM_SG: "viis", GEN_SG: "viie", PART_SG: "viit", ILL_SG_SHORT: "viide", NOM_PL: "viied", PART_PL: "viisi", GEN_PL: "viite" },
     government: null,
     usages: ["Kakskümmend viis.", "Kaks korda viis.", "Viis pluss viis on kümme.", "Peres on viis last."],
     note: "põhiarv 5",
@@ -11846,7 +11846,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "viisakas", gloss: "polite", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 256715,
-    parts: { NOM_SG: "viisakas", GEN_SG: "viisaka", PART_SG: "viisakat", PART_PL: "viisakaid", GEN_PL: "viisakate" },
+    parts: { NOM_SG: "viisakas", GEN_SG: "viisaka", PART_SG: "viisakat", NOM_PL: "viisakad", PART_PL: "viisakaid", GEN_PL: "viisakate" },
     government: null,
     usages: ["Ole viisakas!", "Ettekandja on viisakas, naeratav ja püüdlik.", "Jahedalt viisakas olek.", "See asi vajas mingit viisakat lahendust."],
     note: "meeldiva käitumisega, heade kommetega",
@@ -11864,7 +11864,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "viitamine", gloss: "referencing", pos: "NOUN", cefr: null,
     ekilexWordId: 276732,
-    parts: { NOM_SG: "viitamine", GEN_SG: "viitamise", PART_SG: "viitamist", ILL_SG_SHORT: "viitamisse", PART_PL: "viitamisi", GEN_PL: "viitamiste" },
+    parts: { NOM_SG: "viitamine", GEN_SG: "viitamise", PART_SG: "viitamist", ILL_SG_SHORT: "viitamisse", NOM_PL: "viitamised", PART_PL: "viitamisi", GEN_PL: "viitamiste" },
     government: null,
     usages: ["Viitamine tundub olevat autorile üks suuremaid probleeme.", "Töös on läbivalt kasutatud tekstisisest viitamist.", "Tänapäeval ei ole aastaajale viitamine haikus enam kohustuslik.", "Eriti ülbe oli pidev mäluaugule viitamine."],
     note: "(teadustöös, õigusaktis, artiklis vm:) allikaviidete esitamine",
@@ -11873,7 +11873,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vilumus", gloss: "proficiency, skill", pos: "NOUN", cefr: null,
     ekilexWordId: 257090,
-    parts: { NOM_SG: "vilumus", GEN_SG: "vilumuse", PART_SG: "vilumust", ILL_SG_SHORT: "vilumusse", PART_PL: "vilumusi", GEN_PL: "vilumuste" },
+    parts: { NOM_SG: "vilumus", GEN_SG: "vilumuse", PART_SG: "vilumust", ILL_SG_SHORT: "vilumusse", NOM_PL: "vilumused", PART_PL: "vilumusi", GEN_PL: "vilumuste" },
     government: null,
     usages: ["Tikkimine ja muu peenem näputöö nõuab vilumust.", "Kõik oskused ja vilumused on ta omandanud treipingi taga."],
     note: "õppides ja harjutades omandatud, osalt automaatseks muutunud oskus teha midagi otstarbekalt ja tulemuslikult",
@@ -11891,7 +11891,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "voodi", gloss: "bed", pos: "NOUN", cefr: "A1",
     ekilexWordId: 257627,
-    parts: { NOM_SG: "voodi", GEN_SG: "voodi", PART_SG: "voodit", ILL_SG_SHORT: "voodi", PART_PL: "voodeid", GEN_PL: "voodite" },
+    parts: { NOM_SG: "voodi", GEN_SG: "voodi", PART_SG: "voodit", ILL_SG_SHORT: "voodi", NOM_PL: "voodid", PART_PL: "voodeid", GEN_PL: "voodite" },
     government: null,
     usages: ["Paksule mehele tehti ase kahele kõrvuti asetatud voodile.", "Õhtul kukkusin voodisse nagu niidetud.", "Magamistoas on pehme ja lai voodi.", "Päris esimesel kohtumisel voodisse ei minda, arvab sõbranna."],
     note: "magamiseks mõeldud mööbliese",
@@ -11900,7 +11900,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "voolav", gloss: "flowing", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 277464,
-    parts: { NOM_SG: "voolav", GEN_SG: "voolava", PART_SG: "voolavat", PART_PL: "voolavaid", GEN_PL: "voolavate" },
+    parts: { NOM_SG: "voolav", GEN_SG: "voolava", PART_SG: "voolavat", NOM_PL: "voolavad", PART_PL: "voolavaid", GEN_PL: "voolavate" },
     government: null,
     usages: ["Hõõru kartulid harjaga voolava vee all puhtaks.", "Magamistuppa voolava külma õhu kohin segunes kerge müraga.", "Poola ralli on tuntud oma kiirete ning voolavate teede poolest.", "... ta käekiri oli jõuline ja voolav, peegeldades ta iseloomu."],
     note: "(vee vm vedeliku kohta:) hooga ühes suunas liikuv",
@@ -11909,7 +11909,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vorm", gloss: "form", pos: "NOUN", cefr: "A2",
     ekilexWordId: 257760,
-    parts: { NOM_SG: "vorm", GEN_SG: "vormi", PART_SG: "vormi", ILL_SG_SHORT: "vormi", PART_PL: "vorme", GEN_PL: "vormide" },
+    parts: { NOM_SG: "vorm", GEN_SG: "vormi", PART_SG: "vormi", ILL_SG_SHORT: "vormi", NOM_PL: "vormid", PART_PL: "vorme", GEN_PL: "vormide" },
     government: null,
     usages: ["Kandilise vormiga klaas.", "Talle meeldib ümara vormiga mööbel.", "Kingad on kaotanud oma esialgse vormi.", "Ümarate vormidega kaunitar."],
     note: "eseme, keha välistest joontest moodustuv (ruumiline) tervik, (väline) kuju",
@@ -11918,7 +11918,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "või", gloss: "butter", pos: "NOUN", cefr: "A1",
     ekilexWordId: 258020,
-    parts: { NOM_SG: "või", GEN_SG: "või", PART_SG: "võid", PART_PL: "võisid", GEN_PL: "võide" },
+    parts: { NOM_SG: "või", GEN_SG: "või", PART_SG: "võid", NOM_PL: "võid", PART_PL: "võisid", GEN_PL: "võide" },
     government: null,
     usages: ["Määrib koogivormi võiga.", "Ostsin poest paki võid.", "Lisa tainasse 150 grammi võid.", "Joome üheskoos jakivõiga teed ning räägime nepaallastega täna kogetust ja homsest ilmast."],
     note: "peamiselt lehmapiima koorest valmistatud toiduaine",
@@ -11927,7 +11927,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võim", gloss: "power", pos: "NOUN", cefr: "B1",
     ekilexWordId: 258105,
-    parts: { NOM_SG: "võim", GEN_SG: "võimu", PART_SG: "võimu", ILL_SG_SHORT: "võimu", PART_PL: "võime", GEN_PL: "võimude" },
+    parts: { NOM_SG: "võim", GEN_SG: "võimu", PART_SG: "võimu", ILL_SG_SHORT: "võimu", NOM_PL: "võimud", PART_PL: "võime", GEN_PL: "võimude" },
     government: null,
     usages: ["Võim on äärmuslaste käes.", "Võimul on demokraadid.", "Võimule tulid parempoolsed.", "Mul pole sinu üle mingit võimu."],
     note: "suutlikkus ja võimalus oma tahet teostada, kedagi valitseda, millegi üle otsustada",
@@ -11936,7 +11936,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võimalikkus", gloss: "possibility", pos: "NOUN", cefr: "B2",
     ekilexWordId: 270953,
-    parts: { NOM_SG: "võimalikkus", GEN_SG: "võimalikkuse", PART_SG: "võimalikkust", ILL_SG_SHORT: "võimalikkusse", PART_PL: "võimalikkusi", GEN_PL: "võimalikkuste" },
+    parts: { NOM_SG: "võimalikkus", GEN_SG: "võimalikkuse", PART_SG: "võimalikkust", ILL_SG_SHORT: "võimalikkusse", NOM_PL: "võimalikkused", PART_PL: "võimalikkusi", GEN_PL: "võimalikkuste" },
     government: null,
     usages: ["Kunagi ei usutud isegi allveelaeva ehitamise võimalikkust.", "Võimalikkus ja tegelikkus on eri asjad."],
     note: "kõik, mis võib teostuda, potentsiaalne tegelikkus",
@@ -11945,7 +11945,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võimalus", gloss: "possibility, opportunity", pos: "NOUN", cefr: "A2",
     ekilexWordId: 258112,
-    parts: { NOM_SG: "võimalus", GEN_SG: "võimaluse", PART_SG: "võimalust", ILL_SG_SHORT: "võimalusse", PART_PL: "võimalusi", GEN_PL: "võimaluste" },
+    parts: { NOM_SG: "võimalus", GEN_SG: "võimaluse", PART_SG: "võimalust", ILL_SG_SHORT: "võimalusse", NOM_PL: "võimalused", PART_PL: "võimalusi", GEN_PL: "võimaluste" },
     government: null,
     usages: ["Ta on kaalunud võimalust minna elama või tööle Soome.", "Kaotatud võimalus.", "Mul pole olnud võimalust temaga rääkida.", "Nii kui võimalus tekib, teen eksami uuesti."],
     note: "miski, mis võib toimuda või on teatavatel tingimustel võimalik",
@@ -11954,7 +11954,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võimatu", gloss: "impossible", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 258117,
-    parts: { NOM_SG: "võimatu", GEN_SG: "võimatu", PART_SG: "võimatut", PART_PL: "võimatuid", GEN_PL: "võimatute" },
+    parts: { NOM_SG: "võimatu", GEN_SG: "võimatu", PART_SG: "võimatut", NOM_PL: "võimatud", PART_PL: "võimatuid", GEN_PL: "võimatute" },
     government: null,
     usages: ["Seda on võimatu kirjeldada.", "Pole olemas võimatuid unistusi.", "See tundus võimatu ülesandena.", "Tema jutust oli võimatu aru saada."],
     note: "selline, mis ei saa toimuda, olemas olla või mis pole teostatav",
@@ -11963,7 +11963,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võimekus", gloss: "capability", pos: "NOUN", cefr: "B2",
     ekilexWordId: 258124,
-    parts: { NOM_SG: "võimekus", GEN_SG: "võimekuse", PART_SG: "võimekust", ILL_SG_SHORT: "võimekusse", PART_PL: "võimekusi", GEN_PL: "võimekuste" },
+    parts: { NOM_SG: "võimekus", GEN_SG: "võimekuse", PART_SG: "võimekust", ILL_SG_SHORT: "võimekusse", NOM_PL: "võimekused", PART_PL: "võimekusi", GEN_PL: "võimekuste" },
     government: null,
     usages: ["Sel võistlusel ei hinnata laulja võimekust, vaid laulu.", "Hakkasin oma võimekuses kahtlema.", "Sisseastujatest tehti pingerida akadeemilise võimekuse testi põhjal.", "Kaitseministrid analüüsisid NATO sõjalise võimekuse hetkeseisu."],
     note: "mingi tegevuse jaoks sobilike vaimsete või kehaliste omaduste, võimete olemasolu (ja nende tase)",
@@ -11972,7 +11972,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võistlus", gloss: "competition", pos: "NOUN", cefr: "A2",
     ekilexWordId: 258234,
-    parts: { NOM_SG: "võistlus", GEN_SG: "võistluse", PART_SG: "võistlust", ILL_SG_SHORT: "võistlusse", PART_PL: "võistlusi", GEN_PL: "võistluste" },
+    parts: { NOM_SG: "võistlus", GEN_SG: "võistluse", PART_SG: "võistlust", ILL_SG_SHORT: "võistlusse", NOM_PL: "võistlused", PART_PL: "võistlusi", GEN_PL: "võistluste" },
     government: null,
     usages: ["Kutsemeisterlikkuse võistlused.", "Maakondlik võistlus.", "Fotovõistlus.", "Lauluvõistlus."],
     note: "kindlate reeglite järgi korraldatav üritus parima selgitamiseks mingil spordialal, kutsealal vm",
@@ -11999,7 +11999,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võrdlus", gloss: "comparison", pos: "NOUN", cefr: "B1",
     ekilexWordId: 258482,
-    parts: { NOM_SG: "võrdlus", GEN_SG: "võrdluse", PART_SG: "võrdlust", ILL_SG_SHORT: "võrdlusse", PART_PL: "võrdlusi", GEN_PL: "võrdluste" },
+    parts: { NOM_SG: "võrdlus", GEN_SG: "võrdluse", PART_SG: "võrdlust", ILL_SG_SHORT: "võrdlusse", NOM_PL: "võrdlused", PART_PL: "võrdlusi", GEN_PL: "võrdluste" },
     government: null,
     usages: ["Aastases võrdluses kallinesid kõige rohkem alkoholi ja tubaka hinnad.", "Firmade omavahelises võrdluses sisulisi erinevusi välja ei tulnud.", "Hindade võrdlus näitab, millist poodi eelistada.", "Võib tunduda kohatu võrdlusena, kuid peab ometi paika."],
     note: "objektide kõrvutamine nende sarnasuse või erinevuse leidmise eesmärgil",
@@ -12008,7 +12008,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võrdpilt", gloss: "metaphor, simile", pos: "NOUN", cefr: null,
     ekilexWordId: 258498,
-    parts: { NOM_SG: "võrdpilt", GEN_SG: "võrdpildi", PART_SG: "võrdpilti", ILL_SG_SHORT: "võrdpilti", PART_PL: "võrdpilte", GEN_PL: "võrdpiltide" },
+    parts: { NOM_SG: "võrdpilt", GEN_SG: "võrdpildi", PART_SG: "võrdpilti", ILL_SG_SHORT: "võrdpilti", NOM_PL: "võrdpildid", PART_PL: "võrdpilte", GEN_PL: "võrdpiltide" },
     government: null,
     usages: ["Oskari jaoks oli elu võrdpilt üks paraja pikkusega rongireis, kus üleliigseid asju ei ole vaja kaasa vedada."],
     note: "miski, mis esindab tajutava seosena mingit ideed või teatavat omadust",
@@ -12017,7 +12017,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võrdsus", gloss: "equality", pos: "NOUN", cefr: "B2",
     ekilexWordId: 270986,
-    parts: { NOM_SG: "võrdsus", GEN_SG: "võrdsuse", PART_SG: "võrdsust", ILL_SG_SHORT: "võrdsusse", PART_PL: "võrdsusi", GEN_PL: "võrdsuste" },
+    parts: { NOM_SG: "võrdsus", GEN_SG: "võrdsuse", PART_SG: "võrdsust", ILL_SG_SHORT: "võrdsusse", NOM_PL: "võrdsused", PART_PL: "võrdsusi", GEN_PL: "võrdsuste" },
     government: null,
     usages: ["Inimeste võrdsus seaduse ees.", "Eelneva võrdsuse korral otsustab paremuse loos.", "Võrdsus püsis teise veerandaja keskpaigani."],
     note: "käsitus, mille järgi peavad inimesed ühiskonnas olema ühesuguses seisundis",
@@ -12026,7 +12026,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võrk", gloss: "network, net", pos: "NOUN", cefr: "B1",
     ekilexWordId: 258593,
-    parts: { NOM_SG: "võrk", GEN_SG: "võrgu", PART_SG: "võrku", ILL_SG_SHORT: "võrku", PART_PL: "võrke", GEN_PL: "võrkude" },
+    parts: { NOM_SG: "võrk", GEN_SG: "võrgu", PART_SG: "võrku", ILL_SG_SHORT: "võrku", NOM_PL: "võrgud", PART_PL: "võrke", GEN_PL: "võrkude" },
     government: null,
     usages: ["Mul ei õnnestu võrku sisse logida.", "Suhtleme tavaliselt võrgus.", "Pane pildid võrku üles.", "Eri arvutite vahel saab faile vahetada nii kohalikus võrgus kui üle interneti."],
     note: "internetis toimiv ja hüpertekstil põhinev elektrooniliste dokumentide ehk veebisaitide süsteem",
@@ -12035,7 +12035,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "võti", gloss: "key", pos: "NOUN", cefr: "B1",
     ekilexWordId: 258715,
-    parts: { NOM_SG: "võti", GEN_SG: "võtme", PART_SG: "võtit", PART_PL: "võtmeid", GEN_PL: "võtmete" },
+    parts: { NOM_SG: "võti", GEN_SG: "võtme", PART_SG: "võtit", NOM_PL: "võtmed", PART_PL: "võtmeid", GEN_PL: "võtmete" },
     government: null,
     usages: ["Korterivõti.", "Kus on seifi võtmed?", "Kaotasin võtmed ära.", "Poisi ümberkasvamise võti peitub vanemates."],
     note: "vahend luku avamiseks ja sulgemiseks",
@@ -12071,7 +12071,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väide", gloss: "claim, assertion", pos: "NOUN", cefr: "B2",
     ekilexWordId: 259019,
-    parts: { NOM_SG: "väide", GEN_SG: "väite", PART_SG: "väidet", PART_PL: "väiteid", GEN_PL: "väidete" },
+    parts: { NOM_SG: "väide", GEN_SG: "väite", PART_SG: "väidet", NOM_PL: "väited", PART_PL: "väiteid", GEN_PL: "väidete" },
     government: null,
     usages: ["Väited ei vastanud tõele.", "Olen nõus kahe peamise väitega, mis minu jaoks kõlama jäid.", "Kumbki eitas ajakirjanduses kulutulena levima hakanud väiteid armuloost.", "Millel teie väide põhineb?"],
     note: "esitaja seisukohta väljendav ütlus",
@@ -12080,7 +12080,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väike", gloss: "small", pos: "ADJECTIVE", cefr: "A1",
     ekilexWordId: 259023,
-    parts: { NOM_SG: "väike", GEN_SG: "väikese", PART_SG: "väikest", ILL_SG_SHORT: "väikesse", PART_PL: "väikesi", GEN_PL: "väikeste" },
+    parts: { NOM_SG: "väike", GEN_SG: "väikese", PART_SG: "väikest", ILL_SG_SHORT: "väikesse", NOM_PL: "väikesed", PART_PL: "väikesi", GEN_PL: "väikeste" },
     government: null,
     usages: ["Väike saar.", "Anna väiksem lusikas!", "Korterisse saab võtta ainult väikese koera.", "Väikest kasvu naine."],
     note: "mõõtmetelt, ulatuselt, kogult, mahult alla keskmise",
@@ -12089,7 +12089,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väitlus", gloss: "debate", pos: "NOUN", cefr: "C1",
     ekilexWordId: 259197,
-    parts: { NOM_SG: "väitlus", GEN_SG: "väitluse", PART_SG: "väitlust", ILL_SG_SHORT: "väitlusse", PART_PL: "väitlusi", GEN_PL: "väitluste" },
+    parts: { NOM_SG: "väitlus", GEN_SG: "väitluse", PART_SG: "väitlust", ILL_SG_SHORT: "väitlusse", NOM_PL: "väitlused", PART_PL: "väitlusi", GEN_PL: "väitluste" },
     government: null,
     usages: ["Korraldati avalik väitlus infoühiskonna üle.", "Akadeemiline väitlus."],
     note: "argumenteeritud, põhjendatud seisukohtadega (avalik) arutlus või vaidlus",
@@ -12107,7 +12107,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "välismaalane", gloss: "foreigner", pos: "NOUN", cefr: "A2",
     ekilexWordId: 259327,
-    parts: { NOM_SG: "välismaalane", GEN_SG: "välismaalase", PART_SG: "välismaalast", ILL_SG_SHORT: "välismaalasse", PART_PL: "välismaalasi", GEN_PL: "välismaalaste" },
+    parts: { NOM_SG: "välismaalane", GEN_SG: "välismaalase", PART_SG: "välismaalast", ILL_SG_SHORT: "välismaalasse", NOM_PL: "välismaalased", PART_PL: "välismaalasi", GEN_PL: "välismaalaste" },
     government: null,
     usages: ["Välismaalasi satub siia kolkasse harva.", "Sellel erialal õpib palju välismaalasi."],
     note: "välisriigist pärit inimene, mitteoma maa või riigi elanik või kodanik",
@@ -12134,7 +12134,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väljak", gloss: "square", pos: "NOUN", cefr: "A2",
     ekilexWordId: 259485,
-    parts: { NOM_SG: "väljak", GEN_SG: "väljaku", PART_SG: "väljakut", PART_PL: "väljakuid", GEN_PL: "väljakute" },
+    parts: { NOM_SG: "väljak", GEN_SG: "väljaku", PART_SG: "väljakut", NOM_PL: "väljakud", PART_PL: "väljakuid", GEN_PL: "väljakute" },
     government: null,
     usages: ["Peetri kiriku esine väljak.", "Tänavad ja väljakud olid rahvast täis.", "Linnaväljak.", "Külaväljak."],
     note: "hrl hoonetega ümbritsetud lage ala linnas vm asulas",
@@ -12143,7 +12143,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väljend", gloss: "expression", pos: "NOUN", cefr: "B2",
     ekilexWordId: 259810,
-    parts: { NOM_SG: "väljend", GEN_SG: "väljendi", PART_SG: "väljendit", PART_PL: "väljendeid", GEN_PL: "väljendite" },
+    parts: { NOM_SG: "väljend", GEN_SG: "väljendi", PART_SG: "väljendit", NOM_PL: "väljendid", PART_PL: "väljendeid", GEN_PL: "väljendite" },
     government: null,
     usages: ["Täiesti tabav väljend: ei liha ega kala.", "Väljend „Käi minema!” oli üks leebemaid solvanguid.", "Väga labane väljend.", "Kujundlik väljend."],
     note: "omaette tähendusega sõnapaar või sõnade rühm, terviklik tekstilõik või ütlus",
@@ -12152,7 +12152,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väljendus", gloss: "expression", pos: "NOUN", cefr: "B2",
     ekilexWordId: 259816,
-    parts: { NOM_SG: "väljendus", GEN_SG: "väljenduse", PART_SG: "väljendust", ILL_SG_SHORT: "väljendusse", PART_PL: "väljendusi", GEN_PL: "väljenduste" },
+    parts: { NOM_SG: "väljendus", GEN_SG: "väljenduse", PART_SG: "väljendust", ILL_SG_SHORT: "väljendusse", NOM_PL: "väljendused", PART_PL: "väljendusi", GEN_PL: "väljenduste" },
     government: null,
     usages: ["Kriis on kiirete muutuste väljendus.", "Visuaalne väljendus.", "Igatsuse väljenduseks on film vast sobivamgi kui raamat.", "Hea küll, pehmendan oma väljendust."],
     note: "mingi mõtte, tunde või suhtumise väljendamine või väljendumine (nt reaktsioonina, olekuga)",
@@ -12161,7 +12161,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väljenduslaad", gloss: "manner of expression", pos: "NOUN", cefr: null,
     ekilexWordId: 259818,
-    parts: { NOM_SG: "väljenduslaad", GEN_SG: "väljenduslaadi", PART_SG: "väljenduslaadi", ILL_SG_SHORT: "väljenduslaadi", PART_PL: "väljenduslaade", GEN_PL: "väljenduslaadide" },
+    parts: { NOM_SG: "väljenduslaad", GEN_SG: "väljenduslaadi", PART_SG: "väljenduslaadi", ILL_SG_SHORT: "väljenduslaadi", NOM_PL: "väljenduslaadid", PART_PL: "väljenduslaade", GEN_PL: "väljenduslaadide" },
     government: null,
     usages: ["Jaani järsuvõitu väljenduslaad pani Reinu hetkeks sõnu otsima."],
     note: "omapära, kuidas midagi väljendatakse (nt sõnadega, kunstis)",
@@ -12170,7 +12170,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väljendusrikkus", gloss: "expressiveness", pos: "NOUN", cefr: null,
     ekilexWordId: 271063,
-    parts: { NOM_SG: "väljendusrikkus", GEN_SG: "väljendusrikkuse", PART_SG: "väljendusrikkust", ILL_SG_SHORT: "väljendusrikkusse", PART_PL: "väljendusrikkusi", GEN_PL: "väljendusrikkuste" },
+    parts: { NOM_SG: "väljendusrikkus", GEN_SG: "väljendusrikkuse", PART_SG: "väljendusrikkust", ILL_SG_SHORT: "väljendusrikkusse", NOM_PL: "väljendusrikkused", PART_PL: "väljendusrikkusi", GEN_PL: "väljendusrikkuste" },
     government: null,
     usages: [],
     note: null,
@@ -12179,7 +12179,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väljendusviis", gloss: "mode of expression", pos: "NOUN", cefr: null,
     ekilexWordId: 259824,
-    parts: { NOM_SG: "väljendusviis", GEN_SG: "väljendusviisi", PART_SG: "väljendusviisi", ILL_SG_SHORT: "väljendusviisi", PART_PL: "väljendusviise", GEN_PL: "väljendusviiside" },
+    parts: { NOM_SG: "väljendusviis", GEN_SG: "väljendusviisi", PART_SG: "väljendusviisi", ILL_SG_SHORT: "väljendusviisi", NOM_PL: "väljendusviisid", PART_PL: "väljendusviise", GEN_PL: "väljendusviiside" },
     government: null,
     usages: [],
     note: "viis, kuidas midagi väljendatakse (nt sõnadega, kunstis)",
@@ -12197,7 +12197,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "värbamine", gloss: "recruitment", pos: "NOUN", cefr: null,
     ekilexWordId: 271076,
-    parts: { NOM_SG: "värbamine", GEN_SG: "värbamise", PART_SG: "värbamist", ILL_SG_SHORT: "värbamisse", PART_PL: "värbamisi", GEN_PL: "värbamiste" },
+    parts: { NOM_SG: "värbamine", GEN_SG: "värbamise", PART_SG: "värbamist", ILL_SG_SHORT: "värbamisse", NOM_PL: "värbamised", PART_PL: "värbamisi", GEN_PL: "värbamiste" },
     government: null,
     usages: ["Värbamine ja valik peavad põhinema eelnevalt avalikustatud tingimustel ning kandidaatide võrdsel kohtlemisel."],
     note: "vabatahtlike kutsumine ja võtmine sõjaväkke",
@@ -12206,7 +12206,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "värss", gloss: "verse", pos: "NOUN", cefr: "B2",
     ekilexWordId: 259975,
-    parts: { NOM_SG: "värss", GEN_SG: "värsi", PART_SG: "värssi", ILL_SG_SHORT: "värssi", PART_PL: "värsse", GEN_PL: "värsside" },
+    parts: { NOM_SG: "värss", GEN_SG: "värsi", PART_SG: "värssi", ILL_SG_SHORT: "värssi", NOM_PL: "värsid", PART_PL: "värsse", GEN_PL: "värsside" },
     government: null,
     usages: ["Lõpuvärss.", "Luulevalimik sisaldab ka seni avaldamata värsse.", "Lastevärsid."],
     note: "luuleteose rütmiline üksus (hrl rida), mis on värsimõõdu ja mõtte poolest suhteline tervik",
@@ -12215,7 +12215,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "värv", gloss: "colour", pos: "NOUN", cefr: "A1",
     ekilexWordId: 259991,
-    parts: { NOM_SG: "värv", GEN_SG: "värvi", PART_SG: "värvi", ILL_SG_SHORT: "värvi", PART_PL: "värve", GEN_PL: "värvide" },
+    parts: { NOM_SG: "värv", GEN_SG: "värvi", PART_SG: "värvi", ILL_SG_SHORT: "värvi", NOM_PL: "värvid", PART_PL: "värve", GEN_PL: "värvide" },
     government: null,
     usages: ["Mere sinine värv.", "Värvide mäng õhtutaevas.", "Putuka värv sulas kokku puukoore värviga.", "Mis värvi su uued kingad on? – Mustad."],
     note: "nägemismeelega tajutav keha omadus, mille määrab sellelt kehalt peegelduv või seda läbiv valgus",
@@ -12224,7 +12224,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väsinud", gloss: "tired", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 260103,
-    parts: { NOM_SG: "väsinud", GEN_SG: "väsinu", PART_SG: "väsinut", PART_PL: "väsinuid", GEN_PL: "väsinute" },
+    parts: { NOM_SG: "väsinud", GEN_SG: "väsinu", PART_SG: "väsinut", NOM_PL: "väsinud", PART_PL: "väsinuid", GEN_PL: "väsinute" },
     government: null,
     usages: ["Ma pole elu sees end nii väsinuna tundnud kui praegu.", "Ta on vana ja väsinud mees.", "Väsinud peaga ei suuda keskenduda.", "Väsinud inimesed on pahased ja kurjad."],
     note: "tööst, pingutusest vms jõuetu, puhkust vajav",
@@ -12233,7 +12233,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väärikus", gloss: "dignity", pos: "NOUN", cefr: "C1",
     ekilexWordId: 260155,
-    parts: { NOM_SG: "väärikus", GEN_SG: "väärikuse", PART_SG: "väärikust", ILL_SG_SHORT: "väärikusse", PART_PL: "väärikusi", GEN_PL: "väärikuste" },
+    parts: { NOM_SG: "väärikus", GEN_SG: "väärikuse", PART_SG: "väärikust", ILL_SG_SHORT: "väärikusse", NOM_PL: "väärikused", PART_PL: "väärikusi", GEN_PL: "väärikuste" },
     government: null,
     usages: ["Nad olid uhked ega kaotanud väärikust.", "Mamma oli väärikus ise.", "Kaunis ja puhas põll lisab perenaisele väärikust."],
     note: "inimese seisund, milles väljendub inimese enesehinnang ja tema ühiskonnapoolne väärtustamine",
@@ -12242,7 +12242,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väärkasutus", gloss: "misuse", pos: "NOUN", cefr: null,
     ekilexWordId: 260184,
-    parts: { NOM_SG: "väärkasutus", GEN_SG: "väärkasutuse", PART_SG: "väärkasutust", ILL_SG_SHORT: "väärkasutusse", PART_PL: "väärkasutusi", GEN_PL: "väärkasutuste" },
+    parts: { NOM_SG: "väärkasutus", GEN_SG: "väärkasutuse", PART_SG: "väärkasutust", ILL_SG_SHORT: "väärkasutusse", NOM_PL: "väärkasutused", PART_PL: "väärkasutusi", GEN_PL: "väärkasutuste" },
     government: null,
     usages: ["Päästeamet hoiatab ilutulestiku väärkasutuse eest.", "Maksusoodustuse väärkasutus.", "Uudne veretest tõotab vähendada antibiootikumide väärkasutust."],
     note: "millegi ebaõige kasutamine",
@@ -12251,7 +12251,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "väärtus", gloss: "value", pos: "NOUN", cefr: "B1",
     ekilexWordId: 260206,
-    parts: { NOM_SG: "väärtus", GEN_SG: "väärtuse", PART_SG: "väärtust", ILL_SG_SHORT: "väärtusse", PART_PL: "väärtusi", GEN_PL: "väärtuste" },
+    parts: { NOM_SG: "väärtus", GEN_SG: "väärtuse", PART_SG: "väärtust", ILL_SG_SHORT: "väärtusse", NOM_PL: "väärtused", PART_PL: "väärtusi", GEN_PL: "väärtuste" },
     government: null,
     usages: ["Omaette väärtus on koha õnnestunud sisekujundus.", "Ajaloolise väärtusega dokument.", "Kahtlase väärtusega kaup.", "Loodusväärtus."],
     note: "hrl paljude inimeste, eriti asjatundjate (püsiv) hinnang asja, nähtuse või olendi positiivse või negatiivse tähenduse kohta",
@@ -12260,7 +12260,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "vöö", gloss: "belt", pos: "NOUN", cefr: "B1",
     ekilexWordId: 260245,
-    parts: { NOM_SG: "vöö", GEN_SG: "vöö", PART_SG: "vööd", PART_PL: "vöid", GEN_PL: "vööde" },
+    parts: { NOM_SG: "vöö", GEN_SG: "vöö", PART_SG: "vööd", NOM_PL: "vööd", PART_PL: "vöid", GEN_PL: "vööde" },
     government: null,
     usages: ["Nahkvöö.", "Sõdalane haaras vööl rippuva mõõga.", "Kleidi juurde kuulub lai vöö.", "Vööst saadik paljas mees."],
     note: "keha keskosa ümber kantav rõivaste kinnitamise ja kaunistamise vahend",
@@ -12269,7 +12269,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õde", gloss: "sister", pos: "NOUN", cefr: "A1",
     ekilexWordId: 260367,
-    parts: { NOM_SG: "õde", GEN_SG: "õe", PART_SG: "õde", PART_PL: "õdesid", GEN_PL: "õdede" },
+    parts: { NOM_SG: "õde", GEN_SG: "õe", PART_SG: "õde", NOM_PL: "õed", PART_PL: "õdesid", GEN_PL: "õdede" },
     government: null,
     usages: ["Triinele sündis eile õde.", "Meil on küll erinevad isad, aga oleme koos kasvanud, ja mina ei ütle ühegi oma õe või venna kohta „pool”.", "Mul on kaks venda ja üks õde.", "Nad on õde ja vend."],
     note: "tüdruk või naine oma vanemate teiste laste suhtes",
@@ -12278,7 +12278,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õhtu", gloss: "evening", pos: "NOUN", cefr: "A1",
     ekilexWordId: 260465,
-    parts: { NOM_SG: "õhtu", GEN_SG: "õhtu", PART_SG: "õhtut", PART_PL: "õhtuid", GEN_PL: "õhtute" },
+    parts: { NOM_SG: "õhtu", GEN_SG: "õhtu", PART_SG: "õhtut", NOM_PL: "õhtud", PART_PL: "õhtuid", GEN_PL: "õhtute" },
     government: null,
     usages: ["Olime hommikust õhtuni rakkes.", "Jõuan artikli õhtuks valmis.", "Reede õhtu.", "Läksin eile õhtul hilja magama."],
     note: "päeva lõpuosa (hrl umbes kella kuuest kuni magamaminekuajani)",
@@ -12287,7 +12287,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õhuke", gloss: "thin", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 260539,
-    parts: { NOM_SG: "õhuke", GEN_SG: "õhukese", PART_SG: "õhukest", ILL_SG_SHORT: "õhukesse", PART_PL: "õhukesi", GEN_PL: "õhukeste" },
+    parts: { NOM_SG: "õhuke", GEN_SG: "õhukese", PART_SG: "õhukest", ILL_SG_SHORT: "õhukesse", NOM_PL: "õhukesed", PART_PL: "õhukesi", GEN_PL: "õhukeste" },
     government: null,
     usages: ["Õhuke jää.", "Õhukesed pannkoogid.", "Lõika õunad õhukesteks viiludeks.", "Õhukese jää peale on ohtlik minna."],
     note: "selline, mille vastasküljed või vastaspinnad on üksteisele suhteliselt lähedal, väikese ristlõikepinnaga",
@@ -12305,7 +12305,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õiglane", gloss: "just, fair", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 1250674,
-    parts: { NOM_SG: "õiglane", GEN_SG: "õiglase", PART_SG: "õiglast", ILL_SG_SHORT: "õiglasse", PART_PL: "õiglasi", GEN_PL: "õiglaste" },
+    parts: { NOM_SG: "õiglane", GEN_SG: "õiglase", PART_SG: "õiglast", ILL_SG_SHORT: "õiglasse", NOM_PL: "õiglased", PART_PL: "õiglasi", GEN_PL: "õiglaste" },
     government: null,
     usages: ["Mees oli harjunud ennast ikka ausaks ja õiglaseks pidama.", "Linnaelanikud on täis õiglast pahameelt.", "Vajasime võitu, kuid viik oli õiglane tulemus.", "Õpetaja on karm, aga õiglane."],
     note: "(ühiskonnas, kohtus) kõiki võrdselt, erapooletusega kohtlev, kõiki asjaolusid arvestav",
@@ -12314,7 +12314,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õiglus", gloss: "justice", pos: "NOUN", cefr: "B2",
     ekilexWordId: 260729,
-    parts: { NOM_SG: "õiglus", GEN_SG: "õigluse", PART_SG: "õiglust", ILL_SG_SHORT: "õiglusse", PART_PL: "õiglusi", GEN_PL: "õigluste" },
+    parts: { NOM_SG: "õiglus", GEN_SG: "õigluse", PART_SG: "õiglust", ILL_SG_SHORT: "õiglusse", NOM_PL: "õiglused", PART_PL: "õiglusi", GEN_PL: "õigluste" },
     government: null,
     usages: ["Viimaks ometi pääses õiglus võidule.", "Õiglus seati jalule ja põgenikud võisid koju tagasi pöörduda.", "Tahame elada riigis, kus valitsevad õigus ja õiglus.", "Olen kaotanud usu nii inimlikku kui jumalikku õiglusesse."],
     note: "sotsiaalne vahekord, mida peetakse (moraalselt) õigeks (nt võrdsust ja erapooletust), hrl eetikas, poliitikas, õiguses, ka igapäevaelus",
@@ -12323,7 +12323,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õigus", gloss: "right, law", pos: "NOUN", cefr: "A2",
     ekilexWordId: 260736,
-    parts: { NOM_SG: "õigus", GEN_SG: "õiguse", PART_SG: "õigust", ILL_SG_SHORT: "õigusse", PART_PL: "õigusi", GEN_PL: "õiguste" },
+    parts: { NOM_SG: "õigus", GEN_SG: "õiguse", PART_SG: "õigust", ILL_SG_SHORT: "õigusse", NOM_PL: "õigused", PART_PL: "õigusi", GEN_PL: "õiguste" },
     government: null,
     usages: ["Igaühel on põhiseaduslik õigus vabalt liikuda ja elukohta valida.", "Vanemlikud õigused.", "Autori varalised õigused.", "Õiguste kaitse."],
     note: "riigis seadustega kehtestatud õigusnormid, mille järgimist riik tagab",
@@ -12332,7 +12332,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õigusakt", gloss: "legal act", pos: "NOUN", cefr: "B2",
     ekilexWordId: 260740,
-    parts: { NOM_SG: "õigusakt", GEN_SG: "õigusakti", PART_SG: "õigusakti", ILL_SG_SHORT: "õigusakti", PART_PL: "õigusakte", GEN_PL: "õigusaktide" },
+    parts: { NOM_SG: "õigusakt", GEN_SG: "õigusakti", PART_SG: "õigusakti", ILL_SG_SHORT: "õigusakti", NOM_PL: "õigusaktid", PART_PL: "õigusakte", GEN_PL: "õigusaktide" },
     government: null,
     usages: ["Põhiõiguste ja vabaduste piiranguid kehtestatakse seadusjõuliste õigusaktidega."],
     note: "ametliku dokumendina esitatud õigusnormide kogum (nt seadus, määrus, otsus), mille järgimine on kõigile kohustuslik",
@@ -12341,7 +12341,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õiguskord", gloss: "legal order", pos: "NOUN", cefr: null,
     ekilexWordId: 260765,
-    parts: { NOM_SG: "õiguskord", GEN_SG: "õiguskorra", PART_SG: "õiguskorda", ILL_SG_SHORT: "õiguskorda", PART_PL: "õiguskordi", GEN_PL: "õiguskordade" },
+    parts: { NOM_SG: "õiguskord", GEN_SG: "õiguskorra", PART_SG: "õiguskorda", ILL_SG_SHORT: "õiguskorda", NOM_PL: "õiguskorrad", PART_PL: "õiguskordi", GEN_PL: "õiguskordade" },
     government: null,
     usages: ["Euroopa Liidu õiguskord."],
     note: "riigi (või riikide liidu) õigusnormid",
@@ -12359,7 +12359,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õnn", gloss: "luck, happiness", pos: "NOUN", cefr: "A2",
     ekilexWordId: 261049,
-    parts: { NOM_SG: "õnn", GEN_SG: "õnne", PART_SG: "õnne", ILL_SG_SHORT: "õnne", PART_PL: "õnni", GEN_PL: "õnnede" },
+    parts: { NOM_SG: "õnn", GEN_SG: "õnne", PART_SG: "õnne", ILL_SG_SHORT: "õnne", NOM_PL: "õnned", PART_PL: "õnni", GEN_PL: "õnnede" },
     government: null,
     usages: ["Noorte õnne ei tumestanud miski.", "Poisi nägu säras õnnest.", "Ta hakkas suurest õnnest tantsima.", "Oma kodu on suur õnn."],
     note: "rõõm ja sügav rahulolu oma olukorraga, õnnelik olek",
@@ -12368,7 +12368,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õnnetus", gloss: "accident", pos: "NOUN", cefr: "A2",
     ekilexWordId: 261109,
-    parts: { NOM_SG: "õnnetus", GEN_SG: "õnnetuse", PART_SG: "õnnetust", ILL_SG_SHORT: "õnnetusse", PART_PL: "õnnetusi", GEN_PL: "õnnetuste" },
+    parts: { NOM_SG: "õnnetus", GEN_SG: "õnnetuse", PART_SG: "õnnetust", ILL_SG_SHORT: "õnnetusse", NOM_PL: "õnnetused", PART_PL: "õnnetusi", GEN_PL: "õnnetuste" },
     government: null,
     usages: ["Õnnetuses hukkus mitu inimest.", "Perekond jäi õnnetuses ilma kogu oma varast.", "Õnnetus juhtus Kose ristmikul.", "Buss sattus õnnetusse."],
     note: "ootamatu ja ettekavatsemata halb sündmus, kus keegi või miski saab viga või muud märkimisväärset kahju",
@@ -12377,7 +12377,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õpetaja", gloss: "teacher", pos: "NOUN", cefr: "A1",
     ekilexWordId: 261140,
-    parts: { NOM_SG: "õpetaja", GEN_SG: "õpetaja", PART_SG: "õpetajat", PART_PL: "õpetajaid", GEN_PL: "õpetajate" },
+    parts: { NOM_SG: "õpetaja", GEN_SG: "õpetaja", PART_SG: "õpetajat", NOM_PL: "õpetajad", PART_PL: "õpetajaid", GEN_PL: "õpetajate" },
     government: null,
     usages: ["Ajalooõpetaja.", "Gümnaasiumiõpetaja.", "Ta töötab Sõle gümnaasiumis eesti keele õpetajana.", "Õpetaja parandas õpilaste kontrolltöid."],
     note: "eriharidusega inimene, kes õpetab lapsi koolis",
@@ -12395,7 +12395,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õpilane", gloss: "pupil, student", pos: "NOUN", cefr: "A1",
     ekilexWordId: 261177,
-    parts: { NOM_SG: "õpilane", GEN_SG: "õpilase", PART_SG: "õpilast", ILL_SG_SHORT: "õpilasse", PART_PL: "õpilasi", GEN_PL: "õpilaste" },
+    parts: { NOM_SG: "õpilane", GEN_SG: "õpilase", PART_SG: "õpilast", ILL_SG_SHORT: "õpilasse", NOM_PL: "õpilased", PART_PL: "õpilasi", GEN_PL: "õpilaste" },
     government: null,
     usages: ["Kaheksanda klassi õpilane.", "Medrese hämaratest soppidest valgusid õpilased õuele.", "Paul Ariste õpilased.", "Martin on 6. klassi õpilane."],
     note: "koolis õppiv laps või (noor) inimene",
@@ -12404,7 +12404,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õppekava", gloss: "curriculum", pos: "NOUN", cefr: "B2",
     ekilexWordId: 261248,
-    parts: { NOM_SG: "õppekava", GEN_SG: "õppekava", PART_SG: "õppekava", ILL_SG_SHORT: "õppekavva", PART_PL: "õppekavu", GEN_PL: "õppekavade" },
+    parts: { NOM_SG: "õppekava", GEN_SG: "õppekava", PART_SG: "õppekava", ILL_SG_SHORT: "õppekavva", NOM_PL: "õppekavad", PART_PL: "õppekavu", GEN_PL: "õppekavade" },
     government: null,
     usages: ["Gümnaasiumi riiklik õppekava.", "Koolide õppekavad kooskõlastab ministeerium.", "Erakoolis saab õppida ka riikliku õppekava alusel."],
     note: "õppe ja kasvatuse alusdokument, mis määrab õppe- ja kasvatuseesmärgid, õppe sisu ja mahu, metoodika põhimõtted ning hindamise alused, nõuded õppekeskkonnale vms",
@@ -12422,7 +12422,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õppimine", gloss: "learning", pos: "NOUN", cefr: "B1",
     ekilexWordId: 261334,
-    parts: { NOM_SG: "õppimine", GEN_SG: "õppimise", PART_SG: "õppimist", ILL_SG_SHORT: "õppimisse", PART_PL: "õppimisi", GEN_PL: "õppimiste" },
+    parts: { NOM_SG: "õppimine", GEN_SG: "õppimise", PART_SG: "õppimist", ILL_SG_SHORT: "õppimisse", NOM_PL: "õppimised", PART_PL: "õppimisi", GEN_PL: "õppimiste" },
     government: null,
     usages: ["Ujuma õppimist alustatakse vettehingamisest.", "Huvi iiri keele õppimise ja kasutamise vastu on kasvanud.", "Ei saa eeldada, et üliõpilane peaks õppimise ajal tööl käima.", "Välismaal õppimine annab väärtuslikke kogemusi."],
     note: "teadmiste, oskuste, vilumuste, väärtuste, hoiakute omandamine",
@@ -12431,7 +12431,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "õun", gloss: "apple", pos: "NOUN", cefr: "A1",
     ekilexWordId: 261443,
-    parts: { NOM_SG: "õun", GEN_SG: "õuna", PART_SG: "õuna", ILL_SG_SHORT: "õuna", PART_PL: "õunu", GEN_PL: "õunte" },
+    parts: { NOM_SG: "õun", GEN_SG: "õuna", PART_SG: "õuna", ILL_SG_SHORT: "õuna", NOM_PL: "õunad", PART_PL: "õunu", GEN_PL: "õunte" },
     government: null,
     usages: ["Magushapu õun oli suurepärase maitsega.", "Suvemenüüsse kuuluvad koduaia õunad ja tomatid.", "Terved või tükeldatud õunad.", "Õunad on alles toored."],
     note: "õhukese kesta ja mahlaka viljalihaga hrl kerajas õunapuu vili",
@@ -12449,7 +12449,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ähmane", gloss: "vague", pos: "ADJECTIVE", cefr: "B2",
     ekilexWordId: 261525,
-    parts: { NOM_SG: "ähmane", GEN_SG: "ähmase", PART_SG: "ähmast", PART_PL: "ähmaseid", GEN_PL: "ähmaste" },
+    parts: { NOM_SG: "ähmane", GEN_SG: "ähmase", PART_SG: "ähmast", NOM_PL: "ähmased", PART_PL: "ähmaseid", GEN_PL: "ähmaste" },
     government: null,
     usages: ["Prillid on ähmaseks läinud.", "Peegel oli ähmane.", "Ähmased fotod.", "Silmad on pisaraist ähmased."],
     note: "halvasti läbipaistev või ebaselgelt nähtav, ilma kindlate piirjoonteta",
@@ -12458,7 +12458,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ähmasus", gloss: "vagueness", pos: "NOUN", cefr: null,
     ekilexWordId: 271177,
-    parts: { NOM_SG: "ähmasus", GEN_SG: "ähmasuse", PART_SG: "ähmasust", ILL_SG_SHORT: "ähmasusse", PART_PL: "ähmasusi", GEN_PL: "ähmasuste" },
+    parts: { NOM_SG: "ähmasus", GEN_SG: "ähmasuse", PART_SG: "ähmasust", ILL_SG_SHORT: "ähmasusse", NOM_PL: "ähmasused", PART_PL: "ähmasusi", GEN_PL: "ähmasuste" },
     government: null,
     usages: [],
     note: null,
@@ -12494,7 +12494,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "öö", gloss: "night", pos: "NOUN", cefr: "A1",
     ekilexWordId: 262254,
-    parts: { NOM_SG: "öö", GEN_SG: "öö", PART_SG: "ööd", ILL_SG_SHORT: "öhe", PART_PL: "öid", GEN_PL: "ööde" },
+    parts: { NOM_SG: "öö", GEN_SG: "öö", PART_SG: "ööd", ILL_SG_SHORT: "öhe", NOM_PL: "ööd", PART_PL: "öid", GEN_PL: "ööde" },
     government: null,
     usages: ["Veetsin enne eksamit unetu öö.", "Isa suri ööl vastu laupäeva.", "Jõudsime koju hommikupoole ööd.", "Sügisöö."],
     note: "õhtu ja hommiku vaheline pimedam osa ööpäevast, hrl magamise aeg",
@@ -12503,7 +12503,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üheksa", gloss: "nine", pos: "NOUN", cefr: "A1",
     ekilexWordId: 262398,
-    parts: { NOM_SG: "üheksa", GEN_SG: "üheksa", PART_SG: "üheksat", PART_PL: "üheksaid", GEN_PL: "üheksate" },
+    parts: { NOM_SG: "üheksa", GEN_SG: "üheksa", PART_SG: "üheksat", NOM_PL: "üheksad", PART_PL: "üheksaid", GEN_PL: "üheksate" },
     government: null,
     usages: ["Üheksa pluss üks on kümme.", "Kolm korda kolm on üheksa.", "Projekt kestis üheksa kuud.", "Kell sai üheksa."],
     note: "põhiarv 9",
@@ -12521,7 +12521,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ühendus", gloss: "connection", pos: "NOUN", cefr: "A2",
     ekilexWordId: 262477,
-    parts: { NOM_SG: "ühendus", GEN_SG: "ühenduse", PART_SG: "ühendust", ILL_SG_SHORT: "ühendusse", PART_PL: "ühendusi", GEN_PL: "ühenduste" },
+    parts: { NOM_SG: "ühendus", GEN_SG: "ühenduse", PART_SG: "ühendust", ILL_SG_SHORT: "ühendusse", NOM_PL: "ühendused", PART_PL: "ühendusi", GEN_PL: "ühenduste" },
     government: null,
     usages: ["Kui auto ei lähe käima, vaata ühendused üle.", "Maja ühendus gaasitrassiga on rajamata.", "Ühendus mandri ja saare vahel on tormi tõttu katkenud.", "Mandri ja saare vahel on regulaarne ühendus."],
     note: "ühendatud olek, kokkupuude, kontakt",
@@ -12539,7 +12539,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ühisavaldus", gloss: "joint statement", pos: "NOUN", cefr: null,
     ekilexWordId: 262604,
-    parts: { NOM_SG: "ühisavaldus", GEN_SG: "ühisavalduse", PART_SG: "ühisavaldust", ILL_SG_SHORT: "ühisavaldusse", PART_PL: "ühisavaldusi", GEN_PL: "ühisavalduste" },
+    parts: { NOM_SG: "ühisavaldus", GEN_SG: "ühisavalduse", PART_SG: "ühisavaldust", ILL_SG_SHORT: "ühisavaldusse", NOM_PL: "ühisavaldused", PART_PL: "ühisavaldusi", GEN_PL: "ühisavalduste" },
     government: null,
     usages: ["Kaheksa riiki tegid ühisavalduse."],
     note: "ühine avaldus",
@@ -12548,7 +12548,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ühiskond", gloss: "society", pos: "NOUN", cefr: "A2",
     ekilexWordId: 262630,
-    parts: { NOM_SG: "ühiskond", GEN_SG: "ühiskonna", PART_SG: "ühiskonda", ILL_SG_SHORT: "ühiskonda", PART_PL: "ühiskondi", GEN_PL: "ühiskondade" },
+    parts: { NOM_SG: "ühiskond", GEN_SG: "ühiskonna", PART_SG: "ühiskonda", ILL_SG_SHORT: "ühiskonda", NOM_PL: "ühiskonnad", PART_PL: "ühiskondi", GEN_PL: "ühiskondade" },
     government: null,
     usages: ["Ta tahab ühiskonnale kasulik olla.", "Aidsi nakatunuid ühiskonnast ei eraldata.", "Postindustriaalne ühiskond.", "Ühiskond peab aitama haigeid ja vanureid."],
     note: "inimeste hrl ajalooliselt kujunenud kooselu vorm ja sellest sugenevate sotsiaalsete suhete ja institutsioonide kogum",
@@ -12557,7 +12557,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üks", gloss: "one", pos: "NOUN", cefr: "A1",
     ekilexWordId: 262779,
-    parts: { NOM_SG: "üks", GEN_SG: "ühe", PART_SG: "üht", ILL_SG_SHORT: "ühte", PART_PL: "ühtesid", GEN_PL: "ühtede" },
+    parts: { NOM_SG: "üks", GEN_SG: "ühe", PART_SG: "üht", ILL_SG_SHORT: "ühte", NOM_PL: "ühed", PART_PL: "ühtesid", GEN_PL: "ühtede" },
     government: null,
     usages: ["Üks pluss üks on kaks.", "Kell on üks öösel.", "Selles majas elab ainult üks inimene.", "Olen Rootsis käinud vaid ühe korra."],
     note: "põhiarv 1",
@@ -12566,7 +12566,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üksteist", gloss: "eleven", pos: "NOUN", cefr: "A1",
     ekilexWordId: 262910,
-    parts: { NOM_SG: "üksteist", GEN_SG: "üheteistkümne", PART_SG: "ühteteist", PART_PL: "üheteistkümneid", GEN_PL: "üheteistkümnete" },
+    parts: { NOM_SG: "üksteist", GEN_SG: "üheteistkümne", PART_SG: "ühteteist", NOM_PL: "üheteistkümned", PART_PL: "üheteistkümneid", GEN_PL: "üheteistkümnete" },
     government: null,
     usages: ["Üksteist ja pool.", "Buss nr 11.", "Registreerinud on üksteist võistkonda.", "See juhtus üksteist aastat tagasi."],
     note: "arv 11",
@@ -12575,7 +12575,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üldarusaadav", gloss: "generally comprehensible", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 262977,
-    parts: { NOM_SG: "üldarusaadav", GEN_SG: "üldarusaadava", PART_SG: "üldarusaadavat", PART_PL: "üldarusaadavaid", GEN_PL: "üldarusaadavate" },
+    parts: { NOM_SG: "üldarusaadav", GEN_SG: "üldarusaadava", PART_SG: "üldarusaadavat", NOM_PL: "üldarusaadavad", PART_PL: "üldarusaadavaid", GEN_PL: "üldarusaadavate" },
     government: null,
     usages: ["Põhjalik, ent samas üldarusaadav raamat."],
     note: "kõigile arusaadav, hõlpsasti mõistetav",
@@ -12584,7 +12584,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üldine", gloss: "general", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 262997,
-    parts: { NOM_SG: "üldine", GEN_SG: "üldise", PART_SG: "üldist", ILL_SG_SHORT: "üldisse", PART_PL: "üldisi", GEN_PL: "üldiste" },
+    parts: { NOM_SG: "üldine", GEN_SG: "üldise", PART_SG: "üldist", ILL_SG_SHORT: "üldisse", NOM_PL: "üldised", PART_PL: "üldisi", GEN_PL: "üldiste" },
     government: null,
     usages: ["Üldine maksukoormus ei tohi tõusta.", "Üldine põhimõte on, et riigid ise otsustavad.", "Üldine sõjaväekohustus.", "Aasta jooksul üldist palgatõusu ei tule."],
     note: "kõiki (asjaosalisi) hõlmav, kõigi kohta käiv",
@@ -12602,7 +12602,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üldistus", gloss: "generalisation", pos: "NOUN", cefr: "B2",
     ekilexWordId: 263005,
-    parts: { NOM_SG: "üldistus", GEN_SG: "üldistuse", PART_SG: "üldistust", ILL_SG_SHORT: "üldistusse", PART_PL: "üldistusi", GEN_PL: "üldistuste" },
+    parts: { NOM_SG: "üldistus", GEN_SG: "üldistuse", PART_SG: "üldistust", ILL_SG_SHORT: "üldistusse", NOM_PL: "üldistused", PART_PL: "üldistusi", GEN_PL: "üldistuste" },
     government: null,
     usages: ["Naiste suust kuuleb ühtepuhku üldistust, et Eesti mees ei kõlba kuhugi.", "Ühe juhtumi põhjal ei saa teha üldistusi."],
     note: "üldistamine",
@@ -12611,7 +12611,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üldkeel", gloss: "general language", pos: "NOUN", cefr: null,
     ekilexWordId: 263020,
-    parts: { NOM_SG: "üldkeel", GEN_SG: "üldkeele", PART_SG: "üldkeelt", ILL_SG_SHORT: "üldkeelde", PART_PL: "üldkeeli", GEN_PL: "üldkeelte" },
+    parts: { NOM_SG: "üldkeel", GEN_SG: "üldkeele", PART_SG: "üldkeelt", ILL_SG_SHORT: "üldkeelde", NOM_PL: "üldkeeled", PART_PL: "üldkeeli", GEN_PL: "üldkeelte" },
     government: null,
     usages: ["Koolitusel osalejad omandavad lisaks üldkeelele ka oma ametikohal toimetulekuks vajaliku erialase sõnavara.", "Kevadsemestril võib valida inglise üldkeele või inglise teaduskeele ettevalmistuskursuse.", "Üldkeele sõnaraamat."],
     note: "kirjakeele üldtarvitatav osa, mida kasutavad kõik keelekõnelejad vanusest, ametist, haridusest, elupaigast olenemata (hrl vastandub oskuskeelele)",
@@ -12620,7 +12620,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üldkehtiv", gloss: "universally valid", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 263022,
-    parts: { NOM_SG: "üldkehtiv", GEN_SG: "üldkehtiva", PART_SG: "üldkehtivat", PART_PL: "üldkehtivaid", GEN_PL: "üldkehtivate" },
+    parts: { NOM_SG: "üldkehtiv", GEN_SG: "üldkehtiva", PART_SG: "üldkehtivat", NOM_PL: "üldkehtivad", PART_PL: "üldkehtivaid", GEN_PL: "üldkehtivate" },
     government: null,
     usages: ["Üldkehtivad normid.", "Üldkehtiv soodustus."],
     note: "kõigi ja kõige kohta kehtiv",
@@ -12638,7 +12638,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üldsus", gloss: "the public", pos: "NOUN", cefr: "B2",
     ekilexWordId: 263082,
-    parts: { NOM_SG: "üldsus", GEN_SG: "üldsuse", PART_SG: "üldsust", ILL_SG_SHORT: "üldsusse", PART_PL: "üldsusi", GEN_PL: "üldsuste" },
+    parts: { NOM_SG: "üldsus", GEN_SG: "üldsuse", PART_SG: "üldsust", ILL_SG_SHORT: "üldsusse", NOM_PL: "üldsused", PART_PL: "üldsusi", GEN_PL: "üldsuste" },
     government: null,
     usages: ["Leping jäi üldsuse eest saladusse.", "Rahvusvaheline üldsus otsib võimalusi konflikti lõpetamiseks."],
     note: "rahvas, ühiskonnaliikmed kõige üldisemas mõttes",
@@ -12683,7 +12683,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ülekantud", gloss: "transferred, figurative", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 263185,
-    parts: { NOM_SG: "ülekantud", GEN_SG: "ülekantu", PART_SG: "ülekantut", PART_PL: "ülekantuid", GEN_PL: "ülekantute" },
+    parts: { NOM_SG: "ülekantud", GEN_SG: "ülekantu", PART_SG: "ülekantut", NOM_PL: "ülekantud", PART_PL: "ülekantuid", GEN_PL: "ülekantute" },
     government: null,
     usages: ["Ülekantud tähenduses kujutame inimest maailma nabana.", "Ülekantud rasedus kestab üle 42 nädala."],
     note: "(sõnatähenduse kohta:) mingile ebatavalisele seosele, hrl võrdlusele toetuv, mitte otsene",
@@ -12692,7 +12692,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üleminek", gloss: "transition", pos: "NOUN", cefr: "B2",
     ekilexWordId: 263282,
-    parts: { NOM_SG: "üleminek", GEN_SG: "ülemineku", PART_SG: "üleminekut", PART_PL: "üleminekuid", GEN_PL: "üleminekute" },
+    parts: { NOM_SG: "üleminek", GEN_SG: "ülemineku", PART_SG: "üleminekut", NOM_PL: "üleminekud", PART_PL: "üleminekuid", GEN_PL: "üleminekute" },
     government: null,
     usages: ["Üleminek uuele töökohale.", "Üleminek kohustuslikule keskharidusele.", "Eurole üleminek toimus 2011. aastal.", "Teose sujuvad üleminekud tõsielust fantaasiasse."],
     note: "varasemalt olukorralt, seisundilt, tegevuselt uuele, teistsugusele siirdumine",
@@ -12710,7 +12710,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ülesanne", gloss: "task", pos: "NOUN", cefr: "A2",
     ekilexWordId: 263420,
-    parts: { NOM_SG: "ülesanne", GEN_SG: "ülesande", PART_SG: "ülesannet", PART_PL: "ülesandeid", GEN_PL: "ülesannete" },
+    parts: { NOM_SG: "ülesanne", GEN_SG: "ülesande", PART_SG: "ülesannet", NOM_PL: "ülesanded", PART_PL: "ülesandeid", GEN_PL: "ülesannete" },
     government: null,
     usages: ["Tänaseks polnud märkmikus ühtki ülesannet.", "Külastan teid peaministri ülesandel.", "Luureülesanne.", "Minu ülesanne oli süüa teha."],
     note: "kohustusena sooritatavaks antud või võetud töö või toiming",
@@ -12719,7 +12719,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ülesehitus", gloss: "structure", pos: "NOUN", cefr: "B2",
     ekilexWordId: 263427,
-    parts: { NOM_SG: "ülesehitus", GEN_SG: "ülesehituse", PART_SG: "ülesehitust", ILL_SG_SHORT: "ülesehitusse", PART_PL: "ülesehitusi", GEN_PL: "ülesehituste" },
+    parts: { NOM_SG: "ülesehitus", GEN_SG: "ülesehituse", PART_SG: "ülesehitust", ILL_SG_SHORT: "ülesehitusse", NOM_PL: "ülesehitused", PART_PL: "ülesehitusi", GEN_PL: "ülesehituste" },
     government: null,
     usages: ["Ülesehituselt on raamat nagu lapitekk.", "Kursuse ülesehitus.", "Reklaami visuaalne ülesehitus."],
     note: "süsteemi, teose vm keerulise objekti sisemised seosed, koostisosade paigutus ja liitumise või seostumise viis",
@@ -12737,7 +12737,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ülevus", gloss: "loftiness", pos: "NOUN", cefr: null,
     ekilexWordId: 271309,
-    parts: { NOM_SG: "ülevus", GEN_SG: "ülevuse", PART_SG: "ülevust", ILL_SG_SHORT: "ülevusse", PART_PL: "ülevusi", GEN_PL: "ülevuste" },
+    parts: { NOM_SG: "ülevus", GEN_SG: "ülevuse", PART_SG: "ülevust", ILL_SG_SHORT: "ülevusse", NOM_PL: "ülevused", PART_PL: "ülevusi", GEN_PL: "ülevuste" },
     government: null,
     usages: [],
     note: null,
@@ -12746,7 +12746,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ülikool", gloss: "university", pos: "NOUN", cefr: "B1",
     ekilexWordId: 263698,
-    parts: { NOM_SG: "ülikool", GEN_SG: "ülikooli", PART_SG: "ülikooli", ILL_SG_SHORT: "ülikooli", PART_PL: "ülikoole", GEN_PL: "ülikoolide" },
+    parts: { NOM_SG: "ülikool", GEN_SG: "ülikooli", PART_SG: "ülikooli", ILL_SG_SHORT: "ülikooli", NOM_PL: "ülikoolid", PART_PL: "ülikoole", GEN_PL: "ülikoolide" },
     government: null,
     usages: ["Stanfordi ülikool.", "Sind ootab ülikoolist väljaheitmine.", "Ma õpin Tartu ülikoolis keemiat.", "Ta jättis ülikooli pooleli."],
     note: "õppe- ja teadusasutus, kus omandatakse akadeemiline kõrgharidus ja akadeemiline kraad",
@@ -12755,7 +12755,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üllatunud", gloss: "surprised", pos: "ADJECTIVE", cefr: "B1",
     ekilexWordId: 281181,
-    parts: { NOM_SG: "üllatunud", GEN_SG: "üllatunu", PART_SG: "üllatunut", PART_PL: "üllatunuid", GEN_PL: "üllatunute" },
+    parts: { NOM_SG: "üllatunud", GEN_SG: "üllatunu", PART_SG: "üllatunut", NOM_PL: "üllatunud", PART_PL: "üllatunuid", GEN_PL: "üllatunute" },
     government: null,
     usages: ["„Mis siin toimub?“ kostis üllatunud hääl meie selja tagant.", "Selle peale ei osanud üllatunud mees enam midagi kosta.", "Vanaemal oli üllatunud nägu peas.", "Ta vaatas mind üllatunud pilguga."],
     note: "millegi ootamatu peale üllatust väljendav või tundev",
@@ -12809,7 +12809,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "ütlus", gloss: "saying", pos: "NOUN", cefr: "B2",
     ekilexWordId: 264140,
-    parts: { NOM_SG: "ütlus", GEN_SG: "ütluse", PART_SG: "ütlust", ILL_SG_SHORT: "ütlusse", PART_PL: "ütlusi", GEN_PL: "ütluste" },
+    parts: { NOM_SG: "ütlus", GEN_SG: "ütluse", PART_SG: "ütlust", ILL_SG_SHORT: "ütlusse", NOM_PL: "ütlused", PART_PL: "ütlusi", GEN_PL: "ütluste" },
     government: null,
     usages: ["Vana hea ütlus, et iga kingsepp jäägu oma liistude juurde, võiks siingi kehtida.", "See ema ütlus ei unune mul surmatunnini.", "Mind kutsuti kohtusse ütlusi andma.", "Kokkupõrke tunnistajalt on ütlused veel võtmata."],
     note: "teatav kindlakskujunenud väljend, kõnekäänd, fraas vms",
@@ -12818,7 +12818,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üür", gloss: "rent", pos: "NOUN", cefr: "A2",
     ekilexWordId: 264142,
-    parts: { NOM_SG: "üür", GEN_SG: "üüri", PART_SG: "üüri", ILL_SG_SHORT: "üüri", PART_PL: "üüre", GEN_PL: "üüride" },
+    parts: { NOM_SG: "üür", GEN_SG: "üüri", PART_SG: "üüri", ILL_SG_SHORT: "üüri", NOM_PL: "üürid", PART_PL: "üüre", GEN_PL: "üüride" },
     government: null,
     usages: ["Koorid ei suuda kontserdisaali kõrget üüri maksta.", "Igakuine üür.", "Üür jälle tõusis.", "Omanik tõstis üüri."],
     note: "tasu, mis makstakse omanikule tema vara kasutamise eest",
@@ -12836,7 +12836,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
   {
     lemma: "üürnik", gloss: "tenant", pos: "NOUN", cefr: "B1",
     ekilexWordId: 264170,
-    parts: { NOM_SG: "üürnik", GEN_SG: "üürniku", PART_SG: "üürnikku", ILL_SG_SHORT: "üürnikku", PART_PL: "üürnikke", GEN_PL: "üürnike" },
+    parts: { NOM_SG: "üürnik", GEN_SG: "üürniku", PART_SG: "üürnikku", ILL_SG_SHORT: "üürnikku", NOM_PL: "üürnikud", PART_PL: "üürnikke", GEN_PL: "üürnike" },
     government: null,
     usages: ["Omanik ja üürnik.", "Üürniku kasutada on maja esimene korrus.", "Selle maja üürnikud maksavad oma üüri alati õigel ajal."],
     note: "kelleltki hrl eluruumi üüriv isik",

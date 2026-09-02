@@ -27,7 +27,6 @@ export interface LexemeWrite {
   pos: string;
   cefr?: string | null;
   government?: string | null;
-  notes?: string | null;
   /** Keyed by form type. Anything that is not a principal part is dropped. */
   forms: Record<string, string>;
   /** Who to attribute it to. A shared edit that is not attributable is untraceable. */
@@ -71,7 +70,21 @@ export async function upsertLexemeWithForms(input: LexemeWrite): Promise<LexemeW
     lemma, translation, pos,
     cefr: input.cefr || null,
     government: input.government || null,
-    notes: input.notes || null,
+    /*
+      `notes` IS NOT HERE, AND THAT IS THE FIX RATHER THAN THE OMISSION.
+
+      It was `notes: input.notes || null`, in an `update`, and neither caller
+      has ever sent one: the add-and-correct form has no notes field and the
+      suggestion queue passes forms and a gloss. So every hand edit and every
+      accepted correction nulled the column, which holds the further English
+      senses the builder stored, in the shared dictionary everybody reads.
+      Correcting a typo in `aadress` deleted "email address" for everyone.
+
+      That is the same fault the comment below this block describes about
+      forms, one column over: replace what the caller supplied and leave alone
+      what it did not. The parameter is gone rather than guarded, because a
+      parameter nobody passes is not a feature, it is the bug's only door.
+    */
     gradation: gradation.type,
     gradationNote: gradation.note ?? null,
     // An entry Ekilex supplied stays marked as Ekilex's after a correction —

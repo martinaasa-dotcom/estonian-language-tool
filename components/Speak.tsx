@@ -2,7 +2,7 @@
 
 import { Volume2, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { fetchClip } from "@/lib/audio/clip";
+import { playClip } from "@/lib/audio/clip";
 import { useAudioPrefs } from "./AudioPrefs";
 
 /**
@@ -75,24 +75,19 @@ export function Speak({
   const play = async (unasked = false) => {
     try {
       setState("loading");
-      const url = await fetchClip({ text, slow, voice });
-      try {
-        await new Audio(url).play();
-      } catch (error) {
-        /*
-          The clip is here and the browser would not play it, which on a page
-          nobody has touched yet is the autoplay policy and not the service.
-          Leave the button to be pressed. A press is a user gesture and will
-          be allowed, so the same error on a press is genuinely something else.
-        */
-        if (unasked && error instanceof DOMException && error.name === "NotAllowedError") {
-          setState("idle");
-          return;
-        }
-        throw error;
-      }
+      /*
+        The clip is here and the browser would not play it, which on a page
+        nobody has touched yet is the autoplay policy and not the service.
+        Leave the button to be pressed. A press is a user gesture and will be
+        allowed, so the same error on a press is genuinely something else.
+
+        That distinction was written here and only here, and the minimal-pairs
+        round paid for it: its own copy of this caught both and told a learner
+        their connection was down. `playClip` is the one answer now.
+      */
+      const outcome = await playClip({ text, slow, voice }, { unasked });
       setState("idle");
-      onPlay?.();
+      if (outcome === "played") onPlay?.();
     } catch {
       setState("gone");
       onUnavailable?.();

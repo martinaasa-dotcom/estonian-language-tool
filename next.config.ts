@@ -93,6 +93,15 @@ const config: NextConfig = {
       words. `scripts/test-restore.mjs` catches it now; it did not before,
       because it was last run against a database small enough to fit.
 
+      AND THEN IT CROSSED THIS ONE TOO, which is what finally moved the fix to
+      the right place. One correction pass over the dictionary took the export
+      from 15.9 MB to 16.5 MB and the restore started refusing a learner's own
+      file. Raising the ceiling again would have bought a few thousand words,
+      because the file was growing with the *dictionary* rather than with the
+      person: `/api/export` sent every lexeme in the database. It sends the
+      words that learner's own rows point at now, 0.08 MB on a demo deck, and
+      the ceiling below stopped being a countdown.
+
       Matched to `bodySizeLimit` above deliberately. Two limits on the same
       upload that disagree is how this happened, and the next person to raise
       one needs to find the other in the same glance.

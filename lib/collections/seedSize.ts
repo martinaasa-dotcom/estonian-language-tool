@@ -40,5 +40,21 @@
  * as the harvest's adjective and once as the builder's noun, because the two
  * disagreed and the key they conflict on includes the label. They are one
  * entry each now. Nothing was dropped from the dictionary.
+ *
+ * The largest single move was 34,554 to 37,723, and no word came or went with
+ * it. It is two corrections in opposite directions, both from
+ * `npm run audit:cases`.
+ *
+ * Up by 5,082: the nominative plural was `genSg + d` and the audit put that to
+ * Ekilex for every nominal in the dictionary. It is wrong for every pronoun
+ * that has a plural and invents one for thirty-three mass nouns that have
+ * none, so it is stored now rather than derived.
+ *
+ * Down by 1,913: a principal part is one form and 2,029 entries carried two of
+ * one, nearly all of them a second partitive plural (`aadresse` beside
+ * `aadressisid`). Which of the pair the app used was decided by whoever read
+ * the rows, since `stemsFrom` takes the first and every caller building a
+ * record with `Object.fromEntries` takes the last. Ekilex lists the primary
+ * first, and that is now the one kept.
  */
-export const SEED_SET_SIZE = { words: 6_101, forms: 34_554 };
+export const SEED_SET_SIZE = { words: 6_101, forms: 37_723 };

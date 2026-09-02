@@ -10,13 +10,23 @@ const page = await (await browser.newContext({ viewport: { width: 1280, height: 
 const errors = [];
 page.on("pageerror", e => errors.push(String(e)));
 
+/*
+  BY THE FIELD'S NAME, NOT BY A PREFIX OF ITS PLACEHOLDER.
+
+  This read `getByPlaceholder("toa")`, which is a substring match, and it broke
+  the day the nominative plural became a principal part and the form grew a
+  field whose example is `toad`. The label is what a person uses to find the
+  box and it cannot be made ambiguous by a field appearing beside it.
+*/
+const genitive = (p) => p.getByRole("textbox", { name: "Genitive sg" });
+
 await page.goto(`${B}/dictionary?q=kohv`, { waitUntil: "networkidle" });
 check("an entry offers an Edit button", (await page.getByRole("button", { name: /^Edit$/ }).count()) > 0);
 await page.getByRole("button", { name: /^Edit$/ }).click();
 await page.waitForTimeout(500);
 check("the editor opens pre-filled with the existing forms",
-  (await page.getByPlaceholder("toa").inputValue()) === "kohvi",
-  `genitive field = "${await page.getByPlaceholder("toa").inputValue()}"`);
+  (await genitive(page).inputValue()) === "kohvi",
+  `genitive field = "${await genitive(page).inputValue()}"`);
 
 // Correct the translation and add a form that was missing.
 const en = page.getByPlaceholder("word");

@@ -12,9 +12,18 @@ const koer: SceneWord = {
   lemma: "koer", pos: "NOUN", translation: "dog", emoji: "🐕",
   forms: forms({ NOM_SG: "koer", GEN_SG: "koera", PART_SG: "koera" }),
 };
+/*
+  With the plural a lexicographer wrote down, because nothing derives it. It
+  used to be `genSg + d`, and `scripts/audit-cases.ts` put that to the
+  Institute for every nominal the dictionary ships: right for 5,098 of 5,143
+  and wrong for every pronoun with a plural, since `see` goes to `need` and no
+  ending reaches it. So `NOM_PL` is a stored principal part, 98.5% of the
+  nominals in the shipped dictionary carry one, and a fixture without it is a
+  word the dictionary has never been asked about rather than an ordinary entry.
+*/
 const lind: SceneWord = {
   lemma: "lind", pos: "NOUN", translation: "bird", emoji: "🐦",
-  forms: forms({ NOM_SG: "lind", GEN_SG: "linnu", PART_SG: "lindu" }),
+  forms: forms({ NOM_SG: "lind", GEN_SG: "linnu", PART_SG: "lindu", NOM_PL: "linnud" }),
 };
 
 const scene = { id: "pets", situation: "Pets" };
@@ -86,7 +95,8 @@ describe("markDescription", () => {
     const mark = markDescription(task, "Koeras ja majas elavad linnud.");
     // `maja` in the inessive, `koer` in the inessive, `lind` in the plural
     // nominative: three different endings, and every one of them counts as the
-    // word being used.
+    // word being used. The plural is the one the entry carries rather than one
+    // built from the genitive, which is not a rule in this language.
     expect(mark.used).toEqual([true, true, true]);
   });
 

@@ -11,7 +11,8 @@ import { allMarks } from "@/lib/exam/score";
 import { PASS_PCT, specFor } from "@/lib/exam/spec";
 import { SKILL_ET } from "@/lib/exam/types";
 import { NO_VALUE } from "@/lib/copy/values";
-import { formatDateTime } from "@/lib/time/clock";
+import { learnerDayClock } from "@/lib/progress/dayClock";
+import { DATE_AND_TIME, DateText } from "@/components/DateText";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
@@ -64,15 +65,21 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
     best yet" means it beat everything, rather than being trivially true of the
     row it was computed from.
   */
-  const [previous, best] = await Promise.all([
+  const [previous, best, clock] = await Promise.all([
     previousAttempt(ownerId, result.level, attempt.finishedAt),
     bestAt(ownerId, result.level, attempt.finishedAt),
+    learnerDayClock(ownerId),
   ]);
   const moved = previous ? result.pct - previous.pct : null;
 
   return (
     <Page
-      eyebrow={`${result.level} · sat ${formatDateTime(attempt.finishedAt)}`}
+      eyebrow={
+        <>
+          {result.level} · sat{" "}
+          <DateText iso={attempt.finishedAt.toISOString()} zone={clock.zone} options={DATE_AND_TIME} />
+        </>
+      }
       title={result.passed ? "Passed" : "Not this time"}
       lead={report.headline}
       actions={
@@ -141,7 +148,9 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
                   className="mt-1 text-sm leading-relaxed"
                   style={{ color: moved >= 0 ? "var(--mint-ink)" : "var(--peach-ink)" }}
                 >
-                  {previous.pct} percent on {formatDateTime(previous.at)}, {result.pct} today. The
+                  {previous.pct} percent on{" "}
+                  <DateText iso={new Date(previous.at).toISOString()} zone={clock.zone} options={DATE_AND_TIME} />
+                  , {result.pct} today. The
                   questions were different both times, so think of this as two tries at this level,
                   not the same paper twice.
                 </p>

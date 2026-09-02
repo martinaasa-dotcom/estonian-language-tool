@@ -7,19 +7,43 @@ export const dynamic = "force-dynamic";
 /**
  * Full export. Months of review history is the one thing in this app that cannot
  * be reconstructed from anywhere, so getting it out must never be more than a click.
- * The dictionary (lexemes/forms) is shared reference data, exported in full so a
- * restore works standalone; everything else here is this user's own, and it is
- * all of it. That completeness is the point twice over: it is what makes the
- * file a real backup, and it is what Article 20 asks of a copy of your data.
+ * Everything here is this user's own, and it is all of it. That completeness is
+ * the point twice over: it is what makes the file a real backup, and it is what
+ * Article 20 asks of a copy of your data.
+ *
+ * THE DICTIONARY THAT TRAVELS IS THE PART THE LEARNER'S ROWS POINT AT.
+ *
+ * It used to be `prisma.lexeme.findMany({ include: { forms: true } })`, the
+ * whole shared dictionary, under a comment saying a restore then works
+ * standalone. Two things were wrong with that. It is the one table in the file
+ * that grows without the learner doing anything, so a personal backup got
+ * bigger every time somebody else's word was added: 15.9 MB in August and 16.5
+ * MB after one correction pass, which crossed `bodySizeLimit` and
+ * `middlewareClientMaxBodySize` in `next.config.ts` and left the restore
+ * refusing a learner's own file. Both limits are 16 MB and both were within a
+ * few hundred kilobytes of a file nobody had looked at.
+ *
+ * And "standalone" was not the property it sounded like. The dictionary is a
+ * build artefact of this repository: `npm run db:seed` loads it, every
+ * installation has it, and `restoreBackup` merges with `ON CONFLICT DO
+ * NOTHING`, so on any real deployment those 6,050 words were bytes that
+ * travelled and then did nothing. What a backup is for is the half that cannot
+ * be rebuilt, which is exactly the argument `Review` is append-only for.
+ *
+ * So the file carries the lexemes this learner's own rows reference, with their
+ * forms: every word their cards, their review log, their starred list and their
+ * reports are about. Measured on a demo deck, 15.19 MB became 0.08 MB, and the
+ * size now scales with the deck rather than with the dictionary, which is the
+ * property that stops this coming back.
  */
 export async function GET() {
   const ownerId = await requireUserId();
 
   /*
-    An export reads the whole dictionary and every review this learner has
-    ever made, so it is the most expensive query in the app by a wide margin.
-    Six an hour is more than anybody backing up their own work needs and far
-    less than a loop would ask for.
+    An export reads every review this learner has ever made and every word
+    those reviews are about, so it is among the most expensive queries in the
+    app. Six an hour is more than anybody backing up their own work needs and
+    far less than a loop would ask for.
   */
   const limit = checkRateLimit(`export:${bucketForOwner(ownerId)}`, 6, 60 * 60_000);
   if (!limit.ok) {
@@ -67,12 +91,32 @@ export async function GET() {
     A mock sitting is the sharpest of the three: it holds the composition the
     learner wrote, which no log reconstructs and no other table keeps.
   */
+  /*
+    Which words to carry, asked before the rest so the answer can be used.
+
+    Four tables reference a lexeme and every one of them is the learner's own.
+    `Review` keeps `lexemeId` as a plain column with no relation, deliberately,
+    so it outlives the card it was about: a word they have not had a card for
+    in a year is still a word their history is about, and leaving it out would
+    restore a log pointing at nothing.
+  */
+  const [cardWords, reviewWords, starWords, reportWords] = await Promise.all([
+    prisma.card.findMany({ where: { ownerId }, select: { lexemeId: true } }),
+    prisma.review.findMany({ where: { ownerId }, select: { lexemeId: true } }),
+    prisma.starredWord.findMany({ where: { ownerId }, select: { lexemeId: true } }),
+    prisma.suggestion.findMany({ where: { ownerId }, select: { lexemeId: true } }),
+  ]);
+  const mine = new Set<string>();
+  for (const row of [...cardWords, ...reviewWords, ...starWords, ...reportWords]) {
+    if (row.lexemeId) mine.add(row.lexemeId);
+  }
+
   const [
     lexemes, cards, reviews, tasks, studyEvents, scans,
     settings, messages, assessments, stars, achievements,
     examAttempts, classrooms, classroomMembers, suggestions,
   ] = await Promise.all([
-    prisma.lexeme.findMany({ include: { forms: true } }),
+    prisma.lexeme.findMany({ where: { id: { in: [...mine] } }, include: { forms: true } }),
     prisma.card.findMany({ where: { ownerId } }),
     prisma.review.findMany({ where: { ownerId }, orderBy: { reviewedAt: "asc" } }),
     prisma.task.findMany({ where: { ownerId } }),

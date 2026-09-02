@@ -1,3 +1,4 @@
+import { CASES } from "@/lib/estonian/cases";
 import { classifyGradation, classifyVerbGradation } from "@/lib/estonian/gradation";
 import { usableExamples, type Example } from "@/lib/dict/examples";
 import type { EkilexDetails } from "./client";
@@ -16,6 +17,7 @@ const PRINCIPAL_PARTS: Record<string, string> = {
   SgG: "GEN_SG",
   SgP: "PART_SG",
   SgAdt: "ILL_SG_SHORT",
+  PlN: "NOM_PL",
   PlP: "PART_PL",
   PlG: "GEN_PL",
   // Verbs
@@ -37,19 +39,61 @@ const FORM_ORDER = [
 ];
 
 /** Estonian question words → the case they signal, for verb government. */
-const GOVERNMENT_CASES: Record<string, string> = {
-  mida: "partitive", keda: "partitive",
-  mille: "genitive", kelle: "genitive",
-  millele: "allative", kellele: "allative",
-  millel: "adessive", kellel: "adessive",
-  millelt: "ablative", kellelt: "ablative",
-  milles: "inessive", kelles: "inessive",
-  millest: "elative", kellest: "elative",
-  millesse: "illative", kellesse: "illative",
-  milleks: "translative", kelleks: "translative",
-  millega: "comitative", kellega: "comitative",
-  kus: "location", kuhu: "direction", kust: "source",
-};
+/**
+ * Which case each question word Ekilex writes a government as signals.
+ *
+ * READ OFF `CASES`, NOT TYPED, because the typed version was missing three.
+ * Essive, terminative and abessive had no row, so `caseOf` returned null for
+ * `kellena`, `kelleni` and `kelleta`, `formatGovernment` left them unannotated
+ * and `parseGovernment` could then read no case out of the entry at all.
+ * `töötama kellena`, which is how you say what you do for a living, had no
+ * government card; and `esitama` and `käsitama` govern the essive beside the
+ * partitive, so the drill could offer it as a wrong answer and mark a learner
+ * wrong for knowing it. That is the exact fault `alsoGoverned` exists to
+ * prevent, arriving through a gap in a table rather than through the parser.
+ *
+ * `lib/estonian/cases.ts` already holds the question a case answers, which is
+ * the `mille-` word, so nothing here is written down twice. The `kelle-` form
+ * is the same word for the other interrogative pronoun: `mis` and `kes`
+ * decline alike in every oblique case, which `npm run audit:cases` confirms
+ * against the Institute for both of them. So one substitution, on an attested
+ * word, rather than an ending joined to a stem.
+ *
+ * The three adverbial questions are named as what they are. Ekilex writes
+ * `kus`, `kuhu` and `kust` where a verb takes a place rather than a case, and
+ * each covers several: naming one would be inventing a government, so they are
+ * annotated for a reader and left unparseable, which is `parseGovernment`
+ * returning null and the drill skipping the verb.
+ */
+const GOVERNMENT_CASES: Record<string, string> = (() => {
+  /*
+    The three that name a place rather than a case, and which the loop below
+    must not touch. `kus` is the question for the inessive *and* the adessive
+    and `kuhu` for the illative *and* the allative, so both appear in two rows
+    of `CASES` and a loop that wrote them down would leave whichever it read
+    last: `kus` read as adessive, and a verb Ekilex records as taking a place
+    would have been drilled as governing one particular case. That is inventing
+    a government, which is what the old typed table's comment forbade and what
+    reading the table back out of `CASES` nearly undid.
+  */
+  const table: Record<string, string> = {
+    kus: "location", kuhu: "direction", kust: "source",
+  };
+  for (const spec of CASES) {
+    if (spec.key === "NOMINATIVE") continue; // Nothing governs it.
+    for (const asked of spec.question.split(/\s+/)) {
+      const word = asked.replace(/\?/g, "").trim().toLowerCase();
+      if (!word || word in table) continue;
+      table[word] = spec.en.toLowerCase();
+      // `mille` and `kelle` are the same case of two pronouns. `cases.ts`
+      // writes whichever reads better in a heading; a government can use
+      // either, and `keda` is the one it uses most.
+      if (word.startsWith("mille")) table[`kelle${word.slice("mille".length)}`] = spec.en.toLowerCase();
+      if (word === "mida") table.keda = spec.en.toLowerCase();
+    }
+  }
+  return table;
+})();
 
 export interface MappedForm {
   formType: string;
@@ -68,8 +112,15 @@ export interface MappedLexeme {
   gradation: string;
   gradationNote: string | null;
   government: string | null;
-  /** Estonian explanatory definition. Ekilex gives no English on a reader key. */
-  notes: string | null;
+  /**
+   * Ekilex's Estonian explanation of the word. It gives no English on a reader key.
+   *
+   * Named for what it is rather than `notes`, which is the column it used to be
+   * written to and which holds English. One column with two languages in it is
+   * why a live lookup replaced `aadress`'s "email address" with a sentence of
+   * Estonian, in a box with no heading and no `lang`.
+   */
+  definition: string | null;
   /** Attested sentences using the word — the source of every cloze exercise. */
   examples: Example[];
   forms: MappedForm[];
@@ -86,6 +137,28 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
 
   const forms: MappedForm[] = [];
   const seen = new Set<string>();
+  /*
+    A PRINCIPAL PART IS ONE FORM, AND EKILEX OFTEN GIVES TWO.
+
+    `@@unique([lexemeId, formType, value])` on `Form` puts the value in the key
+    deliberately, because Estonian has genuine parallel forms (`raamatutes`
+    beside `raamatuis`) and a key without it would drop one. That is right for
+    the whole retrieved table and it is wrong for the six principal parts,
+    which are the forms a learner memorises: 2,016 of the 5,363 shipped entries
+    carried two `PART_PL` rows and 120 carried two `GEN_PL`, and which of the
+    pair the app used was decided by whoever read them. `stemsFrom` takes the
+    first row it finds, in whatever order the database returns; every caller
+    that builds a `Record` with `Object.fromEntries` takes the last. So the
+    dictionary entry for `aadress` could show `aadresse` while the flashcard
+    behind it asked for `aadressisid`, and neither was a decision anybody made.
+
+    Ekilex lists the primary first, which is the one a course teaches: `asju`
+    before `asjasid`, `aegu` before `aegasid`, `rindade` before `rinde`. So the
+    first wins for a principal part. The parallel form is not lost where it
+    matters, because an enriched entry keeps the whole retrieved table under
+    `EKILEX:<morphCode>`, and those stay parallel exactly as before.
+  */
+  const principalTaken = new Set<string>();
 
   for (const f of formSet.forms) {
     const key = `${f.morphCode}|${f.value}`;
@@ -93,6 +166,10 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
     seen.add(key);
 
     const principal = PRINCIPAL_PARTS[f.morphCode];
+    if (principal) {
+      if (principalTaken.has(principal)) continue;
+      principalTaken.add(principal);
+    }
     const order = FORM_ORDER.indexOf(f.morphCode);
     forms.push({
       formType: principal ?? `EKILEX:${f.morphCode}`,
@@ -118,7 +195,7 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
     gradation: gradation.type,
     gradationNote: gradation.note ?? null,
     government: formatGovernment(details.governments),
-    notes: details.definitions[0] ?? null,
+    definition: details.definitions[0] ?? null,
     examples: usableExamples(details.usages.map((et) => ({ et, source: "EKILEX" as const }))),
     forms: forms.sort((a, b) => a.orderIndex - b.orderIndex),
   };
