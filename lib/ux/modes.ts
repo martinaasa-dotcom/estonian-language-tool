@@ -116,6 +116,15 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "word is already in your deck, finishing the round counts towards it.",
   },
   {
+    href: "/crossword", title: "Crossword", subtitle: "Clued in English",
+    icon: "Grid3x3", tone: "butter", group: "targeted", note: "A new grid daily",
+    within: "/practice",
+    blurb:
+      "Seven words at your level crossing each other, clued in English. That is the direction " +
+      "that teaches: you know what you mean and you are looking for the word, which is where " +
+      "you are every time you open your mouth.",
+  },
+  {
     href: "/review/target", title: "Target", subtitle: "Fast, mostly endings",
     icon: "Target", tone: "peach", group: "targeted", note: "Shrinking clock",
     within: "/practice",

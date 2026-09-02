@@ -44,6 +44,8 @@ import {
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
 import { ratingFor, SONAD_GUESSES } from "@/lib/games/sonad";
+import { solvedEntries } from "@/lib/games/crossword";
+import { crosswordFor } from "@/lib/progress/crossword";
 import { puzzleFor } from "@/lib/progress/sonad";
 import { courseLevelFor } from "@/lib/progress/level";
 import type { DayKey } from "@/lib/time/day";
@@ -887,6 +889,69 @@ export async function recordSonad(day: string, guesses: unknown) {
   const result = await gradeCard(card.id, rating, 0);
   return result.ok ? { ok: true as const, graded: true } : result;
 }
+
+/**
+ * A finished crossword, in the review log for the words that are cards.
+ *
+ * `recordSonad`'s shape, over more words. The client sends the grid it filled
+ * in and which entries it asked to be shown; the server rebuilds the day's
+ * puzzle from the date and the learner's level, checks the letters itself, and
+ * grades only the entries that are right. A filled-in grid is the only route
+ * to a Good, which is the half that matters; whether the Show button was used
+ * can only make a rating worse, and is the same latitude the guesses have.
+ *
+ * Every entry is one card at most, so a seven-word grid is at most seven rows
+ * in an append-only table, which is the size of one review session.
+ */
+export async function recordCrossword(day: string, typed: unknown, helped: unknown) {
+  const ownerId = await requireUserId();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { ok: false as const, error: "Not a day." };
+
+  /*
+    Off the wire, whatever the types say. A cell index that is not a number and
+    a letter that is a paragraph both reach `solvedEntries`, which compares
+    strings, so what this has to stop is the size rather than the shape: a
+    thousand-key object is a thousand comparisons of a thousand characters.
+  */
+  const grid: Record<number, string> = {};
+  if (typed && typeof typed === "object") {
+    for (const [cell, letter] of Object.entries(typed as Record<string, unknown>).slice(0, MAX_CELLS)) {
+      if (typeof letter === "string" && letter.length <= 2) grid[Number(cell)] = letter;
+    }
+  }
+  const shown = new Set(
+    Array.isArray(helped) ? helped.filter((h): h is number => typeof h === "number") : [],
+  );
+
+  const puzzle = await crosswordFor(ownerId, day as DayKey, await courseLevelFor(ownerId));
+  if (!puzzle) return { ok: false as const, error: "No crossword for that day." };
+
+  const solved = solvedEntries(puzzle, grid);
+  if (solved.size === 0) return { ok: true as const, graded: 0 };
+
+  const wanted = [...solved].map((index) => puzzle.entries[index]!);
+  const cards = await prisma.card.findMany({
+    where: { ownerId, lexemeId: { in: wanted.map((e) => e.lexemeId) }, cardType: "PRODUCTION" },
+    orderBy: { id: "asc" },
+    select: { id: true, lexemeId: true },
+  });
+  const byLexeme = new Map(cards.map((c) => [c.lexemeId ?? "", c.id]));
+
+  let graded = 0;
+  for (const index of solved) {
+    const entry = puzzle.entries[index]!;
+    const cardId = byLexeme.get(entry.lexemeId);
+    if (!cardId) continue;
+    // Shown is not solved. A learner who pressed the button read the answer,
+    // which is worth telling the scheduler about and is not worth a Good.
+    const result = await gradeCard(cardId, shown.has(index) ? 1 : 3, 0);
+    if (result.ok) graded += 1;
+  }
+  return { ok: true as const, graded };
+}
+
+/** A nine by nine grid is 81 cells; anything past that is not a grid. */
+const MAX_CELLS = 81;
 
 // ──────────────────────────── Learner preferences ──────────────────────────
 

@@ -24,8 +24,8 @@ page.on("console", (m) => {
 });
 
 // Floor: 29, measured in the state CI seeds. A thinner database reads as short.
-// 23 before Sõnad added six.
-const { check, absent, done } = suite("Practice modes", { floor: 29 });
+// 23 before Sõnad added six and the crossword six more.
+const { check, absent, done } = suite("Practice modes", { floor: 35 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -287,6 +287,44 @@ await page.waitForTimeout(400);
 const restored = await board.evaluateAll((els) =>
   els.filter((e) => e.textContent.trim()).map((e) => e.textContent.trim()).join(""));
 check("the board comes back after a reload", restored === "kastan");
+
+// 6c — The daily crossword
+await page.goto(`${B}/crossword`, { waitUntil: "networkidle" });
+await page.evaluate(() => { try { localStorage.clear(); } catch { /* blocked */ } });
+await page.reload({ waitUntil: "networkidle" });
+
+const grid = page.locator('input[aria-label^="Row "]');
+const cellCount = await grid.count();
+check("the crossword draws a grid", cellCount > 10);
+check("it has clues in both directions",
+  (await page.getByText("Across", { exact: true }).count()) > 0
+  && (await page.getByText("Down", { exact: true }).count()) > 0);
+
+// A wrong letter, then Check, which has to say so on the cell rather than
+// somewhere else: the grid is where the mistake is.
+await grid.first().click();
+await page.keyboard.type("q");
+const beforeCheck = await grid.first().evaluate((el) => getComputedStyle(el).backgroundColor);
+await page.getByRole("button", { name: "Check" }).click();
+await page.waitForTimeout(300);
+const afterCheck = await grid.evaluateAll((els) =>
+  els.map((e) => getComputedStyle(e).backgroundColor));
+check("Check marks a wrong letter on the cell", new Set(afterCheck).size >= 2 && beforeCheck !== undefined);
+
+// The letter bar is the only way to write õ on a keyboard that has no key for
+// it, which is most of them, so it has to be on this screen.
+check("the Estonian letter bar is on the grid",
+  (await page.locator('button[aria-label^="Insert "]').count()) === 6);
+
+await page.getByRole("button", { name: "Show this one" }).click();
+await page.waitForTimeout(300);
+const shown = await grid.evaluateAll((els) => els.filter((e) => e.value).length);
+check("Show fills the clue that is selected", shown >= 3);
+
+await page.reload({ waitUntil: "networkidle" });
+await page.waitForTimeout(400);
+check("the grid comes back after a reload",
+  (await grid.evaluateAll((els) => els.filter((e) => e.value).length)) === shown);
 
 // 7 — Command palette
 await page.goto(`${B}/`, { waitUntil: "networkidle" });

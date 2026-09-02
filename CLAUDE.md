@@ -674,6 +674,38 @@ browser in both themes: 7.40 and 5.31 and 5.62 in the light, 11.70 and 9.27 and 
 draft that dropped the fill and kept only the ring measured 3.52, because `--butter-ink` is drawn to
 sit on butter's tint and not on a card.
 
+**A crossword's format is nobody's; its grids and its clues and its name are somebody's.** The
+interlocking grid with numbered clues is from 1913 and is not owned. What a newspaper owns is the
+puzzles it publishes. So nothing here is taken from one: `lib/games/crossword.ts` compiles the grid,
+the answers are dictionary headwords at the learner's band, and the clues are the English glosses
+already beside them, cut to two senses. **No clue is written anywhere in this app**, which is what
+keeps it inside ADR-005: the only authored English is the gloss the syllabus already carries, and no
+Estonian is written at all.
+
+**English clues and Estonian answers, one direction only, because that is the direction that
+teaches.** You know what you mean and you are looking for the word, which is where a learner is
+every time they open their mouth. The other way round is a reading exercise with extra steps.
+
+**A criss-cross rather than a dense grid, and that is a fact about the dictionary.** A five-by-five
+where every row and column is a word needs a search over words with the right letter in the right
+place five times over, and at A1 there are 215 six-letter words to search: it does not reliably
+terminate. A criss-cross places words at intersections, leaves the rest empty, always succeeds, and
+is the shape a schoolbook puzzle takes. Measured over thirty days at three levels: seven words every
+day, every time. **Empty cells are drawn as nothing rather than as black squares**, because a
+criss-cross is mostly empty and sixty black squares read as a rendering fault.
+
+**Nine by nine is a phone, not a taste.** At 360px, nine columns is a 36px cell and ten is under 32,
+which is below what a finger can hit. The first compiler had no cap and produced a fifteen by eight
+grid on its second day. A placement that would push the bounding box past nine is refused rather
+than accepted and cropped, so a long word costs the grid a word rather than its shape.
+
+**A real input per cell, which is the opposite of Sõnad's choice and right for the opposite reason.**
+Sõnad is one word with a card of keys under it, so a keydown handler is enough. A crossword has
+thirty cells in two directions: the caret has to be visible, a phone has to open its own keyboard,
+and a composed õ has to arrive, which an `input` event carries and a `keydown` does not. The letter
+bar under the grid is the app's own `DiacriticBar` and needed nothing added, since it types into
+whatever has focus.
+
 **A daily puzzle needs a walk, not a hash, and it took two goes to get there.** `hash % pool` with
 the string hash everybody writes (`h * 31 + charCode`) moves by one row a day, so Sõnad's first ten
 days were `lammas, laulja, laulma, leidma, lemmik, lennuk, leping, lihtne, liiter`: a week of the

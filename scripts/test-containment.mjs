@@ -128,6 +128,7 @@ const ROUTES = [
   "/practice",
   "/quest",
   "/sonad",
+  "/crossword",
   "/calendar",
 
   // The dictionary, the deck and the reference, which is where the Estonian is.
@@ -232,7 +233,10 @@ const SPARSE = new Map([
 // checks. It is the tightest board in the app at 360, six circles across with
 // a 32-key alphabet under them, so it is exactly the route this suite exists
 // for.
-const { check, absent, done } = suite("Containment", { floor: 1070 });
+// 1090 rather than 1070: the crossword joined it. Nine columns of cells with
+// a clue number in each corner at 360 is the densest arrangement of small
+// boxes in the app, which is what this suite is for.
+const { check, absent, done } = suite("Containment", { floor: 1090 });
 
 const browser = await launchChromium();
 

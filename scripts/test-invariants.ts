@@ -604,7 +604,7 @@ check("every practice mode writes to the same review log", () => {
   for (const file of sessions) {
     assert.match(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
       `${file} does not write to the shared review log`,
     );
   }
@@ -621,7 +621,7 @@ check("every practice mode writes to the same review log", () => {
     assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
     assert.doesNotMatch(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
       `${file} now grades, so it is a practice mode and must come off the exemption list`,
     );
   }
@@ -737,7 +737,7 @@ check("a session never lets its questions change under the learner", () => {
     // The exam session hands its answers to a Server Action rather than grading
     // per card, and Next refreshes the route after that call just the same, so
     // the freeze matters here too.
-    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad)\b/.test(source)) continue;
+    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/.test(source)) continue;
     // Only the ones actually handed a list by the page can be caught out. The
     // `initial` naming convention is the reliable signal: a prop called
     // initialSteps or initialCards exists precisely because it is meant to be
@@ -3601,6 +3601,10 @@ check("nothing is stored on a device that would need asking first", () => {
     // a phone. Guesses only, never the answer, which is worked out from the
     // date on the server, and swept by the same sign-out.
     "app/(app)/sonad/resume.ts",
+    // And the crossword's grid, which is the same argument a size up: fifteen
+    // minutes rather than three. Letters and which clues were shown, never the
+    // answers, which are rebuilt on the server to mark it.
+    "app/(app)/crossword/resume.ts",
   ];
   for (const file of storage) {
     assert.ok(
