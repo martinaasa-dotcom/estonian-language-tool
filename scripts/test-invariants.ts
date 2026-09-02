@@ -4147,6 +4147,52 @@ check("first run is exercised, which means one suite runs before the fixture", (
  * Read comment-blind, because a paragraph explaining why `void` is wrong would
  * otherwise satisfy a check looking for it.
  */
+/**
+ * EVERY PROVIDER KEY IS IN THE CREDENTIAL CANARY.
+ *
+ * CI builds with a marked value in every server-only variable and greps
+ * `.next/static` for it, which is the check CLAUDE.md leads with. It is only
+ * as good as the list of variables it marks, and that list was seven names
+ * somebody typed: `GROQ_API_KEY` and `GEMINI_API_KEY` joined the provider
+ * chain, `PROVIDER_KEY_ENV` grew to five, and the canary stayed at three of
+ * them. A key nothing marks is a key the grep cannot find, so the check would
+ * have passed over exactly the two the default free chain holds.
+ *
+ * `PROVIDER_KEY_ENV` is the one list of provider keys and the chain reads it,
+ * so this reads it too rather than keeping a fourth copy. Adding a provider
+ * now fails here until its key is marked.
+ */
+check("every provider key the chain can hold is marked in the credential canary", () => {
+  const chain = read(join("lib", "tutor", "provider.ts"));
+  const listed = chain.match(/export const PROVIDER_KEY_ENV = \[([\s\S]*?)\] as const;/);
+  assert.ok(listed, "PROVIDER_KEY_ENV is not where this check expects it");
+  const keys = [...listed![1]!.matchAll(/"([A-Z_]+)"/g)].map((m) => m[1]!);
+  assert.ok(keys.length >= 3, `only ${keys.length} provider keys found, so this check stopped looking`);
+
+  const ci = read(join(".github", "workflows", "ci.yml"));
+  for (const key of keys) {
+    assert.match(
+      ci,
+      new RegExp(`^\\s*${key}: .*canary-${key}-must-not-ship`, "m"),
+      `${key} is in PROVIDER_KEY_ENV and is not marked in the CI credential canary, ` +
+      "so a build that leaked it into the client bundle would pass the grep.",
+    );
+  }
+
+  /*
+    And the marker carries the variable's name. Every one of them used to be
+    the same string, so a failure could say that something had leaked and not
+    which: on the one check whose whole job is naming a leak.
+  */
+  const assigned = [...ci.matchAll(/^\s*([A-Z_]+): .*canary-([A-Z_]+)-must-not-ship/gm)];
+  const mismatched = assigned.filter(([, variable, marker]) => variable !== marker);
+  assert.deepEqual(
+    mismatched.map(([, v, m]) => `${v} is marked canary-${m}`), [],
+    "a variable's canary marker does not carry its own name, so a failure cannot say which leaked",
+  );
+  assert.ok(assigned.length >= 10, `only ${assigned.length} variables are marked, so this stopped looking`);
+});
+
 check("no ledger write is left to a promise the platform may drop", () => {
   const roots = ["app", "lib"];
   const files: string[] = [];
