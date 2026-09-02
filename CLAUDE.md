@@ -1057,6 +1057,47 @@ a case card apiece would be eight hundred cards for one press. The invariant tha
 name `addUnitsToDeck` and read its body; it counts inserts now, so a fifth caller fails it whatever it
 is called, which is what the refactor itself demonstrated by silently emptying the old check.
 
+**Reading a list of words and working through one are two different things, so they are two
+screens.** `/dictionary/common` is the four lists as lists: what is on them, in order, with a button
+that collects a hundred words cheaply. `/review/common` is what to do with them, which is a round per
+list, and `/practice` carries the four as buttons on a card under Flash cards because that is the
+screen somebody is on when they want one. The round is not a fifth card runner: it renders
+`ReviewSession`, fills it with `withChoices`, picks its cards with `leastPractisedSlot` and grades
+through `gradeCard` like every other mode (ADR-016), so it differs from Flash cards in its `where`
+clause and in nothing else.
+
+**Asking a word in a different form each time only works if the word has the cards to be asked
+with.** The dictionary's button builds a recognition card and a production card, which is the right
+trade for collecting a hundred words and is a round that can only ever ask what a word means.
+`deepenCommonWords` is the other half: it plans `CARD_TYPES` entire and lets `generateCards` decide
+what each word can actually build, so twenty nouns arrive with their cases and twenty verbs with
+their persons and their government, and an adverb arrives with the two it supports and no more. It
+names no card type of its own, which is what makes it proof against the `objekt` fault: a unit
+cannot ask for a card its words cannot make if it never names one. Measured on the shipped
+dictionary at 183 cards for twenty nouns and 223 for twenty verbs.
+
+**And it is twenty at a time, because a hundred nouns built out is over a thousand cards for one
+press.** That is the backlog first run already learned not to assemble by accident, and
+`nextCommonBatch` is the bound. A word counts as finished when every type `availableCardTypes` says
+it could support has a card behind it, which is what makes pressing twice progress rather than
+stall: a word holding only the dictionary button's pair comes back and is deepened, while `ei`,
+which can never make more than two, is finished at two and drops out. Counting rows instead would
+leave it at the front of the queue for ever.
+
+**No render writes cards, and this is the one that would have been invisible.** `PrefetchLink`
+fetches a whole page once a pointer has settled on a link for 90ms, so a round that topped the deck
+up while rendering would build somebody twenty words for hovering over the button, and no browser
+suite would ever see it because a suite clicks. The add is a Server Action behind a press, the two
+round screens may not reach a deck write at all, and that is asserted rather than remembered.
+
+**And what a list is called is one table.** `lib/collections/commonGroups.ts` holds the four titles,
+the four lines and the four slugs, because four screens print them now and it was two maps inside
+one client component. The invariant is that the label appears exactly once in the tree, since a
+screen that imports the table and then writes its own heading beside it satisfies any check that
+only looks for the import. It reads `code()` rather than `read()`, which took one go to learn: the
+comment in `CommonWords.tsx` explaining why the label moved out of that file names the label to do
+it, which is the oldest recurring mistake in this repository's own checks, made for the fifth time.
+
 **The seasonal row names units of the course, never words of its own.** `lib/collections/topical.ts`
 is a calendar of Estonia's year, and every window in it names unit ids from
 `lib/collections/syllabus/`; the words come out of the course, where a lemma is already a request

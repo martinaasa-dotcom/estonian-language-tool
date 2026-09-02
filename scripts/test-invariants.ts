@@ -7326,6 +7326,94 @@ check("the commonest words are counted, gated, and never written down twice", ()
   );
 });
 
+check("a frequency list is named once, asked one way, and never built by a render", () => {
+  /*
+    THE FOUR LISTS ARE NOW TWO SCREENS AND A ROUND, AND EACH IS A WAY OF
+    GETTING THIS WRONG.
+
+    ONE TABLE OF WHAT A LIST IS CALLED. `TITLE` and `BLURB` were two maps
+    inside `CommonWords.tsx`, which was right while one screen printed them.
+    Four do now: the dictionary's lists, the card on `/practice`, the round
+    index and the round itself. A second copy is how "Describing words"
+    becomes "Adjectives" on one screen out of four, which is the fault
+    `lib/ux/modes.ts` and `lib/ux/nav.ts` each exist to prevent and which this
+    app has fixed four times. Anchored on the label appearing exactly once in
+    the tree, because a screen that imports the table and then writes its own
+    heading beside it satisfies any check that only looks for the import.
+
+    ONE ANSWER TO WHICH CARD OF A WORD TO ASK. `leastPractisedSlot` is the
+    variety half of mastery: the slot the learner has been asked in least. Two
+    routes render the Flash cards session now, the whole deck and one
+    frequency list, and a second copy of that rule is two answers to "what
+    should this word be asked as" that drift apart a tie break at a time.
+
+    THE DEEPENING NAMES NO CARD TYPE. `deepenCommonWords` plans `CARD_TYPES`
+    entire and lets `generateCards` decide what each word can build, so it
+    cannot ask for a card its own words cannot make, which is the `objekt`
+    fault. A hand-typed list here would be a fifth place the seven are written
+    down, and would go stale the day an eighth arrives.
+
+    AND IT IS BOUNDED. A hundred nouns built out into every case is well over
+    a thousand cards for one press, which is the backlog first run already
+    learned not to assemble by accident. `nextCommonBatch` is the bound.
+
+    AND NO RENDER WRITES CARDS. This is the one that would be invisible.
+    `PrefetchLink` fetches a whole page once a pointer has settled on a link
+    for 90ms, so a round that topped the deck up while rendering would build
+    somebody twenty words for hovering over the button, and the browser suites
+    would never see it because they click. The add is a Server Action behind a
+    press, and these two pages may not reach a deck write at all.
+  */
+  const label = "Describing words";
+  // `code()`, not `read()`: this is the oldest recurring mistake in this
+  // repository's own checks, and the comment in `CommonWords.tsx` explaining
+  // why the label moved out of that file names the label to do it.
+  const naming = [...APP, ...LIB, ...COMPONENTS].filter((f) => code(f).includes(label));
+  assert.deepEqual(
+    naming, ["lib/collections/commonGroups.ts"],
+    `"${label}" is written down somewhere other than the one table of what a list is called`,
+  );
+
+  const rounds = [
+    "app/(app)/review/flashcards/page.tsx",
+    "app/(app)/review/common/[group]/page.tsx",
+  ];
+  for (const file of rounds) {
+    const source = code(file);
+    assert.match(
+      source, /leastPractisedSlot\(/,
+      `${file} no longer asks lib/srs/mastery.ts which card of a word to put up`,
+    );
+    assert.doesNotMatch(
+      source, /function leastPractised/,
+      `${file} has grown its own copy of the slot rule, which is two answers to one question`,
+    );
+  }
+
+  const deepen = /export async function deepenCommonWords\(([\s\S]*?)\n\}/
+    .exec(code("app/actions.ts"))?.[1] ?? "";
+  assert.ok(deepen, "deepenCommonWords has gone, or changed shape past recognition");
+  assert.match(
+    deepen, /FREQUENCY_GROUPS\.includes\(/,
+    "deepenCommonWords no longer checks its argument against the closed list of groups",
+  );
+  assert.match(
+    deepen, /CARD_TYPES\.map\(/,
+    "deepenCommonWords names card types of its own rather than planning the one table of them",
+  );
+  assert.match(
+    deepen, /nextCommonBatch\(/,
+    "deepenCommonWords stopped bounding what one press builds",
+  );
+
+  for (const file of [...rounds.slice(1), "app/(app)/review/common/page.tsx"]) {
+    assert.doesNotMatch(
+      code(file), /addPlanToDeck|deepenCommonWords|addCommonWords|card\.createMany/,
+      `${file} writes to the deck while rendering, and a settled pointer is enough to fetch it`,
+    );
+  }
+});
+
 check("the word of the day reads the learner's level, and reads it in the right place", () => {
   /*
     A B1 account was taught `keskmine`, an A1 adjective meaning "average". That

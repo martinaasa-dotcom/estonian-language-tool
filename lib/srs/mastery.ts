@@ -154,3 +154,51 @@ export const MASTERY_LABEL: Record<Mastery, string> = {
  * to act on. Mastered is last and is the one you read for the pleasure of it.
  */
 export const MASTERY_ORDER: readonly Mastery[] = ["struggling", "almost", "learning", "mastered"];
+
+/**
+ * ONE CARD PER WORD, IN THE SLOT THE LEARNER HAS PRACTISED LEAST.
+ *
+ * The half of "asked in a way you have not" that a query cannot express. A word
+ * short of `MASTERY_SLOTS` has room in some slot it has not been asked in, and
+ * this cannot see *which* from a verdict alone, so it works the other way
+ * round: walk the cards in the order the caller asked for them, keep the first
+ * card of each word, and let a later card take that place only when it opens a
+ * slot the word has not been asked in yet.
+ *
+ * The caller's order is the whole of the tie break, which is why it takes the
+ * rows already sorted rather than sorting them itself: both callers ask for
+ * `lapses` first, so among cards of equal novelty the one that keeps going
+ * wrong leads.
+ *
+ * An untyped `targetCase` (a recognition or a production card) is one shared
+ * slot, exactly as `masteryOf` counts it, so the round and the verdict cannot
+ * disagree about what variety means.
+ *
+ * Generic over the row rather than typed to Prisma's, because `lib/srs/` is
+ * pure and both callers hand in a different select. Two routes render the Flash
+ * cards session now, the whole deck and one frequency list, and a second copy
+ * of this is two answers to "what should this word be asked as" that drift.
+ */
+export function leastPractisedSlot<
+  T extends { lexemeId: string | null; targetCase: string | null },
+>(cards: readonly T[], wanted: ReadonlySet<string>): T[] {
+  const chosen = new Map<string, T>();
+  const slotsSeen = new Map<string, Set<string>>();
+
+  for (const card of cards) {
+    const lexemeId = card.lexemeId;
+    if (!lexemeId || !wanted.has(lexemeId)) continue;
+
+    const slot = card.targetCase ?? "";
+    const seen = slotsSeen.get(lexemeId) ?? new Set<string>();
+    const held = chosen.get(lexemeId);
+
+    if (!held || !seen.has(slot)) {
+      if (!held) chosen.set(lexemeId, card);
+      else if (seen.size < MASTERY_SLOTS) chosen.set(lexemeId, card);
+    }
+    seen.add(slot);
+    slotsSeen.set(lexemeId, seen);
+  }
+  return [...chosen.values()];
+}
