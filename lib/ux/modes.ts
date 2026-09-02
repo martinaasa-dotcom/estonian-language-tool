@@ -91,7 +91,7 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       the reason Flash cards is: six rounds, six hues, and a seventh tile would
       have to borrow one and read as a duplicate.
     */
-    href: "/quest", title: "Daily quest", subtitle: "Two minutes, your weak spots",
+    href: "/quest", title: "Daily quest", subtitle: "Your weak spots",
     icon: "Target", tone: "accent", group: "targeted", note: "From your log",
     within: "/",
     blurb:
@@ -231,6 +231,19 @@ export const FIRST_DOORS = ["/review/match", "/review/listening"]
  * which is the other way of bringing your own text in.
  */
 export const TARGETED_MODES = PRACTICE_MODES.filter((m) => m.within);
+
+/**
+ * The rounds that are reached from `/practice` but are not one of its six.
+ *
+ * Flash cards is its headline card and the two games sit under a heading of
+ * their own. Read from the table rather than listed on that page, so a game
+ * added here appears without anybody remembering to edit a second file: both
+ * games shipped claiming to be reached from `/practice` while nothing there
+ * linked to them, which made them unfindable outside the command palette.
+ */
+export const GAMES = PRACTICE_MODES.filter(
+  (m) => m.within === "/practice" && m.href !== "/review/flashcards",
+);
 
 /** Whichever mode drills a given thing, for the page that names it. */
 export function modeAt(href: string): PracticeMode | undefined {

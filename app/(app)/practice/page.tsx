@@ -10,7 +10,7 @@ import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
-import { QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
+import { GAMES, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { WeakestCases } from "@/components/WeakestCases";
@@ -162,6 +162,31 @@ export default async function PracticePage() {
               ))}
             </div>
           </section>
+
+          {/*
+            THE GAMES, WHICH ARE ROUNDS THAT ARE NOT ABOUT THE SCHEDULE.
+
+            Drawn from the table rather than listed here, so a game added to
+            `lib/ux/modes.ts` with `within: "/practice"` appears without anybody
+            remembering this file. That is not tidiness: Picture match and Target
+            shipped claiming to be reached from here while nothing here linked to
+            them, so both were unfindable outside the command palette, and
+            `nav.test.ts` is what said so.
+
+            A section of their own rather than seven tiles in the grid above,
+            because the six rounds are six hues and a seventh would have to
+            borrow one and read as a duplicate of whichever it took.
+          */}
+          {GAMES.length > 0 && (
+            <section>
+              <SectionTitle hint="for the fun of it">Games</SectionTitle>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {GAMES.map((m) => (
+                  <ModeTile key={m.href} mode={m} meta={metaFor(m)} />
+                ))}
+              </div>
+            </section>
+          )}
 
           <section>
             <SectionTitle hint="an afternoon, not five minutes">Sit the paper</SectionTitle>

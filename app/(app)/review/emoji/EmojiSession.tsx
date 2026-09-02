@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Timer, Trophy } from "lucide-react";
+import { Grid2x2, Timer, Trophy } from "lucide-react";
 import { ButtonLink, Button } from "@/components/Button";
 import { Chip, Page, StatTile } from "@/components/ui";
 import { Speak } from "@/components/Speak";
@@ -119,7 +119,17 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
     return (
       <Page title="Picture match" lead="Match the picture to the Estonian, ending and all.">
         <div className="mx-auto flex max-w-md flex-col items-center gap-5 text-center">
-          <p className="text-5xl" aria-hidden>🏠 🐕 🍎</p>
+          {/*
+            An icon rather than three emoji. The voice sweep bans pictographic
+            emoji in copy and is right to: this one is decoration, and the
+            pictures this round is actually about arrive from the dictionary as
+            data. Excusing the whole component would have excused those literals
+            too, for a line that says nothing the sentence below it does not.
+          */}
+          <span className="flex h-20 w-20 items-center justify-center rounded-full quest-pulse"
+            style={{ background: "var(--mint-soft)", color: "var(--mint-ink)" }}>
+            <Grid2x2 size={34} aria-hidden />
+          </span>
           <p className="max-w-[42ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
             No English on the board. The picture is the meaning, so the Estonian
             side can be a case form: match <span lang="et" className="font-semibold">majas</span>{" "}
