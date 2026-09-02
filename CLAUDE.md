@@ -282,8 +282,13 @@ prompt. The fix is the illative's: every answer on the back, joined with the sep
 `acceptedAnswers` splits on, so what the screen shows and what the marker takes are one string.
 `lib/collections/senses.ts` is the rule, `lib/dict/facts.ts` caches which words share a prompt
 because that is a fact about the shared dictionary, and `lib/srs/deck.ts` reads it once per build
-rather than once per word. It does **not** repair a card already in a deck, which is a migration
-over owner-scoped rows and its own change.
+rather than once per word. `repairProductionBacks` in `prisma/repair.ts` widens the cards already in a
+deck, because fixing the builder alone would reach new learners and nobody else. It runs where
+`applyPosCorrections` runs and for the same reason, before the `--only-if-empty` early return, since
+a card built the old way only exists on a database that was already seeded. It may touch the back
+and nothing else, never a scheduling column; it only ever widens, so the answer the card had stays
+first; and its guard is `back = lemma`, which is the signature of a card built before the fix, so a
+second run matches nothing.
 
 Ekilex's definition is the **diagnosis** rather than the trigger, and half of what it diagnoses is
 worse than a synonym pair: where the Institute gives two definitions, the gloss is not describing

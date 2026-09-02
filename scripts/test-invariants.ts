@@ -1192,6 +1192,61 @@ check("a screen built from a list of lemmas shows one entry per lemma", () => {
   }
 });
 
+check("there is one assembly of the shipped dictionary", () => {
+  /*
+    `prisma/seed.ts` reads six files and writes them into `Lexeme` under a
+    conflict key of `(lemma, pos)`, keeping the first writer. A script that
+    wants to measure or audit what shipped has to read the same six and dedupe
+    the same way, or its numbers describe a dictionary nobody has.
+
+    `scripts/measure-scenes.ts` grew one copy of that and did not dedupe, so a
+    word in both the hand-checked seed and the course harvest was counted twice
+    and its sentences with it: the corpus read 15,920 attested lines where it
+    has 13,683, and the entry count read 7,127 where `SEED_SET_SIZE` says 6,083.
+    Nothing was wrong with the conclusions and every absolute figure was.
+    `scripts/audit-senses.ts` was about to be the second copy.
+
+    So the assembly lives in `scripts/lib/dictionary.ts` and the check is that
+    nothing else builds one. The seed itself is the exception it has to be: it
+    is the thing being described, it writes rows rather than reading them, and
+    it computes gradation on the way.
+  */
+  const HOME = "scripts/lib/dictionary.ts";
+  assert.ok(existsSync(HOME), `the one assembly has gone from ${HOME}`);
+
+  // Reading one of these is ordinary. Reading several is assembling the seed.
+  const sources = [
+    /prisma\/data\/nouns/, /prisma\/data\/verbs/, /prisma\/data\/other/,
+    /prisma\/data\/advanced/, /prisma\/data\/harvested/, /prisma\/data\/expanded/,
+  ];
+  /*
+    Two exceptions and both have to be exceptions.
+
+    `prisma/seed.ts` is the thing being described: it writes rows rather than
+    reading them, and it computes gradation on the way.
+
+    `lib/collections/seedSize.test.ts` is the independent count that
+    `SEED_SET_SIZE` is checked against, and independence is the whole of its
+    value. A counter that read the shared assembly could not catch the shared
+    assembly being wrong, which is exactly the fault that made this check
+    necessary. It compares its own total against `shippedDictionary()` instead,
+    so the two are pinned to each other without either one trusting the other.
+  */
+  const allowed = new Set([HOME, "prisma/seed.ts", "lib/collections/seedSize.test.ts"]);
+
+  const copies: string[] = [];
+  for (const file of [...LIB, ...APP, ...sourceFiles("scripts")]) {
+    if (allowed.has(file)) continue;
+    const src = code(file);
+    if (sources.filter((pattern) => pattern.test(src)).length > 2) copies.push(file);
+  }
+  assert.deepEqual(
+    copies, [],
+    "these assemble the shipped dictionary out of the seed's own data files. There is one, in "
+    + `${HOME}, and two of them disagree about how big the dictionary is.`,
+  );
+});
+
 check("there is one shuffle, and the sort-comparator kind is not a shuffle at all", () => {
   /*
     There were ten, in three implementations. Four in `app/` were Fisher-Yates

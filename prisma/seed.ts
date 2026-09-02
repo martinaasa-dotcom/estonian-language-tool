@@ -6,6 +6,7 @@ import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "./data/adva
 import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
 import { applyPosCorrections, writeExpanded } from "./expanded";
+import { repairProductionBacks } from "./repair";
 import { ensureSearchIndexes } from "./indexes";
 import { classifyGradation, classifyVerbGradation, gradates } from "../lib/estonian/gradation";
 import { courseWords } from "../lib/collections/syllabus/index";
@@ -44,6 +45,21 @@ async function main() {
   const relabelled = await applyPosCorrections(prisma);
   if (relabelled > 0) {
     console.log(`Corrected the part of speech on ${relabelled} entries.`);
+  }
+
+  /*
+    And the cards built before the dictionary knew a prompt had two answers.
+
+    Here for the reason the correction above is here, and after it because
+    `pos` is half of what a prompt is. A production card built the old way
+    carries one lemma on its back and marks the other right answer wrong every
+    time a learner types it; nothing rewrites a `Card` row, so the fix in
+    `lib/srs/cards.ts` reaches new cards only. This widens the old ones and
+    touches no scheduling column at all.
+  */
+  const widened = await repairProductionBacks(prisma);
+  if (widened > 0) {
+    console.log(`Widened ${widened} production cards whose prompt has more than one answer.`);
   }
 
   if (process.argv.includes("--only-if-empty")) {

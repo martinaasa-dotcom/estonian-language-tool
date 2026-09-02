@@ -7,6 +7,7 @@ import { VERBS } from "@/prisma/data/verbs";
 import { ADJECTIVES, PHRASES } from "@/prisma/data/other";
 import { ADVANCED_ADJECTIVES, ADVANCED_NOUNS, ADVANCED_VERBS } from "@/prisma/data/advanced";
 import { HARVESTED } from "@/prisma/data/harvested";
+import { shippedDictionary } from "@/scripts/lib/dictionary";
 
 /**
  * The seed is read here the way `prisma/seed.ts` reads it: the hand-typed
@@ -51,5 +52,23 @@ function countSeed(): { words: number; forms: number } {
 describe("the built-in dictionary's stated size", () => {
   it("is the size a fresh seed actually loads", () => {
     expect(countSeed()).toEqual(SEED_SET_SIZE);
+  });
+
+  /*
+    And the assembly the scripts share agrees with the count above.
+
+    `scripts/lib/dictionary.ts` reads the same six files for `measure-scenes`
+    and `audit-senses`, and the first version of that reading did not dedupe on
+    `(lemma, pos)` the way the seed does, so a word in two files was counted
+    twice: the measurement reported 7,127 entries where the dictionary has
+    6,083. Nothing caught it, because nothing compared the two.
+
+    This is the comparison, and it is worth having in both directions: the
+    counter above stays independent, so it can catch the assembly being wrong,
+    and the assembly is pinned here, so it cannot drift from the number the
+    landing page prints.
+  */
+  it("is the size the assembly the scripts share reports", () => {
+    expect(shippedDictionary().length).toBe(SEED_SET_SIZE.words);
   });
 });

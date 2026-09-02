@@ -1196,10 +1196,28 @@ the rule a deck build is already held to. `LexemeForCards.alsoAccepted` is optio
 has not looked builds the card that was built before, rather than silently claiming a word has no
 synonym.
 
-The one thing this does not do is repair a card already in somebody's deck. A `Card` row holds its
-own back and nothing rewrites it, so a learner who added `defineerima` last month keeps the card
-that marks `määratlema` wrong until it is rebuilt. That is a data migration over owner-scoped rows
-and it deserves its own change rather than a rider on this one.
+### And the cards already in a deck
+
+Fixing the builder fixes the cards it builds and does nothing for the ones already written, because
+a `Card` row carries its own back and nothing rewrites it: a learner who added `defineerima` before
+this kept a card that marks `määratlema` wrong and drills it every time they get it right. A fix
+that only reaches new learners is half a fix.
+
+`repairProductionBacks` in `prisma/repair.ts` is the other half, and it runs where
+`applyPosCorrections` runs and for the same stated reason: before the `--only-if-empty` early
+return, because a card built the old way only exists on a database that was already seeded, which is
+exactly the case that check skips. After the part-of-speech corrections, because `pos` is half of
+what a prompt is.
+
+Three things bound it. It may touch the **back and nothing else**, never `due`, `stability`, `reps`
+or `lapses`, because a repair that reset somebody's progress would cost more than the bug it fixes.
+It only ever **widens**: the answer the card already had stays first and the others join it. And its
+guard is `back = lemma`, which is the signature of a card built before the fix, so a card already
+carrying a set is left alone and a second run matches nothing.
+
+`prisma/repair.itest.ts` is against a real database, because every claim there is a claim about
+rows, and the one that would hurt is the scheduling: a raw `UPDATE` is exactly the shape that
+quietly touches more than it says.
 
 ### And half of them are not synonyms at all
 
