@@ -306,6 +306,25 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   const { voice } = useAudioPrefs();
   const sound = useFeedbackSound();
 
+  /*
+    HOW MANY IN A ROW, WHICH IS WHAT THE RIGHT SOUND CLIMBS WITH.
+
+    The two-note chime was the same every time, so the tenth card you got right
+    sounded exactly like the first and a session had no shape to it. A run that
+    goes up says what a counter would say and says it while you are already
+    reading the next card, which is the one thing sound is better at than a
+    number on a screen.
+
+    A ref rather than state: nothing on the screen reads it, so putting it in
+    state would re-render the card to change a frequency. Undo puts it back to
+    nothing, because taking an answer back is not a run continuing.
+  */
+  const run = useRef(0);
+  const cheer = useCallback((right: boolean) => {
+    run.current = right ? run.current + 1 : 0;
+    sound(right ? "right" : "wrong", run.current);
+  }, [sound]);
+
   const card = queue[index];
   const finished = !card;
   const ask = card ? askFor(card, mode, met) : "flip";
@@ -493,6 +512,8 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
       setDone((d) => Math.max(0, d - 1));
       setXp((x) => Math.max(0, x - xpForRating(last.rating)));
       if (last.rating >= 3) setCorrect((c) => Math.max(0, c - 1));
+      // Taking an answer back is not a run continuing.
+      run.current = 0;
       setQueue((q) => {
         // The card may have been requeued by an "Again"; find it wherever it is.
         const without = q.filter((c) => c.id !== last.cardId);
@@ -512,7 +533,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     const result = checkAnswer(typed, card.back, language);
     setVerdict(result);
     setRevealed(true);
-    sound(countsAsRecalled(result.verdict) ? "right" : "wrong");
+    cheer(countsAsRecalled(result.verdict));
     if (result.verdict === "wrong" && typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate?.(60);
     }
@@ -524,21 +545,21 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
     if (result.verdict === "correct") {
       window.setTimeout(() => void submit(result.suggestedRating), 420);
     }
-  }, [card, typed, verdict, submit, sound]);
+  }, [card, typed, verdict, submit, cheer]);
 
   const pickChoice = useCallback((choice: string) => {
     if (!card || chosen) return;
     setChosen(choice);
     setRevealed(true);
     const right = choice === card.back;
-    sound(right ? "right" : "wrong");
+    cheer(right);
     if (!right && typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(60);
     if (right) {
       // Right answers move on by themselves: multiple choice is the fast mode,
       // and a confirmation click on every correct card halves the throughput.
       window.setTimeout(() => void submit(3), 420);
     }
-  }, [card, chosen, submit, sound]);
+  }, [card, chosen, submit, cheer]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

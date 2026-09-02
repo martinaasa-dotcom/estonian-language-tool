@@ -1,3 +1,5 @@
+import { dictionaryLemmas } from "@/lib/dict/facts";
+import { soundAlike } from "@/lib/estonian/sounds";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { searchLexemes } from "@/lib/dict/search";
@@ -49,6 +51,23 @@ export default async function DictionaryPage({
       fetched = true;
     }
   }
+
+  /*
+    STILL NOTHING, SO ASK WHAT THEY MIGHT HAVE HEARD.
+
+    A search that found nothing is the commonest dead end in the app, and every
+    way out of it so far assumes the learner can spell the word: add it
+    yourself, or report it missing. Nobody here has only read these words.
+    Somebody who heard `poiss` writes "pois", somebody who heard `padi` writes
+    "pati", and the search folds diacritics and case endings and has nothing to
+    say about either.
+
+    Over the lemma list `lib/dict/facts.ts` already keeps in memory, so it is
+    no query at all, and only on the path where the answer was going to be a
+    dead end. See `lib/estonian/sounds.ts` for which confusions it forgives and
+    which it deliberately does not.
+  */
+  const heard = hits.length === 0 && q ? soundAlike(q, await dictionaryLemmas()) : [];
 
   // Open the first hit straight away — searching a word and then having to click it
   // again is a wasted step when you already know what you looked up. Unless the
@@ -109,6 +128,7 @@ export default async function DictionaryPage({
         justFetched={fetched}
         initialQuery={q}
         hits={hits}
+        heard={heard}
         openedId={opened?.id ?? null}
         entry={entry}
         matchedAs={matchedAs}

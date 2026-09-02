@@ -66,12 +66,19 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan,
+  initialQuery, hits, heard, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan,
 }: {
   initialQuery: string;
   /** True when this word was pulled from Ekilex on this request. */
   justFetched?: boolean;
   hits: SearchHit[];
+  /**
+   * Words that sound like the query, when nothing matched it.
+   *
+   * Empty on every path but the dead end, because that is the only screen it
+   * has anything to say on. See `lib/estonian/sounds.ts`.
+   */
+  heard: string[];
   /**
    * Which of the hits is the one on screen. Usually the first, and not when a
    * link asked for another entry of the same lemma by name.
@@ -238,6 +245,38 @@ export function DictionaryClient({
             title={`Nothing found for "${initialQuery}"`}
             body="The built-in dictionary covers common words to B2. Add this one with its genitive."
           />
+          {/*
+            WHAT THEY MIGHT HAVE HEARD, BEFORE ANYTHING ELSE ON THIS SCREEN.
+
+            Every other way out of this dead end assumes the learner can spell
+            the word. Nobody using this app has only read these words: somebody
+            who heard `poiss` writes "pois" and somebody who heard `padi`
+            writes "pati", and the search folds diacritics and case endings and
+            has nothing to say about either. It leads because it is the only
+            one that might mean they are not at a dead end at all.
+          */}
+          {heard.length > 0 && (
+            <Card>
+              <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                If you heard it rather than read it, Estonian writes some sounds two ways.
+                One of these might be it.
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {heard.map((lemma) => (
+                  <li key={lemma}>
+                    <Link
+                      href={`/dictionary?q=${encodeURIComponent(lemma)}`}
+                      lang="et"
+                      className="press inline-flex items-center rounded-full px-3.5 py-2 text-base font-semibold transition-ui hover:-translate-y-px"
+                      style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                    >
+                      {lemma}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           <AddWord initialLemma={initialQuery} />
           {/*
             A search that found nothing is the commonest dead end in the app,

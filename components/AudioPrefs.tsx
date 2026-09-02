@@ -28,8 +28,14 @@ const Context = createContext<AudioPrefs>({
 
 export const useAudioPrefs = () => useContext(Context);
 
-/** A right or wrong sound, if the learner wants them. Stable across renders. */
-export function useFeedbackSound(): (kind: Feedback) => void {
+/**
+ * A right or wrong sound, if the learner wants them. Stable across renders.
+ *
+ * The second argument is how many right answers are in a row, counting this
+ * one, which the right sound climbs with. Optional, so a caller that is not
+ * counting keeps the sound the app has always made.
+ */
+export function useFeedbackSound(): (kind: Feedback, streak?: number) => void {
   const { sounds } = useAudioPrefs();
   return sounds === "on" ? playFeedback : SILENT;
 }
