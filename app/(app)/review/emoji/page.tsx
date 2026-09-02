@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { shuffle } from "@/lib/random/shuffle";
-import { emojiFor } from "@/lib/collections/emoji";
+import { EMOJI_LEMMAS, emojiFor } from "@/lib/collections/emoji";
+import { oneEntryPerLemma } from "@/lib/dict/search";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
 import { grammarTerm } from "@/lib/estonian/terms";
@@ -120,21 +121,38 @@ export default async function EmojiPage() {
 
   /*
     Topped up from the dictionary at the learner's level, one band either side,
-    which is the table every other screen bands by. Ordered because this is a
-    `take`: past the cap, which words can appear would otherwise be the query
-    plan's answer rather than this one.
+    which is the table every other screen bands by.
+
+    ASKED FOR BY NAME RATHER THAN SIFTED FOR. This read the first 480 graded
+    nouns in the band, every form on each, and then dropped the ones with no
+    picture, which is 480 rows fetched to use six and, worse, always the same
+    480: the order is the band and then the alphabet, so at B1 the 47 pictured
+    nouns at the front were the whole game and the other 126 in the band could
+    not come up. `EMOJI_LEMMAS` is the 313 words that have one, so the band
+    narrows a list that is already small and every pictured noun in it is
+    reachable. That list is the bound, which is why there is no `take` here to
+    say where to cut: there is nothing to cut.
   */
   if (pairs.length < PAIRS) {
-    const rows = await prisma.lexeme.findMany({
+    const wanted = EMOJI_LEMMAS.filter((l) => !usedLemmas.has(l));
+    const found = await prisma.lexeme.findMany({
       where: {
         pos: "NOUN",
         cefr: { in: [...bandsAround(level)] },
-        lemma: { notIn: [...usedLemmas] },
+        lemma: { in: wanted },
       },
       orderBy: [{ cefr: "asc" }, { lemma: "asc" }, { id: "asc" }],
-      take: POOL * 4,
       include: { forms: { select: { formType: true, morphCode: true, value: true } } },
     });
+
+    /*
+      One entry per lemma, because `@@unique` is on `(lemma, pos)` and a noun
+      can still be two rows: a word confirmed off a photograph sits beside the
+      seeded one, with no forms behind it. `usedLemmas` would keep the second
+      off the board, but only after the shuffle had already decided which of
+      the two the learner gets, and the empty one answers nothing.
+    */
+    const rows = oneEntryPerLemma(found, wanted);
 
     /*
       Cases that decline and are worth asking. The three principal parts are
@@ -144,7 +162,7 @@ export default async function EmojiPage() {
     */
     const askable = CASES.filter((c) => !c.principal);
 
-    for (const row of shuffle(rows.filter((r) => emojiFor(r.lemma)))) {
+    for (const row of shuffle(rows)) {
       if (pairs.length === PAIRS) break;
       const emoji = emojiFor(row.lemma)!;
       if (usedLemmas.has(row.lemma) || usedEmoji.has(emoji)) continue;

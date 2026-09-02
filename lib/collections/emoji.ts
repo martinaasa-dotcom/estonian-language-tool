@@ -333,3 +333,20 @@ export function emojiFor(lemma: string): string | undefined {
 
 /** How many words carry a picture, for a screen that has to say when it cannot fill a round. */
 export const EMOJI_WORD_COUNT = 313;
+
+/**
+ * THE WORDS THAT HAVE ONE, SO A QUERY CAN ASK FOR THEM RATHER THAN SIFT FOR THEM.
+ *
+ * `/review/emoji` needs six nouns with a picture and used to read the first 480
+ * graded nouns in the band, forms and all, and then throw away the ones with no
+ * picture. Two things came of that. It fetched 480 rows with every form on each
+ * to use six, and the 480 were the alphabetical front of the lowest band, so at
+ * B1 the same 47 of the 173 pictured nouns in the band could ever appear and
+ * the other 126 could not, on a board whose whole promise is that it is worth
+ * playing again. It is the fault the dictionary's suggestion row had, which is
+ * why `aberratsioon` was the standing joke, pointed at pictures instead.
+ *
+ * The list is the bound, which is why the query it feeds takes no `take`: 313
+ * lemmas is smaller than any cap worth typing, and the band narrows it further.
+ */
+export const EMOJI_LEMMAS: readonly string[] = Object.keys(WORD_EMOJI);

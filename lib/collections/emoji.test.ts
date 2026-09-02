@@ -1,9 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { EMOJI_WORD_COUNT, WORD_EMOJI, emojiFor } from "./emoji";
+import { EMOJI_LEMMAS, EMOJI_WORD_COUNT, WORD_EMOJI, emojiFor } from "./emoji";
 
 describe("which words have a picture", () => {
   it("counts what it holds", () => {
     expect(Object.keys(WORD_EMOJI).length).toBe(EMOJI_WORD_COUNT);
+  });
+
+  /*
+    The list is what `/review/emoji` puts in its `where`, so a query asking for
+    the words that have a picture and a table saying which words those are have
+    to be the same answer. They were one answer and a filter over a window
+    before, which is how the board came to be the same 47 words at B1.
+  */
+  it("lists exactly the words it holds", () => {
+    expect(EMOJI_LEMMAS).toEqual(Object.keys(WORD_EMOJI));
+    expect(EMOJI_LEMMAS.length).toBe(EMOJI_WORD_COUNT);
+    expect(EMOJI_LEMMAS.every((l) => emojiFor(l))).toBe(true);
   });
 
   it("answers for a word it has and not for one it does not", () => {

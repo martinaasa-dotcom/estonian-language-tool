@@ -7793,6 +7793,41 @@ check("the README's dictionary size is the seed's own count", () => {
   Digits rather than words, because a count nothing can read is a count nothing
   checks, and the README already writes "6,101 words" and "44 notes" that way.
 */
+/*
+  A SCREEN THAT NEEDS ROWS CARRYING A PROPERTY ASKS FOR THEM, RATHER THAN
+  READING A WINDOW AND SIFTING IT.
+
+  The picture board needs six nouns that have a picture. It read the first 480
+  graded nouns in the band, every form on each, and dropped the ones with no
+  picture. That is 480 rows fetched to use six, and the cost that matters is
+  not the fetching: the order is the band and then the alphabet, so the window
+  is always the same words. At B1, 47 of the 173 pictured nouns in the band
+  were the whole game and the other 126 could not come up, on the one round
+  whose promise is that it is worth playing again. `lib/dict/suggest.ts` had
+  this exact shape and it is why `aberratsioon` is the standing joke in here.
+
+  Which words have a picture is a static table of 313 lemmas, so it belongs in
+  the `where` rather than in a `.filter` after the fact, and once it is there
+  the query needs no cap at all.
+*/
+check("the picture board asks the dictionary for the words that have a picture", () => {
+  const src = code(join("app", "(app)", "review", "emoji", "page.tsx"));
+  const asked = /EMOJI_LEMMAS\s*\.\s*filter\(/.exec(src);
+  assert.ok(
+    asked,
+    "the picture board no longer narrows EMOJI_LEMMAS for its query, so it is sifting a window again",
+  );
+  assert.match(
+    src.slice(asked.index),
+    /lemma:\s*\{\s*in:/,
+    "the picture board narrows the picture table and then does not select on it",
+  );
+  assert.ok(
+    !/take:\s*POOL\s*\*/.test(src),
+    "the picture board has gone back to reading a multiple of its deck window out of the dictionary",
+  );
+});
+
 check("the README's course and practice counts are the code's own", () => {
   const readme = read("README.md");
   assert.ok(SYLLABUS.length > 50, "the syllabus no longer collects its units the usual way");
