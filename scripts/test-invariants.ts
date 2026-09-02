@@ -36,7 +36,7 @@ import type { Skill } from "../lib/assessment/types";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
 import { DESTINATIONS } from "../lib/ux/nav";
-import { LADDER_CARD_TYPE, LADDER_STATES, rungOf } from "../lib/learn/ladder";
+import { rungOf } from "../lib/learn/ladder";
 import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
 import { DEMO_STEMS } from "../lib/collections/demoWords";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
