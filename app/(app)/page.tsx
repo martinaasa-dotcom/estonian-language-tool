@@ -223,10 +223,19 @@ export default async function TodayPage() {
                 {summary.goalPct}%
               </span>
             </Ring>
-            <div aria-hidden className="sm:hidden">
+            {/*
+              Shown at every width. It was `sm:hidden`, so from 640 up the card
+              carried two labelled tiles and one unlabelled circle reading
+              100%, with the meaning in an aria-label and nowhere else. Past
+              the goal it said "24 of 15 reviews", which reads as a counting
+              fault rather than as a day gone well.
+            */}
+            <div aria-hidden>
               <p className="label-xs" style={{ color: "var(--ink-3)" }}>Daily goal</p>
               <p className="tnum mt-1 text-xs" style={{ color: "var(--ink-2)" }}>
-                {summary.reviewsToday} of {summary.dailyGoal} reviews
+                {summary.reviewsToday >= summary.dailyGoal
+                  ? `Met, ${summary.reviewsToday} reviews`
+                  : `${summary.reviewsToday} of ${summary.dailyGoal} reviews`}
               </p>
             </div>
           </div>
@@ -245,10 +254,30 @@ export default async function TodayPage() {
           <ArrowRight size={17} aria-hidden />
         </ButtonLink>
       ) : (
-        <Note tone="good">
-          Caught up. Reviewing early doesn&rsquo;t help memory. Try a game below, or add new
-          words for tomorrow.
-        </Note>
+        /*
+          THE ONE CARD ON THE PAGE THAT EXISTS TO SAY WHAT TO DO NOW, SAYING IT.
+
+          With nothing due this was a sentence and no control, and it pointed
+          "below" at practice tiles that sit in the other column from `lg` up.
+          The lead above already says there is nothing due. So the note is one
+          line and the next unit is a button, which is the honest next thing on
+          a day the learner has earned.
+        */
+        <div className="flex flex-col gap-3">
+          <Note tone="good">
+            Caught up. Reviewing early does not help memory, so this is a good moment for
+            something new.
+          </Note>
+          {nextUnit ? (
+            <ButtonLink href={`/learn/${nextUnit.unit.id}/lesson`} variant="secondary" className="w-full justify-center">
+              Meet {nextUnit.unit.title} <ArrowRight size={16} aria-hidden />
+            </ButtonLink>
+          ) : (
+            <ButtonLink href="/practice" variant="secondary" className="w-full justify-center">
+              Open practice <ArrowRight size={16} aria-hidden />
+            </ButtonLink>
+          )}
+        </div>
       )}
 
       {stage === "arriving" && snapshot.totalCards > 0 && toReview > 0 && (

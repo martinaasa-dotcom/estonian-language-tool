@@ -476,7 +476,10 @@ function gapsFrom(signals: ReadinessSignals, target: ExamLevel): Feedback[] {
     if (pct < 80) {
       out.push({
         id: "vocabulary",
-        title: `${missing} words short at ${target}`,
+        // "513 words short at A1" under a B1 target read as being short of A1,
+        // which is the first sentence a nervous learner screenshots for their
+        // teacher. It is the band of the words still to meet.
+        title: `${missing} ${target} words still to meet`,
         detail: `${row.known} of ${row.available} have stuck, which is ${pct} percent. The paper draws on all of them.`,
         href: "/learn",
         cta: "Open the path",

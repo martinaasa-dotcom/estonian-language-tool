@@ -45,6 +45,8 @@ export function ExamCountdownCard({ countdown, zone, className }: {
           pct={countdown.confidence}
           size={68}
           tone={passing ? "var(--mint)" : "var(--accent)"}
+          // This card is tinted, so the ring's own default track vanishes into it.
+          track="var(--rule)"
           label={`${countdown.confidence} percent likely to pass ${countdown.band}`}
         >
           <span className="tnum text-md font-bold" style={{ color: "var(--ink)" }}>

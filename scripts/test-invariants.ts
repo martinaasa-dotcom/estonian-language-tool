@@ -4788,11 +4788,19 @@ check("a control inflated to the tap-target floor centres its own content", () =
   const floor = /@media\s*\(pointer:\s*coarse\)\s*\{[^]*?min-width:\s*2\.75rem/;
   assert.match(CSS, floor, "the 44px tap-target floor is gone from app/globals.css");
 
-  const centred = CSS.match(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/);
+  /*
+    Every block whose selector reaches an icon-only control, not merely the
+    first: the coarse-pointer floor names the same shape now, so matching the
+    first one found the floor's own declarations and reported the centring
+    rule missing while it sat ten lines below.
+  */
+  const blocks = [...CSS.matchAll(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/g)].map((m) => m[1]!);
+  assert.ok(blocks.length > 0, "nothing in app/globals.css reaches an icon-only control");
+  const centred = blocks.find((b) => b.includes("display: inline-flex"));
   assert.ok(centred, "nothing in app/globals.css centres an icon-only control's content");
   for (const declaration of ["display: inline-flex", "align-items: center", "justify-content: center"]) {
     assert.ok(
-      centred[1]!.includes(declaration),
+      centred.includes(declaration),
       `the icon-only rule no longer sets ${declaration}, so the floor's slack lands on one side`,
     );
   }

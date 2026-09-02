@@ -486,13 +486,35 @@
     already carry their own height, and a min-height on an element that
     centres its content pushes the content away from where it was drawn.
   */
+  /*
+    THE FLOOR IS FOR ANYTHING A THUMB HAS TO HIT, NOT FOR ANYTHING SPELT
+    `<button>`.
+
+    It listed the button elements, and this app reaches half its screens
+    through links: measured on Today with a coarse pointer, "Entry" was 74x29,
+    the help mark beside a case 28x28, "See the full entry" 128x19, "Change
+    the goal" 105x19. `scripts/test-mobile.mjs` measured exactly the same set
+    of selectors, so none of them had ever been flagged by the suite whose job
+    that is. A link drawn as a pill or as an icon is a control, and an inline
+    link in a paragraph gets the padding instead, because widening it to 44px
+    would open a hole in the text around it.
+  */
   @media (pointer: coarse) {
     button:not(.inline-edit),
     [role="button"]:not(.inline-edit),
     a[role="button"],
+    a.pill,
+    a[aria-label]:has(> svg:only-child),
     summary {
       min-height: 2.75rem;
       min-width: 2.75rem;
+    }
+
+    /* An inline link inside running text: taller to press, same line to read. */
+    p > a,
+    li > a,
+    span > a {
+      padding-block: 0.375rem;
     }
   }
 

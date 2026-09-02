@@ -104,7 +104,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
               {point.targetCase && (
                 <Link
                   href={`/grammar/${point.targetCase.toLowerCase()}`}
-                  className="press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
+                  className="pill press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
                 >
                   <Compass size={12} aria-hidden /> The {point.targetCase.toLowerCase()}

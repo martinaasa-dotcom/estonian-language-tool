@@ -265,7 +265,7 @@ export function StatTile({ value, label, tone = "accent", icon, hint }: {
  * which all want the same shape — a conic gradient rather than an SVG arc,
  * because it animates cheaply and needs no viewBox arithmetic.
  */
-export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "var(--accent)" }: {
+export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "var(--accent)", track = "var(--raised)" }: {
   pct: number;
   size?: number;
   thickness?: number;
@@ -273,13 +273,21 @@ export function Ring({ pct, size = 64, thickness = 6, label, children, tone = "v
   label: string;
   children?: ReactNode;
   tone?: string;
+  /**
+   * The unfilled part. `--raised` is right on the app's own ground and
+   * disappears on a tinted card: measured at 1.01 to 1.17:1 against
+   * `--accent-soft` in both themes, so a ring at two percent read as a white
+   * disc with a fleck at twelve o'clock rather than as a ring nearly empty. A
+   * card that paints itself passes the rule it is sitting on.
+   */
+  track?: string;
 }) {
   const clamped = Math.max(0, Math.min(100, pct));
   // The angle is a custom property so the fill can draw itself on arrival
   // (`.ring-fill` in globals.css); the gradient reads it, the keyframe moves it.
   const ring = {
     width: size, height: size,
-    background: `conic-gradient(${tone} var(--ring-deg), var(--raised) 0deg)`,
+    background: `conic-gradient(${tone} var(--ring-deg), ${track} 0deg)`,
     "--ring-deg": `${clamped * 3.6}deg`,
   } as CSSProperties;
   return (
