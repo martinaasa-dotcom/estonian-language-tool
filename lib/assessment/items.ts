@@ -21,6 +21,7 @@ import {
   type GlossOption,
 } from "@/lib/questions/distractors";
 import { BANDS, type Band, type ChoiceItem, type DictationItem, type Item, type SpeakItem, type WriteItem } from "./types";
+import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 
 /**
  * Turning the dictionary into a placement test.
@@ -442,6 +443,18 @@ export function explainGap(word: WordRow, gap: Gap): string {
  * wrong for being right is the one thing this file's own comment says it may
  * never do.
  */
+/**
+ * What a meaning question says after it has been answered.
+ *
+ * "film is film." was a true sentence and read as a fault, on the two question
+ * shapes that print one: thirty entries in the shipped dictionary are spelled
+ * the same in both languages. Says the fact instead, which is what the review
+ * screen and the dictionary entry now say for the same words.
+ */
+function meansLine(lemma: string, translation: string): string {
+  return sameSpelling(lemma, translation) ? SAME_SPELLING : `${lemma} is ${translation}.`;
+}
+
 export function readingItems(words: readonly WordRow[], rng: () => number): ChoiceItem[] {
   const pool = usableWords(words);
   const glosses = pool.map(glossFor);
@@ -467,7 +480,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
       estonianOptions: false,
       answer: set.answer,
       source: "dictionary",
-      because: `${word.lemma} is ${word.translation}.`,
+      because: meansLine(word.lemma, word.translation),
     });
   }
 
@@ -594,7 +607,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
       estonianOptions: false,
       answer: set.answer,
       source: "dictionary",
-      because: `${word.lemma} is ${word.translation}.`,
+      because: meansLine(word.lemma, word.translation),
     });
   }
 

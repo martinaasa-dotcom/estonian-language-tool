@@ -1293,6 +1293,13 @@ gaps taking one answer is a different exercise and the marker takes one string; 
 sentences and this costs fifteen cards. It is fixed in `buildCloze` rather than in the card builder
 because the mock exam and the level check draw their gaps from the same function.
 
+**And this corrects what is built, not what was.** A card's hint is a column on `Card`, so a deck
+assembled before these three rules keeps the hints and the cases it was given: the fix reaches every
+learner who has not started yet and nobody who has. That is deliberate rather than an oversight.
+There is no path in this app that rewrites somebody else's cards, and the one that rewrites a
+learner's own is the hand edit, which is theirs to ask for; a migration over every deck to save
+three hundred cards a learner is a larger and riskier thing than the fault it would undo.
+
 `mentions` in `lib/estonian/cloze.ts` is the one whole-word test all three read, with the boundaries
 the module already splits on rather than `\b`, which is ASCII and so does not know what õ is. After
 all three: **zero cards print their own answer**, measured the same way.
