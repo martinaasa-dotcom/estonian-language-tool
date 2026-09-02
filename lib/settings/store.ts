@@ -102,6 +102,23 @@ export const SETTING_KEYS = {
    * Ekilex rather than from anything this app or a model wrote.
    */
   glossLanguage: "glossLanguage",
+  /**
+   * Whether this learner's reviews are counted in the anonymous statistics.
+   *
+   * `/api/research` turns the review log into accuracy per grammatical case,
+   * per gradation pattern and per word, across everybody, behind a disclosure
+   * gate that publishes nothing resting on fewer than ten people. What comes
+   * out is not personal data by the time it exists, which is exactly why this
+   * setting is not consent and is not asked for at sign-up: a question nobody
+   * needs to answer should not be put to them on the way in.
+   *
+   * It exists anyway, because this app is for people whose data is the reason
+   * they are careful, and "we aggregated it, trust us" is the sentence they
+   * have heard before. A missing row means counted, which is the behaviour
+   * everybody already had, and the row is written only by somebody who went to
+   * Settings and turned it off. See lib/research/corpus.ts.
+   */
+  researchOptOut: "researchOptOut",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

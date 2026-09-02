@@ -375,6 +375,30 @@ is harmless; replacing everything is behind a typed confirmation.
 Your review history is the one thing here that cannot be recreated, grab a copy now and then, and
 try restoring it once while nothing is at stake. A backup you have never restored is a hypothesis.
 
+## What learners get wrong, counted
+
+The review log already records every exercise anybody has answered and whether they got it right,
+because the scheduler needs it. Aggregated across everybody, that is a picture of where learners of
+Estonian actually fail, by case, by stem change and by word, which is not something a textbook or a
+single classroom can measure.
+
+Set `RESEARCH_TOKEN` and `/api/research` produces it as a CSV you can send to somebody who teaches
+Estonian or studies how it is learned. Leave it unset and the route does not exist.
+
+```
+curl -H "Authorization: Bearer $RESEARCH_TOKEN" \
+     "https://your-app/api/research?format=csv" -o learner-errors.csv
+```
+
+Nothing in that file rests on fewer than ten people or fifty answers, no one person may be more than
+half of any figure, counts are rounded and head counts are given as bands. A category below the
+threshold is missing from the file rather than shown as a small number, so a gap means too little
+data and never no errors. Anyone can leave their own answers out in **Settings → Anonymous
+statistics**, and out means their rows are never read rather than subtracted afterwards.
+
+Read `docs/19-research-export.md` before sending a file to anybody. It says what the tables can and
+cannot support, which is the half that makes the rest of it worth having.
+
 ## Commands
 
 ```

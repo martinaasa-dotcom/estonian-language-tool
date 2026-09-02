@@ -36,6 +36,7 @@ import {
 } from "@/lib/settings/store";
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
+import { participationValue } from "@/lib/research/participation";
 import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
@@ -923,6 +924,26 @@ export async function setFeedbackSounds(value: string) {
   await writeSetting(ownerId, SETTING_KEYS.feedbackSounds, normalised);
   revalidatePath("/", "layout");
   return { ok: true as const, value: normalised };
+}
+
+/**
+ * Whether this learner's answers are counted in the anonymous statistics.
+ *
+ * Revalidated at the settings path rather than at the layout, because nothing
+ * outside this screen reads it: the export reads the table directly, at the
+ * moment it runs, so a change here is honoured by the next export whether or
+ * not any page has re-rendered. See lib/research/participation.ts.
+ */
+export async function setResearchParticipation(value: string) {
+  const ownerId = await requireUserId();
+  const participation = value === "out" ? "out" : "in";
+  await writeSetting(
+    ownerId,
+    SETTING_KEYS.researchOptOut,
+    participationValue(participation),
+  );
+  revalidatePath("/settings");
+  return { ok: true as const, value: participation };
 }
 
 /**

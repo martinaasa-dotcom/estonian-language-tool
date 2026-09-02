@@ -108,6 +108,12 @@ jobs:
       # them reaches the browser bundle, the grep below finds this exact
       # string, and the failure names which one leaked. This is the check
       # CLAUDE.md has always said CI does; until now nothing did.
+      #
+      # The list is hand-written and was therefore incomplete: four variables
+      # the app reads had never been marked, so a leak of any of them would
+      # have been a clean pass here. `test-invariants.ts` now reads this file
+      # and the source together and fails on a secret-shaped variable that is
+      # missing, which is what makes "every" a fact rather than an intention.
       - name: Build with marked secrets
         env:
           CI_CANARY: kodukeel-ci-canary-must-not-ship
@@ -116,8 +122,12 @@ jobs:
           OPENROUTER_API_KEY: kodukeel-ci-canary-must-not-ship
           ANTHROPIC_API_KEY: kodukeel-ci-canary-must-not-ship
           OPENAI_API_KEY: kodukeel-ci-canary-must-not-ship
+          GROQ_API_KEY: kodukeel-ci-canary-must-not-ship
+          GEMINI_API_KEY: kodukeel-ci-canary-must-not-ship
           EKILEX_API_KEY: kodukeel-ci-canary-must-not-ship
           SUPABASE_SERVICE_ROLE_KEY: kodukeel-ci-canary-must-not-ship
+          METRICS_TOKEN: kodukeel-ci-canary-must-not-ship
+          RESEARCH_TOKEN: kodukeel-ci-canary-must-not-ship
         run: npx next build
       - name: Grep the client bundle
         run: |

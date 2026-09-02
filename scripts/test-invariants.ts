@@ -36,6 +36,11 @@ import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/t
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
 import { allGlosses, occasionsFor } from "../lib/copy/almanac";
 import { glossSenses } from "../lib/dict/gloss";
+import {
+  COUNT_ROUNDING, LEARNER_BANDS, MAX_LEARNER_SHARE, MIN_LEARNERS, MIN_REVIEWS,
+} from "../lib/research/corpus";
+import { CORRECT_FROM_RATING, MATURE_STATE } from "../lib/research/sections";
+import { REVIEW_STATE } from "../lib/stats/history";
 // @ts-expect-error - plain JS, shared with the .mjs browser suites it describes.
 import { DECLARES_SUITE, NOT_IN_CI } from "./lib/suites.mjs";
 
@@ -487,10 +492,23 @@ check("nothing derived from a stem is stored", () => {
 // ── Review is append-only (ADR-014, ADR-015) ─────────────────────────────────
 
 check("no code path updates a review", () => {
-  // It is the one table whose loss is unrecoverable, and it is the input to
-  // FSRS parameter optimisation. An undo writes a compensating row.
+  /*
+    It is the one table whose loss is unrecoverable, and it is the input to
+    FSRS parameter optimisation. An undo writes a compensating row.
+
+    `code()` rather than `read()`, which is the fifth time this repository has
+    made the same mistake and the first time it was caught by a comment saying
+    the right thing: a fixture explaining in prose why it does *not* reach for
+    `review.update` to arrange a state failed this check. A rule that fires on
+    an honest explanation is a rule that gets satisfied by deleting the
+    explanation.
+
+    Tests are still in scope, unlike the deletion check below. Setting a state
+    up by editing history is exactly what must not be learned from, and a
+    fixture can always write the row it wants in the first place.
+  */
   for (const file of ALL) {
-    assert.equal(/review\.update/.test(read(file)), false, `${file} updates a review`);
+    assert.equal(/review\.update/.test(code(file)), false, `${file} updates a review`);
   }
 });
 
@@ -1787,7 +1805,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
   */
   const pure = [
     "assessment", "collections", "copy", "estonian", "exam", "gamification", "offline",
-    "random", "scan", "security", "stats", "time", "ux",
+    "random", "research", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
@@ -4431,7 +4449,7 @@ check("a truncated query in the progress layer ends on the primary key", () => {
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
     "assessment", "estonian", "gamification", "stats", "collections", "time",
-    "offline", "security", "scan", "questions", "ux", "random", "copy",
+    "offline", "security", "scan", "questions", "ux", "random", "copy", "research",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],
@@ -4609,12 +4627,19 @@ check("a route that spends something is throttled", () => {
 
     metrics  carries its own bearer token, 404s when none is configured, and is
              read by whoever runs the deployment rather than by a learner.
+    research is the same shape and the same reader, and the expensive work is
+             behind the token rather than in front of it: with no token set the
+             route 404s having read one environment variable, and with one set
+             the only caller who can reach the queries is the person who holds
+             the deployment's own secret. A per-owner bucket is also the wrong
+             instrument here, since there is no owner to resolve: the caller is
+             not a learner and `requireUserId` would have nothing to say.
     reminder is one indexed read and some string building, so a ceiling there
              would be met by a person tapping twice and by nobody else, which
              is the same argument `lib/security/actionLimits.ts` makes about
              grading a card.
   */
-  const exempt = new Set(["metrics", "reminder"]);
+  const exempt = new Set(["metrics", "reminder", "research"]);
 
   for (const file of routes) {
     const name = file.split(/[\\/]/).slice(-2, -1)[0] ?? file;
@@ -6356,6 +6381,238 @@ check("a screen that prints a derived verb form says it was derived", () => {
   ]) {
     assert.match(code(file), /\.origin\b/, `${file} prints a verb form without reading where it came from`);
   }
+});
+
+/**
+ * The anonymous research export publishes nothing that could be one person.
+ *
+ * `/api/research` is the only thing in this app whose output is meant to leave
+ * the deployment and be handed to somebody outside it. What makes that safe is
+ * a gate in `lib/research/corpus.ts`, and a gate is exactly the kind of thing
+ * that gets loosened by somebody in a hurry to make a thin deployment produce a
+ * fuller file. These four are the floors under it.
+ *
+ * Floors rather than equalities, deliberately: raising a threshold is always
+ * allowed and lowering one is the change worth stopping. Asserting today's
+ * numbers would fail on the safe direction and teach whoever hit it to edit the
+ * check.
+ */
+check("the research export's disclosure thresholds are never loosened", () => {
+  assert.ok(
+    MIN_LEARNERS >= 10,
+    `the research export would publish a figure from ${MIN_LEARNERS} people. Ten is the floor.`,
+  );
+  assert.ok(
+    MIN_REVIEWS >= 50,
+    `the research export would publish a figure resting on ${MIN_REVIEWS} answers.`,
+  );
+  assert.ok(
+    MAX_LEARNER_SHARE <= 0.5,
+    "one person may now be more than half of a published figure, which is the rule a head count alone misses",
+  );
+  assert.ok(
+    COUNT_ROUNDING >= 10,
+    "published counts are exact again, so two vintages of the file can be differenced",
+  );
+  assert.ok(
+    LEARNER_BANDS.every((band) => band.from >= MIN_LEARNERS) &&
+      LEARNER_BANDS[LEARNER_BANDS.length - 1]!.from === MIN_LEARNERS,
+    "the learner bands no longer start at the threshold, so a published cell could report a band below it",
+  );
+});
+
+/**
+ * And there is one way to make a published figure, not two.
+ *
+ * `gate` is where all three rules live, so a second place that builds an
+ * accuracy figure is a second place that has to remember them. The check reads
+ * for the construction rather than for the word: the type is written out in
+ * several places and only one of them fills it in.
+ */
+check("every figure the research export publishes was made by the gate", () => {
+  const corpus = code("lib/research/corpus.ts");
+  const built = corpus.match(/accuracyPct:\s*Math/g) ?? [];
+  assert.equal(
+    built.length,
+    1,
+    `an accuracy figure is constructed in ${built.length} places in lib/research/corpus.ts, and gate() is meant to be the only one`,
+  );
+  assert.match(
+    corpus,
+    /const all = gate\(/,
+    "buildSection stopped putting its cells through the gate",
+  );
+  assert.match(
+    corpus,
+    /const mature = gate\(cell\.mature\)/,
+    "the mature column is no longer gated on its own, so a cell can publish a rate resting on one person's answers",
+  );
+
+  const route = code("app/api/research/route.ts");
+  assert.equal(
+    /accuracyPct/.test(route),
+    false,
+    "the research route computes an accuracy of its own instead of asking the gate for one",
+  );
+});
+
+/**
+ * The export is reachable only by whoever holds the deployment's own secret.
+ *
+ * Three separate things have to hold and each is easy to lose on its own: the
+ * middleware has to let it past the learner gate, since there is no learner to
+ * resolve; the route has to then authenticate itself; and with no token
+ * configured it has to be absent rather than merely refused, because a 401
+ * advertises that a deployment has a corpus worth asking for.
+ */
+check("the research export authenticates itself and hides when unconfigured", () => {
+  const middleware = code("middleware.ts");
+  assert.match(
+    middleware,
+    /path\.startsWith\("\/api\/research"\)/,
+    "the research route is no longer past the sign-in gate, so it answers a caller with no session rather than checking its own token",
+  );
+
+  const route = code("app/api/research/route.ts");
+  assert.match(route, /process\.env\.RESEARCH_TOKEN/, "the research route stopped reading its token");
+  assert.match(
+    route,
+    /timingSafeEqual\(/,
+    "the research token is compared in a way that leaks how much of it was right",
+  );
+  assert.match(
+    route,
+    /!process\.env\.RESEARCH_TOKEN[\s\S]{0,120}status:\s*404/,
+    "an unconfigured deployment now advertises the research endpoint instead of 404ing",
+  );
+});
+
+/**
+ * Somebody who asked to be left out is left out of the query, not the answer.
+ *
+ * The difference is the whole of what the setting promises. Filtering after the
+ * fact would mean their rows were read, counted and then subtracted, which is
+ * not what /privacy says and is not what anybody ticking it means.
+ *
+ * The privacy page and the Settings row are checked together with it, because
+ * three things drift apart in the same direction: a page describing a control
+ * that was renamed, a control for a promise that was deleted, and a promise for
+ * a control nobody wired up.
+ */
+check("the research opt-out is applied in the query, and is where the page says", () => {
+  const route = code("app/api/research/route.ts");
+  assert.match(
+    route,
+    /SETTING_KEYS\.researchOptOut/,
+    "the research export stopped reading who asked to be left out",
+  );
+  /*
+    Both queries, named separately, because the first version of this asked
+    the file for the clause once and the file has two of them: deleting the one
+    that matters left the other one satisfying the check. The same trap `code()`
+    exists for, arriving through a different door.
+  */
+  assert.match(
+    route,
+    /conditions\.push\(\s*Prisma\.sql`r\."ownerId" NOT IN/,
+    "the tallies no longer exclude anybody, so an excluded learner's answers are counted into the published cells",
+  );
+  assert.match(
+    route,
+    /const not = [\s\S]{0,60}Prisma\.sql`WHERE r\."ownerId" NOT IN/,
+    "the corpus totals no longer exclude anybody, so the file reports a size that counts people who asked to be left out",
+  );
+
+  const label = "Anonymous statistics";
+  for (const file of ["app/privacy/page.tsx", "app/(app)/settings/page.tsx"]) {
+    assert.ok(
+      read(file).includes(label),
+      `${file} no longer names the "${label}" row, so the promise and the control have come apart`,
+    );
+  }
+  assert.match(
+    read("app/(app)/settings/PreferencesPanel.tsx"),
+    /setResearchParticipation\(/,
+    "the Settings row for the research opt-out no longer writes anything",
+  );
+});
+
+/**
+ * What the export counts as a right answer is the app's own cut, not a second
+ * one.
+ *
+ * `lib/stats/history.ts` decides everywhere else in this app that Good and Easy
+ * are recalled and Hard is not, and the export restates the number rather than
+ * importing it, so that `lib/research/` stays about the export. Restating it is
+ * only safe while something notices the day the two disagree, which is what
+ * this is. The same for the FSRS state that means a card was learned.
+ */
+check("the research export counts a right answer the way the rest of the app does", () => {
+  assert.equal(
+    CORRECT_FROM_RATING,
+    3,
+    "the research export and lib/stats/history.ts no longer agree on what counts as recalled",
+  );
+  assert.equal(
+    MATURE_STATE,
+    REVIEW_STATE,
+    "the research export's mature column and retentionReading no longer mean the same thing",
+  );
+});
+
+/**
+ * Every secret the app reads is marked in the build CI greps.
+ *
+ * CLAUDE.md says the `secrets` job "builds with a marked string in every
+ * server-only variable and greps `.next/static` for it, so a leak names which
+ * variable leaked", and calls that true now rather than aspirational. It was
+ * not. The list in the workflow is hand-written, and four variables the app
+ * reads had never reached it: `GROQ_API_KEY`, `GEMINI_API_KEY`,
+ * `METRICS_TOKEN` and the research export's own `RESEARCH_TOKEN`. A leak of
+ * any of those would have passed that job cleanly, because the canary string
+ * was never in them to be found.
+ *
+ * The rule is a shape rather than a list, which is what stops it going stale
+ * again: a variable whose name ends in KEY, TOKEN, SECRET or PASSWORD, read
+ * anywhere Next builds, has to be in the canary environment. `NEXT_PUBLIC_` is
+ * the one exclusion and it excludes itself, since a variable with that prefix
+ * is public by design and is *supposed* to be in the bundle.
+ *
+ * Scoped to `app/`, `lib/` and the middleware because those are what Next
+ * builds. A variable only a script reads cannot reach a browser, so requiring
+ * it here would be a check firing on something that cannot happen, which is
+ * the kind people learn to waive.
+ */
+check("every secret-shaped variable the app reads is marked in the CI canary build", () => {
+  const CANARY = ".github/workflows/ci.yml";
+  const workflow = read(CANARY);
+  const canaryEnv = between(workflow, "Build with marked secrets").split("run: npx next build")[0] ?? "";
+  assert.ok(
+    canaryEnv.includes("kodukeel-ci-canary-must-not-ship"),
+    `the marked build in ${CANARY} has been renamed, so this check is reading nothing`,
+  );
+
+  const secretish = /^[A-Z0-9_]+_(KEY|TOKEN|SECRET|PASSWORD)$/;
+  const found = new Set<string>();
+  for (const file of [...APP, ...LIB, "middleware.ts"]) {
+    for (const match of read(file).matchAll(/process\.env\.([A-Z0-9_]+)/g)) {
+      const name = match[1]!;
+      if (name.startsWith("NEXT_PUBLIC_")) continue;
+      if (secretish.test(name)) found.add(name);
+    }
+  }
+
+  assert.ok(
+    found.size >= 8,
+    `only ${found.size} secret-shaped variables found, so this check stopped looking`,
+  );
+
+  const missing = [...found].filter((name) => !canaryEnv.includes(`${name}:`)).sort();
+  assert.deepEqual(
+    missing,
+    [],
+    `${missing.join(", ")} would leak into the client bundle without CI noticing: add each to the marked build in ${CANARY}`,
+  );
 });
 
 console.log(
