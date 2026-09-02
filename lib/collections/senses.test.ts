@@ -7,13 +7,25 @@
  * marking by putting the whole set on the back, so none of the 372 can mark a
  * right answer wrong any more.
  *
- * What it cannot fix is a gloss that does not describe its own word.
- * `iseloom` and `tegelane` are both glossed "character", and one is a person's
- * character while the other is a character in a story: accepting both is fair,
- * because the learner is being punished for a prompt nobody could answer, and
- * the prompt is still wrong. Ekilex's own definition is what tells that case
- * from a real synonym pair, and this pins the ones that are known so the list
- * can only shrink.
+ * What a card cannot fix is a gloss that does not describe its own word, and
+ * there were eleven of those. Ten were a real fault and are corrected: each one
+ * now carries the Institute's own definition of its sense, rendered in English
+ * in the house style the course already uses for one English word covering two
+ * Estonian ones (`leib` "bread (dark)" beside `sai` "bread (white)"). So
+ * `iseloom` is "character (a person's)" and `tegelane` is "character (in a
+ * story)".
+ *
+ * The eleventh was the check being wrong. `teravmeelne` and `vaimukas` are
+ * defined by naming each other, which is the Institute saying they are
+ * synonyms in its own synonym-list style, and comparing the definitions as
+ * strings read that as a disagreement. `sharedPrompts` knows the shape now.
+ *
+ * WHICH IS WHY THERE IS NO DEFECT LIST HERE ANY MORE. There was one, of
+ * eleven, on the argument that a list that can only shrink is honest about
+ * work outstanding. It shrank to nothing, and an empty exemption list with two
+ * tests around it is the parking space every exemption list becomes. The check
+ * is now the flat claim: no prompt in the shipped dictionary is one its own
+ * gloss cannot answer.
  */
 import { describe, expect, it } from "vitest";
 import { shippedDictionary } from "@/scripts/lib/dictionary";
@@ -26,69 +38,89 @@ const words: SenseWord[] = shippedDictionary().map((e) => ({
 }));
 const groups = sharedPrompts(words);
 
-/**
- * Prompts where the two words are not synonyms and the gloss cannot say which
- * is wanted. Ekilex gives each of these pairs two different definitions.
- *
- * A DEFECT LIST, NOT AN EXEMPTION LIST. Each line is a card no learner can
- * answer as asked, waiting for somebody to write a gloss that identifies its
- * word. The value beside it is what the two words actually are, so whoever
- * picks one up does not have to look it up again.
- */
-const AMBIGUOUS_PROMPTS = new Map<string, string>([
-  ["application|NOUN", "avaldus is a form you submit, rakendus is a piece of software"],
-  ["character|NOUN", "iseloom is a person's character, tegelane is a character in a story"],
-  ["competition|NOUN", "konkurents is rivalry, võistlus is a contest"],
-  ["connection|NOUN", "seos is a relation between things, ühendus is a link or a service"],
-  ["equivalent|NOUN", "ekvivalent is the borrowed term, vaste is the everyday one"],
-  ["everyday|ADJECTIVE", "argine is humdrum, igapäevane is daily"],
-  ["expression|NOUN", "väljend is a phrase, väljendus is the act of expressing"],
-  ["on the other hand|ADVERB", "seevastu contrasts, teisalt enumerates a second view"],
-  ["to adapt|VERB", "kohandama adapts something, kohanema is adapting oneself"],
-  ["to justify|VERB", "põhjendama gives reasons, õigustama defends as right"],
-  ["witty|ADJECTIVE", "teravmeelne is sharp, vaimukas is playful"],
-]);
-
 describe("prompts more than one word answers", () => {
   it("finds them at the size the dictionary actually has", () => {
     expect(groups.length).toBeGreaterThan(300);
     expect(groups.every((g) => g.lemmas.length > 1)).toBe(true);
   });
 
-  it("has no new prompt whose gloss cannot identify its word", () => {
-    const fresh = groups
-      .filter((g) => g.diagnosis === "ambiguous")
-      .map((g) => g.key)
-      .filter((key) => !AMBIGUOUS_PROMPTS.has(key));
+  it("has no prompt whose gloss cannot identify its word", () => {
+    const ambiguous = groups.filter((g) => g.diagnosis === "ambiguous").map((g) => `${g.key}: ${g.lemmas.join(", ")}`);
     expect(
-      fresh,
-      "a new pair of entries shares a prompt and Ekilex says they are different words, so the card "
-      + "asks a question neither of them answers. Give one a gloss that tells them apart, or add it "
-      + "here with what the two words actually are.",
+      ambiguous,
+      "two entries share a prompt and Ekilex gives them different definitions, so the card asks a "
+      + "question neither of them answers. Read the Institute's definition of each and give one a "
+      + "gloss that tells them apart, in the course's own style: character (a person's) beside "
+      + "character (in a story). Accepting both is what the card already does and is not the fix.",
     ).toEqual([]);
-  });
-
-  /*
-    Keeps the list honest. A prompt that stops being ambiguous, because somebody
-    wrote a gloss that identifies its word, has to come off, or the list becomes
-    the parking space every exemption list turns into when nobody prunes it.
-  */
-  it("has no stale entry", () => {
-    const ambiguous = new Set(groups.filter((g) => g.diagnosis === "ambiguous").map((g) => g.key));
-    const stale = [...AMBIGUOUS_PROMPTS.keys()].filter((key) => !ambiguous.has(key));
-    expect(stale, "these are no longer ambiguous and should come off the list").toEqual([]);
   });
 
   it("tells a synonym pair from a gloss that cannot identify its word", () => {
     const one = "seob sisu poolest samaväärseid sõnu";
     const two = "hoopis midagi muud";
     const pair = (noteA: string, noteB: string): SenseWord[] => [
-      { lemma: "a", pos: "ADVERB", gloss: "and", note: noteA, ekilexPos: ["konj"] },
-      { lemma: "b", pos: "ADVERB", gloss: "and", note: noteB, ekilexPos: ["konj"] },
+      { lemma: "aa", pos: "ADVERB", gloss: "and", note: noteA, ekilexPos: ["konj"] },
+      { lemma: "bb", pos: "ADVERB", gloss: "and", note: noteB, ekilexPos: ["konj"] },
     ];
     expect(sharedPrompts(pair(one, one))[0]?.diagnosis).toBe("synonyms");
     expect(sharedPrompts(pair(one, two))[0]?.diagnosis).toBe("ambiguous");
     expect(sharedPrompts(pair(one, ""))[0]?.diagnosis).toBe("unjudged");
+  });
+
+  /*
+    The Institute's other way of saying "synonym": where it has nothing to add
+    beyond naming the neighbours, the definition is a list of them. Two such
+    definitions are two different strings saying one thing.
+  */
+  it("reads two definitions that name each other as one meaning", () => {
+    const mutual: SenseWord[] = [
+      { lemma: "teravmeelne", pos: "ADJECTIVE", gloss: "witty", note: "vaimukas, nutikas, leidlik" },
+      { lemma: "vaimukas", pos: "ADJECTIVE", gloss: "witty", note: "teravmeelne, ootamatu ja leidlik" },
+    ];
+    expect(sharedPrompts(mutual)[0]?.diagnosis).toBe("synonyms");
+  });
+
+  /*
+    And one-way naming is not that, which is the whole reason the rule is
+    mutual. Ekilex defines konkurents as a võistlus for supremacy and võistlus
+    as an organised event: the first explains itself with the second word and
+    is not it. Measured over the shipped dictionary, one-way naming would have
+    excused this pair and to justify, both of which are real faults.
+  */
+  it("does not read one definition mentioning the other word as a synonym", () => {
+    const oneWay: SenseWord[] = [
+      { lemma: "konkurents", pos: "NOUN", gloss: "competition", note: "osaliste omavaheline võistlus paremuse pärast" },
+      { lemma: "võistlus", pos: "NOUN", gloss: "competition", note: "kindlate reeglite järgi korraldatav üritus" },
+    ];
+    expect(sharedPrompts(oneWay)[0]?.diagnosis).toBe("ambiguous");
+  });
+
+  /*
+    A word boundary that is not ASCII. `\b` sees a space and an `õ` as two
+    non-word characters with no boundary between them, so the naming rule
+    written the obvious way misses exactly the words this language is made of.
+  */
+  it("finds a named word whose first letter is Estonian", () => {
+    const mutual: SenseWord[] = [
+      { lemma: "õige", pos: "ADJECTIVE", gloss: "right", note: "täpne, õige" },
+      { lemma: "täpne", pos: "ADJECTIVE", gloss: "right", note: "õige, korrektne" },
+    ];
+    expect(sharedPrompts(mutual)[0]?.diagnosis).toBe("synonyms");
+  });
+
+  /*
+    And a lemma inside a longer word is not a mention of it. `seos` sits in
+    `seosed` and in `seostama`, so a substring rule would call any pair whose
+    definitions inflect each other synonyms.
+  */
+  it("does not count a lemma buried inside a longer word", () => {
+    // Each note buries the other lemma and names neither: sidemete holds side,
+    // seostamine holds seos. A substring rule reads this pair as synonyms.
+    const buried: SenseWord[] = [
+      { lemma: "seos", pos: "NOUN", gloss: "link", note: "sidemete loomine" },
+      { lemma: "side", pos: "NOUN", gloss: "link", note: "seostamine ja ühendamine" },
+    ];
+    expect(sharedPrompts(buried)[0]?.diagnosis).toBe("ambiguous");
   });
 
   /*

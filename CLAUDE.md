@@ -274,7 +274,7 @@ glosses mean one of them describes a sense the entry does not carry, which is th
 Ekilex's definition, on the reasoning that two words the Institute calls one meaning are one card
 with two right answers. A card knows nothing but its front: it is `translation`, its hint is `pos`,
 and `checkAnswer` marks against the back, so two entries collide when a learner cannot tell which is
-wanted, whatever a lexicographer thinks. Grouping on the prompt finds **372 of them in the shipped
+wanted, whatever a lexicographer thinks. Grouping on the prompt found **372 of them in the shipped
 dictionary** rather than twelve, and every one was a card able to mark a right answer wrong.
 `sameMeaning` was tried as the grouping and is wrong the other way, since it is built for "could
 these be different answers to one question" and called `abi` "help" and `aitama` "to help" one
@@ -290,14 +290,34 @@ and nothing else, never a scheduling column; it only ever widens, so the answer 
 first; and its guard is `back = lemma`, which is the signature of a card built before the fix, so a
 second run matches nothing.
 
-Ekilex's definition is the **diagnosis** rather than the trigger, and half of what it diagnoses is
-worse than a synonym pair: where the Institute gives two definitions, the gloss is not describing
-its own word. `iseloom` and `tegelane` are both "character", and one is a person's character and the
-other a character in a story. Eleven of those are in the course, pinned in `senses.test.ts` as a
-defect list that can only shrink, and accepting both only makes them fair rather than right.
+Ekilex's definition is the **diagnosis** rather than the trigger, and what it diagnoses is worse
+than a synonym pair: where the Institute gives two definitions, the gloss is not describing its own
+word. Accepting both only makes such a card fair rather than right, so the eleven that were in the
+course were fixed rather than pinned, and there are **none left**: ten now carry the Institute's own
+definition of their sense rendered in English, in the house style the course already had for one
+English word covering two Estonian ones. `iseloom` is "character (a person's)" beside `tegelane`,
+"character (in a story)"; `leib` and `sai` had been "bread (dark)" and "bread (white)" all along.
+`seevastu` is the one that took a different fix, because "on the other hand" was not a shared prompt
+so much as the wrong translation: it is "by contrast, whereas". Shared prompts fell from 372 to 362,
+and `senses.test.ts` now asserts the flat claim rather than keeping a list, since an empty exemption
+list with two tests round it is the parking space every exemption list becomes.
 `ning`, `vaid` and `enam` were dropped for a day to avoid three of the twelve and are back, because
-deleting three of the commonest words in Estonian to dodge a fault the dictionary has 372 of is one
+deleting three of the commonest words in Estonian to dodge a fault the dictionary had 372 of is one
 unit paying for everybody.
+
+**And the Institute says "synonym" in two ways, so a check reading one of them invents work.**
+Comparing two definitions as strings finds the pair that disagrees and also the pair that agrees in
+different words. Where Ekilex has nothing to add beyond naming the neighbours, its definition *is* a
+list of them: `teravmeelne` is "vaimukas, nutikas, leidlik" and `vaimukas` is "teravmeelne, ootamatu
+ja leidlik". That was the eleventh entry on the defect list, and it was asking somebody to invent a
+distinction Estonian does not draw, which is the one repair worse than leaving a gloss alone. The
+rule is **mutual** naming and that is the whole of why it is safe: a definition mentioning another
+word means nothing on its own, since `konkurents` is defined as a `võistlus` for supremacy and is
+not a contest, and `põhjendama` ends "seletama või `õigustama`" and is not self-defence. Measured
+over the shipped dictionary, one-way naming picks up both of those and mutual naming picks up
+neither, matching exactly one pair in the whole file. The boundaries are written out rather than
+left to `\b`, which is ASCII: a space and an `õ` are both non-word characters to it, with no
+boundary between them, so the obvious spelling misses the words this language is made of.
 
 **And Ekilex's own part of speech was being discarded**, so a deliberate coarsening could not be
 told from a mistake. `ekilexPos` records it. The table of legitimate coarsenings was set by

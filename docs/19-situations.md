@@ -1227,27 +1227,58 @@ fix: `ja` and `ning` are both "and" and no gloss could separate them. Where it g
 gloss is not describing its own word, and that is a worse bug that accepting both only makes fair
 rather than right.
 
-Eleven of those are in the course and every one is a card no learner can answer as asked:
+Eleven of those were in the course, and ten of them were a card no learner could answer as asked.
+All ten are corrected, from the Institute's own definition of each sense, in the house style the
+course already had for one English word covering two Estonian ones: `leib` was "bread (dark)" beside
+`sai`, "bread (white)", long before any of this.
 
-| Prompt | What the two words actually are |
-|---|---|
-| "character" | `iseloom` is a person's character, `tegelane` is a character in a story |
-| "application" | `avaldus` is a form you submit, `rakendus` is a piece of software |
-| "competition" | `konkurents` is rivalry, `võistlus` is a contest |
-| "connection" | `seos` is a relation between things, `ühendus` is a link or a service |
-| "to adapt" | `kohandama` adapts something, `kohanema` is adapting oneself |
-| "to justify" | `põhjendama` gives reasons, `õigustama` defends as right |
-| "expression" | `väljend` is a phrase, `väljendus` is the act of expressing |
-| "everyday" | `argine` is humdrum, `igapäevane` is daily |
-| "equivalent" | `ekvivalent` is the borrowed term, `vaste` the everyday one |
-| "on the other hand" | `seevastu` contrasts, `teisalt` enumerates a second view |
-| "witty" | `teravmeelne` is sharp, `vaimukas` is playful |
+| Prompt | Was | Is now |
+|---|---|---|
+| "character" | `iseloom`, `tegelane` | character (a person's) · character (in a story) |
+| "application" | `avaldus`, `rakendus` | application (a form you submit) · application (a piece of software) |
+| "competition" | `konkurents`, `võistlus` | competition (rivalry) · competition (a contest) |
+| "connection" | `seos`, `ühendus` | connection (between things) · connection (a link or a service) |
+| "to adapt" | `kohandama`, `kohanema` | to adapt (something) · to adapt (oneself), to settle in |
+| "to justify" | `põhjendama`, `õigustama` | to justify (give reasons for) · to justify (defend as right) |
+| "expression" | `väljend`, `väljendus` | expression (a phrase) · expression (the act of expressing) |
+| "everyday" | `argine`, `igapäevane` | everyday (humdrum) · everyday (happening daily) |
+| "equivalent" | `ekvivalent`, `vaste` | equivalent (of equal value) · equivalent (in another language) |
+| "on the other hand" | `seevastu`, `teisalt` | by contrast, whereas · on the other hand |
 
-They are pinned in `lib/collections/senses.test.ts` as a defect list rather than an exemption list:
-a twelfth fails, and one that stops being ambiguous because somebody wrote a gloss that identifies
-its word has to come off. Writing those eleven pairs of glosses is authoring work on the one column
-in this pipeline a person writes, and it wants somebody who knows the register of both words rather
-than somebody who has just read two dictionary definitions.
+`seevastu` is the one that is not a disambiguation, and it is the more interesting correction. It
+had no shared prompt so much as the wrong translation: Ekilex defines it as standing "nagu
+vastukaaluks" to what came before, which is `by contrast`, and `teisalt` is the one that really
+means `on the other hand`. Two words were sharing a prompt because one of them was in the wrong
+place.
+
+### The eleventh was the check being wrong
+
+`teravmeelne` and `vaimukas` are not two words with one gloss between them. Ekilex defines
+`teravmeelne` as "vaimukas, nutikas, leidlik" and `vaimukas` as "teravmeelne, ootamatu ja leidlik":
+two different strings, each naming the other word. Where the Institute has nothing to add beyond
+naming the neighbours, its definition **is** a list of synonyms, and comparing the strings read that
+as a disagreement. It sat on the defect list asking somebody to invent a distinction Estonian does
+not draw, which is the one repair worse than leaving a gloss alone.
+
+`sharedPrompts` knows the shape now, and the rule is **mutual** naming, which is the whole of why it
+is safe. One definition mentioning another word means nothing: `konkurents` is defined as a
+`võistlus` for supremacy and is not a contest, `põhjendama` ends "seletama või `õigustama`" and is
+not self-defence. Measured over the shipped dictionary, one-way naming picks up both of those and
+mutual naming picks up neither, matching exactly one pair in the whole file. A word can be used to
+explain a second word without being it; two words can only define each other when there is nothing
+between them to explain.
+
+The boundaries are written out rather than left to `\b`, which is ASCII. A space and an `õ` are both
+non-word characters to it with no boundary between them, so the obvious spelling misses the words
+this language is made of, and a substring would call `seos` a mention of itself inside `seostamine`.
+Both are tests, and both were made to fail before they were kept.
+
+### What is left
+
+Nothing on this axis. The defect list is gone rather than empty, because an empty exemption list
+with two tests round it is the parking space every exemption list becomes; the check is now the flat
+claim that no prompt in the shipped dictionary is one its own gloss cannot answer, with the fix
+spelled out in the failure message. Shared prompts fell from 372 to 362.
 
 The other 355 are outside the course, so they carry no Ekilex definition and there is nothing to
 judge them by. They are marked correctly all the same, which is the point of fixing the card rather

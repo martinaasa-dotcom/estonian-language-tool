@@ -555,7 +555,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["развитие", "прогресс"], ukr: ["розвиток"],
   },
   {
-    lemma: "argine", gloss: "everyday", pos: "ADJECTIVE", cefr: null,
+    lemma: "argine", gloss: "everyday (humdrum)", pos: "ADJECTIVE", cefr: null,
     ekilexWordId: 157911,
     ekilexPos: ["adj"],
     parts: { NOM_SG: "argine", GEN_SG: "argise", PART_SG: "argist", PART_PL: "argiseid", GEN_PL: "argiste" },
@@ -855,7 +855,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["выражать", "выразить"], ukr: ["висловлювати", "висловити"],
   },
   {
-    lemma: "avaldus", gloss: "application", pos: "NOUN", cefr: "A2",
+    lemma: "avaldus", gloss: "application (a form you submit)", pos: "NOUN", cefr: "A2",
     ekilexWordId: 159344,
     ekilexPos: ["s"],
     parts: { NOM_SG: "avaldus", GEN_SG: "avalduse", PART_SG: "avaldust", ILL_SG_SHORT: "avaldusse", PART_PL: "avaldusi", GEN_PL: "avalduste" },
@@ -1215,7 +1215,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["эксперимент", "опыт"], ukr: ["дослід", "експеримент"],
   },
   {
-    lemma: "ekvivalent", gloss: "equivalent", pos: "NOUN", cefr: null,
+    lemma: "ekvivalent", gloss: "equivalent (of equal value)", pos: "NOUN", cefr: null,
     ekilexWordId: 163239,
     ekilexPos: ["s"],
     parts: { NOM_SG: "ekvivalent", GEN_SG: "ekvivalendi", PART_SG: "ekvivalenti", ILL_SG_SHORT: "ekvivalenti", PART_PL: "ekvivalente", GEN_PL: "ekvivalentide" },
@@ -2175,7 +2175,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["каждый", "любой"], ukr: ["кожний", "кожен"],
   },
   {
-    lemma: "igapäevane", gloss: "everyday", pos: "ADJECTIVE", cefr: "A2",
+    lemma: "igapäevane", gloss: "everyday (happening daily)", pos: "ADJECTIVE", cefr: "A2",
     ekilexWordId: 171411,
     ekilexPos: ["adj"],
     parts: { NOM_SG: "igapäevane", GEN_SG: "igapäevase", PART_SG: "igapäevast", PART_PL: "igapäevaseid", GEN_PL: "igapäevaste" },
@@ -2365,7 +2365,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["даже", "аж"], ukr: ["навіть", "аж"],
   },
   {
-    lemma: "iseloom", gloss: "character", pos: "NOUN", cefr: "A2",
+    lemma: "iseloom", gloss: "character (a person's)", pos: "NOUN", cefr: "A2",
     ekilexWordId: 173031,
     ekilexPos: ["s"],
     parts: { NOM_SG: "iseloom", GEN_SG: "iseloomu", PART_SG: "iseloomu", ILL_SG_SHORT: "iseloomu", PART_PL: "iseloome", GEN_PL: "iseloomude" },
@@ -3985,7 +3985,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["применять", "применить"], ukr: [],
   },
   {
-    lemma: "kohandama", gloss: "to adapt", pos: "VERB", cefr: "B2",
+    lemma: "kohandama", gloss: "to adapt (something)", pos: "VERB", cefr: "B2",
     ekilexWordId: 183213,
     ekilexPos: ["v"],
     parts: { INF_MA: "kohandama", INF_DA: "kohandada", PRES_1SG: "kohandan", PAST_1SG: "kohandasin", PART_TUD: "kohandatud" },
@@ -3995,7 +3995,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["приспосабливать", "приспособить"], ukr: [],
   },
   {
-    lemma: "kohanema", gloss: "to adapt", pos: "VERB", cefr: "B1",
+    lemma: "kohanema", gloss: "to adapt (oneself), to settle in", pos: "VERB", cefr: "B1",
     ekilexWordId: 183216,
     ekilexPos: ["v"],
     parts: { INF_MA: "kohanema", INF_DA: "kohaneda", PRES_1SG: "kohanen", PAST_1SG: "kohanesin", PART_TUD: "kohanetud" },
@@ -4325,7 +4325,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["конкретный", "реальный"], ukr: ["конкретний", "реальний"],
   },
   {
-    lemma: "konkurents", gloss: "competition", pos: "NOUN", cefr: "A2",
+    lemma: "konkurents", gloss: "competition (rivalry)", pos: "NOUN", cefr: "A2",
     ekilexWordId: 184604,
     ekilexPos: ["s"],
     parts: { NOM_SG: "konkurents", GEN_SG: "konkurentsi", PART_SG: "konkurentsi", ILL_SG_SHORT: "konkurentsi", PART_PL: "konkurentse", GEN_PL: "konkurentside" },
@@ -8605,7 +8605,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["основательный", "подробный"], ukr: ["ґрунтовний", "докладний"],
   },
   {
-    lemma: "põhjendama", gloss: "to justify", pos: "VERB", cefr: "B1",
+    lemma: "põhjendama", gloss: "to justify (give reasons for)", pos: "VERB", cefr: "B1",
     ekilexWordId: 222517,
     ekilexPos: ["v"],
     parts: { INF_MA: "põhjendama", INF_DA: "põhjendada", PRES_1SG: "põhjendan", PAST_1SG: "põhjendasin", PART_TUD: "põhjendatud" },
@@ -8905,7 +8905,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["применение", "приложение"], ukr: [],
   },
   {
-    lemma: "rakendus", gloss: "application", pos: "NOUN", cefr: "B2",
+    lemma: "rakendus", gloss: "application (a piece of software)", pos: "NOUN", cefr: "B2",
     ekilexWordId: 225524,
     ekilexPos: ["s"],
     parts: { NOM_SG: "rakendus", GEN_SG: "rakenduse", PART_SG: "rakendust", ILL_SG_SHORT: "rakendusse", PART_PL: "rakendusi", GEN_PL: "rakenduste" },
@@ -9685,7 +9685,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["поэтому", "потому"], ukr: ["тому", "через те"],
   },
   {
-    lemma: "seevastu", gloss: "on the other hand", pos: "ADVERB", cefr: "B2",
+    lemma: "seevastu", gloss: "by contrast, whereas", pos: "ADVERB", cefr: "B2",
     ekilexWordId: 231949,
     ekilexPos: ["adv"],
     parts: {  },
@@ -9845,7 +9845,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["соединяться", "соединиться"], ukr: [],
   },
   {
-    lemma: "seos", gloss: "connection", pos: "NOUN", cefr: "B1",
+    lemma: "seos", gloss: "connection (between things)", pos: "NOUN", cefr: "B1",
     ekilexWordId: 232695,
     ekilexPos: ["s"],
     parts: { NOM_SG: "seos", GEN_SG: "seose", PART_SG: "seost", PART_PL: "seoseid", GEN_PL: "seoste" },
@@ -11105,7 +11105,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["услуга"], ukr: ["послуга"],
   },
   {
-    lemma: "tegelane", gloss: "character", pos: "NOUN", cefr: "B1",
+    lemma: "tegelane", gloss: "character (in a story)", pos: "NOUN", cefr: "B1",
     ekilexWordId: 243187,
     ekilexPos: ["s"],
     parts: { NOM_SG: "tegelane", GEN_SG: "tegelase", PART_SG: "tegelast", ILL_SG_SHORT: "tegelasse", PART_PL: "tegelasi", GEN_PL: "tegelaste" },
@@ -12695,7 +12695,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["напротив", "против"], ukr: ["напроти", "навпроти"],
   },
   {
-    lemma: "vaste", gloss: "equivalent", pos: "NOUN", cefr: "B2",
+    lemma: "vaste", gloss: "equivalent (in another language)", pos: "NOUN", cefr: "B2",
     ekilexWordId: 254654,
     ekilexPos: ["s"],
     parts: { NOM_SG: "vaste", GEN_SG: "vaste", PART_SG: "vastet", PART_PL: "vasteid", GEN_PL: "vastete" },
@@ -13145,7 +13145,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["способность", "ресурс"], ukr: ["здібність", "здібності"],
   },
   {
-    lemma: "võistlus", gloss: "competition", pos: "NOUN", cefr: "A2",
+    lemma: "võistlus", gloss: "competition (a contest)", pos: "NOUN", cefr: "A2",
     ekilexWordId: 258234,
     ekilexPos: ["s"],
     parts: { NOM_SG: "võistlus", GEN_SG: "võistluse", PART_SG: "võistlust", ILL_SG_SHORT: "võistlusse", PART_PL: "võistlusi", GEN_PL: "võistluste" },
@@ -13335,7 +13335,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["площадь", "площадка"], ukr: ["майдан", "площа"],
   },
   {
-    lemma: "väljend", gloss: "expression", pos: "NOUN", cefr: "B2",
+    lemma: "väljend", gloss: "expression (a phrase)", pos: "NOUN", cefr: "B2",
     ekilexWordId: 259810,
     ekilexPos: ["s"],
     parts: { NOM_SG: "väljend", GEN_SG: "väljendi", PART_SG: "väljendit", PART_PL: "väljendeid", GEN_PL: "väljendite" },
@@ -13345,7 +13345,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["выражение", "фраза"], ukr: ["вислів", "вираз"],
   },
   {
-    lemma: "väljendus", gloss: "expression", pos: "NOUN", cefr: "B2",
+    lemma: "väljendus", gloss: "expression (the act of expressing)", pos: "NOUN", cefr: "B2",
     ekilexWordId: 259816,
     ekilexPos: ["s"],
     parts: { NOM_SG: "väljendus", GEN_SG: "väljenduse", PART_SG: "väljendust", ILL_SG_SHORT: "väljendusse", PART_PL: "väljendusi", GEN_PL: "väljenduste" },
@@ -13555,7 +13555,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["правовой порядок", "правопорядок"], ukr: [],
   },
   {
-    lemma: "õigustama", gloss: "to justify", pos: "VERB", cefr: "B2",
+    lemma: "õigustama", gloss: "to justify (defend as right)", pos: "VERB", cefr: "B2",
     ekilexWordId: 260787,
     ekilexPos: ["v"],
     parts: { INF_MA: "õigustama", INF_DA: "õigustada", PRES_1SG: "õigustan", PAST_1SG: "õigustasin", PART_TUD: "õigustatud" },
@@ -13735,7 +13735,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["соединять", "соединить"], ukr: ["зʼєднувати", "зʼєднати"],
   },
   {
-    lemma: "ühendus", gloss: "connection", pos: "NOUN", cefr: "A2",
+    lemma: "ühendus", gloss: "connection (a link or a service)", pos: "NOUN", cefr: "A2",
     ekilexWordId: 262477,
     ekilexPos: ["s"],
     parts: { NOM_SG: "ühendus", GEN_SG: "ühenduse", PART_SG: "ühendust", ILL_SG_SHORT: "ühendusse", PART_PL: "ühendusi", GEN_PL: "ühenduste" },

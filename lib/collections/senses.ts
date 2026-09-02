@@ -34,6 +34,15 @@
  * thing to do while that is true, because the learner is being punished for a
  * prompt that cannot be answered, but the gloss is what wants fixing.
  *
+ * AND THE INSTITUTE SAYS "SYNONYM" IN TWO WAYS, NOT ONE. Comparing the
+ * definitions as strings reads only the first of them. Where Ekilex has
+ * nothing to say beyond naming the neighbours, its definition *is* a list of
+ * synonyms: `teravmeelne` is defined as "vaimukas, nutikas, leidlik" and
+ * `vaimukas` as "teravmeelne, ootamatu ja leidlik". Two different strings, and
+ * each one names the other word. Read as a disagreement, that pair sat on the
+ * defect list asking somebody to invent a distinction the language does not
+ * have, which is the one repair worse than leaving a gloss alone.
+ *
  * Pure: plain data in, plain data out. The caller supplies the entries.
  */
 /** A dictionary entry, as this module needs to see it. */
@@ -63,7 +72,10 @@ export function promptKey(gloss: string, pos: string): string {
 }
 
 export type SharedPromptDiagnosis =
-  /** Ekilex gives the group one definition: real synonyms, nothing else to fix. */
+  /**
+   * Ekilex gives the group one definition, or defines each of them by naming
+   * the others: real synonyms, and nothing to fix beyond accepting both.
+   */
   | "synonyms"
   /** Ekilex gives them different definitions: the gloss cannot identify its word. */
   | "ambiguous"
@@ -78,6 +90,37 @@ export interface PromptGroup {
   /** Every lemma that answers this prompt, in a stable order. */
   readonly lemmas: readonly string[];
   readonly diagnosis: SharedPromptDiagnosis;
+}
+
+/**
+ * Does this definition name that word?
+ *
+ * Its own boundaries rather than `\b`, which is ASCII: the character before
+ * `õigustama` in "seletama või õigustama" is a space, and to `\b` a space and
+ * an `õ` are both non-word characters with no boundary between them, so the
+ * one shape this has to catch is the one shape it would miss.
+ */
+function names(note: string | null | undefined, lemma: string): boolean {
+  if (!note) return false;
+  const word = lemma.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^\\p{L}])${word}([^\\p{L}]|$)`, "iu").test(note);
+}
+
+/**
+ * Whether the Institute defines each of these words by naming the others.
+ *
+ * MUTUAL, AND THAT IS THE WHOLE OF WHY IT IS SAFE. A definition mentioning
+ * another word means nothing on its own: `konkurents` is defined as a
+ * "võistlus ... paremuse pärast" and is not a contest, `põhjendama` ends
+ * "seletama või õigustama" and is not self-defence. Measured over the shipped
+ * dictionary, one-way naming picks up both of those and mutual naming picks up
+ * neither, matching exactly one pair in the whole file. A word can be used to
+ * explain a second word without being it; two words can only define each other
+ * when there is nothing between them to explain.
+ */
+function definedByEachOther(group: readonly SenseWord[]): boolean {
+  if (group.length < 2) return false;
+  return group.every((a) => group.every((b) => a === b || names(a.note, b.lemma)));
 }
 
 /** Every prompt more than one entry answers. */
@@ -96,7 +139,7 @@ export function sharedPrompts(words: readonly SenseWord[]): PromptGroup[] {
     const notes = new Set(group.map((w) => (w.note ?? "").trim().toLowerCase()));
     const diagnosis: SharedPromptDiagnosis = notes.has("")
       ? "unjudged"
-      : notes.size === 1
+      : notes.size === 1 || definedByEachOther(group)
         ? "synonyms"
         : "ambiguous";
     out.push({
