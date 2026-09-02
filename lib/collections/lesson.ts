@@ -41,6 +41,7 @@ import { caseAnswer, stemsFromParts } from "@/lib/estonian/derive";
 import { CASES } from "@/lib/estonian/cases";
 import type { CaseKey } from "@/lib/estonian/types";
 import { shuffle } from "@/lib/random/shuffle";
+import { differentMeaning } from "@/lib/questions/distractors";
 
 export type StepKind =
   | "intro" | "meet" | "choose" | "produce" | "type"
@@ -215,11 +216,26 @@ function pickWrong(
   count: number,
   rand: () => number,
   seen: Set<string>,
+  /**
+   * Nothing that means what the answer means.
+   *
+   * The exact string of the correct answer was the whole of the test, and a
+   * unit teaches its words in themes, so the pairs that break it sit a line
+   * apart in the same unit: `toit` "food" beside `söök` "food, a meal",
+   * `leib` "bread (dark)" beside `sai` "bread (white)", `kuidas` "how" beside
+   * `kui` "how, as, if, than". Measured over the whole course at 60 seeds a
+   * unit: 766 of 22,260 multiple-choice questions carried a second right
+   * answer, and 0 do now, with all 22,260 still asked. `differentMeaning` is
+   * the rule the mock exam and the level check already use, and this is the
+   * third caller of it rather than a fourth answer to the same question.
+   */
+  distinctFrom?: string,
 ): string[] {
   const out: string[] = [];
   for (const candidate of shuffle(candidates, rand)) {
     const key = candidate.toLowerCase();
     if (seen.has(key)) continue;
+    if (distinctFrom !== undefined && !differentMeaning(candidate, distinctFrom)) continue;
     seen.add(key);
     out.push(candidate);
     if (out.length === count) break;
@@ -241,7 +257,7 @@ function choiceOf(
   rand: () => number,
 ): { options: string[]; answer: number } | null {
   const seen = new Set([correct.toLowerCase()]);
-  const wrong = pickWrong(pool, OPTIONS - 1, rand, seen);
+  const wrong = pickWrong(pool, OPTIONS - 1, rand, seen, correct);
   if (wrong.length < OPTIONS - 1) return null;
   const options = shuffle([correct, ...wrong], rand);
   return { options, answer: options.indexOf(correct) };
@@ -268,9 +284,9 @@ function choiceOfNear(
   const seen = new Set([correct.toLowerCase()]);
   const near = pool.filter((c) => c.pos === correctPos).map((c) => c.text);
   const far = pool.filter((c) => c.pos !== correctPos).map((c) => c.text);
-  const wrong = pickWrong(near, OPTIONS - 1, rand, seen);
+  const wrong = pickWrong(near, OPTIONS - 1, rand, seen, correct);
   if (wrong.length < OPTIONS - 1) {
-    wrong.push(...pickWrong(far, OPTIONS - 1 - wrong.length, rand, seen));
+    wrong.push(...pickWrong(far, OPTIONS - 1 - wrong.length, rand, seen, correct));
   }
   if (wrong.length < OPTIONS - 1) return null;
   const options = shuffle([correct, ...wrong], rand);

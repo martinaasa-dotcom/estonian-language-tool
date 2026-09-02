@@ -46,12 +46,23 @@ export interface StarterDeck {
   person can already do rather than by its code, since somebody who needs to
   pick a level is exactly somebody who does not know what B2 means.
 */
+/*
+  ONE VOICE, AND IT IS WHAT YOU CAN DO.
+
+  The first two were written as things ("Tere, aitäh, and not much else yet")
+  and the last three as the learner speaking ("I am able to comprehend and add
+  to most conversations"), so the list changed person halfway down on the
+  screen that decides somebody's year, ninety seconds into the app. The last
+  one also assumed a motive nobody had been asked about. Every row is now the
+  same shape as the first two, which is the shape CEFR itself uses: what you
+  can already do.
+*/
 const LEVELS = [
   { key: "A1", label: "Just starting", detail: "Tere, aitäh, and not much else yet." },
   { key: "A2", label: "I get by", detail: "Shopping, online orders, simple sentences." },
-  { key: "B1", label: "Conversational", detail: "I can understand the context of many things, but still miss some things." },
-  { key: "B2", label: "Confident", detail: "I am able to comprehend and add to most conversations." },
-  { key: "C1", label: "Fluent", detail: "Basically fluent, just want to improve my writing." },
+  { key: "B1", label: "Conversational", detail: "A clear conversation, and holding your own side of it." },
+  { key: "B2", label: "Confident", detail: "A meeting, and an article read without stopping." },
+  { key: "C1", label: "Fluent", detail: "Anything, near enough. Here for the shades of meaning." },
 ] as const;
 
 /**

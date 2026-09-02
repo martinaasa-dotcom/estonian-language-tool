@@ -1,3 +1,5 @@
+import { learnerDayClock } from "@/lib/progress/dayClock";
+import { nextCardLine } from "@/lib/time/day";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { courseLevelFor } from "@/lib/progress/level";
@@ -201,7 +203,40 @@ export default async function ReviewPage({
     .slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
   const cards = await withChoices([...spaced, ...inTeachingOrder(fresh)].map(toReviewCard));
 
-  return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
+  /*
+    WHEN THE NEXT CARD COMES BACK, WHICH IS THE ONLY QUESTION AN EMPTY QUEUE
+    RAISES.
+
+    The caught-up screen said "All 312 cards are scheduled for later", which is
+    the count somebody already knows and not the thing they came to find out.
+    `docs/18-voice.md` uses this exact screen as its worked example and the
+    answer it gives is a date.
+
+    Asked only on the path where it is going to be shown, and that is the
+    point rather than a saving: this is one more round trip on a page whose
+    daily job is to open fast, and on the day there is something to review it
+    would answer a question nobody is asking.
+  */
+  const caughtUp = cards.length === 0 && totalCards > 0;
+  const [next, clock] = caughtUp
+    ? await Promise.all([
+        prisma.card.findFirst({
+          where: { ownerId, suspended: false, due: { gt: now } },
+          orderBy: [{ due: "asc" }, { id: "asc" }],
+          select: { due: true },
+        }),
+        learnerDayClock(ownerId),
+      ])
+    : [null, null];
+
+  return (
+    <ReviewSession
+      cards={cards}
+      totalCards={totalCards}
+      mode={mode}
+      nextDue={next && clock ? nextCardLine(next.due, now, clock) : null}
+    />
+  );
 }
 
 /**

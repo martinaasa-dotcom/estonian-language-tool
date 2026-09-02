@@ -10019,7 +10019,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "märk millestki",
   },
   {
-    lemma: "viima", gloss: "to take away", pos: "VERB", cefr: "A1",
+    lemma: "viima", gloss: "to take (somewhere), to carry", pos: "VERB", cefr: "A1",
     ekilexWordId: 256523,
     parts: { INF_MA: "viima", INF_DA: "viia", PRES_1SG: "viin", PAST_1SG: "viisin", PART_TUD: "viidud" },
     government: "keda/mida (partitive) · kuhu (direction) · kust + kuhu · mida (partitive)",

@@ -435,8 +435,18 @@ function Entry({ entry, tutorReady }: { entry: EntryView; tutorReady: boolean })
                   ) : (
                     <span className="block text-lg" style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>
                   )}
-                  <span className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{label}</span>
-                  <span lang="et" className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  {/*
+                    The Estonian name leads and the English is the
+                    cross-reference under it, which is the rule everywhere else
+                    in this app and was the wrong way round on the one screen a
+                    learner opens to look a word up. The case table two rows
+                    below already did it correctly, so the entry disagreed with
+                    itself: "SHORT ILLATIVE" in caps over `lühike sisseütlev`
+                    in small italics is the exact layout CLAUDE.md names as the
+                    fault it was written to stop.
+                  */}
+                  <span lang="et" className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  <span className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{label}</span>
                 </div>
               );
             })}

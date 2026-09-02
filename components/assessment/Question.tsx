@@ -487,12 +487,16 @@ export function SpeakQuestion({ item, onAnswer }: { item: SpeakItem; onAnswer: (
         />
       </div>
 
+      {/*
+        The section that opens this part already explains why nothing scores
+        it, in four sentences, and the exam hub says it a third time. Repeating
+        the whole argument above every question is the volume fault
+        docs/18-voice.md describes: each sentence true, and together far too
+        many, in front of somebody who wants the button. One line is enough to
+        stop anybody wondering whether this counts.
+      */}
       <Note tone="neutral">
-        Nothing here can grade how you say it. The speech recognisers we tested get Estonian
-        consonant length and word boundaries wrong often enough that they would mark good
-        pronunciation as a mistake, and being told you are wrong when you are right is worse than
-        being told nothing. Until that changes, this part asks you instead. Your answer is recorded
-        as yours, and it never moves your level.
+        Nothing here scores this. Your answer is recorded as yours and never moves your level.
       </Note>
 
       <p className="mt-5 text-base font-semibold" style={{ color: "var(--ink)" }}>

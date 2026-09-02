@@ -60,12 +60,14 @@ export default async function ExamPage() {
     <Page
       eyebrow="Mock examination"
       title="Practise the state exam, before you sit the real one"
-      lead={
-        "Estonia tests Estonian at A2, B1, B2 and C1. Each paper has four parts, and you need sixty " +
-        "percent to pass, with a zero on any one part failing the whole thing. These are practice " +
-        "versions of those papers, built from the dictionary, " +
-        "plus two extra levels the state doesn't test."
-      }
+      /*
+        278 characters, in four literals joined with `+`, which is how it got
+        past the 95-character ceiling on a page lead: the sweep measured each
+        fragment. It also said "two extra levels the state doesn't test" over a
+        list with one, and the pass rule it spent a sentence on is the hint on
+        the section that lists the papers, three screens down.
+      */
+      lead="Estonia examines at A2, B1, B2 and C1. These are practice papers, built from the dictionary."
     >
       {target && targetLevel && (
         <section className="mb-10">

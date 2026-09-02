@@ -235,7 +235,12 @@ export const A1 = [
       ["sööma", "to eat"],
       ["jooma", "to drink"],
       ["tooma", "to bring"],
-      ["viima", "to take away"],
+      // Not "to take away": in English that means to remove, and Ekilex's own
+      // definition and all three stored sentences are about taking somebody or
+      // something somewhere ("Isa viis hommikul lapsed kooli"). The unit pairs
+      // it with tooma, which is the other direction of the same act, and "take
+      // away" points a beginner at ära viima instead.
+      ["viima", "to take (somewhere), to carry"],
       ["andma", "to give"],
       ["võtma", "to take"],
       ["panema", "to put"],
@@ -584,7 +589,17 @@ export const A1 = [
     module: "Maailm ümber",
     canDo: "Say what is on, under, in front of, behind and next to what.",
     blurb: "Most of these come after the noun and put it in the genitive: laua peal, not peal laud. A few go in front and ask for another case, and this unit has both.",
-    grammar: ["genitive", "adessive"],
+    /*
+      All four cases this unit's twenty words actually take, not the two it
+      used to name. Fifteen of them take the genitive; koos takes the
+      comitative, ilma the abessive, and enne, pärast and mööda the partitive.
+      A beginner following a unit that named only the genitive writes "ilma
+      raha" and "koos sõbra", and the app's own dictionary contradicts the
+      unit on the rektsioon of the very words it links to. Each id resolves to
+      a case page through `grammarPoint`, so the chips say the Estonian name
+      and the question it answers.
+    */
+    grammar: ["genitive", "adessive", "partitive", "comitative", "abessive"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
     requires: ["kus-ja-kuhu"],
     words: [

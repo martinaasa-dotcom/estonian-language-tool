@@ -258,13 +258,22 @@ interface Done {
   before: ReviewCard["scheduling"];
 }
 
-export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode }: {
+export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode, nextDue }: {
   cards: ReviewCard[];
   drillCase?: string;
   drillUnit?: string;
   /** A photographed page being drilled on its own: its id, and what it is called. */
   drillScan?: { id: string; title: string };
   totalCards: number;
+  /**
+   * One sentence saying when the next card comes back, or null.
+   *
+   * The only question an empty queue raises, and the one the caught-up screen
+   * did not answer: it said "All 312 cards are scheduled for later", which is
+   * a count the learner already knows. Worked out on the server, where the
+   * learner's own zone lives, and only on the path where it is shown.
+   */
+  nextDue?: string | null;
   mode: ReviewMode;
 }) {
   // Snapshotted once on mount, and never updated from later props. gradeCard()
@@ -629,7 +638,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
         ) : (
           <Empty
             title="Nothing due, you're caught up"
-            body={`All ${totalCards} cards are scheduled for later. Reviewing early does not help.`}
+            body={nextDue ?? `All ${totalCards} cards are scheduled for later.`}
             action={<ButtonLink href="/practice" variant="secondary">Play a round instead</ButtonLink>}
           />
         )}
