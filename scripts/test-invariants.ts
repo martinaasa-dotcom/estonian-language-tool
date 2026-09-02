@@ -4055,6 +4055,50 @@ check("every browser suite that exists is a browser suite CI runs", () => {
 });
 
 /**
+ * And the other one, at the far end of the same list.
+ *
+ * `test-restore.mjs` empties the shared dictionary and rebuilds it from a
+ * backup, which is the whole of what it exists to prove. Everything it puts
+ * back is created as the restorer's own, because that is what a restore is
+ * allowed to do to a word it does not already hold, so afterwards not one row
+ * in the dictionary is marked `SEED`. Every suite that reads a seeded word is
+ * then looking at a dictionary that no longer has one.
+ *
+ * `test-scan.mjs` says so out loud when it happens, which is the right
+ * behaviour and is not a substitute for the ordering: it reports "no seeded
+ * words" and waives seventeen checks, and the person reading that is sent to
+ * reseed a database that was seeded correctly an hour ago. Run second to last
+ * on somebody's own machine it costs a suite; the only thing keeping it
+ * harmless in CI is the order of two lines in a workflow file.
+ *
+ * Asserted inside the browser job, because the sign-in suite is a separate job
+ * with a database of its own and appears later in the same file.
+ */
+check("the suite that empties the dictionary runs after every suite that reads it", () => {
+  const workflow = read(join(".github", "workflows", "ci.yml"));
+  const start = workflow.indexOf("name: The browser suites");
+  assert.ok(start > 0, "ci.yml no longer has a job called The browser suites");
+  const next = workflow.indexOf("\n  signin:", start);
+  const job = workflow.slice(start, next > 0 ? next : undefined);
+
+  const suites = [...job.matchAll(/node scripts\/([\w-]+)\.mjs/g)].map((m) => m[1]);
+  assert.ok(suites.includes("test-restore"), "the browser job does not run scripts/test-restore.mjs");
+  assert.equal(
+    suites[suites.length - 1],
+    "test-restore",
+    `scripts/test-restore.mjs has to be the last browser suite: ${suites[suites.length - 1]} runs after it, ` +
+    "against a dictionary it has just rebuilt with no SEED row in it",
+  );
+
+  // And it is last because of what it does, not because somebody put it there.
+  assert.match(
+    read(join("scripts", "test-restore.mjs")),
+    /lexeme\.deleteMany/,
+    "test-restore.mjs no longer empties the dictionary, so its position no longer has to be last",
+  );
+});
+
+/**
  * And the one suite whose *position* in that list is the whole of its value.
  *
  * `/start` redirects anyone carrying `onboardedAt` or a single card, which is

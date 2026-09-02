@@ -2716,6 +2716,17 @@ the key was the price of even seeing what you were about to ask. Neither was
 reachable on a machine with the keys set, which is the argument for running a
 suite in the state a stranger installs into.
 
+**And one suite's position is the whole of its safety.** `test-restore.mjs` empties the shared
+dictionary and rebuilds it from a backup, which is what it exists to prove, and everything it puts
+back is created as the restorer's own, because that is what a restore may do to a word the
+dictionary does not already hold. Afterwards not one row is marked `SEED`, so every suite that
+reads a seeded word is looking at a dictionary that no longer has one. `test-scan.mjs` says so out
+loud when it happens, waiving seventeen checks and naming the cause, which is the right behaviour
+and is not a substitute for the order: the person reading it is sent to reseed a database that was
+seeded correctly an hour ago. The only thing that kept this harmless was the order of two lines in
+a workflow file, so it is asserted, inside the browser job, since the sign-in suite is a separate
+job with a database of its own and appears later in the same file.
+
 **And a waiver that fires on every possible run is a hole wearing a waiver's clothes.** That
 is the one thing the machinery above cannot see: `absent(n, why)` states a fact about *this*
 run, and it never asks whether some run exists where the fact is false. `test-assess.mjs`
