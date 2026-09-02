@@ -1,6 +1,6 @@
 import { CASES, caseByKey } from "@/lib/estonian/cases";
 import { localCasesFor } from "@/lib/estonian/place";
-import { buildCloze } from "@/lib/estonian/cloze";
+import { buildCloze, mentions } from "@/lib/estonian/cloze";
 import { gapForms } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
@@ -199,6 +199,24 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           */
           const answer = caseAnswer(stemsFrom(lex.forms), key);
           if (!answer) continue;
+          /*
+            AND NOTHING TO ASK WHERE THE ANSWER IS THE WORD IN THE QUESTION.
+
+            Estonian genuinely spells some cases like the nominative: `kallis`
+            has the genitive `kalli`, so its inessive is `kalli` + `s`, which
+            is `kallis` again, and the same goes for `kapsas`, `lusikas`,
+            `maasikas`, `rahvas`, `taevas` and 109 others. The card read
+            `kallis → milles? kus?` with `kallis` on the back, so the question
+            printed its own answer: nobody can get it wrong, the scheduler
+            reads every pass as a recall and pushes the interval out, and the
+            slot is spent for ever on a card that asks nothing.
+
+            Only where *every* accepted spelling is the word itself. Seven
+            words have the lemma as one of two, `voodi / voodisse` among them,
+            and there the pair is exactly what a learner should be shown.
+          */
+          const lemma = lex.lemma.trim().toLocaleLowerCase("et");
+          if (answer.accepted.every((form) => form.trim().toLocaleLowerCase("et") === lemma)) continue;
           const spec = CASES.find((c) => c.key === key)!;
           out.push({
             cardType: type,
@@ -265,13 +283,31 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           if (built >= MAX_CLOZE_PER_WORD) break;
           const cloze = buildCloze(example.et, [...byValue.keys()]);
           if (!cloze) continue;
+          /*
+            The lemma is given deliberately: this asks for the right *form*,
+            not for the vocabulary, which the recognition card already tests.
+
+            EXCEPT WHERE THE HINT WOULD BE THE ANSWER, which was 2,468 of these
+            cards and 302 of the ones the course builds. Wherever the gap wants
+            the dictionary form, the hint printed it a line under the gap, so
+            the exercise this comment describes was not the exercise on screen.
+            Dropping the card would lose a real question, since "which word goes
+            in this gap, given what it means" is worth asking; what it may not
+            do is hand over the string.
+
+            So the hint falls back rather than switching: the lemma and the
+            meaning, then the meaning alone, then nothing. The last step is not
+            hypothetical, because a word can be spelled the same in both
+            languages: `film`, `lamp`, `monument`, `trend` and `kama` all had
+            their answer sitting in the English.
+          */
+          const asked = [`${lex.lemma}, ${lex.translation}`, lex.translation];
+          const hint = asked.find((line) => !mentions(line, cloze.answer)) ?? null;
           out.push({
             cardType: type,
             front: cloze.text,
             back: cloze.answer,
-            // The lemma is given deliberately: this asks for the right *form*,
-            // not for the vocabulary, which the recognition card already tests.
-            hint: `${lex.lemma}, ${lex.translation}`,
+            hint,
             targetCase: byValue.get(cloze.answer.toLowerCase()) ?? null,
           });
           built++;

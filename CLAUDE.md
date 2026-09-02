@@ -1264,6 +1264,39 @@ since that page is the side holding the part of speech and already decides what 
 The offer to add a sentence from class stays on both, because a sentence somebody met using a
 phrase is worth having.
 
+**A card may not print its own answer, and 2,644 of them did.** Found by building every card the
+shipped dictionary can make, 47,263 of them, and asking a question no unit test had: is the answer
+already visible on the question side, in the prompt or in the hint. Three separate causes, all of
+them invisible on any one word.
+
+**A case whose form is the nominative asks nothing.** Estonian genuinely spells some that way:
+`kallis` has the genitive `kalli`, so its inessive is `kalli` plus `s`, which is `kallis` again, and
+the same holds for `kapsas`, `lusikas`, `maasikas`, `rahvas`, `taevas` and 109 more. The card read
+`kallis → milles? kus?` with `kallis` on the back. Nobody can get one wrong, so the scheduler reads
+every pass as a recall and stretches the interval, and the deck slot is spent for ever. Skipped only
+where *every* accepted spelling is the word itself: seven words have the lemma as one of two,
+`voodi / voodisse` among them, and there the pair is exactly what a learner should see.
+
+**The gap's hint was the answer** wherever the gap wanted the dictionary form, which is 2,468 cards
+and 302 of the ones the course builds. `lib/srs/cards.ts` says in its own comment that the lemma is
+given deliberately because the card asks for the *form* rather than the vocabulary, and that was
+true of every card except the ones where the form is the lemma. The hint falls back rather than
+switching: the lemma and the meaning, then the meaning alone, then nothing at all. The last step is
+not hypothetical, because a word can be spelled the same in both languages and `film`, `lamp`,
+`monument`, `trend` and `kama` all had their answer sitting in the English. Thirteen cards end up
+with no hint, and "which word goes in this gap" is still a question worth asking.
+
+**And a gap may not leave its own answer standing in the sentence.** `buildCloze` blanks one
+occurrence, the longest match, so a sentence saying the word twice printed it: `Poisid läksid ____
+(= hakkasid kaklema).` had `kaklema` on the back. Refused rather than blanked twice, because two
+gaps taking one answer is a different exercise and the marker takes one string; the caller has other
+sentences and this costs fifteen cards. It is fixed in `buildCloze` rather than in the card builder
+because the mock exam and the level check draw their gaps from the same function.
+
+`mentions` in `lib/estonian/cloze.ts` is the one whole-word test all three read, with the boundaries
+the module already splits on rather than `\b`, which is ASCII and so does not know what õ is. After
+all three: **zero cards print their own answer**, measured the same way.
+
 **A card never answers the card before it.** FSRS decides when a card comes back and has no
 opinion on the order of the cards already due, which the queue took from `due` alone. A word's
 cards are written in one `createMany`, graded in one session and come back within seconds of each
