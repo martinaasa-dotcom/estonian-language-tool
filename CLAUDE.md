@@ -541,6 +541,55 @@ meets one they can read through rather than a wall of names, and the block names
 from, since these are somebody else's words. It lives on the dictionary landing beside the row it
 grew out of, rendered from the same hourly cache and stored nowhere; asserted.
 
+**Which words are worth learning first is a question about the language, not about the syllabus, so
+it is answered by counting.** The course teaches in themes and the dictionary holds six thousand
+words, and neither tells somebody in their first week where to start. `scripts/build-frequency.ts`
+counts a published word list over the OpenSubtitles corpus and writes `lib/collections/frequency.ts`,
+a hundred lemmas of each of four kinds. It is the third door onto the same rule as the photograph
+and the headline: the corpus proposes, the dictionary decides, and every word on the page is the
+dictionary's own headword. Nothing generated holds an English gloss, because a gloss copied out of
+the dictionary is a second copy of it that goes stale the first time somebody corrects one, and the
+correction path here is a queue strangers write to.
+
+**The licence is why it is that corpus.** `hermitdave/FrequencyWords` is MIT for the code and
+**CC BY-SA 4.0** for the counts, which is the licence Wiktionary already puts on the glosses in the
+built dictionary, so it may be used commercially, it has to be credited, and what is built on it
+carries the same terms. The University of Tartu publishes a better Estonian frequency dictionary
+and it is **CC BY-NC**: no charge today is not a promise of no charge ever, and a non-commercial
+clause is the one licence a project cannot walk itself back out of later. It is credited beside
+Ekilex and Wiktionary on sign-in, in the landing footer, on /terms and in `LICENSE`.
+
+**Two counting rules, both measured rather than reasoned out.** Only an *exact* spelling counts, never
+a folded one: `matchEstonianForm` accepts a lemma with its diacritics folded away, which is right for
+somebody typing `room` meaning `rõõm` and wrong over a corpus that is spelled correctly, and folding
+put `õli` at the top of the nouns on the 294,452 occurrences of `oli`, with `ära` landing on `arg`
+and `veel` on `väli`. And a **nominal is counted on its dictionary form while a verb is counted on
+its persons**: summing every case looks more accurate and is worse, because the commonest words in
+Estonian are function words and `välja` was being credited to `väli`, `ees` to `esi` and `sea` to
+`siga`. A verb is the exception because `saan`, `tean` and `tahan` are only ever that verb, and
+without them `olema` ranks nowhere since nobody says the infinitive. A spelling more than one entry
+can claim counts towards none of them, which is the comparator rule again: `hall` is frost and grey
+and there is no honest way to split thirty thousand occurrences. `meil` and `sai` are the residue
+and are named in the script's header so nobody adds a third rule to chase them.
+
+**And the count is what found the hole.** Of the four hundred commonest words in Estonian, 125 were
+ones the dictionary could not vouch for in any form, and the top of that list is `ja`, `et`, `aga`,
+`jah`, `ei`, `ka`, `siis` and `nii`. Six units of "the words between the words" had been appended
+once and the job was half done. Three more A1 units carry the connectives, the replies and the degree
+words, 51 lemmas, every one a request the harvest either honours or reports, and all 51 came back.
+They are labelled `ADVERB` for the reason the harvest already gives about the connectives it had, that
+an Estonian adverb does not inflect and demanding forms would drop every one of them; the label says
+which card types a word takes rather than making a claim about word class, which is what `kas` has
+been doing since the question words unit was written.
+
+**A page that offers a hundred words at once adds them under one lock.** `planLemmas` and
+`addPlanToDeck` are the shared body `addUnitsToDeck` was refactored into, so the frequency page
+inherits the transaction, the deck lock, the dedupe against what is already there and the chunked
+insert, rather than growing a fourth path that writes cards. Recognition and production only, because
+a case card apiece would be eight hundred cards for one press. The invariant that guards this used to
+name `addUnitsToDeck` and read its body; it counts inserts now, so a fifth caller fails it whatever it
+is called, which is what the refactor itself demonstrated by silently emptying the old check.
+
 **The seasonal row names units of the course, never words of its own.** `lib/collections/topical.ts`
 is a calendar of Estonia's year, and every window in it names unit ids from
 `lib/collections/syllabus/`; the words come out of the course, where a lemma is already a request
@@ -2639,6 +2688,7 @@ npm run audit:merge      # after merging: what the other side added that is no l
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
+npm run build:frequency  # recount the commonest words (cached corpus, --refresh to re-fetch)
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running

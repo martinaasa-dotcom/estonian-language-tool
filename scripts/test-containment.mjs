@@ -131,6 +131,7 @@ const ROUTES = [
 
   // The dictionary, the deck and the reference, which is where the Estonian is.
   "/dictionary",
+  "/dictionary/common",
   "/dictionary?q=tuba",
   "/words",
   "/grammar",
@@ -220,7 +221,13 @@ const SPARSE = new Map([
 // why they had to: "a route that is not in this list is a screen where the
 // whole rule is unenforced", and the calendar was over its box at 768 on the
 // first run.
-const { check, absent, done } = suite("Containment", { floor: 1030 });
+//
+// 1050 rather than 1040: the commonest words joined it, which is one route and
+// twenty checks, and it is the densest page in the app by some way. Four
+// hundred Estonian chips in four disclosures, and the longest of them
+// (`sellepärast`, `suurepärane`) are exactly the shape the unbreakable pass
+// asks about.
+const { check, absent, done } = suite("Containment", { floor: 1050 });
 
 const browser = await launchChromium();
 

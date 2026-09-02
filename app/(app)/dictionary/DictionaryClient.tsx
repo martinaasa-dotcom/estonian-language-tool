@@ -4,7 +4,7 @@ import { equivalentIn, type GlossLanguage } from "@/lib/collections/glossLanguag
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Camera, Check, Plus, ScissorsLineDashed, Search, Star } from "lucide-react";
+import { Camera, Check, Plus, ScissorsLineDashed, Search, Star, TrendingUp } from "lucide-react";
 import { addToDeck, toggleStar } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
@@ -255,6 +255,32 @@ export function DictionaryClient({
             ))}
           </ul>
         </div>
+      )}
+
+      {/*
+        THE OTHER WAY IN, FOR SOMEBODY WHO DOES NOT HAVE A WORD IN MIND.
+
+        The suggestion row above offers three or four words and the search box
+        wants one. Neither answers "which words are worth learning first",
+        which is a question about the language rather than about this app, and
+        `/dictionary/common` answers it by counting. It sits here rather than
+        in the rail because this is the screen somebody is on when they want
+        it, which is the whole of what `within` means in lib/ux/nav.ts.
+      */}
+      {!initialQuery && (
+        <Link
+          href="/dictionary/common"
+          className="tap-tint flex items-center justify-between gap-3 rounded-[var(--r)] px-4 py-3"
+          style={{ background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+        >
+          <span className="flex items-center gap-2.5">
+            <TrendingUp size={16} aria-hidden style={{ color: "var(--sky-ink)" }} />
+            <span className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
+              The words you will hear most
+            </span>
+          </span>
+          <span className="text-xs" style={{ color: "var(--ink-3)" }}>a hundred of each kind</span>
+        </Link>
       )}
 
       {!initialQuery && <Headlines headlines={headlines} host={feedHost} />}

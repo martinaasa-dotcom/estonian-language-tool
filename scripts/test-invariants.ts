@@ -1057,6 +1057,14 @@ check("every path that adds cards reads and writes under one lock", () => {
     taken outside the transaction, or a lock with the read left outside it. And
     asserted as *one* lock, because two paths guarding themselves with two
     different keys are two paths neither of which guards the other.
+
+    THE TWO BODIES ARE NAMED, AND THEN EVERY INSERT IS COUNTED AGAINST THEM.
+    Naming the bodies alone is anchored on today's function names, which broke
+    the moment `addUnitsToDeck` became a one-line delegation to the batched
+    builder the frequency page also uses: the rule held perfectly and the check
+    read an empty body. So the second half asks the question the heading asks,
+    that no card is written anywhere but inside one of them, which is what
+    catches the *next* caller rather than the last one.
   */
   const lockedPaths = [
     {
@@ -1066,8 +1074,8 @@ check("every path that adds cards reads and writes under one lock", () => {
       write: "card.createMany",
     },
     {
-      what: "addUnitsToDeck",
-      body: /export async function addUnitsToDeck\(([\s\S]*?)\n\}/.exec(code("lib/srs/deck.ts"))?.[1] ?? "",
+      what: "addPlanToDeck",
+      body: /export async function addPlanToDeck\(([\s\S]*?)\n\}/.exec(code("lib/srs/deck.ts"))?.[1] ?? "",
       read: "card.findMany",
       write: "card.createMany",
     },
@@ -1090,6 +1098,23 @@ check("every path that adds cards reads and writes under one lock", () => {
       `${what} takes its lock after the read it is meant to protect, which serialises nothing`,
     );
   }
+
+  /*
+    EVERY INSERT OF A CARD IS INSIDE ONE OF THOSE BODIES.
+
+    Counted rather than located, because a body is found by a regex and a
+    count is not fooled by one that stops matching: if the two files hold four
+    `card.createMany` calls between them and the two locked bodies hold four,
+    every insert is covered, and a fifth written anywhere else fails here
+    whatever it is called.
+  */
+  const inserts = (text: string) => [...text.matchAll(/card\.createMany/g)].length;
+  const everywhere = inserts(code("app/actions.ts")) + inserts(code("lib/srs/deck.ts"));
+  const locked = lockedPaths.reduce((sum, path) => sum + inserts(path.body), 0);
+  assert.equal(
+    everywhere, locked,
+    `${everywhere - locked} card insert(s) are outside the locked paths, so two tabs can both write them`,
+  );
 
   /*
     And the lock itself. The transaction form and the blocking one, keyed on the
@@ -5740,8 +5765,8 @@ check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
   );
   assert.match(page, /<LocalDate/, "Today lost its fallback for a build whose locale data has no Estonian");
 
-  const module = code("lib/time/estonianDate.ts");
-  assert.match(module, /hasEstonian\(\)/, "the Estonian date no longer checks that the platform has Estonian");
+  const dateModule = code("lib/time/estonianDate.ts");
+  assert.match(dateModule, /hasEstonian\(\)/, "the Estonian date no longer checks that the platform has Estonian");
   /*
     And it never asks Intl for the deployment's locale, which is the fault
     `components/LocalDate.tsx` exists for: `undefined` there means whatever
@@ -5749,9 +5774,69 @@ check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
     Estonian request in English with nothing to say it had.
   */
   assert.doesNotMatch(
-    module,
+    dateModule,
     /DateTimeFormat\(\s*undefined/,
     "the Estonian date asks Intl for the deployment's locale",
+  );
+});
+
+check("the commonest words are counted, gated, and never written down twice", () => {
+  /*
+    A corpus proposes and the dictionary decides, which is ADR-021's rule about
+    a photographed page and ADR-024's about a headline, arriving through a
+    third door. Four things hold it up and each was a way of getting this
+    wrong.
+
+    THE TABLE HOLDS NO ENGLISH. A generated file carrying a gloss beside each
+    lemma is a second copy of the dictionary that goes stale the first time
+    somebody corrects one, and the correction path in this app is a queue
+    strangers write to. So the table is lemmas and the page joins.
+
+    THE COUNTING NEVER FOLDS A DIACRITIC. `matchEstonianForm` accepts a lemma
+    with its diacritics folded away, which is right for somebody typing `room`
+    meaning `rõõm` and wrong over a corpus that is spelled correctly: it put
+    `õli` at the top of the nouns on the 294,452 occurrences of `oli`, which
+    is the past of `olema`.
+
+    A WORD CARRIES A BAND. The same filter the suggestion row takes, and here
+    it is what keeps an entry that happens to be spelled like a very common
+    form of something else off the front of the list.
+
+    AND THE ACTION TAKES A GROUP, NOT A LIST OF WORDS. Every export of
+    `app/actions.ts` is a public endpoint whose arguments are JSON off the wire
+    whatever the types say, so one taking lemmas would let a caller choose what
+    gets built into a deck. A group name indexes a table in the repository and
+    can name nothing else.
+  */
+  const table = read("lib/collections/frequency.ts");
+  assert.doesNotMatch(
+    table, /translation|gloss:/,
+    "the frequency table carries English, which is a second copy of the dictionary that will go stale",
+  );
+
+  const builder = code("scripts/build-frequency.ts");
+  assert.doesNotMatch(
+    builder, /\bfold\(|FOLD_FROM/,
+    "the frequency builder folds diacritics, which credits `oli` to `õli`",
+  );
+  assert.match(
+    builder, /\.cefr\b/,
+    "the frequency builder stopped requiring a band, so the Wiktionary tail can reach the list",
+  );
+  assert.doesNotMatch(
+    builder, /lib\/tutor|openWithFallback|ANTHROPIC|OPENAI|OPENROUTER/,
+    "the frequency builder can reach a model, and this path decides which words a learner is offered",
+  );
+
+  const action = /export async function addCommonWords\(([\s\S]*?)\n\}/.exec(code("app/actions.ts"))?.[1] ?? "";
+  assert.ok(action, "addCommonWords has gone, or changed shape past recognition");
+  assert.match(
+    action, /FREQUENCY_GROUPS\.includes\(/,
+    "addCommonWords no longer checks its argument against the closed list of groups",
+  );
+  assert.match(
+    action, /lemmasIn\(/,
+    "addCommonWords takes its words from somewhere other than the checked-in table",
   );
 });
 

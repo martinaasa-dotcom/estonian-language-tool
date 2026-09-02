@@ -32,6 +32,7 @@
     "test:containment": "node scripts/test-containment.mjs",
     "wordlist": "tsx scripts/build-wordlist.ts",
     "harvest": "tsx scripts/harvest-ekilex.ts",
+    "build:frequency": "tsx scripts/build-frequency.ts",
     "test:load": "tsx scripts/load-test.mjs",
     "fixture:load": "tsx scripts/load-fixture.ts",
     "measure:asr": "node scripts/measure-asr.mjs"

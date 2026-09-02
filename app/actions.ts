@@ -42,7 +42,9 @@ import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
-import { addUnitsToDeck, lockDeck } from "@/lib/srs/deck";
+import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
+import { FREQUENCY_GROUPS, type FrequencyGroup } from "@/lib/collections/frequency";
+import { lemmasIn } from "@/lib/progress/common";
 import { MAX_STARTER_UNITS } from "@/lib/collections/starter";
 
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
@@ -1045,6 +1047,38 @@ export async function completeOnboarding(input: {
  * case-form cards. Already-present cards are skipped, so re-adding a unit after
  * finishing half of it costs nothing and loses no scheduling.
  */
+/**
+ * The hundred commonest words of one kind, into the deck.
+ *
+ * The group rather than a list of words, and that is the point: every export
+ * of this file is a public endpoint whose arguments are JSON off the wire
+ * whatever the types say, so a caller handing over lemmas would be choosing
+ * what gets built. A group name indexes a table checked into the repository
+ * and cannot name anything else.
+ *
+ * Recognition and production only (`planLemmas` decides), because a case card
+ * apiece would be eight hundred cards for one press. Already-present cards are
+ * skipped under the same lock every other deck write takes, so pressing twice
+ * costs nothing and loses no scheduling.
+ */
+export async function addCommonWords(group: string) {
+  const ownerId = await requireUserId();
+  if (!FREQUENCY_GROUPS.includes(group as FrequencyGroup)) {
+    return { ok: false as const, error: "That list does not exist." };
+  }
+
+  const { added, words } = await addPlanToDeck(
+    ownerId,
+    planLemmas(lemmasIn(group as FrequencyGroup), ["RECOGNITION", "PRODUCTION"]),
+    "DICTIONARY",
+  );
+
+  revalidatePath("/dictionary/common");
+  revalidatePath("/words");
+  revalidatePath("/");
+  return { ok: true as const, added, words };
+}
+
 export async function addUnitToDeck(unitId: string) {
   const ownerId = await requireUserId();
   const unit = unitById(unitId);
