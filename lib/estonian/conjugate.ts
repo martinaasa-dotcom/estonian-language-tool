@@ -77,10 +77,21 @@ const CONDITIONAL: readonly (readonly [ConditionalCode, string])[] = [
 const IRREGULAR_PRESENT: ReadonlySet<string> = new Set(["olema"]);
 
 /**
- * Verbs whose singular imperative is not the present stem. `minema` says
- * `mine`, off the infinitive, where its present runs on `lähe-`.
+ * Verbs whose singular imperative the rule may not produce.
+ *
+ * `minema` says `mine`, off the infinitive, where its present runs on `lähe-`,
+ * so the rule would give `lähe`. `pidama` in the sense the course teaches, the
+ * one a learner needs for "ma pidin minema", has no imperative at all: Ekilex
+ * records the slot as absent, and the rule would offer `pea`, which is the
+ * imperative of a different verb and also the word for a head. That is the
+ * one thing this module must not do, since a derived form appears beside
+ * attested ones and looks exactly like them.
+ *
+ * Found by `npm run audit:verbs`, which derives every slot for all 797 verbs
+ * and compares them with what Ekilex records: this was its one disagreement
+ * after the course pinned `pidama` to the right homonym.
  */
-const IRREGULAR_IMPERATIVE: ReadonlySet<string> = new Set(["minema"]);
+const IRREGULAR_IMPERATIVE: ReadonlySet<string> = new Set(["minema", "pidama"]);
 
 /**
  * The present stem, or null where there is no honest one.
