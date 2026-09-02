@@ -156,7 +156,7 @@ export default async function TodayPage() {
     that still runs their queries has kept the cost and thrown away the reason.
   */
   const [word, collection, struggle, countdown] = await Promise.all([
-    shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now)) : null,
+    shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now), placement) : null,
     shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
     shows(stage, "struggle") ? loadStruggle(ownerId, now) : null,
     // The snapshot is handed over rather than fetched again: this page already

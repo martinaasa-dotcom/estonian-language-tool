@@ -5712,6 +5712,40 @@ check("the word of the day is one the learner has not met", () => {
   assert.match(card, /Ekilex/, "the sentence's provenance no longer names its source");
 });
 
+check("the word of the day reads the learner's level, and reads it in the right place", () => {
+  /*
+    A B1 account was taught `keskmine`, an A1 adjective meaning "average". That
+    word matches no gloss the almanac can ask for, which names the path: the
+    fallback filtered on nothing at all and its skip landed anywhere in six
+    thousand entries.
+
+    The asymmetry is the part worth asserting, because the obvious fix is
+    symmetric and half of it is wrong. Measured over a year of the shipped
+    dictionary at B1, banding the *themed* pick outright moved 37 days of 336
+    onto a word whose gloss carries the day's meaning as a fourth sense, on 31
+    days that had the primary one. The almanac asks for `snow`, `hand` and
+    `week`, and there is no B1 word for snow. So the band ranks under the
+    sense and never over it, and the fallback, which has no meaning to honour,
+    filters.
+
+    Anchored on the order of two keys in one array rather than on the words
+    around them, and `lib/progress/wordOfDay.itest.ts` is the half that can
+    fail on a word: it stars out everything the day could otherwise answer
+    with and asks a real dictionary.
+  */
+  const source = code("lib/progress/wordOfDay.ts");
+  assert.match(
+    source,
+    /cefr:\s*\{\s*in:\s*\[\.\.\.bandsAround\(level\)\]/,
+    "the word of the day's fallback no longer bands its pool, so a skip lands anywhere in the dictionary",
+  );
+  assert.match(
+    source,
+    /senseIndex\(row\.translation, gloss\),\s*isAround\(row\.cefr, level\)/,
+    "the band no longer sits under the sense in the themed ranking; there is no B1 word for snow",
+  );
+});
+
 check("late is decided in one place, against the learner's own day", () => {
   /*
     A due date is typed into `<input type="date">`, so it is stored at midnight

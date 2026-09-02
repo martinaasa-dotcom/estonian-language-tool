@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { computeStreak } from "@/lib/achievements/badges";
 import { occasionsFor, type Occasion } from "@/lib/copy/almanac";
+import { bandsAround, isAround } from "@/lib/collections/levels";
+import type { Level } from "@/lib/collections/syllabus/types";
 import { matchesGloss, senseIndex } from "@/lib/dict/gloss";
 import { parseExamples, usableExamples, type Example } from "@/lib/dict/examples";
 import { naturalSentence } from "@/lib/estonian/cloze";
@@ -28,6 +30,26 @@ import type { DayClock, DayKey } from "@/lib/time/day";
  * is and which English gloss that asks for, this asks the dictionary who
  * carries it, and the card prints the reason next to the word. A word with a
  * reason is remembered and a word drawn at random is scrolled past.
+ *
+ * THE LEVEL IS A TIE-BREAK ON ONE PATH AND A FILTER ON THE OTHER, AND THAT
+ * ASYMMETRY IS MEASURED RATHER THAN TIDY. A B1 learner was shown `keskmine`,
+ * an A1 adjective meaning "average", which is a word they had before they
+ * started. The obvious fix is to band both paths on `bandsAround`, the way
+ * every other screen that chooses a word for somebody does, and on the themed
+ * path it is worse than doing nothing: the almanac asks for meanings, and the
+ * meanings a calendar has are `snow`, `hand`, `week` and `first`, which are A1
+ * words because that is what those meanings are in any language. Measured over
+ * a year of the shipped dictionary at B1, banding the themed pick moved 37
+ * days of 336 out of the alphabetically first candidates and into words whose
+ * gloss carries the day's meaning as a fourth sense, on 31 days that had the
+ * primary one. There is no B1 word for snow. So the themed path ranks on the
+ * band **after** the sense, which changes six days and costs nothing, and the
+ * word arrives at whatever level the meaning happens to live at, which is the
+ * honest answer to "here is a word for today".
+ *
+ * `pickAny` has no meaning to honour and is where the fault actually was: it
+ * filtered on nothing at all, so its skip landed anywhere in six thousand
+ * entries. It bands.
  *
  * NOTHING HERE WRITES ESTONIAN, WHICH IS THE POINT OF THE SPLIT (ADR-005). The
  * almanac is English and asks for a meaning. The Estonian is whatever the
@@ -88,12 +110,17 @@ const CANDIDATE_LIMIT = 240;
  * does not swap it either, since "met" is measured at the start of the day and
  * "add this to my deck" is the button the card is built around.
  */
-export async function wordOfDay(ownerId: string, day: DayKey, dayStart: Date): Promise<WordOfDay | null> {
+export async function wordOfDay(
+  ownerId: string,
+  day: DayKey,
+  dayStart: Date,
+  level: Level,
+): Promise<WordOfDay | null> {
   const occasions = occasionsFor(day);
   const glosses = [...new Set(occasions.flatMap((o) => o.glosses))];
 
-  const themed = glosses.length > 0 ? await pickThemed(ownerId, day, dayStart, occasions, glosses) : null;
-  return themed ?? (await pickAny(ownerId, day, dayStart));
+  const themed = glosses.length > 0 ? await pickThemed(ownerId, day, dayStart, occasions, glosses, level) : null;
+  return themed ?? (await pickAny(ownerId, day, dayStart, level));
 }
 
 /**
@@ -166,6 +193,7 @@ async function pickThemed(
   dayStart: Date,
   occasions: Occasion[],
   glosses: string[],
+  level: Level,
 ): Promise<WordOfDay | null> {
   const rows = await prisma.lexeme.findMany({
     where: {
@@ -191,7 +219,7 @@ async function pickThemed(
   for (const occasion of occasions) {
     for (const gloss of occasion.glosses) {
       const matches = fresh.filter((row) => matchesGloss(row.translation, gloss));
-      const chosen = choose(matches, gloss, day);
+      const chosen = choose(matches, gloss, day, level);
       if (chosen) return build(chosen, occasion);
     }
   }
@@ -206,25 +234,52 @@ async function pickThemed(
  * seeded before the harvest, or a learner far enough in to have met every word
  * their level has. So this exists, and it does not pretend to have a reason.
  */
-async function pickAny(ownerId: string, day: DayKey, dayStart: Date): Promise<WordOfDay | null> {
-  const where = { ...unmet(ownerId, dayStart), translation: { not: "" } };
-  const total = await prisma.lexeme.count({ where });
-  if (total === 0) return null;
+async function pickAny(ownerId: string, day: DayKey, dayStart: Date, level: Level): Promise<WordOfDay | null> {
+  const base = { ...unmet(ownerId, dayStart), translation: { not: "" } };
+  /*
+    Around the learner's level, then anything at all.
 
-  // Stable through the day and spread across the dictionary, from the one
-  // thing that changes at midnight.
-  const skip = hashDay(day) % total;
-  const rows = await prisma.lexeme.findMany({
-    // `lemma` is not unique (`@@unique` is on `(lemma, pos)`), so the id ends
-    // it: a skip landing on `hall` must take the same one of its two rows on
-    // every request of the same day.
-    where, select: SELECT, orderBy: [{ lemma: "asc" }, { id: "asc" }], skip, take: 1,
-  });
+    The band is a `cefr` the course or the graded seed wrote down, so it is
+    also the filter ADR-024 puts on the dictionary's suggestion row: an entry
+    with no band is the tail of the Wiktionary expansion, and `aberratsioon`
+    is no better a word of the day than it was a suggestion. That is the one
+    place this reads a missing tag differently from `isAround`, which is right
+    to keep an untagged word in a learner's own deck and has nothing to say
+    about picking one out of the shared dictionary.
 
-  const fresh = await withoutReviewed(ownerId, rows);
-  const chosen = fresh[0];
-  return chosen ? build(chosen, null) : null;
+    The second pass is the whole dictionary and is what stops the panel going
+    blank: a learner far enough in has met every graded word their level has,
+    and a card that says nothing is worse than one that says a hard word.
+  */
+  for (const where of [{ ...base, cefr: { in: [...bandsAround(level)] } }, base]) {
+    const total = await prisma.lexeme.count({ where });
+    if (total === 0) continue;
+
+    // Stable through the day and spread across the dictionary, from the one
+    // thing that changes at midnight.
+    const skip = hashDay(day) % total;
+    const rows = await prisma.lexeme.findMany({
+      // `lemma` is not unique (`@@unique` is on `(lemma, pos)`), so the id ends
+      // it: a skip landing on `hall` must take the same one of its two rows on
+      // every request of the same day.
+      where, select: SELECT, orderBy: [{ lemma: "asc" }, { id: "asc" }], skip, take: WINDOW,
+    });
+
+    /*
+      A window rather than one row, because the one row can be thrown out. A
+      word whose card was deleted has no card and has certainly been met, so
+      `withoutReviewed` rejects it, and with a window of one that used to end
+      the whole pick: the panel went blank, or, once this had a second pass
+      under it, fell out of the learner's band over a single stale word.
+    */
+    const chosen = (await withoutReviewed(ownerId, rows))[0];
+    if (chosen) return build(chosen, null);
+  }
+  return null;
 }
+
+/** Enough rows past the skip that one already-met word does not end the pick. */
+const WINDOW = 8;
 
 /**
  * Never met, as a relation filter.
@@ -265,14 +320,20 @@ async function withoutReviewed(ownerId: string, rows: Candidate[]): Promise<Cand
  *
  * Ranked rather than picked at random, because the candidates for one gloss
  * are rarely equal: "fire" is the first sense of one word and the third of
- * another, and the first is the word for fire. Then a sentence, because a word
- * of the day with an example is a lesson and one without is a vocabulary item.
- * Then a level, because an entry the course placed is one somebody looked at.
+ * another, and the first is the word for fire.
+ *
+ * Then the learner's own band, among words that carry the meaning equally
+ * well: a word for snow is a word for snow, and where two of them are, the one
+ * at their level is the one worth printing. It sits *under* the sense and not
+ * over it, for the reason in this file's header. Then a sentence, because a
+ * word of the day with an example is a lesson and one without is a vocabulary
+ * item. Then a level at all, because an entry the course placed is one
+ * somebody looked at.
  *
  * The day breaks a tie among equals, so a gloss that comes round every month
  * does not hand over the same word twelve times a year.
  */
-function choose(matches: Candidate[], gloss: string, day: DayKey): Candidate | undefined {
+function choose(matches: Candidate[], gloss: string, day: DayKey, level: Level): Candidate | undefined {
   if (matches.length === 0) return undefined;
 
   const scored = matches
@@ -280,6 +341,7 @@ function choose(matches: Candidate[], gloss: string, day: DayKey): Candidate | u
       row,
       rank: [
         senseIndex(row.translation, gloss),
+        isAround(row.cefr, level) ? 0 : 1,
         firstExample(row) ? 0 : 1,
         row.cefr ? 0 : 1,
         row.lemma.length,

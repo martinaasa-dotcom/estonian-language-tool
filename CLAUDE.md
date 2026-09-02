@@ -1407,6 +1407,27 @@ a substring, because a gloss is a comma-separated list and a substring runs thro
 `contains` match on "dark" reaches a slur four rows down and one on "love" reaches "love child",
 and either would have been printed as today's word.
 
+**And the learner's level is a tie-break on one path and a filter on the other, which is measured
+rather than tidy.** A B1 account opened the app and was taught `keskmine`, an A1 adjective meaning
+"average", which is a word somebody has before they start. It matches no gloss the almanac can ask
+for, and that names the path: `pickAny`, the fallback for a day whose requests the dictionary could
+not meet, filtered on nothing at all, so its skip landed anywhere in six thousand entries. It bands
+on `bandsAround` now, and on a `cefr` being there at all, which is ADR-024's rule about the
+suggestion row for the same reason: an entry with no band is the tail of the Wiktionary expansion,
+and `aberratsioon` is no better a word of the day than it was a word to look up. The whole
+dictionary is the second pass under it, because a learner far enough in has met every graded word
+their level has and a blank panel is worse than a hard word.
+
+The obvious fix is to band both paths, and half of it is wrong. Measured over a year of the shipped
+dictionary at B1, banding the *themed* pick moved 37 days of 336 onto a word whose gloss carries the
+day's meaning as a fourth sense, on 31 days that had the primary one. The almanac asks for `snow`,
+`hand` and `week`, and those are A1 words because that is what those meanings are in any language:
+there is no B1 word for snow. So the band ranks **under** the sense, where it changes six days of
+336 and costs nothing, and a word chosen for today is a word for today first. Both halves have an
+invariant, anchored on the order of two keys in one array, and `lib/progress/wordOfDay.itest.ts` is
+the half that can fail on a word: it stars out everything the day could otherwise answer with and
+asks a real dictionary which word three learners at three levels are handed.
+
 **The date somebody gave us belongs on the screen they open.** A learner answers two questions in
 their first five minutes here, what they want to reach and by when, and the app then stored both and
 never mentioned them again on the one page they see every morning. `lib/progress/countdown.ts` puts
