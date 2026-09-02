@@ -78,17 +78,33 @@ export default async function EmojiPage() {
 
   const pairs: EmojiPair[] = [];
   const usedLemmas = new Set<string>();
+  /*
+    AND ONE PICTURE PER BOARD, WHICH IS NOT THE SAME AS ONE WORD PER BOARD.
+
+    313 words carry a picture and there are only 249 pictures: 🏠 is both `maja`
+    and `elamu`, 🚌 is `buss` and `autobuss`, 👨 is `mees`, `meesisik` and
+    `meesterahvas`, and there are fifty of these. This is a *matching* board, so
+    two words sharing one emoji put the same tile up twice against two different
+    forms, and the learner has no way to tell which goes with which. Getting it
+    wrong then marks a card they knew.
+
+    Deduplicating on the lemma cannot see it, because the two are different
+    words. It is the picture that has to be unique here, since the picture is
+    the question.
+  */
+  const usedEmoji = new Set<string>();
 
   for (const card of shuffle(deckCards)) {
     if (pairs.length === PAIRS) break;
     const lemma = card.lexeme?.lemma;
     const emoji = lemma ? emojiFor(lemma) : undefined;
-    if (!lemma || !emoji || usedLemmas.has(lemma)) continue;
+    if (!lemma || !emoji || usedLemmas.has(lemma) || usedEmoji.has(emoji)) continue;
 
     const spec = CASES.find((c) => c.key === card.targetCase);
     if (!spec) continue;
 
     usedLemmas.add(lemma);
+    usedEmoji.add(emoji);
     pairs.push({
       id: `card-${card.id}`,
       cardId: card.id,
@@ -130,7 +146,8 @@ export default async function EmojiPage() {
 
     for (const row of shuffle(rows.filter((r) => emojiFor(r.lemma)))) {
       if (pairs.length === PAIRS) break;
-      if (usedLemmas.has(row.lemma)) continue;
+      const emoji = emojiFor(row.lemma)!;
+      if (usedLemmas.has(row.lemma) || usedEmoji.has(emoji)) continue;
       const stems = stemsFrom(row.forms);
 
       // One case per word, drawn at random, so the same word is a different
@@ -144,10 +161,11 @@ export default async function EmojiPage() {
 
       const spec = CASES.find((c) => c.key === picked!.key)!;
       usedLemmas.add(row.lemma);
+      usedEmoji.add(emoji);
       pairs.push({
         id: `dict-${row.id}`,
         cardId: null,
-        emoji: emojiFor(row.lemma)!,
+        emoji,
         lemma: row.lemma,
         form: picked.form,
         question: spec.question,

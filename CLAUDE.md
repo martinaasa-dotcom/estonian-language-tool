@@ -1557,6 +1557,21 @@ wherever a screen prints a case, and no card asks for it.
 the module already splits on rather than `\b`, which is ASCII and so does not know what õ is. After
 all three: **zero cards print their own answer**, measured the same way.
 
+**A matching board is unique by what it asks with, not by what it answers.** 313 words carry a
+picture and there are 249 pictures: the house stands for `maja` and `elamu`, the bus for `buss` and
+`autobuss`, the man for `mees`, `meesisik` and `meesterahvas`, fifty of them in all. That is the table being right rather
+than wrong, since Estonian has more than one word for plenty of things a picture can show and
+`scripts/build-emoji.ts` has no business choosing between two true ones.
+
+What it costs is downstream. `/review/emoji` is a *matching* board, so the picture is the question,
+and two words sharing one put the same tile up twice against two different forms with no way for the
+learner to tell which goes with which. Getting it wrong then marks a card they knew, which is the
+`aitama` fault in a different room. Both of its pickers deduplicated on the lemma, which cannot see
+this, because the two really are different words. The invariant is the pairing rather than either
+line: a picker that writes a word down writes its picture down too, so a third one cannot be added
+knowing half the rule, and `emoji.test.ts` is why that guard is load-bearing rather than
+theoretical.
+
 **A card never answers the card before it.** FSRS decides when a card comes back and has no
 opinion on the order of the cards already due, which the queue took from `due` alone. A word's
 cards are written in one `createMany`, graded in one session and come back within seconds of each

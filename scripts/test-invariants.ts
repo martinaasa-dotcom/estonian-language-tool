@@ -5421,6 +5421,43 @@ check("the research note names the gradation values the classifier assigns", () 
   );
 });
 
+/*
+  A MATCHING BOARD IS UNIQUE BY WHAT IT ASKS WITH, NOT BY WHAT IT ANSWERS.
+
+  313 words carry a picture and there are 249 pictures: 🏠 is `maja` and
+  `elamu`, 🚌 is `buss` and `autobuss`, 👨 is `mees`, `meesisik` and
+  `meesterahvas`, fifty of them in all. That is the table being right; Estonian
+  has more than one word for plenty of things and `scripts/build-emoji.ts` has
+  no business choosing between two true ones.
+
+  `/review/emoji` is a matching board, so the picture is the question and two
+  words sharing one put the same tile up twice against two different forms,
+  with no way for the learner to tell which goes with which. Getting it wrong
+  then marks a card they knew. Both of its pickers deduplicated on the lemma,
+  which cannot see this, because the two really are different words.
+
+  Anchored on the pairing rather than on either line: a picker that writes a
+  word down has to write its picture down too, so a third one cannot be added
+  knowing only half the rule.
+*/
+check("the emoji board is unique by picture as well as by word", () => {
+  const file = join("app", "(app)", "review", "emoji", "page.tsx");
+  const source = code(file);
+  const words = (source.match(/usedLemmas\.add\(/g) ?? []).length;
+  const pictures = (source.match(/usedEmoji\.add\(/g) ?? []).length;
+  assert.ok(words > 0, `${file}: no longer tracks which words are on the board`);
+  assert.equal(
+    pictures, words,
+    `${file}: ${words} places put a word on the board and ${pictures} put its picture down. `
+    + "A picture stands for more than one word 50 times in lib/collections/emoji.ts, and this is a "
+    + "matching board, so the same tile would appear twice against two different forms.",
+  );
+  assert.ok(
+    /usedEmoji\.has\(/.test(source),
+    `${file}: writes down which pictures are used and never asks, so nothing is deduplicated.`,
+  );
+});
+
 check("a screen that reports a missing example knows a phrase is not one", () => {
   const POS_HOME = "lib/dict/pos.ts";
   assert.match(
