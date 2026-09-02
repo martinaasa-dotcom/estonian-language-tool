@@ -27,7 +27,7 @@ import { createRequire } from "node:module";
 
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
-import { ratingButtons, revealAnswer } from "./lib/review.mjs";
+import { gradeButtons, revealAnswer } from "./lib/review.mjs";
 
 /*
   Read off disk and injected, rather than imported and called in Node: axe
@@ -317,7 +317,7 @@ for (const theme of ["light", "dark"]) {
   await graded.goto(`${BASE}/review`, { waitUntil: "networkidle" });
   await graded.waitForTimeout(300);
   const shape = await revealAnswer(graded);
-  const ratings = ratingButtons(graded);
+  const ratings = gradeButtons(graded);
   if (shape && (await ratings.count())) {
     await ratings.first().click();
     await graded.waitForTimeout(1200);
@@ -331,8 +331,9 @@ for (const theme of ["light", "dark"]) {
     check(`/review once a card is graded, in ${theme}: axe finds nothing`,
       violations.length === 0, violations.slice(0, 2).join("; "));
   } else {
-    absent(2, `/review with a card graded, in ${theme}: the deck had nothing due, ` +
-      "so the controls a grade unlocks were never drawn. Run `npm run demo`");
+    absent(2, `/review with a card graded, in ${theme}: no card offered a grade button, ` +
+      "so the controls a grade unlocks were never drawn. Either the deck has nothing due " +
+      "(run `npm run demo`) or every card that came up graded itself, which a clean hit does");
   }
   await graded.close();
 }

@@ -40,9 +40,17 @@ export function BadgeShelf({ earnedKeys }: { earnedKeys: Set<string> }) {
               <Icon size={19} aria-hidden />
             </span>
             <p className="text-sm font-semibold leading-tight" style={{ color: earned ? "var(--ink)" : "var(--ink-2)" }}>
-              {b.title}
+              <span lang="et">{b.title}</span>
             </p>
-            <p className="text-2xs leading-snug" style={{ color: "var(--ink-3)" }}>{b.description}</p>
+            {/*
+              The name is Estonian, so it says what it means. A shelf of
+              badges is the one place in this app where a learner reads a
+              phrase for pleasure rather than to answer something, which is
+              exactly where a word sticks.
+            */}
+            <p className="text-2xs leading-snug" style={{ color: "var(--ink-3)" }}>
+              {b.gloss}. {b.description}
+            </p>
           </div>
         );
       })}

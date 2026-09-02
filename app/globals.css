@@ -495,9 +495,24 @@
     the help mark beside a case 28x28, "See the full entry" 128x19, "Change
     the goal" 105x19. `scripts/test-mobile.mjs` measured exactly the same set
     of selectors, so none of them had ever been flagged by the suite whose job
-    that is. A link drawn as a pill or as an icon is a control, and an inline
-    link in a paragraph gets the padding instead, because widening it to 44px
-    would open a hole in the text around it.
+    that is. A link drawn as a pill or as an icon is a control.
+
+    AN INLINE LINK IN A SENTENCE IS NOT ON THIS LIST, AND THE ATTEMPT TO PUT IT
+    THERE IS WHY THAT IS WRITTEN DOWN. It was given `padding-block: 0.375rem`
+    on the argument that a taller link is easier to press and the line still
+    reads the same. Vertical padding on an inline box does not grow the line
+    box, it grows the element's border box past it, so the link on the last
+    line of a paragraph reaches 6px below the paragraph it is in: measured on
+    the landing page's credit line at 360 with a coarse pointer, "TartuNLP" sat
+    5px outside the footer's own border, and `scripts/test-containment.mjs`
+    failed on it six times. Overlaying a bigger hit area with an absolutely
+    positioned pseudo-element is the other way and is worse, because in running
+    prose it would take the taps meant for a link on the line above.
+
+    WCAG 2.2's target-size rule makes exactly this exception, for exactly this
+    reason: a target in a sentence is constrained by the line-height of the
+    text around it, and the way to make it easier to hit is to give it a line
+    of its own, not to inflate it where it stands.
   */
   @media (pointer: coarse) {
     button:not(.inline-edit),
@@ -508,13 +523,6 @@
     summary {
       min-height: 2.75rem;
       min-width: 2.75rem;
-    }
-
-    /* An inline link inside running text: taller to press, same line to read. */
-    p > a,
-    li > a,
-    span > a {
-      padding-block: 0.375rem;
     }
   }
 

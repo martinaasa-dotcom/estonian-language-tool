@@ -50,9 +50,9 @@ export function TodayPlan({ tasks, clock, now, className }: {
               {/*
                 The late group gets no heading, which is the one exception and
                 the reason for it is that a heading has to add something. The
-                panel's own hint counts them, and every row underneath already
-                says "Overdue" against its date and carries a chip saying the
-                same. A fourth sighting of one fact is noise.
+                panel's own hint counts them and every row underneath says
+                "Overdue" against its date. That is twice; a heading and the
+                chip that used to sit on each row made it four.
               */}
               {group.bucket !== "overdue" && (
                 <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>{group.label}</h3>

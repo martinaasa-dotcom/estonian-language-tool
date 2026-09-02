@@ -11,36 +11,48 @@ import { dayClock, type DayClock, type DayKey } from "@/lib/time/day";
 
 export interface Badge {
   key: string;
+  /** The badge's name, in Estonian. */
   title: string;
+  /**
+   * What the Estonian name says, in English.
+   *
+   * Not decoration. Every badge here is named in Estonian and a learner who
+   * has just earned one is looking at it for the first time, which is the one
+   * moment a word is worth reading. `Paarid paigas` under a description about
+   * a match round teaches nothing; `the pairs are in place` teaches two words
+   * somebody will meet again. It is a translation into English, which is the
+   * one language this project may write (ADR-005).
+   */
+  gloss: string;
   description: string;
   /** Name of a lucide-react icon component; mapped to the real component in the UI. */
   icon: string;
 }
 
 export const BADGES: Badge[] = [
-  { key: "first_review", title: "Esimene samm", description: "Complete your first review.", icon: "Sparkles" },
-  { key: "streak_3", title: "Kolm järjest", description: "Reach a 3-day streak.", icon: "Flame" },
-  { key: "streak_7", title: "Terve nädal", description: "Reach a 7-day streak.", icon: "Flame" },
-  { key: "streak_30", title: "Terve kuu", description: "Reach a 30-day streak.", icon: "Flame" },
-  { key: "streak_100", title: "Sada päeva", description: "Reach a 100-day streak.", icon: "Flame" },
-  { key: "reviews_100", title: "Sada kordust", description: "Complete 100 reviews in total.", icon: "Repeat" },
-  { key: "reviews_500", title: "Viissada kordust", description: "Complete 500 reviews in total.", icon: "Repeat" },
-  { key: "reviews_1000", title: "Tuhat kordust", description: "Complete 1,000 reviews in total.", icon: "Repeat" },
-  { key: "cards_known_25", title: "Veerandsada teada", description: "Get 25 cards into the Known state.", icon: "BookCheck" },
-  { key: "cards_known_100", title: "Sada teada", description: "Get 100 cards into the Known state.", icon: "BookCheck" },
-  { key: "deck_50", title: "Viiskümmend sõna", description: "Add 50 words to your dictionary.", icon: "Library" },
-  { key: "deck_200", title: "Kakssada sõna", description: "Add 200 words to your dictionary.", icon: "Library" },
-  { key: "case_master", title: "Käänded selged", description: "Reach 90% accuracy on a grammatical case, with at least 10 reviews of it.", icon: "Target" },
-  { key: "perfect_session", title: "Laitmatu seanss", description: "Finish a review session of 10+ cards with 100% recalled.", icon: "Trophy" },
-  { key: "sprint_ace", title: "Kiire keel", description: "Score 15 or more in one 60-second Case Sprint.", icon: "Zap" },
-  { key: "match_ace", title: "Paarid paigas", description: "Clear a match round of 8 pairs in under 45 seconds.", icon: "Grid2x2" },
-  { key: "unit_done", title: "Esimene peatükk", description: "Finish a unit on the learning path.", icon: "Map" },
-  { key: "units_5", title: "Viis peatükki", description: "Finish five units on the learning path.", icon: "Map" },
-  { key: "level_5", title: "Viies tase", description: "Reach level 5.", icon: "TrendingUp" },
-  { key: "level_10", title: "Kümnes tase", description: "Reach level 10.", icon: "TrendingUp" },
-  { key: "all_quests", title: "Päev tehtud", description: "Finish all three daily quests in one day.", icon: "CheckCheck" },
-  { key: "early_bird", title: "Varajane lind", description: "Review before 7am.", icon: "Sunrise" },
-  { key: "night_owl", title: "Öökull", description: "Review after 11pm.", icon: "Moon" },
+  { key: "first_review", title: "Esimene samm", gloss: "first step", description: "Complete your first review.", icon: "Sparkles" },
+  { key: "streak_3", title: "Kolm järjest", gloss: "three in a row", description: "Reach a 3-day streak.", icon: "Flame" },
+  { key: "streak_7", title: "Terve nädal", gloss: "a whole week", description: "Reach a 7-day streak.", icon: "Flame" },
+  { key: "streak_30", title: "Terve kuu", gloss: "a whole month", description: "Reach a 30-day streak.", icon: "Flame" },
+  { key: "streak_100", title: "Sada päeva", gloss: "a hundred days", description: "Reach a 100-day streak.", icon: "Flame" },
+  { key: "reviews_100", title: "Sada kordust", gloss: "a hundred repetitions", description: "Complete 100 reviews in total.", icon: "Repeat" },
+  { key: "reviews_500", title: "Viissada kordust", gloss: "five hundred repetitions", description: "Complete 500 reviews in total.", icon: "Repeat" },
+  { key: "reviews_1000", title: "Tuhat kordust", gloss: "a thousand repetitions", description: "Complete 1,000 reviews in total.", icon: "Repeat" },
+  { key: "cards_known_25", title: "Veerandsada teada", gloss: "twenty-five known", description: "Get 25 cards into the Known state.", icon: "BookCheck" },
+  { key: "cards_known_100", title: "Sada teada", gloss: "a hundred known", description: "Get 100 cards into the Known state.", icon: "BookCheck" },
+  { key: "deck_50", title: "Viiskümmend sõna", gloss: "fifty words", description: "Add 50 words to your dictionary.", icon: "Library" },
+  { key: "deck_200", title: "Kakssada sõna", gloss: "two hundred words", description: "Add 200 words to your dictionary.", icon: "Library" },
+  { key: "case_master", title: "Käänded selged", gloss: "the cases are clear", description: "Reach 90% accuracy on a grammatical case, with at least 10 reviews of it.", icon: "Target" },
+  { key: "perfect_session", title: "Laitmatu seanss", gloss: "a faultless session", description: "Finish a review session of 10+ cards with 100% recalled.", icon: "Trophy" },
+  { key: "sprint_ace", title: "Kiire keel", gloss: "a quick tongue", description: "Score 15 or more in one 60-second Case Sprint.", icon: "Zap" },
+  { key: "match_ace", title: "Paarid paigas", gloss: "the pairs are in place", description: "Clear a match round of 8 pairs in under 45 seconds.", icon: "Grid2x2" },
+  { key: "unit_done", title: "Esimene peatükk", gloss: "first chapter", description: "Finish a unit on the learning path.", icon: "Map" },
+  { key: "units_5", title: "Viis peatükki", gloss: "five chapters", description: "Finish five units on the learning path.", icon: "Map" },
+  { key: "level_5", title: "Viies tase", gloss: "fifth level", description: "Reach level 5.", icon: "TrendingUp" },
+  { key: "level_10", title: "Kümnes tase", gloss: "tenth level", description: "Reach level 10.", icon: "TrendingUp" },
+  { key: "all_quests", title: "Päev tehtud", gloss: "the day is done", description: "Finish all three daily quests in one day.", icon: "CheckCheck" },
+  { key: "early_bird", title: "Varajane lind", gloss: "early bird", description: "Review before 7am.", icon: "Sunrise" },
+  { key: "night_owl", title: "Öökull", gloss: "night owl", description: "Review after 11pm.", icon: "Moon" },
 ];
 
 const BADGE_BY_KEY = new Map(BADGES.map((b) => [b.key, b]));

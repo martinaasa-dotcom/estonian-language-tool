@@ -97,6 +97,23 @@ async function answerOneCard(depth = 0) {
     }
   }
 
+  /*
+    A MISS DOES NOT GRADE ITSELF, AND THAT IS THE WHOLE OF WHAT BROKE HERE.
+
+    A clean hit on a choice or a typed card grades and moves on. A miss keeps
+    its screen, because the correction is the one moment in a review worth
+    stopping for, and leaves "Got it, next" as the acknowledgement. This driver
+    types "zzz" on purpose, which is always a miss, so after that change every
+    typed card it drove ended on a screen waiting for a press and no grade was
+    ever written: the outbox read 0 and the suite reported the app as unable to
+    grade offline, which was a fact about the driver.
+  */
+  const next = app.getByRole("button", { name: /^Got it, next$/ });
+  if (await next.count()) {
+    await next.first().click();
+    await page.waitForTimeout(300);
+  }
+
   await page.waitForTimeout(700);
   return (await gradedCount()) > before;
 }

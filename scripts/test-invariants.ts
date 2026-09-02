@@ -4154,9 +4154,18 @@ check("a suite that reveals a review card knows all the shapes it comes in", () 
     driver that graded would quietly change what the rest of them measure.
   */
   const helper = code(join("scripts", "lib", "review.mjs"));
+  /*
+    Named for the buttons the screen actually draws. This used to read
+    `Again|Hard|Good|Easy`, and those left the review screen when a card the
+    marker can mark stopped being asked how well it went: the check could no
+    longer fail, and `gradeButtons` in the same file had gone stale unnoticed
+    for exactly as long. What grades now is "Not yet", "Got it" and the
+    "Got it, next" a miss leaves behind, and "Got it, ask me later" is the
+    first meeting, which writes nothing and is the one this helper may press.
+  */
   assert.doesNotMatch(
-    helper,
-    /\b(Again|Hard|Good|Easy)\b[\s\S]{0,120}?\.click\(/,
+    helper.replace(/export function gradeButtons[\s\S]*?\n\}/, ""),
+    /(Not yet|Got it, next)[\s\S]{0,160}?\.click\(/,
     "lib/review.mjs grades a card. It reveals only: a caller that wants the grade clicks it.",
   );
 });

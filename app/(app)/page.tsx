@@ -347,9 +347,21 @@ export default async function TodayPage() {
                   // 2.52:1 and the tick is the channel carrying
                   // "reviewed" without relying on the colour.
                   color: d.done ? "var(--on-mint)" : "var(--ink-3)",
-                  boxShadow: d.done ? "inset 0 0 0 1.5px var(--mint-ink)" : "none",
-                  outline: d.isToday ? "2px solid var(--accent)" : "none",
-                  outlineOffset: 2,
+                  /*
+                    Today was marked with a 2px outline at a 2px offset, which
+                    is this app's focus ring exactly, sitting permanently on a
+                    span nobody can focus. A reader who tabs sees the real one
+                    move and this one stay, which reads as the page being
+                    stuck. It is an inset ring instead: inside the circle,
+                    where no focus ring in this app ever sits, and the letter
+                    under it carries the same colour so the mark is not the
+                    ring alone.
+                  */
+                  boxShadow: d.isToday
+                    ? "inset 0 0 0 2px var(--accent-deep)"
+                    : d.done
+                      ? "inset 0 0 0 1.5px var(--mint-ink)"
+                      : "none",
                   animationDelay: d.done ? `${i * 60}ms` : undefined,
                 }}
                 aria-hidden
@@ -357,9 +369,12 @@ export default async function TodayPage() {
                 {d.done ? "✓" : "·"}
               </span>
               <span className="sr-only">
-                {d.day}: {d.done ? "reviewed" : "no reviews"}
+                {d.day}{d.isToday ? " (today)" : ""}: {d.done ? "reviewed" : "no reviews"}
               </span>
-              <span className="text-2xs font-semibold" style={{ color: "var(--ink-3)" }}>
+              <span
+                className="text-2xs font-semibold"
+                style={{ color: d.isToday ? "var(--accent-deep)" : "var(--ink-3)" }}
+              >
                 {weekdayLetter(d.day)}
               </span>
             </div>
@@ -379,7 +394,8 @@ export default async function TodayPage() {
         <div className="border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
           <div className="mb-2 flex items-baseline justify-between gap-3">
             <span className="label-xs" style={{ color: "var(--ink-3)" }}>
-              Level {summary.level.level} · <span lang="et">{summary.level.title}</span>
+              Level {summary.level.level} · <span lang="et">{summary.level.title}</span>,{" "}
+              {summary.level.gloss}
             </span>
             <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
               {summary.level.into}/{summary.level.span} XP

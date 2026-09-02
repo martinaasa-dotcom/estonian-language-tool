@@ -62,6 +62,19 @@ export async function revealAnswer(page, { timeout = 900 } = {}) {
   if (await page.getByText(/Pick the meaning/).count()) {
     await page.keyboard.press("1");
     await page.waitForTimeout(timeout);
+    /*
+      A right pick now grades itself after 420ms, which this helper promises
+      not to do. One guess in four lands on the answer and there is no way to
+      know which before picking, so when it does the grade is taken straight
+      back through the app's own undo. Undo is disabled until something has
+      been graded in this page's session, and a first meeting writes nothing,
+      so an enabled button here means exactly one thing.
+    */
+    const undo = page.locator("main").getByRole("button", { name: /Undo/ });
+    if ((await undo.count()) && (await undo.first().isEnabled())) {
+      await undo.first().click();
+      await page.waitForTimeout(300);
+    }
     return "choice";
   }
 
@@ -77,7 +90,21 @@ export async function revealAnswer(page, { timeout = 900 } = {}) {
   return null;
 }
 
-/** The four rating buttons, which only appear once an answer is showing. */
-export function ratingButtons(page) {
-  return page.locator("main").getByRole("button", { name: /^(Again|Hard|Good|Easy)/ });
+/**
+ * The buttons that write a grade, which only appear once an answer is showing.
+ *
+ * There used to be four of them, Again, Hard, Good and Easy, and this named
+ * those. The screen stopped asking a question it had already answered: a card
+ * the marker can mark grades itself on a clean hit and leaves "Got it, next"
+ * on a miss, and only the flip, which has nothing to compare, still asks, in
+ * two options rather than four. Nothing updated this, so it matched nothing,
+ * and `a11y-check.mjs` waived four checks a run saying the deck had nothing
+ * due while the deck had forty cards due. That is the false-reason waiver
+ * CLAUDE.md warns about, made by the fix that removed the buttons.
+ *
+ * The anchors are exact, because "Got it, ask me later" is the first-meeting
+ * button and writes nothing at all.
+ */
+export function gradeButtons(page) {
+  return page.locator("main").getByRole("button", { name: /^(Not yet|Got it, next|Got it)$/ });
 }

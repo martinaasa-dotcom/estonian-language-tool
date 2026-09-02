@@ -37,7 +37,7 @@ import {
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
 import {
-  availableCardTypes, generateCards, type CardType, type LexemeForCards,
+  availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
 import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addUnitsToDeck, lockDeck } from "@/lib/srs/deck";
@@ -65,8 +65,40 @@ import { safeMessage } from "@/lib/observability/report";
  * Cards are per-user (`ownerId`) even though the Lexeme they're generated from is the shared
  * dictionary — see docs/03-architecture.md ADR-012.
  */
+/**
+ * The card sources a caller may name.
+ *
+ * `Card.source` is not decoration: `lib/progress/wordOfDay.ts` counts the
+ * words a learner kept from the almanac by querying it, and `/words` groups
+ * by it. It is also a free-text column on a row a signed-in stranger can
+ * create, and this endpoint was passing whatever arrived straight into it, so
+ * one caller could file a card under a source nothing else in the app has
+ * ever written and quietly break a count that is supposed to be derived from
+ * facts. A closed list costs nothing: every caller in the tree already names
+ * one of these.
+ */
+const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC"]);
+
+/**
+ * Add a word to the deck.
+ *
+ * Every argument here comes from a browser, because this file is
+ * `"use server"` and each export is a public endpoint. `types` is typed
+ * `CardType[]` for the callers in this tree and is a JSON array at runtime, so
+ * it is filtered against the table that defines what a card type is, capped at
+ * the length of that table, and deduplicated: an unbounded array of the same
+ * key was a way to make the generator run a thousand times for one word.
+ */
 export async function addToDeck(lexemeId: string, types: CardType[], source = "DICTIONARY") {
-  return addCardsFor(await requireUserId(), lexemeId, types, source);
+  const known = new Set(CARD_TYPES.map((t) => t.type));
+  const wanted = [...new Set(Array.isArray(types) ? types : [])]
+    .filter((t): t is CardType => known.has(t as CardType));
+  return addCardsFor(
+    await requireUserId(),
+    lexemeId,
+    wanted,
+    CARD_SOURCES.has(source) ? source : "MANUAL",
+  );
 }
 
 /**
@@ -189,12 +221,38 @@ export async function gradeCard(
   cardId: string, rating: RatingValue, durationMs: number, reviewedAt?: string,
 ) {
   const ownerId = await requireUserId();
+
+  /*
+    `Review` IS APPEND-ONLY, SO A BAD ROW IS PERMANENT.
+
+    `rating` is typed here and is a number off a POST body at runtime. Nothing
+    checked it, so a 7 or a NaN would have been written into the one table this
+    app cannot repair, read back by every chart and fed to the scheduler. The
+    four values are the four the scheduler defines.
+  */
+  if (rating !== 1 && rating !== 2 && rating !== 3 && rating !== 4) {
+    return { ok: false as const, error: "That is not a rating." };
+  }
+
   const card = await prisma.card.findFirst({ where: { id: cardId, ownerId } });
   if (!card) return { ok: false as const, error: "Card not found." };
 
+  /*
+    A grade carries the time it was actually answered, because the offline
+    outbox replays in order with the timestamp it was given (ADR-015). It was
+    clamped forward and not back, so a caller could date one before the card
+    existed, which is a review of something that was not there: the streak, the
+    heatmap and every "reviews this week" figure read it, and none of them can
+    tell a replayed grade from a forged one. The card's own creation is the
+    floor, and it cannot narrow an honest replay.
+  */
   const now = new Date();
   const when = reviewedAt ? new Date(reviewedAt) : now;
-  const at = Number.isNaN(when.getTime()) || when > now ? now : when;
+  const at = Number.isNaN(when.getTime()) || when > now
+    ? now
+    : when < card.createdAt
+      ? card.createdAt
+      : when;
 
   await prisma.review.create({
     data: {

@@ -20,11 +20,9 @@
 export interface QuestStats {
   /** Reviews recorded today. */
   reviewsToday: number;
-  /** XP earned today. */
-  xpToday: number;
   /** Reviews today whose card had never been seen before. */
   newCardsToday: number;
-  /** Reviews today rated Good or Easy. */
+  /** Reviews today the marker graded Good or Easy, or the learner said they knew. */
   recalledToday: number;
   /** Cards added to the deck today. */
   cardsAddedToday: number;
@@ -66,25 +64,16 @@ const SPECS: readonly QuestSpec[] = [
   {
     key: "reviews_goal",
     title: (t) => `Review ${t} cards`,
-    detail: "Any mode counts, review, sprint, listening or match.",
+    detail: "Any mode counts, review, sprint, listening or match",
     icon: "GraduationCap",
     target: (s) => Math.max(5, s.dailyGoal),
     progress: (s) => s.reviewsToday,
     reward: 20,
   },
   {
-    key: "xp_burst",
-    title: (t) => `Earn ${t} XP`,
-    detail: "Every card you grade earns XP, even the ones you miss.",
-    icon: "Zap",
-    target: (s) => Math.max(50, Math.round((s.dailyGoal * 10) / 10) * 10),
-    progress: (s) => s.xpToday,
-    reward: 15,
-  },
-  {
     key: "meet_new",
     title: (t) => `Meet ${t} new words`,
-    detail: "Cards you have never been shown before.",
+    detail: "Cards you have never been shown before",
     icon: "Sparkles",
     target: () => 5,
     progress: (s) => s.newCardsToday,
@@ -93,7 +82,7 @@ const SPECS: readonly QuestSpec[] = [
   {
     key: "clear_due",
     title: () => "Clear everything due",
-    detail: "Finish the day with nothing waiting.",
+    detail: "Finish the day with nothing waiting",
     icon: "CheckCheck",
     target: () => 1,
     progress: (s) => (s.dueRemaining === 0 && s.reviewsToday > 0 ? 1 : 0),
@@ -103,7 +92,7 @@ const SPECS: readonly QuestSpec[] = [
   {
     key: "sharp_recall",
     title: (t) => `Recall ${t} cards cleanly`,
-    detail: "Right first time, with no peeking.",
+    detail: "Right first time, with no peeking",
     icon: "Target",
     target: (s) => Math.max(8, Math.round(s.dailyGoal * 0.6)),
     progress: (s) => s.recalledToday,
@@ -112,7 +101,7 @@ const SPECS: readonly QuestSpec[] = [
   {
     key: "grow_deck",
     title: (t) => `Add ${t} new cards to your deck`,
-    detail: "From the dictionary, a unit on the path, or a pasted list.",
+    detail: "From the dictionary, a unit on the path, or a pasted list",
     icon: "Plus",
     target: () => 4,
     progress: (s) => s.cardsAddedToday,
