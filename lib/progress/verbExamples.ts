@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { derivedVerbForms, pres1sgFrom, type DerivedVerbCode } from "@/lib/estonian/conjugate";
+import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 
 /**
  * Real verbs conjugated, for the grammar reference.
