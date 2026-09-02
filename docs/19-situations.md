@@ -1,0 +1,895 @@
+# Situations
+
+A module where the learner uses Estonian on somebody rather than studying it. What a scene is, how
+one is drawn so that no two runs are alike, how the difficulty setting works, and the rule that
+keeps every Estonian word in it out of a model's hands.
+
+Nothing here is built. This is the design, the arithmetic behind it, the things it must never
+become, and the measurements that decide whether it can be built at all.
+
+## 1. The promise the course already made
+
+`lib/collections/syllabus/` holds 79 units and every one of them carries a `canDo`, which is a claim
+about what the learner will be able to do:
+
+> Greet someone, thank them, apologise, and say you do not understand.
+>
+> Ask where something is and understand the directions you are given.
+>
+> Describe a symptom to a doctor and understand the advice you are given.
+>
+> Buy something, ask the price, and find your way to a place in town.
+
+Not one of those 79 claims is ever tested. The app has four verbs and this is not among them: it
+teaches a word, drills it, looks it up and measures it. Every one of those happens with the learner
+alone, at their own pace, with the right answer sitting in the dictionary the whole time. The
+closest thing to a conversation anywhere in the product is the mock exam's spoken part, which is a
+monologue the learner marks themselves, and Anu, who explains grammar in English and is the most
+patient interlocutor anybody has ever met.
+
+What a person actually needs is the receptionist who says one sentence too fast, has no appointment
+on Thursday, and switches to English the moment you hesitate. That is the gap, it is the largest one
+left in the product, and it is the one an integration foundation is asking about when it writes
+about using Estonian in natural communication settings.
+
+So: **Situations**. A short scene, played one turn at a time, where the learner has something to get
+done in Estonian and the other person has an agenda of their own.
+
+The name is plain on purpose. Not "roleplay", which is a word for a game, and not an Estonian title,
+because a scene file may not write Estonian and a name it cannot spell for itself is a name it has
+borrowed.
+
+## 2. The one rule the module lives under
+
+**The scene names a move; the dictionary supplies the words.**
+
+That is `lib/copy/almanac.ts`'s rule applied to dialogue. The almanac names a *meaning* (a pancake,
+a bonfire) and the dictionary answers with the word, which is how a table deciding what today is
+holds no Estonian at all. A scene file names a *move* (ask why they came, offer a time, refuse) and
+the same thing happens: no scene file contains an Estonian character, and there is a tripwire on it,
+exactly as there is on `lib/estonian/grammar.ts`.
+
+That settles the authored half. The other half is what has kept this module unbuilt: a conversation
+cannot be assembled out of dictionary entries the way a case table can. Something has to produce a
+sentence nobody wrote down in advance.
+
+### The ladder
+
+`sceneLine()` is the one function that answers "what does the other side say here", and it works the
+way `caseAnswer` works: an attested form ahead of a stored one ahead of a derived one, with the
+screen saying which it got.
+
+1. **Attested.** A sentence a lexicographer recorded, used whole. `lib/estonian/cloze.ts` already
+   holds the test of whether a usage is a sentence somebody said (`naturalSentence`, which rejects
+   101 of the 8,826 usages that clear the length rules), and the exam already searches that corpus
+   for a sentence containing a given form. A beat that needs "ask what is wrong" wants a recorded
+   question containing a form of a lemma from the health unit, inside the learner's band, whose
+   other words are in the scene's own list. Where one exists, that is the line. Nothing is generated,
+   nothing needs checking, and it costs a query.
+2. **Reviewed.** A line a person approved into the scene's phrase bank through the suggestion queue.
+   Phase 3, and deliberately not in the first build (§19).
+3. **Composed.** A model is given the move, the beat, the closed word list and the last two turns,
+   and returns one line, which then has to get past the gate below.
+4. **The way out.** Composition can fail twice and there is still a person standing there waiting,
+   so the fallback is a move that is always in character and always attested: they did not catch
+   that, and they ask again. The learner sees somebody who missed what they said, which is the
+   truest thing that can happen in a conversation, rather than an error. `patience` bounds it, so a
+   beat whose line cannot be built at all is skipped and the debrief says the app could not build
+   that turn. A failure is reported, never hidden, and never looped.
+
+### The gate, which is four checks and not one
+
+A line is **withheld whole** when it fails any of them, the way `lib/tutor/verify.ts` withholds a
+grader's note, and never shown with a caveat. A caveat still puts a wrong form in front of somebody
+trying to learn one.
+
+1. **Shape.** One sentence, inside a word count set by the level, ending in a full stop, a question
+   mark or an exclamation mark, and no markdown. A move of `ask` that comes back without a question
+   mark did not do what it was told.
+2. **Vouching.** Every Estonian token has to resolve, through `matchEstonianForm` at
+   `VOUCHED_SCORE`, against **the scene's own word list** rather than against the whole dictionary.
+   That distinction is the whole constraint: vouching against the dictionary would pass any Estonian
+   word in the language, and vouching against a few hundred lemmas means the model is choosing
+   inside a box. The list is built by the same function the grader's check uses
+   (`buildAllowlist`), because a second copy of it is where the two stop agreeing.
+3. **Register.** A scene set in `teie` may not come back with a `sina` form unless a curveball says
+   so. It is one lookup against the pronoun unit, and it catches the model error a learner would
+   find most jarring.
+4. **Government, proposed and unmeasured.** The dictionary records what case a word demands for 268
+   verbs, 36 nouns and 12 adjectives, and `parseGovernment` reads it. A composed line containing a
+   governed verb and a noun in a case that verb does not govern is probably wrong. Probably is not
+   good enough to ship: this check goes in only if the eval in §19 shows it rejecting more real
+   errors than good lines, because a check that fires on honest output is a check somebody waives.
+
+### Why word-level vouching is enough here, and where it is not
+
+Vouching every word does not prove a sentence is grammatical. That is the honest limit of this
+design and it has to be argued rather than walked past.
+
+What survives the four checks is a line whose words all exist, in the right register and in a
+plausible shape, so what is left is an error of order, of agreement, or of sense. Those are real and
+they will happen. The claim is not that they cannot, it is that this is the smallest space the error
+can be squeezed into with the tools already in the repository.
+
+There is a bigger tool and it should be named rather than ignored. Estonian has an open source
+morphological analyser, Vabamorf, which `EstNLTK` wraps, and running a composed line through it is a
+real option. What it would add over vouching is less than it first appears: vouching already
+establishes that every word is a real form of a word this scene is allowed to use, which is most of
+what an analyser reports. What would genuinely help is agreement and government checked across the
+sentence, and that is a dependency, a service and a body of Estonian-specific code that this app has
+so far managed to avoid entirely. It belongs in the open questions, not in Phase 1, and the
+government check above is the cheap half of it done with what is already here.
+
+What makes that acceptable is what happens to the sentence afterwards. A wrong form on a flashcard
+is *drilled*: the scheduler brings it back until it sticks, which is why ADR-005 exists at all. A
+wrong form in the other side's line is read once, in context, never stored, never becomes a card
+answer, never reaches `Lexeme` or `Form`, and is gone at the end of the scene. That distinction is
+already written into the app twice: the chat guard flags rather than gates because prose is not
+acted on the way a correction is, and the grader gates because it is (ADR-005 amendment 2).
+
+Three things narrow what is left, and all three are cheap:
+
+- **Every line carries its provenance on screen.** Attested says so and names the entry. Composed
+  says so too. A learner is never invited to memorise a sentence without being told where it came
+  from, which is the rule the grammar pages already follow for every form they print.
+- **Every line has a report button.** `components/SuggestFix.tsx` mounts on the turn with the turn
+  attached, and "this is not how anybody says it" becomes a row in the queue an admin works.
+- **The learner is never marked against a composed line.** What advances a scene is what the
+  dictionary finds in the **learner's** turn, and that path has no model in it at all (§8).
+
+## 3. What a scene is
+
+A scene is a small machine, authored in English, that knows the shape of an encounter without
+knowing a word of it.
+
+```ts
+export interface SceneSpec {
+  id: string;                          // "arsti-aeg"
+  title: string;                       // "Booking a doctor's appointment"
+  place: string;                       // "The reception desk at a health centre"
+  level: Level;                        // the band the scene is written for
+  /** Which of the course's units supply its vocabulary. Ids, never words. */
+  units: readonly string[];            // ["keha-ja-tervis", "aeg", "arvud"]
+  /** What the other side calls you, and expects back. */
+  register: "teie" | "sina";
+  other: readonly PersonaSpec[];       // who is behind the desk today
+  role: RoleCardSpec;                  // who you are today
+  beats: readonly BeatSpec[];
+  props: readonly PropSlot[];
+  curveballs: readonly CurveballId[];  // which ones this scene admits
+  outcomes: readonly OutcomeSpec[];    // how it can end, including badly
+}
+```
+
+`units` is the load-bearing field and it is the topical calendar's trick again
+(`lib/collections/topical.ts` names unit ids and never words, so a misspelled seasonal word cannot
+ship in silence). A scene names units; the syllabus names lemmas; the Ekilex harvest decides whether
+those lemmas exist. A scene therefore cannot reference a word that is not in the dictionary, and
+`scenes.test.ts` fails on a unit id that is not a unit, the way `topical.test.ts` does.
+
+A scene is offered one band either side of the learner's level, through
+`lib/collections/levels.ts`, which is the same table that decides which words the minimal pairs
+round and the government drill draw from. A second answer to "what is around this learner's level"
+is how the first one rots.
+
+### Beats
+
+```ts
+export interface BeatSpec {
+  id: string;                    // "reason"
+  /** What the learner has to get done here. English, and shown to them. */
+  goal: string;                  // "Say what is wrong with you."
+  /** What the other side is doing. One of about ten verbs. */
+  move: MoveKind;                // greet | ask | offer | confirm | correct | refuse | instruct | close
+  /** What counts as done. Dictionary facts only. */
+  needs: readonly Requirement[];
+  /** Required beats are the objectives. Optional ones are the colour. */
+  required: boolean;
+  /** How many times they will try again before moving on. */
+  patience: number;
+}
+```
+
+### Requirements, which are the whole of the marking
+
+Every requirement is decidable by a module that already exists, with no model anywhere near it:
+
+```ts
+type Requirement =
+  | { kind: "lemma";    oneOf: string[] }              // matchEstonianForm, lib/dict/search.ts
+  | { kind: "case";     lemma: string; case: CaseKey } // caseAnswer, lib/estonian/answer.ts
+  | { kind: "datum";    slot: PropId }                 // the prop value, as text or as digits
+  | { kind: "question" }                               // a question mark, or a word from kusisonad
+  | { kind: "negation" }                               // the negator, from the course
+  | { kind: "register" }                               // a form of the expected pronoun, from asesonad
+  | { kind: "any" };                                   // small talk. Never fails.
+```
+
+The three that look hardest are the ones that got easiest last month. `kusisonad` (question words),
+`asesonad` (pronouns) and `kohasonad` (postpositions) were among the six units the seventeenth pass
+added for the words between the words, and they are exactly the machinery a conversation marker
+needs: "did they ask a
+question" is answerable because the question words are now dictionary entries with forms, and "did
+they use the right register" is answerable because the pronouns are.
+
+### The role card, which is not a decoration
+
+**The learner never plays themselves.** They are handed a card: you are a patient, your throat has
+hurt since Tuesday, you can come any afternoon except Wednesday, your ID number is on the card.
+
+Two reasons, and the second is the one that matters legally.
+
+The first is that marking has to know what the learner is trying to say. A scene that invites
+somebody to describe their own symptoms cannot tell a complete turn from an incomplete one, because
+it does not know what the complete one was.
+
+The second is that a doctor scene where somebody types about their own health is a database holding
+health data about an identified person, which is Article 9 special category data, in a product whose
+privacy notice is one of the reasons people choose it. The role card removes the question: nothing
+in a transcript is true about the person who wrote it. `/privacy` says so, and the scene screen says
+so once, in one line, before the first scene.
+
+**A scene that asks for a document number supplies a fictional one on the card**, and never invites
+the learner to type their own. An identity code typed into a practice app is the one thing this
+module could collect that nobody could ever take back.
+
+The card is English. Its facts come from `props`, and a prop is either a dictionary word (so the
+Estonian the learner needs exists and can be checked) or a generated value: a time, a date, a
+number, a room, a fictional code.
+
+### Outcomes
+
+```ts
+export interface OutcomeSpec {
+  id: string;
+  /** Which required beats have to have been met. */
+  when: readonly string[];
+  /** One line, English, in the debrief. The thing a person remembers. */
+  says: string;   // "You have an appointment on Thursday at 14:00."
+}
+```
+
+At least one outcome is a **failure that is not the learner's fault**, because a real encounter has
+those and a module where trying hard enough always works is a module that has stopped simulating
+anything. Walking out is an outcome too, and it is written kindly.
+
+## 4. A worked run
+
+The Estonian is left as slots, because this document may not write any either. Everything in square
+brackets is filled at run time from the dictionary; the quoted phrases are course phrases that
+already exist in `lib/collections/syllabus/a1.ts`.
+
+Scene `arsti-aeg`, A2, difficulty *Ordinary day* (budget 4). Persona drawn: the one who is thorough
+and slow. Curveballs drawn: *the time you asked for is gone* (2), *small talk* (1), *they speed up*
+(1).
+
+| Beat | Other side | Learner has to | Marked on |
+|---|---|---|---|
+| greet | `Tere!`, attested | Greet back | `{ kind: "lemma", oneOf: [the greeting phrases] }` |
+| reason | [attested question containing a form of `valu`] | Say what hurts | `{ case: "part", lemma: <the prop symptom> }` |
+| since | [composed, `ask`] | Say since when | `{ datum: "since" }` |
+| offer | [composed, `offer`, with the drawn time] | Accept or decline | `{ oneOf: [yes and no words] }` |
+| *curveball* | That slot has gone. They offer another. | Take it, or ask for another | `{ datum: "time" }` |
+| *curveball* | Small talk about the weather | Anything | `{ kind: "any" }` |
+| confirm | [composed, `confirm`, reading the details back] | Confirm, or correct them | `{ oneOf: [...] }` |
+| close | [attested closing phrase] | Say goodbye | `{ oneOf: [the closing phrases] }` |
+
+Outcome: an appointment on the day and time actually agreed, which is not the one the learner asked
+for. Objectives: five of six required beats. The one missed is `since`, where the learner wrote a
+weekday in the wrong case twice and the other side moved on, which is what the debrief opens on
+after the outcome line.
+
+Two things this table is meant to show. Half the turns cost nothing, because a greeting, a closing
+and a question about pain are all things the dictionary has recorded somebody saying. And the
+learner is marked on a case, a datum and a word choice, every one of which is a string comparison
+against something the dictionary vouches for. There is no point in the run where a model decides
+anything about the learner.
+
+## 5. Every run is a different draw
+
+A run is a pure function of `(scene, seed, level, difficulty, pool)`, exactly as a paper is
+(`lib/exam/paper.ts`), and for the same reason: a reload in the middle of a conversation has to give
+back the same conversation rather than a fresh one. The seed is stored with the run, so a learner
+can send a friend the same encounter and a teacher can set one for a class.
+
+What varies, in the order a learner notices it:
+
+| Axis | What it changes |
+|---|---|
+| Persona | Who is behind the desk. Their agenda, their patience, their voice, their speed. |
+| Props | The card you are handed and the facts they ask you for. |
+| Curveballs | Which ones fire, and at which beat. |
+| Beat order | Which of the optional beats are in, and where. Required beats never move. |
+| Lines | Which attested sentence fills a move, out of the several that fit. |
+
+**The persona's agenda is the strongest lever and it is nearly free.** A receptionist who wants the
+queue gone, one who is thorough and slow, one who is new and unsure, one who is following a script
+and will not deviate: same beats, same props, four conversations that feel nothing alike, because
+the agenda biases which move the machine prefers and which curveballs attach. Props change the
+words. An agenda changes the person.
+
+### The claim to make, and the claim not to make
+
+Multiplying those axes gives a number in the millions and it is worth nothing, because nobody plays
+a scene a million times. What a learner notices is repetition **in a row**, so that is what gets
+promised and measured:
+
+- no prop value repeats within three consecutive runs of one scene,
+- no curveball repeats within five,
+- no attested line repeats until the pool for that move is exhausted, and when it is, the run says
+  so rather than quietly cycling.
+
+All three are enforceable because `SceneRun` is append-only and the last runs are one indexed read,
+which makes the recency memory derived rather than a stored counter (ADR-014).
+`scripts/measure-scenes.ts` plays twenty consecutive runs of every scene and reports the three
+numbers. A pool too thin to keep the promise is a fact about the dictionary, and it is reported the
+way `paper.ts` reports a shortfall rather than papered over.
+
+## 6. The other side's turn
+
+Per turn:
+
+1. The machine picks the move from the beat, the persona's agenda, and what the learner just did.
+2. `sceneLine()` walks the ladder in §2 and returns a line with its provenance and its words.
+3. The words come back already resolved, because resolving them is how they were vouched for, so
+   **every word in the other side's line is tappable and opens its dictionary entry**. That is free,
+   and it is what a learner in a real conversation most wishes they could do.
+4. The line is spoken in the persona's voice, from `lib/audio/voice.ts`'s twelve, at the persona's
+   speed. A second persona in a scene gets a different voice, which is how an interruption reads as
+   a second person rather than as more of the first.
+
+### What the model is asked for, and what it is not
+
+One line, for one move, inside a closed word list. It never sees the plot, never decides what
+happens next, never marks anything, and never sees the learner's deck beyond the words lent to the
+list. The static half of the prompt is identical on every turn of every scene, so it sits behind the
+Anthropic `cache_control` breakpoint the tutor already uses.
+
+A rejected line costs one retry with the failing words named, then the fallback. **The gate
+rejection rate is the number that decides whether composition is safe**, and it is measured before
+the module ships rather than watched afterwards. Above one line in twenty withheld, either the word
+list is too small or the model is the wrong one for this, and the answer is not to loosen the gate.
+
+### Latency, and the turn that is already written
+
+An attested turn is a query and appears at once. A composed turn is a model call, so the other side
+would pause for a second every time they say something the dictionary had not recorded. That is
+survivable and it is also avoidable: while the learner is typing, the machine already knows the most
+likely next move, which is the one where the learner does what was asked. So it composes that line
+after the first keystroke and either uses it or drops it. This is `PrefetchLink`'s argument on the
+one path in the app where somebody is definitely about to need the next thing.
+
+Speculation is bounded: one branch only, never when the day's allowance is thin, and counted inside
+the scene's reservation, so a dropped line is still paid for honestly.
+
+## 7. There are no meters
+
+Real conversations have no progress bar, no timer and no patience gauge, and every one of those
+would turn this into a game about the gauge. Pressure is carried in what the other person says. When
+their patience runs out, they say so, in words, and move on.
+
+The one thing that stays on screen is the objective list from the role card. Knowing what you came
+in to get done is not a hint; it is what a person walking into a health centre already knows.
+
+## 8. The learner's turn
+
+This is the half with no model in it, and the type system is what keeps it that way.
+
+```ts
+/** What the dictionary found in a turn. The only thing that can advance a scene. */
+export interface Evidence { /* per requirement: met, and with what */ }
+
+/** The one producer. Takes dictionary candidates, not prose. */
+export function readTurn(text: string, needs: readonly Requirement[], lex: Lexicon): Evidence;
+
+/** The one consumer. Cannot be called with anything a model wrote. */
+export function advance(state: SceneState, evidence: Evidence): SceneState;
+```
+
+`advance` taking `Evidence` rather than a verdict is the same device as `buildOptions` taking a
+parsed `Government` rather than a case key: a caller holding only a model's opinion cannot satisfy
+the type, so a fifth screen cannot reintroduce the fault by not knowing about the rule.
+
+### Five outcomes, not two
+
+- **Understood, complete.** The scene advances and the other side answers the content.
+- **Understood, incomplete.** They answer, and ask for the part that was missing. Receptionists do
+  this constantly and no drill in this app has ever imitated it.
+- **Not recognised.** Nothing matched and few of the words were vouched for. The repair move: they
+  did not catch it, and they ask again.
+- **Vouched, and not what was asked for.** Several words the dictionary knows, none of them the
+  point. Worth separating, because this is a learner who said something real that the scene did not
+  anticipate: they get a narrower re-ask rather than "say again", and their turn appears in the
+  debrief with each word marked as recognised.
+- **English.** A turn with no Estonian in it is recognised as English rather than as unreadable
+  Estonian, because those are different things and telling somebody "I did not understand" when they
+  wrote a clear English sentence is a lie. What happens next is the persona's: the helpful one
+  translates the question, the brisk one repeats it in Estonian. It is counted in the debrief and it
+  is never scolded. Reaching for English under pressure is the thing being practised against.
+
+### What counts as a turn
+
+Two holes are worth closing before somebody finds them.
+
+**A bare word is an answer at A1 and a dodge at B1.** Nothing above stops a learner typing the one
+required word on its own, every time, and finishing a scene without ever building a sentence. So a
+beat carries a `shape`: `word` where a one-word answer is what a person would actually say, and
+`sentence` where it is not, checked with `looksLikeSentence` from `lib/estonian/writing.ts`, which
+the writing exercise already uses. A turn that is one word where a sentence was wanted is not marked
+wrong, it gets the response a person would give, which is a look and a wait.
+
+**A turn that repeats the other side's line back is not a turn.** It would satisfy several
+requirements at once, because their line is full of vouched words. A turn that is contained in the
+line above it is answered in character, once, and does not advance anything.
+
+### The learner pushes back, and the scene gets better
+
+A turn marked "not what was asked for" that was in fact a good answer is a scene bug, and the person
+who knows is the one standing in front of it. So that outcome carries a report button and a category
+of its own: **this should have counted**. It arrives in the queue with the scene, the beat, the
+requirement and the exact turn, which is everything a reviewer needs to add a lemma to a `oneOf` and
+close it for everybody who meets it.
+
+That is the loop the dictionary already has, pointed at the course. It is also the only mechanism in
+this design that makes the scenes improve without somebody sitting down to improve them.
+
+### The help button
+
+"What is the word for" is a search by English gloss, scoped to the scene's word list, which is a
+query the dictionary already answers. Every use writes a `SceneGap` row, so the debrief can hand
+back exactly the words the conversation needed and the learner did not have. It is help, it is
+counted, and it is never taken away: a learner who asks for four words and finishes has learned more
+than one who gave up with none.
+
+## 9. Curveballs
+
+**A difficulty setting is a budget, not a mode.** Each curveball costs points, the setting is how
+many points a run may spend, and the draw is seeded. Difficulty is then one number a learner can
+move by one, rather than four presets that jump.
+
+| Setting | Budget | What it feels like |
+|---|---|---|
+| Textbook | 0 | Everything goes the way the unit taught it. |
+| Good day | 2 | One thing is not quite as expected. |
+| Ordinary day | 4 | Two or three, and one of them is real. |
+| Bad day | 7 | About as bad as a Tuesday at a government counter. |
+
+### The catalogue
+
+Each entry names its cost, what it changes mechanically, and its **out**: the move that resolves it.
+A curveball with no out is a trap.
+
+| Curveball | Cost | Out |
+|---|---|---|
+| They ask for something you were not given | 2 | Say you do not have it. A negation, which the course teaches. |
+| The time you asked for is gone | 2 | Take the one offered, or ask for another. |
+| They mishear your word for its minimal pair | 3 | Correct them, and say it again. |
+| They switch to English | 3 | Keep going in Estonian, and they come back. |
+| Someone interrupts | 2 | Wait, or say you were first. A second voice, one turn. |
+| They speed up | 1 | Ask them to slow down. Free, always, and taught. |
+| Small talk about the weather | 1 | Answer it and return. The `ilm` unit, doing its job. |
+| The form has to be filled in their order | 2 | Give the data as asked, not as you planned. |
+| What you came for is not possible | 3 | Ask what is, or when. |
+| They use the register you did not expect | 1 | Match them, or do not. |
+| The price is not what you were told | 2 | Query it. |
+| A queue forms behind you | 1 | Nothing. Their patience drops by one. |
+| They contradict what they said two turns ago | 3 | Notice, and say so. B2 and above. |
+| They give you an instruction with a place in it | 2 | Follow it, or ask where. The `kohasonad` unit. |
+
+Three deserve a note.
+
+**The switch to English is the most real thing in the table.** It is what happens to a foreigner
+speaking Estonian in Tallinn, it is a large part of why people stop practising, and no textbook
+rehearses it because a textbook cannot. Here the other side switches, the learner may switch too,
+and holding the line in Estonian brings them back.
+
+**The mishearing ties this module to the phonology drills.** It is drawn only where the prop word has
+a genuine pair, which `lib/estonian/quantity.ts` and `sounds.ts` already know how to find, so a
+learner meets in conversation the exact contrast the minimal pairs round drills in isolation.
+
+**The queue is the only one with no words in it.** It costs a point and its whole effect is one
+number, which is the argument for it: pressure that is felt rather than announced.
+
+### The rules of the draw
+
+- **Never on the first beat.** You get to say hello and be answered. A scene that ambushes somebody
+  at the door teaches them to dread it.
+- **No two of the same kind in a run**, and none within two beats of another.
+- **Never one whose out is not sayable.** Asserted: every curveball's out is expressed as
+  requirements, and every requirement has to resolve inside the scene's own word list at its level.
+  A curveball a learner cannot answer is not difficulty, it is a bug in a costume.
+- **At most one cost-3 below Ordinary day**, so that step is a step and not a cliff.
+
+## 10. Difficulty is four dials, and only one of them is curveballs
+
+The presets set all four at once. Each is separately reachable, because they measure different
+things and nobody is evenly bad at all four.
+
+- **Curveballs.** How much goes wrong.
+- **Memory.** How much of the transcript stays on screen: all of it, the last two turns, or none. In
+  a real conversation you cannot scroll back, and this is the only dial that changes the kind of
+  work rather than the amount. Default is the last two turns.
+- **Pace.** How fast they speak, and whether their line is written down at all. At the top setting
+  the text arrives only after you have answered, which is the state examination's listening
+  condition and the hardest honest thing this module can ask. Off by default, and never the only way
+  to play a scene: a learner who cannot hear it is not locked out of the module, exactly as the
+  placement check leaves listening unmeasured rather than failed when there is no audio.
+- **Help.** Whether the help button is there. It is there by default and it is never removed as a
+  punishment: at the top setting it is still there, and the debrief counts what it was used for,
+  which is a word list worth more than the score it would have cost.
+
+## 11. Speaking
+
+ADR-018 stands and nothing here scores pronunciation. `scripts/measure-asr.mjs` measured
+`whisper-large-v3` at a 14.6% word error rate on clean native audio, with its errors landing on
+consonant length, voicing and word boundaries, which is precisely where a learner is weakest. Using
+that to decide whether a scene advances would be scoring pronunciation with extra steps, and it
+would stall a learner who said the right thing, which is worse than not listening at all.
+
+So there are two ways to take a turn, and both are honest about what they are:
+
+- **Typed.** The turn is marked mechanically, the scene advances on evidence, and the learner may
+  press to hear a native rendering of what they typed and compare. That is the app's speaking
+  practice, inside a conversation.
+- **Spoken, unmarked.** Nothing is typed, nothing is marked, the transcript is hidden, and the scene
+  advances when the learner says they have answered. It is a language lab drill, it is labelled as
+  one, and it is the mode somebody uses on the walk to an appointment they are dreading. Rehearsal
+  does not need a verdict.
+
+Reopening this needs a re-run of `measure-asr.mjs` against a recogniser that clears the bar, and the
+bar is not "good": a false stall has to be rarer than a real one, or the app tells a learner they
+were wrong when they were right, on the screen where that costs the most.
+
+## 12. The debrief
+
+The order is the argument.
+
+1. **What happened**, in one line. You have an appointment on Thursday at 14:00. Or you do not, and
+   why. A person remembers the outcome, so it goes first, before any teaching.
+2. **What you got done.** The required beats, ticked. A count of things achieved, never a
+   percentage: a mark on a conversation is a claim about somebody's Estonian, and the only module
+   allowed to make one is the mock exam, which caveats it heavily (ADR-022).
+3. **Your turns**, with each word marked as recognised or not, and the near misses named. This is
+   where a learner finds out that the word they were sure of was not the word.
+4. **The words you needed and did not have**, from the help button and from the beats that stalled,
+   each with an add-to-deck button.
+5. **One thing to work on**, as a `DrillLink` into the drill that addresses it, chosen from the
+   cases and forms that actually failed in this run.
+6. **Try it again**, which keeps the role card and redraws the persona and the curveballs. The
+   second run is where most of the learning is, and it should be one button.
+
+### What it writes
+
+A card added from a scene carries `SCENE_SOURCE` in the `source` column `Card` already has, so
+"words your conversations needed" is a query and never a counter (ADR-014).
+
+Grading is deliberately conservative. Every mode grades through `gradeCard` (ADR-016) and a scene is
+no exception, but a conversation is a noisy instrument, so a `Review` row is written only where the
+retrieval was unambiguous: the learner produced a vouched form of a word they hold a card for,
+without pressing help for it, in a beat that asked for it. `Good` on the first attempt, `Hard` after
+a repair, `Again` where the app had to supply the word. Never `Easy`, because a conversation cannot
+tell easy from lucky. Where the requirement was a case, the row carries its `targetCase`, which
+means **the case you fail under pressure lands in the same weak-case charts as the case you fail on
+a card**. An abandoned scene writes nothing, exactly as an abandoned round does.
+
+## 13. The screen
+
+**Choosing one.** A list of scenes at and around the learner's level, each showing the place, what
+you would be trying to get done, and how long it takes. The difficulty dial sits on the scene, not
+in Settings, because it is a decision about this conversation rather than a preference about the
+app, and because somebody who found the last one hard should be able to turn it down at the moment
+they feel that rather than two screens away.
+
+Four states, per `docs/08-ux-ia-a11y.md` §4:
+
+- **Empty.** No conversation yet, and a scene that needs only the first three A1 units, so the empty
+  state is a door rather than an explanation. The body stays under 100 characters.
+- **Loading.** The pool query and the draw. A skeleton the shape of the header, which is the one
+  part whose shape is known before the draw.
+- **Error.** `app/error.tsx`'s rules, and a scene interrupted mid-run is resumable rather than lost.
+- **Offline.** One scene pre-assembled and cached. Difficulty 0, attested lines only, marking is
+  mechanical so it needs nothing, and the finished run goes to the outbox with the grades. A
+  conversation you can have on a train is worth more than most of what this app can do offline.
+
+The layout, at 360px first: the role card and the objectives at the top, collapsible and never gone;
+the turns in their own scroll container, per the containment rules; the input above the phone bar
+with the letter bar, the help button, and "say that again" as a first-class control, because asking
+for repetition is the most useful sentence a learner can own and putting it on screen teaches it.
+
+**Accessibility.** The turns are a log region that announces each new turn once and does not
+re-announce the ones above it, which is the lesson the exam clock taught: a live region that updates
+constantly reads a number a second at somebody. The provenance chip is text, not a colour. The
+objective ticks carry an icon and a word beside the hue, because mint means recalled and nothing in
+this app may be carried by colour alone.
+
+You can walk out. Leaving is a real option in a real conversation, and the debrief handles it
+without a word of reproach.
+
+## 14. Where it lives
+
+`lib/ux/nav.ts` gets one row, in `Every day`, after Practice. The rail answers four questions and
+none of them is "what do I do with this", which is the argument for a row rather than a tile inside
+Practice.
+
+It does not take a cell in the phone bar. The bar holds four and a fifth breaks the 44px floor; its
+four are the daily loop, and this is not yet part of anybody's daily loop.
+
+Individual scenes carry `within: "/situations"`, which is the rule `lib/ux/modes.ts` already applies
+to the five targeted drills: a scene is offered on the unit page whose `canDo` it tests, and a unit
+links to the scene that tests its promise. That two-way link is what makes this part of the course
+rather than a side game, and it is the reason the module is worth building: the syllabus has been
+claiming for 79 units that a learner will be able to do something, and this is where it finds out.
+
+**A scene's required beats are that `canDo` taken apart.** "Describe a symptom to a doctor and
+understand the advice you are given" is three beats, and they are the three the scene marks, so the
+claim the course makes and the thing the module checks are one sentence rather than two people's
+readings of it. That is also what keeps the scene catalogue from drifting into a list of situations
+somebody thought sounded useful.
+
+No panel on Today in the first build. `lib/ux/disclosure.ts` decides what a screen leads with, a
+scene is a five to eight minute sitting rather than a daily obligation, and a module nobody has used
+yet does not get to push the review button down the page.
+
+## 15. Data model
+
+```prisma
+model SceneRun {
+  id         String   @id @default(uuid())
+  ownerId    String
+  sceneId    String
+  seed       String
+  level      String
+  difficulty Int
+  /// JSON: the persona, the props, the curveballs drawn, the turns and their provenance.
+  /// Nothing in here is true about the learner: the role card is fiction (§3).
+  transcript String    @default("{}")
+  /// Which required beats were met, and how it ended.
+  outcome    String    @default("{}")
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+
+  @@index([ownerId, startedAt])
+  @@index([ownerId, sceneId, startedAt])
+}
+
+model SceneGap {
+  id        String   @id @default(uuid())
+  ownerId   String
+  runId     String
+  lexemeId  String?
+  /// ASKED (the help button) | STALLED (the beat could not be met)
+  kind      String
+  createdAt DateTime @default(now())
+
+  @@index([ownerId, createdAt])
+  @@index([ownerId, lexemeId])
+}
+```
+
+`SceneRun` is append-only, like `Review` and `Assessment`, with the same single exception: somebody
+erasing their own account, because the promise on `/privacy` outranks the rule. `SceneGap` is a
+child table rather than a field inside the transcript so that "the words my conversations keep
+needing" is one indexed query instead of a JSON scan over every run.
+
+Both are owner-scoped, so the export coverage invariant in `lib/legal/exportCoverage.ts` fails until
+somebody decides about them, which is the correct behaviour and the reason that check reads the
+schema rather than a list somebody typed. Both belong in the backup and in the erasure. Neither
+belongs in the classroom roll-up (§18).
+
+An unfinished run lives on the device, the way an unfinished exam paper does
+(`app/(app)/exam/[level]/resume.ts`), and the server sees the finished run. The client sends the
+turns; the server re-runs `readTurn` to decide the objectives and the grades. That is ADR-022's
+discipline, the client never sends a mark, and it costs one function call because the marker is
+pure.
+
+## 16. Cost, and what happens when there is none
+
+`UsageKind` gets `SCENE`, and a scene books **one call rather than one per turn**, because running
+out of allowance halfway through a conversation is the worst failure available to this module. The
+reservation is written at the start for the whole scene's expected tokens, exactly as the ledger
+already books a call before opening a provider, and the real figures arrive at the end as the
+settlement that corrects it, which is negative whenever the estimate was generous. A scene abandoned
+before it composed anything hands the booking back through `releaseReservation`, which is what that
+function is for: a call that reached nobody is not a question anybody asked. Booking per scene is
+also what makes the honest sentence possible, "two conversations left today", rather than "eleven
+calls left".
+
+The number itself needs the Phase 0 measurement, and the shape of the table is worth noting before
+somebody picks one. `ALLOWANCE` is a whole multiple of the base, which is the tutor's ten a day, so
+the smallest thing that can be said is ten scenes. A scene is worth roughly five grader calls in
+tokens, so ten scenes is a real amount of somebody's budget, and the limit that actually binds is
+the money rather than the count: the reservation is the whole scene, so the global budget sees a
+scene as a scene. Either the table learns a fraction, or the entry is ten and the deployment's daily
+budget is what rations it. That is a decision to make with a measured cost in hand, and not before.
+
+**A deployment with no key runs this module.** Not a reduced version of it: difficulty 0 with
+attested lines only is a whole conversation, marked identically, because the marking never needed a
+model. That is the standard `/assess` already meets and the reason the level check works on a
+machine with nothing configured. Composition is what curveballs and the higher levels buy.
+
+## 17. The learner's text reaches a model, so it is data
+
+The last two turns go into the composer's prompt, which means somebody can type instructions into
+it. The blast radius is worth stating rather than assuming.
+
+The model's only output is one line, which is then checked for shape, vouched word by word against a
+closed list, and checked for register. A line that tries to be anything other than a short Estonian
+sentence fails the shape check; a line reaching outside the word list fails vouching; and either way
+what the learner gets is the fallback, which is somebody asking them to repeat. The model cannot
+call anything, cannot see the deck, cannot mark, and cannot advance the scene. The worst available
+outcome is a wasted call and a withheld line.
+
+Prompt text is never built by string-concatenating the learner's turn into an instruction: the turns
+go in as conversation, the way the tutor's do. And the report button on every turn is the path for
+anything strange that does get through.
+
+## 18. What this must never become
+
+Each of these is a way the module fails, with the guard that stops it.
+
+- **A chatbot in a costume.** Guard: the state machine decides what happens, the dictionary decides
+  what advances it, and the model writes one line for one move inside a closed word list.
+- **A second exam.** Guard: no score, no percentage, no level, no pass mark. Counts of things
+  achieved, and an outcome.
+- **A teacher of wrong Estonian.** Guard: attested first, four checks always, withheld rather than
+  caveated, provenance on every line, a report button on every turn, and nothing generated ever
+  written to `Lexeme`, `Form` or a card answer.
+- **A thing that needs a key.** Guard: §16.
+- **The same conversation every time.** Guard: the recency rules in §5, measured.
+- **A place people feel small.** Guard: the curveball budget is the learner's own dial, help is
+  never taken away, walking out is allowed, asking for repetition is free and taught, English is
+  counted and not scolded, and the debrief leads with what got done.
+- **A window into somebody's private life.** Guard: the role card, and no scene asks for a real
+  document number.
+- **A way for a teacher to read a student's mistakes.** Guard: ADR-019 stands unchanged. A class
+  sees effort and aggregate: a roster row says how many conversations were finished, and the class
+  panel says which objective the group most often misses. A transcript belongs to one person.
+
+## 19. Phases
+
+**Phase 0, before anything is built.** `scripts/measure-scenes.ts` answers the question the whole
+design rests on: for each beat of each scene, how many attested sentences in the shipped dictionary
+can fill it. High, and most turns cost nothing and the module is nearly free. Near zero, and every
+turn is composed, the gate does all the work, and the cost and the risk both change shape. Nobody
+knows this number today and it should be the first thing anybody finds out. Beside it,
+`scripts/eval-scene.mjs` measures the gate rejection rate against the real chain, and measures
+whether the government check of §2 rejects more real errors than good lines.
+
+**Phase 1.** Three scenes at A2 and B1, drawn from units the course already teaches: the health
+centre (`keha-ja-tervis`), the landlord (`eluase`), and the counter that wants a document
+(`linn-ja-teenused`). Typed turns, mechanical marking, attested and composed lines, four curveballs,
+the debrief, the offline scene. Every guard in §18 on day one, because a guard added afterwards is a
+guard that was missing for a release. Done means what `docs/09-roadmap.md` says it means, plus the
+suite in §21.
+
+**Phase 2.** The rest of the dials, the spoken unmarked mode, the two-way link from the unit pages,
+the full curveball catalogue, class assignment, and the loop that makes this more than practice:
+**a word you could not say last week comes back in the next scene's props**. That is spaced
+repetition applied to conversation gaps, `SceneGap` is already the right shape for it, and it is
+Phase 2 rather than Phase 1 because it needs real runs behind it before anybody can tune how hard it
+pushes.
+
+**Phase 3.** The reviewed phrase bank: a line an admin approved becomes reusable, so scenes need the
+model less over time. Out of Phase 1 deliberately, because it is a new kind of write into shared
+content and it deserves its own argument rather than arriving inside a feature. It would have to
+meet everything `lib/dict/upsert.ts` meets, plus one more rule: a banked line may never be a card
+answer, an exam answer or a marking target, and that is an invariant rather than a note.
+
+Phase 3 also holds **the worked example**, where the app plays both sides and the learner watches
+once before trying. It is the most useful thing here for a beginner and it is the one feature that
+puts composed Estonian in front of somebody explicitly as a model to imitate. Same gate, same
+provenance, and a decision somebody should make on purpose rather than by extension.
+
+## 20. What was considered and rejected
+
+- **Hand-written dialogue.** The obvious answer, and the one this project cannot take: a scene file
+  full of typed Estonian is ADR-005 broken in the most direct way available, and the first
+  misspelling ships in silence.
+- **A branching authored tree.** Variety by writing more branches. It multiplies the authoring cost
+  by the thing it is trying to fix, and every branch is authored Estonian again.
+- **Building it into Anu.** She already talks. She also streams, which is what stops her Estonian
+  being gated rather than flagged (ADR-005 amendment 2), and she has no state machine, no
+  mechanical marking and no closed word list. Putting this behind her would trade every guarantee in
+  §18 for a chat window.
+- **Speech recognition to advance a turn.** §11. Measured, not assumed.
+- **A model deciding whether the learner was understood.** The judgement a model is least qualified
+  to make, with the worst failure mode available: a learner marked wrong for being right, in a
+  language they cannot yet argue in.
+- **A score.** Every version of a percentage on a conversation read worse than the outcome sentence
+  that replaced it.
+- **Two learners in one class taking the two roles.** Genuinely good, and it needs realtime
+  infrastructure this app does not have. Worth revisiting once a language house is actually using
+  the classroom.
+- **A patience meter.** §7.
+- **Voice to voice.** Needs a recogniser this design has already turned down, and it would put the
+  whole conversation behind a microphone prompt on a phone.
+- **A morphological analyser in the gate, for now.** §2 says what Vabamorf would and would not buy.
+  The short version is that it overlaps vouching almost entirely, and the part that does not overlap
+  is a syntactic check that is a project rather than a check.
+
+## 21. The invariants
+
+Written the way `scripts/test-invariants.ts` would assert them, because a rule with nothing behind
+it is a rule that drifts:
+
+1. No file under `lib/scenes/catalogue/` contains an Estonian letter. The `grammar.ts` tripwire,
+   moved one directory over.
+2. Every `units` entry is a real syllabus unit id, and every `oneOf` lemma is a word the harvest
+   brought back.
+3. Every scene names the unit whose `canDo` its required beats take apart, and that unit exists.
+4. Every curveball's out resolves inside its scene's word list at its level.
+5. `advance` takes `Evidence`, `readTurn` is its only producer, and nothing under `lib/scenes/`
+   imports a provider, a React module or Prisma.
+6. Every line reaching a screen came from `sceneLine`, and `sceneLine` withholds rather than
+   caveats.
+7. Nothing generated is written to `Lexeme`, `Form` or `Card.back`.
+8. `SceneRun` and `SceneGap` are append-only outside the erasure path, are in the export, are in the
+   erasure, and are absent from the classroom roll-up.
+9. The scene action is in `ACTION_LIMITS`, and the scene route sends `no-store`.
+10. Every truncated read in the module states its order and ends on `id`.
+11. A curveball is never drawn on the first beat.
+12. `SCORED_SKILLS` is unchanged. This module contributes nothing to any level.
+
+And one browser suite, `scripts/test-scene.mjs`, with the model stubbed the way `test-scan.mjs`
+stubs it: a whole scene played through, the provenance chips, the repair path, a curveball and its
+out, the debrief, the offline scene, and a run completed with no provider key at all. It declares a
+floor like every other suite, and it waives with a number and a reason rather than a line saying
+SKIP. It invents its own word if it writes to the shared dictionary, for the reason `test-scan.mjs`
+does.
+
+## 22. For a language house pilot
+
+The classroom already draws the boundary this needs: effort, never contents (ADR-019). A teacher can
+set a scene for a week, see who finished it, and see which objective the group missed most often,
+and can see no transcript at all. That is the honest shape of what a language house wants, which is
+to know whether the class can book an appointment, and not to read twenty people's practice
+attempts.
+
+One thing belongs here because it is easy to get wrong in a funding application: the classroom
+feature is built and no real class has used it. It should not be cited as a case study until one
+language house has run one course with it. Until then the accurate sentence is that the feature
+exists and is waiting for a pilot, which is fair to say and is a different thing from a result.
+
+## 23. ADR-025, proposed
+
+**A scene is assembled from the dictionary, advanced by the dictionary, and says which of its lines
+a model wrote.**
+
+The scene file names moves and unit ids and holds no Estonian. What the other side says comes from a
+recorded usage where one fits, and otherwise from a model working inside a closed word list, checked
+for shape and register and vouched word by word against that list at the same floor a photographed
+word has to clear, withheld whole when it fails, and marked on screen as composed. What the learner
+says is read by `readTurn` against the dictionary and by nothing else, so no model ever decides
+whether a learner was understood and no model output can advance a scene. Nothing generated is
+stored as a form, a card answer or a sentence in the shared dictionary. Speaking is unmarked
+(ADR-018), and this module contributes nothing to any level (ADR-020).
+
+This extends ADR-005 in the direction ADR-021 already went for a photograph and ADR-024 for a
+headline: a model may propose Estonian, and the dictionary decides whether the learner sees it.
+
+When the module ships, this belongs in `docs/03-architecture.md` §6 with the others.
+
+## 24. Open questions
+
+- **How much of a scene can attested sentences fill?** Phase 0 answers it, and the answer changes
+  the cost, the risk and the shape of the first build.
+- **Does a learner want the same scene twice?** The design assumes the second run is where the
+  learning is. That is a belief, and a pilot can measure it: how many runs of one scene before
+  somebody stops.
+- **Which three scenes first?** The health centre is the strongest candidate, because
+  `keha-ja-tervis` already promises at A2 that a learner can describe a symptom to a doctor, and
+  because it is the encounter people are most afraid of. The other two are a judgement about the
+  audience an integration foundation serves, and somebody who works with that audience should make
+  it rather than this document.
+- **Does the register dial belong to the scene or the learner?** A scene sets `teie` because a health
+  centre does. Somebody practising for a workplace where everybody says `sina` might want to
+  override it. The safer answer is that the scene owns it and there are two scenes.
+- **Is a syntactic check worth its dependency?** Vabamorf plus agreement and government rules over a
+  whole sentence would close most of what §2 admits is left open. It is also the first
+  Estonian-specific service this app would take a dependency on, and every module so far has been
+  built out of the dictionary instead. Worth costing once the gate rejection rate is known, because
+  a low rate makes the question smaller.
+- **What happens to a run somebody abandons halfway, twice a week, for a month?** Nothing writes a
+  grade, which is right, and the gaps still record what they could not say, which may be the most
+  useful signal in the module or may be a way of telling somebody they keep failing. Worth watching
+  before it is built on.
