@@ -49,10 +49,10 @@ async function main() {
   if (process.argv.includes("--only-if-empty")) {
     const existing = await prisma.lexeme.count();
     if (existing > 0) {
-      console.log(`Dictionary already has ${existing} entries — leaving it alone.`);
+      console.log(`Dictionary already has ${existing} entries. Leaving it alone.`);
       return;
     }
-    console.log("Dictionary is empty — seeding it.");
+    console.log("Dictionary is empty. Seeding it.");
   }
 
   const entries: SeedEntry[] = [];
@@ -307,7 +307,7 @@ const ownedBy = (e: SeedEntry) =>
 function dedupe(entries: SeedEntry[]) {
   const byKey = new Map<string, SeedEntry>();
   for (const e of entries) {
-    if (byKey.has(key(e))) console.warn(`  duplicate seed entry: ${e.lemma} (${e.pos}) — keeping the last one`);
+    if (byKey.has(key(e))) console.warn(`  duplicate seed entry: ${e.lemma} (${e.pos}). Keeping the last one.`);
     byKey.set(key(e), e);
   }
   return [...byKey.values()];

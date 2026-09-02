@@ -580,6 +580,23 @@ last is excused **by name** rather than wholesale, through an `only` list on the
 excusing a whole file from the phrase rule to keep one key would have handed it every brochure word
 as well.
 
+**And neither is the seed, which is where the copy actually lives.** The sweep read `app/`,
+`lib/` and `components/`, which is three directories of source and not the same thing as three
+directories of copy. `prisma/data/other.ts` holds the note printed under `Tere hommikust!` on its
+dictionary entry, and `verbs.ts` and `advanced.ts` hold the line printed under
+`Government · rektsioon` for the words Ekilex records no government for. Nine of those reached a
+learner with an em dash in them and six were on the A1 greetings, the first unit anybody opens.
+`lib/collections/syllabus/` was already swept for exactly this reason and only because it happens
+to sit under `lib`: where a file of authored English lives decided whether the rule reached it.
+
+`prisma/data/harvested.ts` is exempt from the dash rule and from that one only, with the reason
+written down beside it: it is generated, and every dash in it is inside Estonian a lexicographer
+recorded, a street number, a range of years, a dash opening a line of speech. Rewriting one would
+be this app editing Ekilex's sentences. Its single authored column is the gloss, which is written
+in the syllabus and swept there, so nothing authored is excused. `expanded.json` is not swept
+because the sweep reads source rather than data, and it was measured rather than assumed: its 40
+dashes are all in Estonian usages and none of its 5,363 English glosses carries one.
+
 **`docs/` is not exempt, and was.** The sweep skipped it on the argument that those pages are read
 by contributors rather than by learners, which was true and was not a reason: they are still
 somebody explaining something to somebody, they are the first thing a new contributor reads, and a

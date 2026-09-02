@@ -67,6 +67,13 @@ const ALLOWED = new Map<string, { rules: ("dash" | "tell")[]; only?: string[]; w
     },
   ],
   [
+    "prisma/data/harvested.ts",
+    {
+      rules: ["dash"],
+      why: "Is generated, and its dashes are all inside Estonian a lexicographer recorded: a street number, a range of years, a dash opening a line of speech. Rewriting one would be this app editing Ekilex's sentences (ADR-005). Its one authored column, the gloss, is written in lib/collections/syllabus/ and swept there.",
+    },
+  ],
+  [
     "lib/ekilex/client.ts",
     {
       rules: ["tell"],
@@ -162,9 +169,21 @@ function sourceFiles(dir: string, extensions = /\.(ts|tsx)$/): string[] {
   return out;
 }
 
-// `flatMap(sourceFiles)` would hand the array index in as the second argument,
-// which is how a default parameter gets silently overridden with a number.
-const FILES = ["app", "components", "lib"].flatMap((dir) => sourceFiles(dir));
+/*
+  `flatMap(sourceFiles)` would hand the array index in as the second argument,
+  which is how a default parameter gets silently overridden with a number.
+
+  AND `prisma/` IS IN IT, BECAUSE THE SEED IS COPY. This was three directories
+  of source, and the hand-written seed data is a fourth: `prisma/data/other.ts`
+  carries the note printed under `Tere hommikust!` on the dictionary entry, and
+  `verbs.ts` and `advanced.ts` carry the government line printed under
+  `Government · rektsioon`. Nine of those reached a learner's screen with an em
+  dash in them, six on the A1 greetings, which is the first unit anybody opens.
+  `lib/collections/syllabus/` was already swept for exactly this reason and
+  happens to live under `lib`; where the same kind of authored English sits
+  decided whether the rule reached it.
+*/
+const FILES = ["app", "components", "lib", "prisma"].flatMap((dir) => sourceFiles(dir));
 
 /**
  * The prose of a markdown file.
