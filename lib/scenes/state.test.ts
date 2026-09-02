@@ -19,6 +19,7 @@ import type { SceneSpec } from "./types";
 const SCENE: SceneSpec = {
   id: "fixture", title: "A fixture", place: "Nowhere", level: "A2",
   tests: "keha-ja-tervis", units: ["tervitused"], register: "teie",
+  role: "You are somebody, and it is not you.", props: [], curveballs: [],
   beats: [
     {
       id: "greet", goal: "Greet back.", move: "greet", topic: ["Tere!"],

@@ -28,6 +28,8 @@
  * Pure: no React, no Next, no Prisma, no clock.
  */
 import type { CaseKey } from "@/lib/estonian/types";
+import type { CurveballId } from "./curveballs";
+import type { PropSpec } from "./props";
 import type { Level } from "@/lib/collections/syllabus";
 
 /**
@@ -163,6 +165,12 @@ export interface SceneSpec {
   readonly units: readonly string[];
   /** What the other side calls you, and expects back. */
   readonly register: "teie" | "sina";
+  /** English, one line. Who the learner is today, and never themselves (§3). */
+  readonly role: string;
+  /** The facts the card hands them, which is what a `datum` requirement reads. */
+  readonly props: readonly PropSpec[];
+  /** Which curveballs this scene admits. The draw may take no others. */
+  readonly curveballs: readonly CurveballId[];
   readonly beats: readonly BeatSpec[];
   /** Fullest first, because `outcomeOf` takes the first one that fits. */
   readonly outcomes: readonly OutcomeSpec[];

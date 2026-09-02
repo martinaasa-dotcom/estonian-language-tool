@@ -78,6 +78,29 @@ const DOCTOR: SceneSpec = {
   */
   units: [...COMMON, "keha-ja-tervis", "inimesed", "plaanid", "minevik", "omadussonad"],
   register: "teie",
+  /*
+    THE LEARNER NEVER PLAYS THEMSELVES (§3), and at a health centre that is a
+    legal rule as much as a marking one: a scene where somebody types about
+    their own symptoms is a database holding health data about an identified
+    person. Everything on this card is fiction, and nothing in a transcript is
+    true about whoever wrote it.
+  */
+  role: "You are a patient. Something has been wrong since earlier this week and you would like to be seen.",
+  props: [
+    {
+      kind: "word", slot: "symptom", oneOf: ["valu", "palavik", "haigus"],
+      says: "What is wrong: read it off the words below and say it in your own sentence.",
+    },
+    {
+      kind: "weekday", slot: "since", oneOf: ["esmaspäev", "teisipäev", "kolmapäev"],
+      says: "It started earlier this week, on the day below.",
+    },
+    { kind: "time", slot: "time", from: 9, to: 16 },
+  ],
+  curveballs: [
+    "slot-gone", "small-talk", "faster", "queue", "not-possible",
+    "other-register", "english", "missing-document", "place-instruction",
+  ],
   beats: [
     {
       id: "greet",
@@ -191,6 +214,29 @@ const LANDLORD: SceneSpec = {
   */
   units: [...COMMON, "eluase", "kodu", "kodutood", "plaanid", "minevik", "omadussonad"],
   register: "teie",
+  role: "You rent a flat. Something in it stopped working earlier this week and you are ringing the person you rent from.",
+  props: [
+    {
+      kind: "word", slot: "problem", oneOf: ["küte", "elekter", "remont"],
+      says: "What has gone wrong: the word is below, and the sentence is yours.",
+    },
+    {
+      kind: "weekday", slot: "since", oneOf: ["esmaspäev", "teisipäev", "kolmapäev"],
+      says: "It has been like this since the day below.",
+    },
+    { kind: "time", slot: "time", from: 8, to: 18 },
+    { kind: "number", slot: "floor", min: 1, max: 5, says: "You live on floor" },
+  ],
+  /*
+    No queue: this one is a telephone call, so the only curveball in the
+    catalogue with no words in it has nowhere to happen. A scene admits what
+    could actually occur in it, which is the same discipline as declaring the
+    units its words come from.
+  */
+  curveballs: [
+    "slot-gone", "not-possible", "faster", "small-talk", "interrupted",
+    "english", "wrong-price", "other-register", "missing-document",
+  ],
   beats: [
     {
       id: "greet",
@@ -299,6 +345,24 @@ const COUNTER: SceneSpec = {
   */
   units: [...COMMON, "linn-ja-teenused", "suhtlemine", "plaanid", "omadussonad"],
   register: "teie",
+  role: "You have a form to hand in. You were given a reference for it and you are at the desk that takes them.",
+  props: [
+    {
+      kind: "word", slot: "paper", oneOf: ["avaldus", "dokument", "luba"],
+      says: "What you have come to hand in is the word below.",
+    },
+    /*
+      A fictional reference, supplied rather than asked for. An identity code
+      typed into a practice app is the one thing this module could collect that
+      nobody could ever take back (§3), so no scene invites one.
+    */
+    { kind: "code", slot: "ref", says: "The reference you were given:" },
+    { kind: "number", slot: "floor", min: 1, max: 4, says: "The desk you were sent to is on floor" },
+  ],
+  curveballs: [
+    "missing-document", "their-order", "place-instruction", "queue", "faster",
+    "not-possible", "english", "small-talk", "other-register", "wrong-price",
+  ],
   beats: [
     {
       id: "greet",

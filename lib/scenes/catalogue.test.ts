@@ -18,6 +18,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { SCENES, sceneById } from "./catalogue";
+import { curveballById } from "./curveballs";
 import { LEFT_OUTCOME, QUESTION_SHAPE } from "./types";
 import { unitById } from "@/lib/collections/syllabus";
 
@@ -153,6 +154,68 @@ describe("the scene catalogue", () => {
       const sizes = scene.outcomes.map((o) => o.when.length);
       expect([...sizes].sort((a, b) => b - a), `${scene.id} lists its outcomes thinnest first`)
         .toEqual(sizes);
+    }
+  });
+
+  /*
+    THE CARD IS WHAT MAKES `datum` MARKABLE, so every slot a beat asks for has
+    to be a slot the card carries. A beat waiting on a prop nobody drew is a
+    beat that can never be met, and it would look exactly like a learner who
+    kept getting it wrong.
+  */
+  it("hands out a card that answers every datum its beats ask for", () => {
+    for (const scene of SCENES) {
+      const slots = new Set(scene.props.map((p) => p.slot));
+      for (const beat of scene.beats) {
+        for (const need of beat.needs) {
+          if (need.kind !== "datum") continue;
+          expect(slots, `${scene.id}/${beat.id} waits on a prop the card does not carry`)
+            .toContain(need.slot);
+        }
+      }
+      expect(new Set(scene.props.map((p) => p.slot)).size, `${scene.id} repeats a prop slot`)
+        .toBe(scene.props.length);
+      expect(scene.role.length, `${scene.id} hands out no role at all`).toBeGreaterThan(20);
+    }
+  });
+
+  /*
+    A CURVEBALL WITH NO OUT IS A TRAP (§9), and the out has to be sayable
+    *inside this scene*: a requirement naming a word the scene's units do not
+    teach is difficulty a learner cannot answer, which is a bug in a costume.
+
+    Every out in the catalogue today is a question, a negation, a register or
+    `any`, all of which the units in `COMMON` supply for every scene. That is
+    why this check is worth writing now rather than when it first fires: it is
+    the entry that names a lemma which would break it, and nobody adding one
+    would think to look.
+  */
+  it("admits only curveballs whose way out its own words can say", () => {
+    for (const scene of SCENES) {
+      const taught = new Set(scene.units.flatMap((id) => unitById(id)?.lemmas ?? []));
+      expect(new Set(scene.curveballs).size, `${scene.id} admits one twice`)
+        .toBe(scene.curveballs.length);
+
+      for (const id of scene.curveballs) {
+        const ball = curveballById(id);
+        expect(ball, `${scene.id} admits ${id}, which is not in the catalogue`).toBeDefined();
+        for (const need of ball?.needs ?? []) {
+          if (need.kind === "lemma") {
+            for (const lemma of need.oneOf) {
+              expect(taught, `${scene.id} admits ${id}, whose out needs ${lemma}, which it does not teach`)
+                .toContain(lemma);
+            }
+          }
+          if (need.kind === "case") {
+            expect(taught, `${scene.id} admits ${id}, whose out needs ${need.lemma}, which it does not teach`)
+              .toContain(need.lemma);
+          }
+          if (need.kind === "datum") {
+            expect(scene.props.map((p) => p.slot), `${scene.id} admits ${id}, whose out needs a prop it has not drawn`)
+              .toContain(need.slot);
+          }
+        }
+      }
     }
   });
 });
