@@ -308,7 +308,17 @@ const word = `proovisona${Date.now()}`;
 await page.goto(`${B}/dictionary?q=${word}`, { waitUntil: "networkidle" });
 check("a failed search offers an add form, not a dead end", (await page.getByText("Add a word").count()) > 0);
 await page.getByPlaceholder("word").fill("trial word");
-await page.getByPlaceholder("toa").fill(`${word}u`);
+/*
+  BY THE FIELD'S NAME, NOT BY A PREFIX OF ITS PLACEHOLDER.
+
+  This read `getByPlaceholder("toa")`, which is a substring match, and it broke
+  the day the nominative plural became a principal part and the form grew a
+  field whose example is `toad`. The label is what a person uses to find the
+  box, it is what the form promises, and it cannot be made ambiguous by adding
+  a field beside it.
+*/
+const genitiveField = page.getByRole("textbox", { name: "Genitive sg" });
+await genitiveField.fill(`${word}u`);
 await page.getByRole("button", { name: "Save word" }).click();
 // What the screen actually said, when it did not say this. A check that
 // reports only false sends the next person to the app looking for a bug that
@@ -331,7 +341,7 @@ check("and it can go straight into the deck",
 // The shared diacritic bar must type into whichever field has focus, and React
 // must see the change — a direct .value write would be silently discarded.
 await page.goto(`${B}/dictionary?q=zzznotaword`, { waitUntil: "networkidle" });
-const genField = page.getByPlaceholder("toa");
+const genField = page.getByRole("textbox", { name: "Genitive sg" });
 await genField.click();
 await genField.fill("s");
 await page.getByLabel("Insert an Estonian letter into the field you're typing in").getByLabel("Insert ä").click();
