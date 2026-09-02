@@ -1853,9 +1853,8 @@ check("the letter bar is a desktop thing, and a choice, and reversible", () => {
     app. Neither is detectable, so it is asked at first run and changed after.
 
     Asserted as shapes rather than as today's declarations: what matters is
-    that the bar is off by default and turned on only under a query naming both
-    a width and a real pointer, that the answer is asked and stored, and that
-    there is a way back.
+    that the bar is off by default and turned on only where there is a real
+    pointer, that the answer is asked and stored, and that there is a way back.
   */
   const css = read("app/globals.css");
 
@@ -1871,11 +1870,31 @@ check("the letter bar is a desktop thing, and a choice, and reversible", () => {
     "the letter bar is no longer hidden by default",
   );
 
-  // Both halves of "a desktop". `min-width` alone hands the bar to a tablet in
-  // landscape with nothing attached to it.
-  const query = /@media\s*\(min-width:\s*768px\)\s*and\s*\(pointer:\s*fine\)\s*\{([\s\S]*?)\n  \}/
-    .exec(css);
-  assert.ok(query, "the letter bar is no longer drawn under a width-and-pointer query");
+  /*
+    A REAL POINTER, AND DELIBERATELY NOT A WIDTH.
+
+    This asserted `(min-width: 768px) and (pointer: fine)` and so asserted
+    today's declaration rather than the rule, which is the mistake this file
+    keeps warning about one layer up. The width was wrong: a viewport width is
+    not a fact about a keyboard, so dragging a desktop window to half the screen
+    took the row away on a machine whose keys had not changed and still had no õ
+    among them.
+
+    What the rule has to say is that the bar is drawn where there is a fine
+    pointer, which is the test that was doing the work: a tablet with nothing
+    attached reports a coarse one. So the query is read for `pointer: fine`, and
+    a width in it is a *failure*, because reintroducing one brings the fault
+    back. `scripts/test-mobile.mjs` measures the other side of this in a
+    browser at 480, 640 and 760 with a mouse, which is the combination that was
+    broken.
+  */
+  const query = /@media\s*\(pointer:\s*fine\)\s*\{([\s\S]*?)\n  \}/.exec(css);
+  assert.ok(query, "the letter bar is no longer drawn under a bare pointer query");
+  assert.equal(
+    /@media[^{]*min-width[^{]*pointer:\s*fine/.exec(css),
+    null,
+    "the letter bar is keyed on a width again, so a half-width desktop window loses it",
+  );
   assert.match(query[1]!, /\.letter-bar\s*\{\s*display:\s*flex/, "the query no longer draws the bar");
   assert.match(
     query[1]!,

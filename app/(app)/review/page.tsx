@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { courseLevelFor } from "@/lib/progress/level";
-import { aroundFirst } from "@/lib/collections/levels";
+import { aroundFirst, bandsAround, isAround } from "@/lib/collections/levels";
 import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseExamples, teachingSentence } from "@/lib/dict/examples";
@@ -35,6 +35,19 @@ const NEW_PER_SESSION = 10;
  * Sixty is a wide enough window for the level to have something to choose
  * between and still one query of one page of rows.
  */
+/**
+ * What a card row carries. At module scope because `inBandPool` reads it too,
+ * and a second copy is two selects that can come apart.
+ *
+ * `cefr` rides along for the new-card queue, which introduces words around the
+ * learner's level before words far off it. `examples` is a handful of short
+ * sentences and only the one that gets shown crosses to the client, because a
+ * word taught without a sentence is a word taught as a label (see `introFor`).
+ */
+const include = {
+  lexeme: { select: { lemma: true, translation: true, pos: true, examples: true, cefr: true } },
+} as const;
+
 const NEW_CANDIDATES = 60;
 const MAX_SESSION = 60;
 const CHOICES = 4;
@@ -58,11 +71,6 @@ export default async function ReviewPage({
   // and a word taught without a sentence is a word taught as a label. The
   // column is a handful of short sentences, and only the one that gets shown
   // crosses to the client (see `introFor`).
-  const include = {
-    // `cefr` rides along for the new-card queue below, which introduces words
-    // around the learner's level before words far off it.
-    lexeme: { select: { lemma: true, translation: true, pos: true, examples: true, cefr: true } },
-  } as const;
 
   // A drill ignores scheduling: the point is to attack one weakness — a case the
   // heatmap found, or the unit just added — not to review whatever is due.
@@ -181,11 +189,54 @@ export default async function ReviewPage({
     modeChosen(),
   ]);
 
-  const fresh = atLevelFirst(freshPool, level)
-    .slice(0, Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length)));
+  const room = Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length));
+  const fresh = atLevelFirst(await inBandPool(ownerId, freshPool, level, room), level).slice(0, room);
   const cards = await withChoices([...due, ...inTeachingOrder(fresh)]);
 
   return <ReviewSession cards={cards} totalCards={totalCards} mode={mode} />;
+}
+
+/**
+ * The window of unseen cards, widened when none of it is anywhere near the
+ * learner's level.
+ *
+ * `atLevelFirst` orders the window and never drops from it, which is right, and
+ * it can only order what it was given. The window is the sixty oldest unseen
+ * cards, and age is a fact about when a card was added rather than about who is
+ * being taught: a learner placed at A1 by a check that got them wrong, or one
+ * who started at A1 a year ago, has a backlog of unseen beginner cards, and the
+ * B1 unit they added last week sits behind all of it. Ordering sixty A1 cards
+ * by how near A1 they are cannot help. That is the shape of the report this
+ * fixes: an A2 or B1 learner being asked about `Tere`.
+ *
+ * So when the window turns out to hold nothing in band, one more query asks for
+ * the same thing filtered to the bands around the learner. It costs a round
+ * trip and it costs it only for the learner this hurts: a deck whose oldest
+ * unseen cards are already in band, which is everybody set up at their own
+ * level, never reaches the second read. Returning the original window when the
+ * filtered one is empty is what keeps a level an ordering rather than a gate:
+ * a learner with nothing in band still gets taught something.
+ *
+ * The card's own bands come from `lib/collections/levels.ts`, one either side,
+ * and an untagged word counts as in band there, so a word somebody typed in or
+ * photographed is never what sends this to a second query.
+ */
+async function inBandPool(
+  ownerId: string, window: CardRow[], level: Level, room: number,
+): Promise<CardRow[]> {
+  if (room === 0) return window;
+  if (window.some((c) => isAround(c.lexeme?.cefr, level))) return window;
+
+  const inBand = await prisma.card.findMany({
+    where: {
+      ownerId, suspended: false, state: 0,
+      lexeme: { cefr: { in: [...bandsAround(level)] } },
+    },
+    orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
+    take: NEW_CANDIDATES,
+    include,
+  });
+  return inBand.length > 0 ? inBand : window;
 }
 
 /**
