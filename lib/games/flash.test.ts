@@ -284,6 +284,14 @@ describe("flashTask", () => {
     const task = taskFor(TUBA, "INESSIVE", 1)!;
     expect(task.sentenceForm).toBe("toas");
     expect(taskFor(TUBA, "COMITATIVE", 0)!.sentenceForm).toBeNull();
+
+    // And a shape that is not about a sentence carries none, even where the
+    // dictionary has one: an `inflect` task shows the pair the slot leads
+    // with, not whichever spelling a lexicographer reached for.
+    const plain = taskFor(TUBA, "INESSIVE", 0)!;
+    expect(plain.shape).toBe("inflect");
+    expect(plain.sentence).toBeNull();
+    expect(plain.shown).toEqual(["toas"]);
   });
 
   it("says whether the form was retrieved or worked out", () => {

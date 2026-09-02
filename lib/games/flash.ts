@@ -269,12 +269,19 @@ function attests(word: FlashWord, code: string, formType: string | undefined): b
 export function shapesFor(
   word: FlashWord, slot: FlashSlot, opts: { canSpeak: boolean } = { canSpeak: true },
 ): FlashShape[] {
+  return shapesFrom(slot, sentenceFor(word, slot), opts.canSpeak);
+}
+
+/** The same answer for a caller that has already found the sentence. */
+function shapesFrom(
+  slot: FlashSlot, sentence: { et: string; form: string } | null, canSpeak: boolean,
+): FlashShape[] {
   if (slot.slot === "PRODUCTION") return ["recall"];
 
   const out: FlashShape[] = ["inflect"];
-  if (sentenceFor(word, slot)) {
+  if (sentence) {
     out.push("gap");
-    if (opts.canSpeak) out.push("heard");
+    if (canSpeak) out.push("heard");
   }
   out.push("build");
   return out;
@@ -292,6 +299,9 @@ export function shapesFor(
  * simply are not offered and the round asks the plain way.
  */
 function sentenceFor(word: FlashWord, slot: FlashSlot): { et: string; form: string } | null {
+  // Nothing to cut a gap out of, so nothing to work out which forms could be
+  // cut. Most of the dictionary's entries carry no usage at all.
+  if (word.examples.length === 0) return null;
   const hideable = gapForms(word);
   for (const form of [slot.value, slot.alsoRight]) {
     if (!form) continue;
@@ -356,13 +366,18 @@ export function flashTask(input: {
   canSpeak?: boolean;
 }): FlashTask | null {
   const { word, slot, cardId, step } = input;
+
+  /*
+    Worked out once. `shapesFor` asks whether a sentence exists and this asked
+    again for the sentence itself, so every task cut two case tables and read
+    the usages twice over. That is nothing on a page building ten tasks and it
+    is half the cost of `npm run audit:questions`, which builds 46,851 of them.
+  */
+  const sentence = sentenceFor(word, slot);
   const shape = shapeFor(
-    shapesFor(word, slot, { canSpeak: input.canSpeak ?? true }),
+    shapesFrom(slot, sentence, input.canSpeak ?? true),
     step,
   );
-
-  const sentence = shape === "gap" || shape === "heard" ? sentenceFor(word, slot) : null;
-  if ((shape === "gap" || shape === "heard") && !sentence) return null;
 
   /*
     The gap text is the `gap` shape's alone. `heard` is the same sentence with
@@ -370,6 +385,7 @@ export function flashTask(input: {
     shape where the context arrives through the ear into a gap-fill with a
     soundtrack, which is the easier exercise and not the one being asked for.
   */
+  const aboutASentence = shape === "gap" || shape === "heard";
   const cloze = sentence ? buildCloze(sentence.et, [sentence.form]) : null;
   if (shape === "gap" && !cloze) return null;
 
@@ -391,12 +407,23 @@ export function flashTask(input: {
     pos: word.pos,
     shape,
     label: slotLabel(slot.slot),
-    sentence: sentence?.et ?? null,
-    sentenceForm: sentence?.form ?? null,
+    /*
+      The sentence belongs to the two shapes that are about one.
+
+      Working it out once rather than three times is a saving in the audit and
+      nothing on a screen, and it must not become a change to what a screen
+      shows: an `inflect` task now has a sentence in hand where a usage exists,
+      and printing it would put a line under the answer that was not there
+      before and, worse, would print the sentence's spelling as the answer.
+      `tuppa / toasse` is the pair to show for the sisseütlev of `tuba`,
+      whatever spelling a lexicographer happened to reach for.
+    */
+    sentence: aboutASentence ? sentence?.et ?? null : null,
+    sentenceForm: aboutASentence ? sentence?.form ?? null : null,
     gapped: shape === "gap" ? cloze?.text ?? null : null,
     // Where the sentence carries the other spelling of a two-form case, that
     // is the one the learner heard and the one to be marked against first.
-    shown: sentence
+    shown: aboutASentence && sentence
       ? shownForms({ singular: sentence.form, alsoRight: null })
       : shownForms({ singular: slot.value, alsoRight: slot.alsoRight }),
     index: formIndex(word),
