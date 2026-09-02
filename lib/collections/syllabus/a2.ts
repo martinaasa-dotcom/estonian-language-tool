@@ -259,7 +259,7 @@ export const A2 = [
       ["saabuma", "to arrive"],
       ["teatama", "to announce, to inform"],
       ["kutsuma", "to invite, to call"],
-      ["kohtumine", "meeting"],
+      ["kohtumine", "meeting (two people coming together)"],
       ["sõnum", "message"],
       ["kiri", "letter"],
       ["aadress", "address"],

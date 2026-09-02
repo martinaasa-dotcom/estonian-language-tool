@@ -22,7 +22,7 @@
  *
  * Pure: takes entries, returns sets. No React, no Next, no Prisma.
  */
-import { buildCaseTable, stemsFromParts } from "@/lib/estonian/derive";
+import { buildCaseTable, stemsFrom } from "@/lib/estonian/derive";
 import { derivedVerbForms } from "@/lib/estonian/conjugate";
 import { ESTONIAN_WORD } from "@/lib/estonian/cloze";
 
@@ -33,6 +33,17 @@ export interface DictEntry {
   readonly cefr: string | null;
   /** Principal parts by formType, exactly as the seed stores them. */
   readonly parts: Readonly<Record<string, string>>;
+  /**
+   * Whole forms Ekilex recorded that no rule reaches, by its own morph code.
+   *
+   * The seed writes these beside the principal parts and this module has to
+   * read both, because between them they are what the dictionary can say. It
+   * read `parts` alone at first and the cost was exactly the words a scene is
+   * made of: `on`, `oli`, `pole`, `ta`, `tal`, `mu`, `nad` and `me` were all
+   * absent from every scene's word list, so the gate would have withheld any
+   * composed line that used one, which is most lines anybody would write.
+   */
+  readonly extraForms?: readonly { code: string; value: string }[];
   /** Sentences a lexicographer recorded against this entry. */
   readonly usages: readonly string[];
 }
@@ -55,13 +66,25 @@ export function formsOf(entry: DictEntry): string[] {
   for (const value of Object.values(entry.parts)) {
     for (const w of words(value)) out.add(w);
   }
+  const extra = entry.extraForms ?? [];
+  for (const form of extra) for (const w of words(form.value)) out.add(w);
 
   if (entry.pos === "VERB") {
     for (const form of derivedVerbForms({ lemma: entry.lemma, pres1sg: entry.parts.PRES_1SG })) {
       for (const w of words(form.value)) out.add(w);
     }
   } else if (entry.parts.GEN_SG) {
-    for (const row of buildCaseTable(stemsFromParts(entry.parts))) {
+    /*
+      `stemsFrom` rather than `stemsFromParts`, because the retrieved forms are
+      what tell `buildCaseTable` that a case has two of them. Through the parts
+      alone a pronoun's table is `minule` and nothing else, and `mulle` is the
+      half anybody says.
+    */
+    const rows = [
+      ...Object.entries(entry.parts).map(([formType, value]) => ({ formType, value })),
+      ...extra.map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
+    ];
+    for (const row of buildCaseTable(stemsFrom(rows))) {
       for (const value of [row.singular, row.plural, row.alsoRight, ...row.accepted]) {
         if (value) for (const w of words(value)) out.add(w);
       }

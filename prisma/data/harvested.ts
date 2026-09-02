@@ -588,7 +588,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["апрель", "березозол"], ukr: ["квітень"],
   },
   {
-    lemma: "arendus", gloss: "development", pos: "NOUN", cefr: "B2",
+    lemma: "arendus", gloss: "development (of land or a building)", pos: "NOUN", cefr: "B2",
     ekilexWordId: 157828,
     ekilexPos: ["s"],
     parts: { NOM_SG: "arendus", GEN_SG: "arenduse", PART_SG: "arendust", ILL_SG_SHORT: "arendusse", PART_PL: "arendusi", GEN_PL: "arenduste" },
@@ -610,7 +610,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["развиваться", "развиться"], ukr: ["розвиватися", "розвинутися"],
   },
   {
-    lemma: "areng", gloss: "development", pos: "NOUN", cefr: "A2",
+    lemma: "areng", gloss: "development (growth or progress)", pos: "NOUN", cefr: "A2",
     ekilexWordId: 157843,
     ekilexPos: ["s"],
     parts: { NOM_SG: "areng", GEN_SG: "arengu", PART_SG: "arengut", PART_PL: "arenguid", GEN_PL: "arengute" },
@@ -2898,7 +2898,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["смелый", "храбрый"], ukr: ["сміливий", "хоробрий"],
   },
   {
-    lemma: "julgeolek", gloss: "security", pos: "NOUN", cefr: "B2",
+    lemma: "julgeolek", gloss: "security (of a country)", pos: "NOUN", cefr: "B2",
     ekilexWordId: 174350,
     ekilexPos: ["s"],
     parts: { NOM_SG: "julgeolek", GEN_SG: "julgeoleku", PART_SG: "julgeolekut", PART_PL: "julgeolekuid", GEN_PL: "julgeolekute" },
@@ -4526,7 +4526,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["встречаться", "встретиться"], ukr: ["зустрічатися", "зустрітися"],
   },
   {
-    lemma: "kohtumine", gloss: "meeting", pos: "NOUN", cefr: "A2",
+    lemma: "kohtumine", gloss: "meeting (two people coming together)", pos: "NOUN", cefr: "A2",
     ekilexWordId: 183344,
     ekilexPos: ["s"],
     parts: { NOM_SG: "kohtumine", GEN_SG: "kohtumise", PART_SG: "kohtumist", ILL_SG_SHORT: "kohtumisse", PART_PL: "kohtumisi", GEN_PL: "kohtumiste" },
@@ -4922,7 +4922,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["вместе", "с"], ukr: ["разом", "з"],
   },
   {
-    lemma: "koosolek", gloss: "meeting", pos: "NOUN", cefr: "B1",
+    lemma: "koosolek", gloss: "meeting (a group with an agenda)", pos: "NOUN", cefr: "B1",
     ekilexWordId: 185443,
     ekilexPos: ["s"],
     parts: { NOM_SG: "koosolek", GEN_SG: "koosoleku", PART_SG: "koosolekut", PART_PL: "koosolekuid", GEN_PL: "koosolekute" },
@@ -13007,7 +13007,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["рынок", "базар"], ukr: ["ринок", "базар"],
   },
   {
-    lemma: "turvalisus", gloss: "security", pos: "NOUN", cefr: "B1",
+    lemma: "turvalisus", gloss: "security (of a person), safety", pos: "NOUN", cefr: "B1",
     ekilexWordId: 248534,
     ekilexPos: ["s"],
     parts: { NOM_SG: "turvalisus", GEN_SG: "turvalisuse", PART_SG: "turvalisust", ILL_SG_SHORT: "turvalisusse", PART_PL: "turvalisusi", GEN_PL: "turvalisuste" },
@@ -13062,7 +13062,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["доказательство", "свидетельство"], ukr: ["доказ", "довід"],
   },
   {
-    lemma: "tõendama", gloss: "to prove", pos: "VERB", cefr: "B2",
+    lemma: "tõendama", gloss: "to prove (by producing evidence)", pos: "VERB", cefr: "B2",
     ekilexWordId: 248954,
     ekilexPos: ["v"],
     parts: { INF_MA: "tõendama", INF_DA: "tõendada", PRES_1SG: "tõendan", PAST_1SG: "tõendasin", PART_TUD: "tõendatud" },
@@ -13106,7 +13106,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     rus: ["вероятный", "возможный"], ukr: ["імовірний", "можливий"],
   },
   {
-    lemma: "tõestama", gloss: "to prove", pos: "VERB", cefr: "B2",
+    lemma: "tõestama", gloss: "to prove (by reasoning), to demonstrate", pos: "VERB", cefr: "B2",
     ekilexWordId: 248978,
     ekilexPos: ["v"],
     parts: { INF_MA: "tõestama", INF_DA: "tõestada", PRES_1SG: "tõestan", PAST_1SG: "tõestasin", PART_TUD: "tõestatud" },

@@ -53,7 +53,8 @@ const onlyScene = sceneArg >= 0 ? process.argv[sceneArg + 1] : undefined;
   reports about one dictionary start disagreeing about its size.
 */
 const pool: DictEntry[] = shippedDictionary().map((e) => ({
-  lemma: e.lemma, pos: e.pos, cefr: e.cefr, parts: e.parts, usages: e.usages,
+  lemma: e.lemma, pos: e.pos, cefr: e.cefr, parts: e.parts,
+  extraForms: e.extraForms, usages: e.usages,
 }));
 
 /* The corpus: every attested line the dictionary ships, tokenised once. */

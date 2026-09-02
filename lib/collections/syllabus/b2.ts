@@ -107,7 +107,7 @@ export const B2 = [
     cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
     requires: ["des-vorm"],
     words: [
-      ["areng", "development"],
+      ["areng", "development (growth or progress)"],
       ["kasv", "growth"],
       ["muutus", "change"],
       ["mõju", "influence"],
@@ -245,7 +245,7 @@ export const B2 = [
       ["seaduslik", "lawful", "ADJECTIVE"],
       ["karistama", "to punish"],
       ["kaebama", "to appeal, to complain"],
-      ["tõendama", "to prove"],
+      ["tõendama", "to prove (by producing evidence)"],
     ],
   }),
 

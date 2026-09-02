@@ -80,4 +80,27 @@ describe("the built-in dictionary's stated size", () => {
   it("is the size the assembly the scripts share reports", () => {
     expect(shippedDictionary().length).toBe(SEED_SET_SIZE.words);
   });
+
+  /*
+    AND THE FORMS TOO, WHICH IS THE HALF THAT WAS MISSING.
+
+    Comparing the lengths alone could not see the fault it was written for. The
+    seed applies two rules and the shared assembly applied one: the built
+    expansion defers to an entry already written, and the course harvest
+    *replaces* a hand-typed one, which `prisma/seed.ts` says on every run as
+    "superseding 293 hand-typed ones". Read as deferring, 293 words came back
+    as their hand-typed version instead, and both versions have the same lemma
+    and the same part of speech, so every count came out right while the
+    contents were wrong.
+
+    What differs is the forms, the sentences and the level. `olema` is in both,
+    and the harvest's row is the one carrying `on`, `oli` and `pole`; the
+    measurement went on reporting those as words the dictionary could not vouch
+    for after they had been stored. Counting the forms is what sees it.
+  */
+  it("agrees with that assembly about the forms as well, not only the count", () => {
+    const forms = shippedDictionary()
+      .reduce((n, e) => n + Object.keys(e.parts).length + e.extraForms.length, 0);
+    expect(forms).toBe(SEED_SET_SIZE.forms);
+  });
 });

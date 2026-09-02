@@ -37,7 +37,8 @@
     "test:load": "tsx scripts/load-test.mjs",
     "fixture:load": "tsx scripts/load-fixture.ts",
     "measure:asr": "node scripts/measure-asr.mjs",
-    "measure:scenes": "tsx scripts/measure-scenes.ts"
+    "measure:scenes": "tsx scripts/measure-scenes.ts",
+    "eval:scene": "tsx scripts/eval-scene.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

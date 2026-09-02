@@ -102,11 +102,19 @@ trying to learn one.
 3. **Register.** A scene set in `teie` may not come back with a `sina` form unless a curveball says
    so. It is one lookup against the pronoun unit, and it catches the model error a learner would
    find most jarring.
-4. **Government, proposed and unmeasured.** The dictionary records what case a word demands for 268
-   verbs, 36 nouns and 12 adjectives, and `parseGovernment` reads it. A composed line containing a
-   governed verb and a noun in a case that verb does not govern is probably wrong. Probably is not
-   good enough to ship: this check goes in only if the eval in §19 shows it rejecting more real
-   errors than good lines, because a check that fires on honest output is a check somebody waives.
+4. **Government, proposed and now measured.** The dictionary records what case a word demands for
+   268 verbs, 36 nouns and 12 adjectives, and `parseGovernment` reads it. A composed line containing
+   a governed verb and a noun in a case that verb does not govern is probably wrong. Probably was
+   not good enough to ship, so `npm run eval:scene` built the labelled set out of what Ekilex had
+   already recorded and asked: **it withholds 42.3% of real errors and 2.1% of good lines**, a net
+   of +115 over 286 pairs, so it goes in. §29 has the method and the one thing it cannot see.
+
+   What made that number defensible is how weakly the check is drawn. There is no parser here, so
+   nothing can say which noun is a verb's complement, and the strict reading, that every noun must
+   be in a governed case, fires on any sentence carrying an adjunct, which is most of them. So it
+   asks the weakest thing that is still a check: a line holding a governed verb has to hold **at
+   least one** nominal in a case that verb governs. A line with no governed verb and a line with no
+   nominal are both outside what it can say, and it passes them.
 
 ### Why word-level vouching is enough here, and where it is not
 

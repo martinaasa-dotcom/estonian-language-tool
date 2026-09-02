@@ -39,10 +39,14 @@ export interface ShippedEntry {
   readonly extraForms: readonly { code: string; value: string }[];
   /** Sentences a lexicographer recorded against this entry. */
   readonly usages: readonly string[];
+  /** The case the word demands of its complement, as Ekilex words it. */
+  readonly government: string | null;
   /** Ekilex's own definition of the sense. Course words only. */
   readonly note: string | null;
   /** What Ekilex calls the word. Course words only. */
   readonly ekilexPos: readonly string[];
+  /** Which file it came from, because that decides who wins a collision. */
+  readonly source: "SEED" | "HARVEST" | "EXPANSION";
 }
 
 interface ExpandedEntry {
@@ -51,6 +55,7 @@ interface ExpandedEntry {
   cefr: string | null;
   translation: string;
   notes?: string | null;
+  government?: string | null;
   examples?: { et: string; en: string | null }[];
   forms?: { formType: string; value: string }[];
 }
@@ -61,15 +66,31 @@ function clean(parts: Record<string, string | undefined>): Record<string, string
   return out;
 }
 
-const bare = { note: null, ekilexPos: [] as string[], extraForms: [] as { code: string; value: string }[] };
+const bare = {
+  note: null, ekilexPos: [] as string[], government: null as string | null,
+  extraForms: [] as { code: string; value: string }[], source: "SEED" as const,
+};
 
 /**
- * Every entry the seed would write, first writer wins.
+ * Every entry the seed would write, resolved the way the seed resolves it.
  *
- * `ON CONFLICT DO NOTHING` on `(lemma, pos)` is what the seed does, so the
- * order here is the order there: the hand-checked seeds, then the course
- * harvest, then the built expansion. A word in two of them is one entry, which
- * is why counting the files gives a larger number than counting the dictionary.
+ * TWO RULES, NOT ONE, AND READING IT AS ONE WAS WRONG FOR 293 WORDS. The
+ * built expansion arrives under `ON CONFLICT DO NOTHING`, so an entry already
+ * written keeps what it has. The course harvest does not: `prisma/seed.ts`
+ * filters the hand-typed lists down to the entries the harvest does not cover
+ * and says so out loud on every run, "superseding 293 hand-typed ones". So the
+ * harvest **replaces** a hand-typed entry and the expansion **defers** to one,
+ * and this read both as deferring.
+ *
+ * What that cost is invisible until you look for it, which is why it lasted:
+ * both versions of a word have the same lemma and the same part of speech, so
+ * every count came out right. What differs is everything else. `olema` is in
+ * the hand-typed verbs and in the harvest, and the harvest's row is the one
+ * with the attested sentences, the Ekilex level, the Russian and Ukrainian
+ * equivalents, and the forms no rule reaches. Reading the hand-typed one meant
+ * `on`, `oli` and `pole` were absent from every report and from every scene's
+ * word list, and the measurement went on listing them as words the dictionary
+ * could not vouch for after they had been stored.
  */
 export function shippedDictionary(): ShippedEntry[] {
   const rows: ShippedEntry[] = [];
@@ -115,14 +136,27 @@ export function shippedDictionary(): ShippedEntry[] {
   for (const h of HARVESTED) {
     rows.push({
       lemma: h.lemma, pos: h.pos, cefr: h.cefr, gloss: h.gloss,
-      parts: h.parts, extraForms: h.extraForms,
-      usages: h.usages, note: h.note, ekilexPos: h.ekilexPos,
+      parts: h.parts, extraForms: h.extraForms, government: h.government,
+      usages: h.usages, note: h.note, ekilexPos: h.ekilexPos, source: "HARVEST",
     });
   }
 
   for (const e of expandedRaw as ExpandedEntry[]) {
+    /*
+      One value per formType in `parts`, and the rest beside it, for the reason
+      `Form`'s unique key carries the value: Estonian has parallel forms and a
+      Record holds one. Folding the surplus into `parts` by formType silently
+      dropped it, which is the same fault the course harvest had, and it is
+      what made the form count here disagree with the seed's by 1,913.
+    */
     const parts: Record<string, string> = {};
-    for (const f of e.forms ?? []) if (!parts[f.formType]) parts[f.formType] = f.value;
+    const surplus: { code: string; value: string }[] = [];
+    for (const f of e.forms ?? []) {
+      if (!parts[f.formType]) parts[f.formType] = f.value;
+      else if (parts[f.formType] !== f.value) {
+        surplus.push({ code: f.formType.replace(/^EKILEX:/, ""), value: f.value });
+      }
+    }
     rows.push({
       lemma: e.lemma, pos: e.pos, cefr: e.cefr, gloss: e.translation, parts,
       usages: (e.examples ?? []).map((x) => x.et),
@@ -133,13 +167,18 @@ export function shippedDictionary(): ShippedEntry[] {
         it as a sense key would call a frying pan a synonym for a car.
       */
       ...bare,
+      // Ekilex's, like the course's: the expansion reads the same field.
+      government: e.government ?? null,
+      extraForms: surplus,
+      source: "EXPANSION",
     });
   }
 
   const seen = new Map<string, ShippedEntry>();
   for (const row of rows) {
     const key = `${row.lemma}|${row.pos}`;
-    if (!seen.has(key)) seen.set(key, row);
+    // The harvest replaces; everything else defers to what is already there.
+    if (!seen.has(key) || row.source === "HARVEST") seen.set(key, row);
   }
   return [...seen.values()];
 }
