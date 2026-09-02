@@ -41,6 +41,9 @@ export async function GET(request: Request) {
     headers: {
       "content-type": "text/calendar; charset=utf-8",
       "content-disposition": 'attachment; filename="kodukeel-daily.ics"',
+      // One learner's own reminder, for the reason /api/export gives.
+      "cache-control": "private, no-store",
+      vary: "Cookie",
     },
   });
 }

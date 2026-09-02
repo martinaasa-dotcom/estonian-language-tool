@@ -975,6 +975,55 @@ every speaker button and every round reads one answer. `lib/audio/clip.ts` is th
 clip's cache key is built, since three copies of "text, speed, voice" is where two of them stop
 agreeing about what is in the cache.
 
+**A response built out of one learner's own rows says it is theirs and is never kept.** The
+framework's silence is not a cache policy: `ImageResponse` stamps `public, immutable,
+max-age=31536000` on anything that does not say otherwise, so the share card, which carries a
+name, a streak and an XP total, was cached for a year at one fixed URL. Measured on the built app:
+three fetches made one request, and the second and third were served from the browser's own cache
+*after* everything `forgetThisDevice` clears had been cleared, so signing out on a shared laptop
+left the last person's card one fetch away. `/api/export` and `/api/reminder` sent no freshness
+directive at all, and the export is every review, every conversation with Anu and every exam
+composition somebody has written. Every owner-scoped route says `no-store` now, and the two shapes
+a shared cache would otherwise keep, a download and a picture, say `private` and vary on the
+cookie that chose them. Asserted, because the next such route inherits the same silence.
+
+**A call is booked once the request is worth answering, and not before.** The ledger writes a call
+down when it authorises it, which is what stops ten tabs reading the same "under the limit"; the
+price of that is that anything refused afterwards has to hand the booking back. `/api/tutor`
+authorised first and then returned 400 on an empty message list, so four empty posts left four
+pending calls against the global budget and spent four of that learner's ten for the day, having
+answered nothing. And the speech route had the opposite fault: a cache miss makes a request of
+TartuNLP and writes a WAV into storage nothing prunes, and nothing but an in-process limiter stood
+in front of it, so `ALLOWANCE.TTS` described a gate that had never existed. A miss is metered now,
+a joiner hands its booking back because it asked nobody for anything, and a failure hands it back
+too.
+
+**Adding to the shared dictionary is not the same as rewriting it, and a backup file is a document
+somebody hands the server.** `restoreBackup` upserted every `Lexeme` in the file by id and then
+deleted and recreated its forms, taking `lemma`, `provenance`, `editedBy`, `ekilexWordId` and every
+`Form` exactly as written: any signed-in learner could rewrite any word every other learner reads,
+forge "retrieved from Ekilex" on their own text, and delete the attested forms underneath. It does
+what the seed does now, `ON CONFLICT DO NOTHING`, and what it creates is marked as the restorer's
+own. `addExample` was the same door one plank narrower: no cap, no throttle, no attribution, and
+`usableExamples` sorted by length alone, so eight short sentences from one learner pushed every
+Ekilex usage off a word for everybody, including the sentences the mock exam and the level check
+are built from. An attested sentence now outranks a typed one and a learner may occupy at most two.
+
+**A half-configured deployment is neither mode and is answered as neither.** ADR-013 keys local
+mode on the *absence* of the Supabase keys, and one of the two present is not an absence: it is a
+hosted install with a typo in a dashboard. Read as local mode it opened that install to the
+internet under one shared id with `isAdmin()` true for every visitor, behind a sign-in screen that
+read as "set up later". `halfConfigured()` is the third state and the middleware answers 503
+naming the variable.
+
+**There is no analytics script, because /privacy says there is none.** Vercel Analytics was mounted
+for every visitor of the hosted build, posting each page's path, the referrer and a derived visitor
+id to a company outside the European Economic Area, while the deployment's own notice said "No
+analytics, no advertising identifiers, no third-party trackers" and the generated recipients list
+never named Vercel. Two of those three could have been edited to make the third true. This app is
+for people whose data is the reason they are careful, and `/api/metrics` already answers whether
+anybody comes back, out of the deployment's own database, which is what the notice describes.
+
 **A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
 `/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
 students on one school network are one IP and a review session asks for audio on nearly every

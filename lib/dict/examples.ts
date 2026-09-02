@@ -25,7 +25,7 @@ export interface Example {
 
 /** Sentences outside this range are unusable: a fragment, or a paragraph. */
 const MIN_CHARS = 8;
-const MAX_CHARS = 140;
+export const MAX_CHARS = 140;
 const MAX_PER_WORD = 8;
 
 export function parseExamples(json: string | null | undefined): Example[] {
@@ -74,8 +74,28 @@ export function usableExamples(examples: Example[]): Example[] {
     out.push({ ...example, et });
   }
 
-  return out.sort((a, b) => a.et.length - b.et.length).slice(0, MAX_PER_WORD);
+  /*
+    A SENTENCE SOMEBODY RECORDED OUTRANKS A SENTENCE SOMEBODY TYPED.
+
+    Shortest first was the only rule here, and `Lexeme` is shared, so eight
+    short sentences added by one learner pushed every Ekilex usage off a word
+    for everybody. Those usages are what the cloze cards, the mock exam and
+    the level check are built out of, so this was one learner rewriting the
+    Estonian other people are examined on. Attested first, then the learner's
+    own, and at most `MAX_USER_PER_WORD` of those, which is enough for the
+    line from class this was built for and not enough to take a word over.
+  */
+  const attested = out.filter((e) => e.source !== "USER" && e.source !== "AI");
+  const mine = out.filter((e) => e.source === "USER" || e.source === "AI");
+  const byLength = (a: Example, b: Example) => a.et.length - b.et.length;
+  return [
+    ...attested.sort(byLength),
+    ...mine.sort(byLength).slice(0, MAX_USER_PER_WORD),
+  ].slice(0, MAX_PER_WORD);
 }
+
+/** How many of a shared word's sentences one learner may occupy. */
+const MAX_USER_PER_WORD = 2;
 
 /**
  * Merges freshly fetched sentences into what is already stored.

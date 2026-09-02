@@ -21,5 +21,26 @@ export function supabaseConfigured(): boolean {
   );
 }
 
+/**
+ * The one shape of this that is neither mode, and must not be read as either.
+ *
+ * ADR-013 keys local mode on the *absence* of configuration, and a deployment
+ * with the URL set and the anon key misspelt is not an absence: it is somebody
+ * standing up a hosted install who has made one mistake in a dashboard. Read
+ * as local mode it opens that install to the internet under one shared id,
+ * with `isAdmin()` true for every visitor, and the sign-in screen reads as
+ * "set up later" rather than "the door is open". Read as hosted it would fail
+ * on the first Supabase call with a message about a missing key, which is a
+ * worse way to find out but at least says so.
+ *
+ * So it is a third state and the middleware answers 503 while it holds.
+ */
+export function halfConfigured(): string | null {
+  const url = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const key = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  if (url === key) return null;
+  return url ? "NEXT_PUBLIC_SUPABASE_ANON_KEY" : "NEXT_PUBLIC_SUPABASE_URL";
+}
+
 /** The owner id every row belongs to when running without sign-in. */
 export const LOCAL_USER_ID = "local-single-user";

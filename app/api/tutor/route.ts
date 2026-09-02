@@ -57,18 +57,6 @@ export async function POST(request: Request) {
     before any of this existed.
   */
   const learnerPromise = learnerContextFor(ownerId).catch(() => null);
-  const decision = await authoriseCall(ownerId, "TUTOR");
-  if (!decision.allowed) {
-    return Response.json(
-      { error: decision.message, reason: decision.reason },
-      {
-        status: 429,
-        headers: decision.retryAfterSeconds
-          ? { "retry-after": String(decision.retryAfterSeconds) }
-          : undefined,
-      },
-    );
-  }
 
   const chain = resolveProviders();
   if (chain.length === 0) {
@@ -78,6 +66,17 @@ export async function POST(request: Request) {
     );
   }
 
+  /*
+    NOTHING IS BOOKED UNTIL THE REQUEST IS WORTH ANSWERING.
+
+    The ledger writes a call down when it authorises it, which is what stops
+    ten tabs reading the same "under the limit"; the cost of that is that a
+    booking made before the body is read is a booking nothing hands back.
+    This route authorised first, so four POSTs of `{"messages":[]}` left four
+    pending calls against the global budget and spent four of the learner's
+    ten for the day, having answered nothing. /api/scan and /api/write
+    validate first and this now matches them.
+  */
   let messages: ChatMessage[];
   try {
     const body = (await request.json()) as { messages?: unknown };
@@ -93,6 +92,19 @@ export async function POST(request: Request) {
       .map((m) => ({ role: m.role, content: m.content.slice(0, 8000) }));
   } catch {
     return Response.json({ error: "Something about that request didn't make sense." }, { status: 400 });
+  }
+
+  const decision = await authoriseCall(ownerId, "TUTOR");
+  if (!decision.allowed) {
+    return Response.json(
+      { error: decision.message, reason: decision.reason },
+      {
+        status: 429,
+        headers: decision.retryAfterSeconds
+          ? { "retry-after": String(decision.retryAfterSeconds) }
+          : undefined,
+      },
+    );
   }
 
   // The learner's text is user content, never spliced into the system prompt.

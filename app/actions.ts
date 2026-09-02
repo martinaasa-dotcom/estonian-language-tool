@@ -12,7 +12,7 @@ import {
 import { checkpointPassed } from "@/lib/collections/checkpoint";
 import { generateCode, isValidCode, normaliseCode } from "@/lib/classroom/code";
 import { loadRecentMessages } from "@/lib/tutor/history";
-import { mergeExamples, parseExamples, serialiseExamples } from "@/lib/dict/examples";
+import { mergeExamples, parseExamples, serialiseExamples, MAX_CHARS as EXAMPLE_MAX_CHARS } from "@/lib/dict/examples";
 import { lookupAndStore } from "@/lib/dict/lookup";
 import { upsertLexemeWithForms } from "@/lib/dict/upsert";
 import { requireAdminId } from "@/lib/auth/admin";
@@ -386,8 +386,21 @@ export async function translateExample(lexemeId: string, sentence: string) {
  * lexicographers' examples rather than quietly passing it off as attested.
  */
 export async function addExample(lexemeId: string, sentence: string, translation?: string) {
-  await requireUserId();
-  const et = sentence.trim();
+  /*
+    THIS IS A WRITE INTO THE SHARED DICTIONARY, SO IT OBEYS WHAT ONE COSTS.
+
+    It took any lexeme id, any length of text, no throttle and no attribution,
+    and `Lexeme` is read by everybody: eight calls put eight of one learner's
+    sentences on a word and pushed every Ekilex usage off it, for every other
+    learner and for the exam and level-check questions built out of them.
+    Capped, throttled and signed now, and `usableExamples` keeps an attested
+    sentence ahead of a typed one.
+  */
+  const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "editDictionary");
+  if (busy) return busy;
+
+  const et = capped(sentence, LIMITS.example);
   if (et.length < 4) return { ok: false as const, error: "That is too short to be a sentence." };
 
   const lexeme = await prisma.lexeme.findUnique({
@@ -397,11 +410,11 @@ export async function addExample(lexemeId: string, sentence: string, translation
   if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
 
   const merged = mergeExamples(parseExamples(lexeme.examples), [
-    { et, en: translation?.trim() || null, source: "USER" },
+    { et, en: capped(translation ?? "", LIMITS.translation) || null, source: "USER" },
   ]);
   await prisma.lexeme.update({
     where: { id: lexeme.id },
-    data: { examples: serialiseExamples(merged) },
+    data: { examples: serialiseExamples(merged), editedBy: ownerId, editedAt: new Date() },
   });
   revalidatePath("/dictionary");
   return { ok: true as const };
@@ -420,6 +433,8 @@ export async function addExample(lexemeId: string, sentence: string, translation
 const LIMITS = {
   lemma: 80,
   translation: 200,
+  /** One sentence: the same ceiling the reader applies, so nothing is stored unshowable. */
+  example: EXAMPLE_MAX_CHARS,
   form: 80,
   government: 300,
   notes: 2000,
@@ -1811,19 +1826,59 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         await tx.scan.deleteMany({ where: { ownerId } });
       }
 
-      // Shared dictionary: upserted as-is, benefits every user, never deleted here.
+      /*
+        THE SHARED DICTIONARY IS ADDED TO BY A RESTORE, NEVER REWRITTEN BY ONE.
+
+        This upserted every `Lexeme` row in the file by id and then deleted and
+        recreated its forms, taking `lemma`, `translation`, `pos`,
+        `provenance`, `editedBy`, `ekilexWordId` and every `Form` exactly as
+        the uploaded file wrote them. A backup file is a document one learner
+        hands the server, so that was any signed-in learner rewriting any word
+        every other learner reads, forging "retrieved from Ekilex" on their
+        own text, and deleting the attested forms underneath it. Every other
+        shared write in this app goes through `lib/dict/upsert.ts` and obeys
+        three rules: only principal parts may be replaced, a retrieved form is
+        never touched, and the edit is attributed.
+
+        So a restore does what the seed does, `ON CONFLICT DO NOTHING`: a word
+        the dictionary already holds is left exactly as it is, and a word it
+        does not is created as this learner's own, without the provenance or
+        the Ekilex identifiers that would claim otherwise. Nothing is lost by
+        it, because the cards below point at ids either way.
+      */
+      const wanted = backup.lexemes.map((l) => String((l as { id?: unknown }).id ?? ""));
+      const present = new Set(
+        (await tx.lexeme.findMany({ where: { id: { in: wanted } }, select: { id: true } }))
+          .map((l) => l.id),
+      );
       for (const raw of backup.lexemes) {
         const { forms, ...lex } = raw as Record<string, unknown> & { forms?: unknown[] };
         const data = revive(lex, ["createdAt", "updatedAt"]);
         delete data.starred; // dropped field from a pre-multi-user backup
-        await tx.lexeme.upsert({
-          where: { id: String(data.id) },
-          create: data as never,
-          update: data as never,
-        });
-        await tx.form.deleteMany({ where: { lexemeId: String(data.id) } });
+        if (present.has(String(data.id))) continue;
+
+        // Whoever restores it is who added it, and it is not Ekilex's.
+        data.provenance = "USER";
+        data.editedBy = ownerId;
+        delete data.ekilexWordId;
+        delete data.fetchedAt;
+        delete data.lookupMissAt;
+
+        try {
+          await tx.lexeme.create({ data: data as never });
+        } catch {
+          // Another word already holds this (lemma, pos). Theirs stays.
+          continue;
+        }
         if (Array.isArray(forms) && forms.length) {
-          await tx.form.createMany({ data: forms.map((f) => revive(f as Record<string, unknown>, [])) as never });
+          await tx.form.createMany({
+            data: forms.map((f) => {
+              const form = revive(f as Record<string, unknown>, []);
+              form.lexemeId = String(data.id);
+              return form;
+            }) as never,
+            skipDuplicates: true,
+          });
         }
       }
 

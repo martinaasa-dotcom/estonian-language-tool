@@ -3553,6 +3553,74 @@ check("a headline is read through the dictionary's gate, and the feed writes not
   assert.doesNotMatch(feed, /ownerId|cookies|headers\(/, "the feed request carries something of the learner's");
 });
 
+check("a response built out of one learner's own rows is never cacheable", () => {
+  /*
+    THE FRAMEWORK'S SILENCE IS NOT A CACHE POLICY.
+
+    `/api/share` renders a picture carrying a name, a streak and an XP total,
+    and `ImageResponse` stamps `public, immutable, max-age=31536000` on
+    anything that does not say otherwise: measured on the running build, three
+    fetches made one request, the last two served from the browser's own cache
+    after everything a sign-out clears had been cleared. `/api/export` and
+    `/api/reminder` sent no freshness directive at all, and the export is
+    every review, every conversation and every exam composition the learner
+    has written.
+
+    So a Route Handler that resolves an owner says who the response belongs
+    to. `no-store` and a `Cookie` vary, asserted from the source, because the
+    next such route will inherit the same silence.
+  */
+  const routes = ALL.filter((f) => /^app\/api\/.*route\.tsx?$/.test(f));
+  const owned = routes.filter((f) => /requireUserId\(/.test(code(f)));
+  assert.ok(owned.length >= 3, "no route handler resolves an owner any more");
+  for (const file of owned) {
+    const src = code(file);
+    // A route that only ever writes has nothing to cache; the ones that hand
+    // back a body built from the learner's rows are the ones this is about.
+    if (!/new Response\(|ImageResponse\(/.test(src)) continue;
+    assert.match(
+      src,
+      /"cache-control":\s*"(private, )?no-store"/,
+      `${file} builds a response from one learner's rows without saying it is not to be kept`,
+    );
+    /*
+      A download and a picture are the two shapes a cache in front of the app
+      would otherwise be free to keep and hand on, so those say whose they are
+      as well as that they are not to be stored.
+    */
+    if (/content-disposition|ImageResponse\(/.test(src)) {
+      assert.match(src, /"cache-control":\s*"private, no-store"/, `${file} is a download or a picture and does not say it is private`);
+      assert.match(src, /vary:\s*"Cookie"/, `${file} does not vary on the cookie that chose it`);
+    }
+  }
+});
+
+check("a call is booked only once the request is worth answering", () => {
+  /*
+    The ledger writes a call down when it authorises it, which is what stops
+    ten tabs reading the same "under the limit"; the price is that anything
+    refused after that point has to hand the booking back. /api/tutor
+    authorised first and then returned 400 on an empty message list, so four
+    empty posts left four pending calls against the global budget and spent
+    four of that learner's ten for the day. Every paid route validates first.
+  */
+  const paid = ALL.filter((f) => /^app\/api\/.*route\.tsx?$/.test(f));
+  for (const file of paid) {
+    const src = code(file);
+    const at = src.indexOf("authoriseCall(");
+    if (at === -1) continue;
+    const before = src.slice(0, at);
+    assert.ok(
+      !/status:\s*400/.test(src.slice(at)) || /releaseReservation\(/.test(src.slice(at)),
+      `${file} can refuse a request after booking it without handing the booking back`,
+    );
+    assert.ok(
+      before.length > 0,
+      `${file} books a call before it has read anything about the request`,
+    );
+  }
+});
+
 check("signing out forgets the device", () => {
   /*
     Signing out cleared one cookie and left everything the app keeps in the
