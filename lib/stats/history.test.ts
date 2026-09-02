@@ -3,6 +3,7 @@ import {
   bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
   retentionReading, RETENTION_MINIMUM, RETENTION_TARGET, REVIEW_STATE,
 } from "./history";
+import { REQUEST_RETENTION } from "@/lib/srs/scheduler";
 import { dayKey, daysBetween, recentDayKeys, shiftDay, startOfDay } from "@/lib/time/day";
 
 const NOON = new Date(2026, 7, 28, 12, 0, 0); // 28 Aug 2026, local noon
@@ -227,5 +228,44 @@ describe("retentionReading", () => {
     const reading = retentionReading([]);
     expect(reading.verdict).toBe("unknown");
     expect(reading.reviews).toBe(0);
+  });
+});
+
+/*
+  THE TARGET AND THE SCHEDULER ARE ONE NUMBER.
+
+  `retentionReading` compares how often a mature card was recalled against what
+  the scheduler plans for, and that comparison is only worth printing if the two
+  are the same number. This file held its own `90` under a comment saying "the
+  target the scheduler is configured for", which is a second copy pointing at
+  the first.
+*/
+describe("the retention target", () => {
+  it("is the share the scheduler was configured to plan for", () => {
+    expect(RETENTION_TARGET).toBe(Math.round(REQUEST_RETENTION * 100));
+    expect(RETENTION_TARGET).toBeGreaterThan(50);
+    expect(RETENTION_TARGET).toBeLessThan(100);
+  });
+
+  it("is what the reading reports and compares against", () => {
+    const mature = Array.from({ length: 100 }, (_, i) => ({
+      rating: i < RETENTION_TARGET ? 3 : 1,
+      stateBefore: 2,
+    }));
+    const reading = retentionReading(mature);
+    expect(reading.target).toBe(RETENTION_TARGET);
+    expect(reading.retention).toBe(RETENTION_TARGET);
+    expect(reading.verdict).toBe("on-target");
+  });
+
+  it("counts only the cards the scheduler thought were learned", () => {
+    // A first sight of a new card is nobody's failure and is not a mature review.
+    const mixed = [
+      ...Array.from({ length: 40 }, () => ({ rating: 3, stateBefore: 2 })),
+      ...Array.from({ length: 40 }, () => ({ rating: 1, stateBefore: 0 })),
+    ];
+    const reading = retentionReading(mixed);
+    expect(reading.reviews).toBe(40);
+    expect(reading.retention).toBe(100);
   });
 });

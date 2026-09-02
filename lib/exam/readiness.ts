@@ -321,10 +321,40 @@ export function readinessFor(signals: ReadinessSignals, level: ExamLevel): Level
 
   const modelled = Math.round(SKILLS.reduce((sum, s) => sum + expected[s], 0) / SKILLS.length);
 
-  // A sitting of this very paper is the best evidence there is. It does not
-  // replace the model outright, because one bad evening is one bad evening.
+  /*
+    A sitting of this very paper is the best evidence there is. It does not
+    replace the model outright, because one bad evening is one bad evening.
+
+    BUT THE BLEND MAY NOT CARRY THE FIGURE ACROSS THE LINE THE SITTING SETTLED,
+    and it did. The model is a coverage share times a recall figure, and
+    coverage is how much of *this app's* word list for the level a learner has
+    met, which is not the examination's: somebody who has learned Estonian
+    elsewhere and taken this paper to check can pass it knowing sixty of the
+    five hundred words the course happens to teach. Their coverage is 0.12,
+    their modelled score is single digits, and thirty-five percent of that is
+    enough to drag a real result under sixty.
+
+    Swept over the combinations a learner can actually be in: **90 of 288 put
+    "You sat this and scored 85 percent, which is a pass" over a confidence of
+    46**, and a sitting at exactly the pass mark read 25. That is a headline
+    being a second opinion on the sentence under it, which is the fault
+    `lib/assessment/plan.ts` has a paragraph about; here it is worse, because
+    one of the two is a fact and the other is an estimate of it.
+
+    "One bad evening" is an argument for not letting a low score condemn
+    somebody, and it is not an argument for letting a low model overrule a high
+    sitting. So the model still moves the number, and it moves it *within* what
+    the sitting established: a paper passed cannot be modelled below a pass, and
+    a paper failed cannot be modelled above one. Where the two agree, which is
+    most of the time, nothing changes at all.
+  */
   const sat = signals.attempts.find((a) => a.level === level);
-  const expectedTotal = sat ? Math.round(0.65 * sat.pct + 0.35 * modelled) : modelled;
+  const blended = sat ? Math.round(0.65 * sat.pct + 0.35 * modelled) : modelled;
+  const expectedTotal = !sat
+    ? blended
+    : sat.passed
+      ? Math.max(blended, PASS_PCT)
+      : Math.min(blended, PASS_PCT - 1);
 
   const evidence = evidenceFrom(signals);
   const spread = spreadFor(evidence, Boolean(sat));
@@ -380,12 +410,46 @@ export function assessReadiness(signals: ReadinessSignals): Readiness {
   const levels = EXAM_LEVELS.map((level) => readinessFor(signals, level));
   const evidence = evidenceFrom(signals);
 
-  // The highest level the app would bet on, and the first one it would not.
-  // "Would bet on" is deliberately the same threshold as a pass: anything
-  // lower and the app is recommending a sitting it expects to fail.
-  const passable = levels.filter((l) => l.confidence >= PASS_PCT);
-  const assessed = passable.length > 0 ? passable[passable.length - 1]!.level : null;
-  const next = levels.find((l) => l.confidence < PASS_PCT)?.level ?? null;
+  /*
+    The highest level the app would bet on, and the one it would not.
+
+    "Would bet on" is deliberately the same threshold as a pass: anything lower
+    and the app is recommending a sitting it expects to fail.
+
+    THE CLIMB STOPS AT THE FIRST LEVEL THAT IS NOT PASSED, which is the rule
+    `lib/assessment/score.ts` scores a placement check on and explains at
+    length, and it was not the rule here. This took the highest passable level
+    anywhere in the list and the lowest unpassable one, which are the same two
+    levels only while the ladder falls from left to right, and it does not. The
+    confidence at each level rests on how much of *this app's* word list for
+    that level has stuck, and the lists are wildly different sizes: 1,069
+    entries at B1 against 99 at C1, so somebody who has met every C1 word the
+    dictionary happens to carry outscores their own B2. A sitting inverts it
+    outright, since a paper failed is clamped below the pass mark and a paper
+    passed above it, and a learner can fail B1 on a bad evening and pass B2 in
+    September.
+
+    Swept over 3,125 vocabulary states, 802 of them put the two the wrong way
+    round, and the card said so in words: "We'd bet on you passing C1 today"
+    over "B2 is next, and the gaps below are what's in your way", and at the
+    bottom of the range "We'd bet on you passing A2" to somebody whose own
+    record showed A1 sat and failed at 20 percent.
+
+    A level is a claim about everything you can do at it, so a level the app
+    would not bet on ends the climb whatever sits above it. `next` is then the
+    level the climb stopped at, one above `assessed` by construction, and the
+    two can no longer disagree.
+  */
+  let assessed: ExamLevel | null = null;
+  let next: ExamLevel | null = null;
+  for (const l of levels) {
+    if (l.confidence >= PASS_PCT) {
+      assessed = l.level;
+      continue;
+    }
+    next = l.level;
+    break;
+  }
 
   return {
     levels,

@@ -50,10 +50,12 @@ invariant checks they agree.
 ```
 CardType    RECOGNITION PRODUCTION CASE_FORM GRADATION GOVERNMENT CLOZE CONJUGATION
 CardSource  MANUAL DICTIONARY TUTOR IMPORT SCAN ALMANAC
-TaskTag     HOMEWORK VOCABULARY
-FormType    NOM_SG GEN_SG PART_SG ILL_SG_SHORT PART_PL GEN_PL
+TaskTag     HOMEWORK VOCABULARY  (declared in TASK_TAGS, lib/ux/agenda.ts)
+FormType    NOM_SG GEN_SG PART_SG ILL_SG_SHORT NOM_PL PART_PL GEN_PL
             INF_MA INF_DA PRES_1SG PAST_1SG PART_TUD
             EKILEX:<morphCode> for anything retrieved
+Language    Lexeme.notes is English (Wiktionary's further senses)
+            Lexeme.definition is Estonian (Ekilex's own explanation)
 GrammCase   NOMINATIVE GENITIVE PARTITIVE ILLATIVE INESSIVE ELATIVE
             ALLATIVE ADESSIVE ABLATIVE TRANSLATIVE TERMINATIVE
             ESSIVE ABESSIVE COMITATIVE

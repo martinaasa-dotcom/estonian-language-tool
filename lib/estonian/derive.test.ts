@@ -4,13 +4,13 @@ import { buildCaseTable, caseAnswer, shownForms, stemsFrom, stemsFromParts } fro
 /** No short illative recorded, so the suffix rule is the whole answer. */
 const raamat = {
   nomSg: "raamat", genSg: "raamatu", partSg: "raamatut",
-  partPl: "raamatuid", genPl: "raamatute", illSgShort: null,
+  partPl: "raamatuid", genPl: "raamatute", illSgShort: null, nomPl: "raamatud",
 };
 
 /** The word that started this: the illative is `tuppa`, never `toasse`. */
 const tuba = {
   nomSg: "tuba", genSg: "toa", partSg: "tuba",
-  partPl: "tube", genPl: "tubade", illSgShort: "tuppa",
+  partPl: "tube", genPl: "tubade", illSgShort: "tuppa", nomPl: "toad",
 };
 
 describe("buildCaseTable", () => {
@@ -48,8 +48,32 @@ describe("buildCaseTable", () => {
     expect(get("ILLATIVE")?.origin).toBe("DERIVED");
   });
 
-  it("forms the nominative plural as genitive + d", () => {
+  it("prints the stored nominative plural and never an ending", () => {
     expect(get("NOMINATIVE")?.plural).toBe("raamatud");
+  });
+
+  /*
+    The rule this replaced was `genSg + d`, and `scripts/audit-cases.ts` put it
+    to Ekilex for every nominal in the dictionary. It is right for 5,098 of
+    5,143 and wrong for a whole category: a pronoun is suppletive in the
+    nominative plural, so `see` goes to `need` where the ending gives `selled`,
+    and `too` to `nood` where it gives `tolled`. Both are first-lesson words.
+    Thirty-three mass nouns have no plural at all and were being given one.
+  */
+  it("shows no plural for a word the dictionary holds none for", () => {
+    const pronoun = buildCaseTable({
+      nomSg: "see", genSg: "selle", partSg: "seda",
+      partPl: "neid", genPl: "nende", illSgShort: null, nomPl: null,
+    });
+    expect(pronoun.find((r) => r.spec.key === "NOMINATIVE")?.plural).toBeUndefined();
+  });
+
+  it("takes the plural the dictionary holds, however little the stem predicts it", () => {
+    const pronoun = buildCaseTable({
+      nomSg: "see", genSg: "selle", partSg: "seda",
+      partPl: "neid", genPl: "nende", illSgShort: null, nomPl: "need",
+    });
+    expect(pronoun.find((r) => r.spec.key === "NOMINATIVE")?.plural).toBe("need");
   });
 
   it("builds plural obliques on the genitive plural when it is stored", () => {
@@ -64,7 +88,7 @@ describe("buildCaseTable", () => {
   });
 
   it("degrades safely when the genitive is unknown", () => {
-    const partial = buildCaseTable({ nomSg: "sõna", illSgShort: null });
+    const partial = buildCaseTable({ nomSg: "sõna", illSgShort: null, nomPl: null });
     expect(partial.find((r) => r.spec.key === "INESSIVE")?.singular).toBeUndefined();
     expect(partial).toHaveLength(14);
   });
@@ -112,7 +136,7 @@ describe("caseAnswer", () => {
     expect(caseAnswer(tuba, "PARTITIVE")).toBeNull();
   });
   it("returns null without a stem", () => {
-    expect(caseAnswer({ nomSg: "sõna", illSgShort: null }, "INESSIVE")).toBeNull();
+    expect(caseAnswer({ nomSg: "sõna", illSgShort: null, nomPl: null }, "INESSIVE")).toBeNull();
   });
 });
 
@@ -147,7 +171,7 @@ describe("reading stems off what a caller happens to hold", () => {
   */
   it("keeps both parallel forms a lexicographer recorded for one case", () => {
     const mina = {
-      nomSg: "mina", genSg: "minu", partSg: "mind", illSgShort: null,
+      nomSg: "mina", genSg: "minu", partSg: "mind", illSgShort: null, nomPl: null,
       retrieved: { ALLATIVE: ["minule", "mulle"], ADESSIVE: ["minul", "mul"] },
     } as const;
     const allative = caseAnswer(mina, "ALLATIVE");
@@ -166,7 +190,7 @@ describe("reading stems off what a caller happens to hold", () => {
   */
   it("does not offer a derived form as the pair outside the illative", () => {
     const one = {
-      nomSg: "tuba", genSg: "toa", partSg: "tuba", illSgShort: null,
+      nomSg: "tuba", genSg: "toa", partSg: "tuba", illSgShort: null, nomPl: null,
       retrieved: { INESSIVE: ["toas"] },
     } as const;
     expect(caseAnswer(one, "INESSIVE")?.alsoRight).toBeNull();
@@ -192,7 +216,7 @@ describe("the illative, which is the one case with two answers", () => {
   it("prefers the stored short illative to the one the rule would build", () => {
     const tuba = buildCaseTable({
       nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
-      illSgShort: "tuppa",
+      illSgShort: "tuppa", nomPl: null,
     });
     const ill = tuba.find((r) => r.spec.key === "ILLATIVE")!;
     expect(ill.singular).toBe("tuppa");
@@ -202,14 +226,14 @@ describe("the illative, which is the one case with two answers", () => {
   it("keeps the plural regular, since only the singular has a short form", () => {
     const tuba = buildCaseTable({
       nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
-      illSgShort: "tuppa",
+      illSgShort: "tuppa", nomPl: null,
     });
     expect(tuba.find((r) => r.spec.key === "ILLATIVE")!.plural).toBe("tubadesse");
   });
 
   it("derives it where the dictionary holds no short form", () => {
     const raamat = buildCaseTable({
-      nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", illSgShort: null,
+      nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", illSgShort: null, nomPl: null,
     });
     const ill = raamat.find((r) => r.spec.key === "ILLATIVE")!;
     expect(ill.singular).toBe("raamatusse");
@@ -219,7 +243,7 @@ describe("the illative, which is the one case with two answers", () => {
   it("names both illatives where the word has two", () => {
     const tuba = buildCaseTable({
       nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
-      illSgShort: "tuppa",
+      illSgShort: "tuppa", nomPl: null,
     });
     const ill = tuba.find((r) => r.spec.key === "ILLATIVE")!;
     expect(ill.singular).toBe("tuppa");
@@ -234,7 +258,7 @@ describe("the illative, which is the one case with two answers", () => {
     // the row repeating what the two above it already said.
     const aadress = buildCaseTable({
       nomSg: "aadress", genSg: "aadressi", partSg: "aadressi",
-      partPl: "aadresse", genPl: "aadresside", illSgShort: "aadressi",
+      partPl: "aadresse", genPl: "aadresside", illSgShort: "aadressi", nomPl: null,
     });
     const ill = aadress.find((r) => r.spec.key === "ILLATIVE")!;
     expect(shownForms(ill)).toEqual(["aadressi", "aadressisse"]);
@@ -243,7 +267,7 @@ describe("the illative, which is the one case with two answers", () => {
   it("has no second form for a case with one answer", () => {
     const tuba = buildCaseTable({
       nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
-      illSgShort: "tuppa",
+      illSgShort: "tuppa", nomPl: null,
     });
     for (const row of tuba.filter((r) => r.spec.key !== "ILLATIVE")) {
       expect(row.alsoRight, row.spec.key).toBeNull();
@@ -252,7 +276,7 @@ describe("the illative, which is the one case with two answers", () => {
 
   it("has no second form where the word records no short illative", () => {
     const raamat = buildCaseTable({
-      nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", illSgShort: null,
+      nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", illSgShort: null, nomPl: null,
     });
     const ill = raamat.find((r) => r.spec.key === "ILLATIVE")!;
     expect(ill.alsoRight).toBeNull();
@@ -262,7 +286,7 @@ describe("the illative, which is the one case with two answers", () => {
   it("prints what a marker accepts, so either half of a pair on screen is right", () => {
     const stems = {
       nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
-      illSgShort: "tuppa",
+      illSgShort: "tuppa", nomPl: null,
     } as const;
     const answer = caseAnswer(stems, "ILLATIVE")!;
     for (const form of shownForms({ singular: answer.value, alsoRight: answer.alsoRight })) {
@@ -279,7 +303,7 @@ describe("the illative, which is the one case with two answers", () => {
     // language: it printed `ajasse` and marked `aega` wrong, on 1,937 words.
     const aeg = buildCaseTable({
       nomSg: "aeg", genSg: "aja", partSg: "aega", partPl: "aegu", genPl: "aegade",
-      illSgShort: "aega",
+      illSgShort: "aega", nomPl: null,
     });
     const ill = aeg.find((r) => r.spec.key === "ILLATIVE")!;
     expect(ill.singular).toBe("aega");

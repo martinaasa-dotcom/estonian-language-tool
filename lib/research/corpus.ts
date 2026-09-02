@@ -269,9 +269,28 @@ export function gate(tallies: readonly Tally[]): Summary | SuppressionReason {
   };
 }
 
+/**
+ * What joins the parts of a cell's key, written as an escape rather than as the
+ * byte itself.
+ *
+ * A NUL cannot occur inside a dimension value, which is why it is the right
+ * separator: two keys can only collide if they really are the same key. It was
+ * typed literally, and a literal control character makes the file *binary* to
+ * every text tool that reads it. `grep` stops printing matches and says "binary
+ * file matches" instead, which is how this was found: a search for the
+ * anonymity floor in this very file came back with no lines. `git diff` and a
+ * review both go the same way, and an editor or a paste can drop it leaving no
+ * visible change.
+ *
+ * `"\0"` is the same string at runtime and leaves a text file on disk. It is the
+ * argument `DASH_SEPARATED` already makes one directory over: a character a
+ * reader cannot see is written down by name.
+ */
+const KEY_SEP = "\0";
+
 /** The key of the group a cell falls in for complementary suppression. */
 function groupKey(keys: readonly string[], groupBy: number): string {
-  return keys.slice(0, groupBy).join(" ");
+  return keys.slice(0, groupBy).join(KEY_SEP);
 }
 
 /**
@@ -290,7 +309,7 @@ export function buildSection(
 ): Section {
   const cells = new Map<string, { keys: readonly string[]; all: Tally[]; mature: Tally[] }>();
   for (const c of contributions) {
-    const id = c.keys.join(" ");
+    const id = c.keys.join(KEY_SEP);
     let cell = cells.get(id);
     if (!cell) {
       cell = { keys: c.keys, all: [], mature: [] };

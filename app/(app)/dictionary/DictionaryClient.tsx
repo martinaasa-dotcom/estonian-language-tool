@@ -13,6 +13,8 @@ import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
+import { isPhrase } from "@/lib/dict/pos";
+import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 import { Examples } from "./Examples";
 import { DerivedVerbForms, WordForms } from "./Forms";
 import type { SearchHit } from "@/lib/dict/search";
@@ -52,6 +54,7 @@ export interface EntryView {
   gradationNote: string | null;
   government: string | null;
   notes: string | null;
+  definition: string | null;
   provenance: string;
   inDeck: boolean;
   starred: boolean;
@@ -461,7 +464,29 @@ function Entry({ entry, tutorReady, glossLanguage }: {
   glossLanguage: GlossLanguage;
 }) {
   const equivalent = equivalentIn(entry, glossLanguage);
-  const isNoun = entry.pos === "NOUN" || entry.pos === "ADJECTIVE";
+  /*
+    A PRONOUN DECLINES LIKE A NOUN AND WAS GETTING NO TABLE AT ALL.
+
+    `see`, `kes` and `mina` are among the first thirty words anybody learns and
+    are looked up constantly, and this screen showed them three forms and
+    stopped, where `raamat` gets fourteen. The exclusion looks deliberate and
+    was not: `PRONOUN` arrived as a part of speech long after this line, and
+    the objection it might have been written for is about cards rather than
+    tables. A card compares one answer, so a pronoun card answering `minule`
+    marks `mulle` wrong, which is why the pronoun unit sets its own card types
+    and builds none. A table has no such problem.
+
+    And the forms are right, measured rather than assumed: `npm run
+    audit:cases` puts every case this derives to Ekilex for every nominal in
+    the dictionary, pronouns included, and every slot matches the form the
+    Institute lists first. `see` gives `sellesse`, `sellel`, `nendega`; `kes`
+    gives `kellele`, `kelleta`. The short forms Estonian also has (`mulle`,
+    `sel`, `neis`) are parallel variants of exactly the kind `raamatuis` is,
+    and they appear on an entry that has been enriched, through the retrieved
+    table above. Where the entry has not been enriched, the note under the
+    table says they exist rather than leaving a beginner to assume they do not.
+  */
+  const isNominal = entry.pos === "NOUN" || entry.pos === "ADJECTIVE" || entry.pos === "PRONOUN";
   const isVerb = entry.pos === "VERB";
   const parts = isVerb ? VERB_PARTS : NOUN_PARTS;
   const form = (t: string) => entry.forms.find((f) => f.formType === t)?.value;
@@ -477,7 +502,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
   // `stemsFrom` rather than five hand-picked slots: it reads the short
   // illative and the retrieved paradigm too, which is what keeps this table
   // from printing `toasse` over the `tuppa` sitting in the same form list.
-  const table = isNoun ? buildCaseTable(stemsFrom(entry.forms)) : [];
+  const table = isNominal ? buildCaseTable(stemsFrom(entry.forms)) : [];
 
   return (
     <Card className="flex flex-col gap-6">
@@ -489,7 +514,15 @@ function Entry({ entry, tutorReady, glossLanguage }: {
             </h2>
             <SpeakPair text={entry.lemma} />
           </div>
-          <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>{entry.translation}</p>
+          {/*
+            An entry spelled the same in both languages printed its own headword
+            again a line down, which reads as a rendering fault rather than as
+            the fact about the word that it is. Thirty entries here, twelve of
+            them taught by the course.
+          */}
+          <p className="mt-2 text-md" style={{ color: "var(--ink-2)" }}>
+            {sameSpelling(entry.lemma, entry.translation) ? SAME_SPELLING : entry.translation}
+          </p>
           {/*
             The meaning in the language the learner thinks in, where Ekilex
             recorded one. Under the English rather than instead of it: the
@@ -539,10 +572,53 @@ function Entry({ entry, tutorReady, glossLanguage }: {
       */}
       <EntryProblem entry={entry} />
 
+      {/*
+        TWO BLOCKS, EACH SAYING WHAT IT IS AND WHAT LANGUAGE IT IS IN.
+
+        This was one unlabelled grey paragraph rendering `entry.notes`, and that
+        column held two different things in two languages: the further English
+        senses Wiktionary lists, and, after any live lookup, Ekilex's Estonian
+        explanation, which overwrote them. So a reader met either a list of
+        English meanings or a paragraph of C1 Estonian, in the same box, with no
+        heading, while every other block on this page has one. And with no
+        `lang`, so a screen reader said the Estonian with English sounds.
+
+        The Estonian leads, because it is the dictionary's own definition and
+        the English under it is the cross-reference, which is the order this app
+        uses everywhere else.
+      */}
+      {entry.definition && (
+        <div>
+          <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
+            Seletus · what the dictionary says
+          </h3>
+          <p
+            lang="et"
+            className="rounded-[var(--r)] px-4 py-3.5 text-sm"
+            style={{ background: "var(--raised)", color: "var(--ink-2)" }}
+          >
+            {entry.definition}
+          </p>
+        </div>
+      )}
+
       {entry.notes && (
-        <p className="rounded-[var(--r)] px-4 py-3.5 text-sm" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
-          {entry.notes}
-        </p>
+        <div>
+          {/*
+            WHAT IS UNDER THE HEADING DECIDES THE HEADING. For the 968 expanded
+            entries that carry one, `notes` really is a list of further senses
+            and "Other meanings" is exactly right. On the six A1 phrases it is a
+            sentence about how the phrase is built, so `Tere hommikust!` read
+            "Other meanings: elative case, literally 'from the morning'", which
+            is not another meaning and is the first entry a beginner opens.
+          */}
+          <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
+            {isPhrase(entry.pos) ? "About this phrase" : "Other meanings"}
+          </h3>
+          <p className="rounded-[var(--r)] px-4 py-3.5 text-sm" style={{ background: "var(--raised)", color: "var(--ink-2)" }}>
+            {entry.notes}
+          </p>
+        </div>
       )}
 
       {entry.government && (
@@ -556,7 +632,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
         </div>
       )}
 
-      <Examples lexemeId={entry.id} examples={entry.examples} tutorReady={tutorReady} />
+      <Examples lexemeId={entry.id} examples={entry.examples} tutorReady={tutorReady} pos={entry.pos} />
 
       {entry.forms.length > 0 && (
         <div>
@@ -606,7 +682,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
         />
       ) : isVerb && form("PRES_1SG") ? (
         <DerivedVerbForms lemma={entry.lemma} forms={entry.forms} />
-      ) : isNoun && form("GEN_SG") && (
+      ) : isNominal && form("GEN_SG") && (
         <div>
           <h3 className="label-xs mb-1" style={{ color: "var(--ink-3)" }}>
             The rest, worked out from the genitive
@@ -668,10 +744,32 @@ function Entry({ entry, tutorReady, glossLanguage }: {
               </tbody>
             </table>
           </div>
-          {!form("GEN_PL") && (
+          {/* The gap has two causes and the note used to name only one. Eleven of
+              the plural forms are the genitive plural plus an ending; the
+              nominative plural is not an ending at all, so a word can have the
+              genitive plural and still show no plural in the first row. */}
+          {(!form("GEN_PL") || !form("NOM_PL")) && (
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Plural forms need the genitive plural, which isn&rsquo;t stored for this word. We leave
-              them blank rather than guess. An invented form is worse than a gap.
+              {!form("GEN_PL")
+                ? "Most plural forms are built on the genitive plural, which isn’t stored for this word."
+                : "The nominative plural isn’t stored for this word, and it isn’t an ending we could work out."}
+              {" "}We leave a gap rather than guess. An invented form is worse than a gap.
+            </p>
+          )}
+          {/* Only on a pronoun, and only where the entry has not been enriched.
+              These are the forms Ekilex lists first and they are the ones a
+              grammar book prints, but a beginner meeting only the long ones
+              here and hearing the short ones all day deserves to be told the
+              second set is not a mistake. An enriched entry shows both in the
+              retrieved table above, so the sentence would be redundant there.
+
+              It names no form, because this file may not write Estonian: the
+              short forms are exactly the ones a seeded entry does not hold, so
+              an example here would be one somebody typed. */}
+          {entry.pos === "PRONOUN" && (
+            <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+              Pronouns also have short forms, and those are the ones you will hear most. These are
+              the long ones, which is what a dictionary lists first. Both are right.
             </p>
           )}
         </div>

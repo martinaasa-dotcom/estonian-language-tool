@@ -18,11 +18,11 @@ export const dynamic = "force-dynamic";
 /**
  * The course.
  *
- * Eighty-three units is far too many for one list, so the page is the six CEFR
+ * Eighty-two units is far too many for one list, so the page is the five CEFR
  * levels and each one opens. The learner's own level is open on arrival and the
- * rest are shut — which is also the honest shape of the thing, because a level
- * is the unit of progress a learner actually cares about. "Four units into B1"
- * means something; "unit 31 of 84" does not.
+ * rest are shut. That is also the honest shape of the thing, because a level is
+ * the unit of progress a learner actually cares about. "Four units into B1"
+ * means something; "unit 31 of 82" does not.
  *
  * Progress is computed from the deck (lib/progress/summary.ts), so a unit fills
  * up as its words are genuinely learned rather than as they are clicked on.

@@ -2,6 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { cellsOf, MAX_ENTRIES, MAX_SIDE, MIN_ENTRIES, solvedEntries } from "@/lib/games/crossword";
 import type { DayKey } from "@/lib/time/day";
+import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { clueFrom, crosswordFor } from "./crossword";
 
 /**
@@ -27,6 +28,33 @@ async function wipe() {
 
 beforeEach(wipe);
 afterAll(async () => { await wipe(); await prisma.$disconnect(); });
+
+/*
+  AND IT STATES THE ONE THING IT CANNOT MAKE FOR ITSELF.
+
+  This is a fact about the shipped dictionary, so a dictionary some other suite
+  left behind is a different question with the same name. `test-restore.mjs`
+  empties it and restores it, `test-edit.mjs` corrects an entry, and
+  `test-containment.mjs` ticks a word into it: run any of those first on a
+  machine that is not CI and this failed with "B1 on 2026-01-01 got no grid",
+  which reads as the compiler being broken and sends whoever hits it into
+  `lib/games/crossword.ts`. It happened, and it cost an hour of looking in the
+  wrong file.
+
+  So the precondition is asked once, in words, before the thirty days are
+  compiled. `SEED_SET_SIZE` is the seed's own count and `seedSize.test.ts`
+  keeps it honest, so this is the same number `npm run db:seed` writes.
+*/
+describe("the dictionary this is a fact about", () => {
+  it("is the one the seed loads", async () => {
+    const words = await prisma.lexeme.count();
+    expect(
+      words, `the dictionary holds ${words} words, not the ${SEED_SET_SIZE.words} a fresh seed `
+      + "loads. Run `npm run db:seed`: a suite that empties or edits it ran first, and the grid "
+      + "below is a fact about the shipped dictionary rather than about whatever is there now",
+    ).toBeGreaterThanOrEqual(SEED_SET_SIZE.words);
+  });
+});
 
 describe("the daily crossword", () => {
   it("makes a grid every day at every level", async () => {
@@ -111,18 +139,43 @@ describe("the daily crossword", () => {
 
 describe("clueFrom", () => {
   it("keeps at most two senses", () => {
-    expect(clueFrom("a devil, an evil spirit, the deuce")).toBe("a devil, an evil spirit");
+    expect(clueFrom("a devil, an evil spirit, the deuce", "kurat")).toBe("a devil, an evil spirit");
   });
 
   it("takes the first group where a gloss is split by a semicolon", () => {
-    expect(clueFrom("to read; to count")).toBe("to read");
+    expect(clueFrom("to read; to count", "lugema")).toBe("to read");
   });
 
   it("drops a gloss too long to be a clue rather than cutting it mid-word", () => {
-    expect(clueFrom("a" .repeat(60))).toBe("");
+    expect(clueFrom("a".repeat(60), "pikk")).toBe("");
   });
 
   it("drops an empty gloss", () => {
-    expect(clueFrom("   ")).toBe("");
+    expect(clueFrom("   ", "tühi")).toBe("");
+  });
+
+  /*
+    A CLUE THAT IS THE ANSWER WRITES IT ACROSS THE TOP OF THE GRID. The clue is
+    the English beside the entry, and a few dozen Estonian words are spelled
+    the same in English: 34 of the 5,329 words in the shipped dictionary with a
+    usable clue, 23 of them the answer exactly.
+  */
+  it("drops a clue that is the answer", () => {
+    expect(clueFrom("film", "film")).toBe("");
+    expect(clueFrom("number", "number")).toBe("");
+    expect(clueFrom("monument", "monument")).toBe("");
+  });
+
+  it("drops a clue that merely contains the answer as a word", () => {
+    expect(clueFrom("sport, sports", "sport")).toBe("");
+    expect(clueFrom("norm, quota", "norm")).toBe("");
+    // Typed without case, so a capital letter hides nothing.
+    expect(clueFrom("August", "august")).toBe("");
+  });
+
+  it("keeps a clue that only looks like the answer", () => {
+    // `mark` inside `market` is not the word, and the clue is the whole point.
+    expect(clueFrom("a market", "mark")).toBe("a market");
+    expect(clueFrom("a lamp shade", "lambivari")).toBe("a lamp shade");
   });
 });

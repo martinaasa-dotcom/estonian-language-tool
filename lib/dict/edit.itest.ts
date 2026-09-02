@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { PRINCIPAL_FORM_TYPES } from "@/lib/estonian/types";
+import { upsertLexemeWithForms } from "@/lib/dict/upsert";
 
 /**
  * The dictionary is shared; decks are not. These are the invariants that keep
@@ -31,6 +32,10 @@ async function seedWord() {
   const lexeme = await prisma.lexeme.create({
     data: {
       lemma: LEMMA, pos: "NOUN", translation: "room", provenance: "EKILEX",
+      // The two columns a correction has no business touching: the further
+      // English senses the builder stored, and Ekilex's Estonian explanation.
+      notes: "chamber; a room in a house",
+      definition: "elamiseks kasutatav ruum",
       forms: {
         create: [
           { formType: "NOM_SG", value: "tuba" },
@@ -86,6 +91,32 @@ describe("correcting a shared dictionary entry", () => {
 
     const survivors = await prisma.form.findMany({ where: { lexemeId: lexeme.id } });
     expect(survivors.map((f) => f.value).sort()).toEqual(["toas", "tubadega"]);
+  });
+
+  it("leaves alone the columns the correction did not supply", async () => {
+    /*
+      `upsertLexemeWithForms` took a `notes` parameter and wrote
+      `notes: input.notes || null` in an update, and neither caller has ever
+      sent one: the add-and-correct form has no notes field and the suggestion
+      queue passes forms and a gloss. So correcting a typo deleted the further
+      English senses from the shared dictionary for everybody. The parameter is
+      gone; this is the check that it stays gone.
+    */
+    const lexeme = await seedWord();
+
+    await upsertLexemeWithForms({
+      id: lexeme.id,
+      lemma: LEMMA,
+      translation: "room (corrected)",
+      pos: "NOUN",
+      forms: { NOM_SG: "tuba", GEN_SG: "toa", PART_SG: "tuba" },
+      editedBy: MINE,
+    });
+
+    const after = await prisma.lexeme.findUnique({ where: { id: lexeme.id } });
+    expect(after?.translation).toBe("room (corrected)");
+    expect(after?.notes).toBe("chamber; a room in a house");
+    expect(after?.definition).toBe("elamiseks kasutatav ruum");
   });
 
   it("rewrites only the editor's own cards", async () => {

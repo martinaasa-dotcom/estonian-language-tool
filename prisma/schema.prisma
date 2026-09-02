@@ -41,7 +41,22 @@ model Lexeme {
   gradationNote String? // e.g. "b : ∅"
   government    String? // verb case government, e.g. "partitive — aitan sind"
   examples      String  @default("[]") // JSON: [{ et, en }]
+  /// The further English senses Wiktionary lists under this word, after the one
+  /// in `translation`. English, always: `aadress` carries "email address".
+  ///
+  /// It held two languages until 2026-09-02. `mapEkilexDetails` put Ekilex's
+  /// Estonian definition here too, so a live lookup replaced the English with
+  /// Estonian in a shared table, and the entry rendered both in one unlabelled
+  /// box. The Estonian has a column of its own below.
   notes         String?
+  /// Ekilex's own Estonian explanation of the word, where it records one.
+  ///
+  /// Estonian, always, which is what lets the entry mark it `lang="et"` and give
+  /// it a heading of its own. The harvest had been fetching this for every
+  /// course word and writing it into `prisma/data/harvested.ts` since the
+  /// syllabus existed, and the seed dropped all 1,359 of them, because `notes`
+  /// is written only for entries that carry the key and the harvest never did.
+  definition    String?
   provenance    String  @default("SEED") // SEED | EKILEX | AI | USER
   ekilexWordId  Int?
 
@@ -163,17 +178,20 @@ model Card {
   learningSteps Int       @default(0) // FSRS learning-step index; must round-trip
   lastReview    DateTime?
 
-  /// The course week this word belongs to, mirroring Task.classWeek.
+  /// The course week this word belongs to. Nothing reads it and nothing writes it.
   ///
-  /// On Card rather than Lexeme because it is a fact about one learner's course,
-  /// not about the word: the same noun is week 3 for one person and week 11 for
-  /// another, and Lexeme is the shared dictionary (ADR-012).
+  /// It belonged to `/week`, the class calendar cut in the eighteenth pass along
+  /// with the homework page beside it (docs/13 §24). The column stays because
+  /// dropping one is destructive and a null costs nothing; its **index** did
+  /// not, and that was not free: `Card` is written on every deck add and
+  /// updated on every grade, so an index nobody queries is paid for on each of
+  /// them. `[ownerId, due, suspended]` already covers every read that filters
+  /// on the owner.
   classWeek Int?
 
   createdAt DateTime @default(now())
 
   @@index([ownerId, due, suspended])
-  @@index([ownerId, classWeek])
   @@index([lexemeId])
 }
 
@@ -213,7 +231,9 @@ model Task {
   ownerId     String
   title       String
   notes       String?
-  tag         String    @default("HOMEWORK") // HOMEWORK | VOCABULARY
+  /// HOMEWORK | VOCABULARY, declared once in `TASK_TAGS` (lib/ux/agenda.ts).
+  tag         String    @default("HOMEWORK")
+  /// Cut with `/week`, like Card.classWeek above. Kept, unread, unwritten.
   classWeek   Int?
   dueAt       DateTime?
   completed   Boolean   @default(false)

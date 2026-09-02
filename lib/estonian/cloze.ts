@@ -45,6 +45,28 @@ export const BLANK = "____";
  * are attached to a meaning, and a few genuinely do not repeat the headword),
  * or when blanking would leave a one-word sentence with nothing to go on.
  */
+/**
+ * Whether `word` stands in `text` as a whole word, ignoring case.
+ *
+ * The boundaries are the same character class the rest of this module splits
+ * on rather than `\b`, which is defined on ASCII: `\bõun\b` does not mean what
+ * it looks like, because õ is not a word character to a regular expression.
+ * The hyphen is deliberately outside the class it would be a range inside, and
+ * is not escaped: `\-` is an invalid escape under the `u` flag and throws
+ * rather than failing to match, which is what took every hyphenated Estonian
+ * word through `splitOnForm` the hard way.
+ *
+ * One definition, because two questions turn on it: whether a gap leaves its
+ * own answer standing in the sentence, and whether the hint under the gap
+ * hands it over.
+ */
+export function mentions(text: string, word: string): boolean {
+  const wanted = word.trim();
+  if (!wanted) return false;
+  const escaped = wanted.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\p{L}\\p{M}-])${escaped}(?![\\p{L}\\p{M}-])`, "iu").test(text);
+}
+
 export function buildCloze(sentence: string, forms: readonly string[]): Cloze | null {
   const text = sentence.trim().replace(/\s+/g, " ");
   if (!text) return null;
@@ -69,8 +91,23 @@ export function buildCloze(sentence: string, forms: readonly string[]): Cloze | 
   }
   if (!best) return null;
 
+  const blanked = text.slice(0, best.index) + BLANK + text.slice(best.index + best.value.length);
+
+  /*
+    AND THE GAP MAY NOT LEAVE ITS OWN ANSWER STANDING. Only one occurrence is
+    blanked, the longest match, so a sentence that says the word twice gave it
+    away: `Poisid läksid ____ (= hakkasid kaklema).` had `kaklema` on the back
+    and `kaklema` four words along, and `... ____ teenindajakaart on taksojuhi
+    kohta ...` asked for `taksojuhi` with `taksojuhi` in the same line.
+
+    Rejected rather than blanked twice, because two gaps taking one answer is a
+    different exercise and the marker takes one string. The caller has other
+    sentences, and fifteen cards across the whole dictionary is what this costs.
+  */
+  if (mentions(blanked, best.value)) return null;
+
   return {
-    text: text.slice(0, best.index) + BLANK + text.slice(best.index + best.value.length),
+    text: blanked,
     answer: best.value,
     full: text,
     index: best.index,

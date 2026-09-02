@@ -24,7 +24,7 @@ export interface Forms {
  * whole set of forms and rebuild it from whatever one person typed.
  */
 export const PRINCIPAL_FORM_TYPES = [
-  "NOM_SG", "GEN_SG", "PART_SG", "ILL_SG_SHORT", "PART_PL", "GEN_PL",
+  "NOM_SG", "GEN_SG", "PART_SG", "ILL_SG_SHORT", "NOM_PL", "PART_PL", "GEN_PL",
   "INF_MA", "INF_DA", "PRES_1SG", "PAST_1SG", "PART_TUD",
 ] as const;
 

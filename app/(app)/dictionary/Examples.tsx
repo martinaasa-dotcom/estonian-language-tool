@@ -8,6 +8,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Chip } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import type { Example } from "@/lib/dict/examples";
+import { isPhrase } from "@/lib/dict/pos";
 import { AI_TAG } from "@/lib/copy/values";
 
 /**
@@ -23,10 +24,12 @@ import { AI_TAG } from "@/lib/copy/values";
  * reader key, and translating eight sentences on every page view would be slow,
  * expensive and mostly unread.
  */
-export function Examples({ lexemeId, examples, tutorReady }: {
+export function Examples({ lexemeId, examples, tutorReady, pos }: {
   lexemeId: string;
   examples: Example[];
   tutorReady: boolean;
+  /** The entry's part of speech, because a phrase has no usages to be waiting for. */
+  pos: string | null;
 }) {
   const [list, setList] = useState(examples);
   const [adding, setAdding] = useState(false);
@@ -35,9 +38,21 @@ export function Examples({ lexemeId, examples, tutorReady }: {
     return (
       <div>
         <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Näited · in a sentence</h3>
+        {/*
+          AN ABSENCE SOMEBODY CAN WAIT OUT, OR ONE THAT IS SIMPLY WHAT THE ENTRY
+          IS. Ekilex records a usage against a *word*, so `Tere!` and `Kuidas
+          läheb?` have none and never will: they are already the sentence. This
+          told all twenty of the A1 phrases that one "shows up the first time you
+          look this word up", which is a promise nothing was ever going to keep.
+          The offer to add one stays either way, because a sentence somebody met
+          in class using a phrase is worth having.
+        */}
         <p className="text-sm" style={{ color: "var(--ink-3)" }}>
-          No example sentences for this word yet. Ekilex has them for most common words, and one
-          shows up the first time you look this word up. You can also{" "}
+          {isPhrase(pos)
+            ? "A phrase is already a sentence, so the dictionary keeps no example under it. "
+            : "No example sentences for this word yet. Ekilex has them for most common words, and one "
+              + "shows up the first time you look this word up. "}
+          You can{" "}
           <button
             type="button"
             onClick={() => setAdding(true)}

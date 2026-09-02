@@ -128,6 +128,9 @@ async function runEnrich(lexemeId: string): Promise<boolean> {
     select: {
       id: true, lemma: true, pos: true, ekilexWordId: true, lookupMissAt: true,
       translation: true, provenance: true, government: true, examples: true,
+      // Read only so the write below can clear it where it is a copy of the
+      // definition. See the note there.
+      notes: true,
       // The marker alone is not proof: re-running the seed rewrites forms with
       // principal parts only while leaving ekilexWordId set, which would strand
       // the word half-upgraded forever.
@@ -169,7 +172,28 @@ async function runEnrich(lexemeId: string): Promise<boolean> {
       // Ekilex records government as bare question words ("kellest/millest").
       // A worked example we already hold teaches more, so it is not overwritten.
       government: lexeme.government ?? mapped.government ?? undefined,
-      notes: mapped.notes,
+      /*
+        Ekilex's Estonian explanation goes in its own column, and the English
+        further senses beside it are left alone.
+
+        This wrote `notes: mapped.notes`, which put the Estonian into the column
+        holding the English the builder had stored, so the first live lookup of
+        `aadress` deleted "email address" from the shared dictionary for
+        everybody. The two lines around it already knew better: government is
+        not overwritten because a worked example teaches more, and sentences are
+        merged rather than replaced.
+      */
+      definition: mapped.definition,
+      /*
+        And the copy the old code left behind is cleared, once, where it is
+        provably that copy. Any row looked up before this change has the
+        Estonian explanation sitting in `notes`, and rendering both would print
+        the same sentence twice, the second time under a heading saying "other
+        meanings". `undefined` leaves the column alone, so a genuine English
+        note is never touched: the only rows this clears are the ones holding
+        exactly what is being written beside them.
+      */
+      notes: lexeme.notes && lexeme.notes === mapped.definition ? null : undefined,
       // Sentences are merged rather than replaced: a translation already
       // resolved for one survives the refetch, exactly as the gloss does.
       examples: serialiseExamples(mergeExamples(parseExamples(lexeme.examples), mapped.examples)),
@@ -295,7 +319,7 @@ async function runLookup(ownerId: string, query: string): Promise<LookupResult |
     gradation: mapped.gradation,
     gradationNote: mapped.gradationNote,
     government: mapped.government,
-    notes: mapped.notes,
+    definition: mapped.definition,
     examples: serialiseExamples(mergeExamples(parseExamples(existing?.examples), mapped.examples)),
     ekilexWordId: mapped.ekilexWordId,
     provenance: "EKILEX",

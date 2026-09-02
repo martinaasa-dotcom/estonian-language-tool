@@ -13,6 +13,7 @@
  * wrong square. See lib/time/day.ts.
  */
 
+import { REQUEST_RETENTION } from "@/lib/srs/scheduler";
 import { dayClock, type DayClock } from "@/lib/time/day";
 
 export interface ReviewPoint {
@@ -224,8 +225,8 @@ export function bestStudyHour(
  */
 export const REVIEW_STATE = 2;
 
-/** The target the scheduler is configured for — see lib/srs/scheduler.ts. */
-export const RETENTION_TARGET = 90;
+/** The target the scheduler is configured for, read from it rather than repeated. */
+export const RETENTION_TARGET = Math.round(REQUEST_RETENTION * 100);
 
 /** Below this many mature reviews the number is noise, and says so. */
 export const RETENTION_MINIMUM = 30;

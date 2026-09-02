@@ -57,3 +57,43 @@ export function prefetchClip(request: ClipRequest): void {
   if (typeof window === "undefined" || !request.text.trim()) return;
   void fetchClip(request).catch(() => undefined);
 }
+
+/**
+ * A CLIP THE BROWSER REFUSED TO AUTOPLAY IS NOT A CLIP THAT FAILED.
+ *
+ * Every browser blocks `HTMLAudioElement.play()` on a page the reader has not
+ * touched yet, and rejects it with a `NotAllowedError`. The clip is in hand,
+ * the service answered, and the same call on a press will be allowed: it is a
+ * fact about the gesture, not about the audio.
+ *
+ * `components/Speak.tsx` knew that and said so in a comment. The minimal-pairs
+ * round did not: it wrapped the fetch and the play in one `try` and set
+ * `audioFailed` on either, and that state replaces the whole drill with "No
+ * audio, no drill. It runs on TartuNLP and needs a connection." The round
+ * autoplays on mount, which is the no-gesture case by construction, so on
+ * every phone and every Safari a learner opening the drill was told their
+ * connection was the problem, given a button back to Today, and never shown
+ * the 80px play button sitting behind that screen which would have worked.
+ * A failure that misnames its cause sends the reader to the wrong place, which
+ * is the rule `scripts/test-restore.mjs` has a paragraph about.
+ *
+ * So the distinction lives here, once, and both callers read it. `blocked`
+ * means "ask for a press"; anything else throws and is a real absence.
+ */
+export type PlayOutcome = "played" | "blocked";
+
+export async function playClip(
+  request: ClipRequest,
+  { unasked = false }: { unasked?: boolean } = {},
+): Promise<PlayOutcome> {
+  const url = await fetchClip(request);
+  try {
+    await new Audio(url).play();
+  } catch (error) {
+    if (unasked && error instanceof DOMException && error.name === "NotAllowedError") {
+      return "blocked";
+    }
+    throw error;
+  }
+  return "played";
+}

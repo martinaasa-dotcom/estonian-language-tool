@@ -26,7 +26,13 @@ import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
+import { SYLLABUS } from "../lib/collections/syllabus";
+import { PRACTICE_MODES } from "../lib/ux/modes";
+import { CARD_TYPES } from "../lib/srs/cards";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
+import { formatGovernment } from "../lib/ekilex/mapper";
+import { OFFICIAL_LEVELS, PASS_PCT, RETAKE_WAIT_PCT, specFor } from "../lib/exam/spec";
+import type { Skill } from "../lib/assessment/types";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
 import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
@@ -50,7 +56,26 @@ let checks = 0;
 function check(label: string, run: () => void) {
   checks += 1;
   try {
-    run();
+    /*
+      A CHECK THAT RETURNS A PROMISE IS A CHECK THAT CANNOT FAIL.
+
+      Nothing here is awaited, so an `async` body runs its assertions after this
+      `try` has already printed PASS, and the rejection lands as an unhandled
+      one that never reaches the tally. Written once, by accident, reaching for
+      a dynamic `import`: the check passed, and passed again with the thing it
+      was checking deliberately broken, which is the only reason it was noticed.
+
+      The suite's whole argument is that a check nobody has made fail once is a
+      check nobody knows the state of. This is the shape that makes that
+      impossible to tell by reading, so it is refused rather than documented.
+    */
+    const result = run() as unknown;
+    if (result && typeof (result as { then?: unknown }).then === "function") {
+      throw new Error(
+        "this check is async, so its assertions run after the suite has already "
+          + "counted it as passing. Import what it needs at the top of the file.",
+      );
+    }
     console.log(`PASS  ${label}`);
   } catch (error) {
     failures += 1;
@@ -282,6 +307,378 @@ check("the short illative is a required stem, not an optional one", () => {
     derive,
     /illSgShort\?:/,
     "NounStems.illSgShort became optional, which is the shape the bug had",
+  );
+});
+
+/*
+  AND THE NOMINATIVE PLURAL IS THE SAME RULE ON THE OTHER SIDE OF THE TABLE.
+
+  `genSg + d` sat in `buildCaseTable` under a comment calling it "the one
+  regular plural", and `npm run audit:cases` put that to the Institute for all
+  5,143 nominals the dictionary ships. Right for 5,098, and wrong for a whole
+  category rather than a scatter of odd words: a pronoun is suppletive in the
+  nominative plural, so `see` goes to `need` and this printed `selled`, `too`
+  goes to `nood` and this printed `tolled`, and `kes` and `mis` do not change
+  at all and were printed as `kelled` and `milled`. Those are first-lesson
+  words on the dictionary entry, the grammar reference and the worksheet.
+  Thirty-three mass nouns (`sealiha`, `sularaha`, `tähelepanu`) have no plural
+  for Ekilex to record and were being handed one.
+
+  So `nomPl` is required for the reason `illSgShort` is, and nothing derives
+  it. `NOM_PL` is on `PRINCIPAL_FORM_TYPES`, which is what makes the harvest,
+  the live enrichment, a hand edit and an accepted correction all carry it
+  without being told to.
+*/
+check("the nominative plural is a required stem, and is never an ending", () => {
+  const derive = code("lib/estonian/derive.ts");
+  assert.match(
+    derive,
+    /readonly nomPl: string \| null;/,
+    "NounStems.nomPl stopped being required, so a caller that never asked the "
+      + "dictionary compiles again and the plural goes back to an ending",
+  );
+  assert.doesNotMatch(derive, /nomPl\?:/, "NounStems.nomPl became optional");
+  /*
+    The join itself, anywhere in the app. `d` is one letter, so this is anchored
+    on the genitive stem rather than on the letter: what is banned is building a
+    word out of the stem the singular obliques are built on plus a `d`.
+  */
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => /\$\{\s*(?:stems\.)?genSg\s*\}d\b|genSg\s*\+\s*"d"/.test(code(file)));
+  assert.deepEqual(
+    offenders,
+    [],
+    "a nominative plural is being built out of the genitive stem and a `d`, "
+      + "which is right for 5,098 of the dictionary's 5,143 nominals and wrong "
+      + "for every pronoun in it",
+  );
+  assert.ok(
+    (code("lib/estonian/types.ts").match(/"NOM_PL"/g) ?? []).length === 1,
+    "NOM_PL left PRINCIPAL_FORM_TYPES, so the harvest and a hand edit stop "
+      + "carrying the one form the table now depends on",
+  );
+});
+
+/*
+  A PRINCIPAL PART IS ONE FORM, AND THE MAPPER IS WHERE THAT IS DECIDED.
+
+  `Form`'s unique key includes the value because Estonian has genuine parallel
+  forms (`raamatutes` beside `raamatuis`), which is right for the retrieved
+  table and wrong for the six a learner memorises. Ekilex gives two partitive
+  plurals for most nouns and `mapEkilexDetails` wrote both down as `PART_PL`:
+  2,016 shipped entries carried a doubled partitive plural and 120 a doubled
+  genitive plural, and which of the pair the app used was decided by whoever
+  read the rows, `stemsFrom` taking the first the database returned and every
+  `Object.fromEntries` caller taking the last.
+
+  The check is a code check rather than a data one because the data half is
+  hermetic and lives in `lib/estonian/attested.test.ts`, where it can fail on a
+  word. What a regex can see is that the mapper still keeps one.
+*/
+/*
+  A SUITE FINDS A FORM FIELD BY ITS NAME, NOT BY A PREFIX OF ITS PLACEHOLDER.
+
+  `getByPlaceholder` is a substring match. `scripts/e2e.mjs` and
+  `scripts/test-edit.mjs` both addressed the add-word genitive box as
+  `getByPlaceholder("toa")`, which was unique until the form grew a nominative
+  plural whose example is `toad`. Both suites then threw on their first
+  interaction and reported a Playwright timeout, which sends whoever reads it
+  to the app rather than to the locator: e2e lost 9 of its 27 checks and the
+  editing suite 9 of 10.
+
+  The check is exact rather than a ban on `getByPlaceholder`: a placeholder is
+  a perfectly good handle where it is unambiguous, and the English boxes
+  ("word", "sõna") stay that way. What is caught is a locator that is a strict
+  prefix of another example on the same form, which is the shape that breaks
+  when a field is added and is invisible until it does.
+*/
+check("no browser suite finds a field by a placeholder another field shares", () => {
+  const examples = [...code("app/(app)/dictionary/AddWord.tsx")
+    .matchAll(/\["[A-Z_]+", "[^"]+", "([^"]+)"\]/g)]
+    .map((m) => m[1] as string);
+  assert.ok(examples.length >= 10, "the add-word field table stopped being readable from here");
+
+  const bad: string[] = [];
+  for (const file of readdirSync("scripts").filter((f) => f.endsWith(".mjs"))) {
+    for (const m of code(join("scripts", file)).matchAll(/getByPlaceholder\(\s*"([^"]+)"/g)) {
+      const used = m[1] as string;
+      const shadowed = examples.filter((e) => e !== used && e.startsWith(used));
+      if (examples.includes(used) && shadowed.length > 0) {
+        bad.push(`${file}: "${used}" is also the start of ${shadowed.map((e) => `"${e}"`).join(", ")}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    bad,
+    [],
+    "a suite addresses a form field by a placeholder that another field's "
+      + "placeholder begins with, so adding a field makes the locator ambiguous "
+      + "and the suite throws before its first check",
+  );
+});
+
+/*
+  ONE LANGUAGE PER COLUMN, BECAUSE A SCREEN CANNOT MARK WHAT IT CANNOT TELL.
+
+  `Lexeme.notes` held the further English senses Wiktionary lists and, after any
+  live lookup, Ekilex's Estonian explanation, which had overwritten them. So the
+  entry rendered either in one unlabelled box, a screen reader read the Estonian
+  with English sounds, and the first person to look `aadress` up with a key
+  deleted "email address" from the shared dictionary for everybody.
+
+  `definition` is the Estonian one. The check is that nothing writes Ekilex's
+  explanation into the English column again, which is the mistake that is easy
+  to make and impossible to see: both are a `String?` holding a sentence.
+*/
+/*
+  A TASK'S KIND IS ONE TABLE, THE WAY A CARD'S TYPE ALREADY IS.
+
+  It was four, and no two agreed. The schema said `HOMEWORK | VOCABULARY`, the
+  data model page said the same, `components/TaskRow.tsx` kept a label table of
+  five, and `scripts/demo-data.ts` wrote three of those five. Two actions in the
+  app write a tag and between them they write exactly two values, so the other
+  three were a kind of task no deployment can produce, drawn in the fixture that
+  every screenshot and every browser suite is measured in.
+*/
+/*
+  ONE PLACE PLAYS A CLIP, BECAUSE ONE PLACE KNOWS WHAT A REFUSAL MEANS.
+
+  Every browser blocks `HTMLAudioElement.play()` on a page nobody has touched
+  yet and rejects it with a `NotAllowedError`. The clip is in hand and the
+  service answered: it is a fact about the gesture. `components/Speak.tsx` knew
+  that and said so in a comment; the minimal-pairs round kept its own copy of
+  the same three lines and did not, wrapping the fetch and the play in one
+  `try` and setting a state that replaces the whole drill with "No audio, no
+  drill. It runs on TartuNLP and needs a connection." That round autoplays on
+  mount, which is the no-gesture case by construction, so on every phone and
+  every Safari a learner opening it was told their connection was the problem
+  and never shown the 80px play button behind that screen.
+
+  `playClip` is the one answer. `components/Recorder.tsx` is exempt by name: it
+  plays back the learner's own recording, from a blob it already holds, on a
+  click, so there is no clip to fetch and no autoplay to be refused.
+*/
+/*
+  EVERY CASE A GOVERNMENT CAN NAME IS A CASE THE TABLE KNOWS.
+
+  Ekilex records a verb's government as the question word it answers, and
+  `formatGovernment` names the case beside it so `parseGovernment` can read one
+  out. The table of question words was typed and was missing three of the
+  fourteen: essive, terminative and abessive. So `kellena` was left unannotated,
+  the entry parsed to no case at all, and `töötama` had no government card even
+  though "to work as" is a first-year sentence. Worse, `esitama` and `käsitama`
+  govern the essive *beside* the partitive, so the drill could offer it as a
+  wrong answer and mark a learner wrong for knowing it, which is the exact
+  fault `alsoGoverned` was built to prevent, arriving through a gap in a table.
+
+  It is read off `CASES` now, so a case cannot be missing. This checks the
+  coverage rather than the code, because the point is the answer.
+*/
+check("every case a government can name is one the table knows", () => {
+  const unread: string[] = [];
+  for (const spec of CASES) {
+    if (spec.key === "NOMINATIVE") continue; // Nothing governs it.
+    // The question a class asks for this case, which is how Ekilex writes a
+    // government. If the table knows it, the round trip names the case.
+    const asked = spec.question.split(/\s+/)[0]!.replace(/\?/g, "");
+    const parsed = parseGovernment(formatGovernment([asked]));
+    if (parsed?.caseKey !== spec.key) {
+      unread.push(`${spec.key}: "${asked}" reads as ${parsed?.caseKey ?? "no case"}`);
+    }
+  }
+  assert.deepEqual(
+    unread,
+    [],
+    "a case the app teaches cannot be read back out of a government written the "
+      + "way Ekilex writes one, so a verb governing it has no card and can be "
+      + "offered as a wrong answer",
+  );
+});
+
+/*
+  THE PAPER'S OWN NUMBERS ARE THE BOARD'S, AND THE DOCUMENT IS WHERE THEY COME
+  FROM.
+
+  `docs/16-exam.md` cites the state examination's published shape: how long each
+  part runs, what it is worth, what a pass is and how far below one a candidate
+  has to wait six months. `lib/exam/spec.ts` is a second copy of all of that,
+  and the whole feature's claim is that it imitates the real paper: a minute or
+  a mark out of step is a candidate rehearsing the wrong exam, which is the one
+  thing a mock is for.
+
+  The document is the authority and the code is the copy, so this reads the
+  table and compares. It is the shape the README's dictionary size already
+  takes: a figure stated twice is a figure that drifts, and the fix is to make
+  one of them read the other rather than to check them by eye.
+*/
+check("the mock paper's minutes and marks are the ones the exam doc cites", () => {
+  const doc = read(join("docs", "16-exam.md"));
+  /*
+    | A2 | 30 min | 30 min | 50 min | 15 min | 80, twenty per part |
+    The columns are in the order the document heads them, which is the order a
+    candidate sits them in and not the order `specFor` lists its parts, so the
+    comparison is by skill rather than by position.
+  */
+  const HEADED: readonly Skill[] = ["writing", "listening", "reading", "speaking"];
+  const wrong: string[] = [];
+  let compared = 0;
+
+  for (const level of OFFICIAL_LEVELS) {
+    const row = new RegExp(`^\\| ${level} \\|(.+)\\|\\s*$`, "m").exec(doc);
+    if (!row?.[1]) { wrong.push(`${level}: the doc has no row for it`); continue; }
+    const cells = row[1].split("|").map((c) => c.trim());
+    const spec = specFor(level);
+
+    HEADED.forEach((skill, i) => {
+      // "30 to 35 min" is the Board publishing a range; the app sits the longer
+      // one, which is the honest choice and is what the cell's last number says.
+      const minutes = [...(cells[i] ?? "").matchAll(/(\d+)/g)].map((m) => Number(m[1]));
+      const published = minutes[minutes.length - 1];
+      const part = spec.parts.find((p) => p.skill === skill);
+      if (published === undefined || !part) {
+        wrong.push(`${level} ${skill}: nothing to compare`);
+        return;
+      }
+      compared++;
+      if (part.minutes !== published) {
+        wrong.push(`${level} ${skill}: the paper runs ${part.minutes} min, the doc says ${published}`);
+      }
+    });
+
+    const stated = Number(/^(\d+),/.exec(cells[HEADED.length] ?? "")?.[1]);
+    const total = spec.parts.reduce((n, p) => n + p.points, 0);
+    compared++;
+    if (stated !== total) wrong.push(`${level}: the paper is out of ${total}, the doc says ${stated}`);
+  }
+
+  assert.ok(compared >= 20, `only ${compared} figures compared; the doc's table stopped being readable`);
+  assert.deepEqual(wrong, [], "the mock paper and the document that cites the Board disagree");
+
+  // The two thresholds the same document states in a sentence rather than a table.
+  assert.match(doc, new RegExp(`pass is sixty percent`, "i"), "the doc stopped stating the pass mark");
+  assert.equal(PASS_PCT, 60, "PASS_PCT drifted from the sixty percent the doc cites");
+  assert.match(doc, /forty five percent/i, "the doc stopped stating the retake threshold");
+  assert.equal(RETAKE_WAIT_PCT, 45, "RETAKE_WAIT_PCT drifted from the forty five percent the doc cites");
+});
+
+check("nothing plays a clip outside lib/audio/clip.ts", () => {
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== join("lib", "audio", "clip.ts"))
+    .filter((file) => file !== join("components", "Recorder.tsx"))
+    .filter((file) => /new Audio\([^)]*\)\s*\.play\(|new Audio\(/.test(code(file)));
+  assert.deepEqual(
+    offenders,
+    [],
+    "a clip is played outside `playClip`, so that caller decides for itself "
+      + "whether a browser refusing to autoplay is a missing speech service",
+  );
+  assert.match(
+    code(join("lib", "audio", "clip.ts")),
+    /NotAllowedError/,
+    "playClip stopped telling a blocked autoplay from a real failure",
+  );
+});
+
+check("a task's kind is the same set wherever it is written down", () => {
+  const table = code("lib/ux/agenda.ts");
+  const declared = [...table.matchAll(/^  ([A-Z_]+): "/gm)].map((m) => m[1] as string);
+  assert.ok(declared.length >= 2, "TASK_TAGS stopped being readable from lib/ux/agenda.ts");
+
+  const written = new Set<string>();
+  for (const file of [...sourceFiles("app"), ...sourceFiles("scripts")]) {
+    for (const m of code(file).matchAll(/\btag:\s*"([A-Z_]+)"/g)) written.add(m[1] as string);
+  }
+  assert.deepEqual(
+    [...written].filter((t) => !declared.includes(t)).sort(),
+    [],
+    `a tag is written that TASK_TAGS does not declare (declared: ${declared.join(", ")})`,
+  );
+  assert.ok(
+    !/TAG_LABEL/.test(code("components/TaskRow.tsx")),
+    "TaskRow keeps a second table of task kinds, which is how the first one rotted",
+  );
+});
+
+check("Ekilex's Estonian explanation has a column of its own", () => {
+  assert.match(
+    code("lib/ekilex/mapper.ts"),
+    /definition: details\.definitions\[0\]/,
+    "mapEkilexDetails stopped returning Ekilex's explanation as `definition`",
+  );
+  const offenders = ["app", "lib", "prisma"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => /\bnotes:\s*(?:\w+\.)*(?:definition|definitions)\b|\bnotes:\s*mapped\.definition\b/.test(code(file)));
+  assert.deepEqual(
+    offenders,
+    [],
+    "an Estonian definition is being written into `notes`, which holds English, "
+      + "so the entry cannot label it or mark its language and a live lookup "
+      + "overwrites the English senses with it",
+  );
+  assert.match(
+    read("prisma/schema.prisma"),
+    /definition\s+String\?/,
+    "Lexeme.definition left the schema",
+  );
+  /*
+    AND A COLUMN THE SEED ONLY SOMETIMES OWNS IS CLAIMED ONLY WHEN IT HAS A
+    VALUE.
+
+    `onlyWhenOwned` means "written for entries whose payload carries this key",
+    and it exists because the dictionary editor and the live Ekilex lookup write
+    these columns too. Written as `definition: word.note`, the key is present
+    even when the value is null, so the harvest would hand `null` to the update
+    for every word Ekilex has no explanation for and a reseed would erase a
+    definition the live lookup had fetched for one. Spread, and it claims
+    nothing it cannot fill. Verified against a real database: a definition
+    planted on a harvested word with no explanation survives a reseed.
+  */
+  assert.match(
+    code("prisma/seed.ts"),
+    /\.\.\.\(word\.note \? \{ definition: word\.note \} : \{\}\)/,
+    "the harvest claims `definition` unconditionally, so a reseed nulls it for "
+      + "every word Ekilex has no explanation for, erasing whatever the live "
+      + "lookup had fetched",
+  );
+});
+
+check("a principal part is one form, whatever Ekilex sends", () => {
+  const mapper = code("lib/ekilex/mapper.ts");
+  assert.match(
+    mapper,
+    /principalTaken\.has\(principal\)/,
+    "mapEkilexDetails stopped keeping one value per principal part, so which "
+      + "partitive plural the app teaches goes back to being decided by whoever "
+      + "reads the rows",
+  );
+});
+
+/*
+  ONE WRITER OF THE BUILT DICTIONARY, BECAUSE THE DIFF IS HOW ANYBODY REVIEWS IT.
+
+  Four scripts write `prisma/data/expanded.json`: the builder and the three
+  audits that correct a gloss, a part of speech and a nominative plural in
+  place. Three of them wrote it compact and the file in the repository is one
+  key per line, so the next full run of any of them would have collapsed 5,363
+  entries into a single 3MB line and buried whatever it actually changed.
+  `scripts/lib/expandedFile.ts` is the one serialiser.
+*/
+check("the built dictionary has one writer", () => {
+  const offenders = sourceFiles("scripts")
+    .filter((file) => !file.endsWith("lib/expandedFile.ts"))
+    .filter((file) => {
+      const src = code(file);
+      return /writeFileSync\([^)]*expanded\.json|writeFile\([^)]*expanded\.json/.test(src)
+        || (/expanded\.json/.test(src) && /JSON\.stringify\([^)]*null,\s*\d/.test(src));
+    });
+  assert.deepEqual(
+    offenders,
+    [],
+    "a script writes prisma/data/expanded.json itself instead of through "
+      + "scripts/lib/expandedFile.ts, so its own indentation decides how the "
+      + "next dictionary diff reads",
   );
 });
 
@@ -4339,22 +4736,46 @@ check("the suite that empties the dictionary runs after every suite that reads i
  * Asserted on the order of the two lines rather than on either alone, because
  * both will still be present when somebody tidies them back together.
  */
-check("first run is exercised, which means one suite runs before the fixture", () => {
+check("first run is exercised, which means two suites run before the fixture", () => {
   const workflow = read(join(".github", "workflows", "ci.yml"));
-  const suite = workflow.indexOf("node scripts/test-assess.mjs");
   const fixture = workflow.indexOf("scripts/demo-data.ts");
   const server = workflow.indexOf("Start the server");
-
-  assert.ok(suite > 0, "CI does not run scripts/test-assess.mjs at all");
   assert.ok(fixture > 0, "CI does not build the demo fixture");
-  assert.ok(
-    suite < fixture,
-    "CI builds the demo deck before test-assess.mjs runs, so /start redirects and the " +
-    "first-run walkthrough is waived rather than checked. It has to run against an empty deck.",
-  );
-  assert.ok(
-    server < suite,
-    "test-assess.mjs is a browser suite and CI runs it before the server is up",
+
+  /*
+    Two, and for the same reason. `test-assess.mjs` walks the first-run wizard,
+    which `/start` refuses to show anybody holding a card. `test-first-day.mjs`
+    walks every route in the app against a learner who has none, which is the
+    branch every panel computed from a review log takes and which no suite
+    rendered until it existed. Both are checks on a *state*, and the fixture is
+    what ends that state, so both belong above it.
+  */
+  for (const name of ["test-first-day", "test-assess"]) {
+    const suite = workflow.indexOf(`node scripts/${name}.mjs`);
+    assert.ok(suite > 0, `CI does not run scripts/${name}.mjs at all`);
+    assert.ok(
+      suite < fixture,
+      `CI builds the demo deck before ${name}.mjs runs, so it measures a learner with `
+        + "two months of history rather than one on their first evening. It has to run "
+        + "against an empty deck.",
+    );
+    assert.ok(
+      server < suite,
+      `${name}.mjs is a browser suite and CI runs it before the server is up`,
+    );
+  }
+
+  /*
+    And the one that cannot tell says so rather than passing. `test-first-day`
+    reads the app's own answer for whether the deck is empty and stops when it
+    is not, because every check in it would pass against the wrong state, which
+    is the shape of the waiver that left the wizard verified by nothing.
+  */
+  assert.match(
+    read(join("scripts", "test-first-day.mjs")),
+    /No cards yet/,
+    "test-first-day.mjs stopped checking that the deck is actually empty, so it can "
+      + "pass having walked the app as an established learner sees it",
   );
 
   /*
@@ -5421,6 +5842,204 @@ check("a practice round has a heading, not only its empty and finished screens",
  * passed to the server, and a locale is a list of preferences that only the
  * browser has.
  */
+/*
+  A MISSING EXAMPLE IS NEWS. A PHRASE HAVING NONE IS NOT.
+
+  Ekilex records a usage against a *word*, to illustrate it in a sentence, so
+  the twenty entries the A1 greetings unit teaches have none and never will:
+  `Tere!`, `Aitäh!`, `Kuidas läheb?`, `Ma ei saa aru` are already the sentence.
+  Both screens that report an absence reported theirs. The first meeting said
+  "No example sentence for this one yet" on the first twenty cards a beginner
+  ever sees, and the dictionary entry went further and promised that one "shows
+  up the first time you look this word up", which nothing was ever going to
+  keep.
+
+  So a screen that tells somebody an example is missing has to know the
+  difference, and `isPhrase` in `lib/dict/pos.ts` is where that difference
+  lives. Anchored on the copy rather than on the two filenames, because the next
+  screen to grow an empty state for examples is the one this is for.
+*/
+/*
+  A DATASET SAYS WHICH VALUES ITS COLUMNS ACTUALLY TAKE.
+
+  `GradationType` allows `QUANTITATIVE` and `classifyGradation` has never
+  returned it, on any of the 5,363 entries the dictionary ships. That is the
+  language rather than an omission: Estonian's third quantity is not written
+  down, so `kooli` the genitive and `kooli` the partitive are the same letters
+  and a classifier reading forms as strings cannot tell them apart. What is
+  spelled is the consonant centre changing, which is what the field records.
+
+  `lib/research/sections.ts` describes the exported crosstab to somebody
+  outside this project, and it named all three, so a researcher was told the
+  column takes a value no row has ever held. The two are paired here: the day
+  the classifier learns to assign it, this fails and the description has to
+  catch up, which is the only way a note about data stays true of the data.
+*/
+check("the research note names the gradation values the classifier assigns", () => {
+  const classifier = code(join("lib", "estonian", "gradation.ts"));
+  const note = read(join("lib", "research", "sections.ts"));
+  const assigns = /type:\s*"QUANTITATIVE"/.test(classifier);
+  const saysNoRowHasIt = /no row carries it/.test(note);
+  assert.equal(
+    assigns, !saysNoRowHasIt,
+    assigns
+      ? "lib/estonian/gradation.ts now assigns QUANTITATIVE, so lib/research/sections.ts must stop "
+        + "telling a researcher that no row carries it."
+      : "lib/estonian/gradation.ts assigns only NONE and QUALITATIVE, so lib/research/sections.ts "
+        + "has to say so: a column described as three-valued whose third value no row holds is a "
+        + "dataset note that is not true of the dataset.",
+  );
+});
+
+/*
+  A MATCHING BOARD IS UNIQUE BY WHAT IT ASKS WITH, NOT BY WHAT IT ANSWERS.
+
+  313 words carry a picture and there are 249 pictures: 🏠 is `maja` and
+  `elamu`, 🚌 is `buss` and `autobuss`, 👨 is `mees`, `meesisik` and
+  `meesterahvas`, fifty of them in all. That is the table being right; Estonian
+  has more than one word for plenty of things and `scripts/build-emoji.ts` has
+  no business choosing between two true ones.
+
+  `/review/emoji` is a matching board, so the picture is the question and two
+  words sharing one put the same tile up twice against two different forms,
+  with no way for the learner to tell which goes with which. Getting it wrong
+  then marks a card they knew. Both of its pickers deduplicated on the lemma,
+  which cannot see this, because the two really are different words.
+
+  Anchored on the pairing rather than on either line: a picker that writes a
+  word down has to write its picture down too, so a third one cannot be added
+  knowing only half the rule.
+*/
+/*
+  A CHARACTER A READER CANNOT SEE IS WRITTEN DOWN BY NAME.
+
+  `lib/research/corpus.ts` joined a cell's key parts on a NUL, which is the
+  right separator (it cannot occur inside a dimension value, so two keys collide
+  only if they really are the same key) and was typed as the byte itself. A
+  literal control character makes the file **binary** to every text tool that
+  reads it: `grep` stops printing matches and says "binary file matches"
+  instead, which is how this was found, by searching that very file for its
+  anonymity floor and getting no lines back. `git diff` and a review go the same
+  way, and an editor or a paste can drop one leaving no visible change.
+
+  Twice in one session a literal control character got into a file here and
+  changed what a regular expression matched, invisibly, both times through a
+  heredoc: a `\b` written in a Python string is a backspace, and the check it
+  was in could no longer fire on anything. `"\\0"` and `"\\b"` are the same
+  strings at runtime and leave a text file on disk. It is the argument
+  `DASH_SEPARATED` already makes: a character a reader cannot see is named
+  rather than pasted.
+
+  Tab, newline and carriage return are how a text file is laid out and are
+  allowed. `lib/auth/access.test.ts` is exempt by name, because the NUL in it is
+  the thing under test: it checks that a path with one embedded is refused, and
+  writing that as an escape would be testing a different string.
+*/
+check("no source file holds a control character it could have named", () => {
+  const EXCUSED = new Map([
+    ["lib/auth/access.test.ts", "The NUL is the subject: it checks that a path with one embedded is refused."],
+  ]);
+  const NAMED = /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/;
+
+  for (const file of [...ALL, ...sourceFiles("scripts"), ...sourceFiles("prisma")]) {
+    if (EXCUSED.has(file)) continue;
+    const raw = read(file);
+    const at = raw.search(NAMED);
+    if (at < 0) continue;
+    const code = raw.charCodeAt(at);
+    assert.fail(
+      `${file}:${raw.slice(0, at).split("\n").length}: holds U+${code.toString(16).padStart(4, "0")} `
+      + "as a literal character. Write it as an escape: a control character makes the file binary to "
+      + "grep and to git diff, and an editor can drop it leaving no visible change.",
+    );
+  }
+
+  // And the exemption stays honest: an entry for a file that no longer holds
+  // one is a parking space for the next person who wants to paste a byte.
+  for (const [file] of EXCUSED) {
+    assert.match(read(file), NAMED, `${file} no longer holds a control character, so its exemption is stale`);
+  }
+});
+
+check("the emoji board is unique by picture as well as by word", () => {
+  const file = join("app", "(app)", "review", "emoji", "page.tsx");
+  const source = code(file);
+  const words = (source.match(/usedLemmas\.add\(/g) ?? []).length;
+  const pictures = (source.match(/usedEmoji\.add\(/g) ?? []).length;
+  assert.ok(words > 0, `${file}: no longer tracks which words are on the board`);
+  assert.equal(
+    pictures, words,
+    `${file}: ${words} places put a word on the board and ${pictures} put its picture down. `
+    + "A picture stands for more than one word 50 times in lib/collections/emoji.ts, and this is a "
+    + "matching board, so the same tile would appear twice against two different forms.",
+  );
+  assert.ok(
+    /usedEmoji\.has\(/.test(source),
+    `${file}: writes down which pictures are used and never asks, so nothing is deduplicated.`,
+  );
+});
+
+check("a screen that reports a missing example knows a phrase is not one", () => {
+  const POS_HOME = "lib/dict/pos.ts";
+  assert.match(
+    code(POS_HOME), /export function isPhrase\(/,
+    `${POS_HOME} stopped answering whether an entry is a whole utterance`,
+  );
+
+  let screens = 0;
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    if (!/No example sentences? /.test(source)) continue;
+    screens++;
+    /*
+      The answer, however it reached the screen. A client component is handed
+      it by its page rather than calling the predicate itself, which is the
+      right way round: the review card's own page already narrows what crosses
+      the wire and is the only side holding the entry's part of speech. What
+      may not happen is a screen reporting the absence without the answer in
+      its hands at all.
+    */
+    assert.match(
+      source, /\bisPhrase\b/,
+      `${file}: tells a reader an example sentence is missing without asking whether the entry `
+      + `is a phrase. Ekilex records a usage against a word, so a phrase has none and never `
+      + `will, and saying it is missing reports a gap in the dictionary that is not there. `
+      + `Ask isPhrase() from ${POS_HOME}.`,
+    );
+  }
+  assert.ok(screens >= 2, `only ${screens} screens report a missing example; this check has stopped looking`);
+
+  /*
+    AND THE ANSWER IS THE PREDICATE'S, NOT A COMPARISON SOMEBODY WROTE OUT.
+    A page that hands a screen `isPhrase: entry.pos === "PHRASE"` is a second
+    copy of the one fact, and it is the copy that stops agreeing the day the
+    dictionary grows another kind of whole utterance. Whoever writes the field
+    imports the function that decides it.
+  */
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    /*
+      A value being written, not the field's type on the interface that
+      declares it: `isPhrase: boolean` is the shape, `isPhrase: isPhrase(pos)`
+      is the answer, and only the second one decides anything.
+
+      Read as a capture and compared, rather than as a negative lookahead after
+      `\s*`: the lookahead backtracks to zero width and passes on the very
+      declaration it was written to skip, which is how this check first failed
+      on a file holding no decision at all.
+    */
+    const written = [...source.matchAll(/\bisPhrase\s*:\s*([A-Za-z_$][\w$]*)/g)]
+      .map((m) => m[1])
+      .filter((token) => token !== "boolean");
+    if (written.length === 0) continue;
+    assert.match(
+      source, /import \{[^}]*\bisPhrase\b[^}]*\} from "@\/lib\/dict\/pos"/,
+      `${file}: writes an isPhrase field without importing the predicate from ${POS_HOME}, so `
+      + `it is deciding what a phrase is on its own.`,
+    );
+  }
+});
+
 check("a date is written in the reader's own locale, not the server's", () => {
   for (const file of [...APP, ...COMPONENTS]) {
     const source = code(file);
@@ -5430,7 +6049,24 @@ check("a date is written in the reader's own locale, not the server's", () => {
       page writes a word count with `toLocaleString("en-GB")` so the thousands
       separator does not move about, which is the opposite of this fault.
     */
-    const LEFT_TO_THE_RUNTIME = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/;
+    /*
+      THREE SPELLINGS, NOT ONE. This asked only about `toLocaleString`, which
+      is one of the three ways to write a date here and the one nobody uses
+      twice: `lib/time/clock.ts` exports `formatDateTime` and `formatTime`
+      precisely so a screen does not have to write the options out, and both
+      end in `Intl.DateTimeFormat(undefined, …)` with no `timeZone`. So four
+      server components went straight through a check whose own header says
+      what they were doing wrong, and a learner in Tallinn who sat a paper at
+      01:30 read "2 Sept, 22:30" on the exam hub, the result page, their own
+      reports and the level check. The wrong hour is a nuisance. The wrong day
+      on a page whose subject is when something happened is not.
+
+      A bare `new Intl.DateTimeFormat()` is left alone, because that is how
+      `TimeZoneSync` asks the browser which zone it is in and it formats
+      nothing.
+    */
+    const LEFT_TO_THE_RUNTIME =
+      /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))|\bformat(?:DateTime|Time)\(|new Intl\.DateTimeFormat\(\s*undefined/;
     if (!LEFT_TO_THE_RUNTIME.test(source)) continue;
     /*
       A client component is the reader's own machine, so there is nothing to
@@ -5456,7 +6092,8 @@ check("a date is written in the reader's own locale, not the server's", () => {
       `fallback` a `LocalDate` renders while it waits, which is what the server
       is *supposed* to write, and it is the only shape that passes.
     */
-    const call = /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))/g;
+    const call =
+      /toLocale(?:Date|Time)?String\(\s*(?:undefined|\))|\bformat(?:DateTime|Time)\(|new Intl\.DateTimeFormat\(\s*undefined/g;
     for (let m = call.exec(source); m; m = call.exec(source)) {
       const before = source.slice(Math.max(0, m.index - 160), m.index);
       assert.ok(
@@ -5471,6 +6108,30 @@ check("a date is written in the reader's own locale, not the server's", () => {
   const local = code(join("components", "LocalDate.tsx"));
   assert.match(local, /^\s*"use client"/m, "LocalDate stopped being a client component");
   assert.match(local, /fallback/, "LocalDate no longer renders what the server wrote while it waits");
+
+  /*
+    AND THE FALLBACK IS WRITTEN IN THE LEARNER'S ZONE, WHICH IS THE HALF THE
+    RULE ABOVE CANNOT SEE. A server rendering handed to `LocalDate` is only
+    right for a couple of hundred milliseconds either way; what it must not do
+    is name the wrong *day*, and it will whenever the deployment's zone is not
+    the reader's, which on Vercel is everybody. `DateText` is the pairing:
+    one set of options for the fallback and for the client formatter, in the
+    zone `learnerDayClock` resolved, so the two cannot drift and neither can
+    be written without the zone.
+  */
+  const dateText = code(join("components", "DateText.tsx"));
+  assert.ok(
+    !/^\s*"use client"/m.test(dateText),
+    "DateText became a client component, so nothing writes the server's rendering any more",
+  );
+  assert.match(
+    dateText, /timeZone: zone/,
+    "DateText stopped writing its fallback in the learner's zone, so the server can name the wrong day",
+  );
+  assert.match(
+    dateText, /hourCycle: "h23"/,
+    "DateText stopped pinning the hour, so a browser in en-US would read the time back in am and pm",
+  );
 });
 
 /*
@@ -5799,14 +6460,24 @@ check("anything a model wrote carries the mark the terms page promises", () => {
     already makes next to it: a phrase retyped in nine places drifts in one of
     them, and this one had. Asserted as "nobody retypes it" rather than "the
     string is right", because a literal is exactly how it came apart.
+
+    AND IT READS THE CODE, NOT THE PROSE, which it did not. Both halves used
+    `read`, so a comment explaining why a word is marked `AI · verify` counted
+    as a screen that draws it, and a comment naming the phrase failed the check
+    outright. That is the oldest recurring mistake in this repository's own
+    checks and this is the fifth time: the marker sweep whose haystack included
+    the list of markers, the `AI_TAG` assertion that matched its own import
+    line, the lemma check that fired on a paragraph describing the query it had
+    removed, and the suite whose comment satisfied a check looking for a call.
+    `code()` is what strips them.
   */
-  const tagged = [...APP, ...COMPONENTS].filter((f) => read(f).includes("AI_TAG"));
+  const tagged = [...APP, ...COMPONENTS].filter((f) => code(f).includes("AI_TAG"));
   assert.ok(
     tagged.length >= 6,
     `only ${tagged.length} screens read AI_TAG; the tag is being written some other way`,
   );
 
-  const retyped = [...APP, ...COMPONENTS].filter((f) => /AI\s*·\s*verify/.test(read(f)));
+  const retyped = [...APP, ...COMPONENTS].filter((f) => /AI\s*·\s*verify/.test(code(f)));
   assert.deepEqual(
     retyped, [],
     `the AI tag is typed out rather than read from lib/copy/values: ${retyped.join(", ")}`,
@@ -7328,6 +7999,12 @@ check("the landing page's five words say what the dictionary says", () => {
     if (short !== stems.illSgShort) {
       wrong.push(`${stems.lemma} ILL_SG_SHORT: page says ${stems.illSgShort ?? "none"}, the seed says ${short ?? "none"}`);
     }
+    // Same rule, same reason. The nominative plural stopped being an ending on
+    // the genitive stem when the audit put that ending to Ekilex.
+    const plural = held("NOM_PL")[0] ?? null;
+    if (plural !== stems.nomPl) {
+      wrong.push(`${stems.lemma} NOM_PL: page says ${stems.nomPl ?? "none"}, the seed says ${plural ?? "none"}`);
+    }
   }
 
   assert.deepEqual(missing, [], "the landing page asks the dictionary for a noun it does not hold");
@@ -7341,11 +8018,16 @@ check("the landing page's five words say what the dictionary says", () => {
     other eleven are a rule over the genitive stem and storing them would be
     the second source of truth this app refuses to keep (ADR-009). So the
     comparison that matters, every case the page works out against the form
-    Ekilex records for it, is a thing somebody runs against a live key rather
-    than a check that can live in this file. It was run for all five of these
-    words: 55 singular forms, all agreeing, and every long plural with them.
-    What differs is the parallel short plural Estonian genuinely has
-    (`raamatuis` beside `raamatutes`), which this card does not show.
+    Ekilex records for it, needs a live key and is `npm run audit:cases`.
+
+    It used to have been run by hand for these five words, which is 55 singular
+    forms, and the note here said so. It now runs over every nominal in the
+    dictionary, 5,143 of them, in both columns: the ten singular obliques agree
+    for all but one word, and so do the eleven plural obliques built on the
+    genitive plural. What it found is that the twelfth was not a rule at all,
+    and `lib/estonian/derive.ts` no longer derives it. What differs and is
+    fine is the parallel short plural Estonian genuinely has (`raamatuis`
+    beside `raamatutes`), which this card does not show.
 
     What is left here is the half that can go stale on its own, which is the
     copy above, and `lib/estonian/derive.test.ts` holds the rule that decides
@@ -7511,6 +8193,126 @@ check("the card types are the same seven wherever they are written down", () => 
   one. What the page keeps is the map and the reasoning, and a map is exactly
   the shape a check can hold to the thing it maps.
 */
+/*
+  THE SIZE OF THE DICTIONARY IS ONE NUMBER, AND THE README HAD LAST YEAR'S.
+
+  `SEED_SET_SIZE` is counted from the two files the seed loads and its own test
+  proves it. The landing page reads it. The README typed it, and the dictionary
+  grew: 5,960 in the README against 6,050 in the seed, which is the first
+  figure anybody reads about this project.
+*/
+/*
+  A COMMAND THE DOCUMENTATION TELLS SOMEBODY TO RUN IS A COMMAND THAT EXISTS.
+
+  Four `npm run` names between the README and this file are the first thing a
+  new contributor types, and a renamed script leaves a page telling them to run
+  something that answers "Missing script". The check is one-directional on
+  purpose: plenty of scripts are internal (`predev`, `build:ci`) or are audits
+  somebody runs once against a live key, and a rule that every script must be
+  documented would be a rule to write filler.
+*/
+check("every command the README and CLAUDE.md name is a script that exists", () => {
+  const scripts = new Set(
+    Object.keys(JSON.parse(read("package.json")).scripts as Record<string, string>),
+  );
+  const named = new Set(
+    ["README.md", "CLAUDE.md"]
+      .flatMap((file) => [...read(file).matchAll(/npm run ([\w:-]+)/g)])
+      .map((m) => m[1]!),
+  );
+  assert.ok(named.size > 10, "the documentation stopped naming its commands the usual way");
+
+  const missing = [...named].filter((name) => !scripts.has(name)).sort();
+  assert.deepEqual(missing, [], "the documentation names an npm script package.json does not have");
+});
+
+check("the README's dictionary size is the seed's own count", () => {
+  const size = /words:\s*([\d_]+)/.exec(read(join("lib", "collections", "seedSize.ts")))?.[1];
+  assert.ok(size, "lib/collections/seedSize.ts no longer states the word count the usual way");
+  const words = Number(size.replaceAll("_", ""));
+  const printed = words.toLocaleString("en-GB");
+
+  const readme = read("README.md");
+  assert.ok(
+    readme.includes(`${printed} words`),
+    `README.md does not say "${printed} words", which is what the seed loads`,
+  );
+});
+
+/*
+  THE OTHER TWO NUMBERS THE README LEADS WITH, WHICH HAD BOTH GONE STALE.
+
+  The dictionary size above was already held to the seed, and the two counts
+  beside it were not, so both drifted the moment a unit or a round was added.
+  The course bullet said seventy-nine units against 82 in `lib/collections/
+  syllabus/`, and the practice bullet said seven modes against 18 in
+  `lib/ux/modes.ts`, which is the whole of the games this app grew and did not
+  mention: the crossword, the picture board, the word a day, flash cards and
+  Target. The flashcard line said five card types against seven, having missed
+  gradation and government, which are the two nothing else drills. The course
+  page's own header had a fourth answer, eighty-three, and counted six CEFR
+  levels after C2 was cut.
+
+  This is the first page anybody reads about the project and the one a funder
+  or a teacher reads before installing anything, so an undercount is not a
+  typo: it is the app selling itself short on the two things it is largest at.
+
+  Digits rather than words, because a count nothing can read is a count nothing
+  checks, and the README already writes "6,101 words" and "44 notes" that way.
+*/
+/*
+  A SCREEN THAT NEEDS ROWS CARRYING A PROPERTY ASKS FOR THEM, RATHER THAN
+  READING A WINDOW AND SIFTING IT.
+
+  The picture board needs six nouns that have a picture. It read the first 480
+  graded nouns in the band, every form on each, and dropped the ones with no
+  picture. That is 480 rows fetched to use six, and the cost that matters is
+  not the fetching: the order is the band and then the alphabet, so the window
+  is always the same words. At B1, 47 of the 173 pictured nouns in the band
+  were the whole game and the other 126 could not come up, on the one round
+  whose promise is that it is worth playing again. `lib/dict/suggest.ts` had
+  this exact shape and it is why `aberratsioon` is the standing joke in here.
+
+  Which words have a picture is a static table of 313 lemmas, so it belongs in
+  the `where` rather than in a `.filter` after the fact, and once it is there
+  the query needs no cap at all.
+*/
+check("the picture board asks the dictionary for the words that have a picture", () => {
+  const src = code(join("app", "(app)", "review", "emoji", "page.tsx"));
+  const asked = /EMOJI_LEMMAS\s*\.\s*filter\(/.exec(src);
+  assert.ok(
+    asked,
+    "the picture board no longer narrows EMOJI_LEMMAS for its query, so it is sifting a window again",
+  );
+  assert.match(
+    src.slice(asked.index),
+    /lemma:\s*\{\s*in:/,
+    "the picture board narrows the picture table and then does not select on it",
+  );
+  assert.ok(
+    !/take:\s*POOL\s*\*/.test(src),
+    "the picture board has gone back to reading a multiple of its deck window out of the dictionary",
+  );
+});
+
+check("the README's course and practice counts are the code's own", () => {
+  const readme = read("README.md");
+  assert.ok(SYLLABUS.length > 50, "the syllabus no longer collects its units the usual way");
+  assert.ok(PRACTICE_MODES.length > 10, "lib/ux/modes.ts no longer lists the modes the usual way");
+  assert.ok(CARD_TYPES.length > 3, "lib/srs/cards.ts no longer lists the card types the usual way");
+
+  for (const [count, what] of [
+    [SYLLABUS.length, "units"],
+    [PRACTICE_MODES.length, "ways to practise"],
+    [CARD_TYPES.length, "card types"],
+  ] as const) {
+    assert.ok(
+      readme.includes(`${count} ${what}`),
+      `README.md does not say "${count} ${what}", which is what the code has`,
+    );
+  }
+});
+
 check("the data model page names every model the schema has, and no others", () => {
   const schema = read(join("prisma", "schema.prisma"));
   const models = [...schema.matchAll(/^model (\w+)/gm)].map((m) => m[1]!);

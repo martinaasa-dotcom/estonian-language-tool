@@ -299,6 +299,32 @@ because it genuinely does not exist for every noun. *Consequences:* the Ekilex m
 `FormType`s rather than five, which is what the Phase 0 spike verifies before any UI is built on the
 assumption.
 
+*Amendment 1 (2026-09-02): six noun principal parts, because the sixth was a rule that had never
+been checked.* The nominative plural was built as genitive plus `-d`, under a comment in
+`lib/estonian/derive.ts` calling it "the one regular plural". `scripts/audit-cases.ts` put every
+case the app derives to Ekilex for all 5,143 nominals in the dictionary, in both columns, and that
+ending is right for 5,098 of them and wrong for a category rather than a scatter: a pronoun is
+suppletive in the nominative plural, so `see` goes to `need` and the app printed `selled`, `too` to
+`nood` and it printed `tolled`, and `kes` and `mis` do not change at all and were printed as
+`kelled` and `milled`. Thirty-three mass nouns have no plural at all and were being given one.
+*Decision:* `NOM_PL` joins `PRINCIPAL_FORM_TYPES`, `NounStems.nomPl` is required on the
+`illSgShort` precedent, and nothing derives it; a word the dictionary holds no plural for shows a
+gap, which is what the genitive plural and the partitive plural have always done.
+*Consequences:* the Ekilex mapper finds eleven `FormType`s rather than ten, the seed grew by 5,082
+forms, and the ten singular obliques and eleven plural obliques are now measured rather than
+asserted. Re-run `npm run audit:cases` before widening the table.
+
+*Amendment 2 (2026-09-02): a principal part is one form, whatever Ekilex sends.* `Form`'s unique
+key includes the value because Estonian has genuine parallel forms (`raamatutes` beside
+`raamatuis`), which is right for the whole retrieved table and wrong for the six a learner
+memorises. Ekilex gives two partitive plurals for most nouns and `mapEkilexDetails` wrote both down
+as `PART_PL`: 2,016 shipped entries carried a doubled partitive plural and 120 a doubled genitive
+plural, and which of the pair the app used was decided by whoever read the rows, since `stemsFrom`
+takes the first the database returns and every caller building a record with `Object.fromEntries`
+takes the last. *Decision:* the first wins for a principal part, which is the primary and the one a
+course teaches (`asju` before `asjasid`, `rindade` before `rinde`). The parallel form is kept where
+it belongs, in the retrieved table under `EKILEX:<morphCode>`.
+
 **ADR-013: Sign-in is optional: no Supabase keys means single-learner local mode.**
 *Context:* ADR-012 gated every route behind Google sign-in, which is right for a hosted class but is
 a wall in front of the first flashcard for anyone who clones the repo: a student on their own

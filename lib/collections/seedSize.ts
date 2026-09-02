@@ -33,21 +33,6 @@
  * `jah` and `ei`. The forms did not move, because an Estonian connective does
  * not inflect and the harvest keeps it attested and formless.
  *
- * The forms moved next, by 577, and that is a different thing again: the same
- * words, with what no rule of this app can work out from them. A seeded verb
- * could not say `oli` for want of a simple past third person, `olema` could
- * not say `on`, and a pronoun had none of the short forms anybody uses. See
- * `unreachableSlots` and `unreachableCaseForms`; the one extra word beside
- * them is `või`, which the connective unit had left out because Ekilex's first
- * candidate for it is the butter the food unit teaches.
- *
- * The last 304 are the polite imperative, one per verb the course teaches.
- * `eval:scene` found it: a model writing a scene set in `teie` reached for
- * `öelge`, `andke`, `oodake` and `täitke` over and over, the gate withheld
- * every line, and the app had no such form for any verb in the language. It is
- * not a suffix on anything a rule holds, since `annan` goes to `andke` and
- * `lähen` to `minge`, so it is stored like everything else no rule reaches.
- *
  * It went *down* by twelve once, which is the only interesting thing that has
  * happened to it. The part-of-speech audit corrected 61 labels in the built
  * file, and twelve of those words were ones the course harvest also carries:
@@ -55,5 +40,38 @@
  * as the harvest's adjective and once as the builder's noun, because the two
  * disagreed and the key they conflict on includes the label. They are one
  * entry each now. Nothing was dropped from the dictionary.
+ *
+ * The largest single move was 34,554 to 37,723, and no word came or went with
+ * it. It is two corrections in opposite directions, both from
+ * `npm run audit:cases`.
+ *
+ * Up by 5,082: the nominative plural was `genSg + d` and the audit put that to
+ * Ekilex for every nominal in the dictionary. It is wrong for every pronoun
+ * that has a plural and invents one for thirty-three mass nouns that have
+ * none, so it is stored now rather than derived.
+ *
+ * Down by 1,913: a principal part is one form and 2,029 entries carried two of
+ * one, nearly all of them a second partitive plural (`aadresse` beside
+ * `aadressisid`). Which of the pair the app used was decided by whoever read
+ * the rows, since `stemsFrom` takes the first and every caller building a
+ * record with `Object.fromEntries` takes the last. Ekilex lists the primary
+ * first, and that is now the one kept.
+ *
+ * The one word after that is `või`, which is butter in the food unit and the
+ * conjunction "or" in the connectives unit, and had been left out of the second
+ * because Ekilex's first candidate for it is the butter. It is pinned by word
+ * id now, like every other homonym the course names.
+ *
+ * The 854 forms after that are the ones no rule of this app can reach, which
+ * the exception lists of `conjugate.ts` and `derive.ts` had been describing
+ * without anybody reading them as a list of what a keyless deployment cannot
+ * say. `olema` showed `olen` and stopped; no verb at all could answer
+ * `lihtminevik · ta`, because the simple past is not derivable; no verb had a
+ * polite imperative, which is the form a learner is addressed with at every
+ * counter in the country; and a pronoun had none of the short forms anybody
+ * uses, so its unit shipped with no case cards rather than teach `minule` and
+ * mark `mulle` wrong. See `unreachableSlots` and `unreachableCaseForms`, which
+ * are asked rather than listed beside, because a list of exceptions kept next
+ * to the exceptions is two copies of one fact.
  */
-export const SEED_SET_SIZE = { words: 6_102, forms: 35_407 };
+export const SEED_SET_SIZE = { words: 6_102, forms: 38_577 };

@@ -197,6 +197,7 @@ async function loadEntry(id: string, ownerId: string): Promise<EntryView | null>
     gradationNote: lex.gradationNote,
     government: lex.government,
     notes: lex.notes,
+    definition: lex.definition,
     provenance: lex.provenance,
     inDeck: lex.cards.length > 0,
     starred: lex.stars.length > 0,

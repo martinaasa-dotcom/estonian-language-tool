@@ -37,10 +37,10 @@ import { extractEstonianEntries, type EstonianSense } from "../lib/dict/wiktiona
 import { resolvePos } from "../lib/dict/pos";
 import { unreachableSlots } from "../lib/estonian/conjugate";
 import { unreachableCaseForms } from "../lib/estonian/derive";
+import { EXPANDED_PATH, writeExpanded } from "./lib/expandedFile";
 
 const CACHE = "prisma/data/.cache/expand.jsonl";
 const CATEGORY_CACHE = "prisma/data/.cache/categories.json";
-const OUT = "prisma/data/expanded.json";
 const UA = "Kodukeel/0.1 (Estonian learning tool; seed builder)";
 
 /**
@@ -427,14 +427,14 @@ async function main() {
       (rank[a.cefr ?? ""] ?? 9) - (rank[b.cefr ?? ""] ?? 9) || a.lemma.localeCompare(b.lemma, "et"),
   );
 
-  writeFileSync(OUT, `${JSON.stringify(entries, null, 0)}\n`);
+  writeExpanded(entries);
 
   const byCefr = new Map<string, number>();
   for (const e of entries) byCefr.set(e.cefr ?? "none", (byCefr.get(e.cefr ?? "none") ?? 0) + 1);
   const byPos = new Map<string, number>();
   for (const e of entries) byPos.set(e.pos, (byPos.get(e.pos) ?? 0) + 1);
 
-  console.log(`\nWrote ${entries.length} entries to ${OUT}`);
+  console.log(`\nWrote ${entries.length} entries to ${EXPANDED_PATH}`);
   console.log("  CEFR:", [...byCefr].map(([k, v]) => `${k}:${v}`).join(" "));
   console.log("  POS: ", [...byPos].map(([k, v]) => `${k}:${v}`).join(" "));
   console.log(`  with a government: ${entries.filter((e) => e.government).length}`);

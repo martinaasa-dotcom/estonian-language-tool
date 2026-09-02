@@ -154,10 +154,49 @@ describe("generateCards — CLOZE", () => {
     expect(first?.front).toBe("____ on laual.");
   });
 
-  it("gives the lemma as the hint — it asks for the form, not the vocabulary", () => {
-    const [card] = generateCards(drinking, ["CLOZE"]);
-    expect(card?.hint).toContain("kohv");
-    expect(card?.hint).toContain("coffee");
+  it("gives the lemma as the hint where the gap wants an inflected form", () => {
+    const inflected = generateCards(drinking, ["CLOZE"]).find(
+      (c) => c.back.toLowerCase() !== "kohv",
+    );
+    expect(inflected?.back.toLowerCase()).toBe("kohvi");
+    expect(inflected?.hint).toContain("kohv");
+    expect(inflected?.hint).toContain("coffee");
+  });
+
+  /*
+    AND WITHHOLDS IT WHERE THE GAP WANTS THE LEMMA, which is 2,468 of these
+    cards across the shipped dictionary and 302 of the ones the course builds.
+    The hint was the answer, printed a line under the gap, so the exercise the
+    comment above describes was not the exercise on screen. The meaning stays,
+    because "which word goes in this gap" is worth asking.
+  */
+  /*
+    AND WITHHOLDS THE HINT ALTOGETHER WHERE THE MEANING IS THE ANSWER TOO. A
+    word can be spelled the same in both languages: `film`, `lamp`, `monument`,
+    `trend` and `kama` all had their answer sitting in the English, so falling
+    back to the meaning alone was still handing it over.
+  */
+  it("withholds the hint entirely where the English is the answer as well", () => {
+    const cognate = {
+      ...drinking, id: "film", lemma: "film", translation: "film",
+      examples: JSON.stringify([{ et: "Film oli igav.", source: "EKILEX" }]),
+      forms: [
+        { formType: "NOM_SG", value: "film", morphCode: "SgN" },
+        { formType: "GEN_SG", value: "filmi", morphCode: "SgG" },
+      ],
+    };
+    const [card] = generateCards(cognate, ["CLOZE"]);
+    expect(card?.back.toLowerCase()).toBe("film");
+    expect(card?.hint).toBeNull();
+  });
+
+  it("withholds the lemma where the gap wants the lemma itself", () => {
+    const asLemma = generateCards(drinking, ["CLOZE"]).find(
+      (c) => c.back.toLowerCase() === "kohv",
+    );
+    expect(asLemma).toBeDefined();
+    expect(asLemma?.hint).toBe("coffee");
+    expect(asLemma?.hint?.toLowerCase()).not.toContain("kohv");
   });
 
   it("tags the case, so a gap-fill counts towards the weak-case breakdown", () => {
@@ -185,6 +224,79 @@ describe("generateCards — CLOZE", () => {
   it("is only offered when it can produce something", () => {
     expect(availableCardTypes(drinking)).toContain("CLOZE");
     expect(availableCardTypes({ ...drinking, examples: null })).not.toContain("CLOZE");
+  });
+});
+
+describe("generateCards — CASE_FORM", () => {
+  /*
+    A CASE WHOSE FORM IS THE NOMINATIVE ASKS NOTHING, and Estonian has plenty:
+    `kallis` has the genitive `kalli`, so the inessive is `kalli` plus `s`,
+    which is `kallis` again. The card read `kallis → milles? kus?` with
+    `kallis` on the back, so the question printed its own answer on 115 cards
+    across the shipped dictionary. Nobody can get one wrong, the scheduler
+    reads every pass as a recall and pushes the interval out, and the deck slot
+    is spent for ever.
+  */
+  const dear = {
+    id: "kallis", lemma: "kallis", translation: "dear, expensive", pos: "ADJECTIVE",
+    gradation: "NONE", gradationNote: null, government: null, examples: null,
+    forms: [
+      { formType: "NOM_SG", value: "kallis", morphCode: "SgN" },
+      { formType: "GEN_SG", value: "kalli", morphCode: "SgG" },
+      { formType: "PART_SG", value: "kallist", morphCode: "SgP" },
+    ],
+  };
+
+  it("builds no card for a case whose only answer is the word in the question", () => {
+    const cards = generateCards(dear, ["CASE_FORM"]);
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) {
+      expect(card.back.toLowerCase().split(" / ")).not.toContain("kallis");
+    }
+    expect(cards.some((c) => c.targetCase === "INESSIVE")).toBe(false);
+    // And the cases that do inflect are still there.
+    expect(cards.some((c) => c.targetCase === "COMITATIVE")).toBe(true);
+  });
+
+  /*
+    ANY ANSWER, NOT EVERY ONE, and the first version of this test asserted the
+    opposite. `voodi` has the short illative `voodi` and the long `voodisse`,
+    and the marker has to take both, because refusing the short one is the
+    `tuppa` fault pointed the other way. So the card asked
+    `voodi → millesse? kuhu?` and a learner who copied the word out of the
+    question was right. `npm run audit:questions` found all seven of these
+    after the rule had been written and shipped the other way round.
+
+    The pair is still the right thing to show, and the dictionary and grammar
+    pages still show it: `shownForms` is that reader and is untouched.
+  */
+  it("builds no card where the word is one of two answers either", () => {
+    const bed = {
+      ...dear, id: "voodi", lemma: "voodi", translation: "bed", pos: "NOUN",
+      forms: [
+        { formType: "NOM_SG", value: "voodi", morphCode: "SgN" },
+        { formType: "GEN_SG", value: "voodi", morphCode: "SgG" },
+        { formType: "PART_SG", value: "voodit", morphCode: "SgP" },
+        { formType: "ILL_SG_SHORT", value: "voodi", morphCode: "SgAdt" },
+      ],
+    };
+    const cards = generateCards(bed, ["CASE_FORM"]);
+    expect(cards.some((c) => c.targetCase === "ILLATIVE")).toBe(false);
+    expect(cards.some((c) => c.targetCase === "COMITATIVE")).toBe(true);
+  });
+
+  it("keeps the illative where neither answer is the word", () => {
+    const room = {
+      ...dear, id: "tuba", lemma: "tuba", translation: "room", pos: "NOUN",
+      forms: [
+        { formType: "NOM_SG", value: "tuba", morphCode: "SgN" },
+        { formType: "GEN_SG", value: "toa", morphCode: "SgG" },
+        { formType: "PART_SG", value: "tuba", morphCode: "SgP" },
+        { formType: "ILL_SG_SHORT", value: "tuppa", morphCode: "SgAdt" },
+      ],
+    };
+    const illative = generateCards(room, ["CASE_FORM"]).find((c) => c.targetCase === "ILLATIVE");
+    expect(illative?.back).toBe("tuppa / toasse");
   });
 });
 
