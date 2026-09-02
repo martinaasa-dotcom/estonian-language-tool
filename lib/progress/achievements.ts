@@ -26,8 +26,8 @@ export interface BadgeContext {
   summary: DailySummary;
   units: UnitView[];
   session?: { count: number; accuracy: number };
-  /** Local hour of the session that just ended, for the early-bird/night-owl pair. */
-  reviewHour?: number;
+  /** Local hours the session's reviews fell in, for the early-bird/night-owl pair. */
+  reviewHours?: readonly number[];
 }
 
 /** Everything a badge condition can depend on, gathered for one learner. */
@@ -69,7 +69,7 @@ export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promi
     level: ctx.summary.level.level,
     questsDoneToday: ctx.summary.questsDone,
     ...(ctx.session ? { session: ctx.session } : {}),
-    ...(ctx.reviewHour !== undefined ? { reviewHour: ctx.reviewHour } : {}),
+    ...(ctx.reviewHours?.length ? { reviewHours: ctx.reviewHours } : {}),
   };
 }
 
@@ -167,7 +167,17 @@ export async function checkAchievementsFor(
     snapshot,
     summary,
     units,
-    ...(session ? { session, reviewHour: clock.hourOf(now) } : {}),
+    // The hours the reviews actually fell in, not the hour the check ran: a
+    // session that began at 06:40 and ended at 07:05 is an early bird by the
+    // half of it that happened before seven.
+    ...(session
+      ? {
+          session,
+          reviewHours: [session.startedAt, session.endedAt]
+            .filter((at): at is Date => at !== null)
+            .map((at) => clock.hourOf(at)),
+        }
+      : {}),
   });
   return awardBadges(ownerId, stats);
 }

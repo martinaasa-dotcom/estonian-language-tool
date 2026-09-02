@@ -49,6 +49,19 @@ export interface SessionSummary {
   count: number;
   /** Percentage recalled, 0 to 100, of those. */
   accuracy: number;
+  /**
+   * The first and last review of the run, or null on an empty log.
+   *
+   * Two badges are about the hour of the day, and they were read off the
+   * moment the check ran, which is when the session *ended*. "Review before
+   * 7am" then went unearned by somebody who sat down at half past six and
+   * carried on past seven, which is the one learner it is most obviously
+   * about. Both ends are kept because a session can cross midnight: 23:50 to
+   * 00:10 is a night owl by its first review and an early bird by its last,
+   * and both are true.
+   */
+  startedAt: Date | null;
+  endedAt: Date | null;
 }
 
 /**
@@ -69,11 +82,17 @@ export async function lastSession(ownerId: string, now = new Date()): Promise<Se
   let previous = now.getTime();
   let count = 0;
   let recalled = 0;
+  // The rows come back newest first, so the last one still inside the run is
+  // the moment the learner sat down.
+  let startedAt: Date | null = null;
+  let endedAt: Date | null = null;
   for (const row of rows) {
     const at = row.reviewedAt.getTime();
     if (previous - at > SESSION_GAP_MS) break;
     previous = at;
     count += 1;
+    endedAt ??= row.reviewedAt;
+    startedAt = row.reviewedAt;
     // The same threshold the rest of the app calls a recall: Good and Easy.
     if (row.rating >= 3) recalled += 1;
   }
@@ -81,5 +100,7 @@ export async function lastSession(ownerId: string, now = new Date()): Promise<Se
   return {
     count,
     accuracy: count === 0 ? 0 : Math.round((recalled / count) * 100),
+    startedAt,
+    endedAt,
   };
 }

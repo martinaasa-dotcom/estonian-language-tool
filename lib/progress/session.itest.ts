@@ -46,13 +46,13 @@ afterAll(async () => {
 describe("lastSession", () => {
   it("counts the run of reviews ending now", async () => {
     for (let i = 0; i < 12; i += 1) await reviewed(i, 3);
-    expect(await lastSession(OWNER, NOW)).toEqual({ count: 12, accuracy: 100 });
+    expect(await lastSession(OWNER, NOW)).toMatchObject({ count: 12, accuracy: 100 });
   });
 
   it("scores it on what the ratings say, not on what a caller says", async () => {
     for (let i = 0; i < 8; i += 1) await reviewed(i, 3);
     for (let i = 8; i < 10; i += 1) await reviewed(i, 1);
-    expect(await lastSession(OWNER, NOW)).toEqual({ count: 10, accuracy: 80 });
+    expect(await lastSession(OWNER, NOW)).toMatchObject({ count: 10, accuracy: 80 });
   });
 
   /*
@@ -65,7 +65,7 @@ describe("lastSession", () => {
     for (let i = 0; i < 5; i += 1) await reviewed(i, 3);
     const past = SESSION_GAP_MS / 60_000 + 5;
     for (let i = 0; i < 20; i += 1) await reviewed(past + i, 1);
-    expect(await lastSession(OWNER, NOW)).toEqual({ count: 5, accuracy: 100 });
+    expect(await lastSession(OWNER, NOW)).toMatchObject({ count: 5, accuracy: 100 });
   });
 
   it("is one session across a pause shorter than the gap", async () => {
@@ -75,7 +75,7 @@ describe("lastSession", () => {
   });
 
   it("says nothing happened when nothing did", async () => {
-    expect(await lastSession(OWNER, NOW)).toEqual({ count: 0, accuracy: 0 });
+    expect(await lastSession(OWNER, NOW)).toMatchObject({ count: 0, accuracy: 0 });
   });
 
   /*
@@ -84,7 +84,7 @@ describe("lastSession", () => {
   */
   it("never counts another learner's answers", async () => {
     for (let i = 0; i < 12; i += 1) await reviewed(i, 3, OTHER);
-    expect(await lastSession(OWNER, NOW)).toEqual({ count: 0, accuracy: 0 });
+    expect(await lastSession(OWNER, NOW)).toMatchObject({ count: 0, accuracy: 0 });
   });
 
   /*
@@ -98,5 +98,24 @@ describe("lastSession", () => {
     const session = await lastSession(OWNER, NOW);
     expect(session.count).toBe(1);
     expect(session.accuracy).toBe(0);
+  });
+
+  /*
+    The two hour-of-day badges read these rather than the moment the check ran,
+    because a session that began at 06:40 and ended at 07:05 is an early bird
+    by the half of it that happened before seven.
+  */
+  it("says when the run began and when it ended", async () => {
+    for (const minutesAgo of [9, 5, 1]) await reviewed(minutesAgo, 3);
+
+    const session = await lastSession(OWNER, NOW);
+    expect(session.startedAt?.getTime()).toBe(NOW.getTime() - 9 * 60_000);
+    expect(session.endedAt?.getTime()).toBe(NOW.getTime() - 60_000);
+  });
+
+  it("says nothing about when, on a log with nothing in it", async () => {
+    const session = await lastSession(OWNER, NOW);
+    expect(session.startedAt).toBeNull();
+    expect(session.endedAt).toBeNull();
   });
 });
