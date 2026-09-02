@@ -45,37 +45,30 @@ byte. The brochure vocabulary is deliberately **not** rewritten: there is no mec
 from `seamless` back into whatever was meant, and putting words in Anu's mouth mid-sentence is worse
 than the word.
 
-## 2. Model configuration (ADR-004)
+## 2. Model configuration (ADR-004, superseded)
 
-```ts
-// lib/anu/client.ts — server-side only
-const response = await client.messages.stream({
-  model: "claude-opus-5",
-  max_tokens: 4096,
-  thinking: { type: "adaptive" },
-  system: [
-    { type: "text", text: ESTONIAN_TUTOR_PROMPT, cache_control: { type: "ephemeral" } },
-    { type: "text", text: learnerContext },      // volatile — after the cache breakpoint
-  ],
-  messages,
-});
-```
+**This section used to show a code block calling the Anthropic SDK at `lib/anu/client.ts`, with a
+model pinned in it.** Neither exists. ADR-004's single-provider pin was superseded, the SDK is not a
+dependency, and `lib/tutor/provider.ts` speaks HTTP to whichever providers the deployment has keys
+for. See `13-mvp-status.md` §2 for the decision; what matters here is what it means for Anu.
 
 | Choice | Why |
 |---|---|
-| `claude-opus-5` | v4.0's `claude-3-5-sonnet` is not a current identifier. Grammar explanation is exactly the reasoning-heavy work worth the strongest model; a wrong explanation gets memorised |
-| `thinking: { type: "adaptive" }` | Case selection and aspect are genuinely multi-step. `budget_tokens` is rejected on this model |
+| A chain, not a model | `resolveProviders()` returns every key in `.env`, free first: OpenRouter, then Anthropic, then OpenAI. A deployment with no paid key still has a tutor |
+| Walk past a bad minute, never past a bad key | `openWithFallback` moves on from a throttle or a hiccup and stops at a rejected key or a model that does not exist, because every provider would answer those the same way and trying them all turns one clear message into a slower one |
+| Never walk past a first token | Once text is reaching the learner a failure stays a failure: a second answer appended to half of a first one is two teachers talking over each other |
 | Streaming | A grammar explanation is long enough that non-streaming reads as a hang |
-| `cache_control` on the static prompt | The Estonian prompt is ~2-3k tokens and identical every turn. Cached, it is paid once per session instead of once per turn |
-| Learner context **after** the breakpoint | Volatile content before a breakpoint invalidates the cache every turn, which is the classic silent cache killer |
+| `cache_control` on the static prompt, where the provider has one | The Estonian prompt is identical every turn, so on the Anthropic path it is paid once per session rather than once per turn |
+| The learner's own context **after** that breakpoint | Volatile content before a breakpoint invalidates the cache every turn, which is the classic silent cache killer. `lib/progress/tutorContext.ts` builds it from the learner's own log, and the route reads no level from the request at all |
+| Which model answered travels with the answer | `x-model-provider` and `x-model-id` are response headers, set after the handshake and before the first token, so the line under the conversation says "Will ask" until a reply arrives and "Answered by" after. Never the head of the chain: a screen naming the wrong model is worse than one naming none |
 
-**Cache verification:** `usage.cache_read_input_tokens` is logged on every message. A dashboard tile
-shows the session cache hit rate. If it is zero across turns, something is invalidating the prefix
-and we find out immediately rather than in the bill.
+**What is metered rather than trusted:** every call goes through `authoriseCall` before and
+`recordUsage` after, and the booking is written inside the same transaction that reads the counters.
+See `lib/usage/`.
 
 ## 3. System prompt structure
 
-`lib/anu/prompt.ts`, assembled from the domain model so the tutor and the app cannot disagree:
+`lib/tutor/prompt.ts`, assembled from the domain model so the tutor and the app cannot disagree:
 
 1. **Identity and teaching style**: the persona rules above.
 2. **The learner**: CEFR level, class week, target exam.
