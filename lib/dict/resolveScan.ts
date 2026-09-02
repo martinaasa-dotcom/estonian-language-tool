@@ -22,6 +22,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import type { ScannedItem } from "@/lib/scan/extract";
 import type { ResolvedItem } from "@/lib/scan/items";
+import { possibleFirstPersons } from "@/lib/estonian/conjugate";
 import {
   FOLD_FROM, FOLD_TO, fold, matchEstonianForm, possibleStems, type Candidate,
 } from "./search";
@@ -123,6 +124,15 @@ export async function candidatesFor(words: string[]): Promise<Candidate[]> {
   if (folded.length === 0) return [];
 
   const stems = [...new Set(folded.flatMap((f) => possibleStems(f)))].filter(Boolean);
+  /*
+    And the same for a verb, which a page of homework is mostly made of. The
+    narrowing had three branches and the search had four, and now both have
+    five: a stem here, a first person there. `ta helistab` on somebody's paper
+    fetched no candidate at all, so `matchEstonianForm` was handed nothing and
+    the word came back unvouched, on the one path where an unvouched word is a
+    word the learner has to type in themselves.
+  */
+  const firstPersons = [...new Set(folded.flatMap((f) => possibleFirstPersons(f)))].filter(Boolean);
 
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     SELECT id FROM (
@@ -136,6 +146,11 @@ export async function candidatesFor(words: string[]): Promise<Candidate[]> {
         WHERE f."formType" IN ('GEN_SG', 'GEN_PL')
           AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
               IN (${Prisma.join(stems.length ? stems : [""])})
+      UNION
+      SELECT f."lexemeId" FROM "Form" f
+        WHERE f."formType" = 'PRES_1SG'
+          AND translate(lower(f.value), ${FOLD_FROM}, ${FOLD_TO})
+              IN (${Prisma.join(firstPersons.length ? firstPersons : [""])})
     ) AS candidates
     -- Ordered because it is truncated, exactly as the search's own union is.
     -- This function's header already says the fault "went unnoticed until it

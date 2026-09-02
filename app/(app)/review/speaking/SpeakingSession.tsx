@@ -78,8 +78,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
   useEffect(() => {
     if (!finished || cards.length === 0 || checked.current) return;
     checked.current = true;
-    const accuracy = done > 0 ? Math.round((correct / done) * 100) : 0;
-    void checkAchievements({ count: done, accuracy }).then((r) => {
+    void checkAchievements(true).then((r) => {
       if (r.ok) setNewBadges(r.newBadges);
     });
   }, [finished, cards.length, done, correct]);

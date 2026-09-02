@@ -188,3 +188,51 @@ describe("the refusal", () => {
     expect(await response.json()).toEqual({ error: "Slow down." });
   });
 });
+
+/*
+  A FULL MAP EVICTS SOMETHING EXPIRED, NOT SOMETHING BUSY.
+
+  `checkRateLimit` sweeps unconditionally at the top, which stamps the sweep
+  clock, and then swept again inside the "map is full" branch: that second call
+  returned immediately every time, because no time had passed. So a full map
+  never reclaimed an expired bucket on demand and fell through to deleting the
+  oldest-inserted key, which is a live caller. Ten thousand distinct keys in a
+  minute is a school network on an anonymous route, or owner ids times
+  endpoints on a busy day, and the caller it evicted got a fresh allowance in
+  the middle of their window.
+
+  Driven at the real ceiling rather than at a lowered one, because the constant
+  is what the branch tests against and a test that could only pass against a
+  smaller map would not be testing this.
+*/
+describe("when the bucket map is full", () => {
+  it("reclaims an expired bucket rather than evicting a live one", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-09-02T12:00:00Z"));
+      // The one we care about: taken first, so it is the oldest by insertion
+      // and would be the one the fallback deletes.
+      expect(checkRateLimit("live", 2, 3_600_000).ok).toBe(true);
+
+      /*
+        Fill the map to exactly its ceiling with buckets that expire in a
+        second, and no further: one more while they are all still live would
+        trip the eviction branch here, with nothing expired to reclaim, and
+        take `live` before the moment this test is about.
+      */
+      for (let i = 0; i < 9_999; i += 1) checkRateLimit(`filler-${i}`, 1, 1_000);
+
+      // Past their window, and past the sweep's own one-minute throttle so the
+      // top-of-function sweep is the thing that stamps the clock.
+      vi.setSystemTime(new Date("2026-09-02T12:00:02Z"));
+      checkRateLimit("newcomer", 1, 1_000);
+
+      // The live bucket kept its count: one request left of two, not a fresh
+      // allowance.
+      expect(checkRateLimit("live", 2, 3_600_000).ok).toBe(true);
+      expect(checkRateLimit("live", 2, 3_600_000).ok).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

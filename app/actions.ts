@@ -41,7 +41,8 @@ import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
-import { emptyScheduling, grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { writeGrade } from "@/lib/srs/grade";
+import { emptyScheduling, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addUnitsToDeck, lockDeck } from "@/lib/srs/deck";
 import { MAX_STARTER_UNITS } from "@/lib/collections/starter";
 
@@ -241,66 +242,47 @@ export async function gradeCard(
 
   /*
     A grade carries the time it was actually answered, because the offline
-    outbox replays in order with the timestamp it was given (ADR-015). It was
-    clamped forward and not back, so a caller could date one before the card
-    existed, which is a review of something that was not there: the streak, the
-    heatmap and every "reviews this week" figure read it, and none of them can
-    tell a replayed grade from a forged one. The card's own creation is the
-    floor, and it cannot narrow an honest replay.
+    outbox replays in order with the timestamp it was given (ADR-015), and a
+    device's clock is whatever its owner set it to. `writeGrade` bounds it at
+    both ends and is the one place either door writes a grade: this one had the
+    floor at the card's own creation and the replay path, which is the door
+    those timestamps actually come through, did not.
   */
-  const now = new Date();
-  const when = reviewedAt ? new Date(reviewedAt) : now;
-  const at = Number.isNaN(when.getTime()) || when > now
-    ? now
-    : when < card.createdAt
-      ? card.createdAt
-      : when;
-
-  await prisma.review.create({
-    data: {
-      ownerId,
-      cardId,
-      lexemeId: card.lexemeId,
-      rating,
-      reviewedAt: at,
-      durationMs: Math.min(Math.max(durationMs, 0), 600_000),
-      stateBefore: card.state,
-      targetCase: card.targetCase,
-    },
-  });
-
-  const current: SchedulingState = {
-    due: card.due,
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsedDays: card.elapsedDays,
-    scheduledDays: card.scheduledDays,
-    reps: card.reps,
-    lapses: card.lapses,
-    state: card.state,
-    lastReview: card.lastReview,
-    learningSteps: card.learningSteps,
-  };
-  const next = grade(current, rating, at);
-
-  await prisma.card.update({
-    where: { id: cardId },
-    data: {
-      due: next.due,
-      stability: next.stability,
-      difficulty: next.difficulty,
-      elapsedDays: next.elapsedDays,
-      scheduledDays: next.scheduledDays,
-      reps: next.reps,
-      lapses: next.lapses,
-      state: next.state,
-      learningSteps: next.learningSteps,
-      lastReview: next.lastReview,
-    },
+  const next = await writeGrade(ownerId, {
+    card,
+    rating,
+    durationMs,
+    reviewedAt: reviewedAt ? new Date(reviewedAt) : new Date(),
   });
 
   revalidatePath("/");
-  return { ok: true as const, due: next.due };
+  /*
+    The state the server just wrote, so the session can hand it back to undo.
+
+    `cards` is snapshotted on mount and its scheduling is never refreshed,
+    which is right for the queue and was wrong for undo: an "Again" puts a card
+    back into the same session, so a card can be graded twice, and both grades
+    recorded the same mount-time state as the one to restore. Undoing the
+    second rewound past the first as well, dropping a lapse the learner really
+    had and sending a card they had just failed away on its old interval.
+  */
+  return { ok: true as const, due: next.due, scheduling: snapshotOf(next) };
+}
+
+/** A scheduling state in the shape that crosses the wire, which `undoGrade` takes back. */
+function snapshotOf(state: SchedulingState): SchedulingSnapshot {
+  return {
+    due: state.due.toISOString(),
+    stability: state.stability,
+    difficulty: state.difficulty,
+    elapsedDays: state.elapsedDays,
+    scheduledDays: state.scheduledDays,
+    reps: state.reps,
+    lapses: state.lapses,
+    state: state.state,
+    learningSteps: state.learningSteps,
+    lastReview: state.lastReview?.toISOString() ?? null,
+  };
 }
 
 /**
@@ -773,9 +755,25 @@ export async function resolveStreak() {
  * No revalidatePath here: this is called from a Server Component render (Today)
  * as well as from actual actions, and revalidating during render is an error.
  */
-export async function checkAchievements(session?: { count: number; accuracy: number }) {
+/**
+ * Awards whatever this learner has earned, and takes no numbers on trust.
+ *
+ * The argument used to be `{ count, accuracy }` for the session that just
+ * ended, and this file is `"use server"`, so those were a claim rather than a
+ * measurement: `checkAchievements({ count: 10, accuracy: 100 })` from a
+ * console earned `perfect_session` with no card answered, into a table that is
+ * never re-awarded and never removed. Only the learner is cheated by that,
+ * which is why it is worth fixing rather than worth an alarm: a badge shelf
+ * you know is a lie is not a badge shelf.
+ *
+ * What is left is a boolean saying a session ended, which the caller does know
+ * and cannot lie usefully about: the run is read off the review log
+ * (`lib/progress/session.ts`), so a forged `true` at a keyboard nobody has
+ * touched counts nothing.
+ */
+export async function checkAchievements(sessionEnded = false) {
   const ownerId = await requireUserId();
-  const newBadges = await checkAchievementsFor(ownerId, session);
+  const newBadges = await checkAchievementsFor(ownerId, sessionEnded === true);
   return { ok: true as const, newBadges };
 }
 
@@ -803,13 +801,40 @@ export async function setDailyGoal(goal: number) {
   return { ok: true as const, goal: clamped };
 }
 
+/*
+  A PERSONAL BEST IS THE ONE FIGURE THE LOG CANNOT REBUILD, AND IT IS STILL A
+  NUMBER OFF A POST BODY.
+
+  ADR-014 says progress is derived and names a personal best as one of its
+  three exceptions, because `Review` records no note of which mode wrote a row
+  and so cannot say what a sixty-second sprint scored. That exception is why
+  these two are stored, and it is not a reason to store whatever arrives.
+  Neither of these clamped anything: `recordSprintScore(NaN)` wrote the string
+  "NaN", `recordMatchTime(NaN)` slipped through its own `Math.max(1, ...)`
+  because `Math.max(1, NaN)` is `NaN`, and `1e21` came back on the sprint
+  screen as somebody's best score in scientific notation.
+
+  What is *not* attempted is bounding a score against the review log. Every
+  answer in both rounds grades through it (ADR-016), so a count is there, but
+  the grades are in flight when the round ends and go to the outbox entirely
+  when the connection is down: a clamp would take an honest best away from
+  somebody who played on a train. The exposure is a learner lying to
+  themselves, on a board that no longer has anybody else on it.
+*/
+
+/** A round of this app is a minute long; nothing honest reaches these. */
+const MAX_SPRINT_SCORE = 500;
+const MAX_MATCH_SECONDS = 3_600;
+
 /** Records a Case Sprint score, keeping only the personal best. */
 export async function recordSprintScore(score: number) {
   const ownerId = await requireUserId();
+  if (!Number.isFinite(score)) return { ok: false as const, error: "That is not a score." };
+  const clamped = Math.min(MAX_SPRINT_SCORE, Math.max(0, Math.round(score)));
   const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.sprintBest), 0);
-  const isNewBest = score > best;
-  if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.sprintBest, String(score));
-  return { ok: true as const, best: Math.max(score, best), isNewBest };
+  const isNewBest = clamped > best;
+  if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.sprintBest, String(clamped));
+  return { ok: true as const, best: Math.max(clamped, best), isNewBest };
 }
 
 /**
@@ -821,7 +846,8 @@ export async function recordSprintScore(score: number) {
  */
 export async function recordMatchTime(seconds: number) {
   const ownerId = await requireUserId();
-  const rounded = Math.max(1, Math.round(seconds));
+  if (!Number.isFinite(seconds)) return { ok: false as const, error: "That is not a time." };
+  const rounded = Math.min(MAX_MATCH_SECONDS, Math.max(1, Math.round(seconds)));
   const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.matchBest), 0);
   const isNewBest = best === 0 || rounded < best;
   if (isNewBest) await writeSetting(ownerId, SETTING_KEYS.matchBest, String(rounded));

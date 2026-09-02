@@ -105,34 +105,42 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       # Built with a key-shaped value in every server-only variable. If any of
-      # them reaches the browser bundle, the grep below finds this exact
-      # string, and the failure names which one leaked. This is the check
-      # CLAUDE.md has always said CI does; until now nothing did.
+      # them reaches the browser bundle, the grep below finds it. This is the
+      # check CLAUDE.md has always said CI does; until now nothing did.
       #
-      # The list is hand-written and was therefore incomplete: four variables
-      # the app reads had never been marked, so a leak of any of them would
-      # have been a clean pass here. `test-invariants.ts` now reads this file
-      # and the source together and fails on a secret-shaped variable that is
-      # missing, which is what makes "every" a fact rather than an intention.
+      # ONE MARKER PER VARIABLE, because the failure has to name which leaked.
+      # Every one of these was the same string, so the grep could only say that
+      # *something* had; the marker carries the variable's own name now and the
+      # failure prints it. The list is the whole server-only inventory rather
+      # than the seven somebody remembered: `GROQ_API_KEY` and `GEMINI_API_KEY`
+      # joined the provider chain and this did not follow them, `METRICS_TOKEN`
+      # gates a route, and an error webhook's path is a common place to keep a
+      # token. `scripts/test-invariants.ts` reads `PROVIDER_KEY_ENV` and checks
+      # it against this list, so the next provider cannot be missed the same way.
+      # A second check there reads the list by shape rather than by inventory:
+      # a variable ending in KEY, TOKEN, SECRET or PASSWORD, read anywhere Next
+      # builds, has to be here. That is what covers the ones no chain declares,
+      # `METRICS_TOKEN` and `RESEARCH_TOKEN` among them.
       - name: Build with marked secrets
         env:
-          CI_CANARY: kodukeel-ci-canary-must-not-ship
-          DATABASE_URL: postgresql://ci:kodukeel-ci-canary-must-not-ship@127.0.0.1:5432/ci
-          DIRECT_URL: postgresql://ci:kodukeel-ci-canary-must-not-ship@127.0.0.1:5432/ci
-          OPENROUTER_API_KEY: kodukeel-ci-canary-must-not-ship
-          ANTHROPIC_API_KEY: kodukeel-ci-canary-must-not-ship
-          OPENAI_API_KEY: kodukeel-ci-canary-must-not-ship
-          GROQ_API_KEY: kodukeel-ci-canary-must-not-ship
-          GEMINI_API_KEY: kodukeel-ci-canary-must-not-ship
-          EKILEX_API_KEY: kodukeel-ci-canary-must-not-ship
-          SUPABASE_SERVICE_ROLE_KEY: kodukeel-ci-canary-must-not-ship
-          METRICS_TOKEN: kodukeel-ci-canary-must-not-ship
-          RESEARCH_TOKEN: kodukeel-ci-canary-must-not-ship
+          CI_CANARY: canary-CI_CANARY-must-not-ship
+          DATABASE_URL: postgresql://ci:canary-DATABASE_URL-must-not-ship@127.0.0.1:5432/ci
+          DIRECT_URL: postgresql://ci:canary-DIRECT_URL-must-not-ship@127.0.0.1:5432/ci
+          OPENROUTER_API_KEY: canary-OPENROUTER_API_KEY-must-not-ship
+          ANTHROPIC_API_KEY: canary-ANTHROPIC_API_KEY-must-not-ship
+          OPENAI_API_KEY: canary-OPENAI_API_KEY-must-not-ship
+          GROQ_API_KEY: canary-GROQ_API_KEY-must-not-ship
+          GEMINI_API_KEY: canary-GEMINI_API_KEY-must-not-ship
+          EKILEX_API_KEY: canary-EKILEX_API_KEY-must-not-ship
+          SUPABASE_SERVICE_ROLE_KEY: canary-SUPABASE_SERVICE_ROLE_KEY-must-not-ship
+          METRICS_TOKEN: canary-METRICS_TOKEN-must-not-ship
+          RESEARCH_TOKEN: canary-RESEARCH_TOKEN-must-not-ship
+          ERROR_WEBHOOK_URL: https://example.invalid/canary-ERROR_WEBHOOK_URL-must-not-ship
         run: npx next build
       - name: Grep the client bundle
         run: |
-          if grep -rl "kodukeel-ci-canary-must-not-ship" .next/static; then
-            echo "::error::A server-only key reached the client bundle."
+          if grep -rEho "canary-[A-Z_]+-must-not-ship" .next/static | sort -u > /tmp/leaked && [ -s /tmp/leaked ]; then
+            echo "::error::A server-only value reached the client bundle: $(tr '\n' ' ' < /tmp/leaked)"
             exit 1
           fi
           echo "No server-only key in .next/static."

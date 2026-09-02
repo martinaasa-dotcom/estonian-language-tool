@@ -42,6 +42,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
       where: { lemma: { in: [...unit.lemmas] } },
       select: {
         id: true, lemma: true, translation: true, pos: true, cefr: true, gradationNote: true,
+        gradation: true,
         government: true, provenance: true, forms: { select: { formType: true } },
       },
     }),
@@ -56,6 +57,19 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
     startedLemmas: [...snapshot.startedLemmas],
     knownLemmas: [...snapshot.knownLemmas],
   });
+
+  /*
+    What the unit will build, not what it asked for.
+
+    `cardTypes` is a request and the generator only produces what a word can
+    support, so a unit of colours asks for a gradation card and no colour
+    gradates. Only that one type is checked here, because the column is already
+    selected and the honest check for the others would be fetching every
+    example sentence to see whether a gap can be made, which is the query this
+    app's own notes warn about.
+  */
+  const offered = unit.cardTypes.filter((type) =>
+    type !== "GRADATION" || words.some((w) => w.gradation && w.gradation !== "NONE"));
 
   const Icon = icon(unit.icon);
   const missing = unit.lemmas.length - words.length;
@@ -158,7 +172,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
 
         <div>
           <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>
-            {words.length} words · {unit.cardTypes.map(cardTypeLabel).join(", ")} cards
+            {words.length} words · {offered.map(cardTypeLabel).join(", ")} cards
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
             {words.map((l) => {
