@@ -1,7 +1,6 @@
 import { lastSession } from "@/lib/progress/session";
 import { prisma } from "@/lib/db";
 import { BADGES, earnedBadgeKeys, type Badge, type BadgeStats } from "@/lib/achievements/badges";
-import { dictionarySize } from "@/lib/dict/facts";
 import { caseAccuracy } from "@/lib/stats/history";
 import { numberSetting, readSettings, SETTING_KEYS, writeSetting } from "@/lib/settings/store";
 import { learnerDayClock } from "@/lib/progress/dayClock";
@@ -32,11 +31,8 @@ export interface BadgeContext {
 
 /** Everything a badge condition can depend on, gathered for one learner. */
 export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promise<BadgeStats> {
-  const [totalReviews, totalWords, settings, caseReviews] = await Promise.all([
+  const [totalReviews, settings, caseReviews] = await Promise.all([
     prisma.review.count({ where: { ownerId } }),
-    // A fact about the shared dictionary, not about this learner: read once
-    // per instance per minute rather than once per render. lib/dict/facts.ts.
-    dictionarySize(),
     readSettings(ownerId, [SETTING_KEYS.sprintBest, SETTING_KEYS.matchBest]),
     /*
       Ordered, because a badge that can appear and disappear is worse than one
@@ -61,7 +57,21 @@ export async function buildBadgeStats(ownerId: string, ctx: BadgeContext): Promi
     streak: ctx.summary.streak,
     totalReviews,
     cardsKnown: ctx.snapshot.knownCards,
-    totalWords,
+    /*
+      THE LEARNER'S OWN WORDS, WHICH IS WHAT THE BADGE SAYS.
+
+      This read `dictionarySize()`, which is how many entries the shared
+      dictionary holds: 6,050 for everybody, the same number on the first
+      morning as on the four hundredth. `deck_50` and `deck_200` say "add 50
+      words to your dictionary" and "add 200 words", and both were handed out
+      on the first load of Today, before a card had been answered. That is
+      ADR-014's "awarded for something that never happened", and `Achievement`
+      is never re-awarded and never removed, so it stayed.
+
+      `startedLemmas` is lemmas with at least one card in the deck, already
+      fetched for the snapshot, so this is free as well as right.
+    */
+    totalWords: ctx.snapshot.startedLemmas.size,
     bestCaseAccuracy: bestCase ? { grammCase: bestCase.grammCase, accuracy: bestCase.accuracy } : null,
     sprintBest: numberSetting(settings[SETTING_KEYS.sprintBest], 0),
     matchBestSeconds: numberSetting(settings[SETTING_KEYS.matchBest], 0),
