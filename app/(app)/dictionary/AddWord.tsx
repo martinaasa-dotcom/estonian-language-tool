@@ -13,6 +13,11 @@ const NOUN_FIELDS = [
   ["GEN_SG", "Genitive sg", "toa"],
   ["PART_SG", "Partitive sg", "tuba"],
   ["ILL_SG_SHORT", "Short illative", "tuppa"],
+  // The nominative plural is here because nothing derives it any more. It was
+  // `genitive + d`, which `npm run audit:cases` found wrong for every pronoun
+  // and for the words that have no plural, so a word typed in by hand has to
+  // be able to carry its own.
+  ["NOM_PL", "Nominative pl", "toad"],
   ["PART_PL", "Partitive pl", "tube"],
   ["GEN_PL", "Genitive pl", "tubade"],
 ] as const;

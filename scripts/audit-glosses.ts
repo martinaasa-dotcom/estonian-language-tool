@@ -28,8 +28,8 @@ import { dirname } from "node:path";
 
 import { extractEstonianSenses } from "../lib/dict/wiktionary";
 import type { ExpandedEntry } from "./expand-seed";
+import { EXPANDED_PATH, writeExpanded } from "./lib/expandedFile";
 
-const OUT = "prisma/data/expanded.json";
 const CACHE = "prisma/data/.cache/audit-pages.json";
 const UA = "Kodukeel/0.1 (Estonian learning tool; gloss audit)";
 /** The query API takes fifty titles at a time; `action=parse` takes one. */
@@ -89,7 +89,7 @@ async function main() {
   const cefrArg = process.argv.indexOf("--cefr");
   const levels = cefrArg > 0 ? new Set(process.argv[cefrArg + 1]?.split(",")) : null;
 
-  const entries = JSON.parse(readFileSync(OUT, "utf8")) as ExpandedEntry[];
+  const entries = JSON.parse(readFileSync(EXPANDED_PATH, "utf8")) as ExpandedEntry[];
   const scope = entries.filter((e) => !levels || levels.has(e.cefr ?? ""));
   console.log(`${entries.length} entries, ${scope.length} in scope.`);
 
@@ -227,8 +227,8 @@ async function main() {
   }
   const remove = new Set(dropped.map((d) => d.lemma));
   const next = entries.filter((e) => !remove.has(e.lemma));
-  writeFileSync(OUT, `${JSON.stringify(next, null, 0)}\n`);
-  console.log(`\nWrote ${next.length} entries to ${OUT} (${corrected.length} corrected, ${dropped.length} dropped).`);
+  writeExpanded(next);
+  console.log(`\nWrote ${next.length} entries to ${EXPANDED_PATH} (${corrected.length} corrected, ${dropped.length} dropped).`);
 }
 
 void main();

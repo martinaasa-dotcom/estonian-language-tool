@@ -139,6 +139,7 @@ const STORED_NAMES: Record<string, FormName> = {
   GEN_SG: { et: "omastav", en: "genitive" },
   PART_SG: { et: "osastav", en: "partitive" },
   ILL_SG_SHORT: { et: "lühike sisseütlev", en: "short illative" },
+  NOM_PL: { et: "mitmuse nimetav", en: "nominative plural" },
   PART_PL: { et: "mitmuse osastav", en: "partitive plural" },
   GEN_PL: { et: "mitmuse omastav", en: "genitive plural" },
   INF_MA: { et: "ma-tegevusnimi", en: "ma-infinitive" },

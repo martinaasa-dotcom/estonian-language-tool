@@ -590,10 +590,16 @@ function Entry({ entry, tutorReady, glossLanguage }: {
               </tbody>
             </table>
           </div>
-          {!form("GEN_PL") && (
+          {/* The gap has two causes and the note used to name only one. Eleven of
+              the plural forms are the genitive plural plus an ending; the
+              nominative plural is not an ending at all, so a word can have the
+              genitive plural and still show no plural in the first row. */}
+          {(!form("GEN_PL") || !form("NOM_PL")) && (
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              Plural forms need the genitive plural, which isn&rsquo;t stored for this word. We leave
-              them blank rather than guess. An invented form is worse than a gap.
+              {!form("GEN_PL")
+                ? "Most plural forms are built on the genitive plural, which isn’t stored for this word."
+                : "The nominative plural isn’t stored for this word, and it isn’t an ending we could work out."}
+              {" "}We leave a gap rather than guess. An invented form is worse than a gap.
             </p>
           )}
         </div>

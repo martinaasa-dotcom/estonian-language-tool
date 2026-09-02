@@ -16,6 +16,7 @@ const PRINCIPAL_PARTS: Record<string, string> = {
   SgG: "GEN_SG",
   SgP: "PART_SG",
   SgAdt: "ILL_SG_SHORT",
+  PlN: "NOM_PL",
   PlP: "PART_PL",
   PlG: "GEN_PL",
   // Verbs
@@ -86,6 +87,28 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
 
   const forms: MappedForm[] = [];
   const seen = new Set<string>();
+  /*
+    A PRINCIPAL PART IS ONE FORM, AND EKILEX OFTEN GIVES TWO.
+
+    `@@unique([lexemeId, formType, value])` on `Form` puts the value in the key
+    deliberately, because Estonian has genuine parallel forms (`raamatutes`
+    beside `raamatuis`) and a key without it would drop one. That is right for
+    the whole retrieved table and it is wrong for the six principal parts,
+    which are the forms a learner memorises: 2,016 of the 5,363 shipped entries
+    carried two `PART_PL` rows and 120 carried two `GEN_PL`, and which of the
+    pair the app used was decided by whoever read them. `stemsFrom` takes the
+    first row it finds, in whatever order the database returns; every caller
+    that builds a `Record` with `Object.fromEntries` takes the last. So the
+    dictionary entry for `aadress` could show `aadresse` while the flashcard
+    behind it asked for `aadressisid`, and neither was a decision anybody made.
+
+    Ekilex lists the primary first, which is the one a course teaches: `asju`
+    before `asjasid`, `aegu` before `aegasid`, `rindade` before `rinde`. So the
+    first wins for a principal part. The parallel form is not lost where it
+    matters, because an enriched entry keeps the whole retrieved table under
+    `EKILEX:<morphCode>`, and those stay parallel exactly as before.
+  */
+  const principalTaken = new Set<string>();
 
   for (const f of formSet.forms) {
     const key = `${f.morphCode}|${f.value}`;
@@ -93,6 +116,10 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
     seen.add(key);
 
     const principal = PRINCIPAL_PARTS[f.morphCode];
+    if (principal) {
+      if (principalTaken.has(principal)) continue;
+      principalTaken.add(principal);
+    }
     const order = FORM_ORDER.indexOf(f.morphCode);
     forms.push({
       formType: principal ?? `EKILEX:${f.morphCode}`,

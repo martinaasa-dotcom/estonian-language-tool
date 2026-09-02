@@ -353,7 +353,8 @@ function nameList(names: readonly { et: string; en: string }[]): string {
 /** The stored slots that are a case, so the case's own note can explain them. */
 const CASE_BY_FORM_TYPE: Record<string, CaseKey | undefined> = {
   NOM_SG: "NOMINATIVE", GEN_SG: "GENITIVE", PART_SG: "PARTITIVE",
-  GEN_PL: "GENITIVE", PART_PL: "PARTITIVE", ILL_SG_SHORT: "ILLATIVE",
+  NOM_PL: "NOMINATIVE", GEN_PL: "GENITIVE", PART_PL: "PARTITIVE",
+  ILL_SG_SHORT: "ILLATIVE",
 };
 
 /**

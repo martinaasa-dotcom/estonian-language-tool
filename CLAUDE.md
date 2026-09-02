@@ -413,6 +413,53 @@ asserts that too, so the illative is singled out rather than the whole table dis
 long form stays *accepted* everywhere the short one is shown, since both are Estonian and marking
 somebody wrong for the other true answer is the fault this started as, pointed the other way.
 
+**And "the other ten are one ending each" was an assertion about five words until it was measured.**
+The verbs had `npm run audit:verbs` and 797 of them checked against Ekilex; the nouns, which is the
+larger half of the language and every case table in the app, had a note saying somebody had run the
+comparison by hand for the five words the landing page demonstrates. `npm run audit:cases` is that
+script pointed at the other half: every nominal the dictionary ships with an Ekilex word id, both
+columns, 5,143 words and 113,000 forms. Ten of the eleven singular obliques agree for all of them,
+and so do the eleven plural obliques built on the genitive plural, which is what makes the illative
+worth singling out rather than the whole table distrusted.
+
+**What it found is that the twelfth was never a rule.** `genSg + d` sat in `buildCaseTable` under a
+comment calling it "the one regular plural", right for 5,098 of 5,143 and wrong for a whole
+category: a pronoun is suppletive in the nominative plural and no ending reaches it. `see` goes to
+**need** and the app printed `selled`; `too` to **nood** and it printed `tolled`; `kes` and `mis` do
+not change at all and were printed as `kelled` and `milled`. Every pronoun in the dictionary that
+has a plural was wrong, all eight, on the first words of anybody's first lesson. And thirty-three
+mass nouns have no plural for a lexicographer to record, so `sealiha` was being given `sealihad` and
+`sularaha` `sularahad`. So `nomPl` is a required field for the reason `illSgShort` is one, nothing
+derives it, and `NOM_PL` is on `PRINCIPAL_FORM_TYPES`, which is what makes the harvest, the live
+enrichment, a hand edit and an accepted correction all carry it without being told to. A word the
+dictionary holds no plural for shows a gap, which is what the genitive plural and the partitive
+plural have always done.
+
+One word out of 5,143 still disagrees and is left alone. Estonian writes an apostrophe between a
+foreign stem and its ending where the two would otherwise merge, so Ekilex records `grappa'st` and
+the rule gives `grappast`. It is the only entry in the dictionary with an apostrophe in a principal
+part, and a rule the app cannot tell when to apply is worse than a form that is one character off.
+
+**A principal part is one form, and Ekilex often sends two.** `Form`'s unique key includes the value
+deliberately, because Estonian has genuine parallel forms and a key without it would drop one. That
+is right for the whole retrieved table and wrong for the six a learner memorises: 2,016 shipped
+entries carried two `PART_PL` rows and 120 two `GEN_PL`, and which of the pair the app used was
+decided by whoever read them. `stemsFrom` takes the first row it finds, in whatever order the
+database returns them; every caller that builds a record with `Object.fromEntries` takes the last.
+So the dictionary entry for `aadress` could show `aadresse` while the flashcard behind it asked for
+`aadressisid`, and neither was a decision anybody made. Ekilex lists the primary first, which is the
+one a course teaches, so the first wins: `asju` before `asjasid`, `aegu` before `aegasid`, `rindade`
+before `rinde`. The parallel form is not lost where it matters, since an enriched entry keeps the
+whole retrieved table under `EKILEX:<morphCode>` and those stay parallel exactly as before.
+
+**And the built dictionary has one writer**, `scripts/lib/expandedFile.ts`. Four scripts write it,
+the builder and the three audits that correct a gloss, a part of speech and a plural in place, and
+three of them wrote it compact while the file in the repository is one key per line. Somebody had
+reformatted it by hand and the next full run of any generator would have collapsed 5,363 entries
+into a single 3MB line. That is not a style disagreement: the diff is the only way anybody reviews a
+change to this file, and a generator that reformats on the way past hides every real change inside a
+rewrite of everything.
+
 **And accepted is not the same as printed, which is how one bug got fixed twice into two bugs.**
 Leading with the long form hides `tuppa` and teaches `toasse`, which is where this started.
 Leading with the short one and hiding the long one is the same fault turned around, and it is
@@ -2656,6 +2703,7 @@ npm run test:invariants  # the rules in this file, asserted
 npm run audit:glosses    # re-check every built gloss against Wiktionary (--write applies)
 npm run audit:pos        # re-check every built part of speech the same way (shares the page cache)
 npm run audit:verbs      # derive every verb's present, negative, conditional and imperative, and compare with Ekilex
+npm run audit:cases      # derive every case of every noun, both columns, and compare with Ekilex (--write fills the gaps)
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary

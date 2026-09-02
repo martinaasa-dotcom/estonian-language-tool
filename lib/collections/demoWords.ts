@@ -52,22 +52,31 @@ export interface DemoStems {
    * says what the seed holds, not what the card should lead with.
    */
   readonly illSgShort: string | null;
+  /**
+   * The nominative plural, or `null` where the seed records none.
+   *
+   * Required for the same reason and read off the same seed. It stopped being
+   * `genSg + d` when `scripts/audit-cases.ts` put that ending to Ekilex for
+   * every nominal in the dictionary and found it wrong for every pronoun and
+   * for thirty-three nouns that have no plural at all.
+   */
+  readonly nomPl: string | null;
 }
 
 export const DEMO_STEMS: readonly DemoStems[] = [
   { lemma: "raamat",
     nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute",
-    illSgShort: null },
+    illSgShort: null, nomPl: "raamatud" },
   { lemma: "tuba",
     nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
-    illSgShort: "tuppa" },
+    illSgShort: "tuppa", nomPl: "toad" },
   { lemma: "sõber",
     nomSg: "sõber", genSg: "sõbra", partSg: "sõpra", partPl: "sõpru", genPl: "sõprade",
-    illSgShort: "sõpra" },
+    illSgShort: "sõpra", nomPl: "sõbrad" },
   { lemma: "käsi",
     nomSg: "käsi", genSg: "käe", partSg: "kätt", partPl: "käsi", genPl: "käte",
-    illSgShort: "kätte" },
+    illSgShort: "kätte", nomPl: "käed" },
   { lemma: "mees",
     nomSg: "mees", genSg: "mehe", partSg: "meest", partPl: "mehi", genPl: "meeste",
-    illSgShort: null },
+    illSgShort: null, nomPl: "mehed" },
 ];

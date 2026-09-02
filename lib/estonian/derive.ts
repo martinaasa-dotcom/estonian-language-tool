@@ -36,6 +36,26 @@ import type { CaseKey } from "./types";
  * suffix on a stored stem is one bug for the whole language rather than one
  * word wrong unpredictably. The change is that an attested form now always
  * beats a derived one, which was supposed to be true and was not.
+ *
+ * AND THE NOMINATIVE PLURAL IS NOT A SUFFIX AT ALL, which is the same fault
+ * again on the other side of the table. `genSg + d` was written here as though
+ * it were the one regular plural, and `scripts/audit-cases.ts` put it to the
+ * Institute for every nominal the dictionary ships: 5,098 of 5,143 agree, and
+ * the ones that do not are not a rounding error, they are a category. **Every
+ * pronoun in the dictionary that has a plural was wrong**, all eight of them,
+ * because a pronoun is suppletive there and no ending reaches it: `see` goes
+ * to `need` and this printed `selled`, `too` goes to `nood` and this printed
+ * `tolled`, and `kes` and `mis` do not change at all and were printed as
+ * `kelled` and `milled`. Those are the first words in anybody's first lesson.
+ * And 33 nouns have no plural for Ekilex to record, mass nouns like `sealiha`
+ * and `sularaha`, which were being given `sealihad` and `sularahad`.
+ *
+ * So `nomPl` is a **required** field for the reason `illSgShort` is one, and
+ * nothing derives it. Where the dictionary holds the plural it is printed;
+ * where the dictionary holds none the row is a gap, which is what the genitive
+ * plural and the partitive plural have always done and is ADR-005. `NOM_PL` is
+ * on `PRINCIPAL_FORM_TYPES` now, so the harvest, the live enrichment, a hand
+ * edit and an accepted correction all carry it by construction.
  */
 
 export interface DerivedForm {
@@ -91,6 +111,16 @@ export interface NounStems {
    * caller cannot skip.
    */
   readonly illSgShort: string | null;
+  /**
+   * The nominative plural, or `null` where the dictionary holds none.
+   *
+   * Required for the same reason as the field above, and it is the same fault:
+   * `genSg + d` reads like the one regular plural in the language and is not
+   * one for a pronoun, which is suppletive (`see : need`, `too : nood`), or
+   * for a mass noun, which has no plural to be regular about. A caller that
+   * never asked the dictionary cannot satisfy the type.
+   */
+  readonly nomPl: string | null;
   /**
    * Whole singular forms a lexicographer wrote down, by case, where we have
    * them. An entry enriched from Ekilex carries the full paradigm; a seeded
@@ -162,6 +192,12 @@ function singularForms(stems: NounStems, spec: CaseSpec): { forms: string[]; als
  * when the genitive plural is stored. We show a gap rather than invent a form,
  * which is ADR-005.
  *
+ * THE NOMINATIVE PLURAL IS STORED TOO, and used to be the one exception. It
+ * was `genSg + d`, which is right for 5,098 of the 5,143 nominals the audit put
+ * to Ekilex and wrong for every pronoun with a plural and for 33 nouns that
+ * have none. It is read off `nomPl` now and never invented, which puts all
+ * three plural principal parts on the same footing.
+ *
  * A STORED SHORT ILLATIVE ALWAYS LEADS, even where it is spelled like one of
  * the three principal parts. Most of them are: `aeg` goes to `aega`, which is
  * also its partitive, and `arst` to `arsti`, which is also its genitive. That
@@ -171,7 +207,7 @@ function singularForms(stems: NounStems, spec: CaseSpec): { forms: string[]; als
  * question about that card, and the landing page answers it for itself.
  */
 export function buildCaseTable(stems: NounStems): DerivedForm[] {
-  const { nomSg, genSg, partSg, partPl, genPl } = stems;
+  const { nomSg, genSg, partSg, partPl, genPl, nomPl } = stems;
 
   return CASES.map((spec): DerivedForm => {
     if (spec.key === "NOMINATIVE") {
@@ -179,8 +215,10 @@ export function buildCaseTable(stems: NounStems): DerivedForm[] {
         spec,
         singular: nomSg,
         alsoRight: null,
-        // Nominative plural is the one regular plural: genitive singular + d.
-        plural: genSg ? `${genSg}d` : undefined,
+        // Attested or nothing. See the header: the ending that used to stand
+        // here was wrong for every pronoun and invented a plural for words
+        // that have none.
+        plural: nomPl ?? undefined,
         origin: "STORED",
         accepted: uniq([nomSg]),
       };
@@ -285,6 +323,7 @@ export function stemsFrom(
     partPl: byType("PART_PL"),
     genPl: byType("GEN_PL"),
     illSgShort: byType("ILL_SG_SHORT") ?? forms.find((f) => codeOf(f) === "SgAdt")?.value ?? null,
+    nomPl: byType("NOM_PL") ?? forms.find((f) => codeOf(f) === "PlN")?.value ?? null,
     retrieved,
   };
 }
@@ -306,6 +345,7 @@ export function stemsFromParts(parts: Readonly<Record<string, string>>): NounSte
     partPl: parts.PART_PL,
     genPl: parts.GEN_PL,
     illSgShort: parts.ILL_SG_SHORT ?? null,
+    nomPl: parts.NOM_PL ?? null,
     retrieved: {},
   };
 }

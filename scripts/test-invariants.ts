@@ -218,6 +218,110 @@ check("the short illative is a required stem, not an optional one", () => {
   );
 });
 
+/*
+  AND THE NOMINATIVE PLURAL IS THE SAME RULE ON THE OTHER SIDE OF THE TABLE.
+
+  `genSg + d` sat in `buildCaseTable` under a comment calling it "the one
+  regular plural", and `npm run audit:cases` put that to the Institute for all
+  5,143 nominals the dictionary ships. Right for 5,098, and wrong for a whole
+  category rather than a scatter of odd words: a pronoun is suppletive in the
+  nominative plural, so `see` goes to `need` and this printed `selled`, `too`
+  goes to `nood` and this printed `tolled`, and `kes` and `mis` do not change
+  at all and were printed as `kelled` and `milled`. Those are first-lesson
+  words on the dictionary entry, the grammar reference and the worksheet.
+  Thirty-three mass nouns (`sealiha`, `sularaha`, `tähelepanu`) have no plural
+  for Ekilex to record and were being handed one.
+
+  So `nomPl` is required for the reason `illSgShort` is, and nothing derives
+  it. `NOM_PL` is on `PRINCIPAL_FORM_TYPES`, which is what makes the harvest,
+  the live enrichment, a hand edit and an accepted correction all carry it
+  without being told to.
+*/
+check("the nominative plural is a required stem, and is never an ending", () => {
+  const derive = code("lib/estonian/derive.ts");
+  assert.match(
+    derive,
+    /readonly nomPl: string \| null;/,
+    "NounStems.nomPl stopped being required, so a caller that never asked the "
+      + "dictionary compiles again and the plural goes back to an ending",
+  );
+  assert.doesNotMatch(derive, /nomPl\?:/, "NounStems.nomPl became optional");
+  /*
+    The join itself, anywhere in the app. `d` is one letter, so this is anchored
+    on the genitive stem rather than on the letter: what is banned is building a
+    word out of the stem the singular obliques are built on plus a `d`.
+  */
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => /\$\{\s*(?:stems\.)?genSg\s*\}d\b|genSg\s*\+\s*"d"/.test(code(file)));
+  assert.deepEqual(
+    offenders,
+    [],
+    "a nominative plural is being built out of the genitive stem and a `d`, "
+      + "which is right for 5,098 of the dictionary's 5,143 nominals and wrong "
+      + "for every pronoun in it",
+  );
+  assert.ok(
+    (code("lib/estonian/types.ts").match(/"NOM_PL"/g) ?? []).length === 1,
+    "NOM_PL left PRINCIPAL_FORM_TYPES, so the harvest and a hand edit stop "
+      + "carrying the one form the table now depends on",
+  );
+});
+
+/*
+  A PRINCIPAL PART IS ONE FORM, AND THE MAPPER IS WHERE THAT IS DECIDED.
+
+  `Form`'s unique key includes the value because Estonian has genuine parallel
+  forms (`raamatutes` beside `raamatuis`), which is right for the retrieved
+  table and wrong for the six a learner memorises. Ekilex gives two partitive
+  plurals for most nouns and `mapEkilexDetails` wrote both down as `PART_PL`:
+  2,016 shipped entries carried a doubled partitive plural and 120 a doubled
+  genitive plural, and which of the pair the app used was decided by whoever
+  read the rows, `stemsFrom` taking the first the database returned and every
+  `Object.fromEntries` caller taking the last.
+
+  The check is a code check rather than a data one because the data half is
+  hermetic and lives in `lib/estonian/attested.test.ts`, where it can fail on a
+  word. What a regex can see is that the mapper still keeps one.
+*/
+check("a principal part is one form, whatever Ekilex sends", () => {
+  const mapper = code("lib/ekilex/mapper.ts");
+  assert.match(
+    mapper,
+    /principalTaken\.has\(principal\)/,
+    "mapEkilexDetails stopped keeping one value per principal part, so which "
+      + "partitive plural the app teaches goes back to being decided by whoever "
+      + "reads the rows",
+  );
+});
+
+/*
+  ONE WRITER OF THE BUILT DICTIONARY, BECAUSE THE DIFF IS HOW ANYBODY REVIEWS IT.
+
+  Four scripts write `prisma/data/expanded.json`: the builder and the three
+  audits that correct a gloss, a part of speech and a nominative plural in
+  place. Three of them wrote it compact and the file in the repository is one
+  key per line, so the next full run of any of them would have collapsed 5,363
+  entries into a single 3MB line and buried whatever it actually changed.
+  `scripts/lib/expandedFile.ts` is the one serialiser.
+*/
+check("the built dictionary has one writer", () => {
+  const offenders = sourceFiles("scripts")
+    .filter((file) => !file.endsWith("lib/expandedFile.ts"))
+    .filter((file) => {
+      const src = code(file);
+      return /writeFileSync\([^)]*expanded\.json|writeFile\([^)]*expanded\.json/.test(src)
+        || (/expanded\.json/.test(src) && /JSON\.stringify\([^)]*null,\s*\d/.test(src));
+    });
+  assert.deepEqual(
+    offenders,
+    [],
+    "a script writes prisma/data/expanded.json itself instead of through "
+      + "scripts/lib/expandedFile.ts, so its own indentation decides how the "
+      + "next dictionary diff reads",
+  );
+});
+
 check("nothing builds a case form out of a bare stem and a suffix", () => {
   /*
     `spec.suffix` is the eleven endings, and joining one onto a stem is exactly
@@ -6383,6 +6487,12 @@ check("the landing page's five words say what the dictionary says", () => {
     if (short !== stems.illSgShort) {
       wrong.push(`${stems.lemma} ILL_SG_SHORT: page says ${stems.illSgShort ?? "none"}, the seed says ${short ?? "none"}`);
     }
+    // Same rule, same reason. The nominative plural stopped being an ending on
+    // the genitive stem when the audit put that ending to Ekilex.
+    const plural = held("NOM_PL")[0] ?? null;
+    if (plural !== stems.nomPl) {
+      wrong.push(`${stems.lemma} NOM_PL: page says ${stems.nomPl ?? "none"}, the seed says ${plural ?? "none"}`);
+    }
   }
 
   assert.deepEqual(missing, [], "the landing page asks the dictionary for a noun it does not hold");
@@ -6396,11 +6506,16 @@ check("the landing page's five words say what the dictionary says", () => {
     other eleven are a rule over the genitive stem and storing them would be
     the second source of truth this app refuses to keep (ADR-009). So the
     comparison that matters, every case the page works out against the form
-    Ekilex records for it, is a thing somebody runs against a live key rather
-    than a check that can live in this file. It was run for all five of these
-    words: 55 singular forms, all agreeing, and every long plural with them.
-    What differs is the parallel short plural Estonian genuinely has
-    (`raamatuis` beside `raamatutes`), which this card does not show.
+    Ekilex records for it, needs a live key and is `npm run audit:cases`.
+
+    It used to have been run by hand for these five words, which is 55 singular
+    forms, and the note here said so. It now runs over every nominal in the
+    dictionary, 5,143 of them, in both columns: the ten singular obliques agree
+    for all but one word, and so do the eleven plural obliques built on the
+    genitive plural. What it found is that the twelfth was not a rule at all,
+    and `lib/estonian/derive.ts` no longer derives it. What differs and is
+    fine is the parallel short plural Estonian genuinely has (`raamatuis`
+    beside `raamatutes`), which this card does not show.
 
     What is left here is the half that can go stale on its own, which is the
     copy above, and `lib/estonian/derive.test.ts` holds the rule that decides

@@ -52,6 +52,7 @@ const NOMINAL_PARTS: Record<string, string> = {
   GEN_SG: "SgG",
   PART_SG: "SgP",
   ILL_SG_SHORT: "SgAdt",
+  NOM_PL: "PlN",
   PART_PL: "PlP",
   GEN_PL: "PlG",
 };
