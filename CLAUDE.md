@@ -343,7 +343,7 @@ Reading the ranked list rather than the total is what made it right, because the
 faults and only one is a missing unit: the untaught conjunctions and particles, the forms of
 `olema` that are neither stored nor derivable, and the short pronoun forms and the simple past that
 two rules above already say arrive with enrichment. A unit built off the total would have taught
-`oli` as a headword. `docs/19-situations.md` §26 has the measurements and §27 what
+`oli` as a headword. `docs/21-situations.md` §26 has the measurements and §27 what
 building them turned up, which was three things nothing had been checking.
 
 **A homonym was reported on one path out of two.** The rule that a homonym is resolved by a person
@@ -542,7 +542,7 @@ of what is withheld in every run, register is none of it, and the lines being th
 `kestma`, `sobima` and `valutama` are in no unit at any level, and nor are `asuma`, `esitama`,
 `korrus`, `katki` or `valmis`. The pattern is one sentence: the course teaches the nouns of a
 situation and not the verbs that do things with them, `valu` and `haige` but not `valutama`, a
-unit on housing but no `katki`. `docs/19-situations.md` §29 is the write-up and §19 is what it
+unit on housing but no `katki`. `docs/21-situations.md` §29 is the write-up and §19 is what it
 changed, which is that Phase 1 waits on that vocabulary rather than on any code.
 
 **Six runs of 63 lines cannot resolve eight points, and the table says so.** Two of the rows in
@@ -3727,6 +3727,7 @@ npm run audit:pos        # re-check every built part of speech the same way (sha
 npm run audit:verbs      # derive every verb's present, negative, conditional and imperative, and compare with Ekilex
 npm run audit:decks      # case cards already in a deck whose answer spells the word in the question (--write removes)
 npm run audit:cases      # derive every case of every noun, both columns, and compare with Ekilex (--write fills the gaps)
+npm run audit:senses     # re-check every course gloss against the sense Ekilex files it under
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
@@ -3735,12 +3736,12 @@ npm run build:frequency  # recount the commonest words (cached corpus, --refresh
 npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
+npm run measure:scenes   # how much of a conversation the dictionary can already carry
+npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
 npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, suggestions, a11y
                          # (test-first-day runs first and needs an empty deck: reseed before it)
-
-npm run test:browser     # the newer browser suites: routes, modes, exam, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
 npm run test:containment # text and icons inside their boxes, measured; needs the server running
 ```
