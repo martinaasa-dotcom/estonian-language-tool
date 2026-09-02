@@ -102,6 +102,14 @@ export default async function PracticePage() {
     round read one query, so the tile cannot promise words the round will not
     find.
   */
+  /*
+    What Review would put in front of them right now: due cards plus the unseen
+    ones it trickles in, drawn the same way Today draws it. A tile saying
+    "Nothing due" over a session with ten cards in it is the sort of small
+    inconsistency a reader catches once and then stops trusting.
+  */
+  const ready = Math.min(snapshot.dueCount + Math.min(snapshot.newForPractice, 10), 60);
+
   const counts = masteryCounts(words);
   const unfinished = counts.struggling + counts.almost + counts.learning;
   const flashMeta = unfinished > 0
@@ -123,26 +131,44 @@ export default async function PracticePage() {
   const metaFor = (mode: PracticeMode) => live[mode.href] ?? mode.note;
 
   return (
-    <Page title="Practice" lead="Every mode grades the same cards.">
+    <Page title="Practice" lead="Words you have already learned, asked every way there is.">
       {snapshot.totalCards === 0 ? (
         <Empty
           title="Nothing to practise yet"
           body="Every mode here draws on your own deck."
-          action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
+          action={<ButtonLink href="/learn" variant="primary">Learn some words first</ButtonLink>}
         />
       ) : (
         <Stack>
           {/*
-            THE TOP SLOT IS NOT A LINK BACK TO REVIEW.
+            THE TOP SLOT IS THE SCHEDULE, AND IT DID NOT USED TO BE.
 
-            It was, and `/review` is the page most people arrive here from, so
-            the first thing this page offered was the door they had just come
-            through. Flash cards is what the learner asked for in its place: the
-            words review has already introduced, asked in a way it does not ask
-            them, across a variety of case endings, until the app can be
+            It was Flash cards, on the argument that `/review` is the page most
+            people arrived here from, so leading with it offered somebody the
+            door they had just come through. That was true while Review was a
+            row in the rail. It is not any more: the daily row is Learn, review
+            lives inside this page (`lib/ux/nav.ts`), and a learner who opens
+            Practice with cards due has come here for exactly that. Leaving it
+            out would make the one thing this page is for reachable only from
+            Today.
+
+            Flash cards keeps its slot directly under it, which is what it is:
+            the words review has already introduced, asked in a way it does not
+            ask them, across a variety of case endings, until the app can be
             confident the word is known. See lib/srs/mastery.ts for what
-            confident means and app/(app)/review/flashcards for the round.
+            confident means.
           */}
+          <ModeCard
+            href="/review"
+            iconName="GraduationCap"
+            tone="accent"
+            title="Review"
+            subtitle="Everything due"
+            body="Timed to the moment before you forget. The schedule decides what comes back, not you."
+            meta={ready > 0 ? `${ready} waiting` : "Nothing due"}
+            primary={ready > 0}
+          />
+
           <ModeCard
             href="/review/flashcards"
             iconName="Layers"
@@ -151,7 +177,7 @@ export default async function PracticePage() {
             subtitle="Words you have met"
             body="A different form each time, typed rather than picked, until the word is solid."
             meta={flashMeta}
-            primary={unfinished > 0}
+            primary={unfinished > 0 && ready === 0}
           />
 
           <section>

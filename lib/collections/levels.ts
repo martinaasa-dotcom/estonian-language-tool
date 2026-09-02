@@ -70,3 +70,49 @@ export function aroundFirst<T>(items: readonly T[], level: Level, cefrOf: (item:
   for (const item of items) (isAround(cefrOf(item), level) ? near : far).push(item);
   return [...near, ...far];
 }
+
+/**
+ * The order in which a band is worth *teaching*, which is not the order it is
+ * worth *showing*.
+ *
+ * `aroundFirst` answers "is this word anywhere near them", which is the right
+ * question for a suggestion row, a pairs round and a review queue: all of those
+ * order a pool the learner already owns and must never drop from it. Learn asks
+ * a narrower question. It picks the next five words somebody will be taught
+ * from scratch, and a word one band below is one they very likely met in the
+ * class they are sitting in, so putting it at the front of that queue spends
+ * the session on revision. A word one band above is where the next thing they
+ * need is.
+ *
+ * So: at level, then the band above, then their own untagged words, then below,
+ * then anything further off. Untagged sits third rather than first because a
+ * deck can hold hundreds of words off a photographed handout and none of them
+ * carries a band, and letting those lead would quietly stop the course from
+ * ever teaching anything. It sits above "below" because the learner went to
+ * the trouble of putting them there.
+ *
+ * Ordering and never filtering, for the reason `aroundFirst` gives at length:
+ * a learner whose whole deck is two bands off still gets taught something.
+ */
+export function challengeRank(cefr: string | null | undefined, level: Level): number {
+  const window = bandsAround(level);
+  if (!cefr) return 2;
+  if (cefr === level) return 0;
+  const at = window.indexOf(cefr);
+  if (at === -1) return 4;
+  // The window is ordered low to high around the level, so anything after the
+  // learner's own band in it is the band above.
+  return at > window.indexOf(level) ? 1 : 3;
+}
+
+/** The ones worth teaching next first, and nothing dropped. */
+export function challengeFirst<T>(
+  items: readonly T[], level: Level, cefrOf: (item: T) => string | null | undefined,
+): T[] {
+  return [...items]
+    .map((item, index) => ({ item, index, rank: challengeRank(cefrOf(item), level) }))
+    // Index breaks the tie, because a comparator that returns 0 for two
+    // different rows hands the order to whatever built the array.
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map((entry) => entry.item);
+}

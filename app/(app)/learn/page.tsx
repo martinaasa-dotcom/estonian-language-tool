@@ -9,9 +9,12 @@ import {
 } from "@/lib/collections/syllabus";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Chip, Meter, Page, Ring } from "@/components/ui";
+import { Chip, Meter, Page, Ring, SectionTitle } from "@/components/ui";
+import { learnCounts } from "@/lib/progress/learn";
+import { LEARN_BATCH } from "@/lib/learn/ladder";
+import { Sparkles } from "lucide-react";
 
-export const metadata = { title: "The course" };
+export const metadata = { title: "Learn" };
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +32,10 @@ export const dynamic = "force-dynamic";
  */
 export default async function LearnPage() {
   const ownerId = await requireUserId();
-  const [snapshot, placement] = await Promise.all([
+  const [snapshot, placement, counts] = await Promise.all([
     deckSnapshot(ownerId),
     courseLevelFor(ownerId),
+    learnCounts(ownerId),
   ]);
   const units = await pathWithProgress(ownerId, snapshot);
 
@@ -70,9 +74,22 @@ export default async function LearnPage() {
 
   return (
     <Page
-      title="The course"
-      lead="Five levels, A1 to C1. Each unit teaches a lesson, then puts its words in your deck."
+      title="Learn"
+      lead="New words, one small round at a time, and the course they come out of."
     >
+      {/*
+        WHAT THIS PAGE LEADS WITH IS THE NEXT FIVE WORDS, NOT THE MAP.
+
+        The course is eighty-two units and answers "where am I going". It is
+        the wrong first thing on a screen somebody opened to study, because
+        choosing a unit is a decision and the honest answer to it at any given
+        level is "the next one". So the ladder is the card at the top and the
+        map is under it: a learner who wants to pick reads on, and one who
+        wants to learn presses the button.
+      */}
+      <LearnCard waiting={counts.waiting} started={counts.started} />
+
+      <SectionTitle hint={`A1 to C1 · working at ${placement}`}>The course</SectionTitle>
       {/*
         Stacked on a phone, one row above it. `flex-wrap` alone looked right and
         was not: at 390px the ring and the button both stayed on the row and
@@ -280,5 +297,52 @@ export default async function LearnPage() {
         Nothing is ever truly locked: a unit above your level shows what it builds on, and opens anyway.
       </p>
     </Page>
+  );
+}
+
+/**
+ * The next round of new words, and what happens to them.
+ *
+ * Three states rather than one with a disabled button. Words waiting is the
+ * ordinary case; words part way up the ladder and none waiting is somebody who
+ * has taken everything their deck holds and is finishing it off; nothing at all
+ * is a deck that needs filling, and the course underneath is the way to fill it,
+ * which is why this says so rather than offering a dead button.
+ */
+function LearnCard({ waiting, started }: { waiting: number; started: number }) {
+  const ready = waiting + started;
+  return (
+    <div
+      className="mb-7 flex flex-col gap-4 rounded-[var(--r-lg)] border p-5 sm:flex-row sm:items-center"
+      style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow)" }}
+    >
+      <span
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+        style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+      >
+        <Sparkles size={20} aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-bold" style={{ color: "var(--ink)" }}>
+          {ready > 0 ? "New words" : "No new words waiting"}
+        </p>
+        <p className="mt-1 text-sm" style={{ color: "var(--ink-2)" }}>
+          {ready > 0
+            ? "Meet it, then pick what it means, then put it back in the sentence. Words you can produce move over to practice."
+            : "Open a unit below and its words arrive here, ready to be met."}
+        </p>
+        {ready > 0 && (
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--ink-3)" }}>
+            <Chip tone="accent">{waiting} never seen</Chip>
+            {started > 0 && <Chip tone="hard">{started} part way</Chip>}
+          </p>
+        )}
+      </div>
+      {ready > 0 && (
+        <ButtonLink href="/learn/new" variant="primary" className="w-full justify-center sm:w-auto">
+          Learn {Math.min(ready, LEARN_BATCH)} words
+        </ButtonLink>
+      )}
+    </div>
   );
 }

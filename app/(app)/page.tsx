@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { redirect } from "next/navigation";
+import { LEARN_BATCH } from "@/lib/learn/ladder";
 import { ArrowRight, Flame, Shield, Sparkles, Target } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
@@ -177,7 +178,19 @@ export default async function TodayPage() {
     variable on the deployment.
   */
   const readerCanConfigure = !supabaseConfigured();
-  const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newCount, 10), 60);
+  /*
+    What Practice will actually put in front of them.
+
+    Due cards, plus the unseen ones a session trickles in, which is what it has
+    always been. What changed is which unseen ones count: the ladder owns a
+    word until its recognition card graduates, so every card of a word being
+    learned is Learn's and none of them is offered here. Both figures draw the
+    same line the review queue draws, so a number on this page is a number that
+    screen will fill.
+  */
+  const toReview = Math.min(snapshot.dueCount + Math.min(snapshot.newForPractice, 10), 60);
+  /** Words waiting on the ladder, in words rather than in cards. */
+  const toLearn = snapshot.learnCount;
   const name = settings[SETTING_KEYS.displayName]?.trim() || (learner.name === "you" ? "" : learner.name);
   /*
     The course decides what comes next, not this page. Its own rule respects
@@ -230,7 +243,7 @@ export default async function TodayPage() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:min-w-[200px] sm:flex-1">
             <StatTile value={snapshot.dueCount} label="Due now" tone="accent" />
-            <StatTile value={Math.min(snapshot.newCount, 10)} label="New today" tone="sky" />
+            <StatTile value={toLearn} label="To learn" tone="mint" />
           </div>
           {/* On a phone the ring wraps onto its own line, where a bare
               circle says nothing — so it is captioned there and only there. */}
@@ -273,11 +286,40 @@ export default async function TodayPage() {
           body="A unit becomes real cards, with every form and its audio."
           action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
         />
+      ) : toLearn > 0 && (toReview === 0 || stage === "arriving") ? (
+        /*
+          THE FIRST BUTTON ON A DECK NOBODY HAS READ YET IS NOT "REVIEW".
+
+          A deck arrives whole and every card in it is unseen, so on day one
+          there is nothing due and there never was: the old page counted the
+          new cards a review session would trickle in and called them due,
+          which put "Start your first review" over a screen whose whole first
+          minute is teaching. Learning is what there is to do, so that is what
+          the button says, and it goes on saying it on any day the schedule is
+          clear and there are still words waiting.
+        */
+        <div className="flex flex-col gap-3">
+          <ButtonLink href="/learn/new" variant="primary" size="lg" className="w-full">
+            {stage === "arriving" ? "Learn your first words" : `Learn ${Math.min(toLearn, LEARN_BATCH)} new words`}{" "}
+            <ArrowRight size={17} aria-hidden />
+          </ButtonLink>
+          {toReview > 0 && (
+            <ButtonLink href="/review" variant="secondary" className="w-full justify-center">
+              Or review {toReview} due <ArrowRight size={16} aria-hidden />
+            </ButtonLink>
+          )}
+        </div>
       ) : toReview > 0 ? (
-        <ButtonLink href="/review" variant="primary" size="lg" className="w-full">
-          {stage === "arriving" ? "Start your first review" : "Start reviewing"}{" "}
-          <ArrowRight size={17} aria-hidden />
-        </ButtonLink>
+        <div className="flex flex-col gap-3">
+          <ButtonLink href="/review" variant="primary" size="lg" className="w-full">
+            Start reviewing <ArrowRight size={17} aria-hidden />
+          </ButtonLink>
+          {toLearn > 0 && (
+            <ButtonLink href="/learn/new" variant="secondary" className="w-full justify-center">
+              Or learn {Math.min(toLearn, LEARN_BATCH)} new words <ArrowRight size={16} aria-hidden />
+            </ButtonLink>
+          )}
+        </div>
       ) : (
         /*
           THE ONE CARD ON THE PAGE THAT EXISTS TO SAY WHAT TO DO NOW, SAYING IT.
@@ -762,7 +804,7 @@ export default async function TodayPage() {
         )
       }
       title={name ? `${greeting(clock, now)}, ${name}` : greeting(clock, now)}
-      lead={lead(stage, toReview)}
+      lead={lead(stage, toReview, toLearn)}
     >
       {/*
         TWO COLUMNS, AND WHICH COLUMN A MODULE SITS IN IS ABOUT WHAT IT IS FOR.
@@ -864,8 +906,12 @@ function NextUnitIcon({ name }: { name: string }) {
  * count and the minutes are the useful sentence once there is a routine, and
  * they are an instruction to nobody on the first morning.
  */
-function lead(stage: "arriving" | "starting" | "settled", toReview: number): string {
-  if (toReview === 0) return "Nothing due right now. A good moment to meet some new words.";
+function lead(stage: "arriving" | "starting" | "settled", toReview: number, toLearn: number): string {
+  // Nothing due is only "a good moment for something new" while there is
+  // something new. A deck whose words are all learned needs a unit, and saying
+  // otherwise sends somebody to a screen with nothing on it.
+  if (toReview === 0 && toLearn > 0) return "Nothing due right now. A good moment to meet some new words.";
+  if (toReview === 0) return "Nothing due, and no new words waiting. A good moment to open a unit.";
   const minutes = Math.max(1, Math.round(toReview / 6));
   if (stage === "arriving") {
     return `Your deck is ready. ${toReview} card${toReview === 1 ? "" : "s"} to meet, about ${minutes} minutes.`;

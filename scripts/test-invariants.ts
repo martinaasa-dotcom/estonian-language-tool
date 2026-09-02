@@ -35,6 +35,8 @@ import { OFFICIAL_LEVELS, PASS_PCT, RETAKE_WAIT_PCT, specFor } from "../lib/exam
 import type { Skill } from "../lib/assessment/types";
 import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
+import { DESTINATIONS } from "../lib/ux/nav";
+import { LADDER_CARD_TYPE, LADDER_STATES, rungOf } from "../lib/learn/ladder";
 import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
 import { DEMO_STEMS } from "../lib/collections/demoWords";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
@@ -2259,7 +2261,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
   */
   const pure = [
     "assessment", "collections", "copy", "estonian", "exam", "funding", "games", "gamification",
-    "offline", "random", "research", "scan", "security", "stats", "time", "ux",
+    "learn", "offline", "random", "research", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
     const area = file.split("/")[1];
@@ -4825,6 +4827,14 @@ check("only the harvest, the seed and the screens name a Russian or Ukrainian me
       as a parking space.
     */
     join("app", "(app)", "review", "cards.ts"),
+    /*
+      And the Learn ladder reads them for the same screen the review session
+      does. A first meeting is the one moment where a meaning in the language
+      somebody already thinks in earns the most, because the word is being
+      learned there rather than tested, and the ladder is where a first meeting
+      now happens.
+    */
+    join("lib", "progress", "learn.ts"),
     join("app", "(app)", "learn", "[unitId]", "lesson", "page.tsx"),
     join("lib", "collections", "lesson.ts"),
     join("app", "(app)", "learn", "[unitId]", "lesson", "LessonSession.tsx"),
@@ -5402,6 +5412,7 @@ check("the layers that promise to be pure import no database, React or Next", ()
   const pure = [
     "assessment", "estonian", "exam", "games", "gamification", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
+    "learn",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],
@@ -8598,6 +8609,177 @@ check("a contributed scene sentence is gated by the dictionary", () => {
     "lib/collections/sceneAnswers.ts imports something. It is generated data: " +
     "anything computed in it is thrown away by the next import.",
   );
+});
+
+
+// ── The Learn ladder (new words) ─────────────────────────────────────────────
+
+check("the ladder a new word climbs is the scheduler's own steps", () => {
+  /*
+    Learn walks a word up three rungs: meet it, pick what it means, put it back
+    in the sentence. FSRS already keeps a card in Learning across two steps
+    before it graduates and already sends a missed card back to the first one,
+    so a ladder of our own beside that would be two answers to when a word is
+    known, drifting apart a grade at a time. The rung is *read off* `state` and
+    `learningSteps`, which `Card` has carried since the scheduler was written.
+
+    Two shapes fail here. A rung stored anywhere, which is the same argument
+    ADR-014 makes about progress: a second source of truth drifts, and it can be
+    awarded for something that never happened. And a second reader working a
+    rung out for itself, which is how the ladder and the scheduler come to
+    disagree about whether a word graduated.
+  */
+  const ladder = code("lib/learn/ladder.ts");
+  assert.match(ladder, /state === NEW/, "the ladder no longer reads the scheduler's state");
+  assert.match(ladder, /learningSteps/, "the ladder no longer reads the scheduler's own step");
+
+  const schema = read("prisma/schema.prisma");
+  for (const column of ["rung", "learnStage", "ladderStep"]) {
+    assert.doesNotMatch(
+      schema, new RegExp(`\\b${column}\\b`),
+      `${column} is a stored rung. The ladder is derived from state and learningSteps.`,
+    );
+  }
+
+  const readers = ALL
+    .filter((f) => !/\.(test|itest)\.tsx?$/.test(f))
+    .filter((f) => /\blearningSteps\b/.test(code(f)));
+  const allowed = new Set([
+    /*
+      The scheduler owns the field. `grade` applies it, `backfill` and `deck`
+      write it on a new card, and the three that carry a card across the wire
+      round-trip it, which the schema says in as many words: dropping it pins a
+      card in Learning for ever.
+    */
+    "lib/srs/scheduler.ts", "lib/srs/grade.ts", "lib/srs/backfill.ts", "lib/srs/deck.ts",
+    "app/actions.ts", "app/(app)/review/cards.ts",
+    // The ladder reads it, and the two files that put a rung on a screen.
+    "lib/learn/ladder.ts", "lib/progress/learn.ts",
+    "app/(app)/learn/new/LearnSession.tsx",
+  ]);
+  assert.deepEqual(
+    readers.filter((f) => !allowed.has(f)), [],
+    "a new file reads the FSRS learning step. If it is working out a rung, "
+    + "call rungOf in lib/learn/ladder.ts rather than reading the number.",
+  );
+
+  // And the mapping itself, because the three rungs are the whole feature.
+  assert.equal(rungOf(0, 0), "meet");
+  assert.equal(rungOf(1, 0), "choice");
+  assert.equal(rungOf(1, 1), "gap");
+  assert.equal(rungOf(2, 0), "kept");
+});
+
+check("learn teaches a word and practice drills it, never both at once", () => {
+  /*
+    The daily row used to be Review and it did two jobs: the cards that were
+    due, and a trickle of words the learner had never seen, taught in among
+    them. Learn owns the second one now, and the line between the two screens
+    has to be drawn in the queries or a word being learned this evening turns up
+    on both, asked cold on the screen that does not teach.
+
+    Two clauses, and they are different shapes on purpose. The due read excludes
+    the ladder's own card while it is still in learning, which is a plain
+    predicate on the row because that is the hottest read in the app. The unseen
+    read excludes every card of a word the ladder still has hold of, which needs
+    the word rather than the row and so is a `none` on the entry's own cards.
+  */
+  const review = code("app/(app)/review/page.tsx");
+  assert.match(
+    review, /NOT:\s*\{\s*cardType:\s*LADDER_CARD_TYPE/,
+    "the review queue serves a card the Learn ladder is still walking",
+  );
+  assert.match(
+    review, /pastTheLadder\(ownerId\)/,
+    "the review queue introduces unseen cards of a word Learn has not finished with",
+  );
+  assert.match(
+    review, /state:\s*\{\s*in:\s*\[\.\.\.LADDER_STATES\]/,
+    "the review queue names the ladder's states itself rather than reading the table",
+  );
+
+  /*
+    And Today counts what Practice will actually serve. A number on the home
+    page that the review queue then refuses to fill reads as a counting fault
+    rather than as a rule, which is worse than either.
+  */
+  const summary = code("lib/progress/summary.ts");
+  assert.match(summary, /LADDER_CARD_TYPE/, "the deck snapshot draws its own line under the ladder");
+  assert.match(summary, /isLearningWord\(/, "the deck snapshot no longer asks which words are Learn's");
+
+  // The card the ladder is kept on is one fact, named once.
+  const typed = ALL.filter((f) => f.startsWith("lib/learn/") || f === "lib/progress/learn.ts")
+    .filter((f) => /"RECOGNITION"/.test(code(f)));
+  assert.deepEqual(
+    typed.filter((f) => f !== "lib/learn/ladder.ts"), [],
+    "the ladder's card type is typed out again. It is LADDER_CARD_TYPE in lib/learn/ladder.ts.",
+  );
+});
+
+check("a word is introduced by one drawing", () => {
+  /*
+    A first meeting shows the word, what it means, and an attested sentence with
+    the form marked in it, and it says where the sentence came from. Review had
+    that drawing and Learn needs the same one: two copies would be two answers
+    to how a word is introduced, and the one nobody was looking at would be the
+    one that stopped naming its source.
+  */
+  assert.ok(existsSync("components/WordIntro.tsx"), "the shared first meeting is gone");
+  for (const file of ["app/(app)/review/ReviewSession.tsx", "app/(app)/learn/new/LearnSession.tsx"]) {
+    assert.match(code(file), /<WordIntro\b/, `${file} draws a first meeting of its own again`);
+  }
+  const provenance = ALL.filter((f) => /A real sentence, from Ekilex/.test(read(f)));
+  assert.deepEqual(
+    provenance, ["components/WordIntro.tsx"],
+    "more than one screen says where a teaching sentence came from",
+  );
+});
+
+check("the gap asks for a word without printing it", () => {
+  /*
+    The rung before the gap asked what the word means, so the gap is about the
+    form and needs to say which word it wants. That cue is the review card's own
+    fallback and for its reason: the lemma and the meaning, then the meaning
+    alone, then nothing, because wherever the gap wants the dictionary form the
+    lemma would be the answer printed a line under the question. The sentence's
+    English translation is held to the same test, since thirty entries in the
+    dictionary are spelled the same in both languages.
+  */
+  const learn = code("lib/progress/learn.ts");
+  assert.match(learn, /mentions\(example\.en, cloze\.answer\)/,
+    "the gap prints an English translation without checking it is not the answer");
+  assert.match(learn, /find\(\(line\) => !mentions\(line, cloze\.answer\)\)/,
+    "the gap's cue no longer falls back where it would hand the answer over");
+});
+
+check("a destination reached from another one really is linked from there", () => {
+  /*
+    `within` in lib/ux/nav.ts keeps a row out of the rail on the promise that
+    the screen it belongs to offers it. A `within` nobody wired up is worse than
+    the menu it left: the screen is then reachable only through the command
+    palette. `lib/ux/nav.test.ts` asserts this for the practice modes and the
+    nav table went unchecked, which is how the deck and the mock paper came to
+    claim they were on Progress while neither was linked from it.
+
+    Asserted against the route's whole directory rather than one file, because a
+    page splits into a client component as often as not.
+  */
+  const inside = DESTINATIONS.filter((d) => d.within?.startsWith("/"));
+  assert.ok(inside.length >= 4, `only ${inside.length} destinations live inside another one`);
+
+  for (const item of inside) {
+    const segment = item.within!.split("/").filter(Boolean)[0]!;
+    const dir = join("app", "(app)", segment);
+    assert.ok(existsSync(dir), `${item.href} says it is reached from ${item.within}, which is not a route`);
+    const linked = ALL
+      .filter((f) => f.startsWith(dir.replace(/\\/g, "/")) || f.startsWith(`${dir}/`))
+      .some((f) => code(f).includes(`"${item.href}"`) || code(f).includes(`\`${item.href}`));
+    assert.ok(
+      linked,
+      `${item.href} is kept out of the rail because it is reached from ${item.within}, `
+      + `and nothing under ${dir} links to it. That leaves it reachable only from the palette.`,
+    );
+  }
 });
 
 console.log(

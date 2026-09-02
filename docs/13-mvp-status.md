@@ -1750,3 +1750,76 @@ Two lines were missing from the bill: transactional mail, and the tooling that w
   unit tests. The containment suite with `/funding` at three widths and in the dark, the
   accessibility suite with axe clean on it in both themes, and the design suite reporting no
   contrast failures with the page in its sweep.
+
+## 27. The twenty-first pass: learning a word, which is not the same as reviewing one
+
+The daily row in the rail said Review, and what it opened was two jobs at once: the cards that were
+due, and a trickle of words the learner had never seen, taught in among them. Reviewing is keeping a
+memory alive and needs a schedule. Building one needs to be walked up. So the daily row is **Learn**,
+and what is due belongs to Practice, where every other way of asking a word you already know already
+lived.
+
+### The three rungs
+
+A word is met (the word, what it means, and an attested sentence with it in), then asked what it
+means out of four ranked options, then put back into the sentence it was met in. Pass the gap and the
+word moves to Practice; miss it and it drops to the rung below.
+
+Five words at a time, and the batch size is also the gap a word waits before it comes round again, so
+one lap is one round: you meet five words, meet four others, and are asked the first one back at the
+point where you have to retrieve it rather than read it off the screen above. A first meeting still
+writes nothing, which is the rule §21 arrived at.
+
+### The rungs are the scheduler's, not a second progression
+
+FSRS already keeps a card in Learning across two steps before it graduates and already sends a missed
+card back to the first step. A ladder of our own beside that would be two answers to when a word is
+known. So the rung is read off `state` and `learningSteps`, two columns `Card` has carried since the
+scheduler was written, and nothing is stored:
+
+| what happened | scheduler | rung |
+| --- | --- | --- |
+| never asked | New | meet it |
+| answered right once | Learning, step 1 | put it in the sentence |
+| answered right twice | Review | Practice's, from now on |
+| missed at the gap | Learning, step 0 | back to the four options |
+| nearly, at the gap | Learning, step 1 | the gap again |
+| "I already know this one" | Review | Practice's, at about a week |
+
+`ladder.test.ts` drives the real scheduler rather than asserting that table from memory. A change to
+those defaults upstream would otherwise leave every rung passing and the ladder silently flat.
+
+### One card per word
+
+Every rung reads and writes the word's **recognition** card, because each rung asks the same question
+at a greater depth and that is the one row in a deck that stands for "do you know this word". The
+word's other cards are drills on a word you already know, and handing them to Practice is what "moves
+to practice" means on the last screen.
+
+### Neither screen teaches what the other one is teaching
+
+The ladder puts its card ten minutes out between rungs, so a word being learned this evening is
+technically due, and serving it in review as well would ask for it cold on the screen that does not
+teach. The due read excludes the ladder's card while it is in learning; the unseen read excludes
+every card of a word the ladder still has hold of. `deckSnapshot` draws the same line, so the number
+on Today is the number the review queue will fill.
+
+### What was found by driving it
+
+- A wrong answer at the gap moved the word to the rung below, and the screen rendered from the
+  ladder directly, so the correction was replaced by the next question in the same frame. The one
+  moment worth stopping for was never drawn. The session now holds the rung it is *asking* at
+  separately from where the word stands.
+- The gap had no cue at all, which made it a memory test of which of five words this sentence
+  belonged to. It says which word and never which spelling, through the review card's own fallback.
+- Two nav destinations, the deck and the mock paper, claimed to be reached from Progress and neither
+  was linked from it. Both are now, and the claim is asserted rather than described.
+
+### Measured
+
+- 215 invariants, five of them new and every one made to fail before it was left passing. 1,924
+  unit tests. The containment suite over every route at three widths and in both themes, 1,160
+  checks clean; axe clean on every screen; the phone, the offline queue and the nav marker all
+  measured again after the bar changed.
+- A round driven end to end in a browser: five meetings, five choices, five gaps, then the words
+  that were produced moving to Practice and the ones that were not coming back at the rung below.
