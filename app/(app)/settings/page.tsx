@@ -25,6 +25,8 @@ import { GlossLanguagePanel } from "./GlossLanguagePanel";
 import { GLOSS_LANGUAGES, glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom, VOICES } from "@/lib/audio/voice";
 import { RestorePanel } from "./RestorePanel";
+import { UsagePanel } from "./UsagePanel";
+import { DangerZone } from "./DangerZone";
 import { SetupGuide } from "./SetupGuide";
 import { providerResilience } from "@/lib/tutor/provider";
 
@@ -341,6 +343,14 @@ export default async function SettingsPage() {
               )}
             </Card>
           </section>
+
+          {/*
+            What today has cost, under the tutor it is about. Only where a
+            provider is configured: "0 of 40 questions" over a tutor that is
+            switched off reports a limit nobody can reach as though it were
+            one they were approaching.
+          */}
+          {provider && <UsagePanel ownerId={ownerId} />}
         </Group>
 
         <Group title="Device and data">
@@ -477,6 +487,15 @@ export default async function SettingsPage() {
               </div>
             </Card>
           </section>
+
+          {/*
+            Last, and in this group rather than one of its own, because the
+            first thing its copy does is point at the backup four sections up.
+            `/privacy` promises somebody can take everything away, and until
+            this was rendered the only way to keep that promise was to ask
+            whoever runs the deployment.
+          */}
+          <DangerZone counts={{ cards, reviews }} />
         </Group>
       </Stack>
     </Page>

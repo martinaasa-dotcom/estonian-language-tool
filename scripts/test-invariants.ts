@@ -3696,6 +3696,59 @@ check("a deletion that leaves something behind says so", () => {
   assert.match(danger, /result\.remaining/, "the screen ignores what the deletion left behind");
 });
 
+/**
+ * A PANEL NOBODY RENDERS IS A FEATURE NOBODY HAS.
+ *
+ * `DangerZone.tsx` and `UsagePanel.tsx` were complete, commented, correct, and
+ * imported by nothing. Not dropped by a merge: `git log -S` finds no commit on
+ * any branch where the settings page ever named either. So for the whole life
+ * of this app there was no way to delete an account from inside it, while
+ * `/privacy` promised somebody could take everything away, and the tutor's own
+ * spending meter, which several rules above describe as the place a learner
+ * reads what they have used, was on no screen.
+ *
+ * The check above is how that survived. It reads `DangerZone.tsx` and asserts
+ * the copy inside it, so it passed with feeling on a component the router
+ * could not reach: this repository's oldest recurring mistake is a check that
+ * reads a file rather than the screen, and this is that mistake pointed at a
+ * whole component instead of a comment. A file being right is not the same
+ * claim as a reader being able to get to it.
+ *
+ * So the pairing is asserted rather than either half. Every module beside
+ * `page.tsx` in that folder has to put something on the page, tested on a name
+ * the module actually exports being used as an element, because an import
+ * nobody renders is the same silence one import earlier. It carries a floor
+ * for the reason every sweep here does: a folder that stops matching would
+ * otherwise assert nothing and say so in the same words as a folder that is
+ * entirely fine.
+ */
+check("every settings panel is on the settings screen", () => {
+  const dir = join("app", "(app)", "settings");
+  const panels = readdirSync(dir).filter((f) => f.endsWith(".tsx") && f !== "page.tsx");
+  assert.ok(
+    panels.length >= 10,
+    `only found ${panels.length} settings panels, so this check stopped looking`,
+  );
+
+  const page = code(join(dir, "page.tsx"));
+  for (const file of panels) {
+    const exported = [...code(join(dir, file))
+      .matchAll(/export\s+(?:async\s+)?(?:function|const)\s+([A-Z]\w*)/g)]
+      .map((m) => m[1]!);
+    assert.ok(exported.length > 0, `${file} exports no component for the page to render`);
+
+    /*
+      The element, not the import. An unused import is what a lint rule
+      catches; a rendered-nowhere component is what nothing did.
+    */
+    assert.ok(
+      exported.some((name) => new RegExp(`<${name}[\\s/>]`).test(page)),
+      `app/(app)/settings/${file} exports ${exported.join(", ")} and the settings page renders ` +
+      `none of them, so whatever it does is unreachable. Render it, or delete the file.`,
+    );
+  }
+});
+
 /** Every model in the schema carrying an `ownerId`: one person's own data. */
 function ownerScopedModels(): string[] {
   const owned = [...SCHEMA.matchAll(/model (\w+) \{([^}]*)\}/g)]
@@ -5276,7 +5329,7 @@ check("the funding page reads the environment once, and only for a yes or a no",
 /**
  * THE INFRASTRUCTURE LIST NAMES VARIABLES THAT DO SOMETHING.
  *
- * `lib/funding/infra.ts` is a catalogue of what this app runs on, and each
+ * `lib/funding/services.ts` is a catalogue of what this app runs on, and each
  * entry that can be switched on names the variable that switches it. A name
  * that nothing in the app reads is worse than no name: the page prints "not
  * set here" for ever, whoever is running it sets the variable, and nothing

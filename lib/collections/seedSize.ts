@@ -73,5 +73,13 @@
  * mark `mulle` wrong. See `unreachableSlots` and `unreachableCaseForms`, which
  * are asked rather than listed beside, because a list of exceptions kept next
  * to the exceptions is two copies of one fact.
+ *
+ * The fifteen after that are the words `npm run eval:scene` watched a model
+ * reach for and the course could not vouch for, and they moved the count by
+ * eight rather than fifteen because seven of them were already in the built
+ * expansion and only needed teaching. They are the verbs a transaction turns
+ * on, which is the shape of the gap: the course had `valu` and `haige` and no
+ * `valutama`, a unit on housing and no `katki`, and no way at all to ask
+ * whether a time suits you. Each went to the unit whose subject it is.
  */
-export const SEED_SET_SIZE = { words: 6_102, forms: 38_577 };
+export const SEED_SET_SIZE = { words: 6_110, forms: 38_607 };

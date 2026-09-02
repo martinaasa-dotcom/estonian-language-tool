@@ -343,7 +343,7 @@ Reading the ranked list rather than the total is what made it right, because the
 faults and only one is a missing unit: the untaught conjunctions and particles, the forms of
 `olema` that are neither stored nor derivable, and the short pronoun forms and the simple past that
 two rules above already say arrive with enrichment. A unit built off the total would have taught
-`oli` as a headword. `docs/19-situations.md` §26 has the measurements and §27 what
+`oli` as a headword. `docs/21-situations.md` §26 has the measurements and §27 what
 building them turned up, which was three things nothing had been checking.
 
 **A homonym was reported on one path out of two.** The rule that a homonym is resolved by a person
@@ -542,7 +542,7 @@ of what is withheld in every run, register is none of it, and the lines being th
 `kestma`, `sobima` and `valutama` are in no unit at any level, and nor are `asuma`, `esitama`,
 `korrus`, `katki` or `valmis`. The pattern is one sentence: the course teaches the nouns of a
 situation and not the verbs that do things with them, `valu` and `haige` but not `valutama`, a
-unit on housing but no `katki`. `docs/19-situations.md` §29 is the write-up and §19 is what it
+unit on housing but no `katki`. `docs/21-situations.md` §29 is the write-up and §19 is what it
 changed, which is that Phase 1 waits on that vocabulary rather than on any code.
 
 **Six runs of 63 lines cannot resolve eight points, and the table says so.** Two of the rows in
@@ -1444,6 +1444,24 @@ learner sees, so an edit to one is an edit for everybody. It is attributed (`edi
 replace only the principal parts, and it must never touch a form retrieved from Ekilex. Anything
 scoped to a person (cards, reviews, tasks) is always filtered by `ownerId`, including in an
 `updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
+
+**A panel nobody renders is a feature nobody has, and two of them were.** `DangerZone.tsx` and
+`UsagePanel.tsx` sat in `app/(app)/settings/` complete, commented and imported by nothing. Not
+dropped by a merge, which is the failure this repository already knows about: `git log -S` finds no
+commit on any branch where the settings page ever named either. So for the whole life of this app
+there was no way to delete an account from inside it, while `/privacy` promised somebody could take
+everything away and `deleteMyAccount` sat in `app/actions.ts` reachable from one file the router
+could not get to; and the tutor's spending meter, which four rules above describe as where a learner
+reads what they have used, was on no screen at all.
+
+What let it survive is the fault this file keeps finding in its own checks, pointed at a component
+instead of a comment. An invariant *reads* `DangerZone.tsx` and asserts the copy inside it, so it
+passed with feeling on a file no reader could reach. A file being right is a different claim from a
+reader being able to get to it, and only the first one was ever made. So the pairing is asserted
+now: every module beside `page.tsx` in that folder has to put something on the page, tested on a
+name the module exports being used as an element rather than on the import, because an import
+nobody renders is the same silence one line later. It has the floor every sweep here has, and it
+was made to fail first, on the real bug rather than on a hypothetical one.
 
 **A dead end offers a way out, and the way out is a queue somebody works.** Nothing here may tell
 somebody it cannot help them and then stop. A search that found nothing, an answer marked wrong that
@@ -3744,6 +3762,7 @@ npm run audit:pos        # re-check every built part of speech the same way (sha
 npm run audit:verbs      # derive every verb's present, negative, conditional and imperative, and compare with Ekilex
 npm run audit:decks      # case cards already in a deck whose answer spells the word in the question (--write removes)
 npm run audit:cases      # derive every case of every noun, both columns, and compare with Ekilex (--write fills the gaps)
+npm run audit:senses     # re-check every course gloss against the sense Ekilex files it under
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
@@ -3752,12 +3771,12 @@ npm run build:frequency  # recount the commonest words (cached corpus, --refresh
 npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
+npm run measure:scenes   # how much of a conversation the dictionary can already carry
+npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
 npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, suggestions, a11y
                          # (test-first-day runs first and needs an empty deck: reseed before it)
-
-npm run test:browser     # the newer browser suites: routes, modes, exam, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
 npm run test:containment # text and icons inside their boxes, measured; needs the server running
 ```
