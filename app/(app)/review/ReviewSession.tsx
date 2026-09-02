@@ -275,7 +275,9 @@ function plan(cards: readonly ReviewCard[]): LearnStep<ReviewCard>[] {
   );
 }
 
-export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode }: {
+export function ReviewSession({
+  cards: initialCards, drillCase, drillUnit, drillScan, totalCards, mode, title = "Review",
+}: {
   cards: ReviewCard[];
   drillCase?: string;
   drillUnit?: string;
@@ -283,6 +285,14 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   drillScan?: { id: string; title: string };
   totalCards: number;
   mode: ReviewMode;
+  /**
+   * What this screen is called, for the heading no round has room to draw.
+   *
+   * Two routes render this session now, and the Flash cards round announced
+   * itself as "Review" to a screen reader while its tab said "Flash cards".
+   * A screen names itself, and it has to be the same name in both places.
+   */
+  title?: string;
 }) {
   // Snapshotted once on mount, and never updated from later props. gradeCard()
   // is a Server Action, and Next.js refreshes this route's Server Component
@@ -742,7 +752,7 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
           nothing back, while the four modes that happen to have a title bar
           answered fine. The `Empty` and finished states of these same files
           already carry one, which is how the gap survived a sweep. */}
-      <h1 className="sr-only">Review</h1>
+      <h1 className="sr-only">{title}</h1>
       <div className="mb-7 flex items-center gap-4">
         <Link
           href="/"

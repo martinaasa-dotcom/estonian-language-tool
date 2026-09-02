@@ -4,17 +4,11 @@ import { courseLevelFor } from "@/lib/progress/level";
 import { aroundFirst, bandsAround, isAround } from "@/lib/collections/levels";
 import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
-import { parseExamples, teachingSentence } from "@/lib/dict/examples";
-import { decoyOptions } from "@/lib/dict/facts";
-import { unitIntroducing } from "@/lib/collections/syllabus";
-import {
-  bandOf, differentMeaning, glossNearness, glossOption, pickOptions,
-} from "@/lib/questions/distractors";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
-import { isStillLearning } from "@/lib/srs/scheduler";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
-import { ReviewSession, type ReviewCard } from "./ReviewSession";
+import { ReviewSession } from "./ReviewSession";
+import { include, withChoices, type CardRow } from "./cards";
 
 export const metadata = { title: "Review" };
 
@@ -35,22 +29,9 @@ const NEW_PER_SESSION = 10;
  * Sixty is a wide enough window for the level to have something to choose
  * between and still one query of one page of rows.
  */
-/**
- * What a card row carries. At module scope because `inBandPool` reads it too,
- * and a second copy is two selects that can come apart.
- *
- * `cefr` rides along for the new-card queue, which introduces words around the
- * learner's level before words far off it. `examples` is a handful of short
- * sentences and only the one that gets shown crosses to the client, because a
- * word taught without a sentence is a word taught as a label (see `introFor`).
- */
-const include = {
-  lexeme: { select: { lemma: true, translation: true, pos: true, examples: true, cefr: true } },
-} as const;
 
 const NEW_CANDIDATES = 60;
 const MAX_SESSION = 60;
-const CHOICES = 4;
 
 export default async function ReviewPage({
   searchParams,
@@ -257,163 +238,4 @@ function atLevelFirst(cards: readonly CardRow[], level: Level): CardRow[] {
   return aroundFirst(cards, level, (c) => c.lexeme?.cefr);
 }
 
-type CardRow = Awaited<ReturnType<typeof prisma.card.findMany>>[number] & {
-  lexeme: { lemma: string; translation: string; pos: string; examples: string; cefr: string | null } | null;
-};
-
-/**
- * What a first meeting with a word shows.
- *
- * Assembled here rather than in the browser for two reasons: the sentence is
- * picked out of a column holding up to eight of them and only the chosen one
- * needs to cross the wire, and `teachingSentence` is the same function the
- * grammar pages and the lesson use, so a word is introduced the same way
- * wherever it is met.
- *
- * Every string in here came out of the dictionary. Nothing is written, and
- * nothing is derived (ADR-005).
- */
-function introFor(c: CardRow): ReviewCard["intro"] {
-  if (!c.lexeme) return null;
-
-  // The form the card is about to ask for comes first, then the lemma. On a
-  // recognition card the front *is* the lemma, and on a gap-fill the front is a
-  // sentence with a hole in it and would match nothing, which is why this asks
-  // the card what it is rather than reading whichever side happens to be
-  // Estonian.
-  const asked = c.cardType === "RECOGNITION" ? c.front : c.back;
-  const found = teachingSentence(parseExamples(c.lexeme.examples), [asked, c.lexeme.lemma]);
-
-  return {
-    lemma: c.lexeme.lemma,
-    gloss: c.lexeme.translation,
-    sentence: found
-      ? { et: found.example.et, en: found.example.en ?? null, form: found.form }
-      : null,
-  };
-}
-
-function toReviewCard(c: CardRow): ReviewCard {
-  return {
-    id: c.id,
-    cardType: c.cardType,
-    front: c.front,
-    back: c.back,
-    hint: c.hint,
-    targetCase: c.targetCase,
-    lemma: c.lexeme?.lemma ?? null,
-    isNew: c.state === 0,
-    // Only on a card that has never been seen. Every other card in the session
-    // would carry a sentence nothing renders.
-    intro: c.state === 0 ? introFor(c) : null,
-    choices: null,
-    scheduling: {
-      due: c.due.toISOString(),
-      stability: c.stability,
-      difficulty: c.difficulty,
-      elapsedDays: c.elapsedDays,
-      scheduledDays: c.scheduledDays,
-      reps: c.reps,
-      lapses: c.lapses,
-      state: c.state,
-      lastReview: c.lastReview?.toISOString() ?? null,
-      learningSteps: c.learningSteps,
-    },
-  };
-}
-
-/**
- * Which recognition cards are asked as four options rather than recalled.
- *
- * Only the ones still being learned, which is the whole point of the shape.
- * Options were once attached to every recognition card a session held, and the
- * effect was that half a deck could never be asked properly: `askFor` routes to
- * a pick whenever options exist, and neither review mode overrides it, so the
- * one question this app is named for, what does this Estonian word mean, was
- * always answered with the answer already on the screen. Recognising a gloss
- * among four is a different and much weaker memory than producing it, and a
- * schedule built on the easier one says a word is known when it is not.
- *
- * A card still in learning keeps them for the same reason a new card leads with
- * its answer at all (see `askFor`): the memory is not there yet, and asking for
- * it cold is a guessing game rather than a test. A lapsed card is back in that
- * position by definition, which `isStillLearning` reads as Relearning.
- */
-function wantsChoices(card: ReviewCard): boolean {
-  if (card.cardType !== "RECOGNITION") return false;
-  /*
-    A word met earlier in this sitting is asked back in it, and four options is
-    what it is asked with. `!card.isNew` used to be here and it was the reason
-    a new word could not be tested the same day it was taught: the server
-    attached no options, so the only shape available on the step after the
-    introduction was recall, which is the guessing game the introduction exists
-    to avoid. See lib/srs/learn.ts.
-  */
-  return card.isNew || isStillLearning(card.scheduling.state);
-}
-
-/**
- * Maps the rows to cards, attaching multiple-choice options to the recognition
- * cards that get them.
- *
- * Wrong answers are real translations of other words rather than invented text:
- * nothing here writes Estonian, and a decoy that is obviously nonsense makes
- * the question free. They are drawn once for the whole session, so the pool is
- * one query rather than one per card.
- *
- * **Which three are offered is ranked, not shuffled.** This screen took the
- * first three strings off a shuffle of the whole dictionary, so a learner asked
- * what `jooma` means chose between "to drink", "window", "October" and
- * "friendship". Three nouns standing around one verb is a single glance, and
- * the question measured whether somebody can spot the odd option rather than
- * whether they know the word. The learner who reported it put it plainly: if
- * the Estonian word is a verb then all four options need to be verbs.
- *
- * `lib/questions/distractors.ts` has been the one table of what a wrong answer
- * is worth since the placement check and the mock exam were fixed for exactly
- * this fault, and the daily review screen was simply never wired to it. It
- * ranks on the course unit, the part of speech, the CEFR band and the shape of
- * the line, and `differentMeaning` is what stops a near option becoming a
- * second right one. `pickOptions` returns null rather than padding when it
- * cannot find three that are genuinely wrong, and that card is asked as recall
- * instead, which is the honest answer and is what this screen does with every
- * card that never had options.
- *
- * Takes the rows rather than the mapped cards, because the ranking needs the
- * part of speech and the band and a `ReviewCard` carries neither. Threading a
- * second parallel array in beside the cards would be two lists that can come
- * apart.
- */
-async function withChoices(rows: CardRow[]): Promise<ReviewCard[]> {
-  const cards = rows.map(toReviewCard);
-  if (!cards.some(wantsChoices)) return cards;
-
-  /*
-    Which words the dictionary holds is not a fact about the person being
-    asked, so the pool is read once per instance rather than once per session,
-    off the render path of the screen this app exists to get people to.
-    See lib/dict/facts.ts.
-  */
-  const pool = await decoyOptions();
-  if (pool.length < CHOICES) return cards;
-
-  return cards.map((card, i) => {
-    if (!wantsChoices(card)) return card;
-    const lexeme = rows[i]?.lexeme;
-    const answer = glossOption({
-      text: card.back,
-      pos: lexeme?.pos ?? "OTHER",
-      band: bandOf(lexeme?.cefr),
-      theme: lexeme ? unitIntroducing(lexeme.lemma, lexeme.pos) : null,
-    });
-    const picked = pickOptions({
-      answer,
-      candidates: pool,
-      rng: Math.random,
-      distinct: differentMeaning,
-      nearness: glossNearness,
-    });
-    return picked ? { ...card, choices: picked.options } : card;
-  });
-}
 

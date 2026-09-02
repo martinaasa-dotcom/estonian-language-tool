@@ -5,6 +5,8 @@ import { ButtonLink } from "@/components/Button";
 import { Card, Empty, Page, SectionTitle, Stack, StatTile } from "@/components/ui";
 import { STATE_LABELS } from "@/lib/srs/scheduler";
 import { Diagnosis } from "@/components/Diagnosis";
+import { MasteryLists } from "@/components/MasteryLists";
+import { masteryCounts, masteryFor } from "@/lib/progress/mastery";
 import { WordsTable, type CardRow } from "./WordsTable";
 
 export const metadata = { title: "My words" };
@@ -22,7 +24,7 @@ export default async function WordsPage() {
     The count rides beside them rather than in front: an empty deck pays for
     two cheap reads it will not show, and everybody else saves a round trip.
   */
-  const [totalCards, cards, counts] = await Promise.all([
+  const [totalCards, cards, counts, mastery] = await Promise.all([
     prisma.card.count({ where: { ownerId } }),
     prisma.card.findMany({
       where: { ownerId },
@@ -31,6 +33,10 @@ export default async function WordsPage() {
       include: { lexeme: { select: { lemma: true, cefr: true } } },
     }),
     prisma.card.groupBy({ by: ["state"], where: { ownerId }, _count: true }),
+    // Where every met word stands, by the one rule in lib/srs/mastery.ts. The
+    // Flash cards round and the tile on Practice read the same query, so the
+    // three cannot disagree about which words are done.
+    masteryFor(ownerId),
   ]);
 
   const rows: CardRow[] = cards.map((c) => ({
@@ -91,6 +97,8 @@ export default async function WordsPage() {
               </Link>.
             </p>
           </Card>
+
+          <MasteryLists words={mastery} counts={masteryCounts(mastery)} />
 
           <Diagnosis ownerId={ownerId} />
 

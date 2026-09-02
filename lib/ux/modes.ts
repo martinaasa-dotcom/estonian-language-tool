@@ -65,6 +65,25 @@ export interface PracticeMode {
 
 export const PRACTICE_MODES: readonly PracticeMode[] = [
   {
+    /*
+      The headline of `/practice`, drawn as its own card above the grid, which
+      is why it carries `within` and stays out of `QUICK_MODES`: the six rounds
+      are six coloured tiles and there are six hues, so a seventh would have to
+      share one and read as a duplicate of whichever it borrowed.
+
+      `targeted` is the honest group for it too. It is not a round you play for
+      five minutes whatever state your deck is in, it is what you open when you
+      know which words are not sticking, which is what the group means.
+    */
+    href: "/review/flashcards", title: "Flash cards", subtitle: "Words you have met",
+    icon: "Layers", tone: "accent", group: "targeted", note: "Typed, varied",
+    within: "/practice",
+    blurb:
+      "The words review has already introduced, asked in a way you have not: a different form " +
+      "each time, typed rather than picked. A word leaves once it is right five times across " +
+      "three different forms.",
+  },
+  {
     href: "/review/sprint", title: "Case Sprint", subtitle: "60 seconds", icon: "Zap", tone: "butter",
     group: "quick", note: "No score yet",
     blurb: "Sixty seconds, as many case forms as you can manage, drawn from the cards you are weakest on.",
