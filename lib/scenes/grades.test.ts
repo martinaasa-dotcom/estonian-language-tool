@@ -1,0 +1,133 @@
+import { describe, expect, it } from "vitest";
+import { advance, startScene, type SceneState } from "./state";
+import { gradesFor, stalledWords } from "./grades";
+import type { Evidence, TurnReading } from "./turn";
+import type { SceneSpec } from "./types";
+
+const SCENE: SceneSpec = {
+  id: "fixture", title: "A fixture", place: "Nowhere", level: "A2",
+  tests: "keha-ja-tervis", units: ["tervitused"], register: "teie",
+  role: "You are somebody, and it is not you.", props: [], curveballs: [],
+  beats: [
+    {
+      id: "reason", goal: "Say what is wrong.", move: "ask", topic: ["valu"],
+      needs: [{ kind: "lemma", oneOf: ["valu", "haigus"] }],
+      required: true, patience: 3, shape: "word",
+    },
+    {
+      id: "where", goal: "Say where.", move: "ask", topic: ["pea"],
+      needs: [{ kind: "case", lemma: "pea", grammCase: "INESSIVE" }],
+      required: true, patience: 3, shape: "word",
+    },
+    {
+      id: "close", goal: "Say goodbye.", move: "close", topic: ["Head aega!"],
+      needs: [{ kind: "question" }],
+      required: true, patience: 2, shape: "word",
+    },
+  ],
+  outcomes: [
+    { id: "done", when: ["reason", "where", "close"], says: "Done." },
+    { id: "left", when: [], says: "You left." },
+  ],
+};
+
+function evidence(reading: TurnReading, met: readonly boolean[]): Evidence {
+  return { reading, met, missing: met.flatMap((ok, i) => (ok ? [] : [i])), words: [] };
+}
+
+/** Plays the turns given, in order, and hands back where it got to. */
+function play(turns: { reading: TurnReading; met: boolean[]; helped?: boolean }[]): SceneState {
+  let state = startScene(SCENE);
+  for (const turn of turns) {
+    ({ state } = advance(SCENE, state, evidence(turn.reading, turn.met), "x", turn.helped));
+  }
+  return state;
+}
+
+describe("what a conversation writes into the review log", () => {
+  it("grades a word the beat asked for, Good on the first attempt", () => {
+    const grades = gradesFor(SCENE, play([{ reading: "complete", met: [true] }]));
+    expect(grades).toEqual([
+      { lemma: "valu", grammCase: null, rating: 3, beatId: "reason" },
+    ]);
+  });
+
+  it("grades Hard after a repair, and never Easy", () => {
+    const grades = gradesFor(SCENE, play([
+      { reading: "incomplete", met: [false] },
+      { reading: "complete", met: [true] },
+    ]));
+    expect(grades[0]?.rating, "a conversation cannot tell easy from lucky").toBe(2);
+    for (const grade of grades) expect(grade.rating).toBeLessThan(4);
+  });
+
+  it("grades Again where the app had to supply the word", () => {
+    const grades = gradesFor(SCENE, play([{ reading: "complete", met: [true], helped: true }]));
+    expect(grades[0]?.rating).toBe(1);
+  });
+
+  it("does not count a fragment or an echo as a repair", () => {
+    /*
+      Neither cost patience in `advance`, because neither was a turn: a learner
+      who answered in one word, was waited at, and then said the sentence has
+      not repaired anything.
+    */
+    const grades = gradesFor(SCENE, play([
+      { reading: "fragment", met: [false] },
+      { reading: "echo", met: [false] },
+      { reading: "complete", met: [true] },
+    ]));
+    expect(grades[0]?.rating).toBe(3);
+  });
+
+  it("carries the case, so the weak-case charts see a conversation too", () => {
+    let state = startScene(SCENE);
+    ({ state } = advance(SCENE, state, evidence("complete", [true]), "x"));
+    ({ state } = advance(SCENE, state, evidence("complete", [true]), "x"));
+    const grades = gradesFor(SCENE, state);
+    expect(grades).toContainEqual({
+      lemma: "pea", grammCase: "INESSIVE", rating: 3, beatId: "where",
+    });
+  });
+
+  it("writes nothing for a beat that asked for no word", () => {
+    let state = startScene(SCENE);
+    for (let i = 0; i < 3; i += 1) {
+      ({ state } = advance(SCENE, state, evidence("complete", [true]), "x"));
+    }
+    // `close` asks for a question mark, which is a thing they did and not a
+    // word they hold a card for.
+    expect(gradesFor(SCENE, state).map((g) => g.beatId)).toEqual(["reason", "where"]);
+  });
+
+  it("writes nothing at all for an abandoned run", () => {
+    const grades = gradesFor(SCENE, play([
+      { reading: "unrecognised", met: [false] },
+      { reading: "unrecognised", met: [false] },
+    ]));
+    expect(grades, "an abandoned scene wrote to the review log").toEqual([]);
+  });
+
+  it("grades one row per requirement, not one per word it would have taken", () => {
+    // `oneOf` is a choice and the turn does not say which was taken, so a row
+    // per candidate would credit a word nobody used.
+    const grades = gradesFor(SCENE, play([{ reading: "complete", met: [true] }]));
+    expect(grades).toHaveLength(1);
+  });
+});
+
+describe("the words a run needed and the learner did not have", () => {
+  it("names the words of a beat that ran out of patience", () => {
+    const state = play([
+      { reading: "unrecognised", met: [false] },
+      { reading: "unrecognised", met: [false] },
+      { reading: "unrecognised", met: [false] },
+    ]);
+    expect(stalledWords(SCENE, state)).toEqual(["valu", "haigus"]);
+  });
+
+  it("says nothing about a beat that was met, or one nobody reached", () => {
+    expect(stalledWords(SCENE, play([{ reading: "complete", met: [true] }]))).toEqual([]);
+    expect(stalledWords(SCENE, startScene(SCENE))).toEqual([]);
+  });
+});

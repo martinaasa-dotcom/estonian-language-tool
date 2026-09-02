@@ -53,6 +53,21 @@ const COMMON = [
   "sidesonad", "vastused", "maaramine", "millal", "kohasonad", "kus-ja-kuhu",
 ] as const;
 
+/**
+ * What the other side says when nothing could be built for a beat.
+ *
+ * A course phrase rather than a sentence written here, which is the rule this
+ * file lives under: a lemma is a request against the dictionary, so a
+ * misspelled one fails to arrive and `catalogue.test.ts` says so. `tervitused`
+ * teaches it and every scene declares that unit through `COMMON`.
+ *
+ * It is the honest move rather than an error message. Composition can fail
+ * twice and there is still a person standing there waiting, and what a learner
+ * sees is somebody who did not catch what they said, which is the truest thing
+ * that can happen in a conversation.
+ */
+export const FALLBACK_PHRASE = "Ma ei saa aru";
+
 /** The closing phrases, which are the same wherever you are leaving. */
 const FAREWELLS = ["Head aega!", "Nägemist!", "Aitäh!"] as const;
 

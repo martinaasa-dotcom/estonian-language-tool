@@ -17,7 +17,7 @@
  * `syllabus.test.ts` fails when the harvest did not honour it.
  */
 import { describe, expect, it } from "vitest";
-import { SCENES, sceneById } from "./catalogue";
+import { FALLBACK_PHRASE, SCENES, sceneById } from "./catalogue";
 import { curveballById } from "./curveballs";
 import { LEFT_OUTCOME, QUESTION_SHAPE } from "./types";
 import { unitById } from "@/lib/collections/syllabus";
@@ -163,6 +163,20 @@ describe("the scene catalogue", () => {
     beat that can never be met, and it would look exactly like a learner who
     kept getting it wrong.
   */
+  it("has a way out every scene's own units teach", () => {
+    /*
+      The fallback is Estonian, so it is a lemma request like every other word
+      in this file: a misspelled one would fail to arrive and the way out would
+      be an empty string on somebody's screen. Every scene, because a scene
+      that could not say it is a scene with no way out of a failed beat.
+    */
+    for (const scene of SCENES) {
+      const taught = new Set(scene.units.flatMap((id) => unitById(id)?.lemmas ?? []));
+      expect(taught, `${scene.id} has no way to say it did not catch that`)
+        .toContain(FALLBACK_PHRASE);
+    }
+  });
+
   it("hands out a card that answers every datum its beats ask for", () => {
     for (const scene of SCENES) {
       const slots = new Set(scene.props.map((p) => p.slot));

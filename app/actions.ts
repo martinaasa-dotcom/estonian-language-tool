@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { throttleAction } from "@/lib/security/actionLimits";
+import { sceneById } from "@/lib/scenes/catalogue";
+import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
+import { finishRun, MAX_TURNS, MAX_TURN_CHARS } from "@/lib/progress/scene";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { formName } from "@/lib/estonian/morph";
 import {
@@ -945,6 +948,118 @@ export async function recordSonad(day: string, guesses: unknown) {
  * Every entry is one card at most, so a seven-word grid is at most seven rows
  * in an append-only table, which is the size of one review session.
  */
+/**
+ * A finished conversation, marked by the server and written down.
+ *
+ * `recordSonad`'s shape over a whole scene, and the same rule behind it: the
+ * client sends what it typed and the server rebuilds the run from its seed and
+ * reads every turn again (ADR-022). A result anybody can type is not a
+ * measurement, and here it would be worse than that, because a conversation
+ * writes into the review log and a forged one would schedule words nobody said.
+ *
+ * Nothing in the transcript is true about the learner. The role card is fiction
+ * (`docs/19-situations.md` §3), which is what makes a table of somebody's
+ * practice sentences about a doctor's appointment safe to hold at all.
+ */
+export async function finishScene(input: {
+  sceneId: unknown;
+  seed: unknown;
+  difficulty: unknown;
+  turns: unknown;
+  walkedOut: unknown;
+  asked: unknown;
+}) {
+  const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "finishScene");
+  if (busy) return busy;
+
+  /*
+    Off the wire, whatever the types say: every export of this file is a public
+    endpoint and its arguments are JSON. What has to be stopped here is the
+    size rather than the shape, since a turn that is not a string is read as an
+    empty one and marked as nothing.
+  */
+  const sceneId = text(input.sceneId).slice(0, 64);
+  const scene = sceneById(sceneId);
+  if (!scene) return { ok: false as const, error: "No scene by that name." };
+
+  const seed = text(input.seed).slice(0, 64);
+  if (!seed) return { ok: false as const, error: "That run has no seed." };
+
+  const difficulty = text(input.difficulty);
+  if (!(difficulty in BUDGETS)) return { ok: false as const, error: "Not a difficulty." };
+
+  const turns = Array.isArray(input.turns)
+    ? input.turns.slice(0, MAX_TURNS).map((turn) => {
+        const row = (turn ?? {}) as Record<string, unknown>;
+        return {
+          beatId: text(row.beatId).slice(0, 64),
+          said: text(row.said).slice(0, MAX_TURN_CHARS),
+          helped: row.helped === true,
+        };
+      })
+    : [];
+
+  const asked = Array.isArray(input.asked)
+    ? input.asked.slice(0, MAX_TURNS).map((one) => {
+        const row = (one ?? {}) as Record<string, unknown>;
+        return {
+          lemma: text(row.lemma).slice(0, 64),
+          lexemeId: typeof row.lexemeId === "string" ? row.lexemeId : null,
+        };
+      }).filter((one) => one.lemma)
+    : [];
+
+  const finished = await finishRun({
+    ownerId,
+    sceneId,
+    seed,
+    level: await courseLevelFor(ownerId),
+    difficulty: difficulty as Difficulty,
+    turns,
+    walkedOut: input.walkedOut === true,
+    asked,
+  });
+  if (!finished) return { ok: false as const, error: "That scene could not be rebuilt." };
+
+  /*
+    EVERY MODE GRADES THROUGH `gradeCard` (ADR-016), and a scene is no
+    exception. What is conservative is which turns earn a row rather than where
+    the row goes: `gradesFor` writes only where the retrieval was unambiguous,
+    and where the beat asked for a case the row carries it, so the case somebody
+    fails under pressure lands in the same weak-case charts as the case they
+    fail on a card.
+  */
+  let graded = 0;
+  for (const grade of finished.grades) {
+    const card = await prisma.card.findFirst({
+      where: {
+        ownerId,
+        lexeme: { lemma: grade.lemma },
+        ...(grade.grammCase
+          ? { cardType: "CASE_FORM", targetCase: grade.grammCase }
+          : { cardType: "PRODUCTION" }),
+      },
+      orderBy: { id: "asc" },
+      select: { id: true },
+    });
+    if (!card) continue;
+    const result = await gradeCard(card.id, grade.rating, 0);
+    if (result.ok) graded += 1;
+  }
+
+  revalidatePath("/situations");
+  return {
+    ok: true as const,
+    runId: finished.runId,
+    objectives: finished.objectives,
+    outcome: finished.outcome,
+    turns: finished.turns,
+    gaps: finished.gaps,
+    graded,
+  };
+}
+
 export async function recordCrossword(day: string, typed: unknown, helped: unknown) {
   const ownerId = await requireUserId();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { ok: false as const, error: "Not a day." };
