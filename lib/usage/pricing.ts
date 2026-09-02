@@ -110,6 +110,67 @@ export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 3);
 }
 
+/**
+ * The kinds of call this app pays for.
+ *
+ * Declared here rather than in `lib/usage/ledger`, which is where it used to
+ * live, because it keys the token profile below and that profile now has a
+ * second reader: `lib/funding` prices a hypothetical month of traffic and may
+ * not open a database to do it. `ledger.ts` re-exports the name, so nothing
+ * that already meant "a metered call" had to move.
+ */
+export type UsageKind = "TUTOR" | "GRADER" | "TTS" | "SCAN";
+
+/**
+ * What one call of each kind is assumed to cost until it says otherwise.
+ *
+ * A reservation has to be written before the provider is opened, and at that
+ * moment nobody knows what the answer will cost: not the tokens, and on a
+ * chain with fallback, not even the model. So it is booked at a stated
+ * expectation and corrected the moment the real numbers arrive.
+ *
+ * The numbers are a rough profile of each kind of request, priced against one
+ * mid-range model. They do not have to be right for the ledger, because a
+ * settlement follows every one of them within seconds and the totals come out
+ * identical either way. They have to be non-zero and roughly the right size,
+ * which is the whole job: to make ten requests in flight at once look like ten
+ * requests in flight at once rather than like none.
+ *
+ * `lib/funding` reads the same profile, and there it is doing the harder job,
+ * because no settlement follows a projection. A funding page that quoted its
+ * own guess at what a tutor answer costs would be a second answer to a
+ * question this app already answers, and the two would drift the first time
+ * anybody tuned the reservation.
+ */
+export const EXPECTED_TOKENS: Readonly<Record<UsageKind, { input: number; output: number }>> = {
+  // A question with a conversation behind it, and a full answer.
+  TUTOR: { input: 4_000, output: 700 },
+  // A few hundred tokens about one sentence or one word.
+  GRADER: { input: 700, output: 200 },
+  // Free, and priced as free. The row still exists: the call count is what
+  // rations speech, not the money.
+  TTS: { input: 0, output: 0 },
+  // A photograph, which is a few thousand input tokens of image.
+  SCAN: { input: 3_000, output: 400 },
+};
+
+/**
+ * The model a reservation is priced against.
+ *
+ * Named rather than derived, because the point of an estimate is that it is
+ * stated. The dearest rate in the table would refuse honest traffic for the
+ * seconds a call is in flight; zero would reserve nothing at all. A mid-range
+ * paid model is the middle of that, and a deployment running free models
+ * simply settles every reservation back down to nothing.
+ */
+export const RESERVE_PRICED_AS = "claude-sonnet-5";
+
+/** What one call of a kind is booked at, in micro-dollars, before it happens. */
+export function reserveMicros(kind: UsageKind, model: string = RESERVE_PRICED_AS): number {
+  const expected = EXPECTED_TOKENS[kind];
+  return estimateCostMicros(model, expected.input, expected.output);
+}
+
 /** Formats micro-dollars for a human, e.g. 1234567 → "$1.23". */
 export function formatMicros(micros: number): string {
   return `$${(micros / 1e6).toFixed(2)}`;

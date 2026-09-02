@@ -316,7 +316,17 @@ check("export returns the full dataset", res.ok() && body.counts.cards > 0,
 
 // 7 — The tutor tab reflects whether a key is configured, either way
 await page.goto(`${B}/tutor`, { waitUntil: "networkidle" });
-const needsKey = (await page.getByText("Anu needs an API key").count()) > 0;
+/*
+  Matched on the shape of the empty state rather than on its sentence.
+
+  This read "Anu needs an API key" and the screen has said "Anu needs an AI
+  key" since the copy pass in #83, so the check has been failing on honest code
+  ever since, on any machine with no provider key: `needsKey` and `connected`
+  both came back false and the failure read as the tutor tab being broken.
+  `test-anu.mjs` had the same string and the opposite fault, since it asserts
+  the count is zero and a string that matches nothing always is.
+*/
+const needsKey = (await page.getByText(/Anu needs an .{1,6} key/).count()) > 0;
 /*
   The shape of the line, not a list of provider names.
 
