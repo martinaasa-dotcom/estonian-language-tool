@@ -1251,6 +1251,53 @@ never named Vercel. Two of those three could have been edited to make the third 
 for people whose data is the reason they are careful, and `/api/metrics` already answers whether
 anybody comes back, out of the deployment's own database, which is what the notice describes.
 
+**The review log answers a question nobody else can answer, and what makes that shareable is a
+gate rather than a promise.** Every graded review already records what was asked and how it went,
+because the scheduler needs it; `caseAccuracy` already turns that into accuracy per case for one
+learner, and `lib/classroom/roster.ts` already does the group version for a class. `/api/research`
+is the same two pieces aimed at the whole deployment: which case, which gradation pattern, which
+word, and how often it comes back right. That number exists nowhere else. A textbook's difficulty
+ordering is somebody's judgement, a classroom's is twenty-five people, and a corpus of written
+Estonian records what natives produce rather than where learners fail. Nothing is collected for it
+and no question is put to anybody, which is the same argument `/api/metrics` makes about retention.
+
+**A table of averages looks anonymous and often is not**, so `lib/research/corpus.ts` implements
+four rules of statistical disclosure control rather than describing them. A cell is published only
+above `MIN_LEARNERS` people and `MIN_REVIEWS` answers, and below either it is *absent* rather than
+reported as a size, because nothing in this file depends on the totals adding up. No one person may
+be more than `MAX_LEARNER_SHARE` of a cell, which is the rule a head count alone misses: ten people
+is not ten people when one of them is nine tenths of the data. A group that hides exactly one cell
+hides a second, since a lone gap in a group whose total is reachable comes back by subtraction, and
+no table publishes a total of its own. And counts are rounded and head counts banded, which is the
+only defence against differencing two vintages of the file. The thresholds are the same in every
+section on purpose: it makes one sentence true of the whole file, and one sentence is what an
+operator can check before sending it to anybody. `gate` is the one place a figure is made,
+asserted, and the four numbers have floors under them rather than equalities, because raising one
+is always allowed and lowering one is the change worth stopping.
+
+**And the export is where a rule this repo already had came due twice.** A `take` beside a
+`distinct` bounds nothing, and Prisma's `distinct` deduplicates in the client, so counting the
+corpus's learners that way would have read the whole of `Review` into the route whose own header
+promises it never does: it is `COUNT(DISTINCT)` in one scan with the other four context figures.
+And a source that will not answer is written down as a miss *except where the miss is not a
+category*. A review can outlive its card, because `Review` has no foreign key to `Card` on purpose,
+and grouping those as an `unknown` shape of question was tried and measured: the bucket is small by
+nature, so it fails the threshold rule in nearly every group it appears in, fires complementary
+suppression there, and takes the real category down with it. Sixteen rows became two. It is an
+inner join now and the coverage is reported as a number at the top of the file instead.
+
+**Nothing about it is asked at sign-up, and it can still be refused.** The output is not personal
+data by the time it exists, so this is not consent, and a checkbox at the door would read as a
+demand for permission the operator does not need, which makes the honest parts of the same screen
+harder to believe. Settings has the row anyway, because this app is for people whose data is the
+reason they are careful and "we aggregated it" is a sentence they have heard from somebody who was
+wrong. Out means the rows are never read rather than subtracted afterwards, asserted on both
+queries separately, since the first version of that check asked the file for a clause the file had
+two of. In is the default and has to be: a missing row is everybody who used this before the
+setting existed, and reading absence as refusal is a silent failure rather than a cautious one.
+`/privacy` says all of it, and an invariant fails if the page and the Settings row stop naming the
+same thing. `docs/19-research-export.md` is what to read before sending a file to anybody.
+
 **A cap on a shared quota is charged to the learner, never to their address.** `/api/tutor`,
 `/api/tts`, `/api/share` and `/api/export` all go through `lib/security/rateLimit.ts`. Twenty-five
 students on one school network are one IP and a review session asks for audio on nearly every
@@ -2666,7 +2713,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `alsoRight`, `shownForms`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
-`conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`. Most of them now
+`conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
+`MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

@@ -8,6 +8,7 @@ import { resolveProvider } from "@/lib/tutor/provider";
 import { ekilexConfigured } from "@/lib/ekilex/client";
 import { dailyGoalFrom, readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { letterBarFrom } from "@/lib/ux/letterBar";
+import { participationFrom, researchExportConfigured } from "@/lib/research/participation";
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
 import { levelLabel } from "@/components/assessment/PlanPanel";
 import { courseLevelFor } from "@/lib/progress/level";
@@ -18,7 +19,7 @@ import { EkilexSetupGuide } from "./EkilexSetupGuide";
 import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
-import { ClassNamePanel, LetterBarPanel, ReviewModePanel } from "./PreferencesPanel";
+import { ClassNamePanel, LetterBarPanel, ResearchPanel, ReviewModePanel } from "./PreferencesPanel";
 import { AutoplayPanel, CurrentVoiceSample, FeedbackSoundsPanel, VoicePanel } from "./AudioPanel";
 import { GlossLanguagePanel } from "./GlossLanguagePanel";
 import { GLOSS_LANGUAGES, glossLanguageFrom } from "@/lib/collections/glossLanguage";
@@ -90,7 +91,7 @@ export default async function SettingsPage() {
     prisma.review.count({ where: { ownerId } }),
     readSettings(ownerId, [
       SETTING_KEYS.dailyGoal, SETTING_KEYS.reviewMode,
-      SETTING_KEYS.letterBar,
+      SETTING_KEYS.letterBar, SETTING_KEYS.researchOptOut,
       SETTING_KEYS.displayName,
       SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
       SETTING_KEYS.glossLanguage,
@@ -110,6 +111,8 @@ export default async function SettingsPage() {
   const dailyGoal = dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]);
   const mode = reviewModeFrom(settings[SETTING_KEYS.reviewMode]);
   const letters = letterBarFrom(settings[SETTING_KEYS.letterBar]);
+  const participation = participationFrom(settings[SETTING_KEYS.researchOptOut]);
+  const researchExported = researchExportConfigured();
   const voice = voiceFrom(settings[SETTING_KEYS.ttsVoice]);
   const voiceName = VOICES.find((v) => v.id === voice)?.name ?? voice;
   const autoplay = autoplayFrom(settings[SETTING_KEYS.autoplayAudio]);
@@ -365,6 +368,15 @@ export default async function SettingsPage() {
               <div className="mt-5 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
                 <RestorePanel currentReviews={reviews} />
               </div>
+            </Card>
+          </section>
+
+          <section>
+            <SectionTitle hint={participation === "in" ? "counted" : "left out"}>
+              Anonymous statistics
+            </SectionTitle>
+            <Card>
+              <ResearchPanel current={participation} exported={researchExported} />
             </Card>
           </section>
 
