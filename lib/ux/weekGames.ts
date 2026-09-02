@@ -17,16 +17,22 @@ import { WEEKDAY_LONG, type Weekday } from "./schedule";
  * by how far in a learner is, this one by what day it is.
  *
  * THE TWO PUZZLES THAT ARE GENUINELY ONE A DAY GET THE DAYS THAT SUIT THEM.
- * Sõnad and the crossword build a new one each morning and are finished once
- * you have done it, so featuring them is a nudge rather than a limit. Sõnad
- * opens the week because it is three minutes; the crossword is Saturday
- * because it is fifteen and Saturday is the day somebody has fifteen. The
- * other five days carry a round that can be played again, so a Tuesday with
- * ten spare minutes is not a Tuesday that runs out.
+ * Sõnad and Ristsõna build a new one each morning and are finished once you
+ * have done it, so featuring them is a nudge rather than a limit. Sõnad opens
+ * the week because it is three minutes; Ristsõna is Saturday because it is
+ * fifteen and Saturday is the day somebody has fifteen. The other five days
+ * carry a round that can be played again, so a Tuesday with ten spare minutes
+ * is not a Tuesday that runs out.
  *
  * The `href` is a mode's own, resolved through `lib/ux/modes.ts`, so a round
  * renamed there is renamed here and an invariant fails on an href this table
  * names and that table does not have.
+ *
+ * `why` carries more weight than it looks like it does, because Today's card
+ * draws a title and this line and no subtitle. So when Ristsõna was renamed out
+ * of English, this was the one screen the word "crossword" left entirely, and
+ * the line says it now: somebody who has never met the word should not have to
+ * press the button to find out what the puzzle is.
  *
  * Pure: a weekday in, a row out.
  */
@@ -50,7 +56,7 @@ export const WEEK_GAMES: readonly FeaturedGame[] = [
   { href: "/review/target", why: "Four forms of one word. Only the ending will get you through." },
   { href: "/review/match", why: "Pairs against the clock. There is a personal best to beat." },
   { href: "/review/sprint", why: "Sixty seconds of cases. Friday does not need a long one." },
-  { href: "/crossword", why: "The long one, for the day there is time for it." },
+  { href: "/crossword", why: "The crossword, for the day there is time for a long one." },
 ];
 
 /** Today's. */
