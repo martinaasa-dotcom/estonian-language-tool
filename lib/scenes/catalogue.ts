@@ -150,6 +150,30 @@ const DOCTOR: SceneSpec = {
       shape: "word",
     },
   ],
+  outcomes: [
+    {
+      id: "booked",
+      when: ["greet", "reason", "where", "since", "offer", "close"],
+      says: "You have an appointment, and they know what it is for.",
+    },
+    {
+      id: "booked-thin",
+      when: ["greet", "reason", "offer"],
+      says: "You have an appointment. They did not get the whole story, so bring it with you.",
+    },
+    /*
+      A failure that is not the learner's fault, which every scene needs one of
+      (§3). The receptionist cannot book what she cannot write down, and a
+      learner who said everything except when it started has met a real wall
+      rather than a marking rule.
+    */
+    {
+      id: "sent-away",
+      when: ["greet"],
+      says: "No appointment today. They ask you to call back when you can say how long it has been.",
+    },
+    { id: "left", when: [], says: "You left the desk. That is a thing people do, and you can come back." },
+  ],
 };
 
 const LANDLORD: SceneSpec = {
@@ -238,6 +262,24 @@ const LANDLORD: SceneSpec = {
       patience: 1,
       shape: "word",
     },
+  ],
+  outcomes: [
+    {
+      id: "fixed",
+      when: ["greet", "problem", "where", "since", "refuse", "agree", "close"],
+      says: "Someone is coming to look at it, on a day you agreed to.",
+    },
+    {
+      id: "logged",
+      when: ["greet", "problem", "agree"],
+      says: "They know something is broken and roughly when. No day agreed yet.",
+    },
+    {
+      id: "no-slot",
+      when: ["greet", "problem"],
+      says: "They have your report and no free day this week. Nothing you said changed that.",
+    },
+    { id: "left", when: [], says: "You hung up. The heating is still broken, and you can ring again." },
   ],
 };
 
@@ -328,6 +370,24 @@ const COUNTER: SceneSpec = {
       patience: 1,
       shape: "word",
     },
+  ],
+  outcomes: [
+    {
+      id: "accepted",
+      when: ["greet", "purpose", "document", "fill", "confirm", "close"],
+      says: "Your form is in, filled in the way they wanted it.",
+    },
+    {
+      id: "partial",
+      when: ["greet", "purpose", "document"],
+      says: "They took the form. Something on it still has to be filled in before it can be read.",
+    },
+    {
+      id: "turned-away",
+      when: ["greet", "purpose"],
+      says: "They cannot take it without the paper you do not have. That is their rule, not your Estonian.",
+    },
+    { id: "left", when: [], says: "You left the counter. The form is still in your bag." },
   ],
 };
 

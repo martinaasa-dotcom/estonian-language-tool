@@ -18,7 +18,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { SCENES, sceneById } from "./catalogue";
-import { QUESTION_SHAPE } from "./types";
+import { LEFT_OUTCOME, QUESTION_SHAPE } from "./types";
 import { unitById } from "@/lib/collections/syllabus";
 
 /** Every lemma a scene names, from its beats' topics and its requirements. */
@@ -107,6 +107,52 @@ describe("the scene catalogue", () => {
       expect(first?.move, `${scene.id} does not open with a greeting`).toBe("greet");
       expect(last?.move, `${scene.id} does not end`).toBe("close");
       expect(scene.beats.filter((b) => b.required).length).toBeGreaterThan(2);
+    }
+  });
+
+  /*
+    THE OUTCOME LIST IS WHERE A SCENE STOPS BEING A DRILL.
+
+    Three rules, and the middle one is the one worth having. Every `when` names
+    beats the scene actually has, or an outcome is unreachable and nobody finds
+    out. Every scene has at least one outcome that is **not the learner's
+    fault**, because a real encounter has those and a module where trying hard
+    enough always works has stopped simulating anything: the test for it is an
+    outcome reachable without every required beat, which is exactly what "you
+    did most of it and it still did not come off" is. And every scene lets
+    somebody leave, because leaving is a real option in a real conversation.
+
+    Fullest first, because `outcomeOf` takes the first that fits: a list in the
+    other order would hand everybody the thinnest ending they qualified for.
+  */
+  it("can end well, can end badly through nobody's fault, and can be walked out of", () => {
+    for (const scene of SCENES) {
+      const beats = new Set(scene.beats.map((b) => b.id));
+      const required = scene.beats.filter((b) => b.required).map((b) => b.id);
+
+      for (const outcome of scene.outcomes) {
+        for (const id of outcome.when) {
+          expect(beats, `${scene.id}/${outcome.id} waits on a beat that is not there`)
+            .toContain(id);
+        }
+        expect(outcome.says.length, `${scene.id}/${outcome.id} says nothing`).toBeGreaterThan(10);
+      }
+
+      const ids = scene.outcomes.map((o) => o.id);
+      expect(new Set(ids).size, `${scene.id} repeats an outcome id`).toBe(ids.length);
+      expect(ids, `${scene.id} cannot be walked out of`).toContain(LEFT_OUTCOME);
+
+      const best = scene.outcomes.find((o) => required.every((id) => o.when.includes(id)));
+      expect(best, `${scene.id} has no outcome for doing all of it`).toBeDefined();
+
+      const short = scene.outcomes.filter(
+        (o) => o.id !== LEFT_OUTCOME && !required.every((id) => o.when.includes(id)),
+      );
+      expect(short.length, `${scene.id} always works if you keep trying`).toBeGreaterThan(0);
+
+      const sizes = scene.outcomes.map((o) => o.when.length);
+      expect([...sizes].sort((a, b) => b - a), `${scene.id} lists its outcomes thinnest first`)
+        .toEqual(sizes);
     }
   });
 });

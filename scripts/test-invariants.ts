@@ -8765,6 +8765,57 @@ check("a case is named only when one case claims the spelling", () => {
  * off the learner's own log, and the marking is over a task rebuilt from the
  * dictionary rather than over anything the browser sent (ADR-022).
  */
+/**
+ * NO MODEL DECIDES WHETHER A LEARNER WAS UNDERSTOOD.
+ *
+ * `docs/19-situations.md` §18 names the first way this module could fail: a
+ * chatbot in a costume. The guard is a type rather than a rule anybody has to
+ * remember. `readTurn` is the only producer of `Evidence` and `advance` is its
+ * only consumer, so a caller holding a model's opinion about a turn cannot
+ * satisfy the signature and cannot move a scene on by mistake. That is
+ * `buildOptions` taking a parsed `Government` rather than a case key, and
+ * `NounStems.illSgShort` being required rather than optional: both were prose
+ * that the code disagreed with until the type carried it.
+ *
+ * The other half is that the pure-layer check one screen up already covers
+ * `lib/scenes/`, so nothing in there can reach a database or a provider at
+ * all. What is asserted here is the shape those two functions have, because a
+ * later `advance(state, verdict: string)` would pass every other check in this
+ * file.
+ */
+check("nothing but the dictionary can advance a scene", () => {
+  const turn = code("lib/scenes/turn.ts");
+  const state = code("lib/scenes/state.ts");
+
+  assert.match(
+    turn,
+    /export function readTurn\(/,
+    "lib/scenes/turn.ts no longer exports readTurn, which is the only producer of Evidence.",
+  );
+  assert.match(
+    state,
+    /export function advance\(\s*scene: SceneSpec,\s*state: SceneState,\s*evidence: Evidence,/,
+    "advance no longer takes Evidence. A caller holding a model's opinion must not be able " +
+    "to satisfy it: that is the whole guard on this module (docs/19-situations.md §8).",
+  );
+
+  /*
+    One producer, asserted by counting. A second function returning Evidence is
+    the door a model's verdict walks through, and it would look entirely
+    reasonable in review.
+  */
+  const producers = [...turn.matchAll(/\): Evidence \{/g)].length;
+  assert.equal(
+    producers, 1,
+    `lib/scenes/turn.ts has ${producers} functions returning Evidence. There is exactly one.`,
+  );
+  assert.doesNotMatch(
+    state,
+    /\): Evidence\b/,
+    "lib/scenes/state.ts builds Evidence. Only readTurn may, or the consumer becomes its own producer.",
+  );
+});
+
 check("the scene route marks mechanically before it reaches a provider", () => {
   const src = code("app/api/describe/route.ts");
   const marked = src.indexOf("markDescription(");

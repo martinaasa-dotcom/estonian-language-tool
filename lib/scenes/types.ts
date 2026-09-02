@@ -121,6 +121,28 @@ export interface BeatSpec {
   readonly shape: "word" | "sentence";
 }
 
+/**
+ * How a run can end, including badly.
+ *
+ * At least one outcome is a failure that is **not the learner's fault**,
+ * because a real encounter has those and a module where trying hard enough
+ * always works has stopped simulating anything. Walking out is an outcome too,
+ * and it is written kindly. `catalogue.test.ts` asserts both.
+ *
+ * `says` is one line of English, and it is what a person remembers, so it goes
+ * first in the debrief, before any teaching.
+ */
+export interface OutcomeSpec {
+  readonly id: string;
+  /** Which required beats have to have been met. Listed fullest first. */
+  readonly when: readonly string[];
+  /** One line, English, in the debrief. */
+  readonly says: string;
+}
+
+/** The id every scene reserves for the learner leaving. */
+export const LEFT_OUTCOME = "left";
+
 export interface SceneSpec {
   readonly id: string;
   /** English. What the scene is called on a screen. */
@@ -142,4 +164,6 @@ export interface SceneSpec {
   /** What the other side calls you, and expects back. */
   readonly register: "teie" | "sina";
   readonly beats: readonly BeatSpec[];
+  /** Fullest first, because `outcomeOf` takes the first one that fits. */
+  readonly outcomes: readonly OutcomeSpec[];
 }
