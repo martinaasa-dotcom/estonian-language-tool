@@ -5389,6 +5389,38 @@ check("a practice round has a heading, not only its empty and finished screens",
   lives. Anchored on the copy rather than on the two filenames, because the next
   screen to grow an empty state for examples is the one this is for.
 */
+/*
+  A DATASET SAYS WHICH VALUES ITS COLUMNS ACTUALLY TAKE.
+
+  `GradationType` allows `QUANTITATIVE` and `classifyGradation` has never
+  returned it, on any of the 5,363 entries the dictionary ships. That is the
+  language rather than an omission: Estonian's third quantity is not written
+  down, so `kooli` the genitive and `kooli` the partitive are the same letters
+  and a classifier reading forms as strings cannot tell them apart. What is
+  spelled is the consonant centre changing, which is what the field records.
+
+  `lib/research/sections.ts` describes the exported crosstab to somebody
+  outside this project, and it named all three, so a researcher was told the
+  column takes a value no row has ever held. The two are paired here: the day
+  the classifier learns to assign it, this fails and the description has to
+  catch up, which is the only way a note about data stays true of the data.
+*/
+check("the research note names the gradation values the classifier assigns", () => {
+  const classifier = code(join("lib", "estonian", "gradation.ts"));
+  const note = read(join("lib", "research", "sections.ts"));
+  const assigns = /type:\s*"QUANTITATIVE"/.test(classifier);
+  const saysNoRowHasIt = /no row carries it/.test(note);
+  assert.equal(
+    assigns, !saysNoRowHasIt,
+    assigns
+      ? "lib/estonian/gradation.ts now assigns QUANTITATIVE, so lib/research/sections.ts must stop "
+        + "telling a researcher that no row carries it."
+      : "lib/estonian/gradation.ts assigns only NONE and QUALITATIVE, so lib/research/sections.ts "
+        + "has to say so: a column described as three-valued whose third value no row holds is a "
+        + "dataset note that is not true of the dataset.",
+  );
+});
+
 check("a screen that reports a missing example knows a phrase is not one", () => {
   const POS_HOME = "lib/dict/pos.ts";
   assert.match(

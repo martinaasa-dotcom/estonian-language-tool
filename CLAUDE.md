@@ -217,6 +217,21 @@ now printed at the end of the run, all 31 of them, with the ids to choose betwee
 is right for about eighty of them and dropping the lot to fix six would cut a fifth of an A1 unit,
 so it is reported rather than dropped or hidden.
 
+**And only two of the three gradation values are ever assigned, which is the language rather than an
+omission.** `GradationType` allows `QUANTITATIVE` and `classifyGradation` has never returned it, on
+any of the 5,363 entries the dictionary ships. Estonian's third quantity is not written down:
+`kooli` the genitive and `kooli` the partitive are the same letters in the same order and differ in
+how long the vowel is held, so a classifier reading principal parts as strings cannot see it, and
+neither can a learner reading a page. What is spelled is the consonant centre changing, and that is
+what the field records.
+
+The value stays in the type, because it is a true category somebody editing an entry by hand may
+want and `Lexeme.gradation` is a string column a future Ekilex field could fill. What may not happen
+is a dataset claiming three where the data holds two: `lib/research/sections.ts` describes the
+exported crosstab to somebody outside this project and named all three, so a researcher was told a
+column takes a value no row has ever held. The two are paired by an invariant in both directions, so
+the day the classifier learns to assign it the description has to catch up.
+
 **A nominative -s that simply goes is an ending, not a grade.** `classifyGradation` counted it as
 part of the consonant centre, so the chip on the dictionary entry and the hint on the flashcard
 said `hammas` alternates "ms : b" and `ratas` "s : t", which are not patterns in the language, and
