@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { derivedVerbForms, pres1sgFrom, type DerivedVerbCode } from "@/lib/estonian/conjugate";
+import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 
 /**
  * Real verbs conjugated, for the grammar reference.
@@ -18,7 +18,14 @@ import { derivedVerbForms, pres1sgFrom, type DerivedVerbCode } from "@/lib/eston
  * Topped up from the dictionary's easiest verbs, so the page reads on day one.
  */
 export interface VerbExampleForm {
-  readonly code: DerivedVerbCode;
+  /**
+   * Ekilex's own code for the slot.
+   *
+   * Wider than `DerivedVerbCode`, which names what the rule can build: a form
+   * the dictionary stores because no rule reaches it fills a slot on this
+   * table too, and the polite imperative is one.
+   */
+  readonly code: string;
   readonly value: string;
   readonly origin: "EKILEX" | "STORED" | "DERIVED";
 }
@@ -85,10 +92,17 @@ export async function verbExamples(ownerId: string, limit = 4): Promise<VerbExam
 /**
  * The slots the reference shows, in the order a table reads them. A
  * particle verb's particle rides along in every form, so it is fine here.
+ *
+ * `string` rather than `DerivedVerbCode`, because that type names what the
+ * rule can build and this table shows what the app can say. The polite
+ * imperative is the difference: `annan` goes to `andke` and `lähen` to
+ * `minge`, so no rule reaches it, and the dictionary stores it like every
+ * other form no rule reaches.
  */
-const CODES: readonly DerivedVerbCode[] = [
+const CODES: readonly string[] = [
   "IndPrSg1", "IndPrSg2", "IndPrSg3", "IndPrPl1", "IndPrPl2", "IndPrPl3", "IndPrPs_",
-  "KndPrSg1", "KndPrSg2", "KndPrPs", "KndPrPl1", "KndPrPl2", "KndPrPl3", "ImpPrSg2",
+  "KndPrSg1", "KndPrSg2", "KndPrPs", "KndPrPl1", "KndPrPl2", "KndPrPl3",
+  "ImpPrSg2", "ImpPrPl2",
 ];
 
 /**
@@ -112,15 +126,30 @@ export function conjugatedForms(
     const code = f.morphCode ?? (f.formType.startsWith("EKILEX:") ? f.formType.slice(7) : null);
     if (code && !attested.has(code)) attested.set(code, f.value);
   }
-  const derived = new Map(
-    derivedVerbForms({ lemma, pres1sg }).map((f) => [f.morphCode, f] as const),
+  /*
+    The present first person is a principal part, so the seed writes it under
+    its own name rather than under Ekilex's code, and the loop above cannot see
+    it. Nothing noticed while every verb whose first person we hold also had a
+    rule to derive the rest from, because that rule hands back the first person
+    too, marked STORED. `olema` is the verb the rule refuses, and the moment the
+    dictionary could answer the other five persons for it the table printed them
+    and started at `oled`: the forms of the commonest verb in the language with
+    a hole exactly where the headword should be.
+  */
+  const firstPersonIsPrincipal = !attested.has("IndPrSg1");
+  if (firstPersonIsPrincipal) attested.set("IndPrSg1", pres1sg);
+  const derived = new Map<string, ReturnType<typeof derivedVerbForms>[number]>(
+    derivedVerbForms({ lemma, pres1sg }).map((f) => [f.morphCode as string, f]),
   );
 
   const out: VerbExampleForm[] = [];
   for (const code of CODES) {
     const fromEkilex = attested.get(code);
     if (fromEkilex) {
-      out.push({ code, value: fromEkilex, origin: "EKILEX" });
+      // The principal part is STORED wherever it comes from, so the provenance
+      // a reader sees for `olen` is the one they see for `loen`.
+      const principal = code === "IndPrSg1" && firstPersonIsPrincipal;
+      out.push({ code, value: fromEkilex, origin: principal ? "STORED" : "EKILEX" });
       continue;
     }
     const rule = derived.get(code);

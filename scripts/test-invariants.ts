@@ -233,6 +233,68 @@ check("the keyed services are only ever reached from the server", () => {
   regex can see: the field stays required, and nobody rebuilds the old
   shortcut beside it.
 */
+/*
+  WHAT THE DICTIONARY STORES IS DECIDED BY THE RULES, NOT BESIDE THEM.
+
+  ADR-005 amendment 1 lets a deterministic rule build a form off a stored one,
+  and the rules are real: ten case endings on a genitive stem, six persons on a
+  stored first person. What they are not is complete. A seeded deployment could
+  not say `on`, could not say `oli` for any verb in the language, and had no
+  short pronoun forms at all, which is what an Estonian sentence is made of.
+
+  So the two builders store what the rules miss, and they ask the rules rather
+  than carrying a list: `unreachableSlots` for a verb and `unreachableCaseForms`
+  for a nominal. A list would be two copies of one fact, and the copy in the
+  builder is the one that goes stale in silence, because nothing about a
+  missing form looks like an error. It looks like a word that inflects less.
+
+  Anchored on the calls, because a builder can import a function and go on using
+  a table of its own, which is exactly what the weakest-case query did one
+  directory over.
+*/
+check("the harvest asks the rules which forms they cannot reach", () => {
+  for (const file of ["scripts/harvest-ekilex.ts", "scripts/expand-seed.ts"]) {
+    const src = code(file);
+    assert.match(
+      src, /unreachableSlots\(/,
+      `${file} stopped asking which verb slots the rule misses, so a seeded verb `
+        + "goes back to answering seven of its eight conjugation cards",
+    );
+    assert.match(
+      src, /unreachableCaseForms\(/,
+      `${file} stopped asking which case forms the rule misses, so the short `
+        + "pronoun forms go back to being absent from the dictionary",
+    );
+  }
+});
+
+/*
+  And the pair a learner is shown is two forms somebody wrote down.
+
+  `alsoRight` is what puts `tuppa / toasse` and `minule / mulle` on a screen and
+  on a card's back, and it may hold only forms the dictionary attests. The one
+  exception is the long illative, which is regular and is the other half of a
+  pair Estonian genuinely has; anywhere else a suffix guess printed beside a
+  retrieved form would assert the guess is a word.
+*/
+check("only the illative may offer a derived form as the pair", () => {
+  const derive = code("lib/estonian/derive.ts");
+  assert.match(
+    derive,
+    /spec\.key === "ILLATIVE" && short\s*\n?\s*\?\s*retrieved\[0\] \?\? derived/,
+    "the illative's own pair rule changed shape, so either the long form stopped "
+      + "being offered beside `tuppa` or a suffix guess started standing in as a "
+      + "second attested word elsewhere",
+  );
+  assert.match(
+    derive,
+    /attested\.length === 2 \? attested\[1\] : undefined/,
+    "the pair stopped being drawn only where a case has exactly two attested "
+      + "forms, so the second of a list of variants can reach a screen: Ekilex "
+      + "records three elatives for `kodu` and the second is not one to teach",
+  );
+});
+
 check("the short illative is a required stem, not an optional one", () => {
   const derive = code("lib/estonian/derive.ts");
   assert.match(
@@ -1662,6 +1724,61 @@ check("a screen built from a list of lemmas shows one entry per lemma", () => {
       at = src.indexOf("lemma: { in:", at + 1);
     }
   }
+});
+
+check("there is one assembly of the shipped dictionary", () => {
+  /*
+    `prisma/seed.ts` reads six files and writes them into `Lexeme` under a
+    conflict key of `(lemma, pos)`, keeping the first writer. A script that
+    wants to measure or audit what shipped has to read the same six and dedupe
+    the same way, or its numbers describe a dictionary nobody has.
+
+    `scripts/measure-scenes.ts` grew one copy of that and did not dedupe, so a
+    word in both the hand-checked seed and the course harvest was counted twice
+    and its sentences with it: the corpus read 15,920 attested lines where it
+    has 13,683, and the entry count read 7,127 where `SEED_SET_SIZE` says 6,083.
+    Nothing was wrong with the conclusions and every absolute figure was.
+    `scripts/audit-senses.ts` was about to be the second copy.
+
+    So the assembly lives in `scripts/lib/dictionary.ts` and the check is that
+    nothing else builds one. The seed itself is the exception it has to be: it
+    is the thing being described, it writes rows rather than reading them, and
+    it computes gradation on the way.
+  */
+  const HOME = "scripts/lib/dictionary.ts";
+  assert.ok(existsSync(HOME), `the one assembly has gone from ${HOME}`);
+
+  // Reading one of these is ordinary. Reading several is assembling the seed.
+  const sources = [
+    /prisma\/data\/nouns/, /prisma\/data\/verbs/, /prisma\/data\/other/,
+    /prisma\/data\/advanced/, /prisma\/data\/harvested/, /prisma\/data\/expanded/,
+  ];
+  /*
+    Two exceptions and both have to be exceptions.
+
+    `prisma/seed.ts` is the thing being described: it writes rows rather than
+    reading them, and it computes gradation on the way.
+
+    `lib/collections/seedSize.test.ts` is the independent count that
+    `SEED_SET_SIZE` is checked against, and independence is the whole of its
+    value. A counter that read the shared assembly could not catch the shared
+    assembly being wrong, which is exactly the fault that made this check
+    necessary. It compares its own total against `shippedDictionary()` instead,
+    so the two are pinned to each other without either one trusting the other.
+  */
+  const allowed = new Set([HOME, "prisma/seed.ts", "lib/collections/seedSize.test.ts"]);
+
+  const copies: string[] = [];
+  for (const file of [...LIB, ...APP, ...sourceFiles("scripts")]) {
+    if (allowed.has(file)) continue;
+    const src = code(file);
+    if (sources.filter((pattern) => pattern.test(src)).length > 2) copies.push(file);
+  }
+  assert.deepEqual(
+    copies, [],
+    "these assemble the shipped dictionary out of the seed's own data files. There is one, in "
+    + `${HOME}, and two of them disagree about how big the dictionary is.`,
+  );
 });
 
 check("there is one shuffle, and the sort-comparator kind is not a shuffle at all", () => {
@@ -3579,6 +3696,59 @@ check("a deletion that leaves something behind says so", () => {
   assert.match(danger, /result\.remaining/, "the screen ignores what the deletion left behind");
 });
 
+/**
+ * A PANEL NOBODY RENDERS IS A FEATURE NOBODY HAS.
+ *
+ * `DangerZone.tsx` and `UsagePanel.tsx` were complete, commented, correct, and
+ * imported by nothing. Not dropped by a merge: `git log -S` finds no commit on
+ * any branch where the settings page ever named either. So for the whole life
+ * of this app there was no way to delete an account from inside it, while
+ * `/privacy` promised somebody could take everything away, and the tutor's own
+ * spending meter, which several rules above describe as the place a learner
+ * reads what they have used, was on no screen.
+ *
+ * The check above is how that survived. It reads `DangerZone.tsx` and asserts
+ * the copy inside it, so it passed with feeling on a component the router
+ * could not reach: this repository's oldest recurring mistake is a check that
+ * reads a file rather than the screen, and this is that mistake pointed at a
+ * whole component instead of a comment. A file being right is not the same
+ * claim as a reader being able to get to it.
+ *
+ * So the pairing is asserted rather than either half. Every module beside
+ * `page.tsx` in that folder has to put something on the page, tested on a name
+ * the module actually exports being used as an element, because an import
+ * nobody renders is the same silence one import earlier. It carries a floor
+ * for the reason every sweep here does: a folder that stops matching would
+ * otherwise assert nothing and say so in the same words as a folder that is
+ * entirely fine.
+ */
+check("every settings panel is on the settings screen", () => {
+  const dir = join("app", "(app)", "settings");
+  const panels = readdirSync(dir).filter((f) => f.endsWith(".tsx") && f !== "page.tsx");
+  assert.ok(
+    panels.length >= 10,
+    `only found ${panels.length} settings panels, so this check stopped looking`,
+  );
+
+  const page = code(join(dir, "page.tsx"));
+  for (const file of panels) {
+    const exported = [...code(join(dir, file))
+      .matchAll(/export\s+(?:async\s+)?(?:function|const)\s+([A-Z]\w*)/g)]
+      .map((m) => m[1]!);
+    assert.ok(exported.length > 0, `${file} exports no component for the page to render`);
+
+    /*
+      The element, not the import. An unused import is what a lint rule
+      catches; a rendered-nowhere component is what nothing did.
+    */
+    assert.ok(
+      exported.some((name) => new RegExp(`<${name}[\\s/>]`).test(page)),
+      `app/(app)/settings/${file} exports ${exported.join(", ")} and the settings page renders ` +
+      `none of them, so whatever it does is unreachable. Render it, or delete the file.`,
+    );
+  }
+});
+
 /** Every model in the schema carrying an `ownerId`: one person's own data. */
 function ownerScopedModels(): string[] {
   const owned = [...SCHEMA.matchAll(/model (\w+) \{([^}]*)\}/g)]
@@ -5159,7 +5329,7 @@ check("the funding page reads the environment once, and only for a yes or a no",
 /**
  * THE INFRASTRUCTURE LIST NAMES VARIABLES THAT DO SOMETHING.
  *
- * `lib/funding/infra.ts` is a catalogue of what this app runs on, and each
+ * `lib/funding/services.ts` is a catalogue of what this app runs on, and each
  * entry that can be switched on names the variable that switches it. A name
  * that nothing in the app reads is worse than no name: the page prints "not
  * set here" for ever, whoever is running it sets the variable, and nothing
@@ -5402,6 +5572,7 @@ check("the layers that promise to be pure import no database, React or Next", ()
   const pure = [
     "assessment", "estonian", "exam", "games", "gamification", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
+    "scenes",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],
@@ -8262,6 +8433,95 @@ check("the picture board asks the dictionary for the words that have a picture",
   assert.ok(
     !/take:\s*POOL\s*\*/.test(src),
     "the picture board has gone back to reading a multiple of its deck window out of the dictionary",
+  );
+});
+
+/*
+  A PAGE ADDRESSED BY A ROW ID PROVES THE ROW IS THE LEARNER'S.
+
+  Three routes name a row somebody owns: `/exam/result/[id]` is a sat paper
+  with the composition in it, `/scan/[scanId]` is the words read off a
+  photograph of somebody's homework, and `/class/[classroomId]` is a roster.
+  All three scope the read by the owner and answer `notFound()`, which is the
+  right shape and was true of every one of them when this was written. The
+  check is here so it stays true of the fourth.
+
+  What it reads is narrow on purpose: a `where` in a `[param]` page that names
+  the route's own parameter is a row being addressed by something a stranger
+  can type, and it has to name `ownerId` too. A page whose parameter is a key
+  rather than a row, which is the level, the case, the grammar topic and the
+  unit, never reaches this, because their parameters do not appear in a `where`
+  at all. That is the difference between an id somebody owns and an id that
+  names a page.
+*/
+/*
+  THE PUBLIC PAGE THAT SAYS WHAT THIS COSTS READS THE SEED'S OWN COUNT.
+
+  `/funding` is measured on a stated day and prints the command that gets the
+  same number again, which is the whole reason a reader is asked to believe it.
+  The dictionary line was typed, and it was stale on the day it was written: it
+  said 6,050 entries and 34,554 forms while the seed it described held 6,102 and
+  38,577, the nominative plural having become a stored principal part in
+  between. Re-measured at 20 MB against a freshly dropped and seeded database,
+  and the two counts now come from `SEED_SET_SIZE`, which its own test proves
+  against the files the seed loads.
+
+  `DICTIONARY_MB` feeds the storage line of the cost model as well as that
+  sentence, so a stale figure was not only a wrong number on a page: it made
+  the projected bill lower than the truth, which is the direction this page
+  exists not to be wrong in.
+*/
+check("the funding page's dictionary size is the seed's own count", () => {
+  const src = code(join("lib", "funding", "facts.ts"));
+  assert.match(
+    src,
+    /SEED_SET_SIZE\.words[\s\S]{0,200}SEED_SET_SIZE\.forms/,
+    "lib/funding/facts.ts no longer reads the seed's own counts, so its measurement can go stale again",
+  );
+  assert.match(
+    src,
+    /\$\{DICTIONARY_MB\} MB/,
+    "the measured dictionary line no longer reads DICTIONARY_MB, so the sentence and the cost model can disagree",
+  );
+
+  /*
+    AND NO THIRD COPY, which is the fault this file's own header records about
+    itself: the cost model started as three lists and nothing failed when a
+    line went missing from a total. Fixing the measured line left the same
+    stale pair in `services.ts`, where Ekilex's entry says what the Institute
+    gives, so the page understated the gift by 52 entries and 4,023 forms. A
+    typed count next to the word "entries" or "forms" anywhere under
+    `lib/funding/` is a fourth copy waiting to go stale.
+  */
+  const typed = sourceFiles(join("lib", "funding"))
+    .filter((file) => !file.endsWith(".test.ts"))
+    .flatMap((file) =>
+      [...code(file).matchAll(/\d[\d,_]*\s+(?:entries|forms)\b/g)].map((m) => `${file}: ${m[0]}`));
+  assert.deepEqual(
+    typed,
+    [],
+    "the funding page counts the dictionary with a typed number instead of reading SEED_SET_SIZE",
+  );
+});
+
+check("a page addressed by a row id proves the row is the learner's", () => {
+  const pages = APP.filter((file) => file.endsWith("page.tsx") && /\[[^\]]+\]/.test(file));
+  assert.ok(pages.length >= 8, "app/ no longer holds the parameterised routes the usual way");
+
+  const offenders: string[] = [];
+  for (const file of pages) {
+    const src = code(file);
+    const params = [...file.matchAll(/\[(\w+)\]/g)].map((m) => m[1]!);
+    for (const call of src.matchAll(/prisma\.(\w+)\.(findFirst|findUnique|findMany)\(\{([\s\S]{0,500}?)\n\s*\}\)/g)) {
+      const [, model, , body] = call;
+      if (!params.some((name) => new RegExp(`\\b${name}\\b`).test(body!))) continue;
+      if (!/ownerId/.test(body!)) offenders.push(`${file}: ${model} is read by the route's own id without an ownerId`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    "a page reads a row by the id in its own URL without proving it belongs to the learner asking",
   );
 });
 

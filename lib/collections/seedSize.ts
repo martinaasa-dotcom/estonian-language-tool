@@ -56,5 +56,30 @@
  * the rows, since `stemsFrom` takes the first and every caller building a
  * record with `Object.fromEntries` takes the last. Ekilex lists the primary
  * first, and that is now the one kept.
+ *
+ * The one word after that is `või`, which is butter in the food unit and the
+ * conjunction "or" in the connectives unit, and had been left out of the second
+ * because Ekilex's first candidate for it is the butter. It is pinned by word
+ * id now, like every other homonym the course names.
+ *
+ * The 854 forms after that are the ones no rule of this app can reach, which
+ * the exception lists of `conjugate.ts` and `derive.ts` had been describing
+ * without anybody reading them as a list of what a keyless deployment cannot
+ * say. `olema` showed `olen` and stopped; no verb at all could answer
+ * `lihtminevik · ta`, because the simple past is not derivable; no verb had a
+ * polite imperative, which is the form a learner is addressed with at every
+ * counter in the country; and a pronoun had none of the short forms anybody
+ * uses, so its unit shipped with no case cards rather than teach `minule` and
+ * mark `mulle` wrong. See `unreachableSlots` and `unreachableCaseForms`, which
+ * are asked rather than listed beside, because a list of exceptions kept next
+ * to the exceptions is two copies of one fact.
+ *
+ * The fifteen after that are the words `npm run eval:scene` watched a model
+ * reach for and the course could not vouch for, and they moved the count by
+ * eight rather than fifteen because seven of them were already in the built
+ * expansion and only needed teaching. They are the verbs a transaction turns
+ * on, which is the shape of the gap: the course had `valu` and `haige` and no
+ * `valutama`, a unit on housing and no `katki`, and no way at all to ask
+ * whether a time suits you. Each went to the unit whose subject it is.
  */
-export const SEED_SET_SIZE = { words: 6_101, forms: 37_723 };
+export const SEED_SET_SIZE = { words: 6_110, forms: 38_607 };

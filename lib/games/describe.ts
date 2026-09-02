@@ -111,6 +111,26 @@ export function taskFor(
   const answer = caseAnswer(stemsFromParts(parts), caseKey);
   if (!answer) return null;
 
+  /*
+    AND NOT A CASE THE WORD IS ALREADY SPELLED AS.
+
+    The prompt puts all three scene words on screen, so a task whose answer is
+    one of them is a task the learner completes by copying. Estonian spells
+    some cases like the nominative: `liblikas` has the genitive `liblika`, so
+    its seesütlev is `liblika` plus `s`, which is `liblikas` again, and the
+    same holds for `sipelgas`, `kotkas`, `kirves`, `labidas`, `maasikas`,
+    `lusikas` and `haldjas`, every one of them a scene word. Eight of the 1,980
+    tasks the sixty scenes can set were free, and `markDescription` graded the
+    copied word Good and sent it to the scheduler.
+
+    The caller walks the cases in priority order and takes the first that
+    answers, so refusing one costs the round nothing: the word is asked in
+    another case rather than dropped. `lib/srs/cards.ts` and the picture board
+    apply the same test, any accepted spelling rather than every one.
+  */
+  const spelt = word.lemma.trim().toLocaleLowerCase("et");
+  if (answer.accepted.some((f) => f.trim().toLocaleLowerCase("et") === spelt)) return null;
+
   return {
     sceneId: scene.id,
     situation: scene.situation,
