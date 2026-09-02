@@ -134,7 +134,7 @@ const BASE = baseUrl();
 const ROUTES = [
   "/", "/learn", "/practice", "/progress", "/words", "/dictionary",
   "/grammar", "/grammar/inessive", "/settings", "/scan", "/class", "/tutor",
-  "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
+  "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/funding", "/offline",
   "/welcome", "/suggestions", "/admin/suggestions",
   "/review", "/review/write", "/review/government", "/review/conjugation", "/review/cloze", "/review/clinic",
   "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
@@ -184,14 +184,21 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   reach.
 */
 /*
-  And by eighty-six, which is nine routes at nine checks each plus the five the
-  new picture round adds beyond a plain page. Eight of those nine had shipped
-  without ever being walked here, and the first run over them found a real
-  fault: the crossword promised `role="grid"` over a flat grid with no row
-  elements in it, which is `aria-required-children` and is the exact shape
-  this list exists to catch. Counted off the route list rather than off a run.
+  And 316: /funding is one more route at nine checks, counted off the list
+  rather than off a run.
+
+  And then ten routes rather than one, from two branches at once. This one
+  added nine that had shipped without ever being walked here, which is the
+  fault the header names, and the first run over them found a real one: the
+  crossword promised `role="grid"` over a flat grid with no row elements in
+  it, which is `aria-required-children`. The number is measured on the merged
+  tree rather than added from either side, for the reason the containment
+  suite gives at its own floor: two branches each adding to a count is exactly
+  where arithmetic on a number nobody re-ran goes wrong. Measured at 402 on
+  the merged tree, which is the 307 above plus nine for /funding and
+  eighty-six for these, and the floor keeps the same five under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 390 });
+const { check, absent, done } = suite("Accessibility", { floor: 397 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.

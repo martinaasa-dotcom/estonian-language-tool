@@ -15,7 +15,7 @@ import { baseUrl, suite } from "./lib/checks.mjs";
 const B = baseUrl();
 const PAGES = ["/", "/practice", "/grammar", "/grammar/partitive", "/progress", "/learn",
   "/learn/kodu", "/dictionary?q=tuba", "/words", "/settings", "/review", "/review/dictation",
-  "/class", "/tutor", "/scan", "/welcome"];
+  "/class", "/tutor", "/scan", "/welcome", "/funding"];
 
 // sRGB relative luminance + WCAG contrast.
 const lum = ([r, g, b]) => {

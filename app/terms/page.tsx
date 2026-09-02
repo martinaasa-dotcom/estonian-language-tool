@@ -50,6 +50,8 @@ export default function TermsPage() {
           The service costs nothing and there is nothing to buy, so none of the usual consumer
           purchase rules apply: no right of withdrawal, no payment terms. If an installation
           ever starts charging, that is a different arrangement and these terms do not cover it.
+          What it costs somebody to run, and who that is, is set out on the{" "}
+          <Link href="/funding" className="underline underline-offset-2">funding page</Link>.
         </P>
       </S>
 
