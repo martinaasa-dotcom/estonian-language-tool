@@ -85,6 +85,38 @@ describe("askableSlots", () => {
     expect(neg.accepted).toContain("loe");
   });
 
+  it("takes the contraction on the one verb that has one", () => {
+    /*
+      Estonian contracts `ei ole` and the contraction is what people say and
+      write, so a learner typing it was being marked wrong on the commonest
+      verb in the language. The card builder learned this on main; a round
+      asking the same slot has to take the same answers.
+    */
+    const olema: FlashWord = {
+      lexemeId: "lex-olema", lemma: "olema", translation: "to be", pos: "VERB", examples: [],
+      forms: [
+        { formType: "INF_MA", value: "olema" },
+        { formType: "PRES_1SG", value: "olen" },
+        { formType: "EKILEX:IndPrPs_", value: "ole", morphCode: "IndPrPs_" },
+        { formType: "EKILEX:IndPrPsN", value: "pole", morphCode: "IndPrPsN" },
+      ],
+    };
+    const neg = askableSlots(olema).find((s) => s.slot === "IndPrPs_")!;
+    expect(neg.accepted).toContain("ei ole");
+    expect(neg.accepted).toContain("pole");
+  });
+
+  it("asks the polite imperative, which is the one a learner is addressed with", () => {
+    const polite: FlashWord = {
+      ...LUGEMA,
+      forms: [
+        ...LUGEMA.forms,
+        { formType: "EKILEX:ImpPrPl2", value: "lugege", morphCode: "ImpPrPl2" },
+      ],
+    };
+    expect(slotKeys(polite)).toContain("ImpPrPl2");
+  });
+
   it("leaves a phrase with the one slot a phrase has", () => {
     expect(slotKeys(TERE)).toEqual(["PRODUCTION"]);
   });

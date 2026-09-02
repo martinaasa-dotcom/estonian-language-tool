@@ -51,25 +51,47 @@ import { CASES, caseByKey } from "@/lib/estonian/cases";
  * what a verb answer was about. The labels are the four axes a course keeps
  * apart, which is the naming rule the whole app follows.
  */
-export const CONJUGATION_SLOTS: readonly {
+export interface ConjugationSlot {
   code: string;
   formType?: string;
   label: string;
   negative?: boolean;
-}[] = [
+  /** A second Ekilex code whose form is also a right answer for this slot. */
+  alsoCode?: string;
+}
+
+export const CONJUGATION_SLOTS: readonly ConjugationSlot[] = [
   { code: "IndPrSg1", formType: "PRES_1SG", label: "olevik · ma" },
   { code: "IndPrSg3", label: "olevik · ta" },
   { code: "IndPrPl1", label: "olevik · me" },
   // The negative is one form for every person, said after `ei`. The card
   // shows and accepts the two words together, since `loe` on its own is not
   // what anybody says.
-  { code: "IndPrPs_", label: "eitus · ma ei", negative: true },
+  //
+  // `pole` is the other half of that for the one verb that has one. Estonian
+  // contracts `ei ole` and the contraction is what people say and write, so a
+  // learner typing it was being marked wrong on the commonest verb in the
+  // language. Ekilex records it as `IndPrPsN`, for `olema` and for nothing
+  // else the course asks about, and the card carries both answers the way the
+  // illative does: joined with the separator `acceptedAnswers` splits on, so
+  // what the screen shows and what the marker takes are one string.
+  { code: "IndPrPs_", label: "eitus · ma ei", negative: true, alsoCode: "IndPrPsN" },
   { code: "IndIpfSg1", formType: "PAST_1SG", label: "lihtminevik · ma" },
   { code: "IndIpfSg3", label: "lihtminevik · ta" },
   { code: "KndPrSg1", label: "tingiv kõneviis · ma" },
   { code: "ImpPrSg2", label: "käskiv kõneviis · sa!" },
+  /*
+    The polite imperative, which is the one a learner is addressed with. Every
+    counter, every receptionist and every official in the country says `öelge`,
+    `andke`, `täitke` and `oodake`, and the app could not produce one for any
+    verb in the language: it is not a suffix on anything the rule holds, since
+    `annan` goes to `andke`, `lähen` to `minge` and `loen` to `lugege`. It is
+    stored now, like every other form no rule reaches, and it was found by
+    `eval:scene`, where a model writing a `teie` scene reached for it over and
+    over and the gate withheld every line.
+  */
+  { code: "ImpPrPl2", label: "käskiv kõneviis · te!" },
 ];
-
 /**
  * Slots that are not a form of the word: the questions every word can be asked
  * whatever the dictionary holds for it.

@@ -33,6 +33,7 @@
  *
  * Pure: no React, no Next, no Prisma.
  */
+import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import type { PlanTier, PriceRef, Shape } from "./types";
 
 /** The day the vendor pricing pages below were read. */
@@ -61,10 +62,29 @@ export interface Measurement {
  * is on it, so the spread is given rather than an average pretending to be one
  * number.
  */
+/**
+ * The dictionary in Postgres, with its indexes, in megabytes.
+ *
+ * Declared above `MEASURED` rather than below it, because both the sentence a
+ * reader gets and the arithmetic the chart draws read this one number, and a
+ * `const` referenced before its declaration throws at import time rather than
+ * quietly reading zero.
+ */
+export const DICTIONARY_MB = 20;
+
 export const MEASURED: readonly Measurement[] = [
   {
     what: "The dictionary, in Postgres",
-    value: "18 MB for 6,050 entries and 34,554 forms, indexes included",
+    /*
+      READ OFF THE SEED RATHER THAN TYPED, because the first version was typed
+      and was stale the same day: it said 6,050 entries and 34,554 forms while
+      the seed it described held 6,102 and 38,577, the nominative plural having
+      become a stored principal part in between. A page whose whole design is
+      "measured on a stated day, and here is the command that gets the same
+      number" cannot carry a number the command no longer gives.
+    */
+    value: `${DICTIONARY_MB} MB for ${SEED_SET_SIZE.words.toLocaleString("en-GB")} entries and `
+      + `${SEED_SET_SIZE.forms.toLocaleString("en-GB")} forms, indexes included`,
     how: "npm run db:seed, then pg_total_relation_size over Lexeme and Form",
   },
   {
@@ -370,7 +390,6 @@ export const CLIP_KB = 188;
 export const HTML_KB = 21;
 export const SHARED_JS_KB = 102;
 export const REQUESTS_PER_PAGE = 13;
-export const DICTIONARY_MB = 18;
 export const POSTGRES_ITSELF_MB = 8;
 /** The deck first run builds, from `lib/collections/starter.ts`. */
 export const STARTER_CARDS = 400;

@@ -7,6 +7,7 @@ import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
 import { applyPosCorrections, writeExpanded } from "./expanded";
 import { writeWordlist } from "./wordlist";
+import { repairProductionBacks } from "./repair";
 import { ensureSearchIndexes } from "./indexes";
 import { classifyGradation, classifyVerbGradation, gradates } from "../lib/estonian/gradation";
 import { courseWords } from "../lib/collections/syllabus/index";
@@ -53,6 +54,21 @@ async function main() {
   const relabelled = await applyPosCorrections(prisma);
   if (relabelled > 0) {
     console.log(`Corrected the part of speech on ${relabelled} entries.`);
+  }
+
+  /*
+    And the cards built before the dictionary knew a prompt had two answers.
+
+    Here for the reason the correction above is here, and after it because
+    `pos` is half of what a prompt is. A production card built the old way
+    carries one lemma on its back and marks the other right answer wrong every
+    time a learner types it; nothing rewrites a `Card` row, so the fix in
+    `lib/srs/cards.ts` reaches new cards only. This widens the old ones and
+    touches no scheduling column at all.
+  */
+  const widened = await repairProductionBacks(prisma);
+  if (widened > 0) {
+    console.log(`Widened ${widened} production cards whose prompt has more than one answer.`);
   }
 
   if (process.argv.includes("--only-if-empty")) {
@@ -147,9 +163,24 @@ async function main() {
       government: word.government,
       examples: JSON.stringify(word.usages.map((et) => ({ et, source: "EKILEX" }))),
       /*
-        Ekilex's own Estonian explanation. The harvest has been fetching this
-        since the syllabus existed and the seed dropped every one, because the
-        column is written only for entries that carry its key and this path
+        The principal parts, and beside them the whole forms no rule of this
+        app reaches: the simple past third person of every verb, the present of
+        `olema`, `pole`, the polite imperative, and the short forms of every
+        pronoun and numeral. `EKILEX:<code>` is the spelling `stemsFrom`,
+        `conjugatedForms` and `conjugationAnswer` already read for a retrieved
+        form, so nothing downstream had to learn a new shape, and `Form`'s
+        unique key is (lexeme, formType, value), so `minule` and `mulle` sit
+        beside each other under one code rather than one overwriting the other.
+
+        They are written as principal, like everything else the seed writes,
+        and that is deliberate: `runEnrich` reads a non-principal form as "this
+        entry has already been enriched", so a seed writing one would strand
+        every reseeded word half-upgraded. See the note on that query.
+      */
+      /*
+        And Ekilex's own Estonian explanation. The harvest has been fetching
+        this since the syllabus existed and the seed dropped every one, because
+        the column is written only for entries that carry its key and this path
         never did. 1,359 of them.
 
         Spread rather than set, so a word Ekilex has no explanation for does
@@ -159,7 +190,10 @@ async function main() {
         exact thing `onlyWhenOwned` exists to stop.
       */
       ...(word.note ? { definition: word.note } : {}),
-      forms: forms(p),
+      forms: [
+        ...forms(p),
+        ...word.extraForms.map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
+      ],
     });
   }
 

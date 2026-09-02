@@ -50,7 +50,8 @@ const CASES = [
   "ADESSIVE", "ABLATIVE", "TRANSLATIVE", "TERMINATIVE", "ESSIVE", "ABESSIVE", "COMITATIVE",
 ];
 const VERB_SLOTS = [
-  "IndPrSg1", "IndPrSg3", "IndPrPl1", "IndPrPs_", "IndIpfSg1", "IndIpfSg3", "KndPrSg1", "ImpPrSg2",
+  "IndPrSg1", "IndPrSg3", "IndPrPl1", "IndPrPs_", "IndIpfSg1", "IndIpfSg3", "KndPrSg1",
+  "ImpPrSg2", "ImpPrPl2",
 ];
 const MEANING_SLOTS = [
   "RECOGNITION", "PRODUCTION", "CLOZE", "GOVERNMENT", "CONJUGATION", "GRADATION", "CASE_FORM",

@@ -8,7 +8,7 @@ import { gapForms } from "@/lib/estonian/gapForms";
 import { INSIDE_CASES, OUTSIDE_CASES, localCasesFor } from "@/lib/estonian/place";
 import { caseIndex, tidyForm } from "@/lib/estonian/whichCase";
 import { looksLikeSentence } from "@/lib/estonian/writing";
-import { conjugationAnswer } from "@/lib/srs/cards";
+import { attestedForms, conjugationAnswer } from "@/lib/srs/cards";
 import { CONJUGATION_SLOTS, isFormSlot, slotLabel } from "@/lib/srs/slots";
 import type { CaseKey } from "@/lib/estonian/types";
 
@@ -154,16 +154,31 @@ export function askableSlots(word: FlashWord): FlashSlot[] {
 
   if (word.pos === "VERB") {
     for (const slot of CONJUGATION_SLOTS) {
-      const value = conjugationAnswer(word, slot);
-      if (!value) continue;
-      const said = slot.negative ? `ei ${value}` : value;
+      const values = conjugationAnswer(word, slot);
+      if (values.length === 0) continue;
+
+      /*
+        Every spelling that is this slot, the way the card builder joins them.
+        A verb slot has parallel forms exactly as a case does: the polite
+        imperative of `ütlema` is `ütelge` and `öelge`, and `ei ole` contracts
+        to `pole`, which is what everybody says and writes. Reading one of them
+        would mark the other wrong on the commonest verb in the language.
+      */
+      const said = values.map((v) => (slot.negative ? `ei ${v}` : v));
+      const also = slot.alsoCode ? attestedForms(word, slot.alsoCode) : [];
+      const accepted = [...new Set([
+        ...said,
+        // The negative is two words and `ei loe` is what anybody says, so the
+        // bare form is let through too and the pair is what the answer shows.
+        ...(slot.negative ? values : []),
+        ...also,
+      ])];
+
       out.push({
         slot: slot.code,
-        value: said,
-        alsoRight: null,
-        // The negative is two words and `ei loe` is what anybody says, so both
-        // are let through and the pair is what the answer shows.
-        accepted: slot.negative ? [said, value] : [value],
+        value: said[0]!,
+        alsoRight: said[1] ?? also[0] ?? null,
+        accepted,
         provenance: attests(word, slot.code, slot.formType) ? "ekilex" : "derived",
       });
     }
