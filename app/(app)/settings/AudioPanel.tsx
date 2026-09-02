@@ -40,52 +40,13 @@ export function VoicePanel({ current }: { current: string }) {
           <ChoiceChip selected={voice === v.id} disabled={pending} onSelect={() => pick(v.id)}>
             {v.name}
           </ChoiceChip>
-          <VoiceSample voice={v.id} name={v.name} />
+          <Speak text={SAMPLE} voice={v.id} label={`Hear ${v.name}`} size={14} />
         </span>
       ))}
     </ChoiceGroup>
   );
 }
 
-/**
- * Hears one voice without changing the setting. `Speak` reads the voice off
- * the shell's context, so a sample of a *different* voice has to ask for it
- * by name; the request shape is the same one the route already validates.
- */
-function VoiceSample({ voice, name }: { voice: string; name: string }) {
-  const [state, setState] = useState<"idle" | "loading" | "gone">("idle");
-  if (state === "gone") return null;
-  const play = async () => {
-    setState("loading");
-    try {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: SAMPLE, speed: 1, voice }),
-      });
-      if (!res.ok) throw new Error(String(res.status));
-      const url = URL.createObjectURL(await res.blob());
-      const audio = new Audio(url);
-      audio.addEventListener("ended", () => URL.revokeObjectURL(url), { once: true });
-      await audio.play();
-      setState("idle");
-    } catch {
-      setState("gone");
-    }
-  };
-  return (
-    <button
-      type="button"
-      onClick={() => void play()}
-      disabled={state === "loading"}
-      aria-label={`Hear ${name}`}
-      className="press tap-tint inline-flex h-8 w-8 items-center justify-center rounded-full"
-      style={{ color: "var(--ink-3)" }}
-    >
-      <Ear size={14} aria-hidden />
-    </button>
-  );
-}
 
 const AUTOPLAY: { value: Autoplay; label: string; detail: string; icon: typeof Ear }[] = [
   {

@@ -348,10 +348,14 @@ export function ReviewSession({ cards: initialCards, drillCase, drillUnit, drill
   useEffect(() => {
     const upcoming = queue[index + 1];
     if (!upcoming) return;
-    const heard = estonianSide(upcoming.cardType, "front") && upcoming.cardType !== "CLOZE"
-      ? upcoming.lemma ?? upcoming.front
-      : upcoming.intro?.lemma ?? upcoming.lemma ?? (estonianSide(upcoming.cardType, "back") ? upcoming.back : null);
-    if (heard) prefetchClip({ text: spoken(heard), voice });
+    // What the card will play: on meeting it, the Estonian front or the lemma;
+    // on the answer, the back whenever the back is the Estonian side, which is
+    // every case, conjugation and gradation card. Both, so neither round-trips.
+    const heard = new Set<string>();
+    if (estonianSide(upcoming.cardType, "front") && upcoming.cardType !== "CLOZE") heard.add(upcoming.lemma ?? upcoming.front);
+    else if (upcoming.intro?.lemma ?? upcoming.lemma) heard.add(upcoming.intro?.lemma ?? upcoming.lemma!);
+    if (estonianSide(upcoming.cardType, "back")) heard.add(upcoming.back);
+    for (const text of heard) prefetchClip({ text: spoken(text), voice });
   }, [index, queue, voice]);
 
   // Interval previews are computed after mount, never during the server render.

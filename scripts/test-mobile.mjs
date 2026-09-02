@@ -27,7 +27,9 @@ const browser = await launchChromium();
   58 rather than 59: `/guide` was one of the routes in the overflow sweep and
   the page is gone. One check, off the route list.
 */
-const { check, done } = suite("The phone", { floor: 58 });
+// 57 rather than 58: `/placement` was cut, and it was one of the thirteen routes
+// the 44px pass walks. The sliver pass visits the lesson in its place.
+const { check, done } = suite("The phone", { floor: 57 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -149,7 +151,7 @@ for (const width of PHONES) {
 // controls could be redrawn without this suite having an opinion.
 for (const path of [
   "/", "/review", "/dictionary", "/scan", "/assess", "/exam",
-  "/learn", "/learn/kodu", "/learn/kodu/lesson", "/placement", "/grammar",
+  "/learn", "/learn/kodu", "/learn/kodu/lesson", "/grammar",
   "/settings", "/practice",
 ]) {
   const { ctx, page } = await open(390, 844, path);
@@ -166,7 +168,7 @@ for (const path of [
 // 6b — Nothing important is squeezed into a sliver.
 //      A block of prose narrower than about fifteen characters is not a layout
 //      choice, it is a flex row that should have wrapped and did not.
-for (const path of ["/learn", "/learn/kodu", "/placement"]) {
+for (const path of ["/learn", "/learn/kodu", "/learn/kodu/lesson"]) {
   const { ctx, page } = await open(390, 844, path);
   const slivers = await page.evaluate(() =>
     [...document.querySelectorAll("main p, main h1, main h2")]

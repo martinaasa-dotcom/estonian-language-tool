@@ -46,7 +46,9 @@ export async function verbExamples(ownerId: string, limit = 4): Promise<VerbExam
     id: true,
     lemma: true,
     translation: true,
-    forms: { select: { formType: true, value: true, morphCode: true } },
+    // Ordered, because a verb Ekilex records two parallel forms for under
+    // one code would otherwise have the plan decide which one the table shows.
+    forms: { select: { formType: true, value: true, morphCode: true }, orderBy: { orderIndex: "asc" as const } },
   } as const;
 
   const deck = await prisma.card.findMany({

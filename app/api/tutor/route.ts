@@ -4,7 +4,7 @@ import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rate
 import { candidatesFor } from "@/lib/dict/resolveScan";
 import { matchEstonianForm } from "@/lib/dict/search";
 import { ProseStream } from "@/lib/tutor/humanize";
-import { buildSystemPrompt, learnerNote } from "@/lib/tutor/prompt";
+import { buildSystemPrompt, learnerNote, type LearnerNote } from "@/lib/tutor/prompt";
 import { learnerContextFor } from "@/lib/progress/tutorContext";
 import { chatEstonianTokens } from "@/lib/tutor/verify";
 import {
@@ -31,6 +31,9 @@ const MAX_HISTORY = 20;
 */
 const QUESTIONS_PER_MINUTE = 12;
 
+/** What Anu is told when the learner's own log could not be read: the middle of the scale, and nothing else. */
+const UNKNOWN_LEARNER: LearnerNote = { level: "B1", weakestCase: null, unit: null };
+
 export async function POST(request: Request) {
   const ownerId = await requireUserId();
 
@@ -46,10 +49,16 @@ export async function POST(request: Request) {
     start — and it fails closed, because "the database hiccuped" is not a reason
     to start spending without a ceiling.
   */
-  const learnerPromise = learnerContextFor(ownerId);
+  /*
+    Started before the ledger is asked so the reads ride beside it, and
+    settled to null on failure rather than thrown: a pooler hiccup on one of
+    these reads must neither 500 a question nor escape the try below, where
+    the reservation is handed back. Anu then knows only the level she knew
+    before any of this existed.
+  */
+  const learnerPromise = learnerContextFor(ownerId).catch(() => null);
   const decision = await authoriseCall(ownerId, "TUTOR");
   if (!decision.allowed) {
-    learnerPromise.catch(() => undefined);
     return Response.json(
       { error: decision.message, reason: decision.reason },
       {
@@ -95,7 +104,7 @@ export async function POST(request: Request) {
     transaction above rather than after it: three round trips that do not
     depend on the answer cost nothing extra when they are in flight together.
   */
-  const learner = await learnerPromise;
+  const learner = (await learnerPromise) ?? UNKNOWN_LEARNER;
   const system = buildSystemPrompt(learner.level);
   const live = learnerNote(learner);
   const encoder = new TextEncoder();

@@ -31,8 +31,11 @@ export const useAudioPrefs = () => useContext(Context);
 /** A right or wrong sound, if the learner wants them. Stable across renders. */
 export function useFeedbackSound(): (kind: Feedback) => void {
   const { sounds } = useAudioPrefs();
-  return sounds === "on" ? playFeedback : () => undefined;
+  return sounds === "on" ? playFeedback : SILENT;
 }
+
+/** One function rather than one per render, so a caller's dependency list stays still. */
+const SILENT = (): void => undefined;
 
 export function AudioPrefsProvider({ value, children }: { value: AudioPrefs; children: ReactNode }) {
   return <Context.Provider value={value}>{children}</Context.Provider>;

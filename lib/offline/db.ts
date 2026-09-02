@@ -36,7 +36,12 @@ function open(): Promise<IDBDatabase | null> {
       if (!db.objectStoreNames.contains(OUTBOX)) db.createObjectStore(OUTBOX, { keyPath: "id" });
       if (!db.objectStoreNames.contains(SESSION)) db.createObjectStore(SESSION);
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      // A connection that closes itself when asked is what lets
+      // `deleteLocalDatabase` finish now rather than when the tab dies.
+      request.result.onversionchange = () => request.result.close();
+      resolve(request.result);
+    };
     request.onerror = () => resolve(null);
     request.onblocked = () => resolve(null);
   });
@@ -57,6 +62,9 @@ function run<T>(
       request.onsuccess = () => resolve(request.result ?? fallback);
       request.onerror = () => resolve(fallback);
       tx.onabort = () => resolve(fallback);
+      // One connection per call, closed when the call is done, rather than a
+      // handle held for the life of the page.
+      tx.oncomplete = () => db.close();
     } catch {
       resolve(fallback);
     }
@@ -108,7 +116,7 @@ export async function dropFromOutbox(ids: string[]): Promise<void> {
       const tx = db.transaction(OUTBOX, "readwrite");
       const store = tx.objectStore(OUTBOX);
       for (const id of ids) store.delete(id);
-      tx.oncomplete = () => resolve();
+      tx.oncomplete = () => { db.close(); resolve(); };
       tx.onerror = () => resolve();
       tx.onabort = () => resolve();
     } catch {
