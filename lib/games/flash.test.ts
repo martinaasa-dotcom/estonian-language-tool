@@ -121,6 +121,56 @@ describe("askableSlots", () => {
     expect(slotKeys(TERE)).toEqual(["PRODUCTION"]);
   });
 
+  it("never asks a form the English gloss beside it already prints", () => {
+    /*
+      Found by `npm run audit:questions` over the shipped dictionary, thirteen
+      times and never twice on one word: the illative of `salv` is `salve` and
+      its gloss is "salve", so the question printed its answer one line up.
+      `sameSpelling` is an exact comparison and catches only the case where the
+      whole gloss is the word.
+    */
+    const salv: FlashWord = {
+      ...TUBA, lexemeId: "lex-salv", lemma: "salv", translation: "salve", examples: [],
+      forms: [
+        { formType: "NOM_SG", value: "salv" },
+        { formType: "GEN_SG", value: "salve" },
+        { formType: "PART_SG", value: "salve" },
+        { formType: "ILL_SG_SHORT", value: "salve" },
+      ],
+    };
+    expect(slotKeys(salv)).not.toContain("ILLATIVE");
+    expect(slotKeys(salv)).toContain("COMITATIVE");
+
+    // And the multi-sense shape, which is what `sameSpelling` cannot see:
+    // `pagan` is glossed "pagan, heathen", so the word is a word in its gloss.
+    const pagan: FlashWord = {
+      ...TUBA, lexemeId: "lex-pagan", lemma: "pagan", translation: "pagan, heathen",
+      examples: [],
+      forms: [
+        { formType: "NOM_SG", value: "pagan" },
+        { formType: "GEN_SG", value: "pagana" },
+        { formType: "PART_SG", value: "paganat" },
+      ],
+    };
+    expect(slotKeys(pagan)).not.toContain("PRODUCTION");
+  });
+
+  it("does not ask somebody to type the word that is printed above the box", () => {
+    // Thirty entries are spelled the same in both languages. A flip card can
+    // turn over and say so; a typed box under the English `film` is a question
+    // whose answer is above it, and answering it would grade the card.
+    const film: FlashWord = {
+      ...TUBA, lexemeId: "lex-film", lemma: "film", translation: "film", examples: [],
+      forms: [
+        { formType: "NOM_SG", value: "film" },
+        { formType: "GEN_SG", value: "filmi" },
+        { formType: "PART_SG", value: "filmi" },
+      ],
+    };
+    expect(slotKeys(film)).not.toContain("PRODUCTION");
+    expect(slotKeys(film)).toContain("COMITATIVE");
+  });
+
   it("never asks a case whose form is spelled like the word in the question", () => {
     // `kallis` has the genitive `kalli`, so its seesütlev is `kallis` again:
     // the question would print its own answer and nobody could get it wrong.
@@ -194,6 +244,30 @@ describe("flashTask", () => {
     expect(task.shape).toBe("gap");
     expect(task.gapped).toBe("Ma olen ____.");
     expect(task.sentence).toBe("Ma olen toas.");
+  });
+
+  it("refuses a gap that leaves another of its own answers standing", () => {
+    /*
+      Ekilex records `Auto jäi porisse/porri kinni.`, which is a lexicographer
+      writing both illatives of one word, so gapping the short one printed the
+      long one two characters away and the marker took it. `buildCloze` refuses
+      a sentence that repeats the word and looks for the same string; a slot's
+      answers are not one string.
+    */
+    const pori: FlashWord = {
+      lexemeId: "lex-pori", lemma: "pori", translation: "mud", pos: "NOUN",
+      forms: [
+        { formType: "NOM_SG", value: "pori" },
+        { formType: "GEN_SG", value: "pori" },
+        { formType: "PART_SG", value: "pori" },
+        { formType: "ILL_SG_SHORT", value: "porri" },
+      ],
+      examples: [{ et: "Auto jäi porisse/porri kinni.", source: "EKILEX" }],
+    };
+    const illative = askableSlots(pori).find((s) => s.slot === "ILLATIVE")!;
+    // The sentence shapes are simply not offered, so the word falls back to
+    // being asked the plain way rather than dropping out of the round.
+    expect(shapesFor(pori, illative)).toEqual(["inflect", "build"]);
   });
 
   it("hides the sentence on the heard shape and keeps it for the reveal", () => {

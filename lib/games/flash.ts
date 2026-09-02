@@ -1,3 +1,4 @@
+import { sameSpelling } from "@/lib/copy/values";
 import { sentenceContaining, type Example } from "@/lib/dict/examples";
 import { checkAnswer } from "@/lib/estonian/answer";
 import { CASES, caseByKey } from "@/lib/estonian/cases";
@@ -144,13 +145,41 @@ export function askableSlots(word: FlashWord): FlashSlot[] {
   const out: FlashSlot[] = [];
   const lemma = word.lemma.trim().toLocaleLowerCase("et");
 
-  out.push({
-    slot: "PRODUCTION",
-    value: word.lemma,
-    alsoRight: null,
-    accepted: [word.lemma],
-    provenance: "ekilex",
-  });
+  /*
+    AND NOT A SLOT WHOSE ANSWER IS PRINTED IN THE MEANING BESIDE IT.
+
+    Four of the five shapes put the English gloss on the screen, so a form
+    spelled like a word in that gloss is a question with its answer above the
+    box. `npm run audit:questions` found fourteen of them over the shipped
+    dictionary and none was visible on any one word: the illative of `salv` is
+    `salve` and its gloss is "salve"; `pagan` is glossed "pagan, heathen",
+    `trend` "trend, tendency", `mink` "American mink". `sameSpelling` is an
+    exact comparison and catches only the first kind, which is why this is the
+    whole-word test the audit itself uses.
+  */
+  const shownInGloss = (spellings: readonly string[]) =>
+    spellings.some((form) => mentions(word.translation, form));
+
+  /*
+    Saying it from the meaning, except where the meaning is the word.
+
+    Thirty entries in the shipped dictionary are spelled the same in both
+    languages: `film`, `number`, `park`, `sport`, `minister`. The review card
+    for one of those turns over and says so in words, which is the honest thing
+    a flip card can do; a typed box under the English `film` is a question
+    whose answer is printed above it, and answering it would grade a card and
+    stretch its interval on a recall that never happened. The word is still
+    asked, in its cases, where there is something to produce.
+  */
+  if (!sameSpelling(word.lemma, word.translation) && !shownInGloss([word.lemma])) {
+    out.push({
+      slot: "PRODUCTION",
+      value: word.lemma,
+      alsoRight: null,
+      accepted: [word.lemma],
+      provenance: "ekilex",
+    });
+  }
 
   if (word.pos === "VERB") {
     for (const slot of CONJUGATION_SLOTS) {
@@ -173,6 +202,7 @@ export function askableSlots(word: FlashWord): FlashSlot[] {
         ...(slot.negative ? values : []),
         ...also,
       ])];
+      if (shownInGloss(accepted)) continue;
 
       out.push({
         slot: slot.code,
@@ -206,6 +236,7 @@ export function askableSlots(word: FlashWord): FlashSlot[] {
     const answer = caseAnswer(stems, key);
     if (!answer) continue;
     if (answer.accepted.some((f) => f.trim().toLocaleLowerCase("et") === lemma)) continue;
+    if (shownInGloss(answer.accepted)) continue;
     out.push({
       slot: key,
       value: answer.value,
@@ -272,7 +303,24 @@ function sentenceFor(word: FlashWord, slot: FlashSlot): { et: string; form: stri
       that says the word twice, because two gaps taking one answer is a
       different exercise and the marker takes one string.
     */
-    if (!buildCloze(example.et, [form])) continue;
+    const cloze = buildCloze(example.et, [form]);
+    if (!cloze) continue;
+
+    /*
+      AND A GAP MAY NOT LEAVE ANOTHER OF ITS OWN ANSWERS STANDING.
+
+      `buildCloze` refuses a sentence that repeats the word, and it looks for
+      the same string; a slot's answers are not one string. Ekilex records
+      `Auto jäi porisse/porri kinni.`, which is a lexicographer writing both
+      illatives of `pori`, so gapping the short one printed the long one two
+      characters away and the marker took it. One sentence in the shipped
+      dictionary, found by `npm run audit:questions` and invisible on any word
+      but that one.
+
+      Refused here rather than in `flashTask`, so the word falls back to being
+      asked the plain way rather than dropping out of the round.
+    */
+    if (slot.accepted.some((spelling) => mentions(cloze.text, spelling))) continue;
     return { et: example.et, form };
   }
   return null;

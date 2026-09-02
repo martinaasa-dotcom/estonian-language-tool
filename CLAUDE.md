@@ -1176,6 +1176,20 @@ genitive stem, so the second round asked `Venemaa → milles? kus?`, which is ex
 `-maa` takes the outside one, and `Venemaas` is not a way of saying "in Russia". A module that
 knows something is only worth having if the next generator asks it.
 
+**And the audit asked the same question of it, which found two more shapes of the same fault.**
+`npm run audit:questions` builds every card, every paper and every clue the shipped dictionary can
+make and asks the one thing no unit test can: is the answer already visible in what the learner is
+shown. The flash round is the widest generator in the app and the newest, so it is in the audit
+too, at 46,851 questions of the 98,318. It found thirteen asks whose answer was a word in the
+English gloss printed beside them, none of them visible on any one word: the sisseütlev of `salv`
+is `salve` and its gloss is "salve", `pagan` is glossed "pagan, heathen", `mink` "American mink".
+`sameSpelling` is an exact comparison and catches only the case where the whole gloss is the word,
+so the rule is the audit's own whole-word test. And it found one gap that left the other half of a
+lexicographer's pair standing two characters away, `Auto jäi porisse/____ kinni.`, because
+`buildCloze` refuses a sentence that repeats the word and looks for the same string, and a slot's
+answers are not one string. The sentence shapes are refused there rather than the task dropped, so
+the word falls back to being asked the plain way.
+
 **And where every word stands has a page of its own, because the first answer was a panel nobody
 found.** It was three cards down `/words`, which is a page about the deck, counted in cards; the
 learner asked for the list twice and reported that they could not see it anywhere. `/words/mastery`

@@ -199,9 +199,24 @@ check("a wrong answer is told what the form is", Boolean(firstLabel && firstForm
 
 await page.goto(`${B}/review/flashcards`, { waitUntil: "domcontentloaded" });
 const again = await question();
-const sameQuestion = again.text.includes(firstLabel ?? "\u0000")
-  && wordOf(again.text) === firstWord;
-check("a reload comes back to the same question", sameQuestion, wordOf(again.text));
+/*
+  The word, and the form where the screen names one.
+
+  A `heard` question deliberately does not print the slot: listening for the
+  ending is the exercise, and naming it would hand the answer over. It also
+  falls back to the plain ask when the clip cannot be fetched, which is what a
+  machine with no route to the speech service does, so the same task can read
+  as two shapes a second apart. Comparing the label unconditionally made this
+  suite fail on a round that was behaving exactly as designed.
+
+  The word is the part that has to hold: the slot is a function of its own
+  unchanged history, so the same word first means the same slot asked.
+*/
+const named = again.text.includes(firstLabel ?? "\u0000");
+const heard = /type the form you hear/i.test(again.text);
+const sameQuestion = wordOf(again.text) === firstWord && (named || heard);
+check("a reload comes back to the same question", sameQuestion,
+  `${firstWord} ${firstLabel} -> ${wordOf(again.text)}`);
 
 let rights = 0;
 let slipped = false;
