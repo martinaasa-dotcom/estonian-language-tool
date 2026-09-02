@@ -130,7 +130,7 @@ model Card {
   back       String
   hint       String?
   targetCase String? // for CASE_FORM cards — powers the weak-case breakdown
-  source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT
+  source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT | SCAN | ALMANAC
   suspended  Boolean @default(false)
 
   // FSRS state (ts-fsrs) — ADR-003
@@ -195,7 +195,7 @@ model Task {
   ownerId     String
   title       String
   notes       String?
-  tag         String    @default("HOMEWORK") // HOMEWORK GRAMMAR VOCABULARY LISTENING SPEAKING
+  tag         String    @default("HOMEWORK") // HOMEWORK | VOCABULARY
   classWeek   Int?
   dueAt       DateTime?
   completed   Boolean   @default(false)

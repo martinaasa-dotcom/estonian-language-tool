@@ -1,298 +1,84 @@
 # Data Model
 
-Prisma schema. v4.0 specified none (audit C3), which is why its `+ Add to Deck` bridge had no
-defined destination. Written to be Postgres-portable per ADR-002: no SQLite-specific types, string
-UUID primary keys, UTC timestamps.
+Postgres, through Prisma. Written to stay portable per ADR-002: no database-specific types, string
+UUID primary keys, UTC timestamps, and the values a string column may take written in a comment
+beside it rather than as a database enum.
 
 `Lexeme` is the hub. Tasks, cards, tutor messages and imports all reference it, which is the structural
 expression of "the word is the unit" (`01-product-spec.md` §2) and the fix for audit gap D4.
 
-```prisma
-generator client { provider = "prisma-client-js" }
-datasource db    { provider = "sqlite"; url = env("DATABASE_URL") }
+**The schema itself lives in `prisma/schema.prisma` and this page does not copy it.** It used to,
+272 lines of it, and the copy went stale the way a second source of truth does: it described ten
+models that no longer exist (`Deck`, `Sense`, `Government`, `Example`, `Conversation`, `AudioClip`,
+`CalendarFeed`, `CalendarEvent`, `TaskLexeme`, `UsageDay`) and named none of the nine that had
+arrived since (`Achievement`, `Assessment`, `Classroom`, `ClassroomMember`, `ExamAttempt`, `Scan`,
+`StarredWord`, `Suggestion`, `UsageEvent`), and it still opened with
+`datasource db { provider = "sqlite" }`. This is the third file `CLAUDE.md` sends a new contributor
+to, so more than half of what they read about the schema was wrong. The schema file carries a
+comment on every model that needs one; what belongs here is the map and the reasoning.
 
-// ─────────────────────────── Vocabulary core ───────────────────────────
+`scripts/test-invariants.ts` fails if a model is in one and not the other.
 
-model Lexeme {
-  id            String   @id @default(uuid())
-  lemma         String                     // citation form: nominative sg / ma-infinitive
-  pos           PartOfSpeech
-  ekilexWordId  Int?     @unique           // null for user-created entries
-  cefr          String?                    // A1..C1 where Ekilex supplies it
-  gradation     Gradation @default(NONE)
-  gradationNote String?                    // e.g. "b : ∅ (tuba : toa)"
-  provenance    Provenance @default(EKILEX)
-  fetchedAt     DateTime?                  // cache freshness for Ekilex-sourced entries
-  classWeek     Int?                       // ties vocabulary to the syllabus
-  notes         String?
+## What each model is for
 
-  forms        Form[]
-  senses       Sense[]
-  examples     Example[]
-  governs      Government[]
-  cards        Card[]
-  tasks        TaskLexeme[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+| Model | What it holds |
+|---|---|
+| `Lexeme` | A dictionary word. **Shared by every learner**: the built-in set plus the Ekilex cache, not anybody's deck. |
+| `Form` | An inflected form. Principal parts are the unpredictable ones a learner memorises; anything Ekilex retrieved keeps its own slot. |
+| `StarredWord` | One learner bookmarking a word. Per learner, unlike the word. |
+| `Card` | One thing to answer about one word, in one of seven shapes, with its FSRS scheduling. |
+| `Review` | Every grade ever given. Append-only, and the one table whose loss cannot be undone. |
+| `Task` | Work a teacher assigned, which is the one thing left of the homework list §24 cut. |
+| `Message` | A turn of a conversation with Anu. |
+| `Setting` | The learner's own answers, one key at a time, through `lib/settings/store.ts`. |
+| `Achievement` | A badge, written the moment its condition is first met and never removed. |
+| `Assessment` | One sitting of the level check. Append-only. |
+| `ExamAttempt` | One sitting of a mock state examination, with the seed its paper was built from. Append-only. |
+| `Scan` | One photographed page, as the words somebody confirmed. **Never the picture.** |
+| `Suggestion` | One thing a learner said was wrong, and what they proposed instead. |
+| `Classroom`, `ClassroomMember` | A class, its join code, and who is in it. A view over what the learners already own. |
+| `UsageEvent` | One metered call to a paid service. Append-only, and the evidence behind the spend cap. |
 
-  @@index([lemma])
-  @@index([classWeek])
-}
+## The values a string column may take
 
-/// One inflected form. Principal parts carry isPrincipal = true; derived forms are
-/// computed at render time and are NOT stored, so a stem correction can never leave
-/// stale derivations behind.
-model Form {
-  id          String   @id @default(uuid())
-  lexemeId    String
-  lexeme      Lexeme   @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
-  formType    FormType
-  value       String
-  isPrincipal Boolean  @default(false)
-  provenance  Provenance @default(EKILEX)
-  audioId     String?
-  audio       AudioClip? @relation(fields: [audioId], references: [id])
+Postgres enums are not used, for the portability ADR-002 asks for, so these live as strings with the
+allowed values in a comment beside them. Three of the four are named in more than one place and the
+invariant checks they agree.
 
-  @@unique([lexemeId, formType])
-  @@index([lexemeId])
-}
-
-model Sense {
-  id           String  @id @default(uuid())
-  lexemeId     String
-  lexeme       Lexeme  @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
-  definitionEt String?
-  translationEn String
-  orderIndex   Int     @default(0)
-}
-
-model Example {
-  id         String  @id @default(uuid())
-  lexemeId   String
-  lexeme     Lexeme  @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
-  et         String
-  en         String?
-  provenance Provenance @default(EKILEX)   // AI-sourced examples are visibly flagged
-  audioId    String?
-  audio      AudioClip? @relation(fields: [audioId], references: [id])
-}
-
-/// Verb case government (rektsioon) — see 02-estonian-domain.md §4.
-model Government {
-  id          String     @id @default(uuid())
-  lexemeId    String
-  lexeme      Lexeme     @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
-  grammCase   GrammCase
-  preposition String?
-  example     String
-  gloss       String?
-}
-
-// ─────────────────────────── Spaced repetition ─────────────────────────
-
-model Card {
-  id         String   @id @default(uuid())
-  lexemeId   String?
-  lexeme     Lexeme?  @relation(fields: [lexemeId], references: [id], onDelete: SetNull)
-  cardType   CardType
-  front      String
-  back       String
-  hint       String?
-  targetCase GrammCase?                   // for CASE_FORM cloze cards
-  audioId    String?
-  audio      AudioClip? @relation(fields: [audioId], references: [id])
-  source     CardSource @default(MANUAL)
-  suspended  Boolean  @default(false)
-
-  // FSRS scheduling state (ts-fsrs) — ADR-003
-  due        DateTime @default(now())
-  stability  Float    @default(0)
-  difficulty Float    @default(0)
-  elapsedDays Int     @default(0)
-  scheduledDays Int   @default(0)
-  reps       Int      @default(0)
-  lapses     Int      @default(0)
-  state      FsrsState @default(NEW)
-  lastReview DateTime?
-
-  reviews    Review[]
-  deckId     String?
-  deck       Deck?    @relation(fields: [deckId], references: [id], onDelete: SetNull)
-  createdAt  DateTime @default(now())
-
-  @@index([due, suspended])               // the hot query: "what is due now"
-  @@index([deckId])
-}
-
-model Deck {
-  id        String @id @default(uuid())
-  name      String @unique
-  classWeek Int?
-  cards     Card[]
-  createdAt DateTime @default(now())
-}
-
-/// Append-only. Never updated, never deleted — this is the irreplaceable data
-/// (01-product-spec.md §2.5) and the input to future FSRS parameter optimisation.
-model Review {
-  id           String   @id @default(uuid())
-  cardId       String
-  card         Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  rating       Int      // 1 Again · 2 Hard · 3 Good · 4 Easy
-  reviewedAt   DateTime @default(now())
-  durationMs   Int
-  stateBefore  FsrsState
-  scheduledDays Int
-  targetCase   GrammCase?                 // powers the weak-case heatmap
-  @@index([reviewedAt])
-  @@index([cardId])
-}
-
-// ─────────────────────────── Tasks & calendar ──────────────────────────
-
-model Task {
-  id        String   @id @default(uuid())
-  title     String
-  notes     String?
-  tag       TaskTag
-  customTag String?
-  classWeek Int?
-  dueAt     DateTime?
-  completed Boolean  @default(false)
-  completedAt DateTime?
-  lexemes   TaskLexeme[]
-  createdAt DateTime @default(now())
-  @@index([dueAt, completed])
-  @@index([classWeek])
-}
-
-model TaskLexeme {
-  taskId   String
-  lexemeId String
-  task     Task   @relation(fields: [taskId],   references: [id], onDelete: Cascade)
-  lexeme   Lexeme @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
-  @@id([taskId, lexemeId])
-}
-
-model CalendarFeed {
-  id         String   @id @default(uuid())
-  name       String
-  url        String
-  enabled    Boolean  @default(true)
-  lastSyncAt DateTime?
-  lastError  String?                      // per-feed failure, surfaced in the UI
-  events     CalendarEvent[]
-}
-
-model CalendarEvent {
-  id        String   @id @default(uuid())
-  feedId    String
-  feed      CalendarFeed @relation(fields: [feedId], references: [id], onDelete: Cascade)
-  uid       String
-  summary   String
-  startsAt  DateTime
-  endsAt    DateTime?
-  allDay    Boolean @default(false)
-  @@unique([feedId, uid])
-  @@index([startsAt])
-}
-
-// ─────────────────────────── Tutor & media ─────────────────────────────
-
-model Conversation {
-  id        String @id @default(uuid())
-  title     String
-  messages  Message[]
-  createdAt DateTime @default(now())
-}
-
-model Message {
-  id             String @id @default(uuid())
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  role           String       // "user" | "assistant"
-  content        String
-  inputTokens    Int?
-  outputTokens   Int?
-  cacheReadTokens Int?        // proves prompt caching is working (06-anu-tutor.md §6)
-  costUsd        Float?
-  createdAt      DateTime @default(now())
-}
-
-/// Daily spend ledger backing the budget cap — audit C5.
-model UsageDay {
-  date        String @id      // YYYY-MM-DD
-  inputTokens Int    @default(0)
-  outputTokens Int   @default(0)
-  costUsd     Float  @default(0)
-  requests    Int    @default(0)
-}
-
-/// Cached TTS. A word's pronunciation never changes, so these are cached
-/// indefinitely and keyed by content hash — see 05-integrations.md §2.
-model AudioClip {
-  id        String @id @default(uuid())
-  textHash  String @unique   // sha256(text + speaker + speed)
-  text      String
-  speaker   String
-  path      String           // file on disk under .data/audio/
-  bytes     Int
-  createdAt DateTime @default(now())
-  forms     Form[]
-  examples  Example[]
-  cards     Card[]
-}
-
-model Setting {
-  key   String @id
-  value String                // JSON blob: CEFR level, target retention, daily cap, TTS speaker
-}
-
-// ─────────────────────────── Enums ─────────────────────────────────────
-
-enum PartOfSpeech { NOUN VERB ADJECTIVE ADVERB PRONOUN NUMERAL PARTICLE PHRASE OTHER }
-enum Gradation    { NONE QUANTITATIVE QUALITATIVE }
-enum Provenance   { EKILEX DERIVED AI USER }
-
-enum FormType {
-  NOM_SG GEN_SG PART_SG ILL_SG_SHORT PART_PL     // noun principal parts (5)
-  INF_MA INF_DA PRES_1SG PAST_1SG PART_TUD       // verb principal parts (5)
-  OTHER
-}
-
-enum GrammCase {
-  NOMINATIVE GENITIVE PARTITIVE ILLATIVE INESSIVE ELATIVE
-  ALLATIVE ADESSIVE ABLATIVE TRANSLATIVE TERMINATIVE
-  ESSIVE ABESSIVE COMITATIVE
-}
-
-enum CardType {
-  RECOGNITION      // et → en
-  PRODUCTION       // en → et
-  CASE_FORM        // produce a named case form
-  GRADATION        // the genitive of a word whose stem changes
-  GOVERNMENT       // which case does this verb take
-  CLOZE            // fill the gap in a sentence somebody recorded
-  CONJUGATION      // produce a named form of a verb
-}
-
-enum CardSource { MANUAL DICTIONARY TUTOR IMPORT }
-enum FsrsState  { NEW LEARNING REVIEW RELEARNING }
-enum TaskTag    { GRAMMAR HOMEWORK VOCABULARY SPEAKLY_GOAL LISTENING CUSTOM }
 ```
+CardType    RECOGNITION PRODUCTION CASE_FORM GRADATION GOVERNMENT CLOZE CONJUGATION
+CardSource  MANUAL DICTIONARY TUTOR IMPORT SCAN ALMANAC
+TaskTag     HOMEWORK VOCABULARY
+FormType    NOM_SG GEN_SG PART_SG ILL_SG_SHORT PART_PL GEN_PL
+            INF_MA INF_DA PRES_1SG PAST_1SG PART_TUD
+            EKILEX:<morphCode> for anything retrieved
+GrammCase   NOMINATIVE GENITIVE PARTITIVE ILLATIVE INESSIVE ELATIVE
+            ALLATIVE ADESSIVE ABLATIVE TRANSLATIVE TERMINATIVE
+            ESSIVE ABESSIVE COMITATIVE
+```
+
 
 ## Notes on three deliberate choices
 
-**Derived forms are not stored.** Only principal parts live in `Form`, five per lexeme, drawn
-from the ten `FormType` values (five noun, five verb). The ten derived cases
-are computed at render time from the genitive stem. Storing them would create a second source of
-truth that goes stale the moment a stem is corrected.
+**Derived forms are not stored.** Only principal parts live in `Form`, drawn from the eleven
+`FormType` values: six for a nominal and five for a verb. The sixth nominal part, `GEN_PL`, is what
+opens the plural oblique cases, and `ILL_SG_SHORT` is the short illative, which is the one case no
+rule reaches; both are present on a word only where the dictionary holds them, so a seeded entry
+has three or four and an enriched one more. The ten regular cases and the verb's present, negative,
+conditional and imperative are worked out at render time from the genitive stem and the stored
+first person. Storing them would create a second source of truth that goes stale the moment a stem
+is corrected.
+
+A form Ekilex retrieved is kept under its own slot, `EKILEX:<morphCode>`, so a retrieved form and a
+derived one fill the same row of a table and an attested one always answers first.
 
 **`Review` is append-only.** No update path, no delete path. It is the one table whose loss cannot
 be recovered by re-fetching from anywhere, and it is the input to future FSRS optimisation.
 
-**`AudioClip` is content-addressed** by `sha256(text + speaker + speed)`, so the same word requested
-from a dictionary entry and from a flashcard hits one cached file.
+**Audio is cached and is not a table.** A clip is content-addressed on the text, the voice and the
+speed, so the same word asked for from a dictionary entry and from a flashcard is one file. It lives
+on disk beside the route that fetched it and in the service worker's own bounded cache, which is
+where a file belongs: `lib/audio/clip.ts` is the one place that key is built.
 
 **`Assessment` is the second append-only table, and the third exception to "progress is derived".**
 A sitting of the level check is a measurement of answers to questions that were never cards and

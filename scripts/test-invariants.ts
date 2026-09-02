@@ -6544,13 +6544,48 @@ check("the card types are the same seven wherever they are written down", () => 
   );
 
   const doc = read(join("docs", "04-data-model.md"));
-  const block = /enum CardType \{([^}]*)\}/.exec(doc)?.[1] ?? "";
-  const documented = [...block.matchAll(/^\s*([A-Z_]+)/gm)].map((m) => m[1]!);
+  const line = /^CardType\s+(.+)$/m.exec(doc)?.[1]?.trim().split(/\s+/) ?? [];
   assert.deepEqual(
-    [...documented].sort(),
+    [...line].sort(),
     [...declared].sort(),
     "docs/04-data-model.md names a different set of card types from lib/srs/cards.ts",
   );
+});
+
+/*
+  AND THE PAGE A NEW CONTRIBUTOR READS ABOUT THE SCHEMA NAMES THE SCHEMA'S OWN
+  MODELS.
+
+  `docs/04-data-model.md` used to carry 272 lines of Prisma, and the copy went
+  stale exactly as a second source of truth does: ten models that no longer
+  exist, none of the nine that had arrived since, and `provider = "sqlite"` at
+  the top of a Postgres app. `CLAUDE.md` sends a new contributor to that page
+  third, so more than half of what they read about the schema was wrong.
+
+  The fields live in the schema file, which comments every model that needs
+  one. What the page keeps is the map and the reasoning, and a map is exactly
+  the shape a check can hold to the thing it maps.
+*/
+check("the data model page names every model the schema has, and no others", () => {
+  const schema = read(join("prisma", "schema.prisma"));
+  const models = [...schema.matchAll(/^model (\w+)/gm)].map((m) => m[1]!);
+  assert.ok(models.length > 10, "prisma/schema.prisma no longer declares models the usual way");
+
+  const doc = read(join("docs", "04-data-model.md"));
+  const named = new Set([...doc.matchAll(/`(\w+)`/g)].map((m) => m[1]!));
+
+  const missing = models.filter((model) => !named.has(model));
+  assert.deepEqual(missing, [], "docs/04-data-model.md does not name every model in the schema");
+
+  /*
+    And the other direction, over the models it once described and no longer
+    should. A name may still appear in the paragraph explaining that it went,
+    which is why this reads the map's own table rather than the whole page.
+  */
+  const table = [...doc.matchAll(/^\| `([^`]+)`[^|]*\|/gm)]
+    .flatMap((m) => m[1]!.split(/`,\s*`/));
+  const invented = table.filter((model) => !models.includes(model));
+  assert.deepEqual(invented, [], "docs/04-data-model.md maps a model the schema does not have");
 });
 
 check("nothing decides what a gap can hide outside lib/estonian/gapForms.ts", () => {
