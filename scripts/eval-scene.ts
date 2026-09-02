@@ -37,13 +37,13 @@
 import { CASES } from "../lib/estonian/cases";
 import { caseAnswer, stemsFromParts } from "../lib/estonian/derive";
 import { parseGovernment } from "../lib/estonian/government";
-import { FREE_OPENROUTER_MODELS } from "../lib/tutor/provider";
+import { FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS } from "../lib/tutor/provider";
 import { SCENES } from "../lib/scenes/catalogue";
 import { buildLexicon, formsOf, words, type DictEntry } from "../lib/scenes/lexicon";
 import { MAX_WORDS, isQuestion } from "../lib/scenes/retrieval";
 import { QUESTION_SHAPE, type BeatSpec, type SceneSpec } from "../lib/scenes/types";
-import { unitById } from "../lib/collections/syllabus";
-import { shippedDictionary, type ShippedEntry } from "./lib/dictionary";
+import { LEVELS, SYLLABUS, unitById } from "../lib/collections/syllabus";
+import { shippedDictionary } from "./lib/dictionary";
 import type { CaseKey } from "../lib/estonian/types";
 
 const arg = (name: string, fallback: number) => {
@@ -53,6 +53,18 @@ const arg = (name: string, fallback: number) => {
 const LINES = arg("lines", 3);
 const sceneArg = process.argv.indexOf("--scene");
 const onlyScene = sceneArg >= 0 ? process.argv[sceneArg + 1] : undefined;
+/*
+  What the gate vouches against.
+
+  `units` is the design's own answer, the lemmas of the units a scene declares,
+  and `course` is every word the syllabus teaches up to the scene's level. The
+  argument for the narrow one is that it is what makes the model choose inside a
+  box rather than reach for any Estonian word there is. The argument for
+  measuring the wide one is that a box can be too small, and §6 names that as
+  the first thing to suspect when the rejection rate is high.
+*/
+const ALLOWLIST = process.argv.includes("--allowlist")
+  ? process.argv[process.argv.indexOf("--allowlist") + 1] : "units";
 
 const shipped = shippedDictionary();
 const pool: DictEntry[] = shipped.map((e) => ({
@@ -64,6 +76,14 @@ const byLemma = new Map(pool.map((e) => [`${e.lemma}|${e.pos}`, e]));
 /** The lemmas one scene may use: every word of every unit it declares. */
 function sceneLemmas(scene: SceneSpec): string[] {
   const out = new Set<string>();
+  if (ALLOWLIST === "course") {
+    const upTo = LEVELS.indexOf(scene.level);
+    for (const unit of SYLLABUS) {
+      if (LEVELS.indexOf(unit.level) > upTo) continue;
+      for (const spec of unit.words) out.add(spec[0]);
+    }
+    return [...out];
+  }
   for (const id of scene.units) {
     for (const spec of unitById(id)?.words ?? []) out.add(spec[0]);
   }
@@ -194,9 +214,37 @@ function runGate(
  * Part A: the rejection rate, against the chain a deployment gets.
  * ------------------------------------------------------------------ */
 
-const KEY = process.env.OPENROUTER_API_KEY;
-const pinned = (process.env.OPENROUTER_MODEL ?? "").split(",").map((m) => m.trim()).filter(Boolean);
-const MODEL = pinned[0] ?? FREE_OPENROUTER_MODELS[0];
+/**
+ * The chain, the way `resolveProviders` builds it: every free model of every
+ * provider whose key is set, in order.
+ *
+ * A single model is what this asked first and it measured a rate limit rather
+ * than a gate. Free models are limited hard and per day, so on any afternoon
+ * one of them is closed, and a run that could not compose a line reported
+ * `0/0 withheld (0%)`, which reads as a perfect score. That is the shape this
+ * repository has a rule about: a failure may not misname its cause.
+ */
+interface Link { label: string; model: string; url: string; key: string }
+const CHAIN: Link[] = [];
+{
+  const or = process.env.OPENROUTER_API_KEY;
+  if (or) {
+    const pinned = (process.env.OPENROUTER_MODEL ?? "").split(",").map((m) => m.trim()).filter(Boolean);
+    for (const model of pinned.length ? pinned : FREE_OPENROUTER_MODELS) {
+      CHAIN.push({ label: "OpenRouter", model, url: "https://openrouter.ai/api/v1/chat/completions", key: or });
+    }
+  }
+  const groq = process.env.GROQ_API_KEY;
+  if (groq) {
+    const pinned = (process.env.GROQ_MODEL ?? "").split(",").map((m) => m.trim()).filter(Boolean);
+    for (const model of pinned.length ? pinned : FREE_GROQ_MODELS) {
+      CHAIN.push({ label: "Groq", model, url: "https://api.groq.com/openai/v1/chat/completions", key: groq });
+    }
+  }
+}
+/** Why a line could not be composed, by status, so a thin run says so. */
+const REFUSALS = new Map<string, number>();
+const ANSWERED = new Map<string, number>();
 
 const SYSTEM = [
   "You are one side of a short conversation in Estonian, in a role-play for a language learner.",
@@ -216,32 +264,40 @@ async function compose(scene: SceneSpec, beat: BeatSpec, lemmas: string[]): Prom
     lemmas.join(", "),
   ].filter(Boolean).join("\n");
 
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${KEY}` },
-      body: JSON.stringify({
-        model: MODEL, temperature: 0.8, max_tokens: 60,
-        messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }],
-      }),
-    });
-    if (res.status === 429) { await new Promise((r) => setTimeout(r, 2000 * (attempt + 1))); continue; }
-    if (!res.ok) return null;
-    const data = await res.json() as { choices?: { message?: { content?: string } }[] };
-    const text = data.choices?.[0]?.message?.content?.trim();
-    return text ? text.replace(/^["'«]|["'»]$/g, "") : null;
+  for (const link of CHAIN) {
+    let status = 0;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await fetch(link.url, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${link.key}` },
+        body: JSON.stringify({
+          model: link.model, temperature: 0.8, max_tokens: 60,
+          messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }],
+        }),
+      });
+      status = res.status;
+      if (res.status === 429 && attempt === 0) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      if (!res.ok) break;
+      const data = await res.json() as { choices?: { message?: { content?: string } }[] };
+      const text = data.choices?.[0]?.message?.content?.trim();
+      if (!text) break;
+      ANSWERED.set(link.model, (ANSWERED.get(link.model) ?? 0) + 1);
+      return text.replace(/^["'«]|["'»]$/g, "");
+    }
+    const why = `${link.model} ${status}`;
+    REFUSALS.set(why, (REFUSALS.get(why) ?? 0) + 1);
   }
   return null;
 }
 
 async function partA() {
   console.log("\n=== Part A: the gate, against a real model ===\n");
-  if (!KEY) {
-    console.log("  OPENROUTER_API_KEY is not set, so no line can be composed and no rate measured.");
-    console.log(`  It would have asked ${MODEL}. Part B below needs no key and runs anyway.`);
+  if (CHAIN.length === 0) {
+    console.log("  No provider key is set, so no line can be composed and no rate measured.");
+    console.log("  Set OPENROUTER_API_KEY or GROQ_API_KEY. Part B below needs no key and runs anyway.");
     return;
   }
-  console.log(`  Composing with ${MODEL}, ${LINES} lines per beat.\n`);
+  console.log(`  ${LINES} lines per beat, vouching against the ${ALLOWLIST === "course" ? "whole course to the scene\u2019s level" : "scene\u2019s own units"}, over ${CHAIN.length} free models: ${CHAIN.map((l) => l.model).join(", ")}\n`);
 
   const tally = new Map<Check, number>();
   let asked = 0, refused = 0, withheld = 0;
@@ -273,7 +329,23 @@ async function partA() {
     console.log(`  ${scene.id.padEnd(14)} ${sceneWithheld}/${sceneAsked} withheld (${pct}%), ${lemmas.length} lemmas in its list`);
   }
 
-  console.log(`\n  ${withheld} of ${asked} lines withheld${refused ? `, ${refused} the model refused or could not answer` : ""}.`);
+  console.log(`\n  ${withheld} of ${asked} lines withheld${refused ? `, and ${refused} nobody in the chain would compose` : ""}.`);
+  if (ANSWERED.size > 0) {
+    console.log("  Who answered: " + [...ANSWERED].map(([m, n]) => `${m} ${n}`).join(", "));
+  }
+  if (REFUSALS.size > 0) {
+    console.log("  Who would not, and with what status: " + [...REFUSALS].map(([m, n]) => `${m} x${n}`).join(", "));
+  }
+  /*
+    A run that composed nothing measured a rate limit, not a gate, and saying
+    "0 of 0 withheld (0%)" about it would be the clean-looking failure this
+    script exists to avoid.
+  */
+  if (asked === 0) {
+    console.log("\n  NOTHING WAS COMPOSED, so this says nothing about the gate. Free models are");
+    console.log("  limited per day and per model; the statuses above say which wall was hit.");
+    return;
+  }
   if (asked > 0) {
     const rate = (withheld / asked) * 100;
     console.log(`  Gate rejection rate: ${rate.toFixed(1)}%.`);

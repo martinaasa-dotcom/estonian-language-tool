@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/db";
 import { resetNewsCache } from "@/lib/news/feed";
+import { oneEntryPerLemma } from "./search";
 import { resetSuggestionCache, suggestWords } from "./suggest";
 
 /**
@@ -145,15 +146,32 @@ describe("the suggestion row", () => {
     for (let i = 0; i < 15; i += 1) {
       for (const word of (await suggestWords(OWNER)).words) lemmas.add(word);
     }
+    /*
+      THE ENTRY A LEARNER WOULD LAND ON, not every entry sharing the lemma.
+
+      A chip is a link to `/dictionary?q=<lemma>` and the dictionary picks one
+      entry by `bySubstance`, so that is the word the row is actually offering
+      and the only one its promise is about. Read as "no entry with this lemma
+      is outside the bands", this fails on any word with a homonym in another
+      part of speech, and there is one: `või` is butter, a noun the food unit
+      teaches, and the conjunction "or" that the connectives unit teaches. Both
+      are A1, both are correct, and the row offers the noun.
+
+      `oneEntryPerLemma` is the dictionary's own answer to which one that is,
+      so asking it here is asking what the learner sees rather than what the
+      table holds.
+    */
     const rows = await prisma.lexeme.findMany({
       where: { lemma: { in: [...lemmas] } },
-      select: { lemma: true, cefr: true, pos: true },
+      select: { id: true, lemma: true, cefr: true, pos: true, provenance: true, forms: { select: { id: true } } },
     });
-    expect(rows.length).toBeGreaterThan(0);
-    for (const row of rows) {
+    const shown = oneEntryPerLemma(rows, [...lemmas]);
+    expect(shown.length).toBeGreaterThan(0);
+    for (const row of shown) {
       expect(["A1", "A2"], `${row.lemma} is ${row.cefr}, outside an A1 learner's band`)
         .toContain(row.cefr);
-      expect(["NOUN", "VERB", "ADJECTIVE"]).toContain(row.pos);
+      expect(["NOUN", "VERB", "ADJECTIVE"], `${row.lemma} opens as a ${row.pos}, which has no case table`)
+        .toContain(row.pos);
     }
   });
 

@@ -927,11 +927,22 @@ an input to a decision, not a check somebody can break.
 
 | | |
 |---|---|
-| Entries | 7,094 |
-| Distinct forms, stored and derived | 153,517 |
-| Attested lines | 15,788 |
-| Of those, things a person says | 6,369 |
-| Of those, questions | 350, which is 5% |
+| Entries | 6,102 |
+| Distinct forms, stored and derived | 155,557 |
+| Attested lines | 14,913 |
+| Of those, things a person says | 8,908 |
+| Of those, questions | 335, which is 4% |
+
+Two corrections stand behind those numbers and both were faults in the reading
+rather than in the dictionary. The first run counted its corpus twice, because
+it read the six files the seed reads without deduplicating on `(lemma, pos)`;
+§28 has that. The second read the merge wrong in the other direction: the seed
+lets the course harvest **supersede** a hand-typed entry and lets the built
+expansion **defer** to one, and `shippedDictionary()` treated both as
+deferring, so 293 words came back as their hand-typed version with none of the
+harvest's sentences, level or forms. `olema` is one of them, which is how it
+was found: the measurement went on reporting `on`, `oli` and `pole` as words
+nothing could vouch for after they had been stored.
 
 "Things a person says" is a rule this needed and did not have. `naturalSentence` rejects a usage
 that trails off, carries a slash or labels itself, and has no opinion on `Kodune aadress.`, which is
@@ -942,17 +953,13 @@ verbs. A question is let through without one, because `Mis kell on?` is a clause
 
 ### The result
 
-| Scene | Level | Beats filled by retrieval |
-|---|---|---|
-| Booking a doctor's appointment | A2 | 4 of 7 |
-| Telling a landlord something is broken | B1 | 4 of 7 |
-| Handing in a form at a counter | A2 | 5 of 7 |
+Twelve of the 21 beats fill from a scene's own units, and 15 from the whole course to that level.
 
-Which reads well and is the wrong way to read it. The four that fill are the greeting, the closing,
-the offer and the confirmation, in all three scenes. **The beats that carry the encounter fill at
-zero**: what is wrong with you, where does it hurt, since when, what have you come for, which
-document, what has broken. Those are the `ask` moves, and they collapse at the shape check rather
-than at readability: the doctor scene's `where` beat has 531 lines mentioning a body part and 13 of
+Which reads well and is the wrong way to read it. What fills is the greeting, the closing, the offer
+and the confirmation, in all three scenes. **The beats that carry the encounter fill at zero**: what
+is wrong with you, where does it hurt, since when, what have you come for, which document, what has
+broken. Those are the `ask` moves, and they collapse at the shape check rather than at readability:
+the doctor scene's `where` beat has hundreds of lines mentioning a body part and single figures of
 them are questions.
 
 That is not a gap in the dictionary and no amount of harvesting fixes it. Ekilex records a usage to
@@ -967,12 +974,13 @@ is too strict for the one move that matters most. Matching by move alone gives t
 
 | Level | Readable questions | With the missing words | Allowing one unknown |
 |---|---|---|---|
-| A1 | 23 | 28 | 80 |
-| A2 | 31 | 36 | 114 |
-| B1 | 37 | 42 | 128 |
+| A1 | 36 | 36 | 111 |
+| A2 | 51 | 51 | 149 |
 
-Thirty-one readable questions across the whole of A2 is not a pool to build a catalogue on, or one
-scene's worth of variety. It is enough to seed a phrase bank by hand and no more.
+Fifty-one readable questions across the whole of A2 is not a pool to build a catalogue on, or one
+scene's worth of variety. It is enough to seed a phrase bank by hand and no more. The middle column
+has stopped moving, which is its own small result: the words the corpus needs and the dictionary
+could not vouch for were the missing units and the forms no rule reaches, and both are in now.
 
 ### The finding nobody was looking for
 
