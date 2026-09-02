@@ -741,9 +741,25 @@ check("a session never lets its questions change under the learner", () => {
     const listProp = /\binitial[A-Z]\w*/.test(props)
       || /\b(cards|prompts|questions|items|gaps|pairs|steps|paper)\b/.test(props);
     if (!listProp) continue;
+    /*
+      Either spelling of the snapshot. `useState(initialCards)` is the plain
+      one; `useState<T>(() => plan(initialCards))` is the lazy one, which the
+      review session needs because it expands its cards into a queue of steps
+      (lib/srs/learn.ts) and doing that work on every render to throw it away
+      is not free.
+
+      The property is the same and the lazy form is the stronger of the two: the
+      initialiser runs once on mount and never again, so a refreshed prop cannot
+      reach the queue either way. This asserted the plain spelling only, and
+      fired on the lazy one, which is a check firing on honest code. The rule is
+      widened rather than the code contorted, and what both arms still require
+      is that the prop reaches `useState` at all: a session that indexes
+      `initialCards` directly matches neither.
+    */
+    const snapshot = /useState(?:<[\s\S]*?>)?\(\s*(?:initial\w+\s*\)|\(\)\s*=>[\s\S]{0,400}?\binitial\w+)/;
     assert.match(
       source,
-      /useState\(\s*initial\w+\s*\)/,
+      snapshot,
       `${file} indexes a list prop directly; snapshot it with useState so a refresh cannot swap it mid-session`,
     );
   }

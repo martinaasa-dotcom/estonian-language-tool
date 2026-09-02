@@ -340,7 +340,16 @@ function toReviewCard(c: CardRow): ReviewCard {
  * position by definition, which `isStillLearning` reads as Relearning.
  */
 function wantsChoices(card: ReviewCard): boolean {
-  return card.cardType === "RECOGNITION" && !card.isNew && isStillLearning(card.scheduling.state);
+  if (card.cardType !== "RECOGNITION") return false;
+  /*
+    A word met earlier in this sitting is asked back in it, and four options is
+    what it is asked with. `!card.isNew` used to be here and it was the reason
+    a new word could not be tested the same day it was taught: the server
+    attached no options, so the only shape available on the step after the
+    introduction was recall, which is the guessing game the introduction exists
+    to avoid. See lib/srs/learn.ts.
+  */
+  return card.isNew || isStillLearning(card.scheduling.state);
 }
 
 /**
