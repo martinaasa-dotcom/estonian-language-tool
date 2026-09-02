@@ -116,7 +116,38 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "word is already in your deck, finishing the round counts towards it.",
   },
   {
-    href: "/crossword", title: "Crossword", subtitle: "Clued in English",
+    /*
+      The picture game and the conversation game, which turned out to be one
+      thing: a situation, and the learner producing Estonian about it. See
+      `lib/collections/scenes.ts` for why the picture is emoji rather than the
+      cartoon artwork that was asked for, and why that is the better answer
+      rather than the cheaper one.
+    */
+    href: "/review/describe", title: "Say what you see", subtitle: "A picture, one sentence",
+    icon: "Eye", tone: "blush", group: "targeted", note: "Five pictures",
+    within: "/practice",
+    blurb:
+      "Three things and a situation, and one sentence of your own about them. One of the words " +
+      "is named and has to carry a case you are asked for; the other two are pictures, and " +
+      "using them is worth credit. The ending is checked against the dictionary, so if you " +
+      "reach for the wrong one it tells you which one you reached for.",
+  },
+  {
+    /*
+      Named the way Sõnad is, in the language it is played in. `ristsõna` is
+      the word a shop in Tallinn prints on the puzzle book, and a learner who
+      meets it here can read it on one. The English name is not dropped, it
+      moves to the subtitle, which is where every screen already puts what a
+      mode does: the title says what this is called and the line under it says
+      what it is, which is the shape the grammar screens take with a case.
+
+      That also keeps it findable both ways. The palette folds both sides, so
+      `ristsona` off a keyboard with no õ lands on the title, and `crossword`
+      lands on the subtitle, which the palette searches too. Which is why the
+      subtitle spends the whole 24-character budget `nav.test.ts` sets: it is
+      carrying the English name now as well as saying what the round does.
+    */
+    href: "/crossword", title: "Ristsõna", subtitle: "Crossword, English clues",
     icon: "Grid3x3", tone: "butter", group: "targeted", note: "A new grid daily",
     within: "/practice",
     blurb:

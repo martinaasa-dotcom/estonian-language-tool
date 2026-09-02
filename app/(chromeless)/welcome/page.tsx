@@ -1045,6 +1045,18 @@ function Footer() {
           <a href="https://tartunlp.ai" target="_blank" rel="noreferrer" className="underline underline-offset-2">TartuNLP</a>,
           University of Tartu.
         </p>
+        {/*
+          The three pages a stranger is entitled to read before signing up, and
+          until now the landing page linked none of them: they were reachable
+          only from each other and from two screens inside the app, which is
+          behind the sign-in they exist to inform. Funding is the newest and the
+          reason the row was noticed.
+        */}
+        <p className="flex shrink-0 gap-3">
+          <Link href="/privacy" className="underline underline-offset-2">Privacy</Link>
+          <Link href="/terms" className="underline underline-offset-2">Terms</Link>
+          <Link href="/funding" className="underline underline-offset-2">Funding</Link>
+        </p>
       </div>
     </footer>
   );

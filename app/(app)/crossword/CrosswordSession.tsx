@@ -145,7 +145,25 @@ export function CrosswordSession({ puzzle, day }: { puzzle: DailyCrossword; day:
         <div
           className="mx-auto grid w-fit gap-1"
           style={{ gridTemplateColumns: `repeat(${puzzle.cols}, minmax(0, 1fr))` }}
-          role="grid"
+          /*
+            A GROUP RATHER THAN A GRID, WHICH AXE IS RIGHT ABOUT.
+
+            `role="grid"` promises rows: an element with it must hold `row`
+            children holding `gridcell` children, and a screen reader offers
+            the grid navigation model on the strength of that promise. This is
+            one flat CSS grid of cells with no row elements in it, so the
+            promise was false and `aria-required-children` fired on it, which
+            nothing noticed because the route was not in the accessibility
+            suite's list until now.
+
+            Wrapping each row in a `role="row"` with `display: contents` is the
+            other fix and buys nothing here: the navigation this actually
+            offers is a real `<input>` per cell, each labelled with its own row
+            and column, which is what a screen reader user needs and is already
+            there. A group says "these controls belong together", which is
+            exactly what is true.
+          */
+          role="group"
           aria-label="Crossword grid"
         >
           {Array.from({ length: puzzle.rows * puzzle.cols }, (_, cell) => {

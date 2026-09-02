@@ -24,8 +24,12 @@ page.on("console", (m) => {
 });
 
 // Floor: 29, measured in the state CI seeds. A thinner database reads as short.
-// 23 before Sõnad added six, the crossword six more and the game of the day two.
-const { check, absent, done } = suite("Practice modes", { floor: 38 });
+// 23 before Sõnad added six, the crossword six more and the game of the day two,
+// then two when the crossword was renamed Ristsõna and both names had to keep
+// reaching it from the palette, and four for the picture round. The last two
+// arrived on two branches at once, so the number is measured on the merged tree
+// rather than added from either side: 44.
+const { check, absent, done } = suite("Practice modes", { floor: 44 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -349,6 +353,37 @@ if ((await featured.count()) === 0) {
     (await page.getByText(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) is /).count()) > 0);
 }
 
+// 6e — Say what you see: a picture, a case, and the ending you actually wrote
+/*
+  The one thing this mode can do that no other screen can: when the ending is
+  wrong it says which ending you wrote, by name. That is worth driving in a
+  browser rather than trusting the unit test, because the sentence is assembled
+  out of three sources (the mechanical mark, the case table, and the form the
+  server revealed) and any of them going missing leaves a grammatical sentence
+  that says nothing.
+*/
+await page.goto(`${B}/review/describe`, { waitUntil: "networkidle" });
+const box = page.locator("#sentence");
+if ((await box.count()) === 0) {
+  absent(4, "no scene at this level: the dictionary has no banded noun with a picture and a stem");
+} else {
+  check("the picture is three characters and none of them is announced as an image",
+    (await page.locator("p [aria-hidden='true']").first().innerText()).trim().split(/\s+/).length === 3);
+  check("and a screen reader is told the same three things in English",
+    (await page.locator(".sr-only").filter({ hasText: /^A picture of/ }).count()) > 0);
+
+  // A sentence with none of the scene's words in it: the mark is certain and
+  // the reveal names what was in the picture.
+  await box.fill("Ma ei tea sellest midagi.");
+  await page.getByRole("button", { name: /Check it/ }).click();
+  await page.waitForTimeout(3500);
+  const verdict = (await page.locator("[aria-live='polite'] p").first().innerText()).replace(/\s+/g, " ");
+  check("a sentence without the word is marked against the dictionary and given the form",
+    /is not in that sentence/.test(verdict) && /The .+ is /.test(verdict));
+  check("and the three words are revealed with their meanings afterwards",
+    (await page.getByText("What was in the picture").count()) > 0);
+}
+
 // 7 — Command palette
 await page.goto(`${B}/`, { waitUntil: "networkidle" });
 await page.keyboard.press("Control+k");
@@ -362,13 +397,32 @@ check("the palette offers a dictionary lookup for anything it doesn't know",
 /*
   And it finds a place whose name a UK keyboard cannot type, which is the
   fault this caught: `Sõnad` was matched with a plain `includes`, so typing
-  `sonad` found nothing and the one place in the app with an Estonian name was
-  unreachable from the box that promises to go anywhere.
+  `sonad` found nothing and the only place in the app with an Estonian name at
+  the time was unreachable from the box that promises to go anywhere.
 */
 await page.getByLabel("Search commands and words").fill("sonad");
 await page.waitForTimeout(250);
 check("and finds Sõnad typed without the diacritic",
   (await page.getByText("Sõnad", { exact: false }).count()) > 0);
+
+/*
+  There are two Estonian names in the box now, so the second one is asked the
+  same question, and then the question the rename actually raises: somebody who
+  knows the game as a crossword and has never met the word `ristsõna` has to
+  find it by the English name. That is not the label any more, it is the
+  subtitle, and the palette searches a mode's subtitle and blurb as keywords.
+  Both halves of the rename are therefore one line each, and either failing is
+  a game somebody cannot reach.
+*/
+await page.getByLabel("Search commands and words").fill("ristsona");
+await page.waitForTimeout(250);
+check("and finds Ristsõna typed without the diacritic",
+  (await page.getByRole("button", { name: /Ristsõna/ }).count()) > 0);
+
+await page.getByLabel("Search commands and words").fill("crossword");
+await page.waitForTimeout(250);
+check("and still finds it under the English name it is described by",
+  (await page.getByRole("button", { name: /Ristsõna/ }).count()) > 0);
 await page.keyboard.press("Escape");
 
 // 8 — The app is installable

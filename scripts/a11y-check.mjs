@@ -134,11 +134,22 @@ const BASE = baseUrl();
 const ROUTES = [
   "/", "/learn", "/practice", "/progress", "/words", "/dictionary",
   "/grammar", "/grammar/inessive", "/settings", "/scan", "/class", "/tutor",
-  "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/offline",
+  "/assess", "/assess?take=1", "/exam", "/privacy", "/terms", "/funding", "/offline",
   "/welcome", "/suggestions", "/admin/suggestions",
   "/review", "/review/write", "/review/government", "/review/conjugation", "/review/cloze", "/review/clinic",
   "/review/dictation", "/review/listening", "/review/match", "/review/pairs",
   "/review/sentences", "/review/speaking", "/review/sprint",
+  /*
+    The rounds and screens the games pass added, which this list did not get.
+    That is the fault its own header names: `/review/emoji` and `/review/target`
+    shipped, `/sonad` and `/crossword` shipped, and every one of them is a whole
+    session rendered from one component, which is exactly the shape that was
+    once found drawing a progress bar, a card and four buttons with no heading
+    in it at all. A route left out is a screen where the rule is unenforced,
+    and a second of wall clock is what it costs to enforce it.
+  */
+  "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
+  "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
 ];
 
 const browser = await launchChromium();
@@ -172,7 +183,22 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   stopped being skippable rather than by however many the run happens to
   reach.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 307 });
+/*
+  And 316: /funding is one more route at nine checks, counted off the list
+  rather than off a run.
+
+  And then ten routes rather than one, from two branches at once. This one
+  added nine that had shipped without ever being walked here, which is the
+  fault the header names, and the first run over them found a real one: the
+  crossword promised `role="grid"` over a flat grid with no row elements in
+  it, which is `aria-required-children`. The number is measured on the merged
+  tree rather than added from either side, for the reason the containment
+  suite gives at its own floor: two branches each adding to a count is exactly
+  where arithmetic on a number nobody re-ran goes wrong. Measured at 402 on
+  the merged tree, which is the 307 above plus nine for /funding and
+  eighty-six for these, and the floor keeps the same five under it.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 397 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.

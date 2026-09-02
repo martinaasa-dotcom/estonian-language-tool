@@ -140,12 +140,13 @@ export async function gradeSentence(
 }
 
 /**
- * The transport, shared by the two things that ask a model for one JSON object.
+ * The transport, shared by the three things that ask a model for one JSON object.
  *
  * Extracted when the mock examination needed a second grader: the composition
  * task hands over a whole text rather than one sentence, and duplicating fifty
  * lines of provider plumbing to say so would have meant two places to fix the
- * next time a provider changed the shape of its usage block.
+ * next time a provider changed the shape of its usage block. The scene grader
+ * is the third and added none, which is the argument for having extracted it.
  */
 async function callForJson(
   config: ProviderConfig,
@@ -287,4 +288,106 @@ export async function gradeComposition(
     config, buildCompositionSystemPrompt(), buildCompositionUserPrompt(text, level), 500,
   );
   return { graded: parseVerdict(reply), usage };
+}
+
+// ── A sentence about a scene ─────────────────────────────────────────────────
+
+/**
+ * Reading back one sentence a learner wrote about a scene.
+ *
+ * The third prompt in this file and the third time the same boundary is drawn.
+ * `lib/games/describe.ts` has already decided, against the dictionary and
+ * before this runs, whether the named word carried the case the task asked for
+ * and which case it carried instead. Nothing here can move that, and the
+ * prompt says so, because a model that re-litigated the morphology would be
+ * the one thing ADR-005 exists to prevent.
+ *
+ * WHAT THE SCENE BUYS. The writing grader is handed a word and a case and
+ * nothing else, so the most it can say about a sentence is whether it hangs
+ * together. Here the model is told what the picture is, so it can say the
+ * thing a teacher would say first: that the sentence is fine Estonian and is
+ * not about the picture. That is a judgement about meaning rather than about
+ * morphology, which is the half a model is actually good at.
+ *
+ * The scene's words are given in English as well as Estonian, and the Estonian
+ * is quoted rather than invented: every form in `KNOWN FORMS` came out of the
+ * dictionary, and `verifyComment` checks afterwards that nothing else was
+ * spelled, because a live test showed a model reaching for forms unprompted.
+ */
+export function buildDescribeSystemPrompt(): string {
+  return `You are Anu, an Estonian teacher, reading one sentence a learner has written about a picture.
+
+WHAT YOU ARE JUDGING
+Two things, in this order:
+1. Is the sentence about the picture? They were shown a situation and three things in it. A grammatical sentence about something else is the most useful thing you can point out, and nothing else in this app can see it.
+2. Is it Estonian that works? Word order, the case of the object, whether the words go together.
+
+WHAT HAS ALREADY BEEN DECIDED WITHOUT YOU
+Whether they used the one word in the one case the task named. That was checked against the dictionary before you saw this and the result is given to you below. Do not re-check it, do not contradict it, and do not repeat it back as though it were your finding.
+
+RULES YOU MUST NOT BREAK
+- Every Estonian form you mention must appear in KNOWN FORMS below, or be a word the learner themselves wrote. You may not introduce an inflected form from your own knowledge. If the sentence needs a word you have not been given, say so in English ("you would need the allative here") and do not spell it.
+- If you are unsure whether something is an error, say the sentence is acceptable. A confident correction that is wrong is far more damaging than a missed one, because the learner will believe you.
+- Name the rule when you correct something, not the feeling. "Partitive, because the action is ongoing", never "it sounds better".
+- Do not tell them to use the other two words. Only one was required.
+
+TONE
+Direct and brief. Say what works before what does not, when both apply. No praise that carries no information.
+
+OUTPUT
+Reply with a single JSON object and nothing else:
+{"verdict":"correct"|"almost"|"wrong","comment":"one or two sentences","rule":"the grammatical rule at issue, or an empty string"}
+
+"correct" means the sentence works and is about the picture. "almost" means it is understandable but has an error worth naming, or is only loosely about the picture. "wrong" means it is not Estonian, or is about something else entirely.
+
+Do not use an em dash or an en dash anywhere in your comment. Use a comma, a full stop, or a pair of brackets.`;
+}
+
+export interface DescribeGraderInput {
+  /** What is going on, in English. */
+  situation: string;
+  /** The three things, as the learner saw them. */
+  things: { emoji: string; lemma: string; translation: string }[];
+  /** The word the task named, and the case it asked for. */
+  asked: { lemma: string; caseEt: string; caseQuestion: string };
+  /** Whether the mechanical check found that case. Settled before this runs. */
+  rightCase: boolean;
+  /** Every authoritative form, so the model never has to guess one. */
+  knownForms: { label: string; value: string }[];
+  sentence: string;
+  level: string;
+}
+
+export function buildDescribeUserPrompt(input: DescribeGraderInput): string {
+  const things = input.things
+    .map((t) => `  ${t.emoji}  ${t.lemma} (${t.translation})`)
+    .join("\n");
+  const forms = input.knownForms
+    .filter((f) => f.value)
+    .map((f) => `  ${f.label}: ${f.value}`)
+    .join("\n");
+
+  return `LEARNER LEVEL: ${input.level}
+
+THE PICTURE. Situation: ${input.situation}. Three things in it:
+${things}
+
+TASK SET: write one sentence about it, with "${input.asked.lemma}" in the ${input.asked.caseEt} (${input.asked.caseQuestion}).
+MECHANICAL CHECK: the learner ${input.rightCase ? "DID" : "DID NOT"} use that case.
+
+KNOWN FORMS, from the dictionary. These are the only Estonian forms you may write:
+${forms || "  (none)"}
+
+THE LEARNER WROTE:
+${input.sentence}`;
+}
+
+export async function gradeDescription(
+  config: ProviderConfig,
+  input: DescribeGraderInput,
+): Promise<{ graded: GradedSentence | null; usage: UsageReport }> {
+  const { text, usage } = await callForJson(
+    config, buildDescribeSystemPrompt(), buildDescribeUserPrompt(input),
+  );
+  return { graded: parseVerdict(text), usage };
 }

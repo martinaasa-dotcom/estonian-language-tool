@@ -36,6 +36,8 @@ export function Legal({ title, updated, children }: {
         {" · "}
         <Link href="/terms" className="underline underline-offset-2">Terms</Link>
         {" · "}
+        <Link href="/funding" className="underline underline-offset-2">Funding</Link>
+        {" · "}
         <Link href="/sign-in" className="underline underline-offset-2">Sign in</Link>
       </p>
     </main>

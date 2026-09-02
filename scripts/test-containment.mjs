@@ -124,6 +124,7 @@ const ROUTES = [
   "/review/sprint",
   "/review/flashcards",
   "/review/emoji",
+  "/review/describe",
   "/review/target",
   "/practice",
   "/quest",
@@ -167,6 +168,7 @@ const ROUTES = [
   "/start",
   "/privacy",
   "/terms",
+  "/funding",
   "/offline",
 ];
 
@@ -249,7 +251,19 @@ const SPARSE = new Map([
 // with the demo fixture in it, which is what CI seeds; without `npm run demo`
 // the workplace group does not exist and the run comes in at 1100 and says so,
 // which is the floor doing its job rather than a regression.
-const { check, absent, done } = suite("Containment", { floor: 1110 });
+//
+// And 1130 rather than 1110: `/funding` joined the sweep, which is one route
+// and twenty checks. It is a page of numbers in a table beside a bar chart and
+// a slider, which is the one arrangement in the app whose width is decided by
+// how long a figure happens to be, so it is exactly the route this suite is
+// for. Measured at 1140 with the demo fixture in place, which is the 1120 above
+// plus that one route, and the floor keeps the same ten under it.
+//
+// And then two routes rather than one, from two branches at once: `/funding`
+// from that one and `/review/describe` from this. Measured at 1160 on the
+// merged tree rather than added from either side, which is the same rule one
+// line up, and the floor keeps the same ten under it.
+const { check, absent, done } = suite("Containment", { floor: 1150 });
 
 const browser = await launchChromium();
 
