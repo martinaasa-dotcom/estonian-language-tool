@@ -2,6 +2,7 @@ import { unitIntroducing } from "@/lib/collections/syllabus";
 import { buildCloze, ESTONIAN_WORD, isBuildable, naturalSentence, sentenceTiles } from "@/lib/estonian/cloze";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
 import { caseByKey } from "@/lib/estonian/cases";
+import { sameSpelling } from "@/lib/copy/values";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { writingTasksFor } from "@/lib/estonian/writing";
 import {
@@ -866,6 +867,16 @@ function buildGlossChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
   for (const word of shuffle(ctx.words, ctx.random)) {
     if (items.length >= spec.items) break;
     if (ctx.spent.has(word.lexemeId) || !word.translation) continue;
+    /*
+      AND NOT A WORD SPELLED THE SAME IN BOTH LANGUAGES. Thirty entries in the
+      shipped dictionary are: `film`, `moment`, `sport`, `park`. The question
+      is the Estonian word and the right option is the English gloss, so on
+      those two the question prints its own answer and the item cannot be got
+      wrong. It is a mark a candidate is given rather than one they earned,
+      and this paper's whole claim is that its marking is mechanical and
+      fair. The level check refuses the same shape for the same reason.
+    */
+    if (sameSpelling(word.lemma, word.translation)) continue;
     const set = pickOptions({
       answer: glossFor(word),
       candidates: glosses,

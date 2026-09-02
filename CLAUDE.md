@@ -703,6 +703,49 @@ answer standing beside the gap in its other spelling. The lesson planner was not
 beside the rule it is an argument to, since it lived in the level check and that is why the deck
 never had it.
 
+**And the gloss and the forms have to be about one word, which nothing checked outside the course.**
+The built dictionary is a join: Wiktionary supplies the English gloss and Ekilex the Estonian forms,
+joined on the spelling. Ekilex numbers its homonyms and `scripts/expand-seed.ts` takes the first
+exact match, which is the fault `scripts/harvest-ekilex.ts` fixed with pins and reported at length
+for the 1,185 course words. The other four thousand were never asked. `kurk` shipped as "throat"
+with the forms of a cucumber, `maks` as "liver" with the forms of a tax, `vaht` as "foam" with the
+forms of a guard, and `kohus` as "court" with the forms of a moral duty, which is the very word the
+harvest's own comment names.
+
+**It is checkable, because the page the gloss came off says which word it is.** A Wiktionary
+Estonian block opens with `{{et-noun|<genitive>|<partitive>}}`, so the same block that supplied the
+gloss declares two of the three principal parts. `extractEstonianEntries` returns them, positional
+arguments only so a superlative is not read as a principal part, and `null` where the template
+declares neither, which is a page saying nothing rather than a page disagreeing.
+`npm run audit:homonyms` compares those two strings with the two the dictionary stores: 96 of 4,681
+nominals disagree.
+
+**A HOMONYM IS RESOLVED BY A PERSON OR REPORTED, NEVER GUESSED THROUGH**, which is the harvest's own
+rule and the reason this reports rather than repairs. Wiktionary cannot settle it alone: it is often
+thinner than Ekilex and 88 of those 96 are its own slips on obscure words, `kasutamiset` for a
+partitive that is `kasutamist`. Choosing automatically was tried and measured and is worse than it
+looks. `aste` really does have two nouns and the page declares both, so the rule moved a B1 entry
+off `aste : astme : astet`, which is the word `astmevaheldus` is built on, and onto a rarer one that
+matched the block the gloss came from. Consistent, and not what a learner wants.
+
+So the report names the Ekilex word whose principal parts *are* the ones the page declares, in the
+shape a pin is written in, and `prisma/data/homonym-pins.json` is where a person puts it. `--write`
+re-reads a pinned entry from that word as `expand-seed.ts` would have: the forms, the sentences, the
+level, the gradation and the Institute's semantic type all belong to whichever homonym was taken, so
+all of them are read again, and only the gloss and the part of speech stay, because those came from
+Wiktionary and are not what was wrong. Fifteen are pinned, each checked against Ekilex's own Estonian
+definition; ten of them are the entry a learner actually meets and five are shadowed by the course
+harvest, which had already pinned the same words.
+
+**A question nobody can get wrong is worse in a measurement than on a card.** Thirty entries in the
+shipped dictionary are spelled the same in both languages, and the level check's meaning question
+put the Estonian word up with its English gloss among the options: `moment` against "moment". On a
+flashcard that costs a deck slot, and `SAME_SPELLING` already says the fact out loud after the
+answer. Here it costs the placement, because a band's score is what decides a learner's level and an
+item nobody can fail measures nothing. The mock exam's `gloss-choice` had it too, which is the
+fallback a thin deployment gets when the dictionary has no sentence to build a reading task from:
+measured over 120 papers built from a pool with no sentences, six free marks in 1,480 items.
+
 **`npm run audit:sense` is the mechanical half.** It builds every card, every writing task and every
 sentence the shipped dictionary can make, 74,294 of them, and asks the four questions no unit test
 can: a local case the word does not take, an interrogative for the wrong kind of thing, a place
@@ -3672,6 +3715,7 @@ npm run audit:verbs      # derive every verb's present, negative, conditional an
 npm run audit:decks      # case cards already in a deck whose answer spells the word in the question (--write removes)
 npm run audit:cases      # derive every case of every noun, both columns, and compare with Ekilex (--write fills the gaps)
 npm run audit:sense      # does every question make sense for the word it is about
+npm run audit:homonyms   # does each gloss describe the word whose forms sit beside it (--write applies the pins)
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary

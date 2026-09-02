@@ -1806,6 +1806,26 @@ meant. That is 26 words and the same answer `maa` already gets.
   leaves the answer standing beside the gap in its other spelling. The lesson planner was not
   calling `usableExamples` at all.
 
+### Two more, found by looking from the other end
+
+**A word with no singular was asked for singular cases.** Nineteen entries are headed by a plural
+because that is the only number the word has, and Ekilex records the whole singular of the word
+underneath, so `prillid → milles?` wanted `prillis`. It is `prillides`, and the entry's plural column
+has said so all along. Eight are graded and ordinary: `prillid`, `teksad`, `käärid`, `jõulud`,
+`aluspüksid`, `kõrvaklapid`, `päikeseprillid`, `lihavõtted`. 231 questions.
+
+**A gloss described one word and the forms beside it another.** The built dictionary is a join on
+the spelling and `expand-seed.ts` takes the first Ekilex homonym, which is the fault the course
+harvest fixed with pins for its own 1,185 words and nothing checked for the other four thousand.
+`kurk` shipped as "throat" with the forms of a cucumber, `maks` as "liver" with the forms of a tax,
+`vaht` as "foam" with the forms of a guard. `npm run audit:homonyms` compares the dictionary's
+principal parts with the ones the Wiktionary block that supplied the gloss declares: 96 of 4,681
+nominals disagree, 88 of them Wiktionary's own slips. It reports and a person pins, because choosing
+automatically was measured and moved `aste` off the word `astmevaheldus` is built on. Fifteen pinned.
+
+**And the level check gave a free mark on a word spelled the same in both languages.** `moment`
+against "moment". On a card that costs a deck slot; here it costs the placement.
+
 ### The column on the other half of the dictionary
 
 Found only by running a real seed. The built dictionary has two writers: `LEXEME_COLUMNS` drives the
@@ -1821,11 +1841,11 @@ statement now.
   rest are phrases and words the Institute types nothing on, which read as unknown and keep the
   behaviour they had.
 - 2,441 case cards moved from the inside trio to the outside one or were withdrawn; 110 government
-  cards and 81 gap-fills went; the deck the shipped dictionary can build is 46,862 cards against
-  47,130.
+  cards, 95 case cards for words with no singular and 81 gap-fills went; the deck the shipped
+  dictionary can build is 46,767 cards against 47,130.
 - The mock exam still fills every task at every level, and the level check is unchanged at 74 items
   from a 100-word band.
-- `npm run audit:sense` builds 74,294 questions and sentences and asks the four questions no unit
+- `npm run audit:sense` builds 74,074 questions and sentences and asks the five questions no unit
   test can. It was made to fail on each.
 - 214 invariants, four of them new and every one made to fail before it was left passing. 1,950 unit
   tests, 179 integration tests against a real Postgres, and the first-day, placement, exam, teaching,

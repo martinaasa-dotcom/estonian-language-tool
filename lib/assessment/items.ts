@@ -450,6 +450,17 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
   const out: ChoiceItem[] = [];
 
   for (const word of shuffle(pool, rng)) {
+    /*
+      AND NOT A WORD SPELLED THE SAME IN BOTH LANGUAGES. Thirty entries in the
+      shipped dictionary are: `film`, `moment`, `sport`, `park`, `stress`. The
+      question is the Estonian word and the right option is the English gloss,
+      so for those two the question prints its own answer and the item cannot
+      be got wrong. On a card that costs a deck slot; here it costs the
+      placement, because a band's score is what decides a learner's level and
+      an item nobody can fail measures nothing. `meansLine` below already knew
+      about these words and only said so after the answer.
+    */
+    if (sameSpelling(word.lemma, word.translation)) continue;
     const band = bandOf(word.cefr)!;
     const set = pickOptions({
       answer: glossFor(word), candidates: glosses, rng,

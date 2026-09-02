@@ -2567,22 +2567,18 @@
   "lemma": "hall",
   "pos": "NOUN",
   "translation": "frost",
-  "cefr": "A1",
+  "cefr": "C1",
   "gradation": "NONE",
   "gradationNote": null,
   "government": null,
   "notes": "frost; gray; gloomy, gray",
   "examples": [
    {
-    "et": "Tumehall.",
+    "et": "Hommikul oli hall maas.",
     "en": null
    },
    {
-    "et": "Helehall.",
-    "en": null
-   },
-   {
-    "et": "Näost hall.",
+    "et": "Haned lähevad, hallad taga.",
     "en": null
    }
   ],
@@ -2593,31 +2589,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "halli"
+    "value": "halla"
    },
    {
     "formType": "PART_SG",
-    "value": "halli"
+    "value": "halla"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "halli"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "hallide"
+    "value": "halla"
    },
    {
     "formType": "NOM_PL",
-    "value": "hallid"
+    "value": "hallad"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "hallade"
    },
    {
     "formType": "PART_PL",
-    "value": "halle"
+    "value": "hallu"
    }
   ],
-  "ekilexWordId": 167909,
-  "semanticTypes": "omadus_füüs_värv"
+  "ekilexWordId": 975426,
+  "semanticTypes": "nähtus_loodus",
+  "definition": "temperatuuri langemisel alla 0 °C õhus olevast veeaurust tekkinud ebaühtlane jääkristallide kiht maapinnal, taimedel vm (hrl kevadel ja sügisel)"
  },
  {
   "lemma": "hambaarst",
@@ -7026,15 +7023,35 @@
   "notes": "cucumber",
   "examples": [
    {
-    "et": "Marineeritud kurk.",
+    "et": "Kurk on külmast kähe.",
     "en": null
    },
    {
-    "et": "Värske kurgi salat.",
+    "et": "Kalaluu jäi kurku kinni.",
     "en": null
    },
    {
-    "et": "Suvel tuli iga päev kurke kasta.",
+    "et": "Särk oli kurguni kinni nööbitud.",
+    "en": null
+   },
+   {
+    "et": "Roosi sügas kassipoega kurgu alt.",
+    "en": null
+   },
+   {
+    "et": "Nutt kurgus, jättis ta sõbraga hüvasti.",
+    "en": null
+   },
+   {
+    "et": "Kurk on valus, hakkan vist haigeks jääma.",
+    "en": null
+   },
+   {
+    "et": "Mängusõltlase raha kadus automaatide kurku.",
+    "en": null
+   },
+   {
+    "et": "Seda lugu kuulates tõusis nii mõnelgi klomp kurku.",
     "en": null
    }
   ],
@@ -7045,31 +7062,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "kurgi"
+    "value": "kurgu"
    },
    {
     "formType": "PART_SG",
-    "value": "kurki"
+    "value": "kurku"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "kurki"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "kurkide"
+    "value": "kurku"
    },
    {
     "formType": "NOM_PL",
-    "value": "kurgid"
+    "value": "kurgud"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "kurkude"
    },
    {
     "formType": "PART_PL",
     "value": "kurke"
    }
   ],
-  "ekilexWordId": 188151,
-  "semanticTypes": "taim"
+  "ekilexWordId": 284207,
+  "semanticTypes": "kehaosa",
+  "definition": "suuõõnele järgnev kitsas osa enne neelu"
  },
  {
   "lemma": "kuu",
@@ -16719,22 +16737,22 @@
   "lemma": "sool",
   "pos": "NOUN",
   "translation": "intestine, bowel, gut",
-  "cefr": "A1",
+  "cefr": "B2",
   "gradation": "NONE",
   "gradationNote": null,
   "government": null,
   "notes": "salt",
   "examples": [
    {
-    "et": "Mineraalvee soolad.",
+    "et": "Mao ja soole seedetegevus on korras.",
     "en": null
    },
    {
-    "et": "Unustasin toidule soola panna.",
+    "et": "Patsiendil tuvastati soolte verejooks.",
     "en": null
    },
    {
-    "et": "Lisasin oma praele soola ja pipart.",
+    "et": "Kiudained hoiavad sooled mürkainetest puhta ja reguleerivad soolestiku talitlust.",
     "en": null
    }
   ],
@@ -16745,31 +16763,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "soola"
+    "value": "soole"
    },
    {
     "formType": "PART_SG",
-    "value": "soola"
+    "value": "soolt"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "soola"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "soolade"
+    "value": "soolde"
    },
    {
     "formType": "NOM_PL",
-    "value": "soolad"
+    "value": "sooled"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "soolte"
    },
    {
     "formType": "PART_PL",
     "value": "sooli"
    }
   ],
-  "ekilexWordId": 235271,
-  "semanticTypes": "materjal/aine toit_maitseaine"
+  "ekilexWordId": 235272,
+  "semanticTypes": "kehaosa",
+  "definition": "torujas elund organismi kehas, kus söödud toit seeditakse (algab maolukutist ja lõpeb pärakuga)"
  },
  {
   "lemma": "soov",
@@ -42825,22 +42844,18 @@
   "lemma": "pakk",
   "pos": "NOUN",
   "translation": "block of wood",
-  "cefr": "A2",
+  "cefr": "B2",
   "gradation": "QUALITATIVE",
   "gradationNote": "kk : k",
   "government": null,
   "notes": "package; being full of something; a hurry",
   "examples": [
    {
-    "et": "Pakk kohvi.",
+    "et": "Kasepakk.",
     "en": null
    },
    {
-    "et": "Tõmban päevas paki sigarette.",
-    "en": null
-   },
-   {
-    "et": "Leidsin sahtlist paki fotosid.",
+    "et": "Tammepakk.",
     "en": null
    }
   ],
@@ -42851,31 +42866,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "paki"
+    "value": "paku"
    },
    {
     "formType": "PART_SG",
-    "value": "pakki"
+    "value": "pakku"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "pakki"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "pakkide"
+    "value": "pakku"
    },
    {
     "formType": "NOM_PL",
-    "value": "pakid"
+    "value": "pakud"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "pakkude"
    },
    {
     "formType": "PART_PL",
     "value": "pakke"
    }
   ],
-  "ekilexWordId": 213002,
-  "semanticTypes": "ese kogus"
+  "ekilexWordId": 213003,
+  "semanticTypes": "ese materjal/aine taim",
+  "definition": "jämeda laasitud puutüve otsast saetud suurem või väiksem tükk"
  },
  {
   "lemma": "palk",
@@ -46864,22 +46880,14 @@
   "lemma": "reis",
   "pos": "NOUN",
   "translation": "thigh",
-  "cefr": "A2",
-  "gradation": "NONE",
-  "gradationNote": null,
+  "cefr": "B1",
+  "gradation": "QUALITATIVE",
+  "gradationNote": "s : ∅",
   "government": null,
   "notes": "trip, journey",
   "examples": [
    {
-    "et": "Perereis.",
-    "en": null
-   },
-   {
-    "et": "Rühmareis.",
-    "en": null
-   },
-   {
-    "et": "Puhkusereis.",
+    "et": "Reied on eilsest trennist valusad.",
     "en": null
    }
   ],
@@ -46890,31 +46898,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "reisi"
+    "value": "reie"
    },
    {
     "formType": "PART_SG",
-    "value": "reisi"
+    "value": "reit"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "reisi"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "reiside"
+    "value": "reide"
    },
    {
     "formType": "NOM_PL",
-    "value": "reisid"
+    "value": "reied"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "reite"
    },
    {
     "formType": "PART_PL",
-    "value": "reise"
+    "value": "reisi"
    }
   ],
-  "ekilexWordId": 226782,
-  "semanticTypes": "sündmus tegevus"
+  "ekilexWordId": 226783,
+  "semanticTypes": "kehaosa",
+  "definition": "(inimesel:) jala osa puusast põlveni"
  },
  {
   "lemma": "reisima",
@@ -74720,21 +74729,41 @@
   "pos": "NOUN",
   "translation": "court",
   "cefr": "B1",
-  "gradation": "NONE",
-  "gradationNote": null,
+  "gradation": "QUALITATIVE",
+  "gradationNote": "s : t",
   "government": null,
   "notes": "duty, requirement",
   "examples": [
    {
-    "et": "Ta ei täida oma kohust.",
+    "et": "Püsti, kohus tuleb!",
     "en": null
    },
    {
-    "et": "Õpilase kohus on õppimine.",
+    "et": "Asi jõudis kohtusse.",
     "en": null
    },
    {
-    "et": "Lapse kohus on vanemaid aidata.",
+    "et": "Auto peatus kohtu ees.",
+    "en": null
+   },
+   {
+    "et": "Kaebasin asja kohtusse.",
+    "en": null
+   },
+   {
+    "et": "Kohus karistas meest tingimisi.",
+    "en": null
+   },
+   {
+    "et": "Varga üle hakatakse kohut mõistma.",
+    "en": null
+   },
+   {
+    "et": "Mehe üle peetakse kohut Massachusettsis.",
+    "en": null
+   },
+   {
+    "et": "Kohus mõistis mehe kolmeks aastaks vangi.",
     "en": null
    }
   ],
@@ -74745,27 +74774,28 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "kohuse"
+    "value": "kohtu"
    },
    {
     "formType": "PART_SG",
-    "value": "kohust"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "kohuste"
+    "value": "kohut"
    },
    {
     "formType": "NOM_PL",
-    "value": "kohused"
+    "value": "kohtud"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "kohtute"
    },
    {
     "formType": "PART_PL",
-    "value": "kohuseid"
+    "value": "kohtuid"
    }
   ],
-  "ekilexWordId": 183400,
-  "semanticTypes": "abstr nähtus_psühh"
+  "ekilexWordId": 283694,
+  "semanticTypes": "koht_asutus",
+  "definition": "kohtuasju läbivaatav ja lahendav, kohtuvõimu teostav riigiasutus"
  },
  {
   "lemma": "kohustus",
@@ -77919,21 +77949,13 @@
   "pos": "NOUN",
   "translation": "a large uninhabited forest",
   "cefr": "B1",
-  "gradation": "NONE",
-  "gradationNote": null,
+  "gradation": "QUALITATIVE",
+  "gradationNote": "b : v",
   "government": null,
   "notes": "a large uninhabited forest; desert; red-brown, tawny",
   "examples": [
    {
-    "et": "Kuum viljatu kõrb.",
-    "en": null
-   },
-   {
-    "et": "Kõrbes kasvavad kaktused.",
-    "en": null
-   },
-   {
-    "et": "Sahara kõrb asub Aafrikas.",
+    "et": "Ürgsed kõrved paeluvad mind tänini.",
     "en": null
    }
   ],
@@ -77944,31 +77966,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "kõrbe"
+    "value": "kõrve"
    },
    {
     "formType": "PART_SG",
-    "value": "kõrbet"
+    "value": "kõrbe"
    },
    {
     "formType": "ILL_SG_SHORT",
     "value": "kõrbe"
    },
    {
-    "formType": "GEN_PL",
-    "value": "kõrbete"
+    "formType": "NOM_PL",
+    "value": "kõrved"
    },
    {
-    "formType": "NOM_PL",
-    "value": "kõrbed"
+    "formType": "GEN_PL",
+    "value": "kõrbede"
    },
    {
     "formType": "PART_PL",
-    "value": "kõrbeid"
+    "value": "kõrbi"
    }
   ],
-  "ekilexWordId": 189241,
-  "semanticTypes": "koht_ala"
+  "ekilexWordId": 189243,
+  "semanticTypes": "koht_loodus",
+  "definition": "suur asustamata (soodega) metsaala"
  },
  {
   "lemma": "kõrgharidus",
@@ -83149,15 +83172,27 @@
   "notes": "tax, payment",
   "examples": [
    {
-    "et": "Maksudest kõrvalehoidmine.",
+    "et": "Veisemaks.",
     "en": null
    },
    {
-    "et": "Palgast võetakse maksud maha.",
+    "et": "Tursamaks.",
     "en": null
    },
    {
-    "et": "Mõned inimesed lihtsalt ei maksa makse.",
+    "et": "Tal on maks haige.",
+    "en": null
+   },
+   {
+    "et": "Stress kurnab maksa.",
+    "en": null
+   },
+   {
+    "et": "Praetud maks sibulakastmes.",
+    "en": null
+   },
+   {
+    "et": "Õhtusöögiks on praetud maks kartuliga.",
     "en": null
    }
   ],
@@ -83168,31 +83203,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "maksu"
+    "value": "maksa"
    },
    {
     "formType": "PART_SG",
-    "value": "maksu"
+    "value": "maksa"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "maksu"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "maksude"
+    "value": "maksa"
    },
    {
     "formType": "NOM_PL",
-    "value": "maksud"
+    "value": "maksad"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "maksade"
    },
    {
     "formType": "PART_PL",
-    "value": "makse"
+    "value": "maksu"
    }
   ],
-  "ekilexWordId": 200115,
-  "semanticTypes": "ese_raha"
+  "ekilexWordId": 200116,
+  "semanticTypes": "kehaosa",
+  "definition": "kõhuõõnes asetsev punakaspruun elund, mis mõjutab organismi ainevahetust, seedimist ja vereloomet (inimesel kõhuõõne ülaosas paremal pool)"
  },
  {
   "lemma": "male",
@@ -109814,15 +109850,15 @@
   "notes": "a row of trucks or any other vehicle carrying a load; row; phase, stage, round, e.g. in a competition",
   "examples": [
    {
-    "et": "Taotlusvoor.",
+    "et": "Matkarada kulgeb voorte harju mööda.",
     "en": null
    },
    {
-    "et": "Kohe tuleb sinu voor hüpata.",
+    "et": "Tavaliselt on voored mõnesaja meetri pikkused.",
     "en": null
    },
    {
-    "et": "Eesti laul pääses teise vooru.",
+    "et": "Huvilistele tutvustati Vooremaad ja sealset kõrgeimat voort – Laiuse mäge.",
     "en": null
    }
   ],
@@ -109833,31 +109869,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "vooru"
+    "value": "voore"
    },
    {
     "formType": "PART_SG",
-    "value": "vooru"
+    "value": "voort"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "vooru"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "voorude"
+    "value": "voorde"
    },
    {
     "formType": "NOM_PL",
-    "value": "voorud"
+    "value": "voored"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "voorte"
    },
    {
     "formType": "PART_PL",
-    "value": "voore"
+    "value": "voori"
    }
   ],
-  "ekilexWordId": 257728,
-  "semanticTypes": "sündmus tegevus"
+  "ekilexWordId": 1213566,
+  "semanticTypes": "nähtus_loodus",
+  "definition": "liikuva liustikujää all kujunenud lauge ovaalne kõrgendik"
  },
  {
   "lemma": "võilill",
@@ -115154,16 +115191,7 @@
   "gradationNote": null,
   "government": null,
   "notes": "sensor",
-  "examples": [
-   {
-    "et": "Turvalisust lisavad autodes ka elektriaknad, mille andurid seiskavad akna, kui laps on näiteks sõrme akna vahele pannud.",
-    "en": null
-   },
-   {
-    "et": "Andurite kasutusala kuulub automaatika ja mõõtetehnika valdkonda. Andureid võib lugeda nii automaatika- kui ka mõõtevahenditeks.",
-    "en": null
-   }
-  ],
+  "examples": [],
   "forms": [
    {
     "formType": "NOM_SG",
@@ -115171,27 +115199,28 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "anduri"
+    "value": "andru"
    },
    {
     "formType": "PART_SG",
-    "value": "andurit"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "andurite"
+    "value": "andrut"
    },
    {
     "formType": "NOM_PL",
-    "value": "andurid"
+    "value": "andrud"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "andrute"
    },
    {
     "formType": "PART_PL",
-    "value": "andureid"
+    "value": "andruid"
    }
   ],
-  "ekilexWordId": 157302,
-  "semanticTypes": "ese_instru"
+  "ekilexWordId": 1339104,
+  "semanticTypes": "ese",
+  "definition": "puulaeva või -paadi põhja pikisuunas läbiv tala, mille külge kinnitub paadi või laeva sõrestik"
  },
  {
   "lemma": "ankur",
@@ -120013,7 +120042,7 @@
   "notes": "fork; snowdrift; blanket of snow",
   "examples": [
    {
-    "et": "Sumasin põlvini hangedes.",
+    "et": "Kuuris on hange ja labidaid.",
     "en": null
    }
   ],
@@ -120024,31 +120053,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "hange"
+    "value": "hangu"
    },
    {
     "formType": "PART_SG",
-    "value": "hange"
+    "value": "hangu"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "hange"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "hangede"
+    "value": "hangu"
    },
    {
     "formType": "NOM_PL",
-    "value": "hanged"
+    "value": "hangud"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "hangude"
    },
    {
     "formType": "PART_PL",
-    "value": "hangi"
+    "value": "hange"
    }
   ],
-  "ekilexWordId": 168156,
-  "semanticTypes": "objekt_loodus"
+  "ekilexWordId": 168158,
+  "semanticTypes": "ese_instru",
+  "definition": "kolme või nelja haruga tööriist heinte, põhu, vilja vm tõstmiseks"
  },
  {
   "lemma": "hape",
@@ -140467,15 +140497,11 @@
   "notes": "note",
   "examples": [
    {
-    "et": "Murenoot.",
+    "et": "Räimenoot.",
     "en": null
    },
    {
-    "et": "Pilkenoot.",
-    "en": null
-   },
-   {
-    "et": "Kahtlusenoot.",
+    "et": "Kutselise kalapüügi vahendid on õngejadad, nakkepüünised, lõkspüünised, kurnpüünised ja traalpüünised.",
     "en": null
    }
   ],
@@ -140486,31 +140512,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "noodi"
+    "value": "nooda"
    },
    {
     "formType": "PART_SG",
-    "value": "nooti"
+    "value": "noota"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "nooti"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "nootide"
+    "value": "noota"
    },
    {
     "formType": "NOM_PL",
-    "value": "noodid"
+    "value": "noodad"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "nootade"
    },
    {
     "formType": "PART_PL",
-    "value": "noote"
+    "value": "nooti"
    }
   ],
-  "ekilexWordId": 208931,
-  "semanticTypes": "esitus_kujutis nähtus_füüs"
+  "ekilexWordId": 208933,
+  "semanticTypes": "ese_instru",
+  "definition": "järelveetav võrgust kalapüünis, mis koosneb pikkadest tiibadest ja kotjast tihedasilmalisest tagaosast"
  },
  {
   "lemma": "norskama",
@@ -160709,22 +160736,30 @@
   "lemma": "vaht",
   "pos": "NOUN",
   "translation": "foam",
-  "cefr": "B2",
+  "cefr": "B1",
   "gradation": "QUALITATIVE",
   "gradationNote": "t : ∅",
   "government": null,
   "notes": "guard",
   "examples": [
    {
-    "et": "Lossivaht.",
+    "et": "Õllevaht.",
     "en": null
    },
    {
-    "et": "Asusin öisesse vahti.",
+    "et": "Õlle peal oli valge vaht.",
     "en": null
    },
    {
-    "et": "Sildadel tugevdati vahti.",
+    "et": "Arengukavas on palju vahtu.",
+    "en": null
+   },
+   {
+    "et": "Tugev laine pritsib vahtu üles.",
+    "en": null
+   },
+   {
+    "et": "Lihaste masseerimiseks sobib kõvast vahust rull.",
     "en": null
    }
   ],
@@ -160735,31 +160770,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "vahi"
+    "value": "vahu"
    },
    {
     "formType": "PART_SG",
-    "value": "vahti"
+    "value": "vahtu"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "vahti"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "vahtide"
+    "value": "vahtu"
    },
    {
     "formType": "NOM_PL",
-    "value": "vahid"
+    "value": "vahud"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "vahtude"
    },
    {
     "formType": "PART_PL",
     "value": "vahte"
    }
   ],
-  "ekilexWordId": 252789,
-  "semanticTypes": "tegevus"
+  "ekilexWordId": 252790,
+  "semanticTypes": "materjal/aine nähtus_füüs",
+  "definition": "õhuline, rohkesti gaasimulle sisaldav aine vedeliku pinnal"
  },
  {
   "lemma": "vaik",
@@ -220248,7 +220284,11 @@
   "notes": "jetty, mole",
   "examples": [
    {
-    "et": "Veeseis on endiselt kõrge ja muuli tagumine osa on vee all.",
+    "et": "Bareljeefil on kujutatud ehitusmaterjali vedavat muula.",
+    "en": null
+   },
+   {
+    "et": "Jalavaeva kergendasid kohalikelt indiaanlastelt saadud muulad.",
     "en": null
    }
   ],
@@ -220259,31 +220299,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "muuli"
+    "value": "muula"
    },
    {
     "formType": "PART_SG",
-    "value": "muuli"
+    "value": "muula"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "muuli"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "muulide"
+    "value": "muula"
    },
    {
     "formType": "NOM_PL",
-    "value": "muulid"
+    "value": "muulad"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "muulade"
    },
    {
     "formType": "PART_PL",
-    "value": "muule"
+    "value": "muuli"
    }
   ],
-  "ekilexWordId": 204948,
-  "semanticTypes": "koht_ala"
+  "ekilexWordId": 204949,
+  "semanticTypes": "loom",
+  "definition": "emase hobuse ja isase eesli järglane"
  },
  {
   "lemma": "muumia",
@@ -256259,7 +256300,12 @@
   "gradationNote": null,
   "government": null,
   "notes": null,
-  "examples": [],
+  "examples": [
+   {
+    "et": "Toomed õitsevad.",
+    "en": null
+   }
+  ],
   "forms": [
    {
     "formType": "NOM_SG",
@@ -256267,31 +256313,32 @@
    },
    {
     "formType": "GEN_SG",
-    "value": "toomi"
+    "value": "toome"
    },
    {
     "formType": "PART_SG",
-    "value": "toomi"
+    "value": "toome"
    },
    {
     "formType": "ILL_SG_SHORT",
-    "value": "toomi"
-   },
-   {
-    "formType": "GEN_PL",
-    "value": "toomide"
+    "value": "toome"
    },
    {
     "formType": "NOM_PL",
-    "value": "toomid"
+    "value": "toomed"
+   },
+   {
+    "formType": "GEN_PL",
+    "value": "toomede"
    },
    {
     "formType": "PART_PL",
-    "value": "toome"
+    "value": "toomi"
    }
   ],
-  "ekilexWordId": 245645,
-  "semanticTypes": "koht_hoone"
+  "ekilexWordId": 245646,
+  "semanticTypes": "taim",
+  "definition": "valgete lõhnavate õiekobarate ja mustade või punaste luuviljadega lehtpuu või -põõsas"
  },
  {
   "lemma": "toonela",

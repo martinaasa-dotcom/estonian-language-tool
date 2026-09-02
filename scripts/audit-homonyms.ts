@@ -2,6 +2,7 @@
  * DOES THE GLOSS DESCRIBE THE WORD WHOSE FORMS ARE STORED BESIDE IT?
  *
  *   npx tsx scripts/audit-homonyms.ts            # every built entry
+ *   npx tsx scripts/audit-homonyms.ts --write    # and apply the pins a person has made
  *   npx tsx scripts/audit-homonyms.ts --limit 50 # a sample
  *
  * The built dictionary is a join: Wiktionary supplies the English gloss and
@@ -22,26 +23,47 @@
  * two the dictionary stores is a mechanical check on the join, from a source
  * this app already trusts for the gloss.
  *
- * WHAT IT IS NOT. It cannot say which homonym is right, only that the two
- * sources disagree about which one was taken. Wiktionary is often thinner than
- * Ekilex and a page with no headword template is silence rather than
- * disagreement, so it reports and never writes: a correction belongs in
- * `expand-seed.ts`, as a pin, in the shape the course harvest already has.
+ * A HOMONYM IS RESOLVED BY A PERSON OR REPORTED, NEVER GUESSED THROUGH, which
+ * is the rule `scripts/harvest-ekilex.ts` arrived at for the course and the
+ * reason this reports rather than repairs. Wiktionary cannot settle it on its
+ * own: it is often thinner than Ekilex and 88 of the 96 disagreements are its
+ * own slips on obscure words, `kasutamiset` for a partitive that is
+ * `kasutamist`. Picking automatically was tried and is worse than it looks.
+ * `aste` really does have two nouns and the page declares both, so the rule
+ * moved a B1 entry off `aste : astme : astet`, which is the word
+ * `astmevaheldus` is built on, and onto a rarer one that matched the block the
+ * gloss came from. Consistent, and not what a learner wants.
  *
- * Needs the network. Pages are cached under `prisma/data/.cache/` in the same
- * file `npm run audit:glosses` fills, so running one after the other costs
- * Wiktionary nothing.
+ * So the report names, for each disagreement, the Ekilex word whose principal
+ * parts *are* the ones the page declares, and a person puts that number in
+ * `prisma/data/homonym-pins.json`. `--write` re-maps a pinned entry from that
+ * word exactly as `scripts/expand-seed.ts` would have mapped it, keeping the
+ * English gloss and the part of speech, because those came from Wiktionary and
+ * are not what was wrong.
+ *
+ * A repoint is a change to the whole entry, not to two strings: the forms, the
+ * sentences, the CEFR level, the gradation and the Institute's own semantic
+ * type all belong to whichever homonym was taken, so all of them are re-read
+ * from the one that was pinned.
+ *
+ * Needs the network, and `--write` needs EKILEX_API_KEY. Pages are cached
+ * under `prisma/data/.cache/` in the same file `npm run audit:glosses` fills,
+ * so running one after the other costs Wiktionary nothing.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
 import { extractEstonianEntries } from "../lib/dict/wiktionary";
-import { readExpanded } from "./lib/expandedFile";
+import { fetchEkilexDetails, searchEkilex } from "../lib/ekilex/client";
+import { mapEkilexDetails } from "../lib/ekilex/mapper";
+import { readExpanded, writeExpanded } from "./lib/expandedFile";
 
 const CACHE = "prisma/data/.cache/audit-pages.json";
+const PINS = "prisma/data/homonym-pins.json";
 const UA = "Kodukeel/0.1 (Estonian learning tool; homonym audit)";
 const BATCH = 50;
 
+const WRITE = process.argv.includes("--write");
 const limitArg = process.argv.indexOf("--limit");
 const LIMIT = limitArg === -1 ? Infinity : Number(process.argv[limitArg + 1]);
 
@@ -52,8 +74,16 @@ interface Entry {
   pos: string;
   translation: string;
   cefr: string | null;
+  gradation?: string;
+  gradationNote?: string | null;
+  government?: string | null;
+  notes?: string | null;
+  definition?: string | null;
+  semanticTypes?: string | null;
+  examples?: { et: string; en: string | null }[];
   ekilexWordId?: number;
   forms: { formType: string; value: string }[];
+  [key: string]: unknown;
 }
 
 function readCache(): Record<string, string> {
@@ -116,7 +146,10 @@ async function main(): Promise<void> {
 
   let checked = 0;
   let silent = 0;
-  const disagree: { lemma: string; gloss: string; ours: string; theirs: string; cefr: string }[] = [];
+  const disagree: {
+    entry: Entry; gloss: string; ours: string; theirs: string; cefr: string;
+    stems: readonly [string, string];
+  }[] = [];
 
   for (const entry of scope) {
     const wikitext = pages[entry.lemma];
@@ -140,7 +173,7 @@ async function main(): Promise<void> {
     const theirs = `${tidy(first.stems[0])} : ${tidy(first.stems[1])}`;
     if (ours !== theirs) {
       disagree.push({
-        lemma: entry.lemma, gloss: entry.translation, ours, theirs, cefr: entry.cefr ?? "--",
+        entry, gloss: entry.translation, ours, theirs, cefr: entry.cefr ?? "--", stems: first.stems,
       });
     }
   }
@@ -157,11 +190,109 @@ async function main(): Promise<void> {
     `\n${disagree.length} where Wiktionary's own headword declares different principal parts `
     + "from the ones stored beside its gloss:\n",
   );
+  const pins = readPins();
+  const candidates = await candidateIds(disagree);
   for (const row of disagree.sort((a, b) => a.cefr.localeCompare(b.cefr))) {
-    console.log(`  ${row.cefr} ${row.lemma.padEnd(18)} "${row.gloss.slice(0, 34)}"`);
-    console.log(`       stored ${row.ours}`);
+    const key = `${row.entry.lemma}|${row.entry.pos}`;
+    console.log(`  ${row.cefr} ${row.entry.lemma.padEnd(18)} "${row.gloss.slice(0, 34)}"`);
+    console.log(`       stored ${row.ours}  (Ekilex word ${row.entry.ekilexWordId ?? "?"})`);
     console.log(`       page   ${row.theirs}`);
+    const candidate = candidates.get(key);
+    if (pins[key]) console.log(`       pinned to ${pins[key]}`);
+    else if (candidate) console.log(`       to pin the word the page describes: "${key}": ${candidate}`);
+    else console.log("       no Ekilex homonym has those parts, so the page is the one that is wrong");
   }
+
+  if (!WRITE) {
+    console.log(`\nNothing written. Pins live in ${PINS}; --write applies them.`);
+    return;
+  }
+  const applied = await applyPins(pins);
+  console.log(`\nRepointed ${applied} pinned entries in ${"prisma/data/expanded.json"}.`);
+}
+
+/**
+ * The pins a person has made: `lemma|pos` to the Ekilex word id to read from.
+ *
+ * A checked-in file rather than a flag, for the reason `pos-corrections.json`
+ * is one: it is a decision somebody made about a word, and it has to survive
+ * the next run of anything that rewrites the dictionary.
+ */
+function readPins(): Record<string, number> {
+  if (!existsSync(PINS)) return {};
+  return JSON.parse(readFileSync(PINS, "utf8")) as Record<string, number>;
+}
+
+/** For each disagreement, the Ekilex homonym whose parts are the page's. */
+async function candidateIds(
+  rows: readonly { entry: Entry; stems: readonly [string, string] }[],
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (!process.env.EKILEX_API_KEY) return out;
+  for (const row of rows) {
+    const hits = (await searchEkilex(row.entry.lemma)).filter((h) => h.wordValue === row.entry.lemma);
+    for (const hit of hits) {
+      if (hit.wordId === row.entry.ekilexWordId) continue;
+      const mapped = await mappedWord(hit.wordId);
+      if (!mapped) continue;
+      const part = (type: string) => mapped.forms.find((f) => f.formType === type)?.value;
+      const genSg = part("GEN_SG");
+      const partSg = part("PART_SG");
+      if (!genSg || !partSg) continue;
+      if (tidy(genSg) !== tidy(row.stems[0]) || tidy(partSg) !== tidy(row.stems[1])) continue;
+      out.set(`${row.entry.lemma}|${row.entry.pos}`, hit.wordId);
+      break;
+    }
+  }
+  return out;
+}
+
+const mappedWord = async (wordId: number) => {
+  const details = await fetchEkilexDetails(wordId);
+  return details ? mapEkilexDetails(details) : null;
+};
+
+/**
+ * Re-reads every pinned entry from the word it is pinned to.
+ *
+ * The English gloss and the part of speech stay: they came off the Wiktionary
+ * block and are not what the pin corrects. Everything else belongs to whichever
+ * homonym was taken, so all of it is read again.
+ */
+async function applyPins(pins: Record<string, number>): Promise<number> {
+  if (Object.keys(pins).length === 0) return 0;
+  if (!process.env.EKILEX_API_KEY) {
+    console.error("EKILEX_API_KEY is not set, so no pinned word can be read.");
+    return 0;
+  }
+  const entries = readExpanded<Entry>();
+  let applied = 0;
+  for (const [i, entry] of entries.entries()) {
+    const wordId = pins[`${entry.lemma}|${entry.pos}`];
+    if (!wordId || entry.ekilexWordId === wordId) continue;
+    const mapped = await mappedWord(wordId);
+    if (!mapped) {
+      console.warn(`  ! Ekilex would not answer for ${entry.lemma} (${wordId})`);
+      continue;
+    }
+    entries[i] = {
+      ...entry,
+      cefr: mapped.cefr ?? entry.cefr,
+      gradation: mapped.gradation,
+      gradationNote: mapped.gradationNote,
+      government: mapped.government,
+      definition: mapped.definition,
+      semanticTypes: mapped.semanticTypes,
+      examples: mapped.examples.map((e) => ({ et: e.et, en: e.en ?? null })),
+      ekilexWordId: mapped.ekilexWordId,
+      forms: mapped.forms
+        .filter((f) => f.isPrincipal)
+        .map((f) => ({ formType: f.formType, value: f.value })),
+    };
+    applied++;
+  }
+  if (applied > 0) writeExpanded(entries);
+  return applied;
 }
 
 void main();
