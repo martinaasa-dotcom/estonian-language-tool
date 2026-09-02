@@ -2047,12 +2047,32 @@ check("nothing is suggested that the dictionary has not graded", () => {
     Asserted against every read of the table rather than against one query,
     because a fourth source added without both filters is exactly how this
     comes back.
+
+    AND A THIRD FILTER, which is about a different question and so is drawn
+    differently. A chip links to `/dictionary?q=<lemma>` and the dictionary
+    answers a lemma with one entry, `bySubstance`'s, while `@@unique` is on
+    `(lemma, pos)`: filtering the rows asks whether *some* entry has a table to
+    open and the chip's promise is about the one a learner lands on. `oma` is
+    the shipped instance, an adjective in the Wiktionary expansion and the
+    pronoun the course teaches. `withATable` is that gate, it drops a lemma any
+    of whose entries has nothing to open, and its own read is the one query here
+    that must constrain neither: it is looking for the entries the filters would
+    have hidden.
   */
   const suggest = read("lib/dict/suggest.ts");
   assert.match(suggest, /const POS = \[/, "the suggestion row stopped naming which parts of speech it offers");
 
-  for (const read_ of suggest.matchAll(/prisma\.lexeme\.\w+\(|FROM "Lexeme"/g)) {
-    const window = suggest.slice(read_.index, read_.index + 400);
+  const gate = between(suggest, "export async function withATable");
+  assert.match(gate, /opensATable/, "the gate stopped asking which parts of speech open a table");
+  assert.match(
+    suggest,
+    /const words = await withATable\(/,
+    "a source's words reach the row without passing the gate",
+  );
+
+  const chooses = suggest.replace(gate, "");
+  for (const read_ of chooses.matchAll(/prisma\.lexeme\.\w+\(|FROM "Lexeme"/g)) {
+    const window = chooses.slice(read_.index, read_.index + 400);
     assert.match(window, /cefr/, "a suggestion query does not constrain the CEFR level");
     assert.match(window, /pos/i, "a suggestion query does not constrain the part of speech");
   }

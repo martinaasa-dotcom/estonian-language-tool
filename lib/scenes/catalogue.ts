@@ -39,10 +39,18 @@ import type { SceneSpec } from "./types";
   the words, and the two commonest things the gate withheld a line over were
   `ja` and `või`: a scene that cannot say "and" or "or" cannot say much.
   `millal` carries `praegu` and `juba`, which is how anybody says when.
+
+  The last two arrived with the vocabulary pass and are the same argument once
+  more. `kohasonad` is the postpositions, which is one of the eight units the
+  seventeenth pass added for exactly this reason and the only one that was left
+  out here; `alates` and `kaasas` were both in the ranked list. And
+  `kus-ja-kuhu` is the adverbs of place, `siin`, `siia`, `mujal` and `asuma`,
+  which stands beside `millal`'s adverbs of time for the same reason: every one
+  of these scenes asks where something is before it asks anything else.
 */
 const COMMON = [
   "tervitused", "kusisonad", "asesonad", "aeg", "arvud", "korraldused", "pohiverbid",
-  "sidesonad", "vastused", "maaramine", "millal",
+  "sidesonad", "vastused", "maaramine", "millal", "kohasonad", "kus-ja-kuhu",
 ] as const;
 
 /** The closing phrases, which are the same wherever you are leaving. */
@@ -61,8 +69,14 @@ const DOCTOR: SceneSpec = {
     could not vouch for the word "doctor" is the shape of specification bug
     that only a measurement finds: nothing about the scene looked wrong, and
     the gate withheld every line the model wrote about one.
+
+    `plaanid` because the last two beats are agreeing a time, and `sobima` is
+    the verb Estonian agrees one with: it was the single commonest word the
+    gate withheld a line over. `minevik` because the `since` beat asks how long
+    this has been going on, which is a past tense. `omadussonad` because saying
+    what is wrong with you is a sentence with an adjective in it.
   */
-  units: [...COMMON, "keha-ja-tervis", "inimesed"],
+  units: [...COMMON, "keha-ja-tervis", "inimesed", "plaanid", "minevik", "omadussonad"],
   register: "teie",
   beats: [
     {
@@ -144,9 +158,14 @@ const LANDLORD: SceneSpec = {
   place: "A phone call to the person you rent from",
   level: "B1",
   tests: "eluase",
-  // `eluase` is the vocabulary of renting; `kodu` is the vocabulary of the flat
-  // itself, and a scene about something broken in one needs both.
-  units: [...COMMON, "eluase", "kodu"],
+  /*
+    `eluase` is the vocabulary of renting; `kodu` is the vocabulary of the flat
+    itself, and a scene about something broken in one needs both. `kodutood`
+    carries `katki`, which is the word this whole scene is about. `plaanid` for
+    the beat that agrees a time and `minevik` for the one that says since when,
+    the same two the health centre needs, and `omadussonad` for the same reason.
+  */
+  units: [...COMMON, "eluase", "kodu", "kodutood", "plaanid", "minevik", "omadussonad"],
   register: "teie",
   beats: [
     {
@@ -228,9 +247,15 @@ const COUNTER: SceneSpec = {
   place: "The desk at an office that wants your paperwork",
   level: "A2",
   tests: "linn-ja-teenused",
-  // `suhtlemine` teaches `aadress`, `kiri`, `teatama` and `helistama`, which is
-  // what a counter asks you for and what it tells you it will do next.
-  units: [...COMMON, "linn-ja-teenused", "suhtlemine"],
+  /*
+    `suhtlemine` teaches `aadress`, `kiri`, `teatama` and `helistama`, which is
+    what a counter asks you for and what it tells you it will do next.
+    `plaanid` for the beat that asks when it will be ready, and `omadussonad`
+    for `valmis`, which is the word the answer to that beat is made of. No
+    `minevik`: nothing at this counter happened in the past, which is what says
+    these three are declared per scene rather than added to `COMMON`.
+  */
+  units: [...COMMON, "linn-ja-teenused", "suhtlemine", "plaanid", "omadussonad"],
   register: "teie",
   beats: [
     {
