@@ -99,6 +99,14 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "It grades like any other round, so the cards you miss come back sooner.",
   },
   {
+    href: "/review/emoji", title: "Picture match", subtitle: "No English on the board",
+    icon: "Grid2x2", tone: "mint", group: "targeted", note: "Six pairs",
+    within: "/practice",
+    blurb:
+      "The picture is the meaning, so the Estonian side is a case form: match majas to the " +
+      "house rather than maja. Six pairs against the clock.",
+  },
+  {
     href: "/review/sprint", title: "Case Sprint", subtitle: "60 seconds", icon: "Zap", tone: "butter",
     group: "quick", note: "No score yet",
     blurb: "Sixty seconds, as many case forms as you can manage, drawn from the cards you are weakest on.",

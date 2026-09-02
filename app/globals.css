@@ -806,8 +806,21 @@
     to { transform: scale(1); }
   }
 
+  /*
+    A wrong pair shakes and stays. Sideways only, and small: the tile is telling
+    you it is still in play, not that something broke.
+  */
+  .emoji-shake { animation: emoji-shake 400ms ease-in-out both; }
+  @keyframes emoji-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .quest-pulse, .quest-card, .quest-pop { animation: none; }
+    .quest-pulse, .quest-card, .quest-pop, .emoji-shake { animation: none; }
   }
 
   /*
