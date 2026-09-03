@@ -250,8 +250,17 @@ check("and offers to keep one", (await page.getByRole("button", { name: /Add it 
 */
 const offered = await page.getByRole("button", { name: /Add it to my deck/i }).count();
 check("a few of them rather than the unit", offered <= 8, `${offered} offered`);
+/*
+  A DRILL, NOT A NAMED ONE. This asserted "Writing" and failed the moment the
+  debrief started reading the drill off what the beat needed rather than linking
+  the same one whatever happened, which is the suite catching a real change and
+  the check being wrong about the claim: what §12 promises is a link into a
+  drill that already exists rather than advice this screen invented, and which
+  drill is the data's answer.
+*/
+const drill = page.locator('main a[href^="/review/"]').first();
 check("points at a drill rather than writing its own advice",
-  (await page.getByRole("link", { name: /Writing|Your own sentence/i }).count()) > 0);
+  (await drill.count()) > 0, await drill.getAttribute("href").catch(() => "none"));
 check("and offers the same conversation again", (await page.getByRole("button", { name: /Have it again/i }).count()) > 0);
 
 // ── What was written down ───────────────────────────────────────────────────

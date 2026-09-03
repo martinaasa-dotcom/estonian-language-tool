@@ -274,7 +274,21 @@ const SPARSE = new Map([
 // from that one and `/review/describe` from this. Measured at 1160 on the
 // merged tree rather than added from either side, which is the same rule one
 // line up, and the floor keeps the same ten under it.
-const { check, absent, done } = suite("Containment", { floor: 1150 });
+//
+// And 1180 rather than 1150: the conversations joined it, which is two routes
+// and a state no URL reaches. The briefing at 360 is a role card over a
+// two-column dial of labelled buttons, and the talking screen behind it is a
+// log of Estonian in a fixed-height scroller with a text field, the letter bar
+// and four controls under it, which is the tightest row of buttons in the app
+// after the rating keys. Measured at 1190 against a production build with the
+// demo fixture in place, and the floor keeps the same ten under it.
+//
+// A production build rather than `next dev`, which is worth writing down
+// because it cost an afternoon: the dev overlay mounts a `nextjs-portal`
+// element over the page, and this suite correctly reports it as drawn into the
+// phone bar on every route it walks. Measuring a floor off a dev server would
+// have baked that in.
+const { check, absent, done } = suite("Containment", { floor: 1180 });
 
 const browser = await launchChromium();
 

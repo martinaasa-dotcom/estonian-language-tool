@@ -32,7 +32,11 @@ const browser = await launchChromium();
 // +3: a narrow window with a real mouse keeps the letter bar, at three widths.
 // That combination is what the width-keyed rule got wrong and what `open()`
 // structurally cannot produce, since it ties `hasTouch` to the viewport.
-const { check, done } = suite("The phone", { floor: 60 });
+/*
+  62 rather than 60: the conversations joined the target sweep, which is two
+  routes and one check each. Measured against a production build.
+*/
+const { check, done } = suite("The phone", { floor: 62 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({

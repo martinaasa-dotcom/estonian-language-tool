@@ -205,8 +205,15 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   where arithmetic on a number nobody re-ran goes wrong. Measured at 402 on
   the merged tree, which is the 307 above plus nine for /funding and
   eighty-six for these, and the floor keeps the same five under it.
+
+  And 415 rather than 397: the conversations joined it, which is the third time
+  this list has been caught by the fault its own header names. A scene is a
+  whole session rendered from one component with a log region, a disclosure and
+  a form in it, which is exactly the shape that was once found drawing a card
+  and four buttons with no heading at all. Measured at 420 against a production
+  build, and the floor keeps the same five under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 397 });
+const { check, absent, done } = suite("Accessibility", { floor: 415 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.
