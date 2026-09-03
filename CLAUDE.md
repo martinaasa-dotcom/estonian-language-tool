@@ -1396,11 +1396,22 @@ the word falls back to being asked the plain way.
 found.** It was three cards down `/words`, which is a page about the deck, counted in cards; the
 learner asked for the list twice and reported that they could not see it anywhere. `/words/mastery`
 is the four tiers with a row per word, what each one still needs and which forms it has been right
-in, and it is reachable from the deck it counts, from Practice beside the round that moves it, and
-from the rail's own table so the palette goes there. `nav.test.ts` asserts that pairing now rather
-than only the claim, and the check found two destinations that had been claiming a home which did
-not link to them: `/words` and `/exam` both said they were reached from Progress and neither was,
-so both were findable through the command palette alone.
+in, and it is linked from the deck it counts and from Practice, beside the round that moves it.
+`nav.test.ts` asserts that pairing rather than only the claim, and the check found two destinations
+that had been claiming a home which did not link to them: `/words` and `/exam` both said they were
+reached from Progress and neither was, so both were findable through the command palette alone.
+
+**And then the learner said it a third time, because a place inside a place inside a place is
+nowhere.** The page was given `within: "/words"`, on the argument every other such entry makes: it
+is reached from the deck it counts and from the screen somebody is standing on when they want it,
+so it needs no row of its own. That argument holds one level in and `/words` is itself
+`within: "/progress"`, so the rail said Progress, Progress linked to the deck, and the deck carried
+a button in its header. Three steps to a list asked for by name, from a column that never mentioned
+it. Both nav checks passed the whole time, because each is about a single link and the fault was in
+the chain. So `within` names a place the rail actually lists, asserted, and it was the one entry in
+the table breaking it. The row sits under "How it is going", since it answers that section's
+question in the unit a learner thinks in, and the in-page links stay: a signpost on the screen you
+are already on is worth more than a row you have to go and find.
 
 **A word game may borrow a shape and may not borrow a look.** Sõnad is guess-a-word-and-be-told-
 which-letters-were-right, which is older than computers: Mastermind sold it in 1970 and Bulls and
@@ -2902,7 +2913,7 @@ third until the page it led was cut.
 The others are one question asked four ways. The deck, the level check, the mock exam and a class
 are four readings of "how am I doing", which is
 the question `/progress` exists to answer: standing them beside it as four more rows made the rail
-a list of every noun in the app rather than a set of places to go. Seven rows are left, under three
+a list of every noun in the app rather than a set of places to go. Eight rows are left, under three
 headings rather than four, because a heading over a single row is furniture: a heading earns itself
 by telling two or three rows apart, and "where you are in the course" and "how far along it you
 are" turned out to be one question rather than two sections.

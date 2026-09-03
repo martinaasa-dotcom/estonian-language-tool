@@ -86,7 +86,10 @@ export interface Destination {
    *     press.
    *
    * The value is where it is reached from, so this file says so rather than
-   * leaving the next reader to find out.
+   * leaving the next reader to find out, and it names a place the rail lists.
+   * One level in is a signpost on the screen you are standing on; two is
+   * nowhere, which is what `/words/mastery` was for a while by pointing at
+   * `/words`, itself reached from `/progress`. Asserted in `nav.test.ts`.
    */
   within?: string;
 }
@@ -197,17 +200,33 @@ export const SECTIONS: NavSection[] = [
       },
       {
         /*
+          A ROW OF ITS OWN, AND IT TOOK THREE GOES TO GET THERE.
+
           Which words are known, which are nearly, and which keep going wrong.
-          Reached from the deck it counts and from Practice, which is where
-          somebody standing in front of the flash round wants it, and it is in
-          the table so the palette goes there: the first version of this list
-          was a panel three cards down `/words` and the learner reported that
-          they could not find it anywhere.
+          The first version was a panel three cards down `/words` and the
+          learner reported that they could not find it anywhere. The second
+          gave it a page and a `within: "/words"`, on the argument every other
+          entry here makes: it is reached from the deck it counts and from
+          Practice, which is the screen somebody is standing on when they want
+          it. The learner reported the same thing again.
+
+          The argument was sound and the placement was not, because `/words` is
+          itself `within: "/progress"`. A place inside a place inside a place
+          has no row anywhere and no signpost either: the rail says Progress,
+          Progress links to the deck, and the deck carries a button. Three
+          steps to a list somebody asked for by name twice. `nav.test.ts` holds
+          the general rule now, that a `within` points at somewhere the rail
+          actually lists, and this was the only entry breaking it.
+
+          It sits here rather than under the deck because it answers this
+          section's own question, "how is it going", in the one unit a learner
+          thinks in: words they have, words they nearly have, words that keep
+          going wrong. The in-page links stay, since a signpost on the screen
+          you are already on is worth more than a row you have to go and find.
         */
         href: "/words/mastery", label: "Word mastery",
         blurb: "Mastered, almost there, and what needs work", icon: "Trophy", tone: "mint",
         keywords: "mastered known struggling almost progress words list stuck weak",
-        within: "/words",
       },
       {
         href: "/assess", label: "Level check", blurb: "Reading, listening, writing and speaking, measured",
