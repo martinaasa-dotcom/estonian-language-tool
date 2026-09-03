@@ -7,7 +7,9 @@ import {
 const tuba: WritingSource = {
   lemma: "tuba",
   translation: "room",
-  pos: "NOUN",
+  // The Institute's own code for it, so the exercise is set on a room rather
+  // than on a word the dictionary knows nothing about.
+  pos: "NOUN", semanticTypes: "koht_hoone",
   forms: [
     { formType: "NOM_SG", value: "tuba" },
     { formType: "GEN_SG", value: "toa" },
@@ -43,7 +45,7 @@ describe("authoritativeForm", () => {
   });
 
   it("returns null rather than inventing a form when there is no stem", () => {
-    const stemless: WritingSource = { lemma: "x", translation: "x", pos: "NOUN", forms: [] };
+    const stemless: WritingSource = { lemma: "x", translation: "x", pos: "NOUN", semanticTypes: null, forms: [] };
     expect(authoritativeForm(stemless, "INESSIVE")).toBeNull();
   });
 });
@@ -62,21 +64,25 @@ describe("writingTasksFor", () => {
     expect(cases).not.toContain("PARTITIVE");
   });
 
-  it("carries the Estonian case name and its question word", () => {
+  it("carries the Estonian case name and the question this word answers", () => {
     const inessive = writingTasksFor(tuba).find((t) => t.caseKey === "INESSIVE");
     expect(inessive?.caseEt).toBe("seesütlev");
-    expect(inessive?.caseQuestion).toContain("kus?");
+    // `milles?`, not `kus?`: the adverb is answered by the seesütlev and by the
+    // alalütlev alike, so an exercise printing it can be answered correctly and
+    // marked wrong. And `milles?` rather than `kelles?` because a room is a
+    // `mis`. See lib/estonian/caseQuestion.ts.
+    expect(inessive?.caseQuestion).toBe("milles?");
   });
 
   it("sets no exercises for a verb, which has no case forms", () => {
     expect(writingTasksFor({
-      lemma: "lugema", translation: "to read", pos: "VERB",
+      lemma: "lugema", translation: "to read", pos: "VERB", semanticTypes: null,
       forms: [{ formType: "GEN_SG", value: "x" }],
     })).toEqual([]);
   });
 
   it("returns nothing for a word with no genitive stem", () => {
-    expect(writingTasksFor({ lemma: "ja", translation: "and", pos: "NOUN", forms: [] })).toEqual([]);
+    expect(writingTasksFor({ lemma: "ja", translation: "and", pos: "NOUN", semanticTypes: null, forms: [] })).toEqual([]);
   });
 });
 

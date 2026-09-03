@@ -58,6 +58,15 @@ export interface HarvestedWord {
   /** Ekilex's Estonian explanatory definition, where it has one. */
   note: string | null;
   /**
+   * The Institute's semantic type codes for the word's primary sense.
+   *
+   * A horse is loom, a teacher is in_elukutse, a room is koht_hoone. Estonian
+   * chooses between two whole sets of local cases on this and nothing in a
+   * word's spelling carries it, so it is what stops a flashcard asking for the
+   * illative of an animal. Read only by lib/estonian/semantics.ts.
+   */
+  semanticTypes: string[];
+  /**
    * The Institute's own Russian and Ukrainian equivalents.
    *
    * Not a translation this app made and not one a model made: they come from
@@ -79,6 +88,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kodune aadress.", "Mis su aadress on?", "Kirjutasin ümbrikule aadressi: Ehitajate tee 102–60, 13517, Tallinn, Eesti.", "Kodulehekülje aadress."],
     note: "inimese elupaiga või asutuse asukoha andmed (nt postisaadetise sihtkohana)",
+    semanticTypes: ["esitus_info"],
     rus: ["почтовый адрес", "адрес"], ukr: ["адреса", "адреса електронної пошти"],
   },
   {
@@ -90,6 +100,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen sündinud 1991. aastal.", "Kohtusime viimati möödunud aastal.", "Mis aastal sa sündinud oled? – 1975. aastal.", "Käisin eelmisel aastal Itaalias."],
     note: "365 või 366 päeva pikkune periood, mis on jagatud 12 kuuks ja algab 1. jaanuaril ning lõpeb 31. detsembril",
+    semanticTypes: ["aeg"],
     rus: ["год", "г."], ukr: ["рік"],
   },
   {
@@ -101,6 +112,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ilma kõrvalise abita ta igapäevaeluga hakkama ei saa.", "Uus fond pakub tagastamatut abi alustavatele ettevõtjatele.", "Vajan dokumentide vormistamisel abi.", "Teiste abile ei saa loota, teen parem ise ära."],
     note: "aitamine, abistamine",
+    semanticTypes: ["abstr/konkr"],
     rus: ["помощь", "подмога"], ukr: ["допомога", "помічник"],
   },
   {
@@ -112,6 +124,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Abielu sõlmiti Inglismaal, mis tõi endaga kaasa hulga paberlikke toiminguid.", "Milles peitub pika ja õnneliku abielu saladus?", "USAs arutab samasooliste abielude legaliseerimist Massachusettsi ülemkohus.", "Pooled inimesed on elu jooksul kogenud abielu või kooselu purunemist."],
     note: "kahe inimese ametlikult registreeritud perekondlik liit ning kooselu",
+    semanticTypes: ["seisund"],
     rus: ["брак", "супружество"], ukr: ["шлюб", "одруження"],
   },
   {
@@ -123,6 +136,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Abstraktne idee.", "Prints pole abstraktne prints, vaid luust ja lihast poiss.", "Mulle meeldivad abstraktsed arutlused.", "Abstraktsed nimisõnad nagu inimkond, ilu, minevik."],
     note: "mõttes eksisteeriv, mõtlemisega tajutav, abstraktsioonidega seotud",
+    semanticTypes: ["omadus_füüs"],
     rus: ["абстрактный", "отвлечённый"], ukr: ["абстрактний", "нонфігуративний"],
   },
   {
@@ -134,6 +148,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võtsin endale advokaadi.", "Advokaat on kohustatud läbima perioodilise õigusalase täiendusõppe."],
     note: "õigusabi osutav, kedagi kohtus esindav ning kaitsev jurist",
+    semanticTypes: ["in_elukutse"],
     rus: ["адвокат"], ukr: ["адвокат"],
   },
   {
@@ -145,6 +160,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aeg lendab kiiresti.", "Aeg ei peatu.", "Puhkus algab kuu aja pärast.", "Kevadeni on veel palju aega."],
     note: "lõputu, piiramatu kestus, lõputult voolavad tunnid, päevad, aastad vms",
+    semanticTypes: ["nähtus_füüs"],
     rus: ["время", "времена"], ukr: ["час", "година"],
   },
   {
@@ -156,6 +172,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Majanduse aeglane areng.", "Aeglase vooluga jõgi.", "Lapse areng on aeglane.", "Ta teeb korralikku tööd, aga on väga aeglane."],
     note: "aegamööda, pikkamööda toimuv, kulgev või arenev",
+    semanticTypes: ["omadus_aeg"],
     rus: ["медленный", "неторопливый"], ukr: ["повільний", "неквапливий"],
   },
   {
@@ -167,6 +184,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen kuulnud küll, aga ei tule meelde.", "Andres on koduhoidja tüüp, aga mina mitte.", "Lootust on, aga vähe.", "Aga siis jäi see kõik sinnapaika, nagu poleks olnudki."],
     note: "(vastandavalt:) seob lauseid või lauseosi, mis sisaldavad vastandavaid või piiravaid väiteid või asjaolusid",
+    semanticTypes: [],
     rus: ["но", "а"], ukr: ["але", "та"],
   },
   {
@@ -178,6 +196,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Raamatut on trükitud ainult 200 eksemplari.", "Tal on ainult üks laps.", "Reis kestis ainult ühe nädala.", "Tule ainult korraks!"],
     note: "osutab, et midagi on vähem kui vaja või eeldatud",
+    semanticTypes: ["ADV_aste"],
     rus: ["только", "лишь"], ukr: ["тільки", "лише"],
   },
   {
@@ -189,6 +208,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · kellel + mida teha · millest (elative) · mida teha",
     usages: ["Päästjad aitasid hädalised kuivale maale.", "Aitasin sõbral autot parandada.", "Jumal, aita!", "Õpetaja aitab õpilast."],
     note: "kellelegi abi osutama, nõu, jõuga vm moel abiks või toeks olema",
+    semanticTypes: ["VERB_abstr", "VERB_tegevus"],
     rus: ["помогать", "помочь"], ukr: ["допомагати", "допомогти"],
   },
   {
@@ -200,6 +220,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aitäh, Mari!", "Aitäh abi eest!", "Olete oodatud kuulama. – Aitäh kutsumast!", "Palun võta veel üks komm. – Aitäh!"],
     note: "sõna, mida kasutatakse tänamisel",
+    semanticTypes: ["esitus_keel_suhtlus"],
     rus: ["спасибо"], ukr: ["дякую", "спасибі"],
   },
   {
@@ -211,6 +232,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ajakiri Keel ja Kirjandus.", "Lugesin täna ajakirjast ühte huvitavat artiklit.", "Arheoloogiat aitab populariseerida meie ajakiri Tutulus."],
     note: "pikema ajavahemiku järel (nt kord kuus) ilmuv kindla teemaringi või käsitluslaadiga perioodikaväljaanne",
+    semanticTypes: ["ese_semio"],
     rus: ["журнал", "журнальное издание"], ukr: ["журнал", "часопис"],
   },
   {
@@ -222,6 +244,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta töötab Postimehe ajakirjanikuna.", "Tahan saada ajakirjanikuks."],
     note: "inimene, kes kirjutab ajalehtedele, ajakirjadele ja veebiväljaannetele artikleid või valmistab ette saateid televisioonis ja raadios",
+    semanticTypes: ["in_elukutse"],
     rus: ["журналист"], ukr: ["журналiст", "журналiстка"],
   },
   {
@@ -233,6 +256,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta loeb igal hommikul värsked ajalehed läbi.", "Kas teile tuleb ajaleht postkasti?", "Ajalehe The Times lugemine veebis muutus tasuliseks 2010. aastal.", "Online-uudised Eesti ajalehtedes."],
     note: "lühikese ajavahemiku järel (nt iga päev või kord nädalas) ilmuv, päevasündmusi käsitlev ning meelelahutust pakkuv väljaanne (paberil, veebis)",
+    semanticTypes: ["ese_semio"],
     rus: ["газета", "газетное издание"], ukr: ["газета"],
   },
   {
@@ -244,6 +268,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti ilmaennustuse ajalugu algab tsaariaja Tartu ülikoolist.", "Maiasmoka kohvikul on väärikas ajalugu.", "Kelle meetod oli tulemuslikum, sellest ajalugu vaikib.", "See oli maailma ajaloos oluline hetk."],
     note: "ühiskonna, rahva vm minevikus toimunud järjestikused sündmused tervikuna",
+    semanticTypes: ["aeg", "vald"],
     rus: ["история", "гистория"], ukr: ["історія"],
   },
   {
@@ -255,6 +280,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Leiutaja ideed on sageli oma ajastust ees.", "Barokiajastu.", "Renessansiajastu.", "Digiajastu."],
     note: "pikem, teatavate iseloomulike tunnustega ajalõik või periood",
+    semanticTypes: ["aeg"],
     rus: ["эпоха", "период"], ukr: ["доба", "епоха"],
   },
   {
@@ -266,6 +292,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Bussiaken.", "Keldriaken.", "Papagoi pääses lahtise akna kaudu välja.", "Kass istus aknal ja jälgis mööduvaid inimesi."],
     note: "hrl raamitud klaasiga avaus valguse ja õhu sissepääsuks hoone, sõiduki vms seinas või laes",
+    semanticTypes: ["koht"],
     rus: ["окно", "окошко"], ukr: ["вікно"],
   },
   {
@@ -277,6 +304,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Turist küsis teed saksa aktsendiga eesti keeles.", "Kalle kõneleb kerge aktsendiga.", "Ta räägib mingi huvitava aktsendiga inglise keelt.", "Uus kõrghoone annab piirkonnale erilise aktsendi."],
     note: "võõrapärane hääldusviis",
+    semanticTypes: ["nähtus"],
     rus: ["акцент", "ударение"], ukr: ["наголос", "акцент"],
   },
   {
@@ -288,6 +316,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "(üld)pealkirja järele või alla paigutatud (hrl väiksemas kirjas) täpsustav, lisainformatsiooni pakkuv pealkiri",
+    semanticTypes: ["esitus_info"],
     rus: ["подзаголовок", "подзаглавие"], ukr: [],
   },
   {
@@ -299,6 +328,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hinnad kehtivad alates 1. oktoobrist 2016.", "Olen puhkusel alates 1. juulist.", "Kella ühest alates võib lõunale minna.", "Suuremate tellimuste korral (alates 10 kilogrammist) toimetame maasikad ka koju kätte."],
     note: "(ajaliselt:) algusega mingist ajast, mingist kuupäevast peale",
+    semanticTypes: ["aeg", "esitus"],
     rus: ["начиная с", "от"], ukr: ["починаючи з", "з"],
   },
   {
@@ -310,6 +340,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tähistaevas on alati ilus.", "Selline asi võib alati korduda.", "Alati rõõmsameelne naine.", "Mulle on alati meeldinud tantsida."],
     note: "kogu aeg, igal ajal",
+    semanticTypes: ["ADV_aeg"],
     rus: ["всегда", "всё время"], ukr: ["завжди", "весь час"],
   },
   {
@@ -321,6 +352,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative) · millest (elative)",
     usages: ["Kontsert algab kell 18.", "Kõik oli ilus nii kaua, kui algas sõda.", "Päev algas meeletu palavusega.", "Mis kell etendus algab?"],
     note: "(sündmuse, nähtuse kohta:) mingil ajal toimuma või kestma hakkama, algust saama",
+    semanticTypes: ["VERB_alustama", "VERB_seisund"],
     rus: ["начинаться", "начаться"], ukr: ["починатися", "початися"],
   },
   {
@@ -332,6 +364,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Politsei algatas juhtunu uurimiseks kriminaalasja.", "Meestelaulu selts algatas korjanduse Gustav Ernesaksa ausamba rajamiseks.", "Mina ei algatanud kaklust.", "Ministeerium algatas seaduse muutmise."],
     note: "(juhina, korraldajana) mingit tegevust käivitama, midagi alustama",
+    semanticTypes: ["VERB_alustama"],
     rus: ["начинать", "начать"], ukr: ["починати", "почати"],
   },
   {
@@ -343,6 +376,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pakume välja autorituvastuse algoritmi eestikeelsete arvamusartiklite jaoks.", "Kui muidu teada ei saa, siis kirjuta algoritmile vastav programm ning proovi järele."],
     note: "sammsammuline tegevusjuhis, eeskiri mingi tegevuse sooritamiseks või mingit kindlat tüüpi ülesannete lahendamiseks",
+    semanticTypes: ["abstr/konkr"],
     rus: ["алгоритм"], ukr: ["алгоритм"],
   },
   {
@@ -354,6 +388,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["All orus linn, üleval mäeharjal loss.", "Kotid silmade all.", "Akna peal ja all on tavaliselt karniisid.", "Kiige all on veelomp."],
     note: "kuskilt vaadates, millegi suhtes madalamas kohas",
+    semanticTypes: ["ADV_koht"],
     rus: ["под", "подо"], ukr: ["під", "внизу"],
   },
   {
@@ -365,6 +400,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaljude vahel voolav selgeveeline allikas.", "Allikate vesi on külm ja puhas.", "Jõgi lättest suudmeni.", "Moseli jõe lätted asuvad Prantsusmaal."],
     note: "põhjavee loodusliku väljavoolu koht maapinnal (hrl veega täitunud süvendina) või veekogu põhjas",
+    semanticTypes: ["koht_loodus"],
     rus: ["источник", "родник"], ukr: ["джерело"],
   },
   {
@@ -376,6 +412,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koerakoonlaste kollaborandid, milline ilus alliteratsioon!"],
     note: "(stiilivõte:) sama kaashääliku kordumine kahe või enama sõna algul värsis või lauses (nt maal ja merel)",
+    semanticTypes: ["nähtus"],
     rus: ["аллитерация"], ukr: [],
   },
   {
@@ -387,6 +424,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Direktor pani vallandamisotsusele allkirja.", "Võltsitud allkirjaga dokument.", "Lepingule on vaja direktori allkirja.", "Foto allkiri viitab sündmuse toimumiskohale."],
     note: "omakäeliselt kirjatähtedega kirjutatud nimi teksti all",
+    semanticTypes: ["esitus_kujutis"],
     rus: ["подпись", "роспись"], ukr: ["підпис"],
   },
   {
@@ -398,6 +436,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sõnadega loed välja üht, aga alltekst on hoopis teine.", "Maali läbivaks motiiviks on tuvid ning nendega seonduvad alltekstid.", "Väärikas suhtlus sisaldab pigem alltekstina edastatavaid hoiakuid, mitte otse välja öeldavaid sõnumeid."],
     note: "teksti vm väljenduse sisemine varjatud mõte",
+    semanticTypes: ["nähtus"],
     rus: ["подтекст"], ukr: [],
   },
   {
@@ -409,6 +448,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · millega (comitative) · millest (elative)",
     usages: ["Kui alustasin kunstnikuelu, maalisin peamiselt kõrbemaastikke.", "Homme alustan dieeti.", "Meeskond alustas treeningutega aprillis.", "Alustame tööd esmaspäeval."],
     note: "(esimest korda, uuesti) midagi tegema hakkama, mingi tegevusega algust tegema",
+    semanticTypes: ["VERB_alustama"],
     rus: ["начинать", "начать"], ukr: ["починати", "почати"],
   },
   {
@@ -420,6 +460,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "maailmajagu läänepoolkeral Vaikse ja Atlandi ookeani vahel, mille moodustavad Põhja- ja Lõuna-Ameerika mander",
+    semanticTypes: ["koht_geogr_maailmajagu"],
     rus: ["Америка", "Соединённые Штаты Америки"], ukr: ["Америка", "Сполучені Штати Америки"],
   },
   {
@@ -431,6 +472,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["USA valimistepäeval välismaal viibivad ameeriklased hääletavad posti teel, mitte oma saatkonnas.", "President kutsus ameeriklasi üles ühtsusele.", "Eesti keele kursusel käib ka kaks ameeriklast."],
     note: "Ameerika Ühendriikide kodanik või elanik",
+    semanticTypes: ["in_rahvas"],
     rus: ["американец", "американка"], ukr: ["американець", "американка"],
   },
   {
@@ -442,6 +484,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Isa viibib oma ameti tõttu tihti välismaal.", "Ema on ametilt õpetaja.", "President nimetas ametisse kolm kohtunikku.", "Ta on ameti poolest rätsep."],
     note: "ülesanded, mida keegi oma töökohal täidab ja mille eest ta tasu saab, tasustatav töö",
+    semanticTypes: ["abstr/konkr", "tegevus"],
     rus: ["должность", "служба"], ukr: ["посада", "служба"],
   },
   {
@@ -453,6 +496,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Valitsus on otsustanud kaotada euroministri ametikoha.", "Direktori ametikohale kandideerib neli inimest.", "Ametikohad riigiasutustes ja kohalikes omavalitsustes täidetakse seaduse alusel ja korras Eesti kodanikega."],
     note: "asutuse, organisatsiooni vms struktuuris ettenähtud töökoht",
+    semanticTypes: ["abstr"],
     rus: ["должность", "пост"], ukr: ["посада"],
   },
   {
@@ -464,6 +508,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ametlik välispoliitika.", "Võimudelt ei tulnud ühtki ametlikku teadet.", "Ametlik dokument.", "Wales'i printsi esimene ametlik visiit Balti regiooni."],
     note: "ametivõimu poolt, riiklikult kehtestatud või korraldatud",
+    semanticTypes: ["omadus_kval"],
     rus: ["официальный", "сдержанный"], ukr: ["офіційний"],
   },
   {
@@ -475,6 +520,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Teadlased on sellele nähtusele üsna ammendava seletuse leidnud.", "Seletusi võib ju leida, kuid ammendavat vastust pole."],
     note: "põhjalik, midagi täielikult, igakülgselt käsitlev, kõiki asju sisaldav",
+    semanticTypes: ["omadus_kval"],
     rus: ["исчерпывающий", "полный"], ukr: [],
   },
   {
@@ -486,6 +532,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viimati olin haige väga ammu.", "Mehisega oleme ammu tuttavad.", "Aga ammu aega tagasi oli seal hoones kõrts.", "Kas sa tulid ammu?"],
     note: "suhteliselt palju või pikka aega tagasi",
+    semanticTypes: ["ADV_aeg"],
     rus: ["давно", "тем более"], ukr: ["давно"],
   },
   {
@@ -497,6 +544,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Statistiline analüüs.", "Otsusele eelnes olukorra igakülgne analüüs.", "Turuanalüüs.", "Andmeanalüüs."],
     note: "põhjalik, üksikasju arvesse võttev uurimine, algosade vm koostisosade kindlaksmääramine",
+    semanticTypes: ["tegevus"],
     rus: ["анализ", "инспекторский осмотр"], ukr: ["аналіз"],
   },
   {
@@ -508,6 +556,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Kuidas analüüsida firma finantsseisu?", "DNA-proovi analüüsitakse laboris.", "Spetsialistid analüüsisid vigade põhjusi.", "Neid andmeid tuleb põhjalikult analüüsida."],
     note: "midagi põhjalikult ja üksikasjalikult uurima, algosadeks lahutama, koostisosi kindlaks määrama",
+    semanticTypes: ["tegevus", "VERB_abstr"],
     rus: ["анализировать", "проанализировать"], ukr: ["аналізувати", "проаналізувати"],
   },
   {
@@ -519,6 +568,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Noor andekas teadlane.", "Ta on klassi kõige andekam õpilane."],
     note: "annet, talenti omav või seda väljendav",
+    semanticTypes: ["omadus", "omadus_kval"],
     rus: ["талантливый", "способный"], ukr: ["талановитий", "обдарований"],
   },
   {
@@ -530,6 +580,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "milleks / mida teha",
     usages: ["Vend andis võtmed minu kätte.", "Andku jumal talle tervist!", "Palun anna mulle pastakas.", "Anna mulle käsi."],
     note: "midagi kellelegi ulatama, kellegi kätte toimetama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["давать", "дать"], ukr: ["давати", "дати"],
   },
   {
@@ -541,6 +592,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti kohanimede andmebaas.", "Politsei kasutab liikluskindlustuse andmebaasi sõiduki kohustusliku liikluskindlustuse kontrollimiseks.", "Teadusinfo andmebaas ISI Web of Science jälgib 8700 teadusajakirja.", "Keskandmebaas."],
     note: "korrastatud ülesehitusega elektrooniline andmekogu, mis võimaldab andmeid otsida, sortida vm viisil töödelda",
+    semanticTypes: ["esitus_info"],
     rus: ["база данных"], ukr: ["база даних"],
   },
   {
@@ -552,6 +604,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Esialgsete andmete põhjal tuleb starti üle tuhande jooksja.", "Elanikkonna küsitluse andmed kinnitavad olukorra paranemist.", "Auto tehnilised andmed.", "Aadressiandmed."],
     note: "faktid, mida kellegi või millegi kohta teada saadakse või teatakse, informatsioon kellegi või millegi kohta",
+    semanticTypes: ["esitus_info"],
     rus: ["данные", "сведения"], ukr: ["дані", "відомості"],
   },
   {
@@ -563,6 +616,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Töötajat kahtlustatakse andmekaitse nõuete rikkumises."],
     note: "isikuandmete kaitsmine avalikustamise, moonutamise või hävitamise eest",
+    semanticTypes: ["abstr/konkr", "tegevus"],
     rus: ["защита данных"], ukr: [],
   },
   {
@@ -574,6 +628,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kogutud andmestik võimaldab hinnata Eesti järvede seisundit."],
     note: "andmed, andmete (korrastatud) kogum",
+    semanticTypes: ["esitus_info"],
     rus: ["данные", "сведения"], ukr: [],
   },
   {
@@ -585,6 +640,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ravimi annuse määrab arst.", "Päevane joodi annus.", "Ärge ületage ravimi ettenähtud annust.", "Ühekordne annus soola."],
     note: "kindlamõõduline kogus ravimit vm keemilist ainet, mida korraga tarbitakse",
+    semanticTypes: ["materjal/aine"],
     rus: ["доза", "порция"], ukr: ["доза", "порція"],
   },
   {
@@ -596,6 +652,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lähen aprilli lõpus reisile.", "Ema tegi aprilli, et vaata, mis sul pükste peal on!", "Aprill!"],
     note: "aasta 4. kuu, põhjapoolkeral teine kevadkuu",
+    semanticTypes: ["aeg_kuu", "esitus"],
     rus: ["апрель", "березозол"], ukr: ["квітень"],
   },
   {
@@ -607,6 +664,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Telliskivi 60 arenduse projektijuht.", "Püramiidiküla arendus leidis mitte just väga õnneliku lõpu.", "Põhirõhk on nüüd õppekava arendusel, eelkõige õppesuundade osas.", "Kui see idee arendus on huvipakkuv, siis võib edasi mõelda."],
     note: "mingi maa-ala ja hoonestuse terviklik projekteerimine ja väljaehitamine (koos tänavate, veevärgi ja muude rajatistega) või mingi hoone(rühma) renoveerimine",
+    semanticTypes: ["tegevus", "vald"],
     rus: ["девелопмент", "разработка программного обеспечения"], ukr: [],
   },
   {
@@ -618,6 +676,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Majandus arenes, kultuur õitses.", "Nooremad mehed arenevad iga aastaga.", "Teadus ja tehnika arenevad väga kiiresti.", "Beebi areneb iga päevaga."],
     note: "kindla seesmise suunaga muutuma, hrl edenema tõusujoones, madalamalt kõrgemale või lihtsamalt keerukamale",
+    semanticTypes: ["VERB_muutus"],
     rus: ["развиваться", "развиться"], ukr: ["розвиватися", "розвинутися"],
   },
   {
@@ -629,6 +688,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Majanduse areng.", "Eesti regionaalne areng.", "Interneti kiire areng.", "Laps vajab normaalseks arenguks õiget toitu."],
     note: "kindla seesmise suunaga muutumine, hrl edenemine tõusujoones, madalamalt kõrgemale või lihtsamalt keerukamale",
+    semanticTypes: ["nähtus"],
     rus: ["развитие", "прогресс"], ukr: ["розвиток"],
   },
   {
@@ -640,6 +700,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõik selles muusikas on keskpärane ja argine.", "Korralik ja argine vein."],
     note: "ilma erilisuse ja särata, alati ühtmoodi (ja töiselt) esinev, toimiv või toimuv (vastandatuna nt pühapäevasele)",
+    semanticTypes: ["omadus_kval"],
     rus: ["повседневный", "обыденный"], ukr: [],
   },
   {
@@ -651,6 +712,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõlas arglik koputus.", "Esimesed arglikud sammud teadusmaailmas.", "Algul olin natukene arglik ja hoidsin omaette.", "End halvasti tundvad kassid on sageli kas arglikud või liiga agressiivsed."],
     note: "ülearu tagasihoidlik, end häbenev, kohmetunud, natuke arg",
+    semanticTypes: ["omadus_psühh"],
     rus: ["робкий", "стеснительный"], ukr: ["соромливий", "соромʼязливий"],
   },
   {
@@ -662,6 +724,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võta või jäta – argumendid on veenvad.", "Minu argument on, et ..", "Neil pole ühtki mõistlikku argumenti.", "Lähtuda ei tohiks ainult majanduslikest argumentidest."],
     note: "põhjendatud seisukoht, väide tõestusvahendina (nt arutluses, väitluses)",
+    semanticTypes: ["abstr/konkr", "tegevus_kõnetegu"],
     rus: ["аргумент", "комплемент"], ukr: ["аргумент", "комплемент"],
   },
   {
@@ -673,6 +736,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Müüakse arhailise tikandiga linaseid riideid.", "Arhailine eluviis.", "Arhailise ladekonna kivimid."],
     note: "kaugemasse minevikku kuuluv, möödunud ajale omane",
+    semanticTypes: ["omadus_kval"],
     rus: ["архаический", "архаичный"], ukr: ["архаїчний", "стародавній"],
   },
   {
@@ -684,6 +748,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive) · mida teha",
     usages: ["Teda kas armastatakse või vihatakse, ükskõikseks ei jäta ta kedagi.", "Eestlased armastavad privaatsust.", "Inimene igatseb ikka olla armastatud ja vastu armastada.", "Vanemad armastavad oma lapsi."],
     note: "kellegi või millegi vastu armastust tundma, kedagi või midagi kalliks või meeldivaks pidama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["любить", "предаваться любовным играм"], ukr: ["любити", "кохати"],
   },
   {
@@ -695,6 +760,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võib-olla pole sa tundnud tõelist armastust?", "Neid seob armastus muusika vastu.", "Lauluarmastus.", "Loodusearmastus."],
     note: "sügav kiindumus kellessegi või millessegi",
+    semanticTypes: ["seisund"],
     rus: ["любовь", "возлюбленный"], ukr: ["кохання", "любов"],
   },
   {
@@ -706,6 +772,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Läksin arsti juurde.", "Arst pani diagnoosi ja kirjutas retsepti.", "Külaarst.", "Lähen homme polikliinikusse arsti juurde."],
     note: "kõrgema meditsiinilise haridusega inimene, kellele on antud õigus haigeid uurida ja ravi määrata",
+    semanticTypes: ["esitus_tiitel", "in_elukutse"],
     rus: ["врач", "доктор"], ukr: ["лікар", "лікарка"],
   },
   {
@@ -717,6 +784,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tippteadlase artikleid on avaldatud paljudes teadusajakirjades üle maailma.", "Erialased artiklid.", "Artikkel sisaldab palju faktivigu.", "Ajaleheartikkel."],
     note: "arutlev kirjutis ajakirjanduses",
+    semanticTypes: ["ese_semio"],
     rus: ["статья", "параграф"], ukr: ["стаття", "параграф"],
   },
   {
@@ -728,6 +796,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uus väljaanne sisaldab üksikasjalikke aruandeid riikide kohta.", "Ettevõttel on kohustus esitada aruanded ettenähtud ajaks.", "Tootmisaruanne.", "Praktikast esitatakse kirjalik aruanne."],
     note: "dokument, mis käsitleb ettevõtte, asutuse vm majandusüksuse tegevuse tulemust",
+    semanticTypes: ["ese_semio"],
     rus: ["отчёт"], ukr: ["звіт"],
   },
   {
@@ -739,6 +808,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Muutuvad ajad, muutuvad arusaamad.", "Inimeste arusaam õigusest ja õiglusest on erinev.", "Meil on elust erinevad arusaamad."],
     note: "milleski selgusele jõudmine, millegi mõistmine, teadlik suhtumine millessegi",
+    semanticTypes: ["tegevus_kõnetegu", "tegevus_tegu"],
     rus: ["понимание", "понятие"], ukr: ["розуміння", "поняття"],
   },
   {
@@ -750,6 +820,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tüdruk vaatas arusaamatuses mulle otsa.", "Tegemist on arusaamatusega: ma tellisin kohvi, mitte mahla.", "Mitmed kuulsused klaarivad omavahelisi arusaamatusi ajaleheveergudel.", "Kord tekkis meil arusaamatus raha pärast."],
     note: "segadust tekitav mittemõistmine või valesti mõistmine",
+    semanticTypes: ["seisund"],
     rus: ["непонимание", "недоразумение"], ukr: ["нерозуміння", "непорозуміння"],
   },
   {
@@ -761,6 +832,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jõuti vastastikusele arusaamisele.", "Minu arusaamist mööda on hakkama saadud sigadusega.", "Ta üritas väljendada oma arusaamist altruismist."],
     note: "mõistmine",
+    semanticTypes: ["tegevus_kõnetegu", "tegevus_tegu"],
     rus: ["понимание", "понятие"], ukr: [],
   },
   {
@@ -772,6 +844,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · kellega (comitative)",
     usages: ["Valitsus arutab piirirežiimi muutmist järgmisel nädalal.", "Kunagi oli raadios saade, kus arutati roppuste üle.", "Olen endamisi arutanud, et kas nii on õige teha.", "Neid probleeme tuleks koosolekul arutada."],
     note: "teatavas asjas kellegagi mõtteid, arvamusi vahetama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["обсуждать", "обсудить"], ukr: ["обговорювати", "обговорити"],
   },
   {
@@ -783,6 +856,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Teema tuleb uuesti arutlusele paari kuu pärast.", "Seminaris käis arutlus Eesti kunsti üle."],
     note: "mitmeid osalisi hõlmav mõtete ja arvamuste vahetus, ühine arutamine millegi üle",
+    semanticTypes: ["tegevus", "tegevus_kõnetegu"],
     rus: ["обсуждение", "рассуждение"], ukr: ["обговорення", "дискусія"],
   },
   {
@@ -794,6 +868,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "et · kellest/millest (elative)",
     usages: ["Teadlased arvavad, et üks kolp kuulus täiskasvanule ja teine noorukile.", "Perearst arvas, et mul võib mingi allergia olla.", "Nii arvan mina, teised ei pea ju nii arvama.", "Kassil arvatakse olevat üheksa hinge."],
     note: "oletama midagi, mis ei pruugi olla päris kindel, tõenäoseks või usutavaks pidama, isiklikul hinnangul, arvamusel põhinema",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["думать", "полагать"], ukr: ["вважати", "думати"],
   },
   {
@@ -805,6 +880,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üleminek suveajale on avalikkuses tekitanud vastakaid arvamusi.", "Eri pooltel on erinevad arvamused.", "Ta on sinust väga heal arvamusel.", "Jään oma arvamuse juurde (= ei muuda arvamust)."],
     note: "oletus, (esialgne) suhtumine või hinnang kellegi või millegi kohta",
+    semanticTypes: ["abstr", "tegevus_kõnetegu"],
     rus: ["мнение", "воззрение"], ukr: ["думка", "погляд"],
   },
   {
@@ -816,6 +892,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seekordne arvamuslugu pärineb peatoimetaja sulest.", "Päevaleht Times reageeris Jokela veresaunale arvamuslooga."],
     note: "kellegi hrl isiklikku seisukohta või hinnangut väljendav kirjutis meedias",
+    semanticTypes: ["ese_semio"],
     rus: ["статья-мнение", "рассуждение"], ukr: [],
   },
   {
@@ -827,6 +904,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laual on kuhi maksmata arveid.", "Elektrooniline arve.", "Telefoniarve.", "Küttearve."],
     note: "müüja poolt ostjale esitatav dokument kauba või teenuse maksumuse, tasumise tähtaja ja tingimuste kohta",
+    semanticTypes: ["ese_semio"],
     rus: ["счёт", "фактура"], ukr: ["рахунок", "банківський рахунок"],
   },
   {
@@ -838,6 +916,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · millega (comitative) · mida (partitive) · kellega (comitative)",
     usages: ["Rahamaailm arvestab alati riskiga.", "Me peame arvestama asjaolu, et ...", "Arst arvestab kindlasti patsiendi rahalisi võimalusi.", "Ma arvestan su nõuandeid."],
     note: "mingeid asjaolusid silmas pidama, nendesse tegutsemisel tõsiselt või tähelepanuga suhtuma",
+    semanticTypes: ["VERB_abstr", "VERB_tegevus"],
     rus: ["рассчитывать", "рассчитать"], ukr: ["враховувати", "врахувати"],
   },
   {
@@ -849,6 +928,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Istusin arvuti taga terve päeva.", "Andmetele saab ligi nutitelefoni või arvutit kasutades.", "Lülitan arvuti sisse.", "Töötan arvutiga iga päev."],
     note: "elektrooniline seade, mida kasutatakse info säilitamiseks, otsimiseks, töötlemiseks ja väljastamiseks, tehete sooritamiseks ning mitmesuguste rakenduste loomiseks ja kasutamiseks",
+    semanticTypes: ["ese_instru"],
     rus: ["компьютер", "комп"], ukr: ["компʼютер"],
   },
   {
@@ -860,6 +940,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative) · keda/mida* (partitive)",
     usages: ["Tallinna ringkonnakohus asendas surmanuhtluse eluaegse vanglakaristusega.", "Retseptis võid juustu asendada seesamiseemnetega.", "Vanad masinad asendati uutega.", "Asepresident asendab vajaduse korral presidenti."],
     note: "ühe asemel teist kasutama hakkama, millegi (või kellegi) vastu välja vahetama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["заменять", "заменить"], ukr: ["заміняти", "замінити"],
   },
   {
@@ -871,6 +952,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuulajad esitasid enamasti ainult asjakohaseid küsimusi, niisama tühjast-tähjast ei räägitud.", "Hetkeolukorras tundus eelarve kärpimine igati asjakohane."],
     note: "teatud asja, küsimuse kohta käiv, seda puudutav",
+    semanticTypes: ["omadus_kval"],
     rus: ["дельный", "уместный"], ukr: ["доречний", "до речі"],
   },
   {
@@ -882,6 +964,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uurimus lähtus ajaloolisest aspektist.", "Probleemil on nii majanduslik kui eetiline aspekt.", "Verbi aspektid."],
     note: "vaate- või seisukoht, millest lähtudes midagi hinnatakse",
+    semanticTypes: ["abstr"],
     rus: ["аспект", "точка зрения"], ukr: [],
   },
   {
@@ -893,6 +976,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kus (location) · mille juurde / mille kallale · mida tegema",
     usages: ["Hotell asub veinikeldriga samas majas.", "Vanaema korter asus jaamahoone teisel korrusel.", "Maavärina epitsenter asus Vaikse ookeani põhjas.", "Meeskond asub hetkel meistriliiga tabelis kolmandal kohal."],
     note: "kusagil, mingis asukohas paiknema või olema",
+    semanticTypes: ["VERB_seisund"],
     rus: ["находиться", "располагаться"], ukr: ["розташовуватися", "розташуватися"],
   },
   {
@@ -904,6 +988,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tulen tööle tagasi augusti lõpus."],
     note: "aasta 8. kuu, põhjapoolkeral kolmas suvekuu",
+    semanticTypes: ["aeg_kuu", "esitus"],
     rus: ["август", "серпень"], ukr: ["серпень"],
   },
   {
@@ -915,6 +1000,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aus ülestunnistus pidavat karistust kergendama.", "Sahkerdamine ja altkäemaksud ei kuulu ausa äri juurde.", "Seda kohtunikku peetakse üdini ausaks.", "Ta on väga aus inimene."],
     note: "tõest ja õiglusest juhinduv, ebaõiglust, pettust mittesalliv",
+    semanticTypes: ["omadus_psühh"],
     rus: ["честный", "добросовестный"], ukr: ["чесний", "порядний"],
   },
   {
@@ -926,6 +1012,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tõele näkku vaatamine nõuab julgust ja ausust.", "Minu isa oli ausus ise.", "Lubage, teie ausus!"],
     note: "aus olek, käitumine või tegutsemine, mitte valetamine",
+    semanticTypes: ["nähtus_psühh", "seisund"],
     rus: ["честность", "порядочность"], ukr: ["чесність", "порядність"],
   },
   {
@@ -937,6 +1024,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaunitar sõidab lahtise autoga, juuksed tuules lehvimas.", "Jalakäija jäi auto alla.", "Istusime autosse."],
     note: "sõitjate või veose veoks mõeldud vähemalt neljarattaline mootorsõiduk",
+    semanticTypes: ["ese_instru"],
     rus: ["автомобиль", "машина"], ukr: ["автомобіль", "автомашина"],
   },
   {
@@ -948,6 +1036,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "protsesside ja seadmete teostamine tehniliste süsteemide abil ilma pideva inimsekkumiseta",
+    semanticTypes: [],
     rus: ["автоматизация", "автоматизирование"], ukr: [],
   },
   {
@@ -959,6 +1048,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Autori pühendusega eksemplar.", "Ta on nii sõnade kui viisi autor.", "Kes selle artikli autor on?", "Penaltit asus lööma esimese värava autor."],
     note: "artikli, raamatu vms kirjutaja, kirjandus- või kunstiteose looja",
+    semanticTypes: ["in_roll"],
     rus: ["автор", "создатель"], ukr: ["автор", "авторка"],
   },
   {
@@ -970,6 +1060,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · mida (partitive)",
     usages: ["Keegi ei avalda selle üle imestust.", "Parlament avaldas umbusaldust siseministrile.", "Avaldati kaastunnet, kallistati vastastikku.", "Nõudlik toon avaldas mõju."],
     note: "mõtet, tunnet või suhtumist edasi andma, hrl sõnadega välja üteldes, oma olekuga näidates vm viisil",
+    semanticTypes: ["VERB_seisund", "VERB_suhtlus"],
     rus: ["выражать", "выразить"], ukr: ["висловлювати", "висловити"],
   },
   {
@@ -981,6 +1072,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ühingu liikmeks astumiseks on vaja esitada kirjalik avaldus.", "Kui soovid töölt lahkuda, kirjuta avaldus.", "Saatsin ära avalduse toetuse saamiseks.", "Minister on teinud mitu julget avaldust."],
     note: "dokument või suuline ütlus, millega inimene pöördub ametiasutuse või -isiku poole, hrl ta endaga seotud asjus",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["заявление", "проявление"], ukr: ["заява", "вияв"],
   },
   {
@@ -992,6 +1084,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on avalikkuse tähelepanuga harjunud.", "Kirjanik ei salli avalikkuse tähelepanu.", "Ta ei tahtnud avalikkuse ees esineda.", "Mõnikord lubatakse kohtuistungi avalikkust piirata."],
     note: "rahvas, ühiskonnaliikmed kõige üldisemas mõttes",
+    semanticTypes: ["inimene"],
     rus: ["общественность", "публичность"], ukr: ["громадськість"],
   },
   {
@@ -1003,6 +1096,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Avasin silmad.", "Ukse avas vanem proua.", "Avasime šampanja.", "Istunud, avas president mapi."],
     note: "midagi kinnisest, suletud olekust lahtisesse olekusse viima",
+    semanticTypes: ["VERB_liigutama"],
     rus: ["открывать", "открыть"], ukr: ["відчиняти", "відчинити"],
   },
   {
@@ -1014,6 +1108,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Teadlased avastasid Tansaania mägedest uut liiki imetaja.", "Arheoloogiliste kaevamiste käigus avastati kahhelahju vundament.", "Arst avastas haiguse liiga hilja.", "Kolumbus avastas Ameerika 1492. aastal."],
     note: "midagi (ammu) olemas olevat, kuid seni tundmatut leidma, millegi olemasolu, omadusi vms esimesena kindlaks tegema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["открывать", "открыть"], ukr: ["відкривати", "відкрити"],
   },
   {
@@ -1025,6 +1120,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kalle broneeris lennupileti reisifirma kaudu.", "Broneerisin laua kahele.", "Hotellil on õigus broneerida teie krediitkaardilt teatav summa enne hotelli saabumist.", "Broneerisin etendusele kaks piletit."],
     note: "(kohta, ruumi, pileteid vm) ette tellima või kinni panema, millegi saamist tagama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["бронировать", "забронировать"], ukr: ["резервувати", "зарезервувати"],
   },
   {
@@ -1036,6 +1132,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Buss väljub keskväljakult.", "Randa sõitsime bussiga nr 1.", "Mis kell järgmine buss väljub?", "Me jäime bussist maha."],
     note: "paljuistmeline sõiduk inimeste veoks",
+    semanticTypes: ["ese_instru"],
     rus: ["автобус"], ukr: ["автобус"],
   },
   {
@@ -1047,6 +1144,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõnda nähtust on võimatu üheselt defineerida.", "Seaduseelnõu ei defineeri pagulast, vaid viitab konventsioonile ja protokollile.", "Baudelaire defineerib modernsust „mööduva, põgusa, sattumuslikuna“.", "Hoolitsetud ja defineeritud kulmud tõstavad esile näo ilu."],
     note: "mõiste sisu või sõna tähendust seletama, sõnadega kirjeldama",
+    semanticTypes: ["VERB_psühh_mõistus", "tegevus"],
     rus: ["определять", "определить"], ukr: ["визначати", "визначити"],
   },
   {
@@ -1058,6 +1156,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Iga kohalik selts delegeeris kongressile ühe liikme.", "Juhi viga on see, kui ta ei oska ülesandeid delegeerida.", "Kokkulepet ei ole lubatud edasi delegeerida.", "Partneritele ei delegeerita vastutust, mis on organisatsiooni enda kohustus."],
     note: "esindajaks või delegaadiks saatma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["делегировать", "передавать"], ukr: ["делегувати", "доручати"],
   },
   {
@@ -1069,6 +1168,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Detsembris on jõulud."],
     note: "aasta 12. kuu, põhjapoolkeral esimene talvekuu",
+    semanticTypes: ["aeg_kuu", "esitus"],
     rus: ["декабрь", "дек."], ukr: ["грудень"],
   },
   {
@@ -1080,6 +1180,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vilunud raviarst pani kohe õige diagnoosi.", "Täpsem diagnoos selgus ultraheliuuringul.", "Selgus, et diagnoos oli vale.", "Gripidiagnoos."],
     note: "arstlik otsus haiguse olemasolu ja patsiendi seisundi kohta",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["диагноз", "диагностика"], ukr: ["діагноз", "діагностика"],
   },
   {
@@ -1091,6 +1192,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanaemal diagnoositi luude hõrenemine."],
     note: "haiguse olemust ja iseloomu määrama, diagnoosi panema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["диагностировать", "ставить диагноз"], ukr: ["діагностувати", "ставити діагноз"],
   },
   {
@@ -1102,6 +1204,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Dokumentide digitaliseerimisega tegeleb rahvusarhiiv.", "Kultuuripärandi digitaliseerimise sümpoosion.", "Kuidas muudab digitaliseerimine teie äri kahe aasta jooksul?"],
     note: "andmete (nt kujutiste, helide, signaalide) digitaalkujule teisendamine",
+    semanticTypes: ["tegevus"],
     rus: ["оцифровка", "оцифровывание"], ukr: [],
   },
   {
@@ -1113,6 +1216,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tahan kirjutada minu jaoks tõsisest dilemmast.", "Vaimsete omaduste arenguga kaasnevad eetilised dilemmad."],
     note: "vajadus valida kahe enam-vähem võrdse, hrl ebasoovitava võimaluse vahel",
+    semanticTypes: ["abstr/konkr"],
     rus: ["дилемма"], ukr: ["дилема"],
   },
   {
@@ -1124,6 +1228,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kolleegidega läbisaamine nõudis üksjagu diplomaatiat."],
     note: "välisriikidega suhtlemise viis",
+    semanticTypes: ["ADV_viis", "vald"],
     rus: ["дипломатия"], ukr: ["дипломатія"],
   },
   {
@@ -1135,6 +1240,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Reisil peab kaasas olema isikut tõendav dokument: pass või ID-kaart.", "Piiripunktis tehti peatus dokumentide kontrolliks.", "Varastati kohver, mis sisaldas salajasi dokumente.", "Leiti rahakott koos dokumentidega."],
     note: "ametlik paber, kirjalikus vormis teade millegi tõendamiseks, õiguste kinnitamiseks vms",
+    semanticTypes: ["ese_semio"],
     rus: ["документ"], ukr: ["документ"],
   },
   {
@@ -1146,6 +1252,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minge otse edasi.", "Ei pääse rahvasummas edasi ega tagasi.", "Kell keeratakse tunni võrra edasi.", "Minge otse edasi!"],
     note: "enda ees olevas suunas",
+    semanticTypes: ["ADV_koht"],
     rus: ["вперёд", "дальше"], ukr: ["вперед", "далі"],
   },
   {
@@ -1157,6 +1264,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kunstnik annab edasi oma nägemuse.", "Seda on sõnades raske edasi anda.", "Näitleja Liv Ullmann tahab edasi anda saagalikkust.", "See oli käsikirjaline üllitis, mida anti edasi käest kätte."],
     note: "(teisendatult) väljendama, mingil viisil esitama",
+    semanticTypes: ["VERB_abstr", "VERB_suhtlus"],
     rus: ["передавать", "передать"], ukr: ["передавати", "передати"],
   },
   {
@@ -1168,6 +1276,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Käskkiri edutamise kohta.", "Ta edutati kantsleriks.", "Edutamiseks peab töötaja täitma kõrgema ametikoha nõuded, mida hinnatakse atesteerimise käigus.", "Vanglaametniku edutamine on vanglaametniku nimetamine kõrgemale ametiastmele vastavale ametikohale."],
     note: "vastutusrikkamale tööle või kõrgemale ametikohale paigutamine",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["выдвижение", "повышение"], ukr: [],
   },
   {
@@ -1179,6 +1288,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Linn eraldas aasta eelarvest 12% lasteaedadele.", "Valitsus kinnitas järgmise aasta eelarve.", "Ettenägematud kulutused lõid pere eelarve sassi.", "Tartu linna kaasav eelarve."],
     note: "kulude ja tulude arvestus eelseisval ajavahemikul, raha kasutamise plaan teatavaks perioodiks (nt aastaks)",
+    semanticTypes: ["ese_raha", "abstr/konkr"],
     rus: ["бюджет", "смета"], ukr: ["бюджет", "кошторис"],
   },
   {
@@ -1190,6 +1300,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "et · mida* (partitive)",
     usages: ["Eeldatakse, et foorumi külalised oskavad inglise keelt.", "Kandidaadilt eeldati kõrgharidust.", "Tööga kaasnev materiaalne vastutus eeldab ausust.", "See töö eeldab kõrgharidust."],
     note: "eeltingimusena mingit omadust, oskust vm asjaolu vajama või ootama",
+    semanticTypes: ["VERB_abstr", "VERB_psühh_mõistus"],
     rus: ["предполагать", "предположить"], ukr: ["передбачати", "припускати"],
   },
   {
@@ -1201,6 +1312,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hea rünnaku eeldus on kiire esimene sööt.", "Ilmatarkade eksimise põhjus peitus valedes eeldustes.", "Tubli töö on edu eeldus.", "Matk toimub eeldusel, et vihma ei saja."],
     note: "aluseks võetav (tõeseks peetav) asjaolu, millest oleneb mingi muu asjaolu või nähtuse tekkimine või olemasolu",
+    semanticTypes: ["abstr/konkr"],
     rus: ["предпосылка", "предварительное условие"], ukr: ["передумова", "попередня умова"],
   },
   {
@@ -1212,6 +1324,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · kellele/millele (allative) · mida teha",
     usages: ["Toiduainete ostmisel eelistatakse üha enam kodumaist.", "Tööandjad eelistavad tavaliselt kogemustega töötajaid.", "Aina enam ettevõtteid eelistab inimestele roboteid ja automatiseeritud süsteeme.", "Eelistan veeta õhtuid oma perega."],
     note: "(valikuvõimaluse korral) paremaks pidama",
+    semanticTypes: ["VERB_psühh", "VERB_seisund"],
     rus: ["предпочитать", "предпочесть"], ukr: ["віддавати перевагу", "віддати перевагу"],
   },
   {
@@ -1223,6 +1336,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jahiseaduse eelnõu suunati teisele lugemisele.", "Määruse eelnõu sätestab muudatused riiklikus õppekavas.", "Eelnõud, arupärimised ja muud dokumendid esitatakse eesti keeles."],
     note: "riigiorganile või rahvale esitatud seaduse, määruse, rahvusvahelise kokkuleppe vms projekt",
+    semanticTypes: ["ese_semio"],
     rus: ["проект"], ukr: ["проєкт"],
   },
   {
@@ -1234,6 +1348,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eelroad olid selles restoranis kallimad kui pearoad.", "Eelroaks olid oliivid ja juust."],
     note: "toit, mida pakutakse enne esimest sooja rooga",
+    semanticTypes: ["toit"],
     rus: ["закуска"], ukr: ["закуска"],
   },
   {
@@ -1245,6 +1360,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laps kõnnib, selg ees.", "Ma ei näe, mis seal ees toimub.", "Nii nad läksid, naine ees ja mees järel.", "Kokku saadi kohviku ees."],
     note: "liikumise või esikülje poolses suunas (teatud kaugusel), esiküljest (seda varjates) eespool",
+    semanticTypes: ["ADV_koht"],
     rus: ["перед", "у"], ukr: ["перед", "спереду"],
   },
   {
@@ -1256,6 +1372,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uuringu eesmärgiks oli teada saada, kuidas teismelised käituvad interneti jututubades.", "Sportlane püstitas üha uusi eesmärke.", "Tema eesmärk on lõpetada ülikool.", "Tal ei ole elus kindlat eesmärki."],
     note: "see, mille poole püütakse, mida tahetakse saavutada",
+    semanticTypes: ["abstr", "abstr/konkr"],
     rus: ["цель", "задача"], ukr: ["мета", "завдання"],
   },
   {
@@ -1267,6 +1384,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti kaitseväe ohvitser.", "Eesti koondise kodumänge käis vaatamas suur hulk fänne.", "Olen sündinud 1956. aastal Eestis."],
     note: "riik Euroopas Läänemere ääres",
+    semanticTypes: ["koht_geogr"],
     rus: ["Эстония"], ukr: ["Естонія"],
   },
   {
@@ -1278,6 +1396,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eestlaste osa ülikooli ajaloos jäi 19. sajandi esimesel poolel siiski tagasihoidlikuks.", "„Jaapani inimesed on rikkamad kui eestlased, aga see ei tähenda õnnelikku elu,“ tõdeb jaapanlasest õpetaja.", "Homme võõrustavad eestlased Lilleküla staadionil Läti koondist.", "Uhke on olla eestlane."],
     note: "Eesti põhirahva liige",
+    semanticTypes: ["in_rahvas"],
     rus: ["эстонец", "эстонка"], ukr: ["естонець", "естонка"],
   },
   {
@@ -1289,6 +1408,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eetikat õpetatakse paljudes kõrgkoolides.", "Moraali ja eetika kategooriad.", "Kristlik eetika.", "Jahieetika."],
     note: "väärtusõpetus, mis käsitleb õiglus- ja moraalinorme ning hea ja õigega kooskõlas olevat käitumist",
+    semanticTypes: ["tegevus", "vald"],
     rus: ["этика", "мораль"], ukr: [],
   },
   {
@@ -1300,6 +1420,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Siin polnud ühtegi puud ega põõsast.", "Auto ei pääsenud edasi ega tagasi.", "Unistab mehest, kes ei joo ega suitseta.", "Ta vaatas võõrale otsa ega lausunud sõnagi."],
     note: "ka mitte, samuti mitte, ja ei",
+    semanticTypes: [],
     rus: ["и не", "также не"], ukr: ["ні", "і не"],
   },
   {
@@ -1311,6 +1432,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative)",
     usages: ["Viiekorruseline maja ehitati valmis vaid viie kuuga.", "Kiireid autosid ehitati ka juba ligemale 100 aastat tagasi.", "Mees ehitas perele maja.", "See firma ehitab hooneid betoonist."],
     note: "hoonet vm ehitist püstitama või rajama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["строить", "построить"], ukr: ["будувати", "збудувати"],
   },
   {
@@ -1322,6 +1444,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ehk on tal õiguski.", "See asi annab ehk veel korraldada.", "Ehk homme on ilusam ilm.", "Küsi Mari käest, ehk tema teab."],
     note: "osutab oletatavale või loodetavale võimalusele, milles siiski ei olda päris kindel",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["возможно", "вероятно"], ukr: ["можливо", "може"],
   },
   {
@@ -1333,6 +1456,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Temaga ei saa vaielda.", "Lihtsalt aega ei olnud.", "„Kas sa tuled ka?” – „Ei.”", "Kas sa süüa ei taha?"],
     note: "(grammatiline abitegusõna:) eitussõna, mis annab kogu lausele või küsimuse vastusele eitava sisu",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["нет", "не"], ukr: ["ні", "немає"],
   },
   {
@@ -1344,6 +1468,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eile sadas vihma, aga täna särab päike.", "Käisin eile teatris.", "Eile oli ilus ilm.", "See, mis eile tundus uus ja innovaatiline, sobib täna pigem muuseumisse."],
     note: "käesolevale päevale, tänasele päevale eelnenud päeval",
+    semanticTypes: ["ADV_aeg"],
     rus: ["вчера"], ukr: ["вчора", "учора"],
   },
   {
@@ -1355,6 +1480,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Puutetundlik ekraan.", "5-tollise ekraaniga telefon.", "Radariekraan.", "LCD-ekraan."],
     note: "kiirgust peegeldav, muundav või neelav pind nähtava kujutise saamiseks, hrl mingi seadme osana",
+    semanticTypes: ["ese_instru"],
     rus: ["экран", "плоскость проекций"], ukr: ["екран"],
   },
   {
@@ -1366,6 +1492,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eks ta ole.", "Eks elu näita.", "Eks inimesi on igasuguseid.", "Eks pead katsetama, mis Sulle sobib."],
     note: "(rõhutava sõnana:) esineb lausetes, mis väljendavad nentimist, oletust või soovitust",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["так", "ведь"], ukr: ["так", "чи не так"],
   },
   {
@@ -1377,6 +1504,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põhikooli riiklik eksam.", "Eksam toimus kahes jaos.", "Matemaatika eksam toimub aprillis.", "Poiss kukkus eksamil läbi."],
     note: "teadmiste või praktiliste oskuste kontrollimiseks sooritatav katse",
+    semanticTypes: ["sündmus"],
     rus: ["экзамен"], ukr: ["іспит", "екзамен"],
   },
   {
@@ -1388,6 +1516,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mitmete teaduslike eksperimentidega on võimalik demonstreerida magnetväljade olemasolu.", "Eksperimendis osales 76 vabatahtlikku.", "Teaduseksperiment.", "Ajakirjanduslik eksperiment paljastas kesklinnas tegutseva põrandaaluse kliiniku."],
     note: "uurimise eesmärgil mingi nähtuse esilekutsumine või mõjustamine",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["эксперимент", "опыт"], ukr: ["дослід", "експеримент"],
   },
   {
@@ -1399,6 +1528,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahulolu on õnne ekvivalent argielus.", "Jalgpallist on kujunenud sõja kaasaegne ekvivalent.", "Algklassides hinnatakse õpilasi sõnaliste hinnangutega, millel puudub numbriline ekvivalent.", "Kuld oli kõige sobivam raha ekvivalent."],
     note: "asi või suurus, mis asendab või väljendab teist, sama väärtusega asja",
+    semanticTypes: ["abstr/konkr"],
     rus: ["эквивалент"], ukr: [],
   },
   {
@@ -1410,6 +1540,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative)",
     usages: ["Vanaema elab, aga vanaisa on juba aastaid surnud.", "Kotkas elab väga vanaks.", "Ilma toiduta ei saa elada.", "Kuidas sa elad?"],
     note: "elus olema, eksisteerima, olemas olema",
+    semanticTypes: ["VERB_nähtus"],
     rus: ["жить", "оживить"], ukr: ["жити", "проживати"],
   },
   {
@@ -1421,6 +1552,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Alati elegantne daam.", "Elegantne ülikond.", "Elegantne disain.", "Moodsas lilleseades valitseb elegantne lohakus."],
     note: "head stiilitunnet väljendav, esteetiliselt nauditav",
+    semanticTypes: ["omadus_kval"],
     rus: ["элегантный", "изящный"], ukr: ["елегантний", "вишуканий"],
   },
   {
@@ -1432,6 +1564,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma kütan oma maja elektriga.", "Vahel kadus elekter kolmeks tunniks.", "Masin töötab elektriga.", "Lülita elekter enne välja, kui midagi parandama hakkad."],
     note: "energia, mis tekib elektromagnetvälja laengute liikumise ja vastastikuse toime tõttu ning mille abil saab masinaid tööle panna ning soojust ja valgust tekitada",
+    semanticTypes: ["nähtus_füüs"],
     rus: ["электричество", "электротехника"], ukr: ["електрика"],
   },
   {
@@ -1443,6 +1576,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kolme lapse ema.", "Kellena su ema ja isa töötavad?", "Kassipoegade ema.", "Linnuema."],
     note: "naissoost vanem, naine oma lapse või laste suhtes",
+    semanticTypes: ["in_roll", "in_sugulane"],
     rus: ["мать", "мама"], ukr: ["мати", "мама"],
   },
   {
@@ -1454,6 +1588,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta räägib ainult oma emakeelt."],
     note: "esimese keelena kõige varasemas lapsepõlves vanemailt või kasvatajailt omandatud keel, mida inimene hrl kõige paremini oskab",
+    semanticTypes: ["in_rahvas_keel"],
     rus: ["родной язык", "родная речь"], ukr: ["рідна мова"],
   },
   {
@@ -1465,6 +1600,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuupileteid müüdi enam kui tuhat.", "Sinna on enam kui sada kilomeetrit.", "Kõige enam paistsid silma meie sportlased.", "Vihma enam ei saja."],
     note: "millegagi võrreldes suuremal hulgal või määral",
+    semanticTypes: ["ADV_aste"],
     rus: ["больше", "более"], ukr: ["більше", "далі"],
   },
   {
@@ -1476,6 +1612,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Talupidaja aeg ja energia kulub maale ja perele.", "Seksuaalne energia.", "Tunnen, et rohkem pole energiat.", "Organism vajab lõunasööki energia hoidmiseks."],
     note: "eluks, toimimiseks vajalik tegutsemisaktiivsus ja jõud",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["энергия", "Е"], ukr: ["енергія"],
   },
   {
@@ -1487,6 +1624,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema kena välimuse taga peitub madal enesehinnang."],
     note: "see, mida inimene arvab enda ja oma hakkamasaamise kohta",
+    semanticTypes: ["abstr/konkr"],
     rus: ["самооценка"], ukr: ["самооцінка"],
   },
   {
@@ -1498,6 +1636,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta rabas naist oma laia naeratuse ja enesekindla käitumisega.", "Ta on väga enesekindel esineja."],
     note: "(liiga) kindel iseeneses, oma võimetes ja jõus",
+    semanticTypes: ["omadus_kval"],
     rus: ["самоуверенный", "самонадеянный"], ukr: ["самовпевнений"],
   },
   {
@@ -1509,6 +1648,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minu enesekindlus kasvab iga päevaga.", "Võit andis meeskonnale enesekindlust."],
     note: "usk iseendasse (oma võimetesse, jõusse, edukusse vms)",
+    semanticTypes: ["abstr"],
     rus: ["уверенность в себе", "самоуверенность"], ukr: ["самовпевненість", "віра в себе"],
   },
   {
@@ -1520,6 +1660,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen enne hakkama saanud, saan pärast ka.", "Sellist asja polnud keegi enne näinud.", "Katsume enne pimedat koju jõuda.", "Kus sa enne töötasid?"],
     note: "varasemal ajal, praeguse või teatava aja eel, millalgi minevikus",
+    semanticTypes: ["ADV_aeg"],
     rus: ["прежде", "перед"], ukr: ["перше", "до"],
   },
   {
@@ -1531,6 +1672,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · keda/mida* (partitive)",
     usages: ["Tervislikud eluviisid aitavad ennetada südamehaigusi.", "Koosolekul arutati, kuidas ennetada koolivägivalda.", "Ma ennetan su küsimust ja ütlen, et ..", "Hilisõhtused bussid kihutavad graafikut ennetades."],
     note: "eelnevalt abinõusid tarvitusele võttes midagi ebasoovitavat ära hoidma või tõkestama",
+    semanticTypes: ["VERB_abstr"],
     rus: ["предупреждать", "предупредить"], ukr: [],
   },
   {
@@ -1542,6 +1684,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Haiguste ennetus.", "Kuriteoennetus."],
     note: "millegi soovimatu ärahoidmine",
+    semanticTypes: ["tegevus"],
     rus: ["опережение", "предупреждение"], ukr: [],
   },
   {
@@ -1553,6 +1696,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Katastroofi järel vallanduvad epideemiad võivad nõuda teist sama palju ohvreid.", "Gripiepideemia.", "Aidsiepideemia.", "Rasvumisepideemia."],
     note: "inimeste hulgaline haigestumine mingisse nakkushaigusse, ulatuslik nakkushaiguse puhang",
+    semanticTypes: ["seisund_haigus"],
     rus: ["эпидемия", "поветрие"], ukr: ["епідемія", "пошесть"],
   },
   {
@@ -1564,6 +1708,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mis erakonna poolt sa hääletasid?"],
     note: "poliitiline organisatsioon, mis ühendab sarnase maailmavaate ja ühiskondlike huvidega inimesi",
+    semanticTypes: ["in_roll"],
     rus: ["партия", "политическая партия"], ukr: ["партія", "політична партія"],
   },
   {
@@ -1575,6 +1720,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele/millele (allative) · kellest/millest (elative) · keda/mida* (partitive)",
     usages: ["Valitsus eraldas raha neljale tööhõive projektile.", "Ministeerium eraldas projektile kuus tuhat eurot.", "Talle eraldati korter munitsipaalmajja.", "Filter eraldab veest kahjulikud ained."],
     note: "mingiks otstarbeks suunama, kellelegi kasutada andma (nt raha, maad, tuba)",
+    semanticTypes: ["VERB_abstr"],
     rus: ["выделять", "выделить"], ukr: ["надавати", "надати"],
   },
   {
@@ -1586,6 +1732,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ilma ühegi erandita olid kõik plaaniga nõus.", "Naissoost mehaanik on pigem erand kui reegel.", "Sellest reeglist on erandeid."],
     note: "milleski üldisest või normaalsest kõrvalekalduv või erinev nähtus, omadus, asi, isik vms",
+    semanticTypes: ["nähtus"],
     rus: ["исключение", "изъятие"], ukr: ["виняток"],
   },
   {
@@ -1597,6 +1744,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aus ja erapooletu kriitika.", "Üritasin jääda erapooletuks ja olukorda kõrvaltvaatajana jälgida.", "Erapooletu ekspertiis.", "Kriitika oli erapooletu ja õiglane."],
     note: "mitte kumbagi poolt, mitte kedagi eelistav, teiste asjadesse mitte vahelesegav",
+    semanticTypes: ["omadus_kval"],
     rus: ["нейтральный", "независимый"], ukr: ["нейтральний", "безсторонній"],
   },
   {
@@ -1608,6 +1756,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen tegutsenud oma erialal kümme aastat.", "Ärijuhtimise eriala.", "Minu eriala on inglise keel.", "Ta on erialalt ajaloolane."],
     note: "kitsamalt piiritletud tehnika, teaduse, kunsti vm ainevaldkond, tegevusala, mille teadmised ja oskused omandatakse hrl õppimise teel",
+    semanticTypes: ["abstr/konkr", "vald"],
     rus: ["специальность", "область знаний"], ukr: ["фах", "спеціальність"],
   },
   {
@@ -1619,6 +1768,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta hakkas otsima võimalusi erialaseks väljaõppeks.", "Tööle võetakse erialase haridusega sotsiaaltöötaja.", "Leidsin kohe pärast ülikooli erialase töö."],
     note: "erialaga seotud, sellele kuuluv",
+    semanticTypes: ["omadus"],
     rus: ["специальный", "по специальности"], ukr: ["фаховий", "за фахом"],
   },
   {
@@ -1630,6 +1780,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Värvitoon võiks seinast erinev olla.", "Inimesed on väga erinevad.", "Oodatust erinevad tulemused.", "Need on tõesti täiesti erinevad eluetapid."],
     note: "mingil viisil teistest, muust eristuv",
+    semanticTypes: ["omadus_kval"],
     rus: ["разный", "различный"], ukr: ["різний", "відмінний"],
   },
   {
@@ -1641,6 +1792,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Naiste ja meeste erinevused.", "Mis on peamine erinevus kristliku demokraatia ja sotsiaaldemokraatia vahel?", "Õpilaste vahel on palju erinevusi.", "Erinevus maa ja linna vahel väheneb."],
     note: "erinevaks tegev omadus, iseloomulik joon vms",
+    semanticTypes: ["abstr/konkr"],
     rus: ["различие", "отличие"], ukr: ["різниця", "відмінність"],
   },
   {
@@ -1652,6 +1804,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · kellest/millest (elative) · keda/mida (partitive)",
     usages: ["Kaugel horisondil eristab silm Paistu kiriku torni.", "Riisikaid saab eristada seenekübara järgi.", "Maksudest kõrvalehoidmist eristatakse maksupettusest.", "Kas koerad suudavad värve eristada?"],
     note: "millegi vahel erinevust nägema, erinevaks tunnistama, erinevana tunnetama",
+    semanticTypes: ["VERB_abstr", "VERB_psühh"],
     rus: ["различать", "различить"], ukr: ["розрізняти", "розрізнити"],
   },
   {
@@ -1663,6 +1816,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uue disaini eesmärk on selgelt eristuda konkurentidest.", "Eemal eristus mustav mets vaevu tähistaevast."],
     note: "erinevaks muutuma, lahku arenema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["отличаться", "различаться"], ukr: ["відрізнятися", "відрізнитися"],
   },
   {
@@ -1674,6 +1828,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema maailmavaadet iseloomustab selge eristus hea ja kurja vahel.", "Firma küsitles 2000 inimest, et teha eristusi maakondade lõikes.", "Kõnede eristus saadetakse kliendile koju koos arvega."],
     note: "vahetegemine millegi vahel, üksteisest lahus hoidmine",
+    semanticTypes: ["abstr", "tegevus"],
     rus: ["распечатка звонков", "выделение"], ukr: [],
   },
   {
@@ -1685,6 +1840,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hooaeg kujuneb eriti huvitavaks.", "Eriti hull oli olukord kuu aega tagasi.", "Eriti kasulik on süüa ingverit.", "Eriti raske on palavust taluda südamehaigetel."],
     note: "iseäranis, eriti",
+    semanticTypes: ["ADV_aste", "ADV_viis"],
     rus: ["очень", "исключительно"], ukr: ["особливо", "зокрема"],
   },
   {
@@ -1696,6 +1852,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ühtlasest ansamblimängust on raske kedagi esile tõsta.", "Konkursil tõsteti esile kaks uurimust."],
     note: "mingit asjaolu, omadust vm (erilisena, olulisena) välja näitama, sellest teada andma või seda märkama panema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["выделять", "выделить"], ukr: ["виділяти", "виділити"],
   },
   {
@@ -1707,6 +1864,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poiss käib esimeses klassis.", "Käisin täna esimest korda elus jõusaalis.", "Istusime kinos esimesse ritta.", "1. märts."],
     note: "(järgarv:) järjestuses või järjekorras 1.",
+    semanticTypes: ["esitus_arv", "omadus_kval"],
     rus: ["первый", "первоначальный"], ukr: ["перший", "первісний"],
   },
   {
@@ -1718,6 +1876,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive)",
     usages: ["Kannatanut esindas kohtus advokaat.", "Lennukile saadeti sportlased, kes esindavad riiki olümpiamängudel.", "Europarlamendis esindab Eestit kuus saadikut.", "Firmat esindab läbirääkimistel juhatuse liige."],
     note: "kellegi või millegi nimel, eest või volitusel esinema või tegutsema",
+    semanticTypes: ["VERB_abstr", "VERB_suhtlus"],
     rus: ["представлять", "представить"], ukr: ["представляти", "представити"],
   },
   {
@@ -1729,6 +1888,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Enne esinemist olin närvis.", "President ütles oma esinemises, et ...", "Väljakuulutatud esinemist ei saanud ära jätta.", "Ta kardab avalikku esinemist."],
     note: "ülesastumine avalikkuse ees, avalik etteaste (nt kõnena, rollisooritusena)",
+    semanticTypes: ["tegevus", "tegevus_mäng"],
     rus: ["выступление"], ukr: ["виступ"],
   },
   {
@@ -1740,6 +1900,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · kellele (allative) · kellena (essive)",
     usages: ["Ajakirjanikud esitasid linnapeale ebameeldivaid küsimusi.", "Õpetaja esitas tööde vormistamisele ranged nõuded.", "Esitasin kõnelejale mitu küsimust.", "Esitasin oma seisukoha."],
     note: "arvamust, seisukohta avaldama, väljendama, ette või esile tooma",
+    semanticTypes: ["VERB_abstr"],
     rus: ["излагать", "изложить"], ukr: ["викладати", "викласти"],
   },
   {
@@ -1751,6 +1912,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Esiteks, aega napib.", "Esiteks on andmed poolteist aastat vanad.", "Esiteks peab õpetaja olema tark, teiseks rahuliku iseloomuga.", "Esiteks pane vesi keema, siis koori kartulid."],
     note: "(asjaolude loetlemisel:) esimesena, kõige enne",
+    semanticTypes: ["ADV_aste"],
     rus: ["во-первых", "сперва"], ukr: ["по-перше"],
   },
   {
@@ -1762,6 +1924,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Käin tööl esmaspäevast reedeni.", "Piletid on müügil alates esmaspäevast, 23. maist."],
     note: "nädala 1. päev, pühapäevale järgnev ja teisipäevale eelnev päev",
+    semanticTypes: ["aeg_nädalapäev", "esitus"],
     rus: ["понедельник"], ukr: ["понеділок"],
   },
   {
@@ -1773,6 +1936,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "lühem subjektiivses laadis kunstipärane teadusliku, ühiskondliku või kirjanduskriitilise sisuga kirjutis",
+    semanticTypes: ["ese_semio"],
     rus: ["эссе", "очерк"], ukr: ["есе"],
   },
   {
@@ -1784,6 +1948,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tundub, et kedagi pole.", "Kuulsin, et koer hakkas haukuma.", "Olukord oli säärane, et pidime kiiresti lahkuma.", "Saavutasime niipalju, et koosolek lükati edasi."],
     note: "alustab lauseosa, mis täpsustab, kirjeldab midagi või toob esile mingi tegevuse eesmärgi, tagajärje või otstarbe",
+    semanticTypes: [],
     rus: ["что", "чтобы"], ukr: ["що", "щоб"],
   },
   {
@@ -1795,6 +1960,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "et · kuidas",
     usages: ["Hea tahtmise korral võib ette kujutada, et suurlinna servast algab loodus.", "Võib ette kujutada, millega selline eksperiment lõpeb.", "Mul on raske ette kujutada, kuidas seal koduneda.", "Kujutasin teda ette hoopis teistsugusena."],
     note: "millestki või kellestki endale varasema kogemuse alusel mõttes pilti looma",
+    semanticTypes: ["VERB_abstr"],
     rus: ["представлять", "представить"], ukr: ["уявляти", "уявити"],
   },
   {
@@ -1806,6 +1972,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Loenguid ette valmistama.", "Tema oleks tahtnud kohemaid hakata pulmapidu ette valmistama.", "Õpilased olid ette valmistanud mõned luuletused.", "Esmalt valmista ette lõhefilee, seejärel lõika parajad jupid."],
     note: "mingi ülesande täitmiseks, millegi teostamiseks hädavajalikke eeltöid sooritama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["подготавливать", "подготовить"], ukr: ["підготовляти", "підготовити"],
   },
   {
@@ -1817,6 +1984,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ministrile tehti etteheiteid asjatus raharaiskamises.", "Kellele meeldiks pidevalt alusetuid etteheiteid kuulata?", "Ema tegi pojale etteheiteid, et ta korralikult ei õpi."],
     note: "millegi või kellegi taunimine, süüdistus või märkus",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["упрёк", "укор"], ukr: ["докір", "закид"],
   },
   {
@@ -1828,6 +1996,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kontserdil tuleb ettekandele helilooja viimase aja looming.", "Laulupeol tuleb ettekandele mitu uut teost.", "Ettekanded keelpilliorkestrilt.", "Konverentsil kõlas õige mitu väga huvitavat ettekannet."],
     note: "mingi kunstiteose esitamine vaatajas- või kuulajaskonnale",
+    semanticTypes: ["sündmus", "tegevus"],
     rus: ["исполнение", "выступление"], ukr: ["виконання", "доповідь"],
   },
   {
@@ -1839,6 +2008,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Monopoolne ettevõte.", "Ettevõte läks pankrotti.", "Töötan ettevõttes, mis tegeleb autode remondiga.", "Kellele see ettevõte kuulub?"],
     note: "mis tahes majandusharus tegutsev iseseisev majandusüksus",
+    semanticTypes: ["koht_asutus"],
     rus: ["фирма", "предприятие"], ukr: ["фірма", "підприємство"],
   },
   {
@@ -1850,6 +2020,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "maailmajagu, mis hõlmab Euraasia mandri lääneosa",
+    semanticTypes: ["koht_geogr_maailmajagu"],
     rus: ["Европа", "европейский"], ukr: ["Європа"],
   },
   {
@@ -1861,6 +2032,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ühingu muutmiskandeavaldusele tuleb failina lisada muudetud või uus põhikiri.", "Trükikotta jõudis vigane fail.", "See fail on meiliga saatmiseks liiga suur.", "Andmefail."],
     note: "elektrooniline andmekogum (nt dokument, pilt, video)",
+    semanticTypes: ["ese_semio"],
     rus: ["файл"], ukr: ["файл"],
   },
   {
@@ -1872,6 +2044,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rõhutatult familiaarne käitumine."],
     note: "pealetükkivalt sõbralik, liiga semutsev",
+    semanticTypes: ["omadus_psühh"],
     rus: ["фамильярный", "бесцеремонный"], ukr: [],
   },
   {
@@ -1883,6 +2056,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Fellini filmide nädal.", "Uus kodumaine täispikk film.", "Lähme kinno, täna on üks hea film.", "Millest see film rääkis?"],
     note: "kino- või teleekraanil demonstreerimiseks mõeldud teos",
+    semanticTypes: ["ese_kunst", "ese_semio"],
     rus: ["фильм", "кинофильм"], ukr: ["фільм", "кінофільм"],
   },
   {
@@ -1894,6 +2068,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Enne kohtusse pöördumist püüdsid hagejad probleemi lahendada kohtuväliselt.", "Kohus mõistis hageja kasuks välja 3840 eurot."],
     note: "tsiviilkohtumenetluses pool, kes esitab kahju hüvitamise nõude, hagi esitaja",
+    semanticTypes: ["abstr/konkr", "inimene"],
     rus: ["истец", "истица"], ukr: [],
   },
   {
@@ -1905,6 +2080,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Linn esitas firma vastu hagi.", "Kohtuhagi.", "Füüsilise isiku vastu võib hagi esitada tema elukoha järgi ja juriidilise isiku vastu tema asukoha järgi.", "Hagi menetletakse poolte esitatud asjaolude ja taotluste alusel, lähtudes nõudest."],
     note: "isiku pöördumine tsiviilkohtu poole menetluse alustamiseks, kahju hüvitamise nõue",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["иск", "исковое заявление"], ukr: ["позов", "позовна заява"],
   },
   {
@@ -1916,6 +2092,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ametlik hagiavaldus sadama vastu esitatakse kahe kuu jooksul.", "Koos hagiavaldusega oli vaja tasuda riigilõiv."],
     note: "isiku pöördumine tsiviilkohtu poole menetluse alustamiseks, kahju hüvitamise nõue",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["иск", "исковое заявление"], ukr: ["позов", "позовна заява"],
   },
   {
@@ -1927,6 +2104,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanaisa on juba vana ja haige.", "Kopsud on haiged.", "Ta on väga haige.", "Selg on kummardamisest haige."],
     note: "mingit haigust põdev või halvas tervislikus seisundis olev, mitteterve",
+    semanticTypes: ["omadus"],
     rus: ["больной", "нездоровый"], ukr: ["хворий", "слабий"],
   },
   {
@@ -1938,6 +2116,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanaisa ei sattunud oma pika elu jooksul kordagi haiglasse.", "Mu vend on kopsupõletikuga haiglas.", "Ta viidi kiirabiga haiglasse.", "Haigla liigid on piirkondlik haigla, keskhaigla, erihaigla, üldhaigla, taastusravihaigla ja hooldushaigla."],
     note: "asutus (ka hoone või hooned), kus haigeid uuritakse ja ravitakse",
+    semanticTypes: ["koht_asutus", "koht_hoone"],
     rus: ["больница", "госпиталь"], ukr: ["лікарня"],
   },
   {
@@ -1949,6 +2128,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpilane puudub haiguse tõttu.", "Punast päevakübarat kasutatakse mitmete haiguste raviks.", "Suu- ja sõrataud on väga nakkav sõralistel leviv haigus.", "See haigus levib vere kaudu."],
     note: "organismi normaalse elutegevuse häire",
+    semanticTypes: ["seisund_haigus"],
     rus: ["болезнь", "заболевание"], ukr: ["хвороба", "недуга"],
   },
   {
@@ -1960,6 +2140,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Halvad teated rikkusid kõigi meeleolu.", "Kandidaat jättis halva mulje.", "Halva ilma tõttu jäeti võistlused ära.", "Kõval toolil oli halb istuda."],
     note: "ebameeldivat tunnet tekitav, rahulolematust või pahameelt esile kutsuv",
+    semanticTypes: ["abstr/konkr_omadus", "omadus_psühh"],
     rus: ["плохой", "нехороший"], ukr: ["поганий", "недобрий"],
   },
   {
@@ -1971,6 +2152,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Taevas on hall ja vihma sajab.", "Hallid juuksed.", "Tumehall.", "Helehall."],
     note: "tuha, hiire värvi, musta ja valge vahepealne",
+    semanticTypes: ["omadus_füüs_värv"],
     rus: ["серый", "сивый"], ukr: ["сірий", "сивий"],
   },
   {
@@ -1982,6 +2164,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanaisa mälu halvenes väga kiiresti.", "Halvenenud teeolud nõuavad liiklejatelt erilist tähelepanu.", "Patsiendi tervis halveneb.", "Olukord halvenes iga päevaga."],
     note: "halvemaks, kehvemaks muutuma",
+    semanticTypes: ["VERB_muutus"],
     rus: ["ухудшаться", "ухудшиться"], ukr: ["гіршати", "погіршати"],
   },
   {
@@ -1993,6 +2176,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poeg läks linna haridust nõutama.", "Kehva haridusega töömehed.", "Ta on hariduselt arst.", "Kunstiharidus."],
     note: "õppimise kaudu omandatud teadmised, oskused ja vilumused",
+    semanticTypes: ["abstr/konkr"],
     rus: ["образование", "просвещение"], ukr: ["освіта"],
   },
   {
@@ -2004,6 +2188,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida tegema · kellega/millega (comitative)",
     usages: ["Pikapeale harjusin vara tõusma.", "Karupoeg harjus inimestega kiiresti.", "Organism harjus ravimiga ja see ei toiminud enam.", "Laps ei suuda kuidagi lasteaiaga harjuda."],
     note: "midagi (algselt võõrast, kogematut) omaks võtma, nii et see muutub harilikuks ja loomulikuks, kellegagi või millegagi kodunema või kohanema",
+    semanticTypes: ["VERB_abstr", "VERB_toimuma"],
     rus: ["свыкаться", "свыкнуться"], ukr: ["звикати", "звикнути"],
   },
   {
@@ -2015,6 +2200,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas alkoholism on haigus või kahjulik harjumus?", "Vahemeres ujumine sai Küprosel olles igapäevaseks harjumuseks.", "Suitsetamisharjumus.", "Suitsetamine on kahjulik harjumus."],
     note: "kordamise ja õppimise teel tavaks, kombeks või automaatseks kujunenud tegevus, mille sooritamine muutub hrl vajaduseks",
+    semanticTypes: ["omadus_psühh"],
     rus: ["привычка", "повадка"], ukr: ["звичка"],
   },
   {
@@ -2026,6 +2212,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Harjumuspärases keskkonnas on lihtsam toime tulla.", "Harjumuspäraseks muutunud toimingud."],
     note: "kindlaks kujunenud, selline, millega ollakse harjunud",
+    semanticTypes: ["omadus_kval"],
     rus: ["обычный", "привычный"], ukr: ["звичайний", "звичний"],
   },
   {
@@ -2037,6 +2224,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma teen vähemalt kord päevas harjutusi säärelihastele.", "Parim meeskonnatöö harjutus on kärestikuparvega sõitmine.", "Võimlemisharjutus.", "Klaveriharjutus."],
     note: "liigutuste, võtete vms kogum võimete arendamiseks ja treenimiseks või milleski vilumuste omandamiseks või nende näitamiseks",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["упражнение", "репетиция"], ukr: ["вправа", "завдання"],
   },
   {
@@ -2048,6 +2236,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pidudel tantsib ta harva.", "Harva mõtleme sellele, et ..", "Näen teda viimasel ajal harva.", "Juulis sadas vihma väga harva."],
     note: "pika vaheaja järel",
+    semanticTypes: ["ADV_aeg", "ADV_viis"],
     rus: ["редко", "изредка"], ukr: ["рідко", "нечасто"],
   },
   {
@@ -2059,6 +2248,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõni päev toob halbu, teine häid uudiseid.", "Selles restoranis on alati head söögid-joogid.", "Emal on poja edusammude üle hea meel.", "Mu enesetunne on hea."],
     note: "meeldivat tunnet tekitav, rõõmu või rahulolu esile kutsuv",
+    semanticTypes: ["omadus_kval", "omadus_psühh"],
     rus: ["хороший", "приятный"], ukr: ["добрий", "приємний"],
   },
   {
@@ -2070,6 +2260,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pere materiaalse heaolu nimel loobus ta oma solistikarjäärist.", "Aednikud hoolitsevad rooside heaolu eest.", "Lapse heaolu sõltub vanematest.", "Kui palgad kasvavad, siis inimeste heaolu paraneb."],
     note: "jõukus, (aineline) kindlustatus, vajaduste rahuldatus",
+    semanticTypes: ["seisund"],
     rus: ["благосостояние", "благополучие"], ukr: ["добробут", "благополуччя"],
   },
   {
@@ -2081,6 +2272,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Külaskäikudega kaasnesid tavaliselt helded annetused.", "Hea isu ja helde käega klient on igas restoranis teretulnud.", "Helde südamega inimene.", "Olgem siis helded ning ärgem küsigem esinemise eest tasu!"],
     note: "oma osast teistele meelsasti, ohtrasti andev",
+    semanticTypes: ["omadus_kval"],
     rus: ["щедрый"], ukr: ["щедрий"],
   },
   {
@@ -2092,6 +2284,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaminas põlesid halud heleda leegiga.", "Hele täht põhjataevas.", "Keldrist tulijat pimestas hele päevavalgus.", "Avar ja hele kabinet."],
     note: "tugevat valgust kiirgav",
+    semanticTypes: ["omadus_füüs"],
     rus: ["яркий", "светлый"], ukr: ["світлий"],
   },
   {
@@ -2103,6 +2296,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Valgus liigub kiiremini kui heli.", "Õuest kostis mingi kahtlane heli.", "Flöödiheli.", "Kitarriheli."],
     note: "elastses keskkonnas lainena leviv võnkumine, mida on võimalik kuulda",
+    semanticTypes: ["nähtus_füüs"],
     rus: ["звук"], ukr: ["звук"],
   },
   {
@@ -2114,6 +2308,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative) · kuhu (direction)",
     usages: ["Helistasin emale.", "Juhuslikult kohal viibinud taksojuht helistas politseisse.", "Nii hilja ei sobi enam helistada.", "Helista Robertile ja küsi, millal ta tuleb."],
     note: "kellegagi telefoni teel ühendust võtma, telefonikõnet võtma",
+    semanticTypes: ["VERB_suhtlus", "VERB_tegevus"],
     rus: ["звонить", "позвонить"], ukr: ["телефонувати", "потелефонувати"],
   },
   {
@@ -2125,6 +2320,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Personalivalikul tehtud vigu on hiljem raske parandada.", "Ma mõistsin alles hiljem, et sul oli õigus.", "Me kohtusime uuesti viis aastat hiljem."],
     note: "ajaliselt millegi järel, millalgi pärastpoole, tulevikus",
+    semanticTypes: ["ADV_aeg", "aeg"],
     rus: ["позже", "позднее"], ukr: ["пізніше", "згодом"],
   },
   {
@@ -2136,6 +2332,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kinnisvara hinnad langevad.", "Ma olen nõus küsitud hinda maksma.", "Kolm ühe hinnaga.", "Ostsin korteri soodsa hinnaga / hinna eest."],
     note: "kauba väärtuse rahaline väljendus, rahasumma või mingi muu materiaalne väärtus, mis millegi ostmisel vastu antakse või mida millegi müümisel nõutakse",
+    semanticTypes: ["ese_raha"],
     rus: ["цена", "стоимость"], ukr: ["ціна", "вартість"],
   },
   {
@@ -2147,6 +2344,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mille järgi · mida* (partitive) · keda/mida* (partitive)",
     usages: ["Kannatanu hindas kahju 1000 eurole.", "Puu vanust hinnatakse 600 aastale.", "Kui analüüsite menüüd toitumisprogrammiga, kas kaalute oma toitu või hindate silma järgi?", "Firma hindas kahju tuhandele eurole."],
     note: "millegi väärtust, suurust, hulka, vanust vms (umbkaudselt või mingite ettenähtud võtete alusel) (kindlaks) määrama",
+    semanticTypes: ["VERB_abstr"],
     rus: ["оценивать", "оценить"], ukr: ["оцінювати", "оцінити"],
   },
   {
@@ -2158,6 +2356,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kandidaatide hindamine toimub kahes voorus.", "Kogu vara on panditud, käimas on varade hindamine.", "Metsahindamine.", "Mõnes valdkonnas (nt mikrobioloogia) on hindamine mitmete katsete, vaatluste või mõõtmiste kogutegevus."],
     note: "punktide, hinde andmine mingi soorituse eest",
+    semanticTypes: ["tegevus"],
     rus: ["оценка", "оценивание"], ukr: ["оцінка", "оцінювання"],
   },
   {
@@ -2169,6 +2368,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "kauba või teenuse eest küsitava rahasumma suurenemine või lisandumine",
+    semanticTypes: ["nähtus"],
     rus: ["повышение цен", "рост цен"], ukr: [],
   },
   {
@@ -2180,6 +2380,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema kümne põhiaine keskmine hinne on 4,2.", "Priit sai koolis kontrolltöö eest hea hinde.", "Tal on matemaatikas head hinded."],
     note: "kellegi teadmistele, oskustele, võimetele, töötulemustele antud hinnang, mida väljendatakse numbrites, tähtedes, punktides vm hindamisühikutes",
+    semanticTypes: ["esitus_mõõt"],
     rus: ["оценка", "отметка"], ukr: ["оцінка", "бал"],
   },
   {
@@ -2191,6 +2392,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mind valdas halvav hirm.", "Kaunitar tundis kohutavat hirmu vananemise ees.", "Tal pidi hirmust süda seisma jääma.", "Sõjahirm."],
     note: "erutusseisund, mida põhjustab selgesti tajutav oht, suur kartus",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["страх", "боязнь"], ukr: ["страх", "острах"],
   },
   {
@@ -2202,6 +2404,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hobune sööb kaera.", "Mulle meeldib hobusega ratsutada.", "Vahus hobused korskasid ja tõusid tagajalgadele.", "Võistlustele on registreerunud 45 sportlast ligi 70 hobusel."],
     note: "suur koduloom, kes hirnub, kelle seljas ratsutatakse ning keda kasutatakse veoloomana",
+    semanticTypes: ["loom"],
     rus: ["лошадь", "конь"], ukr: ["кінь"],
   },
   {
@@ -2213,6 +2416,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõnede ametite esindajad on ametiühingute suhtes pigem tõrjuva hoiakuga.", "Ta peaks muutma oma hoiakut vähemuste suhtes.", "Harjutusi tehes tuleks jälgida keha hoiakut.", "Peahoiak."],
     note: "kellegi suhtumine millessegi, arvamus millegi kohta",
+    semanticTypes: ["abstr"],
     rus: ["позиция", "направленность"], ukr: ["позиція", "ставлення"],
   },
   {
@@ -2224,6 +2428,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · kelle/mille eest",
     usages: ["Liikluskorraldajad hoiatavad autojuhte aukude eest.", "Kolm päeva varem hoiatati, et lumi tuleb.", "Hoiatasin lapsi, et nad üksi ujuma ei läheks.", "Meid hoiatati puukide eest."],
     note: "võimalikele halbadele tagajärgedele või hädaohule tähelepanu juhtima",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["предупреждать", "предупредить"], ukr: ["попереджати", "попередити"],
   },
   {
@@ -2235,6 +2440,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Arvutiteemaline blogi avaldas hoiatuse uut tüüpi viiruste levimise kohta.", "Ta ei hoolinud teiste hoiatustest.", "Olgu see kurb kogemus kõigile hoiatuseks.", "Suulisi hoiatusi tehti 21 ettevõttele."],
     note: "märkus, mis juhib tähelepanu võimalikele halbadele tagajärgedele või ohtudele",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["остережение", "предупреждение"], ukr: ["застереження", "попередження"],
   },
   {
@@ -2246,6 +2452,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive) · keda* (partitive)",
     usages: ["Reporter hoidis käes mikrofoni.", "Naine hoiab last süles.", "Juht hoidis kahe käega kramplikult rooli ja vaatas enda ette.", "Ta hoidis käes paksu raamatut."],
     note: "millestki või kellestki kinni pidama, seda haardesse jätma, haardest mitte vabastama",
+    semanticTypes: ["VERB_seisund"],
     rus: ["держать", "придерживать"], ukr: ["тримати", "утримувати"],
   },
   {
@@ -2257,6 +2464,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Homme algab kool.", "Homme on neljapäev.", "Homme sõidame reisile.", "Homme sõidame maale."],
     note: "käesolevale, tänasele päevale järgneval päeval",
+    semanticTypes: ["ADV_aeg", "aeg"],
     rus: ["завтра", "назавтра"], ukr: ["завтра"],
   },
   {
@@ -2268,6 +2476,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ärkasin kell viis hommikul.", "Töö käis hommikust õhtuni.", "Kevadhommik.", "Ärkasin täna hommikul kell 7."],
     note: "päeva algusosa",
+    semanticTypes: ["aeg"],
     rus: ["утро", "завтрак"], ukr: ["ранок", "сніданок"],
   },
   {
@@ -2279,6 +2488,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hoolas aednik alustas oksalõikusega kohe, kui ilmad soojenesid.", "Hoolsa perenaise käe all on kodu korras.", "Hoolsa harjutamise järel võisid poisid maratonile minna."],
     note: "oma tööd püüdlikult, kohusetundlikult tegev, oma tegemistes tähelepanelikult täpne ja korralik",
+    semanticTypes: ["omadus_kval"],
     rus: ["старательный", "аккуратный"], ukr: ["старанний", "ретельний"],
   },
   {
@@ -2290,6 +2500,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest/kellest (elative) · kellest/millest (elative)",
     usages: ["Autojuht ei hoolinud õueala märkidest.", "Sa oled väga tubli, et oma tervisest hoolid.", "Tüdruk ei hoolinud ema soovitustest.", "Kusagil on keegi, kes sinust tõeliselt hoolib."],
     note: "midagi või kedagi arvesse võtma, millelegi või kellelegi tähelepanu pöörama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["считаться", "посчитаться"], ukr: ["зважати", "зважити"],
   },
   {
@@ -2301,6 +2512,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lennujaamast hotelli sõitsime taksoga.", "Peatusime ühes uhkes hotellis.", "Hotelli administraator ütles, et vabu tube ei ole."],
     note: "hrl suurem ja esinduslikum ajutist majutust pakkuv asutus",
+    semanticTypes: ["koht_asutus"],
     rus: ["гостиница", "отель"], ukr: ["готель"],
   },
   {
@@ -2312,6 +2524,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Valitsuse pressiteates mõisteti hukka igasugune terrorism.", "Mõni on alati nõus teisi hukka mõistma.", "Jaan ei mõista oma sõpru kunagi hukka."],
     note: "taunitavaks, vääraks või ebasoovitavaks pidama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["осуждать", "осудить"], ukr: ["осуджувати", "осудити"],
   },
   {
@@ -2323,6 +2536,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["See oli öeldud kerge huumoriga.", "Film oli tõsine, aga seal oli ka huumorit.", "Ta hindab head huumorit.", "Võtan selliseid jutte huumoriga."],
     note: "heatahtlik nali, koomiliste elunähtuste, sündmuste või inimeste puuduste ja nõrkuste heatahtlik naeruvääristamine",
+    semanticTypes: ["ese_kunst", "tegevus"],
     rus: ["юмор"], ukr: ["гумор"],
   },
   {
@@ -2334,6 +2548,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative)",
     usages: ["Välismaalased huvituvad lisaks Tartule ka Peipsist.", "Huvitun fotograafiast."],
     note: "midagi teada saada tahtma või soovima millegagi tegelda",
+    semanticTypes: ["VERB_psühh"],
     rus: ["поинтересоваться", "заинтересовываться"], ukr: ["цікавитися", "виявляти цікавість"],
   },
   {
@@ -2345,6 +2560,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida (partitive)",
     usages: ["Tegevuskava aruandlus hõlmab perioodi 2005–2006.", "Küsitlus hõlmab nii koosseisulisi kui lepingulisi töötajaid.", "Kõnealune käsitlus hõlmab pea kõik terrorismi vormid.", "Raudteejaama arendusala hõlmab ligi 100 hektarit."],
     note: "endasse haarama või enda all hoidma",
+    semanticTypes: ["VERB_seisund"],
     rus: ["охватывать", "занимать"], ukr: ["охоплювати", "охопити"],
   },
   {
@@ -2356,6 +2572,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minu jaoks oli see kogemus alandav ja häbistav.", "Häbistav lüüasaamine."],
     note: "(hrl teo, sündmuse vm asjaolu kohta:) häbi, piinlikkust põhjustav, (avalikku) hukkamõistu pälviv",
+    semanticTypes: ["omadus_kval", "omadus_psühh"],
     rus: ["постыдный", "позорный"], ukr: ["ганебний"],
   },
   {
@@ -2367,6 +2584,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta oskab hästi hispaania keelt.", "Kaugele näen ma hästi, aga lugemiseks on prille vaja.", "Kõik lõppes õnneks hästi.", "Publik võttis etenduse hästi vastu."],
     note: "nii, et millegagi ollakse rohkem kui ainult rahul",
+    semanticTypes: ["ADV_viis"],
     rus: ["хорошо", "неплохо"], ukr: ["добре", "гаразд"],
   },
   {
@@ -2378,6 +2596,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Logopeed juhtis tähelepanu s-hääliku valele hääldusele.", "Kirjutasin ta nime häälduse järgi üles.", "Arvutis saab kuulata ka sõnade hääldust.", "Diktori hääldus olgu selge ja tämber meeldiv."],
     note: "häälikute (ja sõnade, fraaside vm) moodustamine kõneelundite abil",
+    semanticTypes: ["esitus_keel", "tegevus"],
     rus: ["произношение", "произнесение"], ukr: ["вимова"],
   },
   {
@@ -2389,6 +2608,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelle/mille poolt · kelle/mille vastu",
     usages: ["Hääletada saab veebruari jooksul telefonil 119.", "Ei teagi, kuidas seekordsetel valimistel hääletada.", "Albaanlased hääletasid referendumil, et anda hinnang põhiseadusele.", "Ta hääletas Juhani poolt."],
     note: "(suuliselt, kirjalikult, märguandega) oma seisukohta avaldama (valimistel, mingi küsimuse otsustamisel), millelegi oma hinnangut, häält andma",
+    semanticTypes: ["VERB_abstr"],
     rus: ["голосовать", "проголосовать"], ukr: ["голосувати", "проголосувати"],
   },
   {
@@ -2400,6 +2620,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ettepanek pandi hääletusele.", "Hääletuse tulemused selguvad õhtuks."],
     note: "seisukoha avaldamine mingi küsimuse otsustamisel, oma poolt- või vastuhääle andmine nt valimistel",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["голосование", "вотирование"], ukr: ["голосування"],
   },
   {
@@ -2411,6 +2632,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "mingi nähtuse seletamiseks esitatud tõestamata, ent ka kummutamata teaduslik oletus",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["гипотеза"], ukr: ["гіпотеза"],
   },
   {
@@ -2422,6 +2644,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema liikumapanevaks jõuks on materiaalsed hüved.", "Metsast saadavad hüved.", "Süsteemi hüveks on lihtsus.", "President ei või oma ametivolituste kestel saada riigilt selles seaduses käsitlemata hüvesid."],
     note: "see, mis on vajalik ja kasulik",
+    semanticTypes: ["abstr/konkr"],
     rus: ["благо", "преимущество"], ukr: ["благо", "добро"],
   },
   {
@@ -2433,6 +2656,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hüvitisteks on välja makstud üle 100 000 euro.", "Ajutise töövõimetuse hüvitis.", "Isikliku sõiduauto hüvitis.", "Kahjuhüvitis."],
     note: "kellelegi makstav rahasumma majandusliku kaotuse, varanduse vähenemise vm kahju eest",
+    semanticTypes: ["ese_raha"],
     rus: ["возмещение", "компенсация"], ukr: ["відшкодування", "компенсація"],
   },
   {
@@ -2444,6 +2668,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Igas peres on omad kombed.", "Buss väljub igal täistunnil.", "Ta võib iga hetk tulla.", "Iga viimane kui sõna oli meile kuulda."],
     note: "(üksiku kohta kogumis:) teatav kindel, määratud",
+    semanticTypes: ["omadus_kval"],
     rus: ["каждый", "любой"], ukr: ["кожний", "кожен"],
   },
   {
@@ -2455,6 +2680,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Igapäevane kontoritöö tundus igav ja hall.", "Mees nõudis oma igapäevast õllelonksu.", "Puuetega laste igapäevane toimetulek.", "Ta on meie peres igapäevane külaline."],
     note: "iga päev, päevast päeva toimuv, esinev vms",
+    semanticTypes: ["omadus_aeg"],
     rus: ["повседневный", "ежедневный"], ukr: ["щоденний", "повсякденний"],
   },
   {
@@ -2466,6 +2692,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ega ma igaüht ka ei usalda.", "Õnnetus võib juhtuda igaühega.", "Igaüks ostis pudeli veini.", "Igaühele, kel pole interneti kasutamise võimalust, peab looma vaba ja avaliku juurdepääsu internetile."],
     note: "(möönvalt:) ükskõik kes, iga inimene",
+    semanticTypes: ["inimene"],
     rus: ["всё равно кто", "безразлично кто"], ukr: ["будь-який", "всякий"],
   },
   {
@@ -2477,6 +2704,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rikas ja ihne Veneetsia kaupmees Pantalone."],
     note: "raha mitte kulutada raatsiv, ülemäära kokkuhoidlik",
+    semanticTypes: ["omadus_psühh"],
     rus: ["скупой", "жадный"], ukr: [],
   },
   {
@@ -2488,6 +2716,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nagu ikka, raha on alati vaja.", "Ma olen ikka arvanud, et saun teeb ihule head.", "Sul on õigus nagu ikka.", "Mida ma sulle poest toon? – Ikka jäätist."],
     note: "kogu aeg, alati, iga (viimane kui üks) kord",
+    semanticTypes: ["ADV_aeg"],
     rus: ["всегда", "постоянно"], ukr: ["завжди", "повсякчас"],
   },
   {
@@ -2499,6 +2728,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vihmase ilmaga pole lastel õues midagi teha.", "Ilm püsis kuiv.", "Tormiilm.", "Täna on halb ilm – külm ja tuuline."],
     note: "pidevalt muutuv atmosfääri olek (temperatuur, sademed, tuul, pilvitus), hrl lühema aja jooksul",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["погода", "погодка"], ukr: ["погода"],
   },
   {
@@ -2510,6 +2740,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Juba mitu kuud ilma tööta.", "Lahkus ilma sõna lausumata.", "Ilma sinuta ei lähe ma kuhugi.", "Sportlane jäi kuldmedalist ilma."],
     note: "osutab rõhutavalt millegi või kellegi puudumisele",
+    semanticTypes: ["ADV_viis", "seisund"],
     rus: ["без", "безо"], ukr: ["без", "безкоштовно"],
   },
   {
@@ -2521,6 +2752,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema kohta biokeemik öelda on ilmne liialdus.", "Jaansoni võit sai ilmseks ammu enne finišit.", "Ta jälgis ettekannet ilmse huviga.", "On täiesti ilmne, keda ta eelistab."],
     note: "täiesti selge, väga selgelt märgatav",
+    semanticTypes: ["omadus_kval", "omadus_psühh"],
     rus: ["очевидный", "явный"], ukr: ["очевидний", "неприхований"],
   },
   {
@@ -2532,6 +2764,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Romaan ilmus järjejutuna ajakirjas.", "Tänavu veebruaris ilmus bändilt singel ja video.", "See ajakiri ilmub iga nädal.", "Eksamile registreerus 35 inimest, kohale ilmus poole vähem."],
     note: "uue teosega avalikkuse ette (lugejani, kuulajani, vaatajani) jõudma, hrl raamatute, ajakirjade, muusikaplaatide vms kohta",
+    semanticTypes: ["VERB_toimuma"],
     rus: ["выходить", "выйти"], ukr: ["виходити", "вийти"],
   },
   {
@@ -2543,6 +2776,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on tark ja ilus naine.", "Ilmajaam lubab ilusat ilma.", "Temast on kõikjal palju ilusaid pilte, aga intervjuusid mõni üksik.", "Ta on kõige ilusam naine, keda ma näinud olen."],
     note: "välimuselt meeldiv, vaadates rahuldust pakkuv, väga kena",
+    semanticTypes: ["omadus_kval"],
     rus: ["красивый", "прекрасный"], ukr: ["гарний", "красивий"],
   },
   {
@@ -2554,6 +2788,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Maailmamajanduses ilmnevad taas tendentsid, kus kasv aeglustub ja inflatsioon kiireneb."],
     note: "raha ostujõu vähenemine, mis väljendub üldises hinnataseme tõusus",
+    semanticTypes: ["nähtus"],
     rus: ["инфляция"], ukr: ["інфляція"],
   },
   {
@@ -2565,6 +2800,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Briti traditsioonis on nn kolme rahva anekdootides tegelasteks inglane, iirlane ja šotlane."],
     note: "Inglismaa põhirahva liige",
+    semanticTypes: ["in_rahvas"],
     rus: ["англичанин", "англичанка"], ukr: ["англієць", "англійка"],
   },
   {
@@ -2576,6 +2812,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Inglismaa kuninganna."],
     note: "Ühendkuningriigi suurim koostisosa Suurbritannia saarel (ilma Šotimaata ja Walesita)",
+    semanticTypes: ["koht_geogr"],
     rus: ["Англия", "Великобритания"], ukr: ["Англія"],
   },
   {
@@ -2587,6 +2824,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Saarel sai selgemaks looduse ja inimese vaheline suhe.", "See ei ole viimane kord, kui viirus hüppab loomalt inimesele.", "Ma olen täiesti tavaline inimene.", "Noored ja haritud inimesed."],
     note: "mõtlemis- ja kõnelemisvõimeline ühiskondlik olend, mees, naine või laps",
+    semanticTypes: ["inimene"],
     rus: ["человек", "ч."], ukr: ["людина"],
   },
   {
@@ -2598,6 +2836,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahandusminister annab intervjuu Saksa päevalehele Der Spiegel.", "Paar lahutas mõni kuu pärast skandaalset intervjuud.", "Peaministri intervjuu ilmub homses ajalehes.", "Lugesin intervjuud etenduse lavastajaga."],
     note: "küsitlus hrl ajakirjanduses, raadios, televisioonis avaldamise eesmärgil",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["интервью", "расспрос"], ukr: ["інтерв’ю"],
   },
   {
@@ -2609,6 +2848,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Riskantsemate investeeringutega võib teenida terve varanduse, kuigi risk kõigest ilma jääda on suurem.", "Investeeringud kinnisvarasse on viimasel aastal kasvanud."],
     note: "pikaajalise kasusaamise eesmärgil tehtav rahapaigutus väärtpaberitesse, kinnisvarasse, kunsti vm",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["инвестирование", "капиталовложение"], ukr: ["інвестування", "інвестиція"],
   },
   {
@@ -2620,6 +2860,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Elu ja inimesi tuleb vahel võtta huumoriga, eluterve irooniaga.", "Lõikava irooniaga pikitud, samas ääretult siiras teos.", "Sergejevi häälest kostis varjamatut irooniat."],
     note: "peen, varjatud pilge, võte, kus millestki kõneldakse pilkeks teadlikult vastupidiselt sellele, mida mõeldakse",
+    semanticTypes: ["abstr/konkr", "tegevus_kõnetegu"],
     rus: ["ирония", "насмешка"], ukr: ["іронія", "насмішка"],
   },
   {
@@ -2631,6 +2872,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelle/mille üle",
     usages: ["„Ahaa, maarott ronis siia!” irvitasid meremehed.", "Margus irvitas mu riidest taskurätikute üle.", "Tema pea kohal oleva pildi klaasis irvitas pirakas auk."],
     note: "pilkavalt, üleolevalt, kahjurõõmsalt vms moel naerma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["насмехаться", "издеваться"], ukr: [],
   },
   {
@@ -2642,6 +2884,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Isa ja ema ei olnud kodus.", "Minu isa ja ema elavad Tallinnas.", "Pääsukesepoegadele toovad toitu nii isa kui ka ema.", "Pärast pikki rännuaastaid tekkis soov tulla tagasi isade maale."],
     note: "meessoost vanem, mees oma lapse või laste suhtes",
+    semanticTypes: ["in_sugulane"],
     rus: ["отец", "папа"], ukr: ["батько", "тато"],
   },
   {
@@ -2653,6 +2896,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on selles jamas ise süüdi.", "Hiljem sai ta sellest ise ka aru.", "Uisutada soovijail tuleks uisud endal kaasa võtta.", "See pole mulle endalegi veel selge."],
     note: "(rõhutab põhisõnaga väljendatut, tõstab seda mingil moel esile:) just see, mitte keegi või miski muu",
+    semanticTypes: ["omadus_psühh"],
     rus: ["сам", "сама"], ukr: ["сам", "сама"],
   },
   {
@@ -2664,6 +2908,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Naabripoiss ei öelnud mulle isegi tere.", "Isegi kampsuniga oli toas külm.", "Juhtunu ei olnud isegi naljakas.", "Naine teenis isegi rohkem kui mees."],
     note: "(tõstab esile järgnevat sõna või lauseosa:) vastupidi ootustele, lisaks kõigele, lausa",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["даже", "аж"], ukr: ["навіть", "аж"],
   },
   {
@@ -2675,6 +2920,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ühegi inimese halb iseloom pole ravitav.", "Eestlased on iseloomult kinnised ja individualistlikud.", "Tõsine sporditegemine noorpõlves kasvatab iseloomu.", "Õde ja vend on iseloomult väga erinevad."],
     note: "inimese või looma käitumises ja suhtumises ilmnevad põhilised, püsivamad psüühilised omadused",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["характер", "нрав"], ukr: ["характер", "вдача"],
   },
   {
@@ -2686,6 +2932,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti iseseisvuse manifest.", "1991. aastal taastati veretult Eesti riigi iseseisvus.", "Laps kasvab, tema mõtlemine ja vajadused muutuvad, ta vajab üha suuremat iseseisvust.", "Tegusad päevad kodust eemal eakaaslaste keskel kasvatavad laste iseseisvust."],
     note: "riigi täielik sise- ja välispoliitiline sõltumatus teistest riikidest",
+    semanticTypes: ["seisund"],
     rus: ["самостоятельность", "независимость"], ukr: ["самостійність", "незалежність"],
   },
   {
@@ -2697,6 +2944,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mitmed isiksuse omadused on pärilikud.", "Isiksuse kahestumine.", "Kodus kujuneb välja lapse isiksus.", "Ta on kindlasti üks eesti muusikaloo eredamaid isiksusi."],
     note: "inimese eriomane (vaimne) olemus või laad",
+    semanticTypes: ["in_omadus", "omadus_kval"],
     rus: ["личность", "индивидуальность"], ukr: ["особистість", "індивідуальність"],
   },
   {
@@ -2708,6 +2956,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kus (location) · kuhu (direction)",
     usages: ["Ta istus mugavas tugitoolis.", "Istusin autosse ja käivitasin mootori.", "Istusime diivanil.", "Istu minu kõrvale."],
     note: "sellises asendis olema, kus istmik toetub mingile alusele ja selg on püstine",
+    semanticTypes: ["VERB_seisund"],
     rus: ["сидеть", "посидеть"], ukr: ["сидіти", "посидіти"],
   },
   {
@@ -2719,6 +2968,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Söödi ja joodi tublisti.", "Tekst oli eesti ja soome keeles.", "Söödi. Ja joodi natuke veel. Ja siis oli õige hea olla.", "Tüdrukule meeldib laulda ja tantsida."],
     note: "(ühendavalt:) seob sisu poolest samaväärseid, võrreldavaid või loetletavaid sõnu, lauseosi või lauseid",
+    semanticTypes: [],
     rus: ["и", "а также"], ukr: ["і", "й"],
   },
   {
@@ -2730,6 +2980,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rong saabus jaama.", "Rong väljub Tapa jaamast kell 12.00.", "Jaama ootesaalist pääses edasi kohvikusse.", "Kunstliku seemenduse jaam."],
     note: "spetsiaalsete hoonetega koht raudteel, kus rongid peatuvad ja reisijad saavad rongile ja rongilt maha minna",
+    semanticTypes: ["koht_ala", "koht_hoone"],
     rus: ["железнодорожный вокзал", "вокзал"], ukr: ["залізничний вокзал", "вокзал"],
   },
   {
@@ -2741,6 +2992,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jaanipäevaks sõitsime maale."],
     note: "24. juuni, eesti rahvakalendris suvist pööripäeva ja kevadiste põllutööde lõppu tähistav püha",
+    semanticTypes: ["aeg_tähtpäev", "sündmus"],
     rus: ["Иван Купала", "День Ивана Купалы"], ukr: ["Івана Купала", "день Івана Купала"],
   },
   {
@@ -2752,6 +3004,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema sünnipäev on 3. jaanuaril."],
     note: "aasta 1. kuu, põhjapoolkeral teine talvekuu",
+    semanticTypes: ["aeg_kuu"],
     rus: ["январь", "сечень"], ukr: ["січень"],
   },
   {
@@ -2763,6 +3016,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas tuled? – Jah, kindlasti.", "Kas sina tegid seda? – Jah.", "Seda oli kuulda jah.", "Sina jah."],
     note: "jaatussõna, mis osutab nõusolekule, kinnitab väidet või tugevdab selle jaatamist",
+    semanticTypes: ["esitus_keel_suhtlus"],
     rus: ["да", "да, как же"], ukr: ["так"],
   },
   {
@@ -2774,6 +3028,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lühikesed kõverad jalad.", "Nikastasin vasaku jala.", "Andres tukub toolil, jalg üle põlve.", "Lehma tagumised jalad."],
     note: "inimese või looma kehaosa, millele toetutakse ja mille abil liigutakse",
+    semanticTypes: ["kehaosa"],
     rus: ["нога", "ножка"], ukr: ["нога"],
   },
   {
@@ -2785,6 +3040,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Istusin jalgratta selga ja sõitsin koju.", "Käin tööl jalgrattaga.", "Jalgratast võib iseseisvalt sõiduteel juhtida vähemalt 10-aastane isik, kes on omandanud jalgratturi kvalifikatsiooni."],
     note: "jalgade abil liikuma pandav kahe-, harva kolmerattaline sõiduk",
+    semanticTypes: ["ese_instru"],
     rus: ["велосипед", "мотоцикл"], ukr: ["велосипед"],
   },
   {
@@ -2796,6 +3052,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suvisel ajal võtab kõige paremini janu ära kihisev jook.", "Kohapeal pakutakse kerget kõhutäidet ja kuumi jooke.", "Kange alkohoolne jook.", "Teravamaid jooke müüakse 2 cl kaupa."],
     note: "vedelik joomiseks (nt kohv, piim, mahl), ka alkohol (nt vein, konjak)",
+    semanticTypes: ["toit_jook"],
     rus: ["напиток", "питьё"], ukr: ["напій"],
   },
   {
@@ -2807,6 +3064,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poiss jooksis kõigest väest.", "Koerad pidid vanamemme pikali jooksma.", "Jooksin hingeldades kohale.", "Sportlane jooksis 400 meetrit hea ajaga."],
     note: "(inimeste, loomade kohta:) jalgadel kiiresti edasi liikuma, jalga jala ette tõstes",
+    semanticTypes: ["VERB_liikuma/liigutama"],
     rus: ["бежать", "бегать"], ukr: ["бігти", "бігати"],
   },
   {
@@ -2818,6 +3076,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jõin tassi kohvi.", "Sünnipäevapeol sai hästi süüa ja juua.", "Kitsed olid ojal joomas.", "Kas eelistaksid juua kohvi või teed?"],
     note: "mingit vedelikku suuga võtma ja alla neelama",
+    semanticTypes: ["VERB_toituma"],
     rus: ["пить", "выпивать"], ukr: ["пити", "випивати"],
   },
   {
@@ -2829,6 +3088,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tuult pidav kapuutsiga jope.", "Nahkjope.", "Mul oli seljas soe jope, mis kaitses tuule eest.", "Ta kandis heledat kapuutsiga jopet."],
     note: "lühem sportlik ülerõivas",
+    semanticTypes: ["ese_riie"],
     rus: ["куртка", "полупальто"], ukr: ["куртка"],
   },
   {
@@ -2840,6 +3100,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Me ju tegime kõik ära.", "Ta ei lase ju teistel rääkida.", "Sa olid ju ise ka seal.", "Seda teab ju igaüks."],
     note: "(rõhutav üldlaiend:) tugevdab kergelt lauses esitatut, vahel seetõttu, et öeldut peetakse endastmõistetavaks või tuntuks",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["ведь", "же"], ukr: ["адже", "ж"],
   },
   {
@@ -2851,6 +3112,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Päevad on juba pikemaks läinud.", "Kontsert sai juba läbi.", "Ma juba tulen.", "Kas sa oled juba väsinud?"],
     note: "näitab, et mingi tegevus, seisund vms on käsitletavaks momendiks alanud või lõppenud",
+    semanticTypes: ["ADV_aeg"],
     rus: ["уже", "уж"], ukr: ["уже", "вже"],
   },
   {
@@ -2862,6 +3124,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ohutustehnika juhend.", "Hindamisjuhend.", "Karbis polnud kaamera kasutamise juhendit.", "Katse viidi läbi juhendi järgi."],
     note: "kirjalik juhis, eeskiri või õpetus mingis olukorras käitumiseks, millegi tegemiseks",
+    semanticTypes: ["ese_semio"],
     rus: ["руководство", "инструкция"], ukr: ["інструкція", "вказівка"],
   },
   {
@@ -2873,6 +3136,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · keda/mida* (partitive)",
     usages: ["Andres autot ei juhi.", "Laeva juhib kapten Valeri Sepp.", "Koer juhib pimeda inimese takistustest mööda.", "Eestis juhib riiki peaminister."],
     note: "sõiduki roolis olema, seda edasi viima ning teel, kursil vms hoidma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["водить", "вести"], ukr: ["водити", "вести"],
   },
   {
@@ -2884,6 +3148,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "päevaprobleemi käsitlev, hrl esikülgedel avaldatud toimetuse artikkel ajalehes või ajakirjas",
+    semanticTypes: ["ese_semio"],
     rus: ["передовая", "передовая статья"], ukr: ["передова стаття", "передовиця"],
   },
   {
@@ -2895,6 +3160,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega/millega (comitative) · mida tegema",
     usages: ["Õnnetus juhtus sirgel teelõigul.", "Minuga juhtub kõiksugu asju.", "Ema loodab, et juhtub ime ja poeg paraneb.", "Juhtus õnnetus."],
     note: "(üksiksündmuse, juhtumi kohta:) (ootamatult, ettekavatsemata) toimuma, (kogemata, juhuslikult) esinema või ette tulema",
+    semanticTypes: ["VERB_toimuma"],
     rus: ["случаться", "случиться"], ukr: ["траплятися", "трапитися"],
   },
   {
@@ -2906,6 +3172,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tubased kassid kasutasid juhust ja lipsasid õue.", "See oli tegelikult juhus, et teatrisse tööle sattusin.", "Ta ei jätnud midagi juhuse hooleks.", "Tutvusime tänu õnnelikule juhusele."],
     note: "ettearvamatu, plaanitsematu sündmus või olukord (tihti millekski soodus, millekski võimalust andev)",
+    semanticTypes: ["abstr"],
     rus: ["случай", "случайность"], ukr: ["випадок", "випадковість"],
   },
   {
@@ -2917,6 +3184,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Politseinikke autasustati julge tegutsemise eest.", "Julged seiklejad sõitsid Pärnust Peipsi poole ise tahutud paatidega.", "Mine üksi, kui sa nii julge oled!", "Esimesed julged käisid eile juba meres ujumas."],
     note: "selline, kes ei karda, ei tunne hirmu midagi teha",
+    semanticTypes: ["omadus_psühh"],
     rus: ["смелый", "храбрый"], ukr: ["сміливий", "хоробрий"],
   },
   {
@@ -2928,6 +3196,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Komisjon arutas Balti riikide julgeoleku küsimust.", "Välisjulgeolek.", "Isa käis mul kommunismi ajal iga kuu julgeolekus aru andmas."],
     note: "riigi vm piirkonna kaitstus ohtude, nt sõjalise ohu, looduskatastroofi, terrorismi vastu, varustatus hädavajalike vahenditega",
+    semanticTypes: ["seisund"],
     rus: ["безопасность", "орган"], ukr: ["безпека"],
   },
   {
@@ -2939,6 +3208,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Just hakkas sadama.", "Olin just magama jäänud, kui helises telefon.", "Olin just magama jäänud, kui telefon helises.", "Jõudsin just koju."],
     note: "praegusel hetkel või pisut varem",
+    semanticTypes: ["ADV_aeg"],
     rus: ["только что", "буквально сейчас"], ukr: ["тільки що", "щойно"],
   },
   {
@@ -2950,6 +3220,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Muhu rahvalaulikute ja jutustajate salvestamine."],
     note: "inimene, kes millestki räägib",
+    semanticTypes: ["in_tegija"],
     rus: ["рассказчик", "рассказчица"], ukr: [],
   },
   {
@@ -2961,6 +3232,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellest/millest (elative) · millest (elative) · kellega (comitative)",
     usages: ["Muuseumi perenaine Katariina jutustab lugusid Tartu ajaloost.", "Film jutustab Eesti ainsast naiskorstnapühkijast.", "Istuti ümber lõkke ja jutustati lugusid.", "Jutustan ühe loo vanadest aegadest."],
     note: "mingit sündmust või lugu vabas vormis (teistele) rääkima",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["рассказывать", "рассказать"], ukr: ["розповідати", "розповісти"],
   },
   {
@@ -2972,6 +3244,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lähen juulis puhkusele."],
     note: "aasta 7. kuu, põhjapoolkeral teine suvekuu",
+    semanticTypes: ["aeg_kuu"],
     rus: ["июль", "страдник"], ukr: ["липень"],
   },
   {
@@ -2983,6 +3256,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jaanipäev on 24. juunil."],
     note: "aasta 6. kuu, põhjapoolkeral esimene suvekuu",
+    semanticTypes: ["aeg_kuu"],
     rus: ["июнь", "червень"], ukr: ["червень"],
   },
   {
@@ -2994,6 +3268,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpetaja seisis akna juures.", "Ma olin juures, kui see juhtus.", "Ma olin juures, kui õnnetus juhtus.", "Naine seisis akna juures."],
     note: "kellegi või millegi vahetus läheduses, hästi lähedal",
+    semanticTypes: [],
     rus: ["у", "около"], ukr: ["поряд", "поруч"],
   },
   {
@@ -3005,6 +3280,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ettevõttes juurutatakse uut tootmisliini.", "Politsei on edukalt juurutanud sõlmejälgede registri."],
     note: "tarvitusele võtma, praktikas rakendama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["внедрять", "внедрить"], ukr: ["запроваджувати", "запровадити"],
   },
   {
@@ -3016,6 +3292,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pehmed ja kõvad juustud.", "Õhtusöögiks on makaronid juustuga.", "Kas sa soovid juustu või vorstiga võileiba?", "Ostsin pool kilo juustu."],
     note: "valgurikas toiduaine, mida saadakse piimast kalgendamise ja vedeliku eraldamise teel",
+    semanticTypes: ["toit"],
     rus: ["сыр", "изношенный"], ukr: ["сир"],
   },
   {
@@ -3027,6 +3304,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sügaval oru põhjas lookleb jõgi.", "Laevatatav jõgi.", "Amazonas on üks maailma pikimaid jõgesid.", "Käisime jõe ääres kala püüdmas."],
     note: "mööda pikka kitsast süvendit voolav veekogu",
+    semanticTypes: ["koht_loodus", "esitus"],
     rus: ["река", "речка"], ukr: ["річка", "ріка"],
   },
   {
@@ -3038,6 +3316,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida teha · kuhu (direction)",
     usages: ["Pidin valima, sest kahte asja ei jõudnud teha.", "Inimesed ei jõua arvet maksta.", "Olin vaevalt jõudnud ajalehega lõpetada, kui helises telefon.", "Ma ei jõua enam nii raskeid asju tõsta."],
     note: "millekski võimeline, suuteline olema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["мочь", "смочь"], ukr: ["могти", "змогти"],
   },
   {
@@ -3049,6 +3328,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uus seadus jõustus 1. septembril.", "Kokkulepe jõustub pärast vastavate ratifitseerimiskirjade vahetamist.", "Kedagi ei tohi käsitada kuriteos süüdi olevana enne, kui tema kohta on jõustunud süüdimõistev kohtuotsus."],
     note: "seadusjõusse astuma, seaduslikult kehtima hakkama",
+    semanticTypes: ["VERB_abstr"],
     rus: ["вступать в действие", "входить в действие"], ukr: ["набувати чинності", "набути чинності"],
   },
   {
@@ -3060,6 +3340,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "kehtima hakkamine, juriidilise jõu omandamine",
+    semanticTypes: [],
     rus: ["вступление в силу", "вступление в законную силу"], ukr: [],
   },
   {
@@ -3071,6 +3352,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive)",
     usages: ["Huvitav on jälgida, kuidas lapsed mänguväljakul tutvust sobitavad.", "Politseinik jälgis mehe iga liigutust.", "Piirivalvurid jõudsid kurjategijaid jälgides jälile salakaubitsejate ketile.", "Veebi kaudu on võimalik jälgida otseülekannet Riigikogu istungilt."],
     note: "midagi või kedagi (liikuvat) pilguga saates vaatlema, ainiti silmitsedes uurima",
+    semanticTypes: ["VERB_nähtus", "VERB_seisund"],
     rus: ["следить", "прослеживать"], ukr: ["стежити", "слідкувати"],
   },
   {
@@ -3082,6 +3364,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Muistne komme tuleb jälle ausse tõsta.", "Nojah, ütles mees jälle.", "Homme peab jälle tööle minema.", "Täna on jälle ilus ilm."],
     note: "(teatud aja järel) uut puhku",
+    semanticTypes: ["ADV_aeg"],
     rus: ["снова", "вновь"], ukr: ["знов", "знову"],
   },
   {
@@ -3093,6 +3376,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Komisjon järeldas, et laev oli merekorras.", "Millest sa seda järeldad?"],
     note: "andmete, faktide vm põhjal (loogilist) otsustust tegema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["заключать", "заключить"], ukr: ["виводити", "вивести"],
   },
   {
@@ -3104,6 +3388,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võiks teha järelduse, et kasulik on süüa ainult rasvata piimatooteid.", "Võrdle vastuseid ning tee järeldused.", "Komisjon jõudis järeldusele, et ..", "Olin teinud täiesti vale järelduse."],
     note: "andmete, faktide vm põhjal tehtav (loogiline) otsustus",
+    semanticTypes: ["abstr"],
     rus: ["вывод", "заключение"], ukr: ["висновок"],
   },
   {
@@ -3115,6 +3400,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uks on lahti, järelikult on ta kodus.", "Vihma sajab, järelikult täna me randa ei lähe."],
     note: "kokkuvõttena, järeldusena hrl eelnevast, sellest tulenevalt",
+    semanticTypes: ["ADV_põhjus"],
     rus: ["следовательно", "значит"], ukr: ["отже", "тому"],
   },
   {
@@ -3126,6 +3412,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Faktide esitamine nende kronoloogilises järgnevuses.", "Pilvede järgnevus sõltub aastaajast."],
     note: "üksteise järel kindla vastastikuse seose alusel ilmnemine, paiknemine vms",
+    semanticTypes: ["nähtus"],
     rus: ["последовательность", "порядок следования"], ukr: [],
   },
   {
@@ -3137,6 +3424,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpetaja peab olema kannatlik ja järjekindel."],
     note: "tegutsemises kindlat sihti järgiv, visa ja kõrvalekaldumatu",
+    semanticTypes: ["omadus_kval"],
     rus: ["последовательный", "неуклонный"], ukr: ["наполегливий", "непохитний"],
   },
   {
@@ -3148,6 +3436,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nimed on tähestikulises järjekorras.", "Õmbles vales järjekorras, harutas lahti ja õmbles uuesti.", "Esinemisjärjekord.", "Sõnade järjekord lauses on vale."],
     note: "järgnemise, reastumise kord või süsteem, kus igal asjal, nähtusel vm on oma kindel koht",
+    semanticTypes: ["abstr/konkr", "koht", "seisund"],
     rus: ["порядок", "последовательность"], ukr: ["порядок", "послідовність"],
   },
   {
@@ -3159,6 +3448,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Käisime järves ujumas.", "Kalamehed sõitsid paadiga järvele.", "Maja ehitati järve kaldale."],
     note: "suurem veega täitunud maismaanõgu, mis ei ole otseses ühenduses merega",
+    semanticTypes: ["koht_loodus", "esitus"],
     rus: ["озеро"], ukr: ["озеро"],
   },
   {
@@ -3170,6 +3460,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Pooled meie klassist jätkasid õpinguid kõrgkoolis.", "Loodetavasti saame varsti oma jutuajamist jätkata.", "Ta jätkab õppimist ülikoolis.", "Pärast lõunat jätkasin tööd."],
     note: "midagi edasi tegema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["продолжать", "продолжить"], ukr: ["продовжувати", "продовжити"],
   },
   {
@@ -3181,6 +3472,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Börsil jätkus langus.", "Pärast vaheaega kontsert jätkus.", "Elevust peaks jätkuma piisavalt.", "Kuuma vett jätkus ainult vähestele."],
     note: "ajaliselt üha edasi kestma",
+    semanticTypes: ["VERB_aeg"],
     rus: ["продолжаться", "продолжиться"], ukr: ["продовжуватися", "продовжитися"],
   },
   {
@@ -3192,6 +3484,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jätkusuutlik turism.", "Eesti maakinode võrgustik pole praegusel kujul jätkusuutlik."],
     note: "edasiseks tegevuseks, toimimiseks võimeline, suuteline oma tegevust jätkama",
+    semanticTypes: ["omadus_kval"],
     rus: ["жизнеспособный", "устойчиво развивающийся"], ukr: [],
   },
   {
@@ -3203,6 +3496,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lisas kokteiliklaasi ohtralt jääd.", "Autoaknad tuli jääst ja lumest puhtaks kraapida.", "Jää sulab.", "Kas sa soovid oma kokteili sisse jääd ka?"],
     note: "külmunud, tahkes olekus vesi",
+    semanticTypes: ["materjal/aine"],
     rus: ["лёд", "лед"], ukr: ["крига", "лід"],
   },
   {
@@ -3214,6 +3508,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction) · kelle juurde · kelleks (translative) · milliseks",
     usages: ["Ema ja isa läksid teatrisse, lapsed jäid koju.", "Teest paremale jääb kirik.", "Näitus jääb avatuks aprilli lõpuni.", "Mure jäi hinge."],
     note: "mingis paigas, seisundis või olukorras püsima, sealt mitte lahkuma",
+    semanticTypes: ["VERB_seisund"],
     rus: ["оставаться", "остаться"], ukr: ["залишатися", "залишитися"],
   },
   {
@@ -3225,6 +3520,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Radioaktiivsed jäätmed.", "Koduses majapidamises sorteeritakse jäätmeid.", "Kas patareid kuuluvad ohtlike jäätmete hulka?", "Jäätmed liigitatakse ohtlikeks ja tavajäätmeteks jäätmenimistu alusel."],
     note: "kasutuselt kõrvaldatud ained, esemed või nende jäägid",
+    semanticTypes: ["ese"],
     rus: ["отходы", "отбросы"], ukr: ["відходи"],
   },
   {
@@ -3236,6 +3532,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kui tahate, võite ka tulla.", "Ma tulin tema juurde ka järgmisel õhtul.", "Mina ka mitte.", "Ka minu mees on väga pragmaatiline."],
     note: "millegagi võrreldes samamoodi, ühesuguselt, nagu keegi teine või miski muu",
+    semanticTypes: ["ADV_viis"],
     rus: ["также", "тоже"], ukr: ["також", "так само"],
   },
   {
@@ -3247,6 +3544,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sel hooajal on kergejõustiklastel olnud rohkesti kaalukaid võistlusi.", "Tal ei olnud oma käitumise põhjenduseks tuua ühtegi kaalukat argumenti.", "Kaalukamad kohvrid asetati pagasiruumi."],
     note: "(mõju, tähtsuse kohta:) väga oluline, määrava tähtsusega, selline, mis nõuab keskendumist või järelemõtlemist, mitte kergelt võetav",
+    semanticTypes: ["omadus_kval"],
     rus: ["веский", "весомый"], ukr: ["важливий", "серйозний"],
   },
   {
@@ -3258,6 +3556,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive)",
     usages: ["Kõrvits kaalus kümme kilo.", "Kui palju sa kaalud?", "Kott kaalus kümme kilo.", "Minu sõna ei kaalu siin midagi."],
     note: "teatud raskusega olema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["весить", "иметь вес"], ukr: ["важити", "мати вагу"],
   },
   {
@@ -3269,6 +3568,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Külmalt kaalutlev inimene.", "Olin pikemalt kaalutlemata ettepanekuga nõus."],
     note: "(mõttes) läbi kaaluma, arutama, aru pidama",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["взвешивать", "взвесить"], ukr: ["зважувати", "зважити"],
   },
   {
@@ -3280,6 +3580,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpilased uurisid tunnis Euroopa kaarti.", "Ma ei leia meie maja kaardilt üles.", "Näita kaardi pealt, kus asub Itaalia.", "Lapsed saatsid vanaemale sünnipäevaks isetehtud kaardi."],
     note: "maapinna vähendatud ja üldistatud tasapinnaline kujutis, mis näitab mitmesuguste objektide ja nähtuste paiknemist",
+    semanticTypes: ["ese_semio", "esitus_kujutis"],
     rus: ["карта", "географическая карта"], ukr: ["мапа", "географічна мапа"],
   },
   {
@@ -3291,6 +3592,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kes sinuga kaasas oli?", "Mul ei ole raha kaasas.", "Emal on lapsed tööl kaasas.", "Tal on vihmavari alati kaasas."],
     note: "kellegagi koos, seltsis (midagi tegemas)",
+    semanticTypes: ["ADV_viis"],
     rus: ["с собой", "при себе"], ukr: ["з собою", "при собі"],
   },
   {
@@ -3302,6 +3604,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kass on juba kolmandat päeva kadunud.", "Politsei kuulutas marjulise kadunuks.", "Kuidas mu kindad alati kuhugi kaovad!", "Lennujaamas läks kaduma kott miljoni dollariga."],
     note: "teadmata paika sattuma või minema, nii et on raske või võimatu üles leida",
+    semanticTypes: ["VERB_muutus"],
     rus: ["пропадать", "пропасть"], ukr: ["пропадати", "пропасти"],
   },
   {
@@ -3313,6 +3616,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mille üle · mida* (partitive) · et · kelle (genitive)",
     usages: ["Patsient kaebas halva enesetunde üle.", "Patsient kaebas arstile peavalu ja väsimust.", "Ta ei kaeba kunagi oma tervise üle.", "Tiit kaebas, et tal on igav."],
     note: "kellelegi millestki halvast, ebameeldivast, muret tekitavast või häirivast asjaolust muretsedes rääkima",
+    semanticTypes: ["VERB_psühh"],
     rus: ["жаловаться", "пожаловаться"], ukr: ["скаржитися", "поскаржитися"],
   },
   {
@@ -3324,6 +3628,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Saabumisel ta kaebusi ei esitanud.", "Korduvad kaebused sundisid komisjoni küsimuse siiski üles võtma.", "Ta pöördus kaebusega politseisse.", "Kirjutasin kaebuse halva teeninduse kohta."],
     note: "milleski esinevatele puudustele ja eksimustele tähelepanu juhtiv, hrl süüdistav avaldus",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["жалоба", "сетование"], ukr: ["скарга", "ремствування"],
   },
   {
@@ -3335,6 +3640,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kakskümmend kaheksa.", "Tööpäev kestab kaheksa tundi.", "Kell on kaheksa.", "Jõudsin tööle kell kaheksa."],
     note: "põhiarv 8",
+    semanticTypes: ["esitus_arv"],
     rus: ["восемь", "восьмеро"], ukr: ["вісім"],
   },
   {
@@ -3346,6 +3652,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Presidendile on antud kaheldava väärtusega nõu.", "Väga kaheldav otsus."],
     note: "kahtlusi äratav, kahtlema või kahtlustama panev",
+    semanticTypes: ["omadus_kval"],
     rus: ["подозрительный", "внушающий подозрение"], ukr: ["підозрілий", "непевний"],
   },
   {
@@ -3357,6 +3664,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kahemõttelised reklaamid ei üllata enam ammu.", "Tegijad on lubanud, et film ei sisalda kahemõttelisi stseene."],
     note: "kahesugust mõistmist või tõlgendamist võimaldav, hrl sündsusetut vihjet sisaldav",
+    semanticTypes: ["omadus_kval"],
     rus: ["двусмысленный"], ukr: [],
   },
   {
@@ -3368,6 +3676,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Temast on rohkem kahju kui kasu.", "Vale ravi võib tervisele kahju teha.", "Ta teeb raske tööga oma tervisele kahju.", "Haigena tööle tulekust on rohkem kahju kui kasu."],
     note: "häda tekitav, kahjustav nähtus või olukord, miski halb",
+    semanticTypes: ["nähtus"],
     rus: ["вред", "ущерб"], ukr: ["шкода", "втрата"],
   },
   {
@@ -3379,6 +3688,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kahjulike kõrvalmõjudega ravim.", "Kahjulikud ja kasulikud bakterid.", "Kahjulikud ained kosmeetikas.", "Hiljutine investeering osutus majanduslikult kahjulikuks."],
     note: "kahjustav, viga või kahju tegev",
+    semanticTypes: ["omadus_kval"],
     rus: ["вредный", "невыгодный"], ukr: ["шкідливий", "вадливий"],
   },
   {
@@ -3390,6 +3700,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "rahasumma, mille võrra ettevõtte kulud ületavad tulusid",
+    semanticTypes: ["abstr/konkr", "ese_raha"],
     rus: ["убыток"], ukr: ["збиток", "збитки"],
   },
   {
@@ -3401,6 +3712,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "milles (inessive) · kas",
     usages: ["Kahtlen sügavalt, kas nad ikka saavad sellega hakkama.", "Ta hakkas endas kahtlema.", "Ära kahtle oma võimetes.", "Ma kahtlen selle töö vajalikkuses."],
     note: "millegi tõepärasuses mitte veendunud olema, midagi küsitavaks pidama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["сомневаться", "усомниться"], ukr: ["сумніватися", "вагатися"],
   },
   {
@@ -3412,6 +3724,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Katsun oma kahtlusi põhjendada.", "Mul on kuri kahtlus, et täna õhtul ma nälga jäängi.", "Ebaõnnestumised seavad kogu projekti kahtluse alla.", "Kahtluse all on ka projekti tasuvus."],
     note: "arvamine, et miski ei pruugi tõele vastata, millegi küsitavaks, ebakindlaks pidamine",
+    semanticTypes: ["abstr"],
     rus: ["сомнение", "подозрение"], ukr: ["сумнів", "підозра"],
   },
   {
@@ -3423,6 +3736,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kahtlustatavale selgitatakse viivitamata tema õigusi ja kohustusi ning ta kuulatakse üle kahtlustuse sisu kohta.", "Politsei pidas kohapeal kinni süütamises kahtlustava mehe."],
     note: "isik, kes on kuriteos kahtlustatavana kinni peetud, või isik, keda on piisav alus kahtlustada kuriteo toimepanemises",
+    semanticTypes: ["in_omadus"],
     rus: ["подозреваемый", "подозреваемая"], ukr: [],
   },
   {
@@ -3434,6 +3748,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Loodusvarade kaitse.", "Gea astus minu kaitseks välja.", "Kate pakub tõhusat kaitset tuisklume eest.", "Lisakaitse."],
     note: "millegi kindlustamine ohu, kahju vm vastu, kellegi või millegi kaitsmine millegi eest",
+    semanticTypes: ["abstr/konkr", "tegevus"],
     rus: ["защита", "охрана"], ukr: ["захист", "охорона"],
   },
   {
@@ -3445,6 +3760,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · kelle/mille eest · mille eest · mida (partitive)",
     usages: ["Kohustus kaitsta tsiviilelanikkonda relvakonfliktides.", "Metsloomade eest saab kodu kaitsta tiheda aiaga.", "Kaitsevägi kaitseb riiki.", "Keegi pole röövlite eest kaitstud."],
     note: "kallaletungi, rünnakut, vägivalda, ohtu tõrjuma või vältida püüdma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["защищать", "защитить"], ukr: ["захищати", "захистити"],
   },
   {
@@ -3456,6 +3772,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Meedia kajastas sündmust üliemotsionaalselt.", "Näitus kajastab tuntud helilooja elu ja loomingut.", "Keele sõnavara kajastab rahva ajalugu ja eluolu.", "Ajakirjandus ei kajastanud konverentsi piisavalt."],
     note: "edasi andma, mingil kujul esitama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["отражать", "отразить"], ukr: ["відображати", "відобразити"],
   },
   {
@@ -3467,6 +3784,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rühma töö tulemused ei kajastu kohe.", "Mitmed ettepanekud kajastuvad ka koosoleku otsustes."],
     note: "teatud viisil ilmnema, avalduma või esile tulema",
+    semanticTypes: ["VERB_nähtus"],
     rus: ["отражаться", "отразиться"], ukr: ["відбиватися", "відбитися"],
   },
   {
@@ -3478,6 +3796,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kakskümmend kaks.", "Kaks pluss kaks.", "Peres on kaks last.", "Kell saab varsti kaks."],
     note: "põhiarv 2",
+    semanticTypes: ["esitus_arv"],
     rus: ["два", "две"], ukr: ["два"],
   },
   {
@@ -3489,6 +3808,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Arvutamine ühest kahekümneni.", "Buss nr 20.", "Hilinesin kakskümmend minutit.", "Raamat koosneb kahekümnest peatükist."],
     note: "põhiarv 20",
+    semanticTypes: ["esitus_arv"],
     rus: ["двадцать", "восемь часов вечера"], ukr: ["двадцять"],
   },
   {
@@ -3500,6 +3820,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaksteist pluss üks.", "Buss nr 12.", "Osales kaksteist veinitootjat.", "Aastas on kaksteist kuud."],
     note: "arv 12",
+    semanticTypes: ["esitus_arv"],
     rus: ["двенадцать"], ukr: ["дванадцять", "дванадцята"],
   },
   {
@@ -3511,6 +3832,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vana kalur püüdis hiiglasliku kala.", "Ootasin, et kala näkkaks.", "Kala ujus sügavamale.", "Akvaariumis ujusid värvilised kalad."],
     note: "vees elav kõigusoojane selgroogne, kes hingab lõpustega, liigub uimede ja saba abil ning on hrl kaetud soomustega",
+    semanticTypes: ["loom_kala", "loom_liik"],
     rus: ["рыба", "на рыбалку"], ukr: ["риба"],
   },
   {
@@ -3522,6 +3844,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mees pildus kalambuure viies keeles."],
     note: "sõnade ootamatutel seostel, hrl tähendustel rajanev vaimukas väljendus, nali vm",
+    semanticTypes: ["tegevus_mäng"],
     rus: ["каламбур", "игра слов"], ukr: [],
   },
   {
@@ -3533,6 +3856,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kallis ülikond.", "Uhke ja kallis auto.", "Ta sõidab kalli autoga.", "Pilet oli liiga kallis."],
     note: "palju raha maksev, kõrge hinnaga",
+    semanticTypes: ["omadus_füüs"],
     rus: ["дорогой", "дорогостоящий"], ukr: ["дорогий", "дорогоцінний"],
   },
   {
@@ -3544,6 +3868,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Edukas allkirjade kogumise kampaania.", "Suitsetamisvastane kampaania.", "Kampaania „Osta kolm, maksa kahe eest”.", "Teavituskampaania."],
     note: "sihipärane (lühiajaline) tegevus mingi eesmärgi saavutamiseks ning osalejate või ostjate ligimeelitamiseks (nt et midagi reklaamida ja müüa, valimistel hääli saada)",
+    semanticTypes: ["tegevus"],
     rus: ["кампания", "поход"], ukr: ["кампанія"],
   },
   {
@@ -3555,6 +3880,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõni eelistab sooja villast kampsunit pintsakule.", "Abikaasa on mulle kudunud hulga kampsuneid.", "Kootud kampsuneid Ruthi garderoobis ei leidu.", "Ta kannab villast kampsunit."],
     note: "varrukatega, üle pea selga tõmmatav või eest lahti käiv silmkoeese",
+    semanticTypes: ["ese_riie"],
     rus: ["кофта", "пуловер"], ukr: ["плетена кофта"],
   },
   {
@@ -3566,6 +3892,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Detsembris saab esitada kandidaate Läänemaa parima sportlase tiitlile.", "Harju maavanema kandidaat.", "Linnapeakandidaat.", "Missikandidaat."],
     note: "inimene, kes on esitatud valimiseks mingile (ameti)kohale, vastuvõtmiseks mingisse organisatsiooni, mingi auhinna saamiseks või kes taotleb mingit kohta, tiitlit vms",
+    semanticTypes: ["in_omadus"],
     rus: ["кандидат", "канд."], ukr: ["кандидат"],
   },
   {
@@ -3577,6 +3904,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelleks (translative)",
     usages: ["Parima filmi auhinnale kandideerib ka üks Eesti dokumentaalfilm.", "Raimo kandideerib merekooli juhi kohale.", "Järgmistel valimistel ma ei kandideeri.", "Jaan kandideerib riigikokku."],
     note: "mingit (töö)kohta, auhinda, tiitlit vm taotlema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["баллотироваться", "выдвигать свою кандидатуру"], ukr: ["балотуватися", "кандидувати"],
   },
   {
@@ -3588,6 +3916,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jalgpallur kanti kanderaamil staadionilt ära.", "Pakikandja kannab raskeid kotte.", "Ei taha sularaha kaasas kanda.", "Tuul kandis kõikjale peenikest liiva."],
     note: "hrl üles tõstetuna edasi toimetama, ühest kohast teise viima või tooma",
+    semanticTypes: ["VERB_liikuma/liigutama"],
     rus: ["носить", "нести"], ukr: ["носити", "нести"],
   },
   {
@@ -3599,6 +3928,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpetaja oli lastega väga kannatlik.", "Selle muusikateose kuulamine nõuab kannatlikku meelt.", "Kannatlik ootamine tasus end ära.", "Ta on väga lahke ja kannatlik õpetaja."],
     note: "kõike rahulikult taluv, närviliseks või kärsituks muutumatu",
+    semanticTypes: ["omadus_psühh"],
     rus: ["терпеливый"], ukr: ["терплячий"],
   },
   {
@@ -3610,6 +3940,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võib-olla on kantseliitliku väljendusviisi põhjus selles, et tegemist on juristiharidusega inimesega?", "Hoidkem mõtted, sõnad ja kirjaviis selged ning ärgem matkem seda kohati kantseliitlikku kõnepruuki."],
     note: "(keelepruugi kohta:) kuivalt ametlik, puine, vahel ka ülemäära keerukas või kohmakas",
+    semanticTypes: ["omadus_kval"],
     rus: ["чиновничий", "канцелярский"], ukr: [],
   },
   {
@@ -3621,6 +3952,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen kuhugi võtmed kaotanud.", "Laps leidis kaotatud kindad üles.", "Kaotasin rahvamurrus oma kaaslased.", "Olen oma võtmed kuhugi kaotanud."],
     note: "mingite asjaolude tõttu kaotsi minna laskma (hrl esemete kohta)",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["терять", "потерять"], ukr: ["губити", "загубити"],
   },
   {
@@ -3632,6 +3964,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · mille eest · millega (comitative)",
     usages: ["Alla 14-aastast kriminaalkorras karistada ei saa.", "Reegli rikkujat karistatakse rahatrahviga.", "Mitte mingil juhul tohi last sellise käitumise eest karistada.", "Last ei tohi karistada."],
     note: "kedagi sunnivahendiga mõjutama, kellelegi karistust määrama või täide viima",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["наказывать", "наказать"], ukr: ["карати", "покарати"],
   },
   {
@@ -3643,6 +3976,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kohus mõistis talle rahalise karistuse.", "Elu näitab, et igale kuriteole järgneb karistus.", "Kuriteo osalised langevad karistuse alla.", "Maksimumkaristus."],
     note: "kasvatus- või mõjutusvahend, mida rakendatakse kuriteo, üleastumise, halva käitumise vms puhul",
+    semanticTypes: ["abstr/konkr", "tegevus"],
     rus: ["наказание", "взыскание"], ukr: ["покарання", "кара"],
   },
   {
@@ -3654,6 +3988,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida teha · et · mida* (partitive)",
     usages: ["Ta kardab olla üksi.", "Keegi ei julge neid keelata ka, sest kardavad kättemaksu.", "Võid ju arstilt üle küsida, sest parem ikka karta kui kahetseda.", "Tüdruk kardab koeri."],
     note: "hirmu, kartust tundma, kedagi või midagi pelgama",
+    semanticTypes: ["VERB_psühh", "VERB_seisund"],
     rus: ["бояться", "опасаться"], ukr: ["боятися", "побоюватися"],
   },
   {
@@ -3665,6 +4000,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Värskeid kartuleid süüakse sageli koos koorega.", "Praetud kartulid.", "Palun koori kartulid ära.", "Kas sa soovid liha kõrvale kartuleid või riisi?"],
     note: "köögiviljana kasvatatav mugulaid moodustav üheaastane taim",
+    semanticTypes: ["taim"],
     rus: ["картофель", "паслён клубненосный"], ukr: ["картопля", "бульба"],
   },
   {
@@ -3676,6 +4012,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas olete viimasel ajal raamatuid ostnud?", "Kas unenäod on sulle tähtsad?", "Kas väljas sajab?", "Kas täna on külm ilm?"],
     note: "alustab küsilauset, mis eeldab jaatavat või eitavat vm vastust",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["разве", "ли"], ukr: ["чи"],
   },
   {
@@ -3687,6 +4024,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kass oli jälle hiirejahil käinud.", "Kass ja koer said omavahel hästi läbi.", "Kassil on teravad küüned.", "Meie kassil on pojad."],
     note: "metskassist põlvnev pehme karvaga koduloom",
+    semanticTypes: ["loom"],
     rus: ["кошка", "кот"], ukr: ["кіт", "кішка"],
   },
   {
@@ -3698,6 +4036,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vasikakarree suitsuploomi kastmes.", "Kuumad ja külmad kastmed.", "Magus kaste.", "Tõsta kartulite peale kastet ka."],
     note: "vedel või poolvedel lisand, mis muudab toidu mahlasemaks ja maitsvamaks",
+    semanticTypes: ["toit"],
     rus: ["соус", "подлива"], ukr: ["соус", "підлива"],
   },
   {
@@ -3709,6 +4048,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pank teenis esimeses kvartalis 20 miljonit eurot kasumit.", "Ärikasum.", "Hiigelkasum."],
     note: "rahasumma, mille võrra ettevõtte tulud ületavad kulusid",
+    semanticTypes: ["abstr/konkr", "ese_raha"],
     rus: ["прибыль"], ukr: ["прибуток"],
   },
   {
@@ -3720,6 +4060,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["IT, andmeteadus, ärianalüütika, tehisintellekt ja kasutajakogemuse disain on osa tulevikupangandusest.", "Parima kasutajakogemuse jaoks tuleb leida ruuterile sobivaim võimalik asukoht.", "Täname teid jagatud kasutajakogemuse eest!", "Ühe panga kasutajakogemus mobiilis on palju parem kui teise oma."],
     note: "see, mida inimene kogeb mingi toote, süsteemi või teenuse kasutamisel (hõlmab nt kasutaja emotsioone, käitumist, reaktsioone)",
+    semanticTypes: ["abstr/konkr"],
     rus: ["опыт пользователя"], ukr: [],
   },
   {
@@ -3731,6 +4072,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Arvutit kasutama õppisin ema töö juures.", "Kasutasime kondoomi, aga kas on võimalik, et olen rase?", "Politseil on õigus kasutada relva.", "Kogutud raha kasutatakse loomade abistamiseks."],
     note: "mingit eset, seadet, materjali vm vahendit teataval otstarbel rakendama, selle abil midagi tegema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["использовать", "использоваться"], ukr: ["використовувати", "використати"],
   },
   {
@@ -3742,6 +4084,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minu jaoks on tegu järjekordse kasutu vidinaga.", "Käib vilgas, ent kasutu vaidlus.", "Kasutuks muutunud seade."],
     note: "selline, mida pole vaja, millest pole kasu",
+    semanticTypes: ["omadus", "omadus_kval"],
     rus: ["ненужный", "бесполезный"], ukr: [],
   },
   {
@@ -3753,6 +4096,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Taliviljade kevadine kasv on kiire.", "Silmaga nähtav kasv.", "Taimekasv.", "Rohukasv."],
     note: "kasvamine, organismi ja ta osade massi ja mõõtmete suurenemine",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["рост", "возрастание"], ukr: ["ріст", "зростання"],
   },
   {
@@ -3764,6 +4108,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millesse (illative)",
     usages: ["Lapsed kasvavad kiiresti.", "Sul on juuksed pikaks kasvanud.", "Olen sündinud ja kasvanud maal.", "Kartuleid aias ei kasva."],
     note: "(inimeste, loomade jt elusolendite kohta:) aja jooksul pikemaks ja suuremaks muutuma, välja arenema",
+    semanticTypes: ["VERB_muutus"],
     rus: ["расти", "вырастать"], ukr: ["рости", "виростати"],
   },
   {
@@ -3775,6 +4120,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Majanduse kasvutempo aeglustus."],
     note: "hrl millegi suurenemise, lisandumise või laienemise kiirus",
+    semanticTypes: ["nähtus"],
     rus: ["темп роста"], ukr: [],
   },
   {
@@ -3786,6 +4132,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mille tõttu",
     usages: ["Lahingu ajal katkes side enamiku väeosade vahel.", "Kui Liisa välismaale kolis, siis meie suhted katkesid.", "Tema õpingud katkesid ootamatult.", "Tormi tõttu on saarega ühendus katkenud."],
     note: "ajutiseks pooleli jääma või seiskuma (seoses vahe, pausi vms tekkimisega)",
+    semanticTypes: ["VERB_muutus"],
     rus: ["прерываться", "прерваться"], ukr: ["перериватися", "перерватися"],
   },
   {
@@ -3797,6 +4144,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lõikasin nööri katki.", "Varas oli akna kiviga katki visanud.", "Tee peal läks jalgratas katki.", "Mees lõi akna katki."],
     note: "mitmeks osaks, tükkideks või kildudeks, mitte (enam) terveks",
+    semanticTypes: ["ADV_seisund"],
     rus: ["разбит", "сломан"], ukr: ["зламаний", "зломлений"],
   },
   {
@@ -3808,6 +4156,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative)",
     usages: ["Põrand kaetakse glasuurplaatidega.", "Ehitajad katavad maja fassaadi valge krohviga.", "Isa viis lapse voodisse ja kattis tekiga.", "Kondiiter kattis tordi martsipaniga."],
     note: "mingit kaitsvat või varjavat kihti või eset peale paigutama, millegagi pealt, väljastpoolt varjama või kaitsma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["крыть", "покрыть"], ukr: ["накривати", "накрити"],
   },
   {
@@ -3819,6 +4168,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sõjalise riigipöörde katse.", "Täna ei tehtud küll mingit katset kompromissi saavutada.", "Hüpe õnnestus esimesel katsel.", "Ta ei teinud katsetki vastu hakata."],
     note: "püüe midagi teha, sooritada või saavutada",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["попытка", "эксперимент"], ukr: ["проба", "спроба"],
   },
   {
@@ -3830,6 +4180,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nende töös on vähe kattuvust ja rollid on selgelt jagatud."],
     note: "(juhuslik, ootamatu) kattumine, kokku sattumine",
+    semanticTypes: ["seisund"],
     rus: ["совпадение", "сочетание"], ukr: [],
   },
   {
@@ -3841,6 +4192,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma olen sind nii kaua oodanud.", "Minister on liiga kaua selles ametis olnud.", "Kellele ei meeldiks nädalavahetusel kaua magada.", "Kui kaua see aega võtab?"],
     note: "pikka või palju aega",
+    semanticTypes: ["aeg"],
     rus: ["долго", "продолжительно"], ukr: ["довго"],
   },
   {
@@ -3852,6 +4204,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tervislike eluviiside kaudne mõju vere kolesteroolile.", "Saime uudisest teada kaudseid teid pidi.", "Jutus leidus kaudseid vihjeid toimunule.", "Kahe juhtumi vahel on kaudne seos."],
     note: "millegi vahendusel või kaudu toimuv või väljenduv",
+    semanticTypes: ["omadus"],
     rus: ["косвенный", "непрямой"], ukr: ["посередній", "непрямий"],
   },
   {
@@ -3863,6 +4216,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Turul müüdav kaup.", "Minev kaup.", "Kauba hinnale lisandub käibemaks.", "Poodi toodi uut kaupa."],
     note: "asjad, mida ostetakse või müüakse",
+    semanticTypes: ["ese"],
     rus: ["товар", "сделка"], ukr: ["товар"],
   },
   {
@@ -3874,6 +4228,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Naine võttis kausta ja lehitses pisut.", "Riiulil on mõned raamatud ja palju kaustu paberitega.", "Suure kaustaga raamat."],
     note: "(plastist, papist) kaaned koos nende vahel olevate paberitega",
+    semanticTypes: ["ese_semio"],
     rus: ["папка", "формат"], ukr: ["папка", "тека"],
   },
   {
@@ -3885,6 +4240,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida teha",
     usages: ["Valitsus kavatseb eelarvekulud tõsise kontrolli alla võtta.", "Noored kavatsevad suvel abielluda.", "Kavatsen õhtul kinno minna.", "Mida sa homme kavatsed teha?"],
     note: "kellelgi kavas või mõttes olema (midagi teha)",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["собираться", "собраться"], ukr: ["збиратися", "зібратися"],
   },
   {
@@ -3896,6 +4252,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Loobusin oma esialgsest kavatsusest.", "Tõsiste kavatsustega investoreid oodatakse avasüli.", "Tal olid kindlasti kõige paremad kavatsused, aga läks nii nagu alati.", "Tulevikukavatsus."],
     note: "mõte midagi teha, mõttes olev otsus",
+    semanticTypes: ["abstr/konkr"],
     rus: ["намерение", "замысел"], ukr: ["план", "намір"],
   },
   {
@@ -3907,6 +4264,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Keegi karjus.", "Kellegi vari langes ta näole.", "See oli keegi soomlane.", "Keegi on akna taga."],
     note: "teadmata või lähemalt määratlemata isik vm olend",
+    semanticTypes: ["in_omadus"],
     rus: ["кто-то", "кто-либо"], ukr: ["хтось", "хто-небудь"],
   },
   {
@@ -3918,6 +4276,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Soome-ugri keeled.", "Paula valdab vabalt mitut keelt.", "Rootsi keelt õpitakse selles koolis alates 7. klassist.", "Ma õpin koolis inglise, vene, saksa ja prantsuse keelt."],
     note: "inimese olulisim suhtlemisvahend, mis mõtete ja tunnete väljendamiseks kasutab sõnu ja väljendeid ning mida hoiab koos teatav struktuur ehk grammatika",
+    semanticTypes: ["abstr/konkr", "esitus_keel", "esitus"],
     rus: ["язык", "речь"], ukr: ["мова", "язик"],
   },
   {
@@ -3929,6 +4288,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellel + mida teha",
     usages: ["Ema keelas poisil aia peal turnida.", "Kõrvalistel isikutel ehitusplatsil viibimine keelatud.", "Seadus keelab kaitsealuseid taimeliike korjata.", "Siin on suitsetamine keelatud."],
     note: "kellelegi ütlema, et see ei tohi midagi teha või et see midagi ei teeks, mitte lubama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["запрещать", "запретить"], ukr: ["забороняти", "заборонити"],
   },
   {
@@ -3940,6 +4300,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Keele püsimine sõltub eelkõige keelekasutajatest.", "Õpiku abil on võimalik jõuda iseseisva keelekasutaja tasemele."],
     note: "teatud keelt kõnes ja kirjas kasutav isik",
+    semanticTypes: ["in_roll"],
     rus: ["пользователь языка"], ukr: [],
   },
   {
@@ -3951,6 +4312,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ametlik keelekasutus.", "Korrektne keelekasutus.", "Lohakas keelekasutus."],
     note: "teatud inimrühmale või üksikisikule omane väljendusviis kõnes ja kirjas",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["использование языка", "применение языка"], ukr: [],
   },
   {
@@ -3962,6 +4324,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Keelt pole üldse kerge väljaspool keelekeskkonda elavana hoida.", "Katrini arvates tuleb võõras keelekeskkond tema lastele ainult kasuks.", "Kunagi varem pole Eesti keelekeskkond nii mitmekesine olnud kui praegu."],
     note: "teatavat keelt kõnelevate inimeste kogukond, keskkond, kus see keel on esil nii kõnes kui kirjas",
+    semanticTypes: [],
     rus: ["языковая среда"], ukr: [],
   },
   {
@@ -3973,6 +4336,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Keelekorraldaja rääkis intervjuus, kuidas endistest keelevigadest saavad uued keelenormid.", "Lapse kõne vastab keelenormile: kirjeldamisel, jutustamisel on järjest täpsem, mõistab mitmetähenduslikke sõnu.", "Ametlikus keelekasutuses on keelenormi järgimine kohustuslik.", "Keelenormide vastavust võib kontrollida õigekeelsussõnaraamatust."],
     note: "üldtarvitatav, üldtunnustatuks peetav keelekuju või keelekasutus",
+    semanticTypes: ["abstr/konkr"],
     rus: ["языковая норма", "норма языка"], ukr: [],
   },
   {
@@ -3984,6 +4348,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suhtlus takerdus puuduliku keeleoskuse taha.", "Ta läheb välismaale oma keeleoskust täiendama."],
     note: "teatud keele oskamine",
+    semanticTypes: ["abstr/konkr"],
     rus: ["знание языка", "владение языком"], ukr: ["знання мови", "володіння мовою"],
   },
   {
@@ -3995,6 +4360,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Keelevahetus ohustab vähemuskeeli."],
     note: "sotsiaalpsühholoogiline nähtus, kus teisele keelele ülemineku tõttu katkeb keele põlvkonnaülene edasiandmine",
+    semanticTypes: ["nähtus"],
     rus: ["языковая ассимиляция", "языковой сдвиг"], ukr: [],
   },
   {
@@ -4006,6 +4372,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Keetsin külalistele kohvi.", "Õhtuks keedame suppi.", "Vanaema oskas ise seepi keeta.", "Keetsin hommikusöögiks mune."],
     note: "vedelikku või vedelikus olevat ainet keeda laskma (hrl toidu või joogi valmistamise kohta)",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["варить", "сварить"], ukr: ["варити", "зварити"],
   },
   {
@@ -4017,6 +4384,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Päike suurendab keha vastupanuvõimet haigustele.", "Hirmujutt käis kehast läbi.", "Kehale tekkis punane lööve.", "Oli tunne, nagu kukuksid käed keha küljest ära."],
     note: "inimese või looma kogu organism",
+    semanticTypes: ["kehaosa", "organism"],
     rus: ["тело", "корпус"], ukr: ["тіло"],
   },
   {
@@ -4028,6 +4396,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive) · millal",
     usages: ["Seadus kehtestati 1. detsembril.", "Kehtestati ajutised tollimaksud.", "Mitmetes jõgedes kehtestatakse kuuajaline lõhepüügi keeld.", "Bussipiletitele on kehtestatud uued hinnad."],
     note: "seadusi, määrusi, makse vms ametlikuks tegema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["вводить", "ввести"], ukr: ["уводити", "увести"],
   },
   {
@@ -4039,6 +4408,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kehtivuse kaotanud dokument.", "Allkirja kehtivus.", "Otsuse kuulutamise kehtivus ei sõltu menetlusosaliste kohalolekust."],
     note: "jõusolek, millegi kehtimine",
+    semanticTypes: ["omadus"],
     rus: ["действительность", "действие"], ukr: [],
   },
   {
@@ -4050,6 +4420,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Head Šveitsi kellad.", "Raekoja kell lõi kaks.", "Kuldkell.", "Kell käib täpselt."],
     note: "mehaaniline või elektrooniline seade aja mõõtmiseks, mis hrl näitab tunde ja minuteid (nt osutitega numbrilaual või vahelduvate numbritega elektroonilisel ekraanil)",
+    semanticTypes: ["ese_instru"],
     rus: ["часы", "время"], ukr: ["годинник", "година"],
   },
   {
@@ -4061,6 +4432,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tööle saabumise kellaaeg fikseeritakse tehase väravas.", "Üritan süüa iga päev kindlal kellaajal.", "Kes nii hilisel kellaajal külla tuleb?", "Küsisin talt kellaaega."],
     note: "aeg kella järgi",
+    semanticTypes: [],
     rus: ["время"], ukr: ["година", "час доби"],
   },
   {
@@ -4072,6 +4444,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kerge koorem.", "Kerged gaasid.", "Kerge kohvriga on mugav reisida.", "Soe õhk on külmast kergem."],
     note: "vähe kaaluv, väikese kaaluga",
+    semanticTypes: ["omadus_füüs"],
     rus: ["лёгкий", "легковесный"], ukr: ["легкий", "неважкий"],
   },
   {
@@ -4083,6 +4456,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kes see on?", "Kelleks sa tahad saada?", "Tal oli klassiõde, keda ta meeletult armastas.", "Kes otsib, see leiab."],
     note: "küsiv-siduv sõna isikute, elusolendite kohta",
+    semanticTypes: [],
     rus: ["кто", "который"], ukr: ["хто"],
   },
   {
@@ -4094,6 +4468,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pikemad poisid seisid keskel, lühemad äärtel.", "Lauluväljaku keskel asuv kõrgemale tõstetud piiratud ala on mõeldud VIP-idele.", "Toa keskel on laud.", "Surnuaed asub linna keskel."],
     note: "mingi ala, koha keskkohas",
+    semanticTypes: ["koht"],
     rus: ["посреди", "посередине"], ukr: ["посередині", "в центрі"],
   },
   {
@@ -4105,6 +4480,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millele (allative)",
     usages: ["Ettekanne keskendus põhiliselt kahele teemale.", "Sellises melus ei ole võimalik keskenduda.", "Sportlane üritas lõppvõistlusel paremini keskenduda.", "Müra ei lasknud mul keskenduda."],
     note: "oma mõtteid, tähelepanu, tegevust kesksele probleemile või teatud ülesande täitmisele suunama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["сосредоточиться", "сосредоточиваться"], ukr: ["зосереджуватися", "зосередитися"],
   },
   {
@@ -4116,6 +4492,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ema igatsuseks on tagada lapsele armastav kodune keskkond.", "Tudeng otsis võimalust õppida ja töötada ingliskeelses keskkonnas.", "Lapsed vajavad turvalist keskkonda.", "Ta laadis video YouTube'i keskkonda."],
     note: "olud, milles inimene elab, kasvab ja areneb või millega ta kokku puutub",
+    semanticTypes: ["abstr"],
     rus: ["среда", "окружение"], ukr: ["середовище", "оточення"],
   },
   {
@@ -4127,6 +4504,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kesklinnas on tööpäeva õhtul ummikud."],
     note: "linna keskosa, hrl vilgas äri- ja meelelahutuskeskus",
+    semanticTypes: ["koht"],
     rus: ["центр", "центр города"], ukr: ["центр міста"],
   },
   {
@@ -4138,6 +4516,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Keskmine aken on veidi laiem kui äärmised.", "Keskmine poeg läks ülikooli.", "Ma elan keskmises trepikojas.", "Vigastasin parema käe keskmist sõrme."],
     note: "ruumiliselt või ajaliselt, vanuseliselt vahepeal olev, keskkohas, keskel või vahel paiknev",
+    semanticTypes: ["omadus_aeg", "omadus_koht", "omadus_vanus"],
     rus: ["средний", "центральный"], ukr: ["середній", "середнє"],
   },
   {
@@ -4149,6 +4528,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kui kaua",
     usages: ["Punarebase tiinus kestab umbes 8 nädalat.", "Õnn kestis igaviku.", "Nõukogu liikme volitused kestavad kuni neli aastat.", "Film kestis kaks tundi."],
     note: "mingist ajamomendist alates üha edasi toimuma või esinema, teatava aja jätkuma",
+    semanticTypes: ["VERB_aeg"],
     rus: ["продолжаться", "продолжиться"], ukr: ["тривати", "протривати"],
   },
   {
@@ -4160,6 +4540,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kevadel pestakse aknaid, armutakse, istutatakse lilli ja ollakse rahutud.", "Isa suri 1940. aasta kevadel.", "Madli sündis kevade poole talve.", "Kevad saabus sel aastal vara."],
     note: "looduse tärkamise aeg, talve ja suve vaheline aastaaeg",
+    semanticTypes: ["aeg_aastaaeg"],
     rus: ["весна"], ukr: ["весна"],
   },
   {
@@ -4171,6 +4552,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kiire jooks.", "Kiire vooluga jõgi.", "Majanduse kiire areng.", "Lapse areng on väga kiire."],
     note: "ruttu, suure hooga, hoogsalt toimuv või kulgev",
+    semanticTypes: ["omadus_aeg"],
     rus: ["быстрый", "стремительный"], ukr: ["швидкий", "стрімкий"],
   },
   {
@@ -4182,6 +4564,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Loodan Londoni kindlasti ära näha.", "Selline küsitlus oleks kindlasti vajalik.", "Koosolek toimub kindlasti.", "Töö tuleb kindlasti täna valmis saada."],
     note: "täie kindlusega, ilma et mingit kahtlust tekiks",
+    semanticTypes: ["ADV_viis"],
     rus: ["безусловно", "непременно"], ukr: ["безумовно", "безперечно"],
   },
   {
@@ -4193,6 +4576,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Avarii teinud autol puudus kehtiv kindlustus.", "Autokindlustus.", "Kindlustus ei kompenseerinud rõdul tekkinud kahju.", "Kindlustus maksis auto parandamise kinni."],
     note: "kindlustusfondi summadel põhinev rahaline kaitse ootamatute sündmuste puhuks",
+    semanticTypes: ["abstr/konkr"],
     rus: ["страховка", "страхование"], ukr: ["страхування", "страхова компанія"],
   },
   {
@@ -4204,6 +4588,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Terava nina ja kõrge kontsaga kingad.", "Nahkking.", "Meesteking.", "Naisteking."],
     note: "jalalaba kattev (kontsaga) jalats, mis ei ulatu pahkluust kõrgemale",
+    semanticTypes: ["ese_riie"],
     rus: ["туфля", "полуботинок"], ukr: ["туфля", "черевик"],
   },
   {
@@ -4215,6 +4600,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanaema kootud villased kindad.", "Poiss tõmbas kinda käest ja pühkis käeseljaga nina.", "Kannan talvel sooje kindaid."],
     note: "kätt välismõjude eest kaitsev, seda kaunistav või selle steriilsust tagav, hrl randmeni ulatuv riietusese, millel on pöidla (sõrmkindal iga sõrme) jaoks omaette haru",
+    semanticTypes: ["ese_riie"],
     rus: ["варежка", "рукавица"], ukr: ["рукавиця", "рукавичка"],
   },
   {
@@ -4226,6 +4612,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction) · et",
     usages: ["Maja seinale kinnitati mälestustahvel.", "Kinnitas ordeni rinda.", "Kinnitasin juuksed klambritega üles.", "Enne sõidu alustamist kinnitage turvavöö."],
     note: "(kuhugi, millegi külge) kinni panema, nt köitma, naelutama, kruvima",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["закреплять", "закрепить"], ukr: ["закріплювати", "закріпити"],
   },
   {
@@ -4237,6 +4624,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Taas kord leiab kinnitust tõsiasi, et raha eest ei saa osta kõike.", "Küsitlused andsid kinnituse, et ..", "Oma väite kinnituseks viisin läbi uuringu.", "Tema jutt ei leidnud kinnitust."],
     note: "asjaolu, avaldus või muu, millega näidatakse, et miski on tõsi või õige",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["подтверждение", "подкрепление"], ukr: ["підтвердження", "твердження"],
   },
   {
@@ -4248,6 +4636,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma pole oma kirjale veel vastust saanud.", "Ta saatis mulle väga vihase kirja.", "Taat pani kirja ümbrikusse ja viis postkasti.", "Kõiki asju sai ajada kirja teel."],
     note: "(posti teel, ümbrikusse panduna saadetav) paberile kirjutatud tekst, mis sisaldab sõnumit kellelegi",
+    semanticTypes: ["ese_semio"],
     rus: ["письмо", "письменность"], ukr: ["лист", "писемність"],
   },
   {
@@ -4259,6 +4648,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaitseväes teenivad vaimulikena eri kirikute esindajad.", "Kaarli kirik on ehitatud neoromaani stiilis.", "Me käime igal pühapäeval kirikus.", "Täna kirikut ei ole."],
     note: "kristlikke kogudusi ühendav organisatsioon või koguduseliit",
+    semanticTypes: ["abstr/konkr"],
     rus: ["церковь", "храм"], ukr: ["церква"],
   },
   {
@@ -4270,6 +4660,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanamees rääkis kirjakeelt, mitte murret.", "Itaalias tekkis ühtne kirjakeel alles möödunud sajandi 50-ndatel aastatel.", "Soome kirjakeele rajaja Mikael Agricola.", "Ametlik keelekasutus peab vastama eesti kirjakeele normile."],
     note: "ühtne, asjaajamises, kirjanduses, ajakirjanduses, suhtluses ja mujal kõnes ja kirjas avalikult kasutatav keelekuju",
+    semanticTypes: ["abstr/konkr", "esitus_keel"],
     rus: ["литературный язык", "стандартный язык"], ukr: ["літературна мова", "писемна мова"],
   },
   {
@@ -4281,6 +4672,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võõrkeelset kirjandust olen ostnud ka välismaa lennujaamadest.", "Ma hakkasin lugema kirjandust Kabuli ajaloo kohta.", "Meditsiinikirjandus.", "Erialakirjandus."],
     note: "kirjutatud sõnaline looming, hrl ilukirjandus, aga ka muud teosed",
+    semanticTypes: ["ese_semio"],
     rus: ["литература", "письменность"], ukr: ["література"],
   },
   {
@@ -4292,6 +4684,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kirjanik kirjutab pikka romaani.", "Kirjanikul sai valmis uus teos."],
     note: "ilukirjanduslikke teoseid kirjutav inimene",
+    semanticTypes: ["in_elukutse"],
     rus: ["писатель", "писательница"], ukr: ["письменник", "письменниця"],
   },
   {
@@ -4303,6 +4696,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Küla nime kirjaviis on korduvalt muutunud.", "Autori kirjaviis on jäetud muutmata."],
     note: "ajalooliselt kujunenud või teatud inimesele omane õigekirjutustava",
+    semanticTypes: ["abstr/konkr"],
     rus: ["орфография", "написание"], ukr: [],
   },
   {
@@ -4314,6 +4708,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive)",
     usages: ["Autor kirjeldab värvikalt Mongoolia loodust ja asulaid.", "Palun kirjelda mulle seda meest.", "Kirjeldasin sõpradele kontserti."],
     note: "jutustades või kirjutades kellestki või millestki ülevaadet või pilti andma",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["описывать", "описать"], ukr: ["описувати", "описати"],
   },
   {
@@ -4325,6 +4720,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laps oskab oma nime kirjutada.", "Esivanemad ei osanud lugeda ega kirjutada.", "Lapsed õpivad koolis lugema ja kirjutama.", "Kuidas seda sõna kirjutatakse?"],
     note: "tähti, numbreid vm kindla tähendusega märke või nende ridu tegema (hrl paberil)",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["писать", "написать"], ukr: ["писати", "написати"],
   },
   {
@@ -4336,6 +4732,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kitsas ja käänuline mägitee.", "Pikk ja kitsas ruum.", "Vanalinna kitsad tänavad.", "Pika nina ja kitsaste huultega noor kutt."],
     note: "(ruumi, maa-ala, pikliku asja kohta:) ristsuunas, laiuselt väikese ulatusega",
+    semanticTypes: ["omadus_füüs"],
     rus: ["узкий", "тесный"], ukr: ["вузький", "тісний"],
   },
   {
@@ -4347,6 +4744,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kalapüügi kitsendused.", "Nende paikapanemiseks on soovitav kasutada kuupäevalisi kitsendusi", "Igaühel on õigus enda omandit vabalt vallata, kasutada ja käsutada. Kitsendused sätestab seadus."],
     note: "midagi piirav, kitsendav tingimus",
+    semanticTypes: ["abstr/konkr"],
     rus: ["ограничение", "стеснение"], ukr: ["обмеження"],
   },
   {
@@ -4358,6 +4756,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Klaasi tootmine.", "Värvilisest klaasist vitraaž.", "Klaasist seintega fuajee.", "Klaas purunes."],
     note: "valgust läbilaskev habras tahke materjal",
+    semanticTypes: ["materjal/aine"],
     rus: ["стекло", "стакан"], ukr: ["скло", "склянка"],
   },
   {
@@ -4369,6 +4768,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahvusvaheline haiguste klassifikatsioon.", "Kaupade ja teenuste klassifikatsioon.", "pr - protsess"],
     note: "mingite tunnuste alusel liikideks või rühmadeks jaotamine, teatud liiki või rühma paigutamine",
+    semanticTypes: ["abstr/konkr", "tegevus"],
     rus: ["классификация", "подразделение"], ukr: ["класифікація"],
   },
   {
@@ -4380,6 +4780,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Menüüs saab liikuda ja valikuid teha telefoni klaviatuuri abil.", "Klaveri klaviatuur koosneb tavaliselt valgetest ja mustadest klahvidest, mis on järjestatud helikõrguse järjekorras.", "Mu kass hüppas klaviatuurile ja nüüd on mul dokumendis kolm lehekülge s-tähte."],
     note: "klahvide kogum klahvpillidel, arvutil vms",
+    semanticTypes: ["ese_instru"],
     rus: ["клавиатура"], ukr: ["клавіатура"],
   },
   {
@@ -4391,6 +4792,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pruudil oli pikk valge kleit seljas.", "Neiu kandis lühikest musta kleiti."],
     note: "keha ja osaliselt jalgu kattev naise või tütarlapse enamasti üheosaline riideese",
+    semanticTypes: ["ese_riie"],
     rus: ["платье"], ukr: ["сукня", "сукенка"],
   },
   {
@@ -4402,6 +4804,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahulolev klient on iga firma unistus.", "Advokaat ajas oma kliendi asju väga osavalt.", "Selle juuksuri kliendid on tema tööga väga rahul.", "Pangaklient."],
     note: "teatud asutuse, ettevõtja või isiku teenuseid kasutav isik",
+    semanticTypes: ["in_omadus"],
     rus: ["клиент"], ukr: ["клієнт"],
   },
   {
@@ -4413,6 +4816,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaktused kasvavad kuivas kliimas.", "Põhjamaa kliimas ei tea kunagi ette, millal tuleb see õige suvi.", "Poliitiline kliima."],
     note: "mingi paikkonna geograafilisest asendist tingitud pikaajaline ilmade laad ja rütm",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["климат", "(о климате с двумя максимумами осадков в течение года)"], ukr: ["клімат"],
   },
   {
@@ -4424,6 +4828,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kolmeparteiline koalitsioon.", "Võimukoalitsioon."],
     note: "riikide või parteide (ajutine) liit ühiste eesmärkide saavutamiseks",
+    semanticTypes: ["in_roll"],
     rus: ["коалиция"], ukr: ["коаліція"],
   },
   {
@@ -4435,6 +4840,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen Eesti kodanik.", "Euroopa Liidu kodanikud.", "Ta on Eesti Vabariigi kodanik.", "Palume varga leidmisel kõigi kodanike abi."],
     note: "teatud riigi elanikkonda kuuluv inimene, kel on selle riigi põhiseaduses ettenähtud õigused ja kohustused",
+    semanticTypes: ["in_roll"],
     rus: ["гражданин", "гражданка"], ukr: ["громадянин", "громадянка"],
   },
   {
@@ -4446,6 +4852,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oma kätega rajatud kodu.", "Sõja ajal jäeti kodud maha.", "Koduga suhtlen Skype'i teel.", "Tule ruttu koju!"],
     note: "kellegi püsiv elupaik (ja seal elavad inimesed)",
+    semanticTypes: ["koht_hoone"],
     rus: ["дом", "очаг"], ukr: ["дім", "домівка"],
   },
   {
@@ -4457,6 +4864,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sõja puhkedes tulid Kaukaasia eestlased tagasi kodumaale.", "Ameerika on ta teine kodumaa.", "Minu kodumaa on Eesti.", "Ta on nii kodumaal kui välismaal tunnustatud teadlane."],
     note: "maa, riik, kust keegi on pärit või kus ta püsivalt elab ja mida omaks peab",
+    semanticTypes: ["koht_geogr"],
     rus: ["родина", "отечество"], ukr: ["батьківщина", "вітчизна"],
   },
   {
@@ -4468,6 +4876,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["See koer ainult haugub, ta ei hammusta.", "Koerte varjupaiga töötajad soovitavad panna koera kaelarihma külge omaniku telefoninumbri.", "Truu nagu koer.", "Käin iga hommik koeraga jalutamas."],
     note: "peamiselt hundist põlvnev koduloom, keda peetakse majavalvurina ja lemmikloomana",
+    semanticTypes: ["loom"],
     rus: ["собака", "пёс"], ukr: ["собака", "пес"],
   },
   {
@@ -4479,6 +4888,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aastatepikkused kogemused terapeudina.", "Eelkäijate kogemused on mind palju aidanud.", "Mul on koertega halbu kogemusi.", "Rahvusvahelise kogemusega tippjuht."],
     note: "elus, tegevuses kogetu põhjal omandatud teadmine või oskus",
+    semanticTypes: ["abstr/konkr"],
     rus: ["опыт", "жизненный опыт"], ukr: ["досвід"],
   },
   {
@@ -4490,6 +4900,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pakutakse tööd kogenud veebiarendajale.", "Kogenud pilk märkas viga kohe.", "Jäime ilma kogenud töötajast."],
     note: "kogemusi omav, rohkete kogemustega",
+    semanticTypes: ["omadus_kval"],
     rus: ["опытный", "искушённый"], ukr: ["досвідчений"],
   },
   {
@@ -4501,6 +4912,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Euroopa koolide virtuaalne kogukond.", "Ameerikas on väga suur vene kogukond.", "Viljandimaal pöörasid tülli kohalik kogukond ja kirikuõpetaja.", "Riigigümnaasiumi rajamisel on kohalikel kogukondadel erinevad tahtmised."],
     note: "inimrühm, kes on omavahel seotud nt ühise asuala, päritolu, ühiste huvide vm sotsiaalsete suhetega ning kes sellega eristub teistest rühmadest",
+    semanticTypes: ["inimene"],
     rus: ["община", "землячество"], ukr: ["громада", "земляцтво"],
   },
   {
@@ -4512,6 +4924,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Liblikad lendlesid pea kohal.", "Linnul oli silmade kohal punane laik.", "Mere kohal lendavad kajakad.", "Lamp ripub laua kohal."],
     note: "millestki, kellestki ülalpool, sellest kõrgemal",
+    semanticTypes: ["konkr"],
     rus: ["над", "у"], ukr: ["над", "наді"],
   },
   {
@@ -4523,6 +4936,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive) · kelle/mille suhtes · kellele/millele (allative)",
     usages: ["Seadus lubab kohaldada sundtoomist.", "Tööandja suhtes kohaldati haldusvastutust ja määrati rahatrahv.", "Käesolevat määrust kohaldatakse liikmesriikides registreeritud sõidukite suhtes.", "Maksu ei kohaldata reklaamile kogu lepingu kehtivuse ajal."],
     note: "seaduses ettenähtud karistust vm mõjutusvahendit, samuti tehtud korraldust, ettekirjutust vms konkreetsel juhul rakendama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["применять", "применить"], ukr: [],
   },
   {
@@ -4534,6 +4948,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive) · millega (comitative) · millele (allative) · milleks (translative)",
     usages: ["Näidendi kohandas Eesti oludele Priit Põldma.", "Suhtekorraldusfirma kohandas töörütmi palava ilmaga.", "Kogudus kohandas endise spordisaali ajutiseks kirikuruumiks.", "Ekraani taustvalgust saab kohandada vastavalt oma maitsele."],
     note: "teatud tingimustele, olukorrale vastavaks, sobivaks muutma, millegagi kokku sobitama",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["приспосабливать", "приспособить"], ukr: [],
   },
   {
@@ -4545,6 +4960,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative) · kus (location)",
     usages: ["Tänapäeva kiires maailmas on vaja pidevalt muutustega kohaneda.", "Pehmemas kliimas sirgunud taim kohaneb Eestis vaevaliselt.", "Alguses võivad jääda lihased valusaks, kuid ajapikku keha kohaneb.", "Lapsed kohanevad ruttu uue ümbrusega."],
     note: "midagi omaks võtma, teatud tingimustega või olukorraga (probleemideta) sobima hakkama, millegagi harjuma",
+    semanticTypes: ["VERB_muutus", "VERB_seisund"],
     rus: ["приспосабливаться", "приспособляться"], ukr: ["пристосовуватися", "пристосуватися"],
   },
   {
@@ -4556,6 +4972,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tule kohe siia!", "Kohe selgub, kellel oli õigus.", "Raamat müüdi kohe läbi.", "Laps jäi kohe magama."],
     note: "selsamal hetkel, väga lühikese aja jooksul, aega viitmata",
+    semanticTypes: ["ADV_aeg", "ADV_viis"],
     rus: ["прямиком", "сразу"], ukr: ["відразу", "зразу"],
   },
   {
@@ -4567,6 +4984,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Algajad tegid jääl esimesi kohmakaid liigutusi.", "Poiss tegi kohmaka kummarduse.", "Joonistasin oma kohmaka käega ühe kujundi.", "Kohmakad pikad laused."],
     note: "kehalise osavuseta, nurgeliste liigutustega, oma keha halvasti valitsev",
+    semanticTypes: ["omadus_füüs"],
     rus: ["неуклюжий", "неповоротливый"], ukr: [],
   },
   {
@@ -4578,6 +4996,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eestis on palju ilusaid kohti.", "Otsisime telkimiseks sobivat kohta.", "Hotell oli hea koha peal.", "Kust kohast sa sõrmuse leidsid?"],
     note: "maa-ala, piirkond üldiselt",
+    semanticTypes: ["koht", "koht_ala"],
     rus: ["место", "местность"], ukr: ["місце", "місцевість"],
   },
   {
@@ -4589,6 +5008,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega (comitative) · millega (comitative)",
     usages: ["Millal me viimati kohtusime?", "Kohtume kohvikus.", "Paavst kohtus paljude riigijuhtidega.", "Kohtume tunni aja pärast!"],
     note: "kellegagi ettekavatsetult (vahel ka juhuslikult) kokku saama",
+    semanticTypes: ["VERB_toimuma"],
     rus: ["встречаться", "встретиться"], ukr: ["зустрічатися", "зустрітися"],
   },
   {
@@ -4600,6 +5020,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Presidentide kohtumine.", "Kohtumine valijatega.", "See oli täiesti juhuslik kohtumine.", "Seisuni 6 : 6 arenes kohtumine tasavägiselt."],
     note: "kokkusaamine (nt nõupidamine, koosolek)",
+    semanticTypes: ["sündmus"],
     rus: ["встреча"], ukr: ["зустріч", "побачення"],
   },
   {
@@ -4611,6 +5032,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tartu maakohtu kohtunik.", "Euroopa inimõiguste kohtu kohtunik.", "Eeluurimiskohtunik.", "Kohtunik määras mehe neljaks kuuks vangi."],
     note: "kohtuasju arutav ja otsustav, õiguse mõistmise pädevusega ametiisik kohtuasutustes",
+    semanticTypes: ["in_elukutse"],
     rus: ["судья", "рефери"], ukr: ["суддя", "рефері"],
   },
   {
@@ -4622,6 +5044,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaebasin asja kohtusse.", "Kohus mõistis mehe kolmeks aastaks vangi.", "Auto peatus kohtu ees.", "Püsti, kohus tuleb!"],
     note: "kohtuasju läbivaatav ja lahendav, kohtuvõimu teostav riigiasutus",
+    semanticTypes: ["koht_asutus"],
     rus: ["суд"], ukr: ["суд"],
   },
   {
@@ -4633,6 +5056,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Meeskonnasport õpetab kohusetunnet ja enesedistsipliini.", "Tegin kohusetundest töö lõpuni."],
     note: "oma kohustuste tunnetamine, moraalne vajadus neid täita",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["чувство долга"], ukr: ["почуття обовʼязку"],
   },
   {
@@ -4644,6 +5068,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · mida tegema",
     usages: ["Leping kohustab ehitajat tööd õigeaegselt lõpetama.", "Punase fooritule süttimisel on juht kohustatud peatuma.", "Seadus kohustab seda infot avalikustama.", "Meistritiitel kohustab meeskonda igal juhul uuesti võitma."],
     note: "kellelegi midagi kohustuseks, ülesandeks tegema",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["обязывать", "обязать"], ukr: ["зобовʼязувати", "зобовʼязати"],
   },
   {
@@ -4655,6 +5080,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Töötajad peavad teadma oma õigusi ja kohustusi.", "Ära üritagi oma kohustusi teiste kaela veeretada.", "Näib, et riik on endalt maha raputanud kõik kohustused riigialamate vastu.", "Inimesed ei suuda enam täita oma kohustusi pankade ees."],
     note: "ülesanne või toiming, mis tuleb vältimatult täita (kellegi korralduse, kellelegi antud lubaduse või sisetunde ajel)",
+    semanticTypes: ["abstr/konkr"],
     rus: ["обязанность", "долг"], ukr: ["обов’язок", "обовʼязок"],
   },
   {
@@ -4666,6 +5092,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kiiver on kohustuslik.", "Kohustuslik kogumispension.", "Koosolekul osalemine on kohustuslik.", "1. Rahvahääletuse otsus on riigiorganitele kohustuslik."],
     note: "tingimata, alati tarvilik või ettenähtud, rangelt, kohustusena esinev või toimiv",
+    semanticTypes: ["omadus_kval"],
     rus: ["обязательный", "непременный"], ukr: ["облигаторный", "непреложный"],
   },
   {
@@ -4677,6 +5104,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: ["omadus_kval"],
     rus: ["обязательность"], ukr: [],
   },
   {
@@ -4688,6 +5116,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ostsin paar pakki kohvi.", "Ostsin paki kohvi.", "Tellisime kaks koorega kohvi.", "Kas te soovite teed või kohvi?"],
     note: "kohvioad",
+    semanticTypes: ["materjal/aine", "toit_vili"],
     rus: ["кофе", "кофепитие"], ukr: ["кава"],
   },
   {
@@ -4699,6 +5128,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pakkisime kohvrid ja sõitsime lennujaama.", "Abivalmis tundmatu aitas vanamemme kohvreid tassida.", "Reisikohver.", "Tööriistakohver."],
     note: "käepideme ning kaanega varustatud nahast või muust materjalist kastilaadne kott asjade kaasavõtmiseks (nt reisile)",
+    semanticTypes: ["ese"],
     rus: ["чемодан", "сундук"], ukr: ["валіза", "чемодан"],
   },
   {
@@ -4710,6 +5140,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pannkoogikohvik.", "Käisin sõbrannaga kohvikus.", "Selles majas asub väike kohvik."],
     note: "söögi- ja ajaviitekoht, kus pakutakse kohvi, küpsetisi ja ka muid sööke-jooke",
+    semanticTypes: ["koht_asutus"],
     rus: ["кафе", "кофейня"], ukr: ["кав’ярня", "кафе"],
   },
   {
@@ -4721,6 +5152,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega + milles · et",
     usages: ["Neil on juba pulmapäevgi kokku lepitud.", "Valitsus peab kokku leppima järgmise aasta eelarves.", "Koosoleku aja lepime kokku hiljem.", "Leppisime ostjaga hinnas kokku."],
     note: "milleski ühisele otsusele jõudma, suulist kokkulepet sõlmima",
+    semanticTypes: ["VERB_abstr", "VERB_suhtlus"],
     rus: ["сговариваться", "сговориться"], ukr: ["домовлятися", "домовитися"],
   },
   {
@@ -4732,6 +5164,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viimaks jõuti kokkuleppele.", "Meeste koostöö põhines suulisel kokkuleppel.", "Tarnija ei täitnud kokkulepet.", "Ta ei pea meie kokkuleppest kinni."],
     note: "kellegi vahel tehtud otsus millegi kohta",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["соглашение", "договорённость"], ukr: ["угода", "договір"],
   },
   {
@@ -4743,6 +5176,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpilased pidid esitama õppekäigust kirjaliku kokkuvõtte.", "Kirjutasin artiklist kokkuvõtte.", "Kokkuvõte moodustab umbes 10-15 protsenti töö sisulise osa mahust.", "Esimese veerandaasta kokkuvõte."],
     note: "millegi lühike, ainult kõige tähtsamat sisaldav esitus",
+    semanticTypes: ["esitus_info"],
     rus: ["резюме", "аннотация"], ukr: ["резюме"],
   },
   {
@@ -4754,6 +5188,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kokkuvõttes kaotavad kõik.", "Esinemine oli kokkuvõttes siiski rahuldav.", "Kokkuvõttes jäin reisiga rahule.", "Kolme etapi kokkuvõttes juhivad tabelit meie lõunanaabrid."],
     note: "üldjoontes, kokkuvõtlikult öeldes, üldiselt",
+    semanticTypes: ["ADV_tulemus"],
     rus: ["в итоге", "в результате"], ukr: [],
   },
   {
@@ -4765,6 +5200,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction)",
     usages: ["Ludwig oli veel üsna väike, kui perekond kolis Viini.", "Raamatukogu kolib uude majja.", "Poiss kolis elama vanemate juurde.", "Kolisin Tallinnast Tartusse."],
     note: "endisest elukohast või asukohast uude siirduma koos kogu kraami ja muu varandusega",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["переселяться", "переселиться"], ukr: ["переселятися", "переселитися"],
   },
   {
@@ -4776,6 +5212,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kolimine läks kiiresti.", "Uude korterisse kolimine lõppes peoga.", "Andmete kolimine vanalt serverilt uuele ei olnud keeruline.", "Firma korralise koosoleku üks päevakorrapunkt oli peakorteri Tartusse kolimine."],
     note: "endisest elukohast uude siirdumine",
+    semanticTypes: ["tegevus"],
     rus: ["переезд"], ukr: ["переїзд"],
   },
   {
@@ -4787,6 +5224,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kollane kuu.", "Kollaseks pleekinud foto.", "Helekollane.", "Tumekollane."],
     note: "võililleõie, sidruni, õlgede värvi, spektris rohelise ja oranži vahel",
+    semanticTypes: ["omadus_füüs_värv"],
     rus: ["жёлтый", "золотой"], ukr: ["жовтий"],
   },
   {
@@ -4798,6 +5236,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kakskümmend kolm.", "Jaga kuus kolmega.", "Süüa pakuti kolm korda päevas.", "Neil on kolm last."],
     note: "põhiarv 3",
+    semanticTypes: ["esitus_arv"],
     rus: ["три", "тройка"], ukr: ["три"],
   },
   {
@@ -4809,6 +5248,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kohtume kolmapäeval kell 12.", "Kolmapäeval tuleb tavaline sajune sügisilm."],
     note: "nädala 3. päev, teisipäevale järgnev ja neljapäevale eelnev päev",
+    semanticTypes: ["aeg_nädalapäev", "esitus"],
     rus: ["среда"], ukr: ["середа"],
   },
   {
@@ -4820,6 +5260,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kolmkümmend kaheksa.", "Buss nr 30.", "Septembris on kolmkümmend päeva.", "Lähim bensiinijaam on siit kolmekümne kilomeetri kaugusel."],
     note: "põhiarv 30",
+    semanticTypes: ["esitus_arv"],
     rus: ["тридцать"], ukr: ["тридцять"],
   },
   {
@@ -4831,6 +5272,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "ajalehtedes või ajakirjades aeg-ajalt kolumne kirjutav ajakirjanik",
+    semanticTypes: ["in_elukutse"],
     rus: ["колумнист"], ukr: [],
   },
   {
@@ -4842,6 +5284,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võrdluse ette koma ei panda.", "Parandasin ära, lauses oli koma tõesti puudu.", "Kümnendkoha eraldaja võib olla punkt või koma."],
     note: "kirjavahemärk (,), mis eraldab sõnu, sõnarühmi või lauseid",
+    semanticTypes: ["esitus_keel"],
     rus: ["запятая"], ukr: ["кома"],
   },
   {
@@ -4853,6 +5296,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Saatesõna ja kommentaarid on kirjutanud Juhan Peegel.", "Peapiiskopilt ei õnnestunud eile kommentaari saada.", "Lisatud on spetsialisti kommentaar.", "Politsei keeldus kommentaaridest."],
     note: "selgitav, täiendav või arvustav märkus mingi teksti kohta",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["комментарий", "коммент"], ukr: ["коментар"],
   },
   {
@@ -4864,6 +5308,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Võistlust kommenteerib kunagine tippkümnevõistleja ise.", "Ta ei nõustunud kommenteerima, kes loo tellis.", "Poliitik ei soovinud valitsuse otsust kommenteerida."],
     note: "mingi sündmuse, teksti vm kohta selgitavaid, täiendavaid või arvustavaid märkusi tegema, oma arvamust avaldama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["комментировать", "прокомментировать"], ukr: ["коментувати", "прокоментувати"],
   },
   {
@@ -4875,6 +5320,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poliitika on kompromisside kunst."],
     note: "vastastikuse järeleandmisega saavutatud kokkulepe",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["компромисс"], ukr: ["компроміс"],
   },
   {
@@ -4886,6 +5332,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["See, millest sa räägid, on lihtsalt põlvkondadevaheline konflikt.", "Konfliktid õpilaste ja õpetajate vahel.", "Esialgu paistis koostöö sujuvat, aga siis algasid konfliktid.", "Huvide konflikt."],
     note: "kahe vastaspoole vaheline äge, terav vastasseis vastandlike seisukohtade pärast",
+    semanticTypes: ["seisund", "sündmus"],
     rus: ["конфликт", "разногласие"], ukr: ["конфлікт", "сутичка"],
   },
   {
@@ -4897,6 +5344,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Konkreetne tegelikkus.", "Too mõni konkreetne näide.", "Konkreetsed nimisõnad nagu inimene, maja, varvas.", "Arst kutsutakse ikka konkreetse probleemi korral."],
     note: "tegelikult olemasolev, meeltega tajutav, kaemusel põhinev",
+    semanticTypes: ["omadus_füüs"],
     rus: ["конкретный", "реальный"], ukr: ["конкретний", "реальний"],
   },
   {
@@ -4908,6 +5356,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tihedas konkurentsis saavutasime II koha.", "Konkurents tihenes meeletu kiirusega.", "Esikohakonkurents.", "Sellele ametikohale oli tihe konkurents."],
     note: "mitme samal alal tegutseva osalise omavaheline võistlus, konkureerimine paremuse, edemuse pärast, püüdlus teisi sama eesmärgi taotlejaid edestada",
+    semanticTypes: ["nähtus", "tegevus"],
     rus: ["конкуренция", "соперничество"], ukr: ["конкуренція", "суперництво"],
   },
   {
@@ -4919,6 +5368,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rääkisime Eestist Euroopa kontekstis.", "Olen Võrust pärit, nii et Baltikumi kontekstis olen mägede poeg.", "Rait vaatas etendust isadepäeval koos oma tütrega, see oli eriline kontekst.", "Barokkmuusika toimib ka tänapäeva kontekstis."],
     note: "objekti, tegevust, sündmust ümbritsev üldine taust, mis aitab seda objekti vm mõista",
+    semanticTypes: ["abstr"],
     rus: ["контекст"], ukr: ["контекст"],
   },
   {
@@ -4930,6 +5380,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Anna mulle oma konto number, teen siis ülekande.", "Kontol pole piisavalt raha.", "Konto väljavõttelt on näha, et raha laekus arvele märtsikuus.", "Kandsin raha firma kontole."],
     note: "teenus raha pangas hoidmiseks ja arvelduste vm tehingute tegemiseks (nt arvelduskonto, hoiuarve)",
+    semanticTypes: ["abstr/konkr"],
     rus: ["конто", "банковский счёт"], ukr: ["банківський рахунок"],
   },
   {
@@ -4941,6 +5392,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Inspektorid kontrollivad suitsuandurite olemasolu.", "Kontrolliti isikuandmeid.", "Doonoril kontrollitakse vererõhku.", "Politsei peab alati versioone kontrollima."],
     note: "midagi üle vaatama, et kindlaks teha, kas miski on sobivas, soovitud seisus, kas see kehtib, vastab nõuetele vms",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["контролировать", "проконтролировать"], ukr: ["контролювати", "проконтролювати"],
   },
   {
@@ -4952,6 +5404,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tallinna juudi kool on venekeelne kool.", "Kokakool.", "Linnas avati uus kool.", "Ta töötab koolis õpetajana."],
     note: "asutus, kus õpilased õpetaja juhtimisel õpivad",
+    semanticTypes: ["koht_asutus"],
     rus: ["школа", "школьное здание"], ukr: ["школа", "будинок школи"],
   },
   {
@@ -4963,6 +5416,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["See oli võrdlemisi koomiline vaatepilt.", "Asi hakkab koomiliseks kiskuma.", "Koomiline ooper.", "Koomiline ajaviiteromaan."],
     note: "naerma ajav, (naljakalt, lõbustavalt) veider või kentsakas",
+    semanticTypes: ["omadus_kval"],
     rus: ["комический", "комичный"], ukr: ["комічний", "смішний"],
   },
   {
@@ -4974,6 +5428,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kui prokurör sellega ei nõustu, vabastab justiitsminister ta teenistusest koondamise tõttu."],
     note: "koondama - töö-, ametikohtade arvu vähendama ning neil töötanud inimesi sellega seoses töölt vabastama",
+    semanticTypes: [],
     rus: ["сокращение", "приведение"], ukr: [],
   },
   {
@@ -4985,6 +5440,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kivid on hunnikus koos.", "Kaotasin rahakoti koos dokumentidega.", "Näitetrupp püsis koos ühe suve.", "Plaan koos, ta rahunes."],
     note: "ühte kohta, üheks rühmaks koondatult või koondunult, ühe rühmana",
+    semanticTypes: ["koht"],
     rus: ["вместе", "с"], ukr: ["разом", "з"],
   },
   {
@@ -4996,6 +5452,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jäin koosolekule hiljaks.", "Koosolek otsustas juhatuse volitusi pikendada.", "Töökoosolek.", "Parteikoosolek."],
     note: "mingi inimeste rühma kokkutulek ühiste küsimuste arutamiseks, otsuste tegemiseks või ettekannete kuulamiseks",
+    semanticTypes: ["inimene", "sündmus"],
     rus: ["собрание", "заседание"], ukr: ["збори", "засідання"],
   },
   {
@@ -5007,6 +5464,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oleme lätlastega varemgi koostööd teinud.", "Raamat valmis koostöös dendroloogidega.", "Festival toimub tihedas koostöös kohalike elanikega."],
     note: "mitme isiku, isikute rühma vm üheskoos töötamine või tegutsemine",
+    semanticTypes: ["tegevus"],
     rus: ["сотрудничество", "совместная работа"], ukr: ["співробітництво", "співпраця"],
   },
   {
@@ -5018,6 +5476,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Toetuse maksmise kord kehtib sellest aastast.", "Avalik kord.", "Riigi põhiseaduslik kord.", "Milline on toetuste maksmise kord?"],
     note: "õiguslikud ja sotsiaalsed normid, mis on kehtestatud seaduste, eeskirjade või tavadega",
+    semanticTypes: ["abstr/konkr", "ese_semio", "seisund"],
     rus: ["порядок", "правила"], ukr: ["порядок", "правила"],
   },
   {
@@ -5029,6 +5488,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "et",
     usages: ["Publik palus veel kord mõnda laulu või tantsu korrata.", "Teist korda poiss sama viga ei korranud.", "See kes hakkab popitama, jääb ka klassikursust kordama.", "Lõpetuseks kordan seda, mida ütlesin juba oma ettekande alguses."],
     note: "uuesti, teist korda või korduvalt midagi tegema, lausuma või esile tooma (nt sõnu, enda või teiste arvamusi)",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["повторять", "повторить"], ukr: ["повторювати", "повторити"],
   },
   {
@@ -5040,6 +5500,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rütmiliste kordustega muusikapala.", "Oluline on harjutuse suur korduste arv ja rahulik tempo.", "Saadete kordust näeb ETV kodulehelt.", "Värsisisesed kordused."],
     note: "millegi uuesti tegemine, lausumine, toimumine",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["повтор", "повторение"], ukr: ["повторення", "повтор"],
   },
   {
@@ -5051,6 +5512,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tube koristati iga päev.", "Talgulised koristasid loomade varjupaiga ümbrust.", "Hommikul pidin jälle lund koristama.", "Koristasime asju kokku."],
     note: "mingit kohta prahist, mustusest vm üleliigsest puhastama, seda sel viisil korda tegema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["убирать", "убрать"], ukr: ["прибирати", "прибрати"],
   },
   {
@@ -5062,6 +5524,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pererahvas korraldab ekskursioone ümbruskonda.", "Peetakse kirjandusõhtuid ja korraldatakse näitusi.", "Äkki peaks korraldama vestlusringi?", "Instituut korraldas põneva konverentsi."],
     note: "üritust, tegevust ette valmistama ja teoks tegema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["организовывать", "организовать"], ukr: ["організовувати", "організувати"],
   },
   {
@@ -5073,6 +5536,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kirjalik korraldus.", "Kui meile korraldust ei anta, siis me ei räägi.", "Valitsuse korraldus.", "Mees ei allunud politseiniku korraldustele."],
     note: "mingi ülesande täitmisele suunav ettekirjutus (nt käsk, nõue)",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["приказ", "распоряжение"], ukr: ["наказ", "розпорядження"],
   },
   {
@@ -5084,6 +5548,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laias laastus on tõesti rikkus ja õnn positiivses korrelatsioonis.", "Geneetiline korrelatsioon oli tugev kõigi tunnuste vahel.", "Statistiliselt oluline korrelatsioon."],
     note: "vastastikune seotus, hrl põhjuslik suhe kahe või mitme objekti, sündmuse, funktsiooni vm (mõõtmistulemuse) vahel, mis näitab vastastikuse seose tugevust (hrl arvulise korrelatsioonikordajana)",
+    semanticTypes: ["abstr"],
     rus: ["корреляция", "соотношение"], ukr: ["кореляція", "співвідношення"],
   },
   {
@@ -5095,6 +5560,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Renoveerimise käigus ehitati hoonele üks korrus juurde.", "Majakorrus.", "Ma elan viiendal korrusel.", "Sõitsime liftiga üheksandale korrusele."],
     note: "hoone osa, mille moodustavad ühel tasandil asuvad ruumid",
+    semanticTypes: ["koht_hoone", "esitus"],
     rus: ["этаж", "эт."], ukr: ["поверх"],
   },
   {
@@ -5106,6 +5572,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kümne korteriga maja.", "Üürisin kahetoalise korteri kolmandal korrusel.", "Naaberkorter.", "Kõrvalkorter."],
     note: "ühest või mitmest toast ja hrl kõrvalruumidest koosnev eluruumide kogum",
+    semanticTypes: ["koht_hoone"],
     rus: ["квартира", "кв."], ukr: ["квартира"],
   },
   {
@@ -5117,6 +5584,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kostja vaidles hageja nõudele vastu.", "Kohus määras pensionäridest hagejale ja kostjale esindajad."],
     note: "tsiviilkohtumenetluses pool, kelle vastu on esitatud kahju hüvitamise nõue ehk hagi",
+    semanticTypes: ["in_roll"],
     rus: ["ответодатель", "ответчица"], ukr: [],
   },
   {
@@ -5128,6 +5596,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Täna on väljas üle 20 kraadi sooja.", "Väljas on 22 kraadi sooja.", "Kolmnurga kolme nurga summa on alati 180 kraadi.", "Veinis on 13 kraadi alkoholi."],
     note: "temperatuuri mõõtühik",
+    semanticTypes: ["esitus_mõõt"],
     rus: ["градус", "градусник"], ukr: ["градус", "термометр"],
   },
   {
@@ -5139,6 +5608,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Demograafiline kriis.", "Sisepoliitiline kriis süveneb.", "Hiljuti elas kinnisvaraturg läbi sügava kriisi.", "Kriis lahenes, kuid pinged jäid."],
     note: "vastuoludest lõhestatud pingeline (sotsiaalne, poliitiline) seisund, mille hrl on põhjustanud raskused, ohud, ebastabiilsed olud ning millega võib kaasneda ähvardavalt järsk muutus",
+    semanticTypes: ["seisund"],
     rus: ["кризис", "кризисное положение"], ukr: ["криза"],
   },
   {
@@ -5150,6 +5620,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Opositsioonilt oodatakse eelkõige konstruktiivset kriitikat.", "Kriitikat lugesin alles pärast näituse vaatamist.", "Kriitika võttis lavastuse väga hästi vastu.", "Valitsuse tegevus sai lahmiva kriitika osaliseks."],
     note: "analüüsiv arvustamine, hindav arvamusavaldus, hinnangud või arvustused kogumina",
+    semanticTypes: ["ese_semio", "esitus_keel_suhtlus", "tegevus"],
     rus: ["критика"], ukr: ["критика"],
   },
   {
@@ -5161,6 +5632,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive)",
     usages: ["Opositsioon kritiseerib uut eelarvet.", "Kellele meeldiks, kui teda pidevalt kritiseeritaks.", "Mõisa mahamüümise plaane on sisearhitekt teravalt kritiseerinud.", "Tema seisukohti on palju kritiseeritud."],
     note: "kedagi või midagi hindama, eeskätt puudusi ja vigu esile tuues",
+    semanticTypes: ["VERB_psühh", "VERB_suhtlus"],
     rus: ["критиковать"], ukr: ["критикувати"],
   },
   {
@@ -5172,6 +5644,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuhu sa lähed?", "Kuhu te trügite?", "Siiani on selgusetu, kuhu ausammas tuleb.", "Eesti on tore maa, kuhu sõita."],
     note: "küsiv-siduv sõna: missugusesse kohta, missugusesse suunda",
+    semanticTypes: ["ADV_koht"],
     rus: ["куда"], ukr: ["куди"],
   },
   {
@@ -5183,6 +5656,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pereisa on laisk kui lohe.", "Nii kaugele ma ei julge ujuda, kui Laura ujus.", "Mees oli tugev kui karu.", "Ta on sama vana kui mina."],
     note: "esineb sarnasusele osutavates võrdlustes, alustab võrdluse varjundiga lauseosa",
+    semanticTypes: ["ADV_põhjus"],
     rus: ["как", "словно"], ukr: ["як", "наче"],
   },
   {
@@ -5194,6 +5668,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuidas suhtute feminismi?", "Kuidas läheb?", "Neilt on õppida, kuidas elada.", "Tee, kuidas kästud."],
     note: "esineb millegi toimumise viisi, olukorra vms täpsustamisel otseses või kaudselt väljendatud küsimuses ning täpsustava lauseosa alguses",
+    semanticTypes: ["ADV_viis"],
     rus: ["как"], ukr: ["як"],
   },
   {
@@ -5205,6 +5680,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pühkisin laua kuivaks.", "Ta vahetas pärast võistlust kuivad riided selga.", "Kraavid on täitsa kuivad.", "Kuiv hein pandi kuhja."],
     note: "niiskuseta, veeta vm vedelikuta",
+    semanticTypes: ["omadus_füüs"],
     rus: ["сухой", "на суше"], ukr: ["сухий"],
   },
   {
@@ -5216,6 +5692,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Geomeetriline kujund.", "Ruumilised kujundid.", "Kujundid tapeedil meenutavad lilli.", "Lõikasime paberist erinevaid kujundeid välja."],
     note: "ühe või mitme joonega esitatud tasandiline kujutis (nt kolmnurk, ring) või ühe või mitme tasapinnaga esitatud ruumiline kujutis (nt kera, kuup), mis tahes punktidest, joontest ja tasapindadest koosnev kujutis",
+    semanticTypes: ["esitus_kujutis"],
     rus: ["фигура", "образ"], ukr: ["фігура"],
   },
   {
@@ -5227,6 +5704,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Alustati Eesti maine kujundamise kampaaniat."],
     note: "teadlikult juhitud loov protsess, mis algab probleemi juurte identifitseerimisest ning viib uute ja kvaliteetsete, inimeste vajadustest ja soovidest lähtuvate, majanduslikult ning ökoloogiliselt elujõuliste toodete ja teenuste väljatöötamiseni",
+    semanticTypes: ["tegevus"],
     rus: ["формирование"], ukr: ["формування"],
   },
   {
@@ -5238,6 +5716,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kujundlik väljend.", "Kujundlik mõtlemine."],
     note: "kujundeid kasutav või sisaldav",
+    semanticTypes: ["omadus_kval"],
     rus: ["фигуральный", "фигурный"], ukr: ["образний", "фігуральний"],
   },
   {
@@ -5249,6 +5728,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: ["образность", "выразительность"], ukr: [],
   },
   {
@@ -5260,6 +5740,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: [], ukr: [],
   },
   {
@@ -5271,6 +5752,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive)",
     usages: ["Skulptuur kujutas päikesejumal Heliost.", "Logo kujutab õuna.", "Romaan kujutab sõda.", "Foto kujutab maastikku."],
     note: "midagi vaadeldaval, loetaval vm kujul edasi andma, millenagi esitama (nt pildina, sümbolina, kirjandusteosena)",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["изображать", "изобразить"], ukr: ["зображати", "зобразити"],
   },
   {
@@ -5282,6 +5764,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kumba lahendust pead paremaks?", "Kumma jalaga seda tantsusammu alustatakse?", "Kumba soovite?", "Las tema ütleb, kummal meist on õigus."],
     note: "osutab kahele inimesele, esemele või nähtusele, mille vahel peab valima",
+    semanticTypes: [],
     rus: ["какой", "который"], ukr: ["який", "котрий"],
   },
   {
@@ -5293,6 +5776,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuna oli ennustatud vihmasadu, siis matkale ei mindud.", "Suur osa ettepanekuid jäi kõrvale, kuna need ei saanud vajalikku toetust.", "Pean uue telefoni ostma, kuna vana läks katki.", "Kuna Martinil on palavik, siis ta kooli ei läinud."],
     note: "sellepärast et, sel põhjusel et",
+    semanticTypes: ["ADV_aeg"],
     rus: ["поскольку", "так как"], ukr: ["бо", "тому що"],
   },
   {
@@ -5304,6 +5788,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rääkisid kunagi, et ..", "Kunagi tahaksin sinna sõita.", "Kunagi meeldis mulle suusatada.", "Tahaks kunagi Hispaaniasse sõita."],
     note: "mingil ebamäärasel, täpselt määratlemata ajal, millalgi minevikus või tulevikus, ühel (heal) päeval",
+    semanticTypes: ["ADV_aeg"],
     rus: ["когда-то", "как-то"], ukr: ["колись", "коли-небудь"],
   },
   {
@@ -5315,6 +5800,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tüdruk nuttis, kuni viha üle läks.", "Kuni päike paistis, oli soe.", "Nad vaidlesid niikaua, kuni kaubale said.", "Käisin talle senikaua peale, kuni ta nõusse jäi."],
     note: "nii kaua kui",
+    semanticTypes: ["aeg"],
     rus: ["пока", "пока не"], ukr: ["поки", "поки не"],
   },
   {
@@ -5326,6 +5812,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Muuseumis on Eesti kunsti näitus.", "Õppisin emalt leivaküpsetamise kunsti.", "Koeraga toimetulemine pole tema jaoks mingi kunst.", "Igasuguseid kunste on proovitud, aga mootor ei käivitu."],
     note: "loov inimtegevus, milles värvi, vormi, heli, sõna vm kaudu ning esteetiliselt mõjusana vahendatakse teistele oma maailmatunnetust",
+    semanticTypes: ["nähtus", "tegevus"],
     rus: ["искусство", "мастерство"], ukr: ["мистецтво"],
   },
   {
@@ -5337,6 +5824,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uudis tegi mind väga kurvaks.", "Koer vaatas peremeest kurva pilguga.", "Teda polnud keegi nii kurvana näinud.", "Olen natuke kurb."],
     note: "(meeleolu, oleku kohta:) õnnetu, rõhutud või rusutud",
+    semanticTypes: ["omadus_psühh"],
     rus: ["грустный", "печальный"], ukr: ["сумний"],
   },
   {
@@ -5348,6 +5836,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mees tunnistas kuriteo üles.", "Kuriteos kahtlustatavat pole leitud.", "Korruptsioonikuritegu.", "Mõrv ja röövimine on rasked kuriteod."],
     note: "raske õigusrikkumine, mille karistuse üle otsustab kohus",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["преступление", "злодейство"], ukr: ["злочин"],
   },
   {
@@ -5359,6 +5848,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kus sa elad?", "Kus ta on?", "Ma ei saanud aru, kus viibin.", "Ma ei tea, kus ta on."],
     note: "küsiv-siduv sõna: missuguses kohas",
+    semanticTypes: ["ADV_koht"],
     rus: ["где", "ну и куда"], ukr: ["де", "коли"],
   },
   {
@@ -5370,6 +5860,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kust sa pärit oled?", "Kust sa seda kuulnud oled?", "Kust sa tead?", "Kust lapsed tulevad?"],
     note: "küsiv-siduv sõna: missugusest kohast, missugusest allikast või missugusel põhjusel",
+    semanticTypes: ["ADV_koht"],
     rus: ["откуда"], ukr: ["звідки"],
   },
   {
@@ -5381,6 +5872,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Päästjad kustutasid põlengu keskööks.", "Viimane ruumist lahkuja kustutab tuled.", "Külaline kustutas suitsu ja astus majja.", "Tuletõrjujad kustutavad põlevat maja."],
     note: "põlemisele, hõõgumisele, helendamisele või valgustamisele lõppu tegema, kustuma sundima",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["гасить", "погасить"], ukr: ["гасити", "загасити"],
   },
   {
@@ -5392,6 +5884,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction) · mida tegema · mille pärast · millele (allative)",
     usages: ["Kutsusime õhtuks sõbrad külla.", "Avariipaigale kutsuti kiirabi.", "Noormees kutsuti aega teenima.", "Liiga kõva muusika pärast kutsusid naabrid politsei."],
     note: "tegema ettepanekut või korraldust tulla kuhugi, millestki osa võtma või midagi tegema",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["звать", "позвать"], ukr: ["кликати", "покликати"],
   },
   {
@@ -5403,6 +5896,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuu siras taevas ning tähed paistsid selgelt.", "Päikesetõusuni on jäänud veel kaks tundi ja ka kuu ei paista, ent ometi pole päris pime.", "Kuu kadus pilve taha.", "Kasvava ja kahaneva kuu mõju taimedele."],
     note: "maakeralt eriti öösiti nähtav suur helendav taevakeha",
+    semanticTypes: ["objekt_loodus"],
     rus: ["луна", "Луна"], ukr: ["місяць", "супутник"],
   },
   {
@@ -5414,6 +5908,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta ei karda oma mõtteid saalitäie kuulajatega jagada.", "Vikerraadio igapäevased kuulajad.", "Pianist üllatas kuulajaid laia repertuaariga.", "Ta on hea kuulaja."],
     note: "inimene, kes kuulab midagi või kedagi",
+    semanticTypes: ["in_tegija"],
     rus: ["слушатель", "слушательница"], ukr: ["слухач", "слухачка"],
   },
   {
@@ -5425,6 +5920,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaugemalt kuuldub tasast jutukõminat.", "Mida teie pool ka kuuldub?", "Jalgpalliringkondadest kuuldub, et meeskondadel olevat rahalisi raskusi."],
     note: "(helide, häälte kohta:) kuuldav olema, kuuldavana levima",
+    semanticTypes: ["VERB_nähtus"],
     rus: ["слышаться", "послышаться"], ukr: ["чутися", "почутися"],
   },
   {
@@ -5436,6 +5932,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuuldused meteoriidist võisid olla Pythease reisi ajendiks."],
     note: "suust suhu liikuv jutt, sõnum vms, millel ei pruugi tõepõhja olla",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["сплетня", "слухи"], ukr: ["чутки", "поголоска"],
   },
   {
@@ -5447,6 +5944,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive) · kellest/millest (elative) · et",
     usages: ["Räägi valjemini, vanaisa ei kuule hästi.", "Ootamatult kuulsin koputust uksele.", "Polnud midagi kahtlast näha ega kuulda.", "Ma ei kuulnud, palun korda oma küsimust."],
     note: "hääli, helisid kõrvaga tajuma ja eristama",
+    semanticTypes: ["VERB_nähtus"],
     rus: ["слышать", "услышать"], ukr: ["чути", "почути"],
   },
   {
@@ -5458,6 +5956,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelleks (translative) · milliseks · kellele (allative) · mida* (partitive)",
     usages: ["Mehel oli kaks valikut: kas võlad ära maksta või kuulutatakse talle pankrot.", "Kohtuistung kuulutati salajaseks.", "Festivali žürii kuulutas võitjaks Leedu filmi.", "Mees kuulutati tagaotsitavaks."],
     note: "midagi avalikult või ametlikult teatavaks tegema, kedagi või midagi avalikult teatud seisundis olevaks tunnistama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["объявлять", "объявить"], ukr: ["оголошувати", "оголосити"],
   },
   {
@@ -5469,6 +5968,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuum suvepäev.", "Kõrvetasin ennast kuuma teega.", "Haige otsaesine oli kuum.", "Supp on liiga kuum."],
     note: "kõrge temperatuuriga, väga soe",
+    semanticTypes: ["omadus_füüs"],
     rus: ["жаркий", "горячий"], ukr: ["гарячий", "жаркий"],
   },
   {
@@ -5480,6 +5980,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aruanne tuli esitada kümnendaks kuupäevaks.", "Mis kuupäev täna on? – 21. veebruar.", "Dokumendil on allkiri ja kuupäev.", "Mis kuupäev täna on? – 6. juuli."],
     note: "päeva järjekorranumber kuus (sageli koos kuu nimetamisega)",
+    semanticTypes: ["aeg", "esitus_arv", "esitus"],
     rus: ["число", "дата"], ukr: ["дата", "число"],
   },
   {
@@ -5491,6 +5992,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kakskümmend kuus.", "Kaheksateist jagub kuuega.", "Kursus kestab kuus kuud.", "Kell on kuus."],
     note: "põhiarv 6",
+    semanticTypes: ["esitus_arv"],
     rus: ["шесть", "шестеро"], ukr: ["шість"],
   },
   {
@@ -5502,6 +6004,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõik olid kohal.", "Kõik koos asusid teele.", "Rääkis seda kõigi kuuldes.", "Peaaegu kõik õpilased olid ettepanekuga nõus."],
     note: "iga üksik mingist tervikust, viimane kui üks",
+    semanticTypes: ["omadus_kval"],
     rus: ["все", "всё"], ukr: ["весь", "все"],
   },
   {
@@ -5513,6 +6016,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuularist kostev tekst on arusaadav, kuid veidi plekise kõlaga.", "Hämmastas orkestri kordumatult õrn ja õhuline kõla.", "Kannelde kõla sobib kitarriansambliga hästi kokku.", "Töökojas kontrollitakse kella kõla."],
     note: "hääle, heli üldine värving",
+    semanticTypes: ["omadus_füüs"],
     rus: ["звучание", "тембр"], ukr: [],
   },
   {
@@ -5524,6 +6028,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Enne teatrit kõndisime pisut vanalinnas.", "Nad kõndisid edasi ja jõudsid järveni.", "Kõndisime mitu kilomeetrit ilma peatusteta.", "Ma ei jaksa enam joosta, kõnnime!"],
     note: "jalga jala ette tõstes edasi liikuma, jalgsi (edasi) minema",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["идти", "ходить"], ukr: ["іти", "ходити"],
   },
   {
@@ -5535,6 +6040,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kandidaat valdas prantsuse keelt nii kõnes kui kirjas.", "Vanamehel oli vähe hambaid ja seetõttu oli tema kõne ebaselge.", "Lapse kõne areng on aeglane.", "Ma valdan saksa keelt nii kõnes kui kirjas."],
     note: "rääkimine, kõnelemine",
+    semanticTypes: ["tegevus"],
     rus: ["речь", "разговор"], ukr: ["мовлення", "розмова"],
   },
   {
@@ -5546,6 +6052,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kirjanik kasutab ohtralt kõnekeelt ja slängi.", "Kursustel õpitakse kõnekeelt, grammatikat ja sõnavara.", "Esseele järgnenud vestluses küsitles Annelit mitu õpetajat, kontrollides tema kõnekeele oskust.", "Vägisõnade kasutamine kõnekeeles ja trükisõnas on inimese alateadvuslike tungide emotsionaalne väljendus."],
     note: "igapäevases suhtluses (nii kirjas kui ka kõnes) kasutatav, ametlikust keelest vabam keel",
+    semanticTypes: ["esitus_keel"],
     rus: ["разговорная речь", "разговорный язык"], ukr: [],
   },
   {
@@ -5557,6 +6064,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["„Jevgeni Oneginis“ pole murdesõnu ega kõnekeelseid väljendeid.", "Kas „süldimuusika“ on kõnekeelne sõna?", "Erinevalt kõnekeelseks jäänud võru murdest on iiri keel olnud pikki sajandeid kirjakeel."],
     note: "igapäevases suhtluses kasutatav, ametlikust keelekasutusest vabamasse registrisse kuuluv",
+    semanticTypes: ["omadus_kval", "esitus_keel"],
     rus: ["разговорный", "обиходно-разговорный"], ukr: [],
   },
   {
@@ -5568,6 +6076,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "rahvapärane piltlik ütlus mingi olukorra, nähtuse, eseme, omaduse vm iseloomustamiseks (nt ei liha ega kala; kadus nagu tina tuhka)",
+    semanticTypes: ["esitus_keel_suhtlus"],
     rus: ["поговорка"], ukr: [],
   },
   {
@@ -5579,6 +6088,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Diplomaatiline kõnepruuk.", "Vanemas kõnepruugis tähistas sõna „kiri“ ka piiblit."],
     note: "(suuline) keelekasutus, keelelise väljendamise laad ja viis",
+    semanticTypes: ["abstr/konkr", "nähtus_psühh"],
     rus: ["применение языка", "употребление языка"], ukr: [],
   },
   {
@@ -5590,6 +6100,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kitsekülla kerkib veel üks kõrge hoone.", "Läks läbi kõrge rohu.", "Kõrge piimakann.", "Kõrge kraega kampsun."],
     note: "püstsuunas (tugevasti) ülespoole ulatuv, alt üles, püstsuunas pikk",
+    semanticTypes: ["omadus_füüs"],
     rus: ["высокий", "высотой"], ukr: ["високий", "заввишки"],
   },
   {
@@ -5601,6 +6112,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vasak kõrv valutab.", "Ta oskab kõrvu liigutada.", "Poiss sosistas talle midagi kõrva.", "Elevandil on suured kõrvad."],
     note: "inimeste jt imetajate kuulmis- ning tasakaaluelund (sageli ka üksnes selle välise osa kohta)",
+    semanticTypes: ["kehaosa"],
     rus: ["ухо", "ушко"], ukr: ["вухо"],
   },
   {
@@ -5612,6 +6124,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Istus minu kõrval.", "Seisis, käed kõrval.", "Kiriku kõrval on surnuaed.", "Tüdruk istus diivanil, kass kõrval."],
     note: "kellegi või millegi külje suunas (väga) lähedal, reas järgmisena, naabruses",
+    semanticTypes: ["konkr"],
     rus: ["у", "около"], ukr: ["поряд", "поруч"],
   },
   {
@@ -5623,6 +6136,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hüperaktiivsus on arenguline kõrvalekalle, mis kimbutab vähemalt nelja protsenti kooliminejaist.", "Kõrvalekalle on tavapäraselt kõrvalekaldumine tavapärasest või ootuspärasest olekust, mis tavaliselt on soovimatu.", "Puue on inimese anatoomilise, füsioloogilise või psüühilise struktuuri või funktsiooni kaotus või kõrvalekalle."],
     note: "(esialgsest) suunast, teemast, normist, eeskirjadest vms eemaldumine",
+    semanticTypes: ["abstr/konkr"],
     rus: ["отклонение", "уклонение"], ukr: [],
   },
   {
@@ -5634,6 +6148,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "(liitlauses:) osalause, mis täpsustab pealauset ning ei saa esineda iseseisvalt (nt osa kas ma täna viitsin lauses Ma ei tea, kas ma täna viitsin)",
+    semanticTypes: ["esitus_keel"],
     rus: ["придаточное предложение"], ukr: [],
   },
   {
@@ -5645,6 +6160,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uus depressiooniravim on kõrvaltoimete poolest ohutum."],
     note: "(ravimi) peamisest või oodatavast teistsugune mõju, mis kaasneb põhitoimega",
+    semanticTypes: ["nähtus_füüs"],
     rus: ["побочный эффект", "побочное действие"], ukr: ["побічна дія", "побічний ефект"],
   },
   {
@@ -5656,6 +6172,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tarbijate käitumine on enamasti ennustatav.", "Õpin auto käitumist alles tundma.", "Valimiskäitumine.", "Riina käitumine tundus mulle imelik."],
     note: "viis või laad, kuidas keegi või miski reageerib, teotseb või töötab",
+    semanticTypes: ["abstr/konkr", "tegevus"],
     rus: ["манеры", "поведение"], ukr: ["поведінка"],
   },
   {
@@ -5667,6 +6184,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Murdsin kukkudes vasaku käe.", "Elli seisab, käed puusas, ja jälgib teiste askeldamist.", "Ta on nii haige, et ei suuda lusikatki käes hoida.", "Pese enne sööki käed ära."],
     note: "inimese või ahvi ülajäse randmest sõrmeotsteni",
+    semanticTypes: ["kehaosa"],
     rus: ["рука", "надевать"], ukr: ["рука"],
   },
   {
@@ -5678,6 +6196,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Konverentsi ettekanded käsitlevad diplomaatiat.", "Komisjon käsitles ettepanekuid ja tegi otsuse.", "Film käsitleb inimestevahelisi suhteid.", "Film käsitleb riigi ajalugu."],
     note: "teatud küsimuse või ainega tegelema, seda analüüsima või arutama",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["рассматривать", "рассмотреть"], ukr: ["розглядати", "розглянути"],
   },
   {
@@ -5689,6 +6208,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ajaliselt hõlmab käsitlus kogu keiserliku ülikooli perioodi 1802–1917.", "Filosoofiline käsitlus.", "Kindlustusjuhtumite käsitlus.", "Ajalookäsitlus."],
     note: "teatud probleemi või uurimisainega tegelemine (hrl teatavaid võtteid, teooriat kasutades)",
+    semanticTypes: ["abstr/konkr", "ese_semio", "tegevus"],
     rus: ["трактовка", "толкование"], ukr: ["трактування", "тлумачення"],
   },
   {
@@ -5700,6 +6220,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · kellel + mida teha",
     usages: ["Arst käskis sportlasel mõneks ajaks treeningutest loobuda.", "Turvamees käskis koera ukse taha jätta.", "Õpetaja käskis lastel vaiksemalt olla.", "Sisetunne käskis mul minna ja kõik ausalt üles tunnistada."],
     note: "käsku, korraldust andma, midagi tegema sundima",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["приказывать", "приказать"], ukr: ["наказувати", "наказати"],
   },
   {
@@ -5711,6 +6232,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Arstiabi kättesaadavus.", "Hariduse võrdne kättesaadavus.", "Tuleb piirata alkoholi laialdast kättesaadavust."],
     note: "võimalus teenusele, kaubale, infole vms ligi pääseda, (hõlpsalt) millegi osaks saada",
+    semanticTypes: ["omadus_kval", "seisund"],
     rus: ["доступность", "достижимость"], ukr: ["доступність", "приступність"],
   },
   {
@@ -5722,6 +6244,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kauba võib tagastada 14 päeva jooksul pärast kauba kättesaamist sama pakiautomaadi kaudu.", "Miks peab jõuluvanale paki kättesaamiseks alati luuletuse või tantsu esitama?", "Juhil kästakse karistuse kättesaamiseks kohtuvälise menetleja juurde ilmuda.", "Loendajal on kohustus iga inimese juures tema kättesaamiseks käia kolm korda."],
     note: "oma valdusse või enda osaks saamine",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["получение", "поимка"], ukr: [],
   },
   {
@@ -5733,6 +6256,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Köögivili on tervislik.", "Turul müüakse juba värsket köögivilja.", "Lisasin supile külmutatud köögivilju."],
     note: "hrl kasvatatav taim, mille osi või tervet taime tarvitatakse söögiks, nt kartul, kapsas, porgand, tomat, aedhernes, salat",
+    semanticTypes: ["taim_liik", "toit_vili"],
     rus: ["овощ", "овощи"], ukr: ["овоч", "овочі"],
   },
   {
@@ -5744,6 +6268,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ema tegi köögis süüa.", "Ema teeb köögis süüa.", "Korteris on köök, elutuba, magamistuba ja vannituba.", "Meil on avar ja moodne köök."],
     note: "eri sisustusega toiduvalmistusruum, harvemini muu ajutine toiduvalmistuskoht",
+    semanticTypes: ["koht_hoone"],
     rus: ["кухня"], ukr: ["кухня", "страви"],
   },
   {
@@ -5755,6 +6280,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Küberturvalisus mängib tuleviku ühiskonnas üha olulisemat rolli.", "Riigid saavad küberturvalisuse heaks palju ära teha.", "Ettevõttes küberturvalisuse tagamine on pidev vägikaikavedu mugavuse ja piisava kaitse vahel.", "Eksperdid viisid läbi e-teenuste ja küberturvalisuse koolituse ajakirjanikele."],
     note: "arvutivõrkude keskkonna, küberruumi kaitstus, mis saavutatakse turvameetmete rakendamisega",
+    semanticTypes: ["seisund"],
     rus: ["кибербезопасность"], ukr: [],
   },
   {
@@ -5766,6 +6292,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ole mureta, küll me saame hakkama.", "Nüüd ma pean küll minema.", "Töö on küll raske, aga huvitav.", "Kurb küll, aga nii see on."],
     note: "(rõhutav üldlaiend:) tugevdab väite jaatamist",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["да-да", "да"], ukr: ["так-так", "так"],
   },
   {
@@ -5777,6 +6304,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Täna on väljas külm ilm.", "Hommikuti käin külma duši all.", "Palun pane aken kinni, mul on külm.", "Pane uks kinni, külma tuleb sisse."],
     note: "madala temperatuuriga, vähese soojusega või hoopis soojuseta",
+    semanticTypes: ["omadus_füüs"],
     rus: ["холодный", "морозный"], ukr: ["холодний", "холод"],
   },
   {
@@ -5788,6 +6316,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kümme tuhat.", "Kümme pluss üks.", "Loe ühest kümneni!", "Kell on pool kümme."],
     note: "põhiarv 10",
+    semanticTypes: ["esitus_arv"],
     rus: ["десять", "десяток"], ukr: ["десять"],
   },
   {
@@ -5799,6 +6328,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laupäeval küpsetas ema tavaliselt kooki.", "Ema küpsetas lastele maitsva koogi.", "Päike küpsetas maasikad punaseks.", "Juulikuumus küpsetas korralikult, aga festivalikülalisi see ei heidutanud."],
     note: "toorest toiduainet (kuivas) kuumuses toiduks valmistama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["печь", "испечь"], ukr: ["пекти", "спекти"],
   },
   {
@@ -5810,6 +6340,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellelt (ablative) · kelle käest · kelle/mille kohta · kust (source)",
     usages: ["Sõber küsis, kas tulen temaga kaasa.", "Ostja küsis, kui pikk on kaubale antav garantii.", "Küsiti palju, ent esinejal oli igale küsimusele vastus olemas.", "Ta rääkis kõigest ise, ilma küsimata."],
     note: "küsimus(t)e abil midagi teada tahtma",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["спрашивать", "спросить"], ukr: ["питати", "спитати"],
   },
   {
@@ -5821,6 +6352,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas kellelgi on ettekande kohta küsimusi?", "Ajakirjanikud esitasid ministrile teravaid küsimusi.", "Peas keerles ainult üks küsimus: miks?", "Õpilane ei osanud õpetaja küsimustele vastata."],
     note: "lausung, millele oodatakse vastust",
+    semanticTypes: ["esitus_keel_suhtlus", "tegevus_kõnetegu"],
     rus: ["вопросик", "вопросец"], ukr: ["питання", "запитання"],
   },
   {
@@ -5832,6 +6364,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pere kasutab kütteks puid ja turvast.", "Suvemaja oli kütteta onnike.", "Nad kasutavad kütteks puid.", "Kütte hind tõuseb."],
     note: "hoone soojaga varustamine, hoone kütmine",
+    semanticTypes: ["ese_instru", "tegevus"],
     rus: ["отопление", "топка"], ukr: ["опалення", "опалювання"],
   },
   {
@@ -5843,6 +6376,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Panin mobiili laadima.", "Akut ei ole vaja laadida väga pikalt, kuna aku laeb ka sõitmise ajal.", "Sõdurid laevad kahureid, saluut lendab taevasse.", "Panin telefoni laadima."],
     note: "mingit seadet laenguga või vajaliku energiaga, kütusega vm varustama",
+    semanticTypes: ["VERB_liigutama"],
     rus: ["заряжать", "зарядить"], ukr: ["заряджати", "зарядити"],
   },
   {
@@ -5854,6 +6388,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üritus on silma paistnud ka ladusa korralduse poolest.", "Ladus koostöö.", "Ta jätab oma ladusa jutuga väga targa mulje.", "Temast ei saanud ladusate värsside autorit."],
     note: "takistusteta kulgev, hästi edenev, laabuv",
+    semanticTypes: ["omadus_kval"],
     rus: ["слаженный", "приветливый"], ukr: [],
   },
   {
@@ -5865,6 +6400,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laev sõidab Eesti lipu all.", "Merearheoloogid otsivad Läänemerest uppunud laevu.", "Lõbusõidulaev.", "Laev väljub sadamast."],
     note: "suur veesõiduk inimeste või kauba vedamiseks",
+    semanticTypes: ["ese_instru"],
     rus: ["судно", "корабль"], ukr: ["корабель", "судно"],
   },
   {
@@ -5876,6 +6412,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oskus lahendada konflikte.", "Läbirääkimised lahendasid olukorra.", "Kõnelustel ei suudetud erimeelsusi lahendada.", "Mure sai lahendatud."],
     note: "tüliküsimuses, selle asjaoludes kokkuleppele, sobiva tulemuseni jõudma (või viima)",
+    semanticTypes: ["VERB_psühh"],
     rus: ["решать", "решить"], ukr: ["розв’язувати", "розв’язати"],
   },
   {
@@ -5887,6 +6424,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tülile otsitakse lahendust kohtus.", "Intriig sai kiire lahenduse.", "Palk jäi samaks ja mure ei leidnud lahendust.", "Hoone arhitektuurne lahendus on põhjustanud suuri vaidlusi."],
     note: "probleemi või keerulise olukorra selgitamisel saadav tulemus, selgus millegi kohta, väljapääs millestki",
+    semanticTypes: ["abstr"],
     rus: ["решение", "разрешение"], ukr: ["рішення", "вирішення"],
   },
   {
@@ -5898,6 +6436,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kust (source) · kust / millest",
     usages: ["Külalised hakkavad lahkuma.", "Lapsed kasvavad suureks ja lahkuvad kodust.", "Laev lahkub koidikul.", "Üksteisest lahkuti uksi paugutades."],
     note: "kuskilt, mingist kohast, kellegi juurest ära minema (ajutiselt või lõplikult)",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["расходиться", "разойтись"], ukr: ["розходитися", "розійтися"],
   },
   {
@@ -5909,6 +6448,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõrge ja lai trepp.", "Lai voodi.", "Jõgi polnud kuigi lai.", "Mehe lai selg varjas kogu vaate."],
     note: "ristsuunas, ühest küljest või servast teiseni suhteliselt suure ulatusega",
+    semanticTypes: ["omadus_füüs"],
     rus: ["широкий", "обширный"], ukr: ["широкий"],
   },
   {
@@ -5920,6 +6460,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koidula piirijaama laiendus puudutas rohkem kui 15 maaomandit.", "Tartu maantee laiendus valmib augusti lõpuks.", "Varasemate tekstidega võrreldes on mõningad laiendused."],
     note: "olemasolevale ehitisele (nt hoonele, sõiduteele) juurde ehitatud seda laiendav osa",
+    semanticTypes: ["koht_ala", "koht_hoone"],
     rus: ["расширение", "дополнение"], ukr: ["розширення", "доповнення"],
   },
   {
@@ -5931,6 +6472,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuumus teeb laisaks.", "Poiss on laisk õppima.", "Temast laisemat annab otsida.", "Laisk kass ei viitsi hiiri püüda."],
     note: "selline, kellele meeldib tegevuseta olla, kellel pole viitsimist pingutada või tööd teha (ka loomade kohta)",
+    semanticTypes: ["omadus"],
     rus: ["ленивый"], ukr: ["лінивий"],
   },
   {
@@ -5942,6 +6484,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Materjali esitus on lakooniline, antakse üksnes mõned määratlused.", "Selge ja lakooniline ülesehitus."],
     note: "väheste sõnadega väljendatud",
+    semanticTypes: ["omadus_kval"],
     rus: ["лаконичный", "лаконический"], ukr: [],
   },
   {
@@ -5953,6 +6496,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millele/kellele (allative)",
     usages: ["Meteoriit langes merre.", "Kui eesriie langes, puhkes mürisev aplaus.", "Riisus langenud lehed kokku.", "Puu langes maja katusele."],
     note: "(oma raskuse mõjul) allapoole, maapinna poole liikuma",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["падать", "упасть"], ukr: ["падати", "упасти"],
   },
   {
@@ -5964,6 +6508,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Paistab, et Pärnu lahes on merevee langus saavutanud haripunkti.", "Maapinna langus mere poole.", "Emajõe langus on väike.", "Tee kulges vaheldumisi tõusude ja langustega."],
     note: "(veeseisu kohta:) alanemine, madalamale vajumine",
+    semanticTypes: ["tegevus_muutus"],
     rus: ["отлив", "падение"], ukr: ["падіння", "зниження"],
   },
   {
@@ -5975,6 +6520,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Film sobib vaatamiseks väiksematele lastele.", "Mõni mees on nagu suur laps.", "Klassis on 25 last.", "Väiksemad lapsed käivad lasteaias ja suuremad lapsed koolis."],
     note: "inimene sündimisest täisealiseks saamiseni",
+    semanticTypes: ["in_omadus", "in_sugulane"],
     rus: ["ребёнок", "дитя"], ukr: ["дитина", "дитя"],
   },
   {
@@ -5986,6 +6532,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hööveldamata lauad.", "Mahajäetud maja uksed-aknad löödi laudadega kinni.", "Sõidutee on sile nagu laud.", "Toas oli laudadest põrand."],
     note: "palgist lõigatud pikk ja suhteliselt õhuke puitmaterjal hrl millegi ehitamiseks (nt põrandalaud, voodrilaud)",
+    semanticTypes: ["materjal/aine"],
     rus: ["доска", "дощечка"], ukr: ["дошка", "стіл"],
   },
   {
@@ -5997,6 +6544,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tantsu ja laulu jagus varaste hommikutundideni.", "Ta õppis muusikakoolis klassikalist laulu.", "Linnuke muudkui laskis oma katkematut laulu.", "Väljast kostab lindude laulu."],
     note: "laulmine, inimese muusikaline eneseväljendus oma hääle abil",
+    semanticTypes: ["tegevus", "vald"],
     rus: ["пение", "пение птиц"], ukr: ["спів", "пісня"],
   },
   {
@@ -6008,6 +6556,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative) · kellele (allative)",
     usages: ["Tantsiti ja lauldi terve öö.", "Karl laulab kooris teist tenorit.", "„Carmeni“ esietendusel laulis nimiosa ..", "Läki karaoket laulma."],
     note: "oma häälega muusikalisi, hrl sõnadega seotud helisid moodustama",
+    semanticTypes: ["VERB_nähtus"],
     rus: ["петь", "спеть"], ukr: ["співати", "заспівати"],
   },
   {
@@ -6019,6 +6568,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sõidame laupäeval maale.", "Laupäeval on pilves selgimistega ilm.", "Mardipäeva laupäev."],
     note: "nädala 6. päev, reedele järgnev ja pühapäevale eelnev päev",
+    semanticTypes: ["aeg", "aeg_nädalapäev", "esitus"],
     rus: ["суббота", "канун"], ukr: ["субота"],
   },
   {
@@ -6030,6 +6580,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõnelejal ei lastud lauset lõpetada.", "Kirjeldage paari lausega Eesti keskklassi kuuluvat inimest.", "Lõpulause.", "Sa ei pea pikka kirja kirjutama, paarist lausest piisab."],
     note: "keelelise suhtluse põhiüksus, mis väljendab terviklikku sõnumit (väidet, küsimust, käsku, soovi vms)",
+    semanticTypes: ["esitus_keel"],
     rus: ["предложение", "высказывание"], ukr: ["речення"],
   },
   {
@@ -6041,6 +6592,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tõlkest jäi mulje, et sõnad on küll eestikeelsed, aga lauseehitus pole eesti oma."],
     note: "lause süntaktiline ülesehitus",
+    semanticTypes: ["abstr"],
     rus: ["строй предложения", "построение предложения"], ukr: [],
   },
   {
@@ -6052,6 +6604,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas oled näinud Madis Kõivu näidendite lavastusi?", "Ooperilavastus.", "Teater alustab hooaega kolme uue lavastusega.", "Seda lavastust mängitakse 10 korda."],
     note: "teatrivahenditega loodud kunstiteos, mis esitatakse etendusena",
+    semanticTypes: ["ese_kunst"],
     rus: ["спектакль", "представление"], ukr: ["спектакль", "вистава"],
   },
   {
@@ -6063,6 +6616,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaine peaga oli ta vaikne, leebe mehike.", "Naine vaatas mind leebe pilguga.", "Leebed seadused.", "Pühapäeval on leebe sügisilm."],
     note: "loomult, olemuselt pehme, heatahtlik, mitte karm või range",
+    semanticTypes: ["omadus_psühh"],
     rus: ["ласковый", "нежный"], ukr: [],
   },
   {
@@ -6074,6 +6628,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nahkjate lehtedega rododendronid.", "Tuul keerutab langenud lehti.", "Sügisel langevad puudelt lehed.", "Paberipakis on 500 lehte."],
     note: "hrl lame roheline taime osa, mis kinnitub varre või oksa külge",
+    semanticTypes: ["taim"],
     rus: ["лист", "листок"], ukr: ["лист", "листок"],
   },
   {
@@ -6085,6 +6640,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ostsin poest leiba ja saia.", "Ta määris leiva peale võid.", "Määri leivale võid ka.", "Leib sai salve."],
     note: "Eestis (ja mujal Põhja-Euroopas) peamiselt rukki-, mujal eeskätt nisujahust küpsetatud toit",
+    semanticTypes: ["toit"],
     rus: ["хлеб"], ukr: ["хліб"],
   },
   {
@@ -6096,6 +6652,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Leidlik lavastaja.", "Leidlik inimene kasutab kilekotti prügikotina.", "Leidlik lahendus."],
     note: "osav lahendust, vastust, olukorrast väljapääsu leidma, sellist osavust ilmutav",
+    semanticTypes: ["omadus_psühh"],
     rus: ["изобретательный", "находчивый"], ukr: ["винахідливий", "вигадливий"],
   },
   {
@@ -6107,6 +6664,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kust (source) · et",
     usages: ["Viige linnupoeg tagasi sinna, kust te ta leidsite.", "On vähe lootust teda elusana leida.", "Ma ei leia oma rahakotti.", "Leidsin sahtlist vana foto."],
     note: "otsides või juhuslikult märkama või kätte saama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["находить", "найти"], ukr: ["знаходити", "знайти"],
   },
   {
@@ -6118,6 +6676,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Maja katus lekib.", "Laevad hakkavad lekkima, nafta voolab merre.", "Oletati, et gaas lekib mõnest raudteetsisternist.", "Info lekkis poole tunniga."],
     note: "vedelikku või gaasi läbi laskma",
+    semanticTypes: ["VERB_nähtus"],
     rus: ["течь", "протекать"], ukr: [],
   },
   {
@@ -6129,6 +6688,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kopter lendas madalalt üle majade.", "President lendab Ameerikasse.", "Linnud lendavad.", "Lennuk lendas Tallinnast Pariisi."],
     note: "õhus edasi liikuma, hrl õhu- või kosmosesõiduki sõidu ja sellel sõitja kohta",
+    semanticTypes: ["VERB_liikuma", "VERB_liikuma/liigutama"],
     rus: ["лететь", "улетать"], ukr: ["летіти", "літати"],
   },
   {
@@ -6140,6 +6700,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lennuk tõusis õhku kesköö paiku.", "Laps sõidab lennukiga esimest korda.", "Kaaperdatud lennuk maandus Tallinnas.", "Lennuk väljub Tallinna lennujaamast kell 8.30."],
     note: "õhust raskem tiibadega õhusõiduk, mis lendab jõuseadme abil tekitatud tõstejõu toimel",
+    semanticTypes: ["ese_instru"],
     rus: ["самолёт", "аэроплан"], ukr: ["літак"],
   },
   {
@@ -6151,6 +6712,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Leping tuli sõlmida notariaalselt.", "Ostu-müügileping.", "Leping kehtib kaks aastat."],
     note: "dokument, mis määrab isikute, asutuste vm vahelise kokkuleppe osaliste kohustused ja õigused",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["договор", "контракт"], ukr: ["угода", "договір"],
   },
   {
@@ -6162,6 +6724,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lepitust otsima.", "Ulatasin lepituseks käe.", "Ega kirik pole teater, kuhu pärast patustamist pattude lepitust tulla otsima.", "Andke endid lepitada Jumalaga!"],
     note: "leppimine, tüli lõpetamine või lahkarvamuse lahendamine",
+    semanticTypes: ["tegevus_muutus"],
     rus: ["примирение"], ukr: ["примирення"],
   },
   {
@@ -6173,6 +6736,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega/kellega (comitative) · kellega (comitative)",
     usages: ["Ajapikku leppisin olukorraga.", "Vähemaga ma lihtsalt ei lepi.", "Temaga tuleb leppida sellisena, nagu ta on.", "Meeskonnal oli kaotusega raske leppida."],
     note: "midagi või kedagi küllalt heaks, kõlblikuks või piisavaks pidama, nõudmata paremat või enamat",
+    semanticTypes: ["VERB_psühh"],
     rus: ["мириться", "смиряться"], ukr: ["примирятися", "примиритися"],
   },
   {
@@ -6184,6 +6748,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seitse levinud viga, mida tehakse dieeti pidades.", "Levinud petuskeem jätab kliendid rahata.", "Punahirv elas Eesti aladel kunagi ka looduslikult, ise siia levinuna."],
     note: "laialdase levikuga, üldiselt tuntud või tarvitatud",
+    semanticTypes: ["omadus_kval"],
     rus: ["распространённый", "популярный"], ukr: [],
   },
   {
@@ -6195,6 +6760,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas ma üldse tahan seda tööd, kui ma isegi ligikaudset palganumbrit ei tea?", "Ligikaudsed arvutused."],
     note: "mitte päris, vaid enam-vähem täpne või õige",
+    semanticTypes: ["omadus_kval"],
     rus: ["ориентировочный", "приблизительный"], ukr: ["орієнтовний", "приблизний"],
   },
   {
@@ -6206,6 +6772,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kulud olid planeeritust ligikaudu viis korda suuremad.", "Linnas on ligikaudu miljon elanikku.", "Lend kestab ligikaudu neli tundi.", "Ettevõttel on ligikaudu pool miljonit klienti."],
     note: "mitte päris täpselt, enam-vähem, ligilähedaselt",
+    semanticTypes: ["ADV_aste", "ADV_viis"],
     rus: ["почти", "приблизительно"], ukr: ["майже", "приблизно"],
   },
   {
@@ -6217,6 +6784,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: [], ukr: [],
   },
   {
@@ -6228,6 +6796,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pakuti vaheldumisi liha ja kala.", "Oli jooksmist mööda Tallinna turge, et võimalikult värsket liha leida.", "Ostsin turult värsket liha.", "Karpkala kasvab kiiresti ja on maitsva lihaga."],
     note: "looma või linnu keha pehme, luid ümbritsev osa, hrl toiduna",
+    semanticTypes: ["toit"],
     rus: ["мясо", "рыба"], ukr: ["м’ясо", "риба"],
   },
   {
@@ -6239,6 +6808,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lihtsad organismid.", "Esialgu lihtsana tundunud ülesanne osutus parajaks pähkliks.", "Masinat on lihtne seadistada.", "Kodune ülesanne oli lihtne."],
     note: "ehituselt, vormilt, olemuselt keerukuseta",
+    semanticTypes: ["omadus_kval"],
     rus: ["простой", "несложный"], ukr: ["простий", "нескладний"],
   },
   {
@@ -6250,6 +6820,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Inimene püüab ikka oma töid lihtsustada, et pääseda kergema vaeva ja lühema ajaga.", "See oleks liialt lihtsustatud arusaam asjadest."],
     note: "lihtsamaks tegema, keerukust või vaeva vähendama",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["упрощать", "упростить"], ukr: ["спрощувати", "спростити"],
   },
   {
@@ -6261,6 +6832,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["See kõlab vaimukalt, kuid on ilmne liialdus.", "Moes on elegantsed liialdused: näiteks luksuslikud detailid käistel ja pluusidel."],
     note: "millegagi liialdamine",
+    semanticTypes: ["abstr/konkr", "tegevus"],
     rus: ["преувеличение", "излишество"], ukr: ["перебільшення", "надмірність"],
   },
   {
@@ -6272,6 +6844,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tööd on liiga palju.", "Ta suri liiga vara.", "Korvpalluriks olen ma liiga lühike.", "Olen juba liiga oma, et asja kõrvalseisja pilguga vaadata."],
     note: "üle tavalise või otstarbeka määra, rohkem kui vaja või kasulik",
+    semanticTypes: ["ADV_aste"],
     rus: ["слишком", "излишне"], ukr: ["надто", "занадто"],
   },
   {
@@ -6283,6 +6856,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Müügil on 40 liiki tooteid: toidunõud, mänguasjad, padjad ja riided.", "Ta oli seda liiki pühamees, kes võis elada söömata-joomata.", "Kuriteoliik.", "Teenuseliik."],
     note: "toodete, nähtuste vms rühm, millel on sarnane valmistamisviis, sarnased omadused või tunnused ning mis eristub sel viisil teistest rühmadest",
+    semanticTypes: ["abstr/konkr"],
     rus: ["вид", "тип"], ukr: ["вид", "тип"],
   },
   {
@@ -6294,6 +6868,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["ÜRO liikmesriigid."],
     note: "riikide ühendusse kuuluv riik",
+    semanticTypes: ["koht_ala", "koht_asutus"],
     rus: ["государство-член", "государство-участник"], ukr: [],
   },
   {
@@ -6305,6 +6880,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction)",
     usages: ["Käsi liikus vaikselt vööl oleva pussnoa poole.", "Ükski puuleht ei liikunud.", "Üks hammas on hakanud liikuma.", "Rong juba liigub."],
     note: "(üks kord või korduvalt, üldse) oma asendit või asukohta muutma, mitte paigal seisma (nt käima, sõitma)",
+    semanticTypes: ["VERB_liikuma", "VERB_liikuma/liigutama"],
     rus: ["двигаться", "двинуться"], ukr: ["рухатися", "рушитися"],
   },
   {
@@ -6316,6 +6892,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Roomlased sõlmisid liidu Kartaagoga.", "Prantsuse kuninga üle võitu ihkav Inglismaa heitis liitu Taani kuningaga.", "Euroopa kujunemine poliitiliseks liiduks.", "Rootsi ei kuulu sõjalistesse liitudesse."],
     note: "sõltumatute osapoolte kokkulepe ühiseks tegevuseks, ühiste eesmärkide saavutamiseks, sel kokkuleppel rajanevad suhted",
+    semanticTypes: ["abstr", "in_roll", "koht_asutus"],
     rus: ["союз", "федерация"], ukr: ["союз", "федерація"],
   },
   {
@@ -6327,6 +6904,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aeda on istutatud õunapuid ja põõsaid, lilledest rääkimata.", "Aias õitsevad kaunid lilled.", "Pane lilled vaasi!", "Laulja heldis kingitud lilledest."],
     note: "kaunite õite, lehtede või viljadega rohttaim",
+    semanticTypes: ["taim"],
     rus: ["цветок", "цветочек"], ukr: ["квітка"],
   },
   {
@@ -6338,6 +6916,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lillaks värvitud küüned.", "Käsivarrel oli lilla pigistusjälg.", "Tumelilla.", "Helelilla."],
     note: "sireli-, kannikese-, kanarbikuõie värvi, punakassinine",
+    semanticTypes: ["omadus_füüs_värv"],
     rus: ["лиловый", "фиолетовый"], ukr: ["фіолетовий", "фіалковий"],
   },
   {
@@ -6349,6 +6928,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üks lind lendas jõe kohal.", "Lennuvõimetud linnud.", "Lindude ränne.", "Söö korralikult, ära näkitse toitu nagu lind."],
     note: "kahejalgne tiibadega selgroogne, kelle keha katavad suled ja kelle pojad kooruvad munast",
+    semanticTypes: ["loom_liik"],
     rus: ["птица", "стальная птица"], ukr: ["птах", "птиця"],
   },
   {
@@ -6360,6 +6940,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tallinn on Eesti suurim linn.", "Paljud noored kolivad maalt ära linna.", "Kogu linn oli leinarongis.", "Linn osales elurajooni rajamisel maaga."],
     note: "suur tihedalt asustatud ja hrl kompaktse hoonestusega asula, mis on ümbruskonna majandus- ja kultuurielu keskus",
+    semanticTypes: ["koht"],
     rus: ["город", "городская управа"], ukr: ["місто", "міська рада"],
   },
   {
@@ -6371,6 +6952,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lisaks soovitame külastada Kolkja vanausuliste muuseumit.", "Kas mul ei või siis lisaks Mihklile veel sõpru olla?", "Lisaks õppimisele käib ta tööl.", "Autojuht sai trahvi, lisaks võeti talt load ära."],
     note: "(olemasoleva, eelneva) täiendusena, peale selle (veel)",
+    semanticTypes: ["abstr"],
     rus: ["в", "дополнительно"], ukr: ["додатково", "на додаток"],
   },
   {
@@ -6382,6 +6964,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on pidanud loenguid Harvardi ülikoolis.", "Avalik loeng.", "E-loeng.", "Loengutes käimine võtab oma aja."],
     note: "hrl kindla kestusega õpetav või teavet andev suuline ettekanne",
+    semanticTypes: ["ese_semio", "sündmus"],
     rus: ["лекция"], ukr: ["лекція"],
   },
   {
@@ -6393,6 +6976,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellest/millest (elative) · mida tegemast · millest (elative)",
     usages: ["Naine sünnitas ja loobus siis lapsest ametlikult.", "Otsustasime magustoidust loobuda.", "Edward VIII loobus troonist, et abielluda lahutatud ameeriklannaga.", "Loobusin tippspordist 28-aastasena."],
     note: "vabatahtlikult oma valduses olevast või pakutavast, osaks saada võivast ilma jääma (nt seda ära andes või sellest keeldudes)",
+    semanticTypes: ["VERB_abstr"],
     rus: ["бросать", "бросить"], ukr: ["кидати", "кинути"],
   },
   {
@@ -6404,6 +6988,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Veetsin päeva vabas looduses.", "Plastpudel võib loodust reostada aastakümneid.", "Inimkond on osa loodusest.", "Tutvusime saare kauni loodusega."],
     note: "meid ümbritsev maailm, eriti taimed, loomad ja maastik (vastandatuna inimese loodule)",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["природа", "материя"], ukr: ["природа"],
   },
   {
@@ -6415,6 +7000,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lihtne loogika ütleb, et mida madalam BASE-hüpe, seda ohtlikum ta on.", "Raudse loogikaga inimene.", "Tal loogika lonkab.", "Matemaatika põhineb loogikal."],
     note: "mõtlemises esinev korrapära, mis võimaldab teha õigeid järeldusi, võime õigesti mõelda",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["логика"], ukr: ["логіка"],
   },
   {
@@ -6426,6 +7012,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Maailmas elab palju huvitavaid linde, loomi ja putukaid.", "Elevandid on ühed vaadatumad loomad loomaaedades.", "Jänes, rebane ja karu on loomad.", "Rott on tark loom."],
     note: "selgrooga elusolend, eelkõige imetaja (välja arvatud inimene)",
+    semanticTypes: ["loom", "organism"],
     rus: ["животное", "зверь"], ukr: ["тварина", "звір"],
   },
   {
@@ -6437,6 +7024,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Toimiv ettevõtlus loob töökohti.", "Kohvilauas loodi suhteid ja räägiti Eesti elust.", "Mees tahab luua uue erakonna.", "Küünlavalgus lõi meeleolu."],
     note: "midagi uut tekitama, tegema või esile kutsuma",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["создавать", "создать"], ukr: ["створювати", "створити"],
   },
   {
@@ -6448,6 +7036,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "millegi uue tekitamine, tegemine või esile kutsumine",
+    semanticTypes: ["tegevus", "tegevus_tegu"],
     rus: ["создание", "творение"], ukr: [],
   },
   {
@@ -6459,6 +7048,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Krokodillid nende loomulikus keskkonnas jäidki nägemata.", "Suurte akendega ruumis on palju loomulikku valgust.", "Kadril on loomulikud lokid.", "Minu juuste loomulik värv on punane."],
     note: "loodusest seatud, looduslikest teguritest johtuv",
+    semanticTypes: ["omadus_kval"],
     rus: ["естественный", "натуральный"], ukr: ["природний", "натуральний"],
   },
   {
@@ -6470,6 +7060,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida teha · et · kellele/millele (allative) · kelle/mille peale",
     usages: ["Loodan, et asi hakkab tasapisi paranema.", "Ära looda kiiret rikastumist.", "Lepingu sõlmimiseni loodetakse jõuda kuu lõpuks.", "Loodetud võit jäi tulemata."],
     note: "midagi soovima, selle täideminekut uskuma ja ootama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["надеяться", "ожидать"], ukr: ["надіятися", "сподіватися"],
   },
   {
@@ -6481,6 +7072,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ametlik luba.", "Keskkonnaamet andis loa, et Saaremaal tohib lasta kolm hunti.", "Ilma luba küsimata ma tänaval inimesi ei pildista.", "Mehed jäeti kohtu loal vahi alla."],
     note: "kelleltki saadud suuline või kirjalik nõusolek millekski",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["разрешение", "пропуск"], ukr: ["дозвіл", "посвідчення водія"],
   },
   {
@@ -6492,6 +7084,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellel + mida teha · kellele (allative) · mida teha",
     usages: ["Kas sa lubad mul nüüd minna?", "Võimud ei luba mehel riigist lahkuda.", "Laps lubati peale esmaabi andmist kodusele ravile.", "Ema lubas lapsed õue."],
     note: "millegi tegemiseks või toimumiseks nõusolekut, luba andma",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["разрешать", "разрешить"], ukr: ["дозволяти", "дозволити"],
   },
   {
@@ -6503,6 +7096,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tänapäeva tippsport toimetab lubatu ja lubamatu piiril.", "Selline käitumine on lubamatu."],
     note: "selline, mis pole lubatud või mis pole vastuvõetav, sallitav",
+    semanticTypes: ["omadus_kval"],
     rus: ["недопустимый", "непозволительный"], ukr: ["неприпустимий", "недопустимий"],
   },
   {
@@ -6514,6 +7108,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võrguväljaannete lugejaskond kasvab paberväljaannete omast kiiremini.", "Blogidel on oma lugejaskond."],
     note: "teatud ajalehe, kellegi teoste vm alalised lugejad",
+    semanticTypes: ["in_roll"],
     rus: ["читатели", "широкий круг читателей"], ukr: [],
   },
   {
@@ -6525,6 +7120,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive) · kust (source) · kellele (allative)",
     usages: ["Mis raamatut sa viimati lugesid?", "Mul on komme õhtuti enne magama jäämist voodis lugeda.", "Ta töötab televisioonis, loeb uudiseid.", "Silver luges jõuluvanale salmi inglise keeles."],
     note: "kirjalikku teksti sõnahaaval jälgima ja sõnu ning lauseid tõlgendades selle tähendust tajuma",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["читать", "прочитать"], ukr: ["читати", "прочитати"],
   },
   {
@@ -6536,6 +7132,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minuga juhtus üks kurioosne lugu.", "Kaurist räägitakse igasuguseid lugusid.", "Pane see lugu kirja.", "Kirjutasin oma reisist ajalehele loo."],
     note: "juhtunud asi või omavahel seotud sündmuste kogum (ka suulises või kirjalikus esituses)",
+    semanticTypes: ["esitus", "sündmus"],
     rus: ["история", "рассказ"], ukr: ["історія", "пісня"],
   },
   {
@@ -6547,6 +7144,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kes teise vastu käe tõstab, ei vääri lugupidamist.", "Minu lugupidamine!", "Professorisse suhtutakse lugupidamisega."],
     note: "austav suhtumine kellessegi või millessegi, kellegi või millegi kõrgelt hindamine",
+    semanticTypes: ["nähtus_psühh", "seisund"],
     rus: ["респект", "уважение"], ukr: ["повага", "пошана"],
   },
   {
@@ -6558,6 +7156,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Öösel on lund sadanud.", "Lõuna-Eestis on juba lumi maas.", "Lapsed hullasid lumes.", "Öösel sadas lund."],
     note: "peamiselt talvel pilvedest langevad pehmed valged helbed, mis koosnevad jääkristallidest",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["снег", "кокаин"], ukr: ["сніг", "кокаїн"],
   },
   {
@@ -6569,6 +7168,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti luule nüüdiskaanon.", "Näituse avamisel loeti Doris Kareva luulet.", "Luuletaja esitas üritusel oma uut luulet.", "Poeedid kuulatavad öö luulet."],
     note: "kirjanduse osa, millele on iseloomulik teksti eriline liigendus ning rütmil ja rõhkudel rajanev ülesehitus",
+    semanticTypes: ["ese_semio", "vald"],
     rus: ["поэзия", "лирика"], ukr: [],
   },
   {
@@ -6580,6 +7180,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kirjutan ka ise luuletusi.", "Juhan Liivi luuletused.", "Ta kirjutab häid luuletusi."],
     note: "kirjandusteos, mis rajaneb värsskõnel ja rütmil (ning riimil), koosnedes hrl ühest või mitmest salmist",
+    semanticTypes: ["ese_kunst"],
     rus: ["стихотворение", "стих"], ukr: ["вірш"],
   },
   {
@@ -6591,6 +7192,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vaarikakoogi lõik.", "Lõik sinki.", "Õunalõik.", "Panin võileivale lõigu tomatit."],
     note: "mingist toiduainest lõigatud lapik tükk või sektorina eraldatud osa",
+    semanticTypes: ["toit"],
     rus: ["кусок", "кусочек"], ukr: ["шматок", "шматочок"],
   },
   {
@@ -6602,6 +7204,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ema lõikas õuna pooleks.", "Küüned tahavad lõigata.", "Palgid lõigati laudadeks.", "Lõikasin kogemata näppu."],
     note: "millestki lõike, tükke eraldama (terariistaga), nii midagi (vajalikku vormi andes) lühemaks, osadeks tegema",
+    semanticTypes: ["VERB_muutus"],
     rus: ["резать", "разрезать"], ukr: ["різати", "порізати"],
   },
   {
@@ -6613,6 +7216,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kohalike venelaste lõimumine eestlastega.", "Moldova jaoks on lõimumine Euroopasse strateegiline eesmärk."],
     note: "ühe rahvusrühma ühinemine teiste sama ühiskonna rahvusrühmadega",
+    semanticTypes: ["nähtus"],
     rus: ["интеграция", "слияние"], ukr: [],
   },
   {
@@ -6624,6 +7228,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuldmedaliga lõpetajate seas olid ülekaalus neiud.", "Majandusteaduskonna lõpetajad.", "Keskkoolilõpetaja.", "Lehes ilmus Tartu ülikooli tänavuste lõpetajate nimekiri."],
     note: "mingis õppeasutuses õpingutega või teatud õpinguastmega lõpuni jõudnud inimene",
+    semanticTypes: ["in_tegija"],
     rus: ["выпускник школы", "выпускница"], ukr: ["випускник", "випускниця"],
   },
   {
@@ -6635,6 +7240,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative)",
     usages: ["Ta lõpetas ülikooli 2010. aastal.", "Lõpetan parasjagu koristamist.", "Kontserdi lõpetas „Salve Regina”.", "Pean töö homseks lõpetama."],
     note: "midagi valmis või lõpuni tegema",
+    semanticTypes: ["VERB_muutus", "VERB_tegevus"],
     rus: ["кончать", "кончить"], ukr: ["кінчати", "кінчити"],
   },
   {
@@ -6646,6 +7252,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative)",
     usages: ["Aasta hakkab lõppema.", "Krediitkaardi kehtivus lõpeb detsembris.", "Õnnelikult lõppenud õnnetus.", "Vaidlus ei tahtnud kuidagi lõppeda."],
     note: "kestuselt või ulatuselt lõpuni jõudma",
+    semanticTypes: ["VERB_aeg", "VERB_seisund"],
     rus: ["кончаться", "кончиться"], ukr: ["закінчуватися", "закінчитися"],
   },
   {
@@ -6657,6 +7264,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poiss ronis läbi akna välja.", "Külm tungib läbi riiete.", "Kapp ei mahu uksest läbi.", "Huvilised uurisid marke läbi luubi."],
     note: "millegi ühest küljest sisse ja teisest välja, ühelt poolt teisele poole",
+    semanticTypes: ["ADV_koht"],
     rus: ["через", "сквозь"], ukr: ["через", "крізь"],
   },
   {
@@ -6668,6 +7276,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kasutusjuhend tuleb hoolega läbi lugeda.", "Palun loe see kiri läbi.", "Lugesin raamatu läbi.", "Palun loe see raamat läbi."],
     note: "kirjapandut algusest lõpuni lugema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["прочитать", "прочесть"], ukr: ["прочитувати", "прочитати"],
   },
   {
@@ -6679,6 +7288,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega + mille suhtes",
     usages: ["Terroristidega läbi rääkima ei hakata.", "Koosolekul on vaja palju asju läbi rääkida.", "Martin tahab juhatajaga palga suhtes läbi rääkida."],
     note: "(mingi kokkuleppe saavutamiseks) asju läbi arutama, nõu pidama",
+    semanticTypes: [],
     rus: ["обсуждать", "обсудить"], ukr: ["обговорювати", "обговорити"],
   },
   {
@@ -6690,6 +7300,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Türgi tegi läbimurde maailma jalgpallis.", "Kulude vähendamiseks on vaja uut tehnoloogilist läbimurret.", "Tuberkuloosiravis võib peagi tulla läbimurre.", "Läbimurde korral oleks vesi katnud tammidetaguse maa mitme meetri kõrguselt."],
     note: "suur saavutus, avastus vm, mis avab võimalused pöördeliseks arenguks või edenemiseks",
+    semanticTypes: ["abstr/konkr"],
     rus: ["прорыв", "пролом"], ukr: [],
   },
   {
@@ -6701,6 +7312,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Noore inimese kohta on ta hämmastavalt läbinägelik."],
     note: "millestki välisest, näilikust end mitte petta või eksitada laskev",
+    semanticTypes: ["omadus_psühh"],
     rus: ["прозорливый", "проницательный"], ukr: [],
   },
   {
@@ -6712,6 +7324,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aluspõhimõtte üle me ei vaidle, kõik ülejäänu on läbirääkimise objekt.", "Pooletunnise läbirääkimise käigus jõudsime kokkuleppele.", "Vallajuhiga läbirääkimisel on saadud nõusolek projekti elluviimiseks lähiaastatel."],
     note: "asja(de) arutamine mingi kokkuleppe saavutamise eesmärgil",
+    semanticTypes: ["tegevus_kõnetegu", "sündmus"],
     rus: ["переговоры", "разговор"], ukr: [],
   },
   {
@@ -6723,6 +7336,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Iisraeli-Palestiina läbirääkimised alalise rahulepingu sõlmimiseks.", "Euroopa Liit ja Pärsia lahe koostöönõukogu on pidanud umbes kakskümmend aastat läbirääkimisi vabakaubanduslepingu üle.", "Läbirääkimised pangaga on praegu veel pooleli.", "Pidasime eile palga üle läbirääkimisi."],
     note: "eri huvidega osapoolte nõupidamine või nende sari mingis küsimuses mõlemale poolele vastuvõetava lahenduse saavutamiseks (hrl äritegevuses, diplomaatias, juhtimises)",
+    semanticTypes: ["sündmus"],
     rus: ["переговоры"], ukr: ["переговори"],
   },
   {
@@ -6734,6 +7348,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uuringute läbiviimiseks polnud raha.", "Usaldushääletuse läbiviimine sõltub opositsioonist."],
     note: "millegi teostamine või korraldamine",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["проведение"], ukr: [],
   },
   {
@@ -6745,6 +7360,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kusagil lähedal peab olema järv.", "Töökoht on kodu lähedal.", "Ma elan siinsamas lähedal.", "Töökoht asub kodule üsna lähedal."],
     note: "lühikese vahemaa taga, läheduses",
+    semanticTypes: ["ADV_koht", "koht"],
     rus: ["близко", "недалеко"], ukr: ["близько", "недалеко"],
   },
   {
@@ -6756,6 +7372,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lähtekeele sõna on võimalik sihtkeelde tõlkida mitmel viisil.", "Õppija lähtekeele ja sihtkeele häälikusüsteemid erinevad vähemalt osaliselt.", "Ühest lähtekeelest hargnes juba Aafrikas mitmeid keeli."],
     note: "(tõlkimisel:) keel, millest sõna, väljend või tekst tõlgitakse teise keelde",
+    semanticTypes: ["esitus_keel"],
     rus: ["исходный язык", "первичный язык"], ukr: [],
   },
   {
@@ -6767,6 +7384,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lennu lähte- ja sihtkoht.", "Uurimuse teoreetilised lähtekohad."],
     note: "koht, kust teele asutakse, liikuma hakatakse",
+    semanticTypes: ["koht"],
     rus: ["точка отправления", "отправной пункт"], ukr: [],
   },
   {
@@ -6778,6 +7396,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative) · kust (source)",
     usages: ["Lähtusin patriootlikest kaalutlustest.", "Kohus lähtub lapse huvidest.", "Lähtusin auto ostmisel hinnast.", "Artikli autor lähtus kindlatest põhimõtetest."],
     note: "tegevuses midagi aluseks võtma, mingit seisukohta vms järgima",
+    semanticTypes: ["VERB_abstr"],
     rus: ["исходить", "опираться"], ukr: ["виходити", "базуватися"],
   },
   {
@@ -6789,6 +7408,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "riik Euroopas Läänemere ääres",
+    semanticTypes: ["koht_geogr"],
     rus: ["Латвия"], ukr: ["Латвія"],
   },
   {
@@ -6800,6 +7420,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Autor nimetab eestlasi ja lätlasi pisimateks mandrirahvasteks, kel on omaette keelele rajatud kõrgkultuur.", "Läti Vabariigi iseseisvuspäeva tähistavad paljud lätlased mitte kodusel paraadil, vaid hoopis Saaremaa spaades.", "Anett Kontaveidi mäng lätlase Jelena Ostapenkoga algab keskpäeval."],
     note: "Läti põhirahva liige",
+    semanticTypes: ["in_rahvas"],
     rus: ["латыш", "латышка"], ukr: ["латиш", "латишка"],
   },
   {
@@ -6811,6 +7432,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lühike kasv pole teda kunagi seganud.", "Sulle sobib lühike juus väga hästi.", "Isegi lühikest maad ei soovitud jala kõndida.", "Poiss on lühikest kasvu."],
     note: "püst- või rõhtsuunas suhteliselt väikese pikkusega",
+    semanticTypes: ["omadus_füüs"],
     rus: ["короткий", "краткий"], ukr: ["короткий"],
   },
   {
@@ -6822,6 +7444,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eks rahvast ole ju maa peal igasugust.", "Pikk merereis ei ole sellega veel lõppenud, kui maa paistma hakkab.", "Pääsukesed lendasid madalalt maa kohal.", "Laev lähenes maale."],
     note: "maakera kui elukeskkond, maailm",
+    semanticTypes: ["koht_ala"],
     rus: ["земля", "суша"], ukr: ["земля", "суша"],
   },
   {
@@ -6833,6 +7456,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Madalad majad.", "Sookask on madal puu.", "Madalamad põllud on vee all.", "Madal vaas."],
     note: "väikese kõrgusega, püstsuunas lühike, suhteliselt vähe ülespoole ulatuv",
+    semanticTypes: ["omadus_füüs"],
     rus: ["низкий", "невысокий"], ukr: ["низький", "невисокий"],
   },
   {
@@ -6844,6 +7468,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega (comitative)",
     usages: ["Mis kell sa eile magama läksid?", "Köha ei lasknud öösel magada.", "Maga ennast kaineks!", "Karu magab talveund."],
     note: "uneseisundis olema, mitte ärkvel olema",
+    semanticTypes: ["VERB_seisund", "VERB_tegevus"],
     rus: ["спать", "бай-бай"], ukr: ["спати"],
   },
   {
@@ -6855,6 +7480,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Dessertveini serveeritakse koos magustoiduga.", "Magustoiduks pakuti küpsetatud banaane.", "Magustoiduks sõime jäätist.", "Lõuna koosnes supist, praest ja magustoidust."],
     note: "lõuna- või õhtusöögi lõpul pakutav magus toit, nt kook, puuvili, jäätis",
+    semanticTypes: ["toit"],
     rus: ["десерт", "сладкое"], ukr: ["десерт", "солодке"],
   },
   {
@@ -6866,6 +7492,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vigastatud kaaslane jäeti maha ja mindi abi järele.", "Põgenejad pidid kodud maha jätma.", "Süütaja oli endast bensiinikanistri maha jätnud.", "Minister jättis maha suure segaduse."],
     note: "(kuskilt lahkumisega seoses:) midagi või kedagi kuhugi paika jätma, midagi või kedagi mitte kaasa võtma",
+    semanticTypes: ["VERB_seisund", "VERB_tegevus"],
     rus: ["оставлять", "оставить"], ukr: ["залишати", "залишити"],
   },
   {
@@ -6877,6 +7504,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õunad tehti mahlaks.", "Värskelt pressitud mahl.", "Lapsed armastavad mahla juua.", "Koogi sisse läheb poole sidruni mahl."],
     note: "puuviljadest, marjadest või köögiviljadest välja pressitud või aurutatud (lahjendatud) vedelik joogina",
+    semanticTypes: ["toit_jook"],
     rus: ["сок", "жизненные соки"], ukr: ["сік"],
   },
   {
@@ -6888,6 +7516,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koosolek toimub 5. mail."],
     note: "aasta 5. kuu, põhjapoolkeral kolmas kevadkuu",
+    semanticTypes: ["aeg_kuu"],
     rus: ["май", "травень"], ukr: ["травень"],
   },
   {
@@ -6899,6 +7528,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tasuta lõunaid ei ole, nagu juba eespool mainiti.", "Ta ei ole oma lahkuminekut poole sõnagagi maininud.", "Sinu nime artiklis ei mainita.", "Kas ma mainisin sulle, et Kaie abiellus?"],
     note: "põgusalt ütlema või teatama, lühidalt millelegi osutama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["упоминать", "упомянуть"], ukr: ["згадувати", "згадати"],
   },
   {
@@ -6910,6 +7540,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Magusa maitsega õunad.", "Pasteedil oli hõrk maitse.", "Peale soola muud maitset ei tundnudki.", "Nohuga ei tunne õiget lõhna ega maitset."],
     note: "toidu, joogi vm aine omadus, mida väljendab süljes lahustunud aineosade toimel suus tekkinud aisting",
+    semanticTypes: ["nähtus_füüs", "omadus", "omadus_kval"],
     rus: ["вкус", "привкус"], ukr: ["смак"],
   },
   {
@@ -6921,6 +7552,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative)",
     usages: ["Mett peaks enne ostmist maitsma.", "Saarel anti meile suitsukala maitsta.", "Maitse, kas supp on piisavalt soolane.", "Meistrivõistlustel tuli taas kaotuskibedust maitsta."],
     note: "toitu või jooki selle maitse proovimiseks suhu võtma",
+    semanticTypes: ["VERB_toituma"],
     rus: ["пробовать", "попробовать"], ukr: ["куштувати", "покуштувати"],
   },
   {
@@ -6932,6 +7564,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kodumaja.", "Palkmaja.", "Maja taga on kuur ja garaaž.", "Elame ühes majas."],
     note: "hoone inimestele elamiseks, töötamiseks, nende teenindamiseks vms",
+    semanticTypes: ["koht_hoone"],
     rus: ["дом", "домик"], ukr: ["будинок", "дім"],
   },
   {
@@ -6943,6 +7576,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Majanduse areng.", "Valitsuse istungil arutati riigi majanduse olukorda.", "Teadmistepõhine majandus.", "Liberaalne majandus tähendab õhukest riiki."],
     note: "ühiskonnaelu valdkond, mis hõlmab kaupade ja teenuste tootmist, ostmist, müüki ja tarbimist",
+    semanticTypes: ["vald"],
     rus: ["экономика", "хозяйство"], ukr: ["економіка", "господарство"],
   },
   {
@@ -6954,6 +7588,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Palgast võetakse maksud maha.", "Maksudest kõrvalehoidmine.", "Mõned inimesed lihtsalt ei maksa makse.", "Tänavakunstnik tegi soovijaist väikese maksu eest karikatuure."],
     note: "seadusega määratud rahasumma, mille asutused või ettevõtjad peavad maksma ettenähtud tähtpäevadel riigi või kohaliku eelarve tuludesse",
+    semanticTypes: ["ese_raha"],
     rus: ["налог", "оплата"], ukr: ["податок"],
   },
   {
@@ -6965,6 +7600,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative) · mille eest · mida teha",
     usages: ["Palka maksma.", "Kas elu mõte ongi käia tööl ja maksta arveid ning makse?", "Poes maksan enamasti kaardiga.", "Ettevõte maksab töötajatele palka."],
     note: "tehtud töö, teenuse, saadud kauba vms eest raha andma",
+    semanticTypes: ["VERB_liigutama", "VERB_tegevus"],
     rus: ["платить", "заплатить"], ukr: ["платити", "заплатити"],
   },
   {
@@ -6976,6 +7612,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kapuutsiga mantel.", "Mulle meeldib, kui mulle aidatakse mantlit selga.", "Täna panin juba kevadise nahkjope selga, muidu käisin mantliga.", "Mees kandis pikka sinist mantlit."],
     note: "väljas kantav pikk varrukatega ülerõivas",
+    semanticTypes: ["ese_riie"],
     rus: ["пальто", "плащ"], ukr: ["пальто", "плащ"],
   },
   {
@@ -6987,6 +7624,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eriti hea on jäätis värskete suviste marjadega.", "Need marjad on mürgised.", "Koetud ja viljastatud mari kleepub veetaimedele.", "Lõhed ujuvad pika tee ülespoole, et mari kudeda."],
     note: "taime või puu väike, ühe või mitme seemnega söödav vili (nt maasikal, kirsil, pihlakal)",
+    semanticTypes: ["taim"],
     rus: ["ягода", "ягодка"], ukr: ["ягода"],
   },
   {
@@ -6998,6 +7636,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaardi mastaap.", "Sellise mastaabiga koolitust pole keegi varem ette võtnud.", "Konflikt on hakanud üha enam saavutama tõelise sõja mastaape."],
     note: "joonisel, kaardil või plaanil oleva lõigu pikkuse ja sama lõigu tegeliku pikkuse suhe",
+    semanticTypes: ["abstr/konkr", "esitus_mõõt"],
     rus: ["масштаб карты", "масштаб"], ukr: ["масштаб"],
   },
   {
@@ -7009,6 +7648,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Inimese viis meelt.", "Kassidel on meeltest hästi arenenud nägemine ja kuulmine.", "Hiinlased olevat tuntud oma praktilise meele poolest.", "Õiglase meelega inimene."],
     note: "teatud aistingute vastuvõtmise ja eristamise võime (nt kuulmine, nägemine, haistmine)",
+    semanticTypes: ["omadus_psühh"],
     rus: ["чувство", "нрав"], ukr: ["чуття", "почуття"],
   },
   {
@@ -7020,6 +7660,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative) · mida teha",
     usages: ["Ühele meeldib ema, teisele tütar.", "Poisile meeldib tähelepanu keskmes olla.", "Laurile hakkas Ameerikas nii meeldima, et jäigi sinna paigale.", "Kui mulle ikka kleit ei meeldi, siis ma lihtsalt ei pane seda selga."],
     note: "kellegi meelest ilus, hea või tore olema, kelleski sümpaatiat, heameelt või rahulolu esile kutsuma",
+    semanticTypes: ["VERB_psühh_emots"],
     rus: ["нравиться", "понравиться"], ukr: ["подобатися", "сподобатися"],
   },
   {
@@ -7031,6 +7672,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen nostalgilises meeleolus.", "Süütasime küünlad romantilise meeleolu loomiseks.", "Juhatuses valitseb käegalöömise meeleolu.", "Masendusmeeleolu."],
     note: "muutlik emotsionaalne seisund, mis annab värvingu inimese elamustele ja tegevusele",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["настроение", "расположение духа"], ukr: ["настрій"],
   },
   {
@@ -7042,6 +7684,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kui palju on teie kolleegide hulgas mehi?", "Mehed ja naised on juhina erinevad.", "Sirje mees on ohvitser.", "Endine mees ajab kiusu."],
     note: "(hrl täiskasvanud) meessoost inimene",
+    semanticTypes: ["inimene"],
     rus: ["мужчина", "мужик"], ukr: ["чоловік"],
   },
   {
@@ -7053,6 +7696,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uus direktor loob oma meeskonna.", "Müügimeeskond.", "Korraldusmeeskond.", "Projektimeeskond."],
     note: "kellegi lähimad abilised või mõttekaaslased",
+    semanticTypes: ["inimene"],
     rus: ["команда", "экипаж"], ukr: ["команда"],
   },
   {
@@ -7064,6 +7708,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Meetod põhineb eri kaupade ja teenuste hindade võrdlemisel.", "Uued meetodid lubavad isegi pimedal nägijaks saada.", "Kloonimine kui meetod.", "Milline on parim meetod võõrkeele õppimiseks?"],
     note: "sihikindlalt teostatav toimimisviis või menetlus teaduslikuks uurimiseks, haiguse ravimiseks vm eesmärgi saavutamiseks",
+    semanticTypes: ["abstr/konkr"],
     rus: ["метод"], ukr: ["метод"],
   },
   {
@@ -7075,6 +7720,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Meie laps sündis jaanipäeval.", "Jäägu see jutt meie vahele.", "Roolis olnud mees rääkis meiega korralikus inglise keeles.", "Meie president."],
     note: "osutab vähemalt kahele inimesele või suuremale rühmale, kelle hulka kõneleja kuulub või kelle hulka ta tunneb end kuuluvat (nt vanuse, soo, ameti vm põhjal)",
+    semanticTypes: ["esitus_keel", "inimene"],
     rus: ["мы", "наш"], ukr: ["ми"],
   },
   {
@@ -7086,6 +7732,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Majanduskomisjon menetles seaduseelnõu 495 oma istungil esmaspäeval.", "Kahe nädalaga on võimalik lühemad seadused ära menetleda.", "Praegu menetleb kohus tema väljaandmist Eestile.", "Politsei menetleb nende süüasja kelmuse paragrahvi tunnustel."],
     note: "seaduseelnõu, kaebuse, kriminaalasjaga vms seotud dokumente õiguslikult käsitlema, selliseid küsimusi, ettepanekuid lahendama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["разбирать", "разобрать"], ukr: [],
   },
   {
@@ -7097,6 +7744,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eelnõu võetakse riigikogu menetlusest tagasi.", "Nüüd on kohtueelne menetlus lõpule viidud.", "Politsei alustas menetlust kannatanu avalduse alusel.", "Menetlus lõpetati kuriteo aegumise tõttu."],
     note: "kindlas järjekorras õiguslikud toimingud mingi küsimuse lahendamiseks",
+    semanticTypes: ["tegevus"],
     rus: ["производство", "способ"], ukr: ["провадження", "спосіб"],
   },
   {
@@ -7108,6 +7756,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rukkitoit peaks oma kasulikkuse tõttu kuuluma laste igapäevasesse menüüsse.", "Õun sobib hästi kehakaalu jälgivate inimeste menüüsse.", "Kassi menüüd ei tohiks sageli vahetada.", "Restoranis on eestipärane menüü."],
     note: "igapäevased või teatava toidukorra toidud ja joogid (liikide järgi), kuskil pakutav toitude ja jookide valik",
+    semanticTypes: ["toit", "grupp", "abstr/konkr"],
     rus: ["меню", "выбор блюд"], ukr: ["меню"],
   },
   {
@@ -7119,6 +7768,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Meri on täna tormine.", "Kalurid tulid merelt värske tursaga.", "Külaline on tulnud kauge mere tagant Kanadast.", "Käisin meres ujumas."],
     note: "maismaasse ulatuv või ookeanist saarte või veealuste kõrgendikega eraldatud soolase vee väli",
+    semanticTypes: ["koht_loodus"],
     rus: ["море"], ukr: ["море"],
   },
   {
@@ -7130,6 +7780,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Töövõime hindamise metoodika.", "Kliiniliste uuringute metoodika.", "Matemaatika metoodika.", "Metoodika, mis sobib nägemispuudega lastele."],
     note: "mingi tegevuse või töö sooritamise meetodite kogum",
+    semanticTypes: ["abstr/konkr"],
     rus: ["методика"], ukr: ["методика"],
   },
   {
@@ -7141,6 +7792,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mets oli marjulisi täis.", "Praegu on metsad väga tuleohtlikud.", "Käisime metsas seeni ja marju korjamas.", "Eksisin metsa ära."],
     note: "suur ala, mis on kaetud puude ja nende juurde kuuluvate (roht)taimedega",
+    semanticTypes: ["koht_loodus", "taim"],
     rus: ["лес"], ukr: ["ліс"],
   },
   {
@@ -7152,6 +7804,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Miks sul on piinlik?", "Miks te ei istu?", "Miks nii morn, Linda?", "Tean täpselt, miks sa seda tegid."],
     note: "(küsimusena:) mille pärast, mis põhjusel",
+    semanticTypes: ["ADV_põhjus"],
     rus: ["почему", "зачем"], ukr: ["чому", "чого"],
   },
   {
@@ -7163,6 +7816,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kus ja millal loengud toimuvad?", "Millal sa viimati piiblit lugesid?", "Ma ei tea, millal ta tuleb.", "Millal kontsert algab?"],
     note: "küsiv-siduv sõna: mis ajal",
+    semanticTypes: ["ADV_aeg"],
     rus: ["когда", "когда же"], ukr: ["коли"],
   },
   {
@@ -7174,6 +7828,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Milline kunst sulle meeldib?", "Millisest ajalehest sa seda lugesid?", "Kes teab, millist elu nad vahepeal on elanud.", "See oli pidu, millist pole siinkandis ammu nähtud."],
     note: "küsiv-siduv sõna: esineb mingi omaduse või valiku täpsustamisel ning täpsustava lauseosa algul",
+    semanticTypes: [],
     rus: ["какой", "который"], ukr: ["який"],
   },
   {
@@ -7185,6 +7840,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minu nimi on Margarita.", "Üks mis selge: majandusinimest minust ei saa.", "See on minu vend.", "Ta armastab mind."],
     note: "sõna, mida kõneleja kasutab endale osutamiseks",
+    semanticTypes: ["esitus_keel", "inimene"],
     rus: ["я"], ukr: ["я"],
   },
   {
@@ -7196,6 +7852,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction) · millega (comitative) · mida tegema · mille peale",
     usages: ["Matilda läks ees, Mattias tema järel.", "Kas lähme jalgsi või autoga?", "Vaatasime kaldal, kuidas laev läheb.", "Poisid läksid kinno."],
     note: "(eemaldudes) liikuma (käima, sõitma vms)",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["идти", "пойти"], ukr: ["іти", "піти"],
   },
   {
@@ -7207,6 +7864,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Skandaali tõttu nõuti ministrilt tagasiastumist.", "Valitsevasse parteisse kuuluvad ministrid.", "Kohtuminister.", "Sõjaminister."],
     note: "valitsuse liige, kes hrl juhib teatud valitsemisala ministeeriumi",
+    semanticTypes: ["in_roll"],
     rus: ["министр"], ukr: ["міністр"],
   },
   {
@@ -7218,6 +7876,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kell on viis minutit seitse läbi.", "Buss tuleb viie minuti pärast.", "Kell on kümme minutit kuus läbi.", "Ta jäi paar minutit hiljaks."],
     note: "1/60 tundi, 60 sekundiga võrduv ajaühik",
+    semanticTypes: ["aeg", "esitus_mõõt"],
     rus: ["минутка", "минуточка"], ukr: ["хвилина", "момент"],
   },
   {
@@ -7229,6 +7888,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mis su aadress on?", "Millega te rahul ei ole?", "Ta on mees, kes teab, mida tahab.", "Mis kell on?"],
     note: "küsiv-siduv sõna: esineb mingite asjaolude täpsustamisel otseses või kaudselt väljendatud küsimuses ning täpsustava lauseosa alguses",
+    semanticTypes: ["esitus_keel_suhtlus"],
     rus: ["что", "какой"], ukr: ["що", "який"],
   },
   {
@@ -7240,6 +7900,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sain kohe aru, et midagi on valesti.", "Sind on raske millegagi üllatada.", "Miski teeb talle muret.", "Kas midagi on juhtunud?"],
     note: "teadmata või lähemalt määratlemata ese, nähtus või asjaolu",
+    semanticTypes: ["konkr_omadus"],
     rus: ["что-то", "нечто"], ukr: ["щось", "ніщо"],
   },
   {
@@ -7251,6 +7912,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti keeles on sõna „rakett\" mitmetähenduslik.", "Tänaõhtune perekonnakontsert Põltsamaal on mitmetähenduslik sündmus."],
     note: "(sõna või väljendi kohta:) mitme eri tähendusega",
+    semanticTypes: ["omadus_kval"],
     rus: ["многозначный", "полисемантический"], ukr: [],
   },
   {
@@ -7262,6 +7924,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olukorra mitmetähenduslikkust oli raske alahinnata.", "Alalise elukoha mitmetähenduslikkus piiriülese pärimise korral Euroopa Liidus.", "Oskuskeeles püütakse mitmetähenduslikkust vältida."],
     note: "mitut moodi tõlgendatavus",
+    semanticTypes: ["abstr", "nähtus"],
     rus: ["неоднозначность", "многозначность"], ukr: [],
   },
   {
@@ -7273,6 +7936,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mitte ei tule meelde.", "Mitte ei vea!", "Ma ei saa sellega mitte kuidagi nõus olla.", "Sa ei tee seda mitte!"],
     note: "(rõhutav üldlaiend:) eitussõna, mis tugevdab väite eitust",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["не", "ни"], ukr: ["не", "ні"],
   },
   {
@@ -7284,6 +7948,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Need on mitteametlikud andmed.", "Mitteametlik maailmarekord."],
     note: "ametlikult vormistamata, kontrollimata või kinnitamata",
+    semanticTypes: ["omadus_kval"],
     rus: ["неофициальный", "неформальный"], ukr: [],
   },
   {
@@ -7295,6 +7960,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seda saab teha mitmel viisil.", "Kool on mitu korda nime vahetanud.", "Mitu aega tagasi olin tubli viskijooja.", "Vahistatud on mitmeid inimesi."],
     note: "märgib umbmäärast arvu (hrl rohkem kui kaks) või hulka",
+    semanticTypes: ["omadus"],
     rus: ["несколько", "сколько же"], ukr: ["кілька", "декілька"],
   },
   {
@@ -7306,6 +7972,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ruumi ühe seina moodustab hiiglaslik aken.", "Enamiku publikust moodustasid kooliõpilased.", "Suurema osa tema loomingust moodustavad romaanid.", "Tähed moodustavad sõnu, sõnad moodustavad lauseid."],
     note: "mingil kujul, millenagi olema, endast midagi kujutama",
+    semanticTypes: ["VERB_seisund"],
     rus: ["составлять", "составить"], ukr: ["складати", "скласти"],
   },
   {
@@ -7317,6 +7984,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Reumatoidartriit moonutab liigeseid.", "Valugrimass moonutas nägu.", "Ebaseaduslik kütuseäri moonutab ausat konkurentsi.", "Kirjutises on moonutatud fakte."],
     note: "teistsuguseks, hrl normaalsest kõrvalekalduvaks tegema",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["искажать", "исказить"], ukr: [],
   },
   {
@@ -7328,6 +7996,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kristlik moraal.", "Väikekodanlik moraal.", "Eetilised nõudmised advokaadile on väga kõrged – üliolulised on ausus ja kõrge moraal.", "Vanad kreeklased kurtsid pidevalt, kui lõdva moraaliga on etruski naised."],
     note: "ühiskonnas või mingis kogukonnas kujunenud väärtuste, põhimõtete ja käitumisnormide süsteem, mis võimaldab eristada õiget ja ebaõiget käitumist",
+    semanticTypes: ["abstr"],
     rus: ["мораль", "нравственность"], ukr: ["мораль", "наука"],
   },
   {
@@ -7339,6 +8008,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuriteo motiiv on esialgu teadmata.", "Teda kiusati taga poliitilistel motiividel.", "Tegutsemismotiiv.", "Käitumismotiiv."],
     note: "(käitumise, tegevuse) ajend või põhjus, tegutsema ergutav jõud või sund",
+    semanticTypes: ["abstr"],
     rus: ["причина", "повод"], ukr: [],
   },
   {
@@ -7350,6 +8020,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Töökeskkonna paranemisega suurenes ka töötajate motivatsioon.", "Õpilasel puudub motivatsioon õppida.", "Kui sul pole motivatsiooni oma tööd teha, siis järelikult oled sa vales kohas.", "Raske on leida motivatsiooni tippspordiga jätkamiseks."],
     note: "huvitatus, mis innustab töötama, õppima vm tegema, asjaolude kogum, mis ajendab inimest teatud viisil toimima",
+    semanticTypes: ["abstr"],
     rus: ["мотивация", "обоснование"], ukr: ["мотивація", "мотиви"],
   },
   {
@@ -7361,6 +8032,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · mida tegema · mida* (partitive) · millega (comitative)",
     usages: ["Väga raske on motiveerida noori Pärnusse tulema.", "Mis motiveerib sponsoreid?", "Kohus avaldas motiveeritud otsuse.", "Konklaavil pole kardinalidel kohustust oma otsust motiveerida."],
     note: "kedagi midagi (innustunult) tegema panema, hrl millegagi tema tahet mõjutades",
+    semanticTypes: ["VERB_abstr", "VERB_psühh_mõistus"],
     rus: ["мотивировать", "создавать мотивацию"], ukr: ["обґрунтовувати", "обґрунтувати"],
   },
   {
@@ -7372,6 +8044,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["DNA molekuli mudel.", "Kanada füüsik töötab matemaatiliste mudelitega, mille abil ta üritab seletada sulamis- ja külmumisprotsesse Gröönimaal.", "Mandala kui universumi mudel.", "Põhjamaade heaoluriigi mudel."],
     note: "uuritava keerulise objekti või nähtuse lihtsustatud (kolmemõõtmeline) kujutis või selle seoste matemaatiline kirjeldus, teoreetiline mõttekäik, mis aitab uuritavat paremini mõista",
+    semanticTypes: ["abstr/konkr", "esitus_kujutis"],
     rus: ["модель", "образец"], ukr: ["модель"],
   },
   {
@@ -7383,6 +8056,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["See on minu mugandus eri retseptidest.", "Tõnni nimi on mugandus katoliku pühaku Antoniuse nimest."],
     note: "miski, mis on teatud tingimustele, olukorrale vastavaks, sobivaks muudetud",
+    semanticTypes: ["abstr/konkr"],
     rus: ["приспособление", "приспосабливание"], ukr: [],
   },
   {
@@ -7394,6 +8068,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Muidugi tuleb ette näpukaid.", "Jah, muidugi.", "Pärast trenni olen muidugi väsinud.", "Kas sa tahad ka kooki? – Muidugi!"],
     note: "(rõhutav üldlaiend:) iseenesest mõista, nagu (kõigile) teada",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["несомненно", "безусловно"], ukr: ["зрозуміло", "звичайно"],
   },
   {
@@ -7405,6 +8080,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma ei taha kuskil mujal elada kui Eestis.", "Nad ei teagi, mis mujal maailmas toimub.", "Ta pole käinud kusagil mujal peale Prantsusmaa.", "Mind huvitab, kuidas mujal elatakse."],
     note: "teises, muus kohas",
+    semanticTypes: ["ADV_koht"],
     rus: ["в другом месте", "в других местах"], ukr: ["в іншому місці", "деінде"],
   },
   {
@@ -7416,6 +8092,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Soengust jääb mulje, nagu ei peseks ta pead.", "Pärast etendust vahetati muljeid.", "Reisimuljed.", "Kontserdimuljed."],
     note: "tähelepanekute põhjal, sündmuse vms mõjul tekkinud üldine ettekujutus, vaistlik arvamus või vahetu tunne",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["впечатление"], ukr: ["враження"],
   },
   {
@@ -7427,6 +8104,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Munast koorus esimene tibu.", "Tibu tuli munast välja.", "Viljastatud munadest arenevad töömesilased, viljastamata munadest lesed.", "Toores muna."],
     note: "linnu, putuka, roomaja munetav ümar või ovaalne moodustis, milles areneb järglane",
+    semanticTypes: ["objekt_loodus"],
     rus: ["яйцо", "шарик"], ukr: ["яйце"],
   },
   {
@@ -7438,6 +8116,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["J. V. Veski andis paljudele murdesõnadele terminoloogias uue sisu."],
     note: "murdekeeles esinev sõna",
+    semanticTypes: ["esitus_keel"],
     rus: ["диалектизм", "диалектное слово"], ukr: [],
   },
   {
@@ -7449,6 +8128,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas on üldse põhjust muret tunda?", "Olen mures sõbra tervise pärast.", "Mulle teevad muret arengud Vene poliitikas.", "Jagatud mure on pool muret."],
     note: "rõhuv sisemine rahutus ja hirm, mille kutsub esile ebameeldiv asjaolu, raske olukord või kahtlus, kas asjad ikka laabuvad",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["горе", "горесть"], ukr: ["тривога", "турбота"],
   },
   {
@@ -7460,6 +8140,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Murelik ema võttis ühendust õpetajaga.", "Uudis tegi majarahva murelikuks.", "Murelik nägu.", "Miks sa nii murelik oled?"],
     note: "mures olev, muretsev",
+    semanticTypes: ["omadus_psühh"],
     rus: ["озабоченный", "обеспокоенный"], ukr: ["стурбований", "занепокоєний"],
   },
   {
@@ -7471,6 +8152,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Karksi murrak.", "Kodavere murrak."],
     note: "murde paikkondliku eripäraga alajaotus, väikseim piirkondlik murdekuju",
+    semanticTypes: ["esitus_keel"],
     rus: ["говор", "местное наречие"], ukr: [],
   },
   {
@@ -7482,6 +8164,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mulgi murre.", "Eestirootsi murded."],
     note: "keele piirkondlik eripärane vorm, paikkondlik keelekasutus",
+    semanticTypes: ["esitus_keel"],
     rus: ["диалект", "наречие"], ukr: ["діалект", "наріччя"],
   },
   {
@@ -7493,6 +8176,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Must talaar.", "Must kass jooksis üle tee.", "Peigmees kandis musta ülikonda.", "Daam mustas."],
     note: "mulla, tõrva, öise taeva värvi",
+    semanticTypes: ["omadus_füüs_värv"],
     rus: ["чёрный", "тёмный"], ukr: ["чорний", "темний"],
   },
   {
@@ -7504,6 +8188,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Muusikale pühendatud elu.", "Peol mängis vali muusika.", "Klassikaline muusika.", "Millist muusikat sa kuulad?"],
     note: "kunstiliik, mille kunstilisi kujundeid luuakse helidega ja tajutakse helidena ning mis avaldub loomingu ja interpretatsiooni kujul",
+    semanticTypes: ["vald"],
     rus: ["музыка"], ukr: ["музика"],
   },
   {
@@ -7515,6 +8200,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Määrust muudeti.", "Kui ei saa muuta asju, muutkem suhtumist!", "Sündmus, mis muutis maailma.", "Lennuk muutis kurssi."],
     note: "teistsuguseks või teiseks tegema",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["менять", "изменять"], ukr: ["міняти", "змінювати"],
   },
   {
@@ -7526,6 +8212,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ühiskonnas on liiga palju muutujaid, et reformide tulemusi ette ennustada.", "Eristatakse sõltumatuid ja sõltuvaid muutujaid."],
     note: "matemaatiline objekt (suurus või sümbol), mille väärtus võib muutuda, nt sõltudes ülesandest (nt x võrrandis x + 2 = 5)",
+    semanticTypes: ["abstr"],
     rus: ["переменная", "изменяющаяся величина"], ukr: [],
   },
   {
@@ -7537,6 +8224,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "milleks (translative) · milliseks",
     usages: ["Olukord muutus järsult.", "Inimesed ei muutu üleöö.", "Elu on kõvasti muutunud.", "Seitsme aastaga on palju muutunud."],
     note: "teistsuguseks või teiseks saama",
+    semanticTypes: ["VERB_muutus"],
     rus: ["меняться", "изменяться"], ukr: ["мінятися", "змінюватися"],
   },
   {
@@ -7548,6 +8236,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema elus oleks vaja mingit muutust.", "Kõik ei suuda kiirete muutustega sammu pidada.", "Eluviisi muutus.", "Hinnamuutus."],
     note: "senisest erinevaks muutumine (sündmuse või protsessina)",
+    semanticTypes: ["nähtus", "sündmus"],
     rus: ["изменение", "перемена"], ukr: ["зміна", "переміна"],
   },
   {
@@ -7559,6 +8248,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma ei tea selle mõistatuse vastust, ütle ise.", "Mõistatuseks jäi, kust jõudsid ookeanile kuldkollased liblikad.", "See mees on mulle mõistatus.", "Ajaloo mõistatused."],
     note: "(küsimusena sõnastatud) teravmeelne, poeetiline kirjeldus, mille järgi tuleb ära arvata, kelle või millega on tegemist (nt Üks hani, neli nina – padi)",
+    semanticTypes: ["esitus"],
     rus: ["загадка", "ребус"], ukr: ["загадка"],
   },
   {
@@ -7570,6 +8260,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Riik on abstraktne mõiste.", "Postmodernismi mõiste tulek Eesti kirjandusruumi.", "Vaesus on suhteline mõiste.", "Arv ja number on mõisted, mis sageli segamini lähevad."],
     note: "mõtlemise üksus, tegelikkuse objektide (asjade ja nähtuste) esitus ideena inimese teadvuses",
+    semanticTypes: ["abstr", "esitus_keel"],
     rus: ["понятие", "понимание"], ukr: ["поняття"],
   },
   {
@@ -7581,6 +8272,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive)",
     usages: ["Alles nüüd mõistsin, millega olin hakkama saanud.", "Galerist peab mõistma kunsti ja tundma publikut.", "Nagunii naised ei mõista mehi ja mehed ei mõista naisi.", "Ma ei mõista, kuidas see võimalik on."],
     note: "mõistuse abil või tajudes milleski selgusele jõudma või selgusel olema",
+    semanticTypes: ["VERB_psühh", "VERB_psühh_mõistus"],
     rus: ["понимать", "понять"], ukr: ["розуміти", "зрозуміти"],
   },
   {
@@ -7592,6 +8284,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahvas eelistab mõistukõnele otsest väljaütlemist."],
     note: "kaudselt, vihjamisi räägitav jutt",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["аллегория", "иносказание"], ukr: [],
   },
   {
@@ -7603,6 +8296,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Narkoosi mõju kestis kaua.", "Ta on kas purjus või mingite ainete mõju all.", "Araabia kultuuri mõjud Euroopa kultuurile.", "Eesti keeles leidub saksa keele mõjusid."],
     note: "see, kui mingi kokkupuude kutsub milleski või kelleski esile füüsilise, füsioloogilise, psüühilise vm muutuse",
+    semanticTypes: ["abstr"],
     rus: ["влияние", "воздействие"], ukr: ["вплив", "дія"],
   },
   {
@@ -7614,6 +8308,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millele/kellele (allative) · millisena",
     usages: ["Krooniline väljamagamatus mõjub tervisele halvasti.", "Reklaam mõjus, juba järgmisel päeval olid huvilised kohal.", "On lapsi, kellele noomimine ja jutt ei mõju.", "Ravim mõjus kiiresti."],
     note: "füsioloogilist, psüühilist vm mõju, toimet avaldama",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["влиять", "повлиять"], ukr: ["впливати", "вплинути"],
   },
   {
@@ -7625,6 +8320,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive)",
     usages: ["Igasugune kaevandamine mõjutab keskkonda.", "Meedia mõjutab inimesi.", "Päike mõjutab naha kaudu ka immuunsüsteemi.", "Ärge laske end mõjutada müüja ilusast jutust."],
     note: "(füüsilist, psüühilist vm) mõju avaldama",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["влиять", "повлиять"], ukr: ["впливати", "вплинути"],
   },
   {
@@ -7636,6 +8332,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pimeduses värelev küünaldemeri oli mõjuv vaatepilt.", "Nime muutmiseks peab olema mõjuv põhjus."],
     note: "tugevat muljet tekitav",
+    semanticTypes: ["omadus_psühh"],
     rus: ["впечатляющий", "внушительный"], ukr: ["вражаючий", "ефектний"],
   },
   {
@@ -7647,6 +8344,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aga kui mõni tuleb?", "Mõnel teist on veel maksmata.", "Kaua sa valid, osta mõni ära!", "Tuleb mõne muu võimaluse järele vaadata."],
     note: "märgib või osutab lähemalt määratlemata isikut, eset või olukorda",
+    semanticTypes: ["abstr", "abstr/konkr"],
     rus: ["кто-то", "кто-нибудь"], ukr: ["хтось", "якийсь"],
   },
   {
@@ -7658,6 +8356,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Reede õhtu on mõnikord vaba.", "Mõnikord sai kinos käidud.", "Mõnikord on targem vaikida kui rääkida.", "Mõnikord juhtub imesid."],
     note: "mõne aja tagant (kordudes), mõnel juhul (ette tulles)",
+    semanticTypes: ["ADV_aeg"],
     rus: ["временами", "время от времени"], ukr: ["іноді", "інколи"],
   },
   {
@@ -7669,6 +8368,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on terve elu pidanud taluma mõnitusi ja narrimist.", "Nagu mõnituseks pidid Saksa sõjaväekalmistu üles kündma saksa sõjavangid ise."],
     note: "alandav, solvav pilge või tegu",
+    semanticTypes: ["tegevus_kõnetegu", "tegevus_tegu"],
     rus: ["глумление", "издевательство"], ukr: [],
   },
   {
@@ -7680,6 +8380,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellest/millest (elative) · kellele/millele (allative) · kelle/mille peale",
     usages: ["Pean asjad enda jaoks selgeks mõtlema.", "Ära kohe vasta, mõtle enne natuke.", "Inimesed ei mõtle, mida nad ütlevad.", "Millest sa mõtled?"],
     note: "mõistuse abil seoseid leidma ja järeldusi tegema (nt mingi probleemi lahendamiseks, selguse saamiseks)",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["думать", "подумать"], ukr: ["думати", "подумати"],
   },
   {
@@ -7691,6 +8392,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Loogiline mõtlemine.", "Analüütiline mõtlemine.", "Abstraktne mõtlemine.", "Matemaatika arendab loogilist mõtlemist."],
     note: "vaimne protsess, mis seisneb tegelikkuse loogilis-abstraktses tunnetamises mõistete ja kujundite alusel",
+    semanticTypes: ["tegevus"],
     rus: ["мышление"], ukr: ["мислення"],
   },
   {
@@ -7702,6 +8404,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sama mõttekäiku võiks edasi arendada muudelegi valdkondadele.", "Ma ei suutnud kõneleja mõttekäike jälgida.", "Vanemas eas mõttekäik aeglustub."],
     note: "omavahel seostuvad, haakuvad mõtted",
+    semanticTypes: ["abstr"],
     rus: ["ход мысли", "течение мысли"], ukr: ["хід думок", "плин думок"],
   },
   {
@@ -7713,6 +8416,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Väljaku mõõtmed on 8 × 16 m.", "Ruumil on kolm mõõdet.", "Minimalistlike mõõtmetega auto.", "Ei ole küll paks telefon, kuid mõõtmetelt ikka väga suur."],
     note: "maa-ala, ruumi või eseme pikkus, laius, kõrgus vm mõõdetav ulatus",
+    semanticTypes: ["omadus_füüs"],
     rus: ["размер", "размерность"], ukr: ["розмір", "обсяг"],
   },
   {
@@ -7724,6 +8428,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vererõhku mõõtma.", "Müra mõõdetakse detsibellides.", "Pärnu lahes mõõdeti jää paksust.", "Mida see aparaat mõõdab?"],
     note: "arvulist suurust, mahtu või hulka (mingi mõõtevahendi abil) kindlaks määrama",
+    semanticTypes: ["VERB_abstr", "VERB_tegevus"],
     rus: ["мерить", "измерять"], ukr: ["міряти", "поміряти"],
   },
   {
@@ -7735,6 +8440,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Otepää ümbruse mäed.", "Mäe otsast avanesid imelised vaated.", "Fuji on jaapanlastele püha mägi.", "Tenerifel üürisime auto ja sõitsime mägedesse."],
     note: "ümbritsevast alast kõrgem pinnamoodustis (ka nt kelgu-, suusamägi)",
+    semanticTypes: ["koht_loodus"],
     rus: ["гора", "горка"], ukr: ["гора"],
   },
   {
@@ -7746,6 +8452,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lapsepõlvest on mul head mälestused.", "Purunenud armastusest jääb mälestus igaveseks.", "Minevikumälestus.", "Noorusmälestus."],
     note: "mällu jäänud, mälus talletunud elamus või taju",
+    semanticTypes: ["abstr/konkr", "tegevus_tegu"],
     rus: ["воспоминание", "память"], ukr: ["спогад", "спомин"],
   },
   {
@@ -7757,6 +8464,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive)",
     usages: ["Vanaproua mäletab aegu, mil tomatit söödi suhkruga.", "Ma ei mäleta oma vanaisa.", "Kas mäletad meie esimest kohtumist?", "Ma ei mäleta enam, kuhu ma oma prillid panin."],
     note: "kellelgi meeles olema, mälus säilima",
+    semanticTypes: ["VERB_psühh"],
     rus: ["помнить", "вспоминать"], ukr: ["памʼятати"],
   },
   {
@@ -7768,6 +8476,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tal on suurepärane mälu.", "Õnnetuse tagajärjel kaotas naine mälu.", "Kui mu mälu ei peta, siis ..", "Raivol on hea mälu – ta ei unusta kunagi inimeste nimesid."],
     note: "inimese võime talletada, säilitada ja taasesitada informatsiooni, kasutada kogemust",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["память", "накопитель"], ukr: ["памʼять"],
   },
   {
@@ -7779,6 +8488,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vana aja lapsed mängisid teisi mänge.", "Tennist peetakse aristokraatlikuks mänguks.", "Keeletundides käis kogu õppetöö mängu kaudu.", "Võtke mind ka mängu."],
     note: "teatud reeglitega meelelahutuslik või sportlik tegevus",
+    semanticTypes: ["tegevus_mäng"],
     rus: ["игра", "токование"], ukr: ["гра"],
   },
   {
@@ -7790,6 +8500,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · millega (comitative) · keda/mida* (partitive)",
     usages: ["Mängiks „Monopoli”?", "Eva mängib nukkudega, aga Kaiele ei meeldi nad üldse.", "Käin kaks korda nädalas hokit mängimas.", "Noor vutistaar mängib nüüd Inglismaal."],
     note: "meelelahutusliku või sportmänguga tegelema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["играть", "поиграть"], ukr: ["грати", "пограти"],
   },
   {
@@ -7801,6 +8512,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sain vihma käes üleni märjaks.", "Riided kõik higist märjad.", "Metsaalune on väga märg.", "Panin märja pesu kuivama."],
     note: "rohkesti vett vm vedelikku sisaldav, sellest läbi imbunud või sellega pealt kaetud",
+    semanticTypes: ["omadus_füüs"],
     rus: ["мокрый", "на мокром месте"], ukr: ["мокрий", "вологий"],
   },
   {
@@ -7812,6 +8524,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Juhendaja märkustest oli palju abi.", "Joonealune märkus.", "Autor on tänulik kõigi asjakohaste märkuste eest.", "Kolleeg pillas esineja kohta paar sapist märkust."],
     note: "lühike suuline või kirjalik selgitus või arvamusavaldus",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["замечание", "примечание"], ukr: ["зауваження", "замітка"],
   },
   {
@@ -7823,6 +8536,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Märts on kevade esimene kuu."],
     note: "aasta 3. kuu, põhjapoolkeral esimene kevadkuu",
+    semanticTypes: ["aeg_kuu"],
     rus: ["март", "протальник"], ukr: ["березень"],
   },
   {
@@ -7834,6 +8548,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Töötasu viidi vastavusse vastutuse määraga.", "Joogi valitseb oma mõtteid sellise määrani, et tal neid enam ei olegi.", "See ei huvita mind vähimalgi määral.", "Kompaktlambid sisaldavad vähesel määral elavhõbedat."],
     note: "millegi hulk või tase",
+    semanticTypes: ["kogus"],
     rus: ["мера", "размер"], ukr: ["величина", "обсяг"],
   },
   {
@@ -7845,6 +8560,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelleks (translative) · kellele (allative)",
     usages: ["Ema soovis, et kohus määraks lapsed elama tema juurde.", "Preemia määrati noorele heliloojale.", "Raske depressiooni ravi määrab arst.", "Kui kauaks õiguskantsler ametisse määratakse?"],
     note: "(ametlikult) otsustama, sellekohast korraldust või käsku andma",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["назначать", "назначить"], ukr: ["призначати", "призначити"],
   },
   {
@@ -7856,6 +8572,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kahjuks seadus ei määratle mõistet „mõistlikkuse piir”.", "Seaduses tuleb kõik mõisted selgelt määratleda.", "Käesolevas dokumendis määratletakse projekti raamid.", "Kolmas Pierce'i seadus määratleb neutraalse keele tingimused."],
     note: "mõiste sisu või sõna tähendust seletama, sõnadega kirjeldama",
+    semanticTypes: ["VERB_psühh_mõistus", "tegevus"],
     rus: ["определять", "определить"], ukr: ["визначати", "визначити"],
   },
   {
@@ -7867,6 +8584,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: [], ukr: [],
   },
   {
@@ -7878,6 +8596,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uuele nähtusele polnud veel keegi täpset määratlust andnud.", "Mõiste määratlus oli pisut ebaselge."],
     note: "mõiste esitus lühikese kirjeldava lausungina, hrl sisaldades lähimat üldisemat mõistet (ülemmõistet) ja olulisi eritunnuseid",
+    semanticTypes: ["esitus"],
     rus: ["определение", "дефиниция"], ukr: ["визначення", "дефініція"],
   },
   {
@@ -7889,6 +8608,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Määrdunud jalatsid jäta esikusse.", "Sain määrdunud numbrimärgi eest trahvi.", "Kokk tuli jalgu lohistades uksele, valge põll ees ja määrdunud lontis kokamüts peas.", "Kui pakend jääb oluliselt määrdunuks, siis tuleb see panna segaolmejäätmete kasti."],
     note: "(mingi ainega kokkupuutumise tõttu) ebapuhas",
+    semanticTypes: ["omadus", "seisund_füüs"],
     rus: ["грязный", "нечистый"], ukr: [],
   },
   {
@@ -7900,6 +8620,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sotsiaalministri määrus.", "Maakohtu määrus.", "Seisundimäärus.", "Määrus on siduv õigusakt. Seda tuleb tervikuna kohaldada kogu ELis."],
     note: "täidesaatva võimu poolt välja antav seadusest madalam õigusakt",
+    semanticTypes: ["ese_semio"],
     rus: ["постановление", "обстоятельство"], ukr: ["постанова", "ухвала"],
   },
   {
@@ -7911,6 +8632,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vahetasime kodus kogu mööbli välja.", "Ettevõte valmistab täispuidust mööblit.", "Sisseehitatud mööbel.", "Puitmööbel."],
     note: "ruumide, tubade sisustusesemed (nt lauad, toolid, kapid)",
+    semanticTypes: ["ese_instru"],
     rus: ["мебель"], ukr: ["меблі"],
   },
   {
@@ -7922,6 +8644,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hakati jala mööda teed astuma.", "Kutsikas vänderdas mööda põrandat.", "Keegi tuleb redelit mööda üles.", "Olen vaba inimene, kolan mööda linna, istun kohvikutes, käin näitustel."],
     note: "millegi pinnal edasi või mingi ala, ruumi piires (liikudes)",
+    semanticTypes: ["ADV_koht"],
     rus: ["по", "вдоль"], ukr: ["по", "уздовж"],
   },
   {
@@ -7933,6 +8656,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Noormees möönis, et ta teenib väga head palka.", "Tehtud vigu möönis ka valitsusjuht.", "Poliitik möönis, et on eksinud."],
     note: "(justkui vastu tahtmist) tunnistama, (järele andes) nõustuma",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["признавать", "признать"], ukr: ["визнавати", "визнати"],
   },
   {
@@ -7944,6 +8668,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võtsin mütsi peast.", "Kootud müts.", "Päkapikumüts.", "Pesapallimüts."],
     note: "hrl pehme (riidest, kootud) peakate",
+    semanticTypes: ["ese_riie"],
     rus: ["шапка", "шапочка"], ukr: ["шапка"],
   },
   {
@@ -7955,6 +8680,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative) · mille eest / millega",
     usages: ["Maalid müüdi oksjonil.", "Müü oma auto mulle!", "See maja on müüa.", "Juhan müüs oma auto Tõnule."],
     note: "raha eest, teatava hinnaga midagi andma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["продавать", "продать"], ukr: ["продавати", "продати"],
   },
   {
@@ -7966,6 +8692,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oleme Mariaga naabrid.", "Meie ülemised naabrid on väga lärmakad.", "Pall lendas naabri aeda.", "Saan oma naabritega hästi läbi."],
     note: "inimene, kes elab kõneleja või kõnealuse isiku kõrval või lähedal",
+    semanticTypes: ["in_omadus"],
     rus: ["сосед", "соседка"], ukr: ["сусід", "сусідка"],
   },
   {
@@ -7977,6 +8704,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Elu nagu seiklusfilmis.", "Trükikoda töötas nagu kellavärk.", "Tunne ennast nagu kodus.", "Parem tee nii, nagu ma ütlesin."],
     note: "esineb sarnasusele osutavates võrdlustes, alustab võrdluse varjundiga lauseosa",
+    semanticTypes: ["ADV_põhjus"],
     rus: ["как", "словно"], ukr: ["як", "наче"],
   },
   {
@@ -7988,6 +8716,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Praegu pole veel teada, kas hukkunu oli mees või naine.", "Kas meestel ja naistel on tööl võrdsed võimalused?", "Ukse taga seisis võõras naine.", "Antil on naine ja kaheaastane laps."],
     note: "(hrl täiskasvanud) naissoost inimene",
+    semanticTypes: ["inimene"],
     rus: ["женщина", "жена"], ukr: ["жінка", "дружина"],
   },
   {
@@ -7999,6 +8728,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative) · millega (comitative)",
     usages: ["Inimesed nakatuvad Siberi katku harva.", "Koer nakatub, kui puuk koera verest toitub.", "Tugevalt nakatunud lehed kipruvad.", "Arvuti nakatus tundmatu viirusega."],
     note: "nakkust, viirust saama, haigeks jääma",
+    semanticTypes: ["VERB_muutus", "VERB_seisund"],
     rus: ["заражаться", "заразиться"], ukr: ["заражатися", "заразитися"],
   },
   {
@@ -8010,6 +8740,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Bakteriaalne nakkus.", "Puukentsefaliit on vere kaudu leviv nakkus."],
     note: "haigustekitajate tungimine organismi ja sellest põhjustatud protsessid organismis",
+    semanticTypes: ["seisund_haigus"],
     rus: ["зараза", "заражение"], ukr: ["інфекція", "зараження"],
   },
   {
@@ -8021,6 +8752,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas ta tegi nalja või rääkis tõsiselt?", "Habemega nali.", "Vanasti korraldati õpetajatele selliseid nalju nagu knopka toolil või veepang ukse kohal.", "Eile sai kõvasti nalja (= naersime palju)."],
     note: "see, mida keegi ütleb või räägib, et teisi lõbustada ja naerma ajada",
+    semanticTypes: ["tegevus_kõnetegu", "tegevus_tegu"],
     rus: ["шутка", "потеха"], ukr: ["жарт"],
   },
   {
@@ -8032,6 +8764,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Naljakas lugu.", "Ma ei leidnud selles filmis mitte midagi naljakat.", "Üks naljakas asi, mida olen märganud, on meeste pikad küüned.", "Kuulsin täna ühte naljakat lugu."],
     note: "naerma ajav, lõbusat meeleolu tekitav",
+    semanticTypes: ["omadus_kval"],
     rus: ["смешной", "комичный"], ukr: ["смішний", "потішний"],
   },
   {
@@ -8043,6 +8776,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lobiseti, naljatati ja löödi klaase kokku.", "Nii tõsise asjaga ei naljatata.", "Üritasin naljatades sügavamast vestlusest kõrvale hiilida."],
     note: "nalja tegema, midagi mitte tõsiselt (mõelduna) ütlema või tegema",
+    semanticTypes: ["VERB_psühh", "VERB_suhtlus"],
     rus: ["шутить", "пошутить"], ukr: ["жартувати", "пожартувати"],
   },
   {
@@ -8054,6 +8788,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema kogemus poliitikuna on üsna napp.", "Nappide sõnadega võib öelda ootamatult palju.", "Valgust jäi napiks.", "Napi ajaga on suudetud küllalt palju ära teha."],
     note: "vähene, (hulgalt, koguselt, mõõtmetelt) vaevalt piisav",
+    semanticTypes: ["omadus"],
     rus: ["недостаточный", "скудный"], ukr: ["недостатній", "убогий"],
   },
   {
@@ -8065,6 +8800,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vastane oli natuke pabinas.", "Mõtlesin natuke, siis vastasin.", "Natuke piinlik on sinult abi paluda.", "Oota veel natuke!"],
     note: "vähesel määral või hulgal",
+    semanticTypes: ["ADV_aste"],
     rus: ["немножечко", "чуть-чуть"], ukr: ["трохи", "трошки"],
   },
   {
@@ -8076,6 +8812,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kakskümmend neli.", "Neli pluss neli.", "Autol on neli ratast.", "Kohtume kell neli."],
     note: "põhiarv 4",
+    semanticTypes: ["esitus_arv"],
     rus: ["четыре", "четверо"], ukr: ["чотири"],
   },
   {
@@ -8087,6 +8824,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Töö valmib neljapäevaks.", "Ilmajaam lubab neljapäevaks ja reedeks kohati kuni 25 kraadi sooja."],
     note: "nädala 4. päev, kolmapäevale järgnev ja reedele eelnev päev",
+    semanticTypes: ["aeg_nädalapäev", "esitus"],
     rus: ["четверг"], ukr: ["четвер"],
   },
   {
@@ -8098,6 +8836,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nemad küll süüdi pole.", "Nendel pole sellest sooja ega külma.", "See on nende probleem."],
     note: "osutab kahele või enamale inimesele (või olendile), kes ei ole ei kõnelejad ega kuulajad",
+    semanticTypes: ["esitus_keel", "inimene"],
     rus: ["они"], ukr: ["вони"],
   },
   {
@@ -8109,6 +8848,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ajakirjanik ei olnud täiesti neutraalne.", "Rootsi jäi neutraalseks mõlemas maailmasõjas.", "Neutraalne hinnang.", "Ehk tuleks arutelu korraldada neutraalsel pinnal, mitte ühe osapoole peakorteris."],
     note: "mitte kellegi poolt ega vastu, mitte kumbagi poolt eelistav",
+    semanticTypes: ["omadus_kval"],
     rus: ["нейтральный", "беспристрастный"], ukr: ["нейтральний", "безсторонній"],
   },
   {
@@ -8120,6 +8860,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nii asjad ei käi.", "Ta seisis nii, et ma ei näinud ta nägu.", "Tee nii.", "Tee nii, nagu ma näitan."],
     note: "sel kombel või viisil, seda moodi (nagu lause kontekstist teada, nagu keegi näitab või ütleb)",
+    semanticTypes: ["ADV_viis"],
     rus: ["так", "таким образом"], ukr: ["так", "таким чином"],
   },
   {
@@ -8131,6 +8872,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mis nime te oma lapsele panete?", "Kassipojal ei ole veel nime.", "Hotell nimega Palazzo.", "Mis su nimi on?"],
     note: "sõna või sõnaühend, mis eristab üht konkreetset olendit, kohta vm asja teiste omasarnaste seast (nt Laura, Tartu, Kiek in de Kök, Pärnu laht)",
+    semanticTypes: ["esitus_info", "abstr/konkr"],
     rus: ["имя", "название"], ukr: ["імʼя"],
   },
   {
@@ -8142,6 +8884,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nina nuuskama.", "Kui koera nina on kuiv ja kuum, siis on koer haige.", "Poisil hakkas ninast verd jooksma.", "Lapsel on nina kinni (= tugev nohu, nii et ei saa läbi nina hingata)."],
     note: "suu kohal paiknev väljaulatuv näoosa, mille kaudu toimub hingamine ja haistmine (inimesel ja selgroogsetel loomadel)",
+    semanticTypes: ["kehaosa"],
     rus: ["носик", "шнобель"], ukr: ["ніс"],
   },
   {
@@ -8153,6 +8896,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nõuti korda ning viisakust.", "Võiksime veiniklaasi taga kohtuda ning maailma asjad paika panna.", "Jõudsin kohale ja asusin kohe talitama ning toimetama.", "Mul on vaja su aadressi ning telefoninumbrit."],
     note: "(ühendavalt:) seob sisu poolest samaväärseid, võrreldavaid või loetletavaid sõnu, lauseosi või lauseid",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["и", "а также"], ukr: ["і", "й"],
   },
   {
@@ -8164,6 +8908,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Täisjõus noor mees.", "Noor põlvkond.", "Ta on selliste filmide jaoks veel liiga noor.", "Kristjan on alles noor mees."],
     note: "suhteliselt lühikest aega, vähe elanud",
+    semanticTypes: ["omadus_aeg"],
     rus: ["молодой", "юный"], ukr: ["молодий", "юний"],
   },
   {
@@ -8175,6 +8920,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Töötaja tööaja üldine norm on 40 tundi nädalas.", "Diislikütuse väävlisisaldus ületas normi.", "Vererõhk on normi piirides.", "Tööaja riiklik norm on 8 tundi päevas."],
     note: "ettenähtud või kokkulepitud hulk, kogus, tase, suurus vm",
+    semanticTypes: ["esitus_mõõt"],
     rus: ["норма", "норматив"], ukr: ["норма"],
   },
   {
@@ -8186,6 +8932,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema sünnipäev on novembri lõpus."],
     note: "aasta 11. kuu, põhjapoolkeral kolmas sügiskuu",
+    semanticTypes: ["aeg_kuu", "esitus"],
     rus: ["ноябрь", "грудень"], ukr: ["листопад"],
   },
   {
@@ -8197,6 +8944,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mistahes arvu nulliga korrutamine annab vastuseks nulli.", "Mitme nulliga kirjutatakse miljon?", "Viis miinus null on viis (5 – 0 = 5).", "Miljon kirjutatakse kuue nulliga."],
     note: "põhiarv 0",
+    semanticTypes: ["esitus_arv"],
     rus: ["ноль", "нуль"], ukr: ["нуль"],
   },
   {
@@ -8208,6 +8956,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tähtedest ja numbritest koosnev salasõna.", "Summa numbritega.", "Numbrid ühest kümneni.", "Summa tuli kirjutada nii sõnade kui ka numbritega."],
     note: "arvu tähistav sümbol, selle kirjamärk",
+    semanticTypes: ["esitus_info"],
     rus: ["цифра", "номер"], ukr: ["цифра", "номер"],
   },
   {
@@ -8219,6 +8968,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ökodukt ei lähe risti üle tee, vaid on 137-kraadise nurgaga tee telje suhtes.", "Lennuk kukkus alla järsu nurga all.", "Kolmnurga nurkade summa on 180°.", "Igaüks näeb asju oma nurga alt."],
     note: "vahemaa kahe lõikuva joone või pinna vahel, mida mõõdetakse hrl kraadides nende lõikumiskoha lähedalt",
+    semanticTypes: ["esitus_mõõt"],
     rus: ["угол", "угол зрения"], ukr: ["кут", "ріг"],
   },
   {
@@ -8230,6 +8980,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nadja oli nutikas tüdruk.", "Nutikas lahendus.", "Uue põlvkonna nutikad segistid.", "Türgi hävitajad kasutasid nutikaid pomme."],
     note: "hea taibuga, terase aruga, (kavalalt) leidlik",
+    semanticTypes: ["nähtus_psühh", "omadus_psühh"],
     rus: ["находчивый", "изобретательный"], ukr: [],
   },
   {
@@ -8241,6 +8992,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ründaja otsib nõrku vastaseid.", "Nõrk iseloom.", "Nõrk käepigistus.", "Haige on palavikust nõrk."],
     note: "(inimese, ka looma kohta:) selline, kellel on vähe keha- või vaimujõudu",
+    semanticTypes: ["omadus_füüs"],
     rus: ["слабый", "мягкий"], ukr: ["слабкий", "одиниця"],
   },
   {
@@ -8252,6 +9004,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oma nõu peab kaasas olema, kui piima tooma lähed.", "Kaasa pesi köögis nõusid.", "Koorenõu.", "Veenõu."],
     note: "ese millegi mahutamiseks, hoidmiseks või toidu tegemiseks (nt ämber, purk, pott, pann)",
+    semanticTypes: ["ese_anum"],
     rus: ["посуда", "контейнер"], ukr: ["посудина", "посуд"],
   },
   {
@@ -8263,6 +9016,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hind muutub vastavalt nõudlusele ja pakkumisele.", "Välismaine nõudlus kasvab püsivalt.", "Suurtele kogustele puudub nõudlus.", "Uute korterelamute puhul ületab nõudlus pakkumist."],
     note: "ostujõuline nõudmine mingi toote või teenuse järele, oodatav kogus, mida tarbijad soovivad ja suudavad osta",
+    semanticTypes: ["abstr/konkr"],
     rus: ["спрос", "рыночный спрос"], ukr: [],
   },
   {
@@ -8274,6 +9028,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · kellelt (ablative)",
     usages: ["Prokurör nõudis rangemat karistust.", "Laps jonnib ja nõuab sülle.", "Naine nõuab lahutust.", "„Räägi!” nõudis teine."],
     note: "mingit soovi, tahtmist väga kindlalt esitama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["требовать", "потребовать"], ukr: ["вимагати", "зажадати"],
   },
   {
@@ -8285,6 +9040,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega/millega (comitative) · mida tegema",
     usages: ["Nõustun esineja väitega, et ..", "Valitsus nõustus kulusid hüvitama.", "Algul ei tahtnud ta kinno tulla, kuid siis nõustus.", "Nõustun sinuga."],
     note: "mingis asjas nõusse jääma, milleski ühel meelel olema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["соглашаться", "согласиться"], ukr: ["погоджуватися", "погодитися"],
   },
   {
@@ -8296,6 +9052,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tallinna börsil algas nädal sündmustevaeselt.", "Ma käin kaks korda nädalas trennis.", "Õnnetus juhtus nädala eest.", "Nägin teda viimati paar nädalat tagasi."],
     note: "seitsmepäevane ajavahemik esmaspäevast pühapäevani (ingliskeelsetes maades pühapäevast laupäevani)",
+    semanticTypes: ["aeg"],
     rus: ["неделя", "нед."], ukr: ["тиждень"],
   },
   {
@@ -8307,6 +9064,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mida te nädalavahetusel teete?", "Käisime nädalavahetusel maal."],
     note: "laupäev ja pühapäev (hrl kui puhkepäevad)",
+    semanticTypes: ["aeg"],
     rus: ["выходные дни", "конец недели"], ukr: ["вихідні дні", "вікенд"],
   },
   {
@@ -8318,6 +9076,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · keda* (partitive) · mida* (partitive)",
     usages: ["Vasaku silmaga ma hästi ei näe.", "Viimati nähti meest sadamas.", "Kas sa oled kuskil mu prille näinud?", "Ma ei näe ilma prillideta hästi."],
     note: "silmade abil esemeid ja keskkonda tajuma",
+    semanticTypes: ["VERB_psühh"],
     rus: ["видеть", "увидеть"], ukr: ["бачити", "побачити"],
   },
   {
@@ -8329,6 +9088,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpetaja tõi näiteid hariduse kasulikkuse kohta.", "See on silmakirjalikkuse ere näide.", "Projekt „Linn kui elukeskkond Narva linna näitel”.", "See on vaid üks näide ebaõiglase käitumise kohta."],
     note: "üksiknähtus (ese, olend, fakt, sündmus vm) millegi üldisema ilminguna, esinemisjuhuna",
+    semanticTypes: ["abstr", "abstr/konkr"],
     rus: ["пример", "экзампль"], ukr: ["приклад"],
   },
   {
@@ -8340,6 +9100,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Shakespeare'i näidendid.", "Ta mängib näidendis peaosa."],
     note: "hrl laval esitamiseks mõeldud dialoogivormis kirjandusteos",
+    semanticTypes: ["ese_kunst", "ese_semio", "tegevus_tegu"],
     rus: ["пьеса", "спектакль"], ukr: ["п’єса"],
   },
   {
@@ -8351,6 +9112,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eestis on raseduse katkestamine meditsiinilisel näidustusel lubatud 21. rasedusnädala lõpuni."],
     note: "põhjus või tingimus, mille korral mingi ravivõte, ravim või protseduur on vajalik või soovitatav",
+    semanticTypes: ["abstr"],
     rus: ["показание", "индикация"], ukr: [],
   },
   {
@@ -8362,6 +9124,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Monitori tehnilised näitajad.", "Netikommentaarid on osalt rahva kultuuritaseme näitaja.", "Auto hind sõltub paljudest tehnilistest näitajatest."],
     note: "mingit eset, seadet, nähtust vm iseloomustav suurus, tunnus vm asjaolu",
+    semanticTypes: ["omadus", "esitus_arv"],
     rus: ["характеристика", "характеристическая кривая"], ukr: ["показник", "параметр"],
   },
   {
@@ -8373,6 +9136,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rooibos leevendavat mitmeid terviseprobleeme, näiteks unetust, pingeid ja peavalu.", "Võib teha ka nii, et toon sulle raamatud näiteks kolmapäeval tagasi.", "Ta räägib mitut keelt, näiteks inglise ja prantsuse keelt.", "Mina näiteks ei nõua kellegi tagasiastumist."],
     note: "näitena mitme või paljude hulgast (ka väljapakutava võimaluse kohta)",
+    semanticTypes: ["esitus"],
     rus: ["например", "к примеру"], ukr: ["наприклад", "для прикладу"],
   },
   {
@@ -8384,6 +9148,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpilastööde näitus.", "Näitus jääb avatuks sügiseni.", "Kas sa Andy Warholi näitusel käisid?", "Käsitöönäitus."],
     note: "vaatamiseks, tutvumiseks väljapandud kunstiteosed vm esemed",
+    semanticTypes: ["ese_kunst", "sündmus"],
     rus: ["выставка", "экспозиция"], ukr: ["виставка"],
   },
   {
@@ -8395,6 +9160,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laia ulatusega nüansirikas hääl."],
     note: "paljude varjunditega, peente erijoontega",
+    semanticTypes: ["omadus_kval"],
     rus: ["богатый нюансами"], ukr: [],
   },
   {
@@ -8406,6 +9172,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nüüd on ka minu kannatus katkenud.", "Ja nüüd koju magama?", "Nüüd ei ole enam hommik, vaid päev juba.", "Aini senise elu võib jagada kaheks: enne ja nüüd."],
     note: "käesoleval ajahetkel või seda hõlmaval lühemal või pikemal ajalõigul",
+    semanticTypes: ["ADV_aeg"],
     rus: ["теперь", "в настоящее время"], ukr: ["тепер", "зараз"],
   },
   {
@@ -8417,6 +9184,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tollide kehtestamine on objektiivne vajadus.", "Mineraalide objektiivne omadus on nende tihedus ja magnetilisus.", "Objektiivsed ja subjektiivsed asjaolud.", "Peegel on objektiivne."],
     note: "reaalsusel, käesoleval olukorral põhinev, sellele vastav või sellest tulenev",
+    semanticTypes: ["omadus_kval"],
     rus: ["объективный", "непредвзятый"], ukr: ["обʼєктивний", "неупереджений"],
   },
   {
@@ -8428,6 +9196,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ostsin odava auto.", "Elekter on praegu suhteliselt odav.", "Selles poes on väga odavad kaubad.", "Eelistan odavale hinnale kvaliteeti."],
     note: "vähe raha maksev, madala hinnaga",
+    semanticTypes: ["omadus_füüs"],
     rus: ["дешёвый"], ukr: ["дешевий"],
   },
   {
@@ -8439,6 +9208,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Taimed istutatakse avamaale, kui öökülmade oht on möödas.", "Arsti sõnul haige elu enam ohus ei ole.", "Mehel on oht kaotada töö.", "Lastele räägiti internetis varitsevatest ohtudest."],
     note: "olukord, kus ähvardab mingi ebaõnn või õnnetus",
+    semanticTypes: ["abstr/konkr", "seisund"],
     rus: ["опасность", "угроза"], ukr: ["небезпека", "загроза"],
   },
   {
@@ -8450,6 +9220,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ohtrasõnaline armutõotus."],
     note: "palju sõnu sisaldav",
+    semanticTypes: ["omadus_füüs"],
     rus: ["многословный", "пространный"], ukr: [],
   },
   {
@@ -8461,6 +9232,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oktoober oli külm ja vihmane."],
     note: "aasta 10. kuu, põhjapoolkeral teine sügiskuu",
+    semanticTypes: ["aeg_kuu", "esitus"],
     rus: ["октябрь", "листопад"], ukr: ["жовтень"],
   },
   {
@@ -8472,6 +9244,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nõukogude okupatsioon.", "Saksa okupatsioon."],
     note: "võõra riigi või selle osa ajutine hõivamine teise riigi relvajõududega",
+    semanticTypes: ["seisund"],
     rus: ["оккупация"], ukr: ["окупація"],
   },
   {
@@ -8483,6 +9256,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olla või mitte olla?", "On nähtusi, mida teadlased ei ole suutnud seletada.", "Riik lakkas olemast.", "Ei ole head ilma halvata."],
     note: "väljendab kellegi või millegi eksisteerimise, olemasolu fakti",
+    semanticTypes: ["VERB_seisund"],
     rus: ["быть", "бывать"], ukr: ["бути", "існувати"],
   },
   {
@@ -8494,6 +9268,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Te vist ei saa probleemi olemusest aru?", "Seksuaalsus on inimese olemuse osa.", "Poiss meenutab välimuselt ja olemuselt oma isa.", "Tunnis selgitati õpilastele demokraatia olemust."],
     note: "seesmine loomus, asja või nähtuse sisu",
+    semanticTypes: ["omadus_abstr"],
     rus: ["суть", "сущность"], ukr: ["суть", "сутність"],
   },
   {
@@ -8505,6 +9280,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõistlik oleks määrata lapse vanusest olenev kindel aeg voodisse minekuks.", "Kui koolitus meist oleneval põhjusel ära jääb, tagastame koolitustasu 100%.", "Kustutasin osa teksti, mida pidasin liiga isiklikuks ja meeleolust olenevaks.", "Teeme kõik endast oleneva, et seda ei juhtuks."],
     note: "millestki või kellestki määratav või (oluliselt) mõjutatav",
+    semanticTypes: ["omadus_abstr"],
     rus: ["зависящий", "зависящее"], ukr: [],
   },
   {
@@ -8516,6 +9292,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · et",
     usages: ["Analüütikud oletavad, et firma läheb pankrotihalduri kätte.", "Tule tekkimise põhjus on seni selgitamata, kuid külaelanikud oletavad süütamist.", "Võib oletada, et see münt on pärit 15. sajandist.", "Politsei oletab, et röövel oli välismaalane."],
     note: "ebapiisava andmestiku või kogemuse põhjal midagi väitma või arvama",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["предполагать", "предположить"], ukr: ["припускати", "припустити"],
   },
   {
@@ -8527,6 +9304,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Esialgse oletuse põhjal süttis maja hooletu suitsetamise tõttu.", "Kõik on vaid teoreetilised oletused!"],
     note: "ebapiisavale teadmisele tuginev, (seni) tõestamata väide või kujutelm",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["предположение", "догадка"], ukr: ["припущення", "гіпотеза"],
   },
   {
@@ -8538,6 +9316,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olukord muutus kümme aastat tagasi.", "Igatahes tuli olukorrale varsti lahendus leida.", "Majandusolukord.", "Hetkeolukord."],
     note: "asjade üldine olek, seis teatud ajahetkel",
+    semanticTypes: ["seisund"],
     rus: ["обстоятельства", "условия"], ukr: ["ситуація", "обставини"],
   },
   {
@@ -8549,6 +9328,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suurte poiste mängud ei erine oluliselt väikeste poiste mängudest.", "Ta on oma abikaasast oluliselt noorem.", "Isa tervis pole oluliselt paranenud."],
     note: "olulisel määral, palju",
+    semanticTypes: ["ADV_aste"],
     rus: ["существенно", "значительно"], ukr: ["істотно", "значно"],
   },
   {
@@ -8560,6 +9340,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Söö oma kõht täis!", "Ta on oma eluga rahul.", "Tema oma jonni ei jäta.", "Laused on Lutsu omad, seosed nende vahel kuuluvad Undile."],
     note: "viitab kuulumisele tegevuse tegijale, viitab millelegi, mis pärineb kelleltki või kuskilt",
+    semanticTypes: ["omadus"],
     rus: ["свой", "себя"], ukr: ["свій", "своя"],
   },
   {
@@ -8571,6 +9352,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uuendused võeti kiiresti omaks.", "Võtab aega, et laps uue kasuvanema omaks võtaks.", "Laulja tänas väga Eesti publikut, kes ta omaks võttis.", "Lapsed võtsid noore õpetaja ruttu omaks."],
     note: "millegagi harjuma, seda tunnustama ja sellega arvestama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["признавать своим", "признать своим"], ukr: ["визнавати своїм", "визнати своїм"],
   },
   {
@@ -8582,6 +9364,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Teose õigused omandas kirjaniku lesk.", "Riik võib omandada osalusi aktsiaseltsides.", "Omandasin oskuse, kuidas nii väikses seltskonnas ennetada konflikte.", "Laps omandab keele märkamatult."],
     note: "midagi endale omandiks soetama või saama",
+    semanticTypes: ["VERB_abstr", "VERB_tegevus"],
     rus: ["получать", "получить"], ukr: ["освоювати", "освоїти"],
   },
   {
@@ -8593,6 +9376,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Krundi õigusjärgne omanik.", "Auto vahetas omanikku.", "Koer leidis uue omaniku Soomes.", "Laevaomanik."],
     note: "see, kellele miski omandina kuulub",
+    semanticTypes: ["in_tegija"],
     rus: ["собственник", "собственница"], ukr: ["власник"],
   },
   {
@@ -8604,6 +9388,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vürtsikas ja omapärase maitsega ingver on mitmekülgselt kasulik.", "Väga omapärane ja põnev koht.", "Ta on huvitav ja omapärane inimene.", "Ta on väga omapärase välimusega."],
     note: "oma (kummalise) eripäraga, teistest või tavalisest (tugevasti) erinev, millegi poolest isesugune",
+    semanticTypes: ["omadus_kval"],
     rus: ["своеобразный", "самобытный"], ukr: ["специфічний", "особливий"],
   },
   {
@@ -8615,6 +9400,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suur suvi oli nüüd viimaks ometi käes.", "Ega ometi mina kahtlusalune ole?", "Oleks ometi proovid korras!", "Kuula ometi."],
     note: "rõhutab kergendustunnet, imestust, pahameelt või tugevdab käsku, soovi",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["же", "ведь"], ukr: ["же", "ж"],
   },
   {
@@ -8626,6 +9412,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · kellelt (ablative) · millest (elative) · mida* (partitive)",
     usages: ["Peatuses ootas bussi kaks inimest.", "Takso ootab maja ees.", "Ema on juba kümme aastat oma kadunud poega koju oodanud.", "Ootasime bussi kaks tundi."],
     note: "kuskil viibima, arvestades, et teatud aja möödumisel keegi või miski saabub või toimub",
+    semanticTypes: ["VERB_psühh", "VERB_seisund"],
     rus: ["ждать", "подождать"], ukr: ["чекати", "почекати"],
   },
   {
@@ -8637,6 +9424,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Asi on võtnud minu jaoks ootamatu pöörde.", "Tõnu surm oli ootamatu.", "Kõrvuti on ootamatuid värvikombinatsioone, aga kõik sobib.", "Ootamatute asjaolude tõttu pean kohe ära sõitma."],
     note: "selline, mida (või keda) ei osatud oodata, ette näha või aimata",
+    semanticTypes: ["omadus_kval"],
     rus: ["неожиданный", "нежданный"], ukr: ["несподіваний", "неочікуваний"],
   },
   {
@@ -8648,6 +9436,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Riigikogu opositsioon proovis eelnõu teist lugemist katkestada.", "Linnavolikogu opositsioon.", "Valimisliit Vastutus jäi opositsiooni.", "Opositsioonis olevad vabariiklased."],
     note: "(poliitikas:) erakond, poliitikute rühm või poliitik, kes seab oma seisukohti vastu võimul olijate seisukohtadele kas parlamendis või riigis üldisemalt",
+    semanticTypes: ["abstr_asend/suund", "in_roll"],
     rus: ["оппозиция", "противостояние"], ukr: ["опозиція"],
   },
   {
@@ -8659,6 +9448,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Gravüüride originaalid asuvad Läänemaa muuseumis.", "Isegi tema positsiooniga meest ei lubatud tutvuda salaprotokollide originaalidega.", "Teose originaal ilmus 2011. aastal."],
     note: "algupärane teos või esialgsel kujul dokument (vastandatult tõlkele, koopiale, reproduktsioonile vms)",
+    semanticTypes: ["ese_kunst", "ese_semio"],
     rus: ["оригинал", "подлинник"], ukr: ["оригінал", "першотвір"],
   },
   {
@@ -8670,6 +9460,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tuuleenergia osakaalult oleme maailmas esikümnes.", "Tööealiste osakaal rahvastikus väheneb 2040. aastaks 160 000 inimese võrra.", "Rahuldavaks võib pidada ettevõtet, mille omakapitali osakaal bilansimahust ületab 30%.", "Aasta tagasi oli välisturgude osakaal müügitulust 2%."],
     note: "kellegi või millegi suhteline tähtsus mingis süsteemis vm tervikus",
+    semanticTypes: ["omadus_kval", "seisund"],
     rus: ["доля", "удельный вес"], ukr: ["питома вага", "значення"],
   },
   {
@@ -8681,6 +9472,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kus / milles",
     usages: ["Moemaja osales Helsingi moemessil.", "Küsitluses osales 3000 inimest.", "Osalesin valimistel vaatlejana.", "Jah, ma olen osalenud filmide tegemisel."],
     note: "koos teistega mingil üritusel, sündmusel olema, teistega koos midagi tegema",
+    semanticTypes: ["VERB_seisund"],
     rus: ["участвовать", "соучаствовать"], ukr: ["брати участь", "узяти участь"],
   },
   {
@@ -8692,6 +9484,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sain koolist üsna hea prantsuse keele oskuse.", "Iseseisva mõtlemise oskus.", "Oskus kõigiga hästi läbi saada.", "Ka roostikus ogalike püüdmine nõuab oskusi."],
     note: "õppimise ja harjutamise teel omandatud asjatundlikkus milleski",
+    semanticTypes: ["omadus_psühh"],
     rus: ["умение", "навык"], ukr: ["уміння", "вміння"],
   },
   {
@@ -8703,6 +9496,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õigusteaduse oskussõnad.", "Raamatus on esitatud ka rida oskussõnade seletusi, puu- ja põõsaliikide eesti- ning ladinakeelne register."],
     note: "erialast mõistet tähistav, täpselt piiritletud tähendusega sõna või sõnaühend",
+    semanticTypes: ["esitus_keel"],
     rus: ["термин"], ukr: ["термін"],
   },
   {
@@ -8714,6 +9508,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mille/mida · kust (source) · kellelt / kelle käest · mille eest / millega",
     usages: ["Tõnis ostis uue auto.", "Etenduse piletid osteti kiiresti ära.", "Orje sai vabaks osta.", "Poiss ostis endale uue arvuti."],
     note: "raha eest midagi vastu saama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["купить", "покупать"], ukr: ["купувати", "купити"],
   },
   {
@@ -8725,6 +9520,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · kellele/millele (allative) · millele (allative)",
     usages: ["Vigastatule osutati abi sündmuskohal.", "Päevahoiu teenust osutatakse tööpäeviti.", "Arst osutas haigele esmaabi.", "Rünnatav osutas vastupanu."],
     note: "mingit abistavat toimingut sooritama, mingit vajadust rahuldavat tegevust võimaldama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["оказывать", "оказать"], ukr: ["подавати", "подати"],
   },
   {
@@ -8736,6 +9532,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuus kilomeetrit sõitke otse, seejärel keerake paremale.", "Kas lips on otse?", "Sõida algul otse, siis pööra vasakule.", "Suits tõusis otse üles."],
     note: "(liikumisega, kulgemisega seoses:) sirgjooneliselt mingis suunas, sellest kõrvale kaldumata",
+    semanticTypes: ["ADV_seisund", "ADV_viis"],
     rus: ["прямо", "по прямой"], ukr: ["прямо", "навпростець"],
   },
   {
@@ -8747,6 +9544,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Otsitakse sündmuse otseseid tunnistajaid.", "Tal pole otseseid pärijaid.", "Ta on minu otsene ülemus.", "Taimi tuleks hoida otsese päikesevalguse käest."],
     note: "vahendamata, ilma vaheastme vm vahepealseta",
+    semanticTypes: ["omadus"],
     rus: ["прямой", "непосредственный"], ukr: ["прямий", "безпосередній"],
   },
   {
@@ -8758,6 +9556,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida (partitive) · mida* (partitive)",
     usages: ["Aita mul prille otsida!", "Politsei otsib kadunud marjulist.", "Esimene koht, kust infot otsitakse, on internet.", "Juhtkond otsib olukorrale lahendust."],
     note: "leida, kätte saada, avastada püüdma (nt ringi vaadates, uurides, nuputades)",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["искать", "поискать"], ukr: ["шукати", "пошукати"],
   },
   {
@@ -8769,6 +9568,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Peame otsuse langetama veel täna.", "Rikkuse jaotamise põhimõtete ülevaatamine nõuab poliitilisi otsuseid.", "Aasta-paar enne valimisi ei luba ükski valitsus endale ebapopulaarseid otsuseid.", "Žürii üksmeelsel otsusel tunnistati parimaks meesnäitlejaks .."],
     note: "tulemus, millele jõutakse pärast asjaolude, võimaluste läbimõtlemist, kaalumist, arutlemist",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["решение", "постановление"], ukr: ["рішення", "постанова"],
   },
   {
@@ -8780,6 +9580,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida teha · et",
     usages: ["Paarike otsustas abielluda.", "Otsustasin, et ei lähe lihtsama vastupanu teed.", "Riigi prioriteetide üle otsustab valitsus.", "Purustuste järgi otsustades võis tegu olla keeristormiga."],
     note: "mõtlemise, kaalumise teel mingile tulemusele jõudma, võimaluste hulgast valikut tegema, otsust tegema",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["решать", "решить"], ukr: ["вирішувати", "вирішити"],
   },
   {
@@ -8791,6 +9592,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Otsustamine oli raske."],
     note: "vaimne tegevus, mille käigus inimene kogub informatsiooni, kaalutleb erinevate lahendusviiside vahel valides välja talle sobiva",
+    semanticTypes: ["tegevus"],
     rus: ["принятие решения", "вынесение решения"], ukr: ["прийняття рішення"],
   },
   {
@@ -8802,6 +9604,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Keegi võiks talle abi pakkuda.", "Pakkusin end appi.", "Suurmeister pakkus viiki.", "Tänavamüüjad pakuvad väsimatult oma kaupa."],
     note: "ettepanekut tegema, ärgitama või paluma, et keegi võtaks midagi vastu, endale, oma kasutusse",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["предлагать", "предложить"], ukr: ["пропонувати", "запропонувати"],
   },
   {
@@ -8813,6 +9616,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Soodsad reisipaketid ning viimase hetke pakkumised.", "Pakkumist tegema.", "Pakkumisest keelduma.", "Ostupakkumine."],
     note: "ettepanek midagi teatud hinna eest osta või müüa või mingit teenust kasutada, konkreetne pakkumine",
+    semanticTypes: ["abstr/konkr", "ese_raha"],
     rus: ["отдельное предложение", "частное предложение"], ukr: ["пропозиція"],
   },
   {
@@ -8824,6 +9628,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanal majal olid paksud seinad.", "Paksude klaasidega prillid.", "Paks lumi on maas.", "Panin jalga paksu tallaga saapad."],
     note: "läbilõikelt, laiuselt suur, suhteliselt suure ümber- või läbimõõduga",
+    semanticTypes: ["omadus_füüs"],
     rus: ["толстый", "полный"], ukr: ["товстий", "грубий"],
   },
   {
@@ -8835,6 +9640,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["40kraadine palavik.", "Palavik kord tõusis, kord langes.", "Pujutee alandab palavikku.", "Lapsel on kõrge palavik."],
     note: "normaalsest kõrgem kehatemperatuur (hrl haigussümptomina)",
+    semanticTypes: ["nähtus_loodus", "seisund"],
     rus: ["температура", "повышенная температура"], ukr: ["жар", "температура"],
   },
   {
@@ -8846,6 +9652,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ega magamiseks palju aega jää.", "Ma olen sellest juba palju rääkinud.", "Täna on enesetunne palju parem.", "Inimesi on maailmas liiga palju."],
     note: "suurel hulgal, arvul või määral, rohkesti",
+    semanticTypes: ["ADV_aste"],
     rus: ["много", "сколько"], ukr: ["дуже багато", "скільки"],
   },
   {
@@ -8857,6 +9664,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti keskmine palk on suurem kui Lätis.", "Tema palk on 1800 eurot kuus.", "Võtsin nädalaks palgata puhkuse.", "Palk laekus eile."],
     note: "rahaline tasu tehtud töö eest, hrl palgana kord kuus makstav tasu",
+    semanticTypes: ["ese_raha"],
     rus: ["оклад", "плата"], ukr: ["заробітна плата", "зарплата"],
   },
   {
@@ -8868,6 +9676,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellelt (ablative) · kelle käest · kellel + mida teha",
     usages: ["Laps palus, et ta kaasa võetaks.", "Politsei palub abi isiku tuvastamisel.", "Ma tahaksin sinult midagi paluda.", "Pead vanematelt luba paluma."],
     note: "mingit soovi, palvet esitama, mingi palvega kellegi poole pöörduma",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["просить", "попросить"], ukr: ["просити", "попросити"],
   },
   {
@@ -8879,6 +9688,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive) · kuhu (direction) · mida* (partitive) · keda (partitive)",
     usages: ["Pane piim külmkappi.", "Maria paneb näputöö käest ja läheb ust avama.", "Pane raamat lauale.", "Panin võtmed taskusse."],
     note: "hrl käeliigutusega midagi kuskile, mingisse kohta asetama",
+    semanticTypes: ["VERB_liigutama"],
     rus: ["класть", "положить"], ukr: ["класти", "покласти"],
   },
   {
@@ -8890,6 +9700,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poeg töötab pangas.", "Lähen homme panka.", "Mart võttis pangast laenu.", "Röövlid sisenesid panka, maskid ees."],
     note: "mitmesuguseid rahaoperatsioone (nt hoiustamist, laenuandmist, arveldamist, valuutavahetust) sooritav ja sellega raharinglust korraldav finantsasutus",
+    semanticTypes: ["koht_asutus", "koht_hoone"],
     rus: ["банк"], ukr: ["банк"],
   },
   {
@@ -8901,6 +9712,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema artiklid on täis sädelevaid paradokse.", "Kvantmehaanika paradoksid.", "Elu kummaline paradoks on, et õnnistus võib vahel osutuda nuhtluseks."],
     note: "näilikult mõistusvastane, vastuolu või vasturääkivust sisaldav väide või nähtus",
+    semanticTypes: ["nähtus", "tegevus_kõnetegu"],
     rus: ["парадокс", "антиномия"], ukr: ["парадокс"],
   },
   {
@@ -8912,6 +9724,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põhiseaduse paragrahv 45.", "Mees mõisteti süüdi kelmuse paragrahvi alusel.", "Süüdistuse aluseks on põhiseaduse paragrahv 12.", "Õpiku iga paragrahv algab motiveeriva probleemiga ja lõpeb põhivara meelespeaga."],
     note: "seaduse vm õigusakti nummerdatud alljaotis (tähistatud märgiga § ja vastava numbriga), mis sisaldab õigusnormi või selle osa",
+    semanticTypes: ["ese_semio"],
     rus: ["параграф", "статья"], ukr: ["параграф", "стаття"],
   },
   {
@@ -8923,6 +9736,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive)",
     usages: ["Mehed parandavad katust.", "Kingsepp parandab kingi.", "Jalgratast on vaja parandada.", "Töömehed parandavad maja katust."],
     note: "midagi lagunenut, katkist terveks ja kasutamiskõlblikuks tegema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["ремонтировать", "отремонтировать"], ukr: ["ремонтувати", "відремонтувати"],
   },
   {
@@ -8934,6 +9748,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mitu ettevõtjat on mõista andnud, et olukord ei parane enne, kui vallandub hinnasõda.", "Kui kehakaal langeb, siis enesetunne paraneb.", "Naabrite suhted on paranenud.", "Olukord paranes tunduvalt."],
     note: "paremaks muutuma",
+    semanticTypes: ["VERB_muutus"],
     rus: ["улучшаться", "улучшиться"], ukr: ["поліпшуватися", "поліпшитися"],
   },
   {
@@ -8945,6 +9760,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vananemine on elu paratamatus.", "Lapsed peaksid olema elu õied, mitte lihtsalt paratamatus suvalisest ööst."],
     note: "nähtuste olemusest, korrast tulenev vältimatus",
+    semanticTypes: ["abstr"],
     rus: ["неизбежность", "непредотвратимость"], ukr: [],
   },
   {
@@ -8956,6 +9772,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Paremal all on lukustusnupp.", "Laps istus emast paremal."],
     note: "keha keskjoonest südamest teisel pool",
+    semanticTypes: ["abstr_asend/suund"],
     rus: ["направо", "вправо"], ukr: ["праворуч", "справа"],
   },
   {
@@ -8967,6 +9784,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Glehni park.", "Pärnu on täis kenasid parke.", "Läksime parki jalutama.", "Lossi ümbritseb kaunis park."],
     note: "suur haljasala jalutusteedega, vahel ka purskkaevude, skulptuuride või paviljonidega",
+    semanticTypes: ["koht_ala"],
     rus: ["парк"], ukr: ["парк"],
   },
   {
@@ -8978,6 +9796,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["„Don Quijote” on kirjutatud rüütliromaanide paroodiana.", "Õudusfilm deformeerub pikema aja jooksul tihti komöödiaks, täpsemalt iseenda paroodiaks.", "Annaks taevas, et Eesti riigist ei saaks riigi paroodiat."],
     note: "teose vm pilkav või humoorikas jäljendus",
+    semanticTypes: ["ese_semio"],
     rus: ["пародия"], ukr: [],
   },
   {
@@ -8989,6 +9808,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Unustasin oma parooli ja ei saanud meile lugeda.", "Vaheta parool ära.", "„Jääaja“ dialoog koosneb paljudest USA filmidest tuntud paroolidest.", "Minu taga üks proua naeris kogu esimese vaatuse, paroolid olid väga head ja mõjusid värsketena."],
     note: "salajane sõna või väljend, mille abil saab tuvastada isikut (nt konkurssidel hindajate erapooletuse tagamiseks, teatavasse kohta pääsuks)",
+    semanticTypes: ["esitus_keel"],
     rus: ["девиз", "пароль"], ukr: ["пароль"],
   },
   {
@@ -9000,6 +9820,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Patsient saadeti onkoloogi juurde järelkontrolli.", "Loomakliiniku peamised patsiendid on koerad ja kassid.", "Patsiendi seisund on paranenud."],
     note: "arstiabi tarvitaja, ravitav inimene (või loom)",
+    semanticTypes: ["in_roll"],
     rus: ["пациент", "пациентка"], ukr: ["пацієнт", "пацієнтка"],
   },
   {
@@ -9011,6 +9832,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Noogutas vastuseks pead.", "Kalle hüppas pea ees vette.", "Kits pööras pead ja vaatas meie poole.", "Mul hakkas pea valutama."],
     note: "inimese ja looma keha ülemine (hrl kerest kaelaga eraldatud) osa, kus paiknevad aju ja meeleelundid",
+    semanticTypes: ["kehaosa"],
     rus: ["голова", "рассудок"], ukr: ["голова", "розум"],
   },
   {
@@ -9022,6 +9844,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanamees istus kännu peal ja puhkas jalga.", "Koer istub tooli peal.", "Raamat on kapi peal.", "Õlu on all, vaht on peal."],
     note: "millestki või kellestki pealpool, ülalpool, kõrgemal, millegi pealispinnal",
+    semanticTypes: ["ADV_koht"],
     rus: ["на", "сверху"], ukr: ["на", "зверху"],
   },
   {
@@ -9033,6 +9856,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "(liitlauses:) osalause, mida täpsustab kõrvallause ning mis saab esineda iseseisva lausena (nt osa Ma ei tea lauses Ma ei tea, kas ma täna viitsin)",
+    semanticTypes: ["esitus_keel"],
     rus: ["главное предложение"], ukr: [],
   },
   {
@@ -9044,6 +9868,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Luuletuse pealkiri on „Roos”.", "Nastja lappab lehti, loeb pealkirju, vaatab pilte."],
     note: "teose, kirjatöö või selle osa nimi või nimetus",
+    semanticTypes: ["esitus_info"],
     rus: ["заглавие", "заголовок"], ukr: ["заголовок", "назва"],
   },
   {
@@ -9055,6 +9880,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Patrull peatas bussi.", "Õnneks sai vedurijuht õigel hetkel rongi peatada.", "Kesklinnas võib kohata mustlasnaisi, kes möödujaid peatavad ja neile roose pakuvad.", "Tööd peatati tugeva tuule tõttu."],
     note: "liikuvat sõidukit või inimest peatuma panema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["останавливать", "остановить"], ukr: ["зупиняти", "зупинити"],
   },
   {
@@ -9066,6 +9892,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Filmi peategelane on ketšua keelt kõnelev tüdruk Fausta."],
     note: "filmi, romaani vm teose olulisim tegelaskuju",
+    semanticTypes: ["esitus_kujutis", "in_roll"],
     rus: ["главное действующее лицо", "главный герой"], ukr: ["головний персонаж", "головна дійова особа"],
   },
   {
@@ -9077,6 +9904,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kus (location)",
     usages: ["Volvo peatub.", "Möödusime peatumata kõigist poodidest.", "Lift peatus kolmandal korrusel.", "Pilk peatus ekraanil."],
     note: "liikumist (ka mingit tegevust) katkestama või lõpetama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["останавливаться", "остановиться"], ukr: ["зупинятися", "зупинитися"],
   },
   {
@@ -9088,6 +9916,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Peen õbluke talje.", "Peened veresooned.", "Tükelda kapsas peenteks ribadeks.", "Kandsin peente triipudega pintsakut."],
     note: "suhteliselt väikese läbi- või ümbermõõduga",
+    semanticTypes: ["omadus_füüs"],
     rus: ["тонкий", "худой"], ukr: ["тонкий", "худий"],
   },
   {
@@ -9099,6 +9928,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lasterikkad pered.", "Mitu liiget teie peres on?", "Nende peres on viis last.", "Terve pere jäi haigeks."],
     note: "ühe majandusliku üksusena elavad vanemad ja lapsed",
+    semanticTypes: ["inimene", "esitus"],
     rus: ["семья", "семейство"], ukr: ["сімʼя", "родина"],
   },
   {
@@ -9110,6 +9940,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laps oskab juba ise hambaid pesta.", "Homme hakkan pesu pesema.", "Nõud jäid pesemata.", "Pesen ennast iga päev."],
     note: "veega või vees (mingi vahendiga nühkides) puhastama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["вымыть", "помыть"], ukr: ["мити", "помити"],
   },
   {
@@ -9121,6 +9952,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida tegema",
     usages: ["Kõik peavad kohal olema.", "Ta pidi vaikides ülekohut taluma.", "Lapsed peavad vanemate sõna kuulama.", "Ma pean minema."],
     note: "vaja olema, kohustatud või sunnitud olema",
+    semanticTypes: ["VERB_abstr", "VERB_modaalsus"],
     rus: ["должен", "должна"], ukr: ["повинен", "повинна"],
   },
   {
@@ -9132,6 +9964,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aastavahetuse pidu.", "Rannapargis peeti rahvarohkeid pidusid.", "Mis pidu see ilma tantsuta on!", "Peost pittu elulaad."],
     note: "seltskondlik koosviibimine hrl söökide-jookide ja meelelahutusega",
+    semanticTypes: ["sündmus"],
     rus: ["праздник", "празднество"], ukr: ["свято", "вечірка"],
   },
   {
@@ -9143,6 +9976,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Festivali pidulik avamine.", "Konverentsi lõpetas rektori pidulik vastuvõtt.", "Rahvas oli väga pidulikus meeleolus.", "Külalise auks korraldati pidulik õhtusöök."],
     note: "mingi sündmuse tähistamisega seotud, selle juurde kuuluv",
+    semanticTypes: ["omadus_kval"],
     rus: ["торжественный", "праздничный"], ukr: ["святковий", "урочистий"],
   },
   {
@@ -9154,6 +9988,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanasti sai laudast kruusiga lüpsisooja piima.", "Lehm annab piima.", "Kitsepiim.", "Pühvlipiim."],
     note: "toiduainena kasutatav valkjas vedelik, mida Eestis saadakse hrl lehmalt, muudel rahvastel ka lambalt, kaamelilt vm loomalt",
+    semanticTypes: ["toit"],
     rus: ["молоко", "молочко"], ukr: ["молоко"],
   },
   {
@@ -9165,6 +10000,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ületasime Saksa-Poola piiri.", "Narva asub Euroopa Liidu piiril.", "Talumaade piirid.", "Ületasime Leedu piiri."],
     note: "territooriume, piirkondi, valdusi vms eraldav kokkuleppeline joon (ja selle lähiala) maastikul või kaardil",
+    semanticTypes: ["esitus_kujutis", "koht_ala"],
     rus: ["граница", "рубеж"], ukr: ["кордон", "межа"],
   },
   {
@@ -9176,6 +10012,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Alkoholimüügi piirangud.", "Raha kasutamise osas polnud mingeid piiranguid.", "Piirangud kehtestatakse, sest COVID-19 haigust põhjustava koroonaviiruse SARS-CoV-2 levik on Eestis kiiresti tõusnud.", "Piirangud kitsendavad projekti meeskonna võimalusi (PMBOK 2000, Sillaots, 2004)."],
     note: "midagi piirav, kitsendav tingimus",
+    semanticTypes: ["abstr/konkr"],
     rus: ["ограничение", "стеснение"], ukr: ["обмеження"],
   },
   {
@@ -9187,6 +10024,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative)",
     usages: ["Jõhkard ei piirdunud sõnadega, ta andis voli ka kätele.", "Proovi piirduda kahe tassi kohviga päevas.", "Meie tutvus piirdub teretamisega.", "Piirdun vaid paari näitega, sest aega on vähe."],
     note: "oma tegutsemises millestki mitte kaugemale minema, mingit piiri mitte ületama",
+    semanticTypes: ["VERB_abstr"],
     rus: ["ограничиваться", "ограничиться"], ukr: ["обмежуватися", "обмежитися"],
   },
   {
@@ -9198,6 +10036,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Toetuse saajate ring ei ole selgelt piiritletud.", "Arengukavas piiritletakse tegevuse põhisuunad.", "Elatise maksimumi seadus ei piiritle.", "Maatükk on traataiaga piiritletud."],
     note: "nähtuse esinemise, mõiste sisu, isikute rühma täpsemat ulatust, hõlmavust (kindlaks) määrama",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["определять", "определить"], ukr: [],
   },
   {
@@ -9209,6 +10048,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõrumädaniku korral tekivad õunale teravalt piiritletud tumepruunid laigud."],
     note: "(erineva värvuse tõttu) selgepiiriliselt välja joonistuv",
+    semanticTypes: ["seisund_füüs"],
     rus: ["выделенный"], ukr: [],
   },
   {
@@ -9220,6 +10060,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jõhvi piirkondlik häirekeskus.", "Otepääd esindas puhkpilliõpilaste konkursi piirkondlikus voorus kaheksa õpilast.", "Kesk-Aasia riikide piirkondlik integratsioon on nõrk.", "Piirkondlik erinevus palkade vahel."],
     note: "(mingit) piirkonda, regiooni hõlmav, selle piires toimiv või toimuv",
+    semanticTypes: ["omadus_kval"],
     rus: ["областной", "региональный"], ukr: [],
   },
   {
@@ -9231,6 +10072,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tüdruk oli minust pool pead pikem.", "Pikad püksid.", "Järjekord pole pikk, aga liigub aeglaselt.", "Võtsime ette pika teekonna."],
     note: "püst- või rõhtsuunas suhteliselt suure ulatusega",
+    semanticTypes: ["omadus_füüs"],
     rus: ["длинный", "высокий"], ukr: ["довгий", "високий"],
   },
   {
@@ -9242,6 +10084,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Piletita sõitmise eest saab trahvi.", "Ühe otsa pilet.", "Kümne korra pilet.", "Äriklassi pilet."],
     note: "sõiduõigust tõendav dokument, millele hrl on märgitud selle kehtivusaeg, hind, koht sõidukis vms",
+    semanticTypes: ["ese_semio"],
     rus: ["билет", "проездной билет"], ukr: ["квиток"],
   },
   {
@@ -9253,6 +10096,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["See ei olnud pilkeks öeldud.", "Ta ei teinud pilgetest ja irvetest väljagi."],
     note: "üleolev, kahjurõõmus naljaheitmine millegi üle, kellegi (häbistav, mõnitav) narrimine",
+    semanticTypes: ["seisund", "tegevus_kõnetegu"],
     rus: ["оскал", "насмешка"], ukr: [],
   },
   {
@@ -9264,6 +10108,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seinal rippus presidendi pilt.", "Laste joonistatud pildid.", "Värviliste piltidega raamat.", "Turistid klõpsisid pilte teha."],
     note: "käsitsi, optilisel teel või elektrooniliselt loodud tasapinnaline kujutis (nt joonistus, maal, foto)",
+    semanticTypes: ["ese_kunst", "esitus_kujutis"],
     rus: ["картина", "картинка"], ukr: ["картина", "картинка"],
   },
   {
@@ -9275,6 +10120,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Piltlik väljend.", "Lõngade värvimise piltlik õpetus."],
     note: "kujundeid kasutav või sisaldav",
+    semanticTypes: ["omadus_kval"],
     rus: ["фигуральный", "фигурный"], ukr: ["образний", "фігуральний"],
   },
   {
@@ -9286,6 +10132,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Taevas on kaetud madalate pilvedega.", "Päike kadus pilve taha.", "Tumedad pilved lähenevad, hakkab vihma sadama.", "Lamasin maas ja vaatasin pilvi."],
     note: "taevas nähtav valge või hall kogum, mis koosneb atmosfääris hõljuvatest pisikestest veepiiskadest või jääkristallidest",
+    semanticTypes: ["objekt_loodus"],
     rus: ["облако", "туча"], ukr: ["хмара"],
   },
   {
@@ -9297,6 +10144,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laenu tagasimaksmiseks tuleb teha suuri pingutusi.", "Iga püsivam suhe nõuab pingutust.", "Arstid on tal raske füüsilise pingutuse ära keelanud.", "Haige tõusis suure pingutusega püsti."],
     note: "jõu kokkuvõtmine, vaevanägemine millegi tegemiseks või saavutamiseks",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["усилие", "напряжение"], ukr: ["зусилля", "напруження"],
   },
   {
@@ -9308,6 +10156,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mul on täna plaan teha lambalihahautist.", "Suvel on plaanis sõpradega mööda Eestit ringi sõita.", "Ülemusel olid uue töötajaga oma plaanid.", "Noormees on plaani võtnud ajateenistuse."],
     note: "see, mida mõeldakse teha või saavutada, mõttes tehtud otsus selle kohta",
+    semanticTypes: ["abstr"],
     rus: ["план", "намерение"], ukr: ["план", "намір"],
   },
   {
@@ -9319,6 +10168,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaubanduskeskus planeerib laieneda terviklikuks elu- ja ärikeskkonnaks.", "Kuna planeerite rasedust, pidage alkoholiga piiri.", "Olen õppinud oma aega paremini planeerima.", "Eelarvet planeeritakse kevadel."],
     note: "võimalikku, edaspidist tegevust otsustama või kavandama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["планировать", "запланировать"], ukr: ["планувати", "запланувати"],
   },
   {
@@ -9330,6 +10180,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mardi peres on kaks teismelist poega.", "Kuningapoeg.", "Neil on kaks poega ja tütar.", "Paljud Eestimaa pojad ja tütred põgenesid kommunistide eest Läände."],
     note: "meesisik oma vanema(te) suhtes, otsene meessoost järglane",
+    semanticTypes: ["in_sugulane"],
     rus: ["сын", "детёныш"], ukr: ["син", "маля"],
   },
   {
@@ -9341,6 +10192,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Relvade müük Soomes on tekitanud poleemikat.", "Omaaegne poleemika kõlblusküsimustes."],
     note: "hrl publitsistlikku või teaduslikku laadi avalik vaidlus, väitlus",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["полемика", "дискуссия"], ukr: ["полеміка", "суперечка"],
   },
   {
@@ -9352,6 +10204,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jaan Kaplinski tegutses pikka aega poliitikuna, esindas rahvast ka Riigikogus.", "Tänapäeval annavad poliitikute seas tooni inimesed, kes ei ole peale poliitika muud tööd teinudki.", "Naine lausus, et ta ei lahku poliitikast, vaid ainult palgalise poliitiku kohalt.", "Teledebatil läksid poliitikud peaaegu kähmlema."],
     note: "poliitikas tegutsev inimene, kes hrl töötab poliitilisel ametikohal (nt rahvaasemikuna)",
+    semanticTypes: ["in_roll"],
     rus: ["политик", "политический деятель"], ukr: ["політик", "політичний діяч"],
   },
   {
@@ -9363,6 +10216,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mindi poodi joogi järele.", "Autopood.", "Suveniiripood.", "Muusikapood."],
     note: "ettevõte, kus müüakse (teatavat liiki) kaupu või teenuseid",
+    semanticTypes: ["koht_asutus", "esitus"],
     rus: ["магазин", "маг."], ukr: ["крамниця", "магазин"],
   },
   {
@@ -9374,6 +10228,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pool miljonit.", "Ostsin pool kilo õunu.", "Koosolek kestis pool tundi (= 30 minutit).", "Müüa pool maja."],
     note: "murdarv 1/2, üks kahest võrdselt jagatud osast",
+    semanticTypes: ["esitus_arv"],
     rus: ["половина", "одна вторая"], ukr: ["половина", "пів"],
   },
   {
@@ -9385,6 +10240,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Toiduportsjon.", "Kokk lõikab liha portsjoniteks.", "Läänest on siiapoole teel paras portsjon sooja ja niisket õhku."],
     note: "kindlamõõduline kogus toiduainet, mida antakse või kasutatakse korraga",
+    semanticTypes: ["toit"],
     rus: ["порция", "порцион"], ukr: ["порція"],
   },
   {
@@ -9396,6 +10252,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Diplomaatiline post.", "Posti kojukanne.", "Tänast posti pole ma veel näinud.", "Elektrooniline post."],
     note: "kirjad, ajalehed vm postisaadetised",
+    semanticTypes: ["abstr/konkr", "ese"],
     rus: ["почта"], ukr: ["пошта"],
   },
   {
@@ -9407,6 +10264,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Krauklis praadis kartuleid, teised mängisid kaarte.", "Prae sibul ja porgand kergelt õlis läbi.", "Praadisin hommikusöögiks sinki ja mune.", "Liha praeb pannil."],
     note: "toiduaineid õli, või vm rasvainega (pannil) kuumutama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["жарить", "зажарить"], ukr: ["смажити", "посмажити"],
   },
   {
@@ -9418,6 +10276,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Praegu on meil talv ja tore lumi.", "Kus sa praegu töötad?", "Praegu või mitte kunagi!", "Mul pole praegu aega."],
     note: "käesoleval ajahetkel või seda hõlmaval lühemal või pikemal ajalõigul",
+    semanticTypes: ["ADV_aeg"],
     rus: ["теперь", "в настоящее время"], ukr: ["тепер", "зараз"],
   },
   {
@@ -9429,6 +10288,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Infoajastul pole kuigipalju privaatsust.", "Privaatsuse ohustajana tajutakse internetis teadmatust, kes mida andmetega teeb."],
     note: "vabadus teha asju, ilma et teised sind jälgiksid või teaksid, mida sa teed",
+    semanticTypes: ["seisund"],
     rus: ["приватность"], ukr: ["приватність"],
   },
   {
@@ -9440,6 +10300,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tehnilised probleemid.", "Tal on suhtlemisega probleeme.", "Naistearsti vahetada pole mingi probleem.", "Keskkonnaprobleemid."],
     note: "midagi takistav, muret tekitav asjaolu või olukord, mis vajab lahendust ja millega tuleb tegelda",
+    semanticTypes: ["abstr"],
     rus: ["проблема", "вопрос"], ukr: ["проблема"],
   },
   {
@@ -9451,6 +10312,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti teadlaste edukus rahvusvahelistes projektides.", "Novembris selgub, kas projekti rahastatakse.", "Koostööprojekt.", "Instituut osaleb mitmes rahvusvahelises projektis."],
     note: "hoolikalt planeeritud ja välja töötatud, hrl taotletava rahastusega ettevõtmine mingi konkreetse eesmärgi tähtaegseks saavutamiseks",
+    semanticTypes: ["abstr/konkr"],
     rus: ["проект", "план"], ukr: ["проєкт"],
   },
   {
@@ -9462,6 +10324,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tegemist on nn autobiograafilise proosaga.", "Ilukirjandusliku proosa aastapreemia.", "Lühiproosa.", "Lasteproosa."],
     note: "kirjanduse osa, millel pole teksti erilist liigendust ning mis hrl on kirjutatud järjestikuse tekstina (nt jutustus, novell, romaan)",
+    semanticTypes: ["ese_semio", "vald"],
     rus: ["проза", "прозаичность"], ukr: ["проза", "прозаїчність"],
   },
   {
@@ -9473,6 +10336,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · keda/mida* (partitive) · mida teha",
     usages: ["Noa vahedust proovisin käsivarrel, võttis karvad maha küll.", "Sai proovida vikatit, mis tõesti niidab.", "Proovi, kas uks on lukus.", "Itaalia naised proovivad tosinate kaupa kingi jalga, enne kui ostu teevad."],
     note: "(katsudes, kasutades, midagi ajutiselt tehes) millegi omadusi, seisundit, kellegi või millegi sobivust vm kindlaks tegema",
+    semanticTypes: ["VERB_abstr", "VERB_liigutama"],
     rus: ["пробовать", "попробовать"], ukr: ["пробувати", "попробувати"],
   },
   {
@@ -9484,6 +10348,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["USAs on valmis saanud esimese lendava auto prototüüp.", "Veebirakenduse prototüüp.", "Uudse jõujaama prototüüp ehitatakse Oslo fjordi lõunaossa.", "Dracula prototüüp on 15 . sajandil tollases Valahhias elanud prints Vlad Tepes."],
     note: "masina, seadme või mingi rakenduse esialgne teostus, algne mudel, mida hrl edasi arendatakse",
+    semanticTypes: ["ese_instru"],
     rus: ["прототип", "прообраз"], ukr: ["прототип", "прообраз"],
   },
   {
@@ -9495,6 +10360,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Leib läks viis protsenti kallimaks.", "90% publikust olid mehed.", "Üürivõlgnike protsent on ühe juures.", "Bert laenas talle kümne protsendiga raha."],
     note: "üks sajandik tervikust (nt arvust, kogumist) (tähis %)",
+    semanticTypes: ["esitus_mõõt"],
     rus: ["процент"], ukr: ["відсоток", "процент"],
   },
   {
@@ -9506,6 +10372,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nii mõnigi patriootlikuna näiv tegu on tehtud provokatiivsel eesmärgil.", "Kumbki pool peab teise käitumist provokatiivseks.", "Ajakirjanik esitas lauljale provokatiivseid küsimusi eraelu kohta."],
     note: "(reetlikult) millelegi õhutav, sihilikult vastaspoole reaktsiooni esile kutsuv",
+    semanticTypes: ["omadus_kval"],
     rus: ["провокационный"], ukr: [],
   },
   {
@@ -9517,6 +10384,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eksperdid soovitavad Vene meedia provokatsioonidele mitte alluda.", "Põhja-Korea sõjalised provokatsioonid."],
     note: "väär info, korraldatud sündmus vm, mille eesmärk on poliitilise vastase reetlik õhutamine tegudele, mis võivad tollele hukatuslikuks saada",
+    semanticTypes: ["abstr/konkr"],
     rus: ["провокация"], ukr: ["провокація"],
   },
   {
@@ -9528,6 +10396,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Päike annab nahale kauni pruuni jume.", "Pruun ja valge suhkur.", "Helepruun.", "Tumepruun."],
     note: "kastanimuna, leiva, šokolaadi värvi",
+    semanticTypes: ["omadus_füüs"],
     rus: ["коричневый", "бурый"], ukr: ["коричневий", "брунатний"],
   },
   {
@@ -9539,6 +10408,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Prügi mahapanek keelatud!", "Kogu seda prügi on liiga palju.", "Vii prügi välja!", "See ämber on prügi jaoks."],
     note: "millegi räpased, reostavad jäätmed, tarbetu kraam või koli",
+    semanticTypes: ["konkr"],
     rus: ["отходы", "отбросы"], ukr: ["сміття"],
   },
   {
@@ -9550,6 +10420,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Etenduse lõppedes seisis publik püsti ja plaksutas ennastunustavalt.", "Teatripublik.", "Kontserdipublik.", "Korvpallipublik."],
     note: "etenduse, kontserdi, võistluse vm ürituse pealtvaatajad",
+    semanticTypes: ["inimene", "in_roll"],
     rus: ["публика", "зрители"], ukr: ["публіка"],
   },
   {
@@ -9561,6 +10432,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Teaduslik publikatsioon.", "Töö tulemuseks on kaks publikatsiooni."],
     note: "trükis, internetis vm viisil avaldatud hrl teaduslik tekst (nt artikkel, raamat)",
+    semanticTypes: ["ese_semio"],
     rus: ["публикация", "издание"], ukr: ["видання", "публікація"],
   },
   {
@@ -9572,6 +10444,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Peske käed puhtaks.", "Panin voodisse puhtad linad.", "Puhas õhk, puhas vesi ja vaikus on väärtused omaette.", "Panin puhtad riided selga."],
     note: "selline, kus pole mustust, prahti vms",
+    semanticTypes: ["omadus_füüs"],
     rus: ["чистый", "чистоплотный"], ukr: ["чистий", "справжній"],
   },
   {
@@ -9583,6 +10456,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üldised puhkepäevad on laupäev ja pühapäev.", "Praegu oleme Rumeenias ja homme plaanime rannikut pidi Varnasse jõuda, kus teeme esimese puhkepäeva.", "Laupäev ja pühapäev on meie firmas puhkepäevad.", "Teenistujal on kahe puhkepäevaga viiepäevane töönädal."],
     note: "(nädala)päev, mil töötaja on tööülesannetest vaba (ja asutus suletud)",
+    semanticTypes: ["aeg"],
     rus: ["выходной день", "нерабочий день"], ukr: ["вихідний день", "вихідний"],
   },
   {
@@ -9594,6 +10468,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suurimad kinosõbrad võtavad PÖFF-i ajaks puhkuse.", "Palgata puhkus.", "25. juulist 12. augustini olen puhkusel.", "Direktor on puhkusel."],
     note: "ajavahemik, mil töötaja on tööülesannetest vaba ja pole tööl",
+    semanticTypes: ["aeg", "seisund"],
     rus: ["отпускное время", "время отпуска"], ukr: ["відпустка", "відпочинок"],
   },
   {
@@ -9605,6 +10480,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Punastest tellistest maja.", "Punane vein.", "Poiss läks näost punaseks.", "Tumepunane."],
     note: "maasikate, vere värvi, spektris otsa peal oranži kõrval",
+    semanticTypes: ["omadus_füüs_värv"],
     rus: ["красный", "рыжий"], ukr: ["червоний"],
   },
   {
@@ -9616,6 +10492,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ahvid elavad puu otsas.", "Metsas on kohti, kus puud ei kasva.", "Päike hakkab puude taha vajuma.", "Maja ümber kasvavad kõrged puud."],
     note: "kõva ja jäiga tüve ning hargnevate okstega pikaealine kõrge taim",
+    semanticTypes: ["taim_liik"],
     rus: ["дерево", "древесина"], ukr: ["дерево", "деревина"],
   },
   {
@@ -9627,6 +10504,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Puuviljades ja juurviljades on palju vitamiine.", "Eksootilised puuviljad.", "Puuviljadena käsitatakse käesoleva määruse tähenduses ka marju."],
     note: "toiduks tarvitatav viljapuu vili, nt õun, ploom, pirn",
+    semanticTypes: ["toit", "toit_vili"],
     rus: ["фрукт", "фрукты"], ukr: ["фрукт"],
   },
   {
@@ -9638,6 +10516,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tööjõu vaba liikumise põhimõte.", "Sõnaraamatu koostamise põhimõtted.", "Lähtusin põhimõttest, et topelt ei kärise.", "Lähtusin põhimõttest, et ela ise ja lase ka teistel elada."],
     note: "millegi aluseks olev kindel idee, sisemine hoiak või seisukoht",
+    semanticTypes: ["abstr"],
     rus: ["принцип"], ukr: ["принцип"],
   },
   {
@@ -9649,6 +10528,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõiges põhjalik inimene.", "Tänan pika ja põhjaliku vastuse eest!", "Hoone vajab põhjalikku renoveerimist.", "Ta andis olukorrast põhjaliku ülevaate."],
     note: "millegi olemusse sügavuti tungiv",
+    semanticTypes: ["omadus_kval"],
     rus: ["основательный", "подробный"], ukr: ["ґрунтовний", "докладний"],
   },
   {
@@ -9660,6 +10540,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · millega (comitative)",
     usages: ["Katsun oma kahtlusi põhjendada.", "Hinnatõus pole põhjendatud.", "See etteheide ei ole põhjendatud.", "Palun põhjenda oma otsust."],
     note: "millelegi põhjendust, selgitusi esitama, midagi millegagi seletama või õigustama",
+    semanticTypes: ["VERB_abstr", "VERB_psühh_mõistus"],
     rus: ["обосновывать", "обосновать"], ukr: ["обґрунтовувати", "обґрунтувати"],
   },
   {
@@ -9671,6 +10552,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tal on oma käitumisele alati veenev põhjendus.", "Kehakaalu rubriigist leiab põhjendusi, miks dieedid ei toimi.", "Sellisele teole on raske loogilist põhjendust leida."],
     note: "faktidel või loogikal rajanev seletus või õigustus",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["обоснование", "мотивировка"], ukr: ["обґрунтування", "аргументування"],
   },
   {
@@ -9682,6 +10564,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Surma põhjuse selgitab ekspertiis.", "Usulistel või poliitilistel põhjustel kodumaalt lahkunud inimesed.", "Põhjuseta puudumiste pärast tuli koolis pahandusi.", "Tulekahju põhjus ei ole teada."],
     note: "asjaolu, nähtus, tegu, mis kutsub esile mingi teise asjaolu, nähtuse, teo",
+    semanticTypes: ["abstr"],
     rus: ["причина", "повод"], ukr: ["причина"],
   },
   {
@@ -9693,6 +10576,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üürnik põhjustab probleeme.", "Äparduse põhjustas tema enda eksimus.", "Praegu ei ole veel teada, mis tulekahju põhjustas.", "Õnnetuse põhjustas libe tee."],
     note: "midagi tagajärjena esile kutsuma, millegi põhjuseks olema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["обусловливать", "обусловить"], ukr: ["спричиняти", "спричинити"],
   },
   {
@@ -9704,6 +10588,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sõjajärgne põlvkond.", "Beebibuumi põlvkond.", "Üles on kasvanud uus põlvkond muusikuid.", "Internetipõlvkond."],
     note: "samaaegselt elavad või elanud lähedase vanusega (ja lähedase tegevusala või elukogemusega) inimesed",
+    semanticTypes: ["inimene", "grupp"],
     rus: ["поколение", "генерация"], ukr: ["покоління", "генерація"],
   },
   {
@@ -9715,6 +10600,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Erineva tausta ja põlvkondliku kuuluvusega kunstnikud."],
     note: "põlvkonnaga või põlvkondadega seotud, põlvkonnas või põlvkondades avalduv",
+    semanticTypes: ["abstr"],
     rus: ["поколения", "поколений"], ukr: [],
   },
   {
@@ -9726,6 +10612,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koristaja peseb põrandat.", "Pesemisruum on köetava põrandaga.", "Puitpõrand.", "Kivipõrand."],
     note: "ruumi või ehitise alumine sisepind, millele toetuvad nt seadmed ja mööbel",
+    semanticTypes: ["koht_hoone"],
     rus: ["пол", "площадка"], ukr: ["підлога"],
   },
   {
@@ -9737,6 +10624,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aprillis on 30 päeva.", "Laps on neli päeva vana.", "Põdrakarjustelt kuulsime, et mereni on umbes nelja päeva teekond.", "Aastas on 365 päeva."],
     note: "24 tundi kestev ajavahemik (keskööst keskööni või ebamäärasemalt)",
+    semanticTypes: ["aeg", "esitus_mõõt", "esitus"],
     rus: ["день", "дни"], ukr: ["день", "сонце"],
   },
   {
@@ -9748,6 +10636,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Päike hakkas loojuma.", "Mis kell päike tõuseb?", "Vananaistesuve päike laskub kiiresti madalale ega anna enam lagedalgi sooja", "Taevas särab päike."],
     note: "heledaim suur täht, taevakeha, mis annab maakerale valgust ja sooja",
+    semanticTypes: ["objekt_loodus"],
     rus: ["солнце", "Солнце"], ukr: ["сонце"],
   },
   {
@@ -9759,6 +10648,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Steinbergide pärand kuulub mulle.", "Ta sai vanaemalt pärandiks korteri.", "Tütar jäi isa pärandist ilma.", "Mis on Noor-Eesti tõeline pärand?"],
     note: "testamendiga, pärimislepinguga või seadusega kellelegi pärandatud või pärandatav vara, õigused vm",
+    semanticTypes: ["abstr/konkr"],
     rus: ["наследство", "наследственное имущество"], ukr: ["спадщина", "спадок"],
   },
   {
@@ -9770,6 +10660,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aasta pärast.", "Kell on viie minuti pärast üks.", "Kohtume nädala pärast.", "Eksam on kahe päeva pärast."],
     note: "mingi ajaühiku järel, möödudes",
+    semanticTypes: ["aeg"],
     rus: ["через", "спустя"], ukr: ["через", "по"],
   },
   {
@@ -9781,6 +10672,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Päris kindel ma selles muidugi pole.", "Ole päris rahulik!", "Asi pole veel päris kindel.", "Laps on päris üksi kodus."],
     note: "täiel määral",
+    semanticTypes: ["ADV_aste"],
     rus: ["совсем", "совершенно"], ukr: ["зовсім", "цілком"],
   },
   {
@@ -9792,6 +10684,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ajaloo pöördepunktid.", "Lapse sünd oli tema elu pöördepunkt."],
     note: "suurt muutust toov, murranguline ajalõik või sündmus",
+    semanticTypes: ["aeg", "sündmus"],
     rus: ["переломный момент", "переломный пункт"], ukr: ["переломний момент"],
   },
   {
@@ -9803,6 +10696,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pühapäeval saab kauem magada.", "Järgmine mäng leiab aset pühapäeval, 31. mail.", "Vanasti oli iga pühapäev ülestõusmispüha ja iga reede suur reede."],
     note: "nädala 7. päev, laupäevale järgnev ja esmaspäevale eelnev päev",
+    semanticTypes: ["aeg", "aeg_nädalapäev", "esitus"],
     rus: ["воскресенье", "воскресный день"], ukr: ["неділя"],
   },
   {
@@ -9814,6 +10708,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pikad püksid.", "Lühikesed püksid.", "Tõmbasin püksid jalga.", "Velvetpüksid."],
     note: "vöölt jalgadeni ulatuv, jalgu kahe (pika või lühema) haruna ümbritsev riideese, mida kannavad nii mehed kui naised",
+    semanticTypes: ["ese_riie"],
     rus: ["брюки", "штаны"], ukr: ["штани"],
   },
   {
@@ -9825,6 +10720,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kadri on uurinud verbi ja noomeni püsiühendeid eesti keeles."],
     note: "püsiv tavapärane sõnade ühend keeles (nt avalik õigus, muljet avaldama)",
+    semanticTypes: ["esitus_keel"],
     rus: ["устойчивое словосочетание", "фразема"], ukr: [],
   },
   {
@@ -9836,6 +10732,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oluline on julgus püstitada eesmärke.", "Ma ei püstitaks küsimust, kas tegemist oli džässiga või mitte.", "Ta püstitas endale raske eesmärgi.", "Ujujad püstitasid maakonna rekordeid."],
     note: "(eesmärki, ülesannet, teemat vms) üles seadma, esitama või algatama",
+    semanticTypes: ["VERB_abstr"],
     rus: ["ставить", "поставить"], ukr: ["ставити", "поставити"],
   },
   {
@@ -9847,6 +10744,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mille poole · kuhu (direction) · mida* (partitive)",
     usages: ["Inimesed on ikka püüelnud vabaduse poole.", "Vähem ettevõtlikel puudub soov ja tihti ka võimalus edasi püüelda.", "Sõudjad püüdlevad nädalavahetusel EM-medaleid."],
     note: "kuhugi, millenigi jõuda tahtma, sihipärase tegevusega eesmärgi poole püüdma",
+    semanticTypes: ["VERB_psühh"],
     rus: ["стремиться", "устремляться"], ukr: [],
   },
   {
@@ -9858,6 +10756,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive) · mida teha · keda/mida* (partitive) · keda* (partitive)",
     usages: ["Mehed püüdsid jõe ääres kala.", "Põhja-Soome maastikud võimaldavad hunte püüda mootorsaanidega.", "Laps ei oska veel palli püüda.", "Pätte püüdku politsei."],
     note: "kätte saada või tabada üritama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["ловить", "поймать"], ukr: ["ловити", "зловити"],
   },
   {
@@ -9869,6 +10768,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Käsikiri ilmus raamatuna alles pärast autori surma.", "Mulle meeldib raamatuid lugeda.", "Ta on kirjutanud mitu raamatut.", "Väga igav raamat."],
     note: "trükitud lehekülgedest koosnev terviklik, ühest küljest köidetud väljaanne, mida katavad kaaned",
+    semanticTypes: ["esitus"],
     rus: ["книга", "книжка"], ukr: ["книжка", "книга"],
   },
   {
@@ -9880,6 +10780,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ülikooli raamatukogu.", "Võtsin raamatukogust õpiku.", "Raamatukogu koosnes heebrea-, kreeka ja ladinakeelsetest raamatutest.", "Kirjanikust jäi järele suur raamatukogu."],
     note: "koht või hoone, kus säilitatakse (üldiseks kasutamiseks ettenähtud) raamatuid, käsikirju vms materjali",
+    semanticTypes: ["koht_asutus", "koht_hoone"],
     rus: ["библиотека", "б-ка"], ukr: ["бібліотека"],
   },
   {
@@ -9891,6 +10792,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Puudub igasugune õiguslik raamistik.", "Teoreetiline raamistik.", "Piibli ajaline raamistik.", "Eelarve raamistik aastateks 2012–2016."],
     note: "mingit valdkonda hõlmav üldistus, üldpõhimõtted või kokkuvõte, millegi mõtteline raam",
+    semanticTypes: ["abstr", "ese_semio"],
     rus: ["рамка", "перечень принципов"], ukr: [],
   },
   {
@@ -9902,6 +10804,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poiss luges oma raha üle.", "Eesti esimene oma raha oli mark.", "Kui te pole tootega rahul, saate raha tagasi.", "Laena mulle veidi raha."],
     note: "üldine ametlik maksevahend müntide ja rahatähtede kujul",
+    semanticTypes: ["ese_raha"],
     rus: ["сребреник", "деньги"], ukr: ["гроші"],
   },
   {
@@ -9913,6 +10816,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Soovin, et kogu maailmas valitseks rahu.", "Rahu kestis 50 aastat.", "Rahu sõlmima.", "Tartu rahu."],
     note: "vägivalla, relvastatud võitluse puudumine riigis vm piirkonnas",
+    semanticTypes: ["seisund"],
     rus: ["мир", "спокойствие"], ukr: ["мир", "спокій"],
   },
   {
@@ -9924,6 +10828,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võimu üleminek riigis toimus rahulikul teel.", "Islamimaailma mõõdukad kutsusid üles rahulikule kooselule kristlastega.", "Loodetavasti leiab konflikt rahuliku lahenduse.", "Hea rahulik laps."],
     note: "mittesõjaline, vaenutegevuseta",
+    semanticTypes: ["omadus_kval"],
     rus: ["мирный", "спокойный"], ukr: ["мирний", "спокійний"],
   },
   {
@@ -9935,6 +10840,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti rahvas.", "Soome-ugri rahvad.", "Eestlased on väike rahvas.", "Me oleme vaba rahvas vabal maal."],
     note: "inimrühm, keda hrl piiritletakse teatud riigis elamisega, keeleliste, kultuuriliste vm territoriaalsete tunnuste alusel",
+    semanticTypes: ["in_rahvas"],
     rus: ["народ", "народность"], ukr: ["народ", "люди"],
   },
   {
@@ -9946,6 +10852,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti alaline rahvastik.", "Maailma rahvastik on kasvanud 7 miljardini."],
     note: "inimeste kogum, kes elab mingis paigas või mingil alal",
+    semanticTypes: ["inimene"],
     rus: ["население", "народонаселение"], ukr: ["населення", "народонаселення"],
   },
   {
@@ -9957,6 +10864,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahvatarkuse järgi tuleb kartul maha panna toominga või kuuse õitsemise ajal."],
     note: "traditsiooniline rahva (elu)tarkus",
+    semanticTypes: ["abstr"],
     rus: ["народная мудрость"], ukr: [],
   },
   {
@@ -9968,6 +10876,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahvuse määratlemisel on igaüks vaba.", "Minu vanemad on eri rahvusest.", "Ta on rahvuselt eestlane.", "Abhaasias elab terve hulk eesti rahvusest isikuid."],
     note: "hrl riiklikult iseseisev, ühtse keelelise ja kultuurilise identiteediga rahvas",
+    semanticTypes: ["in_rahvas"],
     rus: ["нация", "народность"], ukr: ["нація", "національність"],
   },
   {
@@ -9979,6 +10888,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive) · keda (partitive)",
     usages: ["Minu nõuandeid kiideti, aga mitte ühtegi pole ellu rakendatud.", "Suveaega rakendatakse vähemalt 70 riigis.", "Head õpetajat annaks rakendada mitmes koolis.", "Firma esitas kohtule taotluse pankrotikaitse rakendamiseks."],
     note: "kasutusele võtma, mingil otstarbel kasutama, tegevusse panema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["применять", "применить"], ukr: ["застосовувати", "застосувати"],
   },
   {
@@ -9990,6 +10900,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Menetlustoimingu rakendamine (toimingu, sh ülekuulamise, arutlemise jms sissejuhatamine)"],
     note: "NATO standardimises standardikokkuleppest tulenevate kohustuste täitmine liikmesriigi poolt",
+    semanticTypes: [],
     rus: ["применение", "приложение"], ukr: [],
   },
   {
@@ -10001,6 +10912,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kinokavade ja piletiostu rakendus.", "Parkimise rakendus.", "Mobiilipanga soodustuste rakenduses saab lihtsalt sooritada erinevaid otsinguid.", "Kaardirakendus."],
     note: "terviklik tarkvaraprogramm, mille abil nutiseadmes (nt telefonis, tahvelarvutis, nutikellas) saab traadita sidevõrgus täita kindlat ülesannet (nt mõõta pulssi, kuulata muusikat, õppida keelt, osta-müüa kaupu)",
+    semanticTypes: ["ese_semio"],
     rus: ["приложение", "мобильное приложение"], ukr: [],
   },
   {
@@ -10012,6 +10924,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õnneks oli kallas lähedal ja laev jõudis randa.", "Siinsetele Vaikse ookeani randadele ronivad munema nelja liiki merekilpkonnad.", "Kas tunned maad, mis Peipsi rannalt / käib Läänemere kaldale ..", "Läksime randa päikest võtma."],
     note: "maa-ala mere, suurema järve vm veekogu ääres, ala rannajoonest kuni tugevaima tormilaine mõjupiirini",
+    semanticTypes: ["koht_ala"],
     rus: ["берег", "брег"], ukr: ["берег", "пляж"],
   },
   {
@@ -10023,6 +10936,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma olen ranget dieeti pidanud neli kuud.", "Range suitsetamiskeeld.", "Keskpanga president soovitab ranget eelarvepoliitikat.", "Range kaitse all olev looduskaitseala."],
     note: "teatavaid põhimõtteid, nõudeid kindlalt järgiv, kõrvalekaldumisi, erandeid mittelubav",
+    semanticTypes: ["omadus_kval"],
     rus: ["строгий", "суровый"], ukr: ["строгий", "суворий"],
   },
   {
@@ -10034,6 +10948,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Raske kohver.", "Laps käib koolis väga raske kotiga.", "Mees oli naisest poole raskem.", "Kaamera on ainult 100 g raske."],
     note: "palju kaaluv, suure kaaluga",
+    semanticTypes: ["omadus_füüs"],
     rus: ["тяжёлый", "грузный"], ukr: ["важкий", "тяжкий"],
   },
   {
@@ -10045,6 +10960,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olin nädalapäevad haiglas ravil.", "Raadiumravi.", "Arst tegi vajalikud uuringud ja määras ravi.", "Selle haiguse ravi kestab elu lõpuni."],
     note: "haige tervise taastamiseks või vaevuste vähendamiseks rakendatavad menetlused",
+    semanticTypes: ["tegevus", "vald"],
     rus: ["лечение", "терапия"], ukr: ["лікування"],
   },
   {
@@ -10056,6 +10972,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on elanud nii tervislikult, et ei tarvita ravimeid.", "Kui patsient ei võta ravimeid, siis riskib ta sellega, et haigus ägeneb.", "Võtan ravimit kolm korda päevas.", "Seda ravimit saab apteegist ainult retseptiga."],
     note: "aine, mis on mõeldud haiguse ravimiseks, ärahoidmiseks või haigussümptomite leevendamiseks",
+    semanticTypes: ["materjal/aine"],
     rus: ["лекарство", "лечебное средство"], ukr: ["ліки", "лікувальний засіб"],
   },
   {
@@ -10067,6 +10984,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive)",
     usages: ["Hambaarst ravib hambaid, aga ei opereeri pimesoolt.", "XVIII sajandil usuti, et šokolaad ravib palavikku ja maokatarri.", "Mees raviti terveks.", "Kroonilised põletikud tuleb välja (= lõpuni) ravida."],
     note: "ravivahendite ja -võtete abil tervistama või tervistada püüdma, haigusprotsessi seisma panema või taanduma sundima",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["лечить", "вылечивать"], ukr: ["лікувати", "виліковувати"],
   },
   {
@@ -10078,6 +10996,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millele (allative) · mille peale · millega (comitative)",
     usages: ["Kui selline olukord püsib pikemat aega, reageerib organism stressiga.", "Aktsiaturg reageeris sellele uudisele väikese hinnatõusuga.", "Publik reageeris naeruga.", "Kuidas su isa sellele uudisele reageeris?"],
     note: "ärritusele, välismõjule vastutoimet avaldama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["реагировать", "среагировать"], ukr: ["реагувати", "зреагувати"],
   },
   {
@@ -10089,6 +11008,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kontsert toimub reedel.", "Reedel on vahelduva pilvisusega ilm."],
     note: "nädala 5. päev, neljapäevale järgnev ja laupäevale eelnev päev",
+    semanticTypes: ["aeg_nädalapäev", "esitus"],
     rus: ["пятница"], ukr: ["п’ятниця"],
   },
   {
@@ -10100,6 +11020,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Muinsuskaitse ei tohiks reeglitega liiale minna.", "Vabakava kestab reeglite järgi neli minutit.", "Liikluskorralduse reeglid.", "Dopingureegel."],
     note: "ametlik, üldine juhis või eeskiri, mis lubab või keelab mingis olukorras või paigas midagi teha",
+    semanticTypes: ["abstr/konkr"],
     rus: ["правило", "норма"], ukr: ["правило", "принцип"],
   },
   {
@@ -10111,6 +11032,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["1990ndate alguse radikaalsed reformid lõid soodsa keskkonna eraettevõtluse ja turumajanduse arenguks.", "Teaduse ja ülikoolide reform.", "Pärisorjuse kaotamise reform.", "Pensionireform."],
     note: "mingil ühiskonnaelu alal tehtav ümberkorraldus või uuendus, millega soovitakse olemasolevat süsteemi edendada, efektiivsemaks muuta",
+    semanticTypes: ["abstr/konkr"],
     rus: ["реформа", "преобразование"], ukr: ["реформа"],
   },
   {
@@ -10122,6 +11044,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kirjanik sooritas viimase reisi sünnilinna Taanis.", "Alustasime reisi Bangkokist.", "Puhkusereis.", "Turismireis."],
     note: "mingi sõiduvahendiga sõit, teekond kuhugi kaugemale hrl koos (lühema) kohalviibimisega",
+    semanticTypes: ["sündmus", "tegevus"],
     rus: ["поездка", "путешествие"], ukr: ["подорож", "мандрівка"],
   },
   {
@@ -10133,6 +11056,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Maja seinale oli kleebitud panga reklaam.", "Firma plaanis minna Korea turule reklaami tegema.", "Tubakareklaam.", "Alkoholireklaam."],
     note: "kaupade, teenuste, ürituste tutvustamine tarbijate ligimeelitamiseks",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["реклама", "рекламная надпись"], ukr: ["реклама"],
   },
   {
@@ -10144,6 +11068,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Esimesel korrusel on tehtud remont, teisel mitte.", "Teeremont.", "Hoone remont lõpeb sügisel.", "Viisin auto remonti."],
     note: "hoonete, seadmete, teede vms parandamine ja uuendamine",
+    semanticTypes: ["tegevus"],
     rus: ["ремонт", "ремонтирование"], ukr: ["ремонт"],
   },
   {
@@ -10155,6 +11080,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põlevkivi kaevandamine reostas põhjavett.", "Ameerikas on paljud piirkonnad reostatud.", "Vareseid on kõik pargid täis, reostavad ümbrust."],
     note: "keskkonda tööstuslike jäätmete, heitgaaside, heitvete vm ohtlike ainetega kahjustama",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["загрязнять", "загрязнить"], ukr: ["забруднювати", "забруднити"],
   },
   {
@@ -10166,6 +11092,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Läbirääkimiste alustamist toetav resolutsioon võeti vastu 407 poolt- ja 262 vastuhäälega.", "Härra kantsler kirjutas täiesti eitava resolutsiooni.", "Avalik on vaid kohtuotsuse lühike resolutsioon.", "Ekraan on üllatavalt kõrge resolutsiooni ja terava pildiga."],
     note: "koosolekul, kongressil vms vastu võetud otsus, mida järgitakse edaspidises tegevuses",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["резолюция", "виза"], ukr: [],
   },
   {
@@ -10177,6 +11104,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Surm tuleb siis, kui raku ressursid ammenduvad.", "Eestis jätkub ressurssi tselluloositehasele, selleks on vaja vaid investeeringut.", "Inimressurss.", "Loodusressurss."],
     note: "millegi toimimiseks vajalikud (majanduslikud) tingimused, vahendid ja (jõu)varud, sh asjas osalevad inimesed vm osalised",
+    semanticTypes: ["abstr/konkr"],
     rus: ["ресурс", "ресурсы"], ukr: ["ресурс", "ресурси"],
   },
   {
@@ -10188,6 +11116,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta tähistas oma sünnipäeva ühes kallis restoranis.", "Ettekandja tutvustas restorani menüüd.", "Kiirtoidurestoran.", "Pitsarestoran."],
     note: "söögi-, joogi- ja ajaviitekoht, kus hrl toite valmistatakse kohapeal",
+    semanticTypes: ["koht_asutus"],
     rus: ["ресторан", "ресторанчик"], ukr: ["ресторан"],
   },
   {
@@ -10199,6 +11128,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Prantsuse revolutsioon.", "Demokraatlik revolutsioon.", "Kõrgtehnoloogiline revolutsioon.", "Interneti tulek ei ole tehnoloogiline revolutsioon, vaid mõtlemise ja suhtumise revolutsioon."],
     note: "riigipööre, mille tulemusena vana poliitiline kord asendatakse (vägivaldselt) uuega",
+    semanticTypes: ["sündmus"],
     rus: ["революция", "государственный переворот"], ukr: [],
   },
   {
@@ -10210,6 +11140,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kahe poolega riidekapp.", "Kass puges riidekappi peitu.", "Magamistoas on suur riidekapp."],
     note: "kapp riiete hoidmiseks",
+    semanticTypes: ["ese"],
     rus: ["гардероб", "платяной шкаф"], ukr: ["гардероб", "шафа для одягу"],
   },
   {
@@ -10221,6 +11152,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Linasest riidest kleit.", "Mantliriie.", "Ostsin ülikonna jaoks riiet.", "Inimesed on šikkidest riietest väsinud."],
     note: "tekstiilmaterjal, mis on valmistatud kangastelgedel või kudumismasinal laia lindina",
+    semanticTypes: ["materjal/aine"],
     rus: ["ткань", "материал"], ukr: ["тканина", "матеріал"],
   },
   {
@@ -10232,6 +11164,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Istungil osalesid kõik riigikogu liikmed.", "Ta kandideerib riigikogu valimistel."],
     note: "Eesti parlament, kõrgeim seadusandlik esindusorgan",
+    semanticTypes: ["koht_asutus"],
     rus: ["Рийгикогу", "парламент Эстонии"], ukr: ["Рійґікоґу", "парламент Естонії"],
   },
   {
@@ -10243,6 +11176,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti riik sündis 1918. aastal.", "Naaberriik.", "Eesti on väike riik.", "Mis riigi kodanik ta on?"],
     note: "kindla territooriumiga ja sõltumatu valitsusega ühiskondlik-poliitiline üksus",
+    semanticTypes: ["abstr/konkr"],
     rus: ["государство", "держава"], ukr: ["держава", "країна"],
   },
   {
@@ -10254,6 +11188,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kui head riimi ei leia, siis on targem teha vabavärss.", "Kui lapsed väikesed olid, siis me rääkisime riimis."],
     note: "(hrl luule vormivõttena:) sõnade või sõnaosade süsteemne, teksti korraldav häälikuline kooskõla",
+    semanticTypes: ["nähtus_füüs"],
     rus: ["рифма", "рифмовка"], ukr: [],
   },
   {
@@ -10265,6 +11200,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suhkrutõve risk tõuseb vanusega.", "Risk haigestuda.", "Milles näete riski ja kuidas üritate seda vältida?", "Nakatumisrisk."],
     note: "mingi tegevuse, olukorraga vm kaasnev võimalik oht või kahju",
+    semanticTypes: ["nähtus_psühh", "seisund"],
     rus: ["риск"], ukr: ["ризик"],
   },
   {
@@ -10276,6 +11212,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Valgusfoori roheline tuli.", "Roheliste silmadega tüdruk.", "Olin merehaigusest roheline.", "Tumeroheline."],
     note: "muru, lehtede värvi, spektris sinise ja kollase vahel",
+    semanticTypes: ["omadus_füüs_värv"],
     rus: ["зелёный", "зелень"], ukr: ["зелений", "зелень"],
   },
   {
@@ -10287,6 +11224,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Astusin paljajalu kastemärjale rohule.", "Lopsaka rohuga karjamaa.", "Karjamaarohi.", "Rohi on juba roheline."],
     note: "maapinnal kasvav madal roheline heintaimedest või rohttaimedest kate",
+    semanticTypes: ["taim"],
     rus: ["трава", "быльё"], ukr: ["трава", "ліки"],
   },
   {
@@ -10298,6 +11236,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Läänemaal sündis lapsi rohkem kui mullu.", "Rohkem muudatusi ei tule.", "Poisse oli klassis rohkem kui tüdrukuid.", "Mul on rohkem jõudu kui sul."],
     note: "millegagi võrreldes suuremal hulgal või määral",
+    semanticTypes: ["ADV_aste"],
     rus: ["больше", "более"], ukr: ["більше", "далі"],
   },
   {
@@ -10309,6 +11248,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Dokumentaalromaan.", "Kirjaniku uus romaan ilmub järgmisel aastal.", "Mulle meeldib lugeda romaane.", "Tema elulugu oli terve romaan."],
     note: "ulatuslik jutustav kirjandusteos, mida iseloomustavad probleemiderohkus, suur tegelaste hulk, mitu süžeeliini ja sündmuste pikaajaline kulg",
+    semanticTypes: ["ese_semio"],
     rus: ["роман", "любовный роман"], ukr: ["роман"],
   },
   {
@@ -10320,6 +11260,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["See rong veab kaupa, mitte inimesi.", "Rong väljub raudteejaamast kell 14.00 ja jõuab Tallinnasse hilisõhtul.", "Tüdrukud marssisid tihedas rongis, klassijuhataja kõige ees."],
     note: "raudteerööbastel liikuv (vedurist ja) ühest või mitmest kokkuhaagitud vagunist koosnev mootor- või elektrisõiduk reisijate või kauba veoks",
+    semanticTypes: ["ese_instru"],
     rus: ["поезд", "железнодорожный состав"], ukr: ["потяг", "поїзд"],
   },
   {
@@ -10331,6 +11272,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Istuti, lobiseti ning nauditi hõrgutavaid roogi.", "Liha saab isuäratavaks roaks kas grillil, ahjus või pannil.", "Road olid kirjas prantsuse keeles.", "Külmad road."],
     note: "söömiseks, maitsmiseks valmistatud või seatud toit",
+    semanticTypes: ["toit"],
     rus: ["еда", "кушанье"], ukr: [],
   },
   {
@@ -10342,6 +11284,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Roosa pesu.", "Roosa õhtutaevas.", "Heleroosa.", "Tüdrukul on roosad põsed."],
     note: "kibuvitsaõie värvi, kergelt punetav, kahvatupunane",
+    semanticTypes: ["omadus_füüs", "omadus_füüs_värv"],
     rus: ["розовый", "розового цвета"], ukr: ["рожевий"],
   },
   {
@@ -10353,6 +11296,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "riik Euroopas Skandinaavia poolsaare idaosas",
+    semanticTypes: ["koht_geogr"],
     rus: ["Швеция"], ukr: ["Швеція"],
   },
   {
@@ -10364,6 +11308,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rippsildu armastavad ehitada rootslased ja norralased.", "Kui ma tulen Eestisse, siis ma tunnen ennast rootslasena, sest ma tulen Rootsist.", "1781. aastal sunniti Hiiumaa rootslased oma kodudest lahkuma."],
     note: "Rootsi põhirahva liige",
+    semanticTypes: ["in_rahvas"],
     rus: ["швед", "шведка"], ukr: ["швед", "шведка"],
   },
   {
@@ -10375,6 +11320,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Avarust ja ruumi on majas palju.", "Taksos ei olnud rohkem ruumi.", "Nii põhjaliku käsitluse jaoks on ajakirja ruum liiga napp.", "Arvutis ei ole enam vaba ruumi."],
     note: "koht, ala või avar pind, mis on vaba või piisav, et miski või keegi kuhugi mahuks",
+    semanticTypes: ["koht_ala"],
     rus: ["место", "пространство"], ukr: ["місце", "приміщення"],
   },
   {
@@ -10386,6 +11332,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vedelikusamba rõhk.", "Aururõhk.", "Rehvide rõhk on jälle langenud.", "Tunneb õlal isa raske käe rõhku."],
     note: "(füüsikaline suurus:) mingile pinnale, pinnaühikule levikusuuna poolest risti mõjuv jõud, mida mõõdetakse paskalites (Pa)",
+    semanticTypes: ["nähtus_füüs"],
     rus: ["давление", "нажим"], ukr: ["тиск", "натиск"],
   },
   {
@@ -10397,6 +11344,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rõhuasetus oli aruteludel, mitte ettekannetel.", "Maal on rõhuasetus põllumajandusel."],
     note: "olulise esiletõstmine, millegi väljatoomine, rõhutamine, millelegi tähelepanu pööramine",
+    semanticTypes: ["abstr/konkr", "nähtus", "tegevus"],
     rus: ["акцент", "штрих"], ukr: ["акцент"],
   },
   {
@@ -10408,6 +11356,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · et",
     usages: ["Paavst rõhutas rahumeelse dialoogi vajadust.", "Valitsus rõhutas, et tegu on riigi siseasjaga.", "Esineja rõhutas seda väidet mitu korda.", "Isa rõhutas, et alati tuleb olla ettevaatlik."],
     note: "(kõneldes) olulist esile tõstma, olulise väitena ütlema",
+    semanticTypes: ["VERB_abstr", "VERB_psühh"],
     rus: ["подчёркивать", "подчеркнуть"], ukr: ["наголошувати", "наголосити"],
   },
   {
@@ -10419,6 +11368,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "(sõnas, silbis:) rõhu puudumine",
+    semanticTypes: ["omadus_füüs"],
     rus: ["безударность", "неударность"], ukr: [],
   },
   {
@@ -10430,6 +11380,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanahärra tundis külaliste üle siirast rõõmu.", "Ta ei varjanud oma rõõmu.", "Fännide suureks rõõmuks püsib menubänd tänini koos.", "Mure ja rõõm käivad ikka käsikäes."],
     note: "heaolu-, rahuldus-, lõbutundega seotud hingeline seisund, heameel",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["радость", "отрада"], ukr: ["радість", "радощі"],
   },
   {
@@ -10441,6 +11392,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rõõmsa näoga lahke mees.", "Loodetud rõõmsad uudised jäid kuulmata.", "Ülirõõmus.", "Ilus ilm teeb meele rõõmsaks."],
     note: "heameelt, rõõmutunnet väljendav või tekitav",
+    semanticTypes: ["omadus_psühh"],
     rus: ["радостный", "весёлый"], ukr: ["радісний", "веселий"],
   },
   {
@@ -10452,6 +11404,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti-sisese rände suurimad tõmbekeskused on Tallinn ja Tartu.", "Illegaalne ränne.", "Rahvaste ränne on ikka olnud idast läände.", "Kärnkonn läbib kevadisel rändel kuni 3 kilomeetrit."],
     note: "rahvastiku ümberasumine omal maal või ühelt maalt teisele",
+    semanticTypes: ["nähtus", "tegevus"],
     rus: ["миграция", "кочёвка"], ukr: [],
   },
   {
@@ -10463,6 +11416,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega (comitative) · et · kellest/millest (elative) · millest (elative)",
     usages: ["Rääkisin arstile, et jalg valutab.", "Kui noorem tüdruk hakkas rääkima, ilmnes tal kerge kõnedefekt.", "Laps alles õpib rääkima.", "Poisid rääkisid valju häälega."],
     note: "suuliselt sõnu, lauseid moodustama, sel teel ennast väljendama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["говорить", "сказать"], ukr: ["говорити", "казати"],
   },
   {
@@ -10474,6 +11428,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahvas hakkas helide rütmis kaasa hüppama.", "Monotoonne rütm.", "Ma ei muutnud kõnni rütmi.", "Tantsurütm."],
     note: "liikumise, heli vm (tugev) korrapärane vaheldumine või kordumine",
+    semanticTypes: ["nähtus_füüs"],
     rus: ["ритм"], ukr: ["ритм"],
   },
   {
@@ -10485,6 +11440,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viisi ta veel ei pea, aga rütmika on tal vinge.", "Linnulaulu rütmikaga tembitud muusika.", "Vitraažis on rütmika kõige tähtsam.", "Hoonel on päris hea rütmika."],
     note: "millegi rütmiline külg, liikumise, heli vm (tugev) korrapärane vaheldumine",
+    semanticTypes: ["omadus_kval"],
     rus: ["ритмика", "обучение ритмике"], ukr: [],
   },
   {
@@ -10496,6 +11452,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pika säärega saapad.", "Tõmbasin saapad jalast.", "Tal on uued saapad jalas.", "Ma kannan musti saapaid."],
     note: "jalats, mille sääreosa ulatub üle pahkluu",
+    semanticTypes: ["ese_riie"],
     rus: ["сапог", "ботинок"], ukr: ["чобіт", "черевик"],
   },
   {
@@ -10507,6 +11464,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction)",
     usages: ["Hiljuti saabus teatrisse pidulik saadetis.", "Õhtul saabusid külalised.", "Lennuk saabus kell 10.", "Külalised saabusid õhtul."],
     note: "kohale jõudma, (kuhugi) pärale jõudma",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["прибывать", "прибыть"], ukr: ["прибувати", "прибути"],
   },
   {
@@ -10518,6 +11476,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Reisist valmis pooletunnine saade.", "Saade läheb eetrisse salvestisena.", "Järelkuulatav saade.", "Kultuurisaade."],
     note: "raadio või televiisori vahendusel teavet, meelelahutust vm pakkuv jutt, film vms",
+    semanticTypes: ["ese_semio"],
     rus: ["передача", "аккомпанемент"], ukr: ["передача"],
   },
   {
@@ -10529,6 +11488,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellelt / kust · mida teha · milleks/kelleks (translative) · milliseks",
     usages: ["Sain sõnumi.", "Lapsed said tunnistused.", "Nad ei saanud pangast laenu.", "Ta sai loa lahkuda."],
     note: "väljendab millegi tulemist kellegi omaks, omandisse, valdusse või kasutusse",
+    semanticTypes: ["VERB_abstr", "VERB_muutus"],
     rus: ["получать", "получить"], ukr: ["отримувати", "одержувати"],
   },
   {
@@ -10540,6 +11500,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Transpordist lähtuv saaste.", "Radioaktiivne saaste.", "Saaste kontrollimiseks tuleb kasutada nelja eraldi tolmupartiid, millest igas on 95 % osakestest.", "Pikkusotsmõõdule pärast kasutamist saastest vältimiseks kantakse mõõtepindadale vastav määre."],
     note: "keskkonna kahjustamine või kahjustumine hrl ohtlike tööstuslike jäätmetega",
+    semanticTypes: ["seisund", "VERB_tegevus"],
     rus: ["заражение", "загрязнение"], ukr: [],
   },
   {
@@ -10551,6 +11512,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eriarsti poole pöördumiseks on vaja perearsti saatekirja.", "Lõhkematerjal võetakse laos arvele tarnija saatekirja alusel.", "Saatekirja vorm ning koostamise, käsitlemise ja registreerimise kord kehtestatakse keskkonnaministri määrusega."],
     note: "ametlik dokument kellegi kuhugi suunamiseks",
+    semanticTypes: ["ese_semio"],
     rus: ["направление", "накладная"], ukr: ["направлення"],
   },
   {
@@ -10562,6 +11524,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viisa saamiseks pöörduge Vene saatkonda.", "Uus saatkond asus teele 1558. aasta lõpul.", "Tartus käis kõrge keiserlik saatkond.", "Välisministeerium seisab hea välissuhtluse eest ning kaitseb Eesti huve välisesinduste ja saatkondade kaudu."],
     note: "riigi alatine diplomaatiline esindus teises riigis",
+    semanticTypes: ["koht_asutus"],
     rus: ["посольство", "делегация"], ukr: ["посольство", "амбасада"],
   },
   {
@@ -10573,6 +11536,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida tegema",
     usages: ["Mind saadeti hämarasse tahatuppa.", "Kapo saatis süüasja materjalid riigiprokurörile.", "Satelliit saadeti orbiidile augustis.", "Saatke mulle takso."],
     note: "kedagi või midagi mingil eesmärgil, põhjusel kuhugi suunama või lähetama",
+    semanticTypes: ["VERB_liikuma/liigutama"],
     rus: ["посылать", "послать"], ukr: ["посилати", "послати"],
   },
   {
@@ -10584,6 +11548,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta saavutas lühikese ajaga palju.", "Saavutatud immuunsus peaks püsima 5 aastat.", "Edu saavutavad vähesed.", "Laulja saavutas rahvusvahelisel konkursil esikoha."],
     note: "jõudma taotletud (eduka) olukorrani, kõrgeima tasemeni vm soovituni välja jõudma, midagi kätte võitma",
+    semanticTypes: ["VERB_abstr"],
     rus: ["достигать", "достигнуть"], ukr: ["досягати", "досягти"],
   },
   {
@@ -10595,6 +11560,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sada tuhat.", "Kirjaniku sünnist möödub sada aastat.", "Näitusel käis sadu inimesi.", "Risk nakatuda on üks sajast."],
     note: "põhiarv 100",
+    semanticTypes: ["esitus_arv"],
     rus: ["сто", "сотня"], ukr: ["сто"],
   },
   {
@@ -10606,6 +11572,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tööga seotud haigestumiste sagedus on vähenenud kaks korda.", "Trenni tehes pulsi sagedus tõuseb üle 100.", "Südamelöögisagedus.", "Esinemissagedus."],
     note: "millegi korduv esinemus teatavas ajaühikus, mida väljendatakse hrl arvuliselt",
+    semanticTypes: ["esitus_mõõt", "nähtus"],
     rus: ["частота", "частотность"], ukr: ["частота", "частотність"],
   },
   {
@@ -10617,6 +11584,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Depressioon on sageli esinev tervisehäire.", "Karjuvad lapsed on sageli andekad.", "Ta käib meil sageli külas."],
     note: "väikeste vaheaegade järel, aina kordudes",
+    semanticTypes: ["ADV_aeg", "ADV_viis"],
     rus: ["часто", "очень часто"], ukr: ["часто"],
   },
   {
@@ -10628,6 +11596,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõik koogid ja saiad on kohapeal tehtud.", "Ostsin poest kaks saia ja võid.", "Sööd sa saia või leiba?", "Panin saiad röstrisse."],
     note: "nisujahutaignast küpsetatud toit (hrl päts või pätsike)",
+    semanticTypes: ["toit"],
     rus: ["булка", "белый хлеб"], ukr: ["булка", "білий хліб"],
   },
   {
@@ -10639,6 +11608,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Esimesed koolid rajati Eestis 13. sajandil.", "Sündisin möödunud sajandi teisel poolel.", "See loss on pärit 16. sajandist.", "Olen oma mõtteviisilt eelmises sajandis."],
     note: "(ajaarvamises:) sada aastat kestev ajavahemik",
+    semanticTypes: ["aeg"],
     rus: ["столетие", "век"], ukr: ["століття", "вік"],
   },
   {
@@ -10650,6 +11620,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sõitsime treeninglaagrisse Saksamaale."],
     note: "riik Kesk-Euroopas",
+    semanticTypes: ["koht_geogr"],
     rus: ["Германия"], ukr: ["Німеччина"],
   },
   {
@@ -10661,6 +11632,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sakslasi meelitab Eestisse eelkõige loodus ja puhas keskkond."],
     note: "Saksamaa põhirahva liige",
+    semanticTypes: ["in_rahvas"],
     rus: ["немец", "немка"], ukr: ["німець", "німкеня"],
   },
   {
@@ -10672,6 +11644,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kasvatan salatit, sibulat ja tilli.", "Ta kasvatab kodus aknalaual tilli, peterselli ja salatit.", "Nirista kalale sidrunimahla, serveeri kohe salatil.", "Punase sibula ja tomati salat."],
     note: "köögiviljana kasvatatav mahlakas väike rohttaim",
+    semanticTypes: ["taim"],
     rus: ["салат", "латук"], ukr: ["салат"],
   },
   {
@@ -10683,6 +11656,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kootud sall.", "Siidist sall.", "Kašmiirsall.", "Pane sall kaela, õues on külm."],
     note: "kaelas, peas või õlgadel kantav hrl piklik kitsas riietusese",
+    semanticTypes: ["ese_riie"],
     rus: ["шарф", "шаль"], ukr: ["шарф"],
   },
   {
@@ -10694,6 +11668,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpilased saavad oma telefoniga loodushelisid salvestada.", "Turvakaamerad salvestasid sündmuse videolindile.", "Salvestage fail oma arvutisse.", "Seade salvestab 50 tundi videot või 25 000 fotot."],
     note: "heli, tekste, pilte vm andmeid mingile andmekandjale jäädvustama, et neid säilitada ja vajadusel kasutada",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["записывать", "записать"], ukr: ["зберігати", "зберегти"],
   },
   {
@@ -10705,6 +11680,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tütrel on sama pruunid silmad kui isal.", "Sadu lakkas sama järsku, nagu oli alanudki.", "Holland on peaaegu sama suur kui Eesti."],
     note: "(võrdlustes:) näitab, et mingi omaduse poolest on mõlemad ühesugused",
+    semanticTypes: ["ADV_aste"],
     rus: ["так же", "такой же"], ukr: ["такий самий", "такий же"],
   },
   {
@@ -10716,6 +11692,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ärikeeld on karm sanktsioon, mille kohus mõistab näiteks majanduskuritegude eest.", "Andmete esitamisest keeldumise puhul saab ettevõtjate vastu rakendada sanktsioone.", "Diplomaatide väljasaatmine jt tavapärased diplomaatilised sanktsioonid.", "Euroopa Liit karmistab Birma valitsuse vastu suunatud majanduslikke sanktsioone."],
     note: "õiguslik karistus, sunniabinõu õigusrikkuja vastu",
+    semanticTypes: ["abstr/konkr"],
     rus: ["санкция"], ukr: ["санкція"],
   },
   {
@@ -10727,6 +11704,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Inspektori hääles kõlas varjamatu sarkasm.", "Ta ütles seda talle omase peene sarkasmiga."],
     note: "salvav pilge, äärmiselt terav, üdini lõikav iroonia",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["сарказм", "язвительная насмешка"], ukr: [],
   },
   {
@@ -10738,6 +11716,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaks täiesti sarnast hoonet.", "Midagi sarnast neis on.", "Klenskiga sarnane mees.", "Feta juustu sarnane pehme juust."],
     note: "välimuses või mingis muus suhtes rohkete ühetaoliseks tegevate ühisjoontega, millegagi võrreldes samalaadne",
+    semanticTypes: ["omadus_kval"],
     rus: ["похожий", "подобный"], ukr: ["подібний", "схожий"],
   },
   {
@@ -10749,6 +11728,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Näojoonte hämmastav sarnasus.", "Keeleline sarnasus.", "Koeral polnud vähimatki sarnasust lubatud tõuga.", "Hulknurkade sarnasus."],
     note: "sarnased, ühised jooned, omadused vms",
+    semanticTypes: ["omadus_kval"],
     rus: ["подобие", "аналогия"], ukr: ["подібність", "схожість"],
   },
   {
@@ -10760,6 +11740,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Puutetundliku ekraaniga seade on muutnud väikelapsele arvuti kasutamise lihtsamaks.", "Külmik on varustatud seadmega, mis jahutab pooleliitrise joogipurgi vähem kui viie minutiga.", "Kilekottide sulgemise seade.", "Kompass on lihtne seade, millel on ainult üks liikuv osa – magnetnõel."],
     note: "kindla otstarbega tehniline või elektrooniline vahend või paljude detailidega süsteem",
+    semanticTypes: ["ese_instru"],
     rus: ["прибор", "устройство"], ukr: ["пристрій", "прилад"],
   },
   {
@@ -10771,6 +11752,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pedaalid ja rool pole omavahel õigesti seadistatud.", "Tänavakellad on võimalik seadistada ka automaatrežiimi.", "ID-kaardi funktsiooni arvutis on vaja seadistada, muidu ei saa seda kasutada.", "Densimeetri näidud on seadistatud mõõtmiseks 15-kraadises vedelikus."],
     note: "süsteemi, rakendust, seadet vms töökorda või vajalikku, sobivasse korda seadma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["налаживать", "наладить"], ukr: [],
   },
   {
@@ -10782,6 +11764,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti Vabariigi seadused.", "Tulumaksuseadus.", "Alkoholi müük alaealistele on seadusega keelatud.", "See seadus enam ei kehti."],
     note: "kõrgeima riigivõimuorgani poolt kehtestatud õigusnorme sisaldav dokument või selles kirja pandud juhised",
+    semanticTypes: ["abstr", "ese_semio"],
     rus: ["закон", "законодательный акт"], ukr: ["закон"],
   },
   {
@@ -10793,6 +11776,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti seaduslik maksevahend on euro.", "Presidendi seaduslik abikaasa.", "Mitteseaduslik.", "Tundub, et asi pole seaduslik."],
     note: "kehtiva seadusega kooskõlas olev, ametlikult lubatud, tunnustatud või määratud",
+    semanticTypes: ["omadus_kval"],
     rus: ["законный", "легальный"], ukr: ["законний", "легальний"],
   },
   {
@@ -10804,6 +11788,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Matemaatiku mõtlemine toetab loogiliste seaduspärasuste otsimist.", "Ametkonna tegevuse seaduspärasuse kontrollimiseks algatati teenistuslik järelevalve.", "Vaidlused jahilubade praegusel viisil väljastamise seaduspärasuse üle võivad kesta veel aastaid."],
     note: "kindlat korda järgiv, teatavatest asjaoludest tingitud (korduv) nähtus, asjaolu vms",
+    semanticTypes: ["omadus_kval"],
     rus: ["закономерность", "правильность"], ukr: ["закономірність", "законність"],
   },
   {
@@ -10815,6 +11800,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kes see on?", "See on minu sõber.", "Mida see peaks tähendama?", "See tüüp tundub kahtlane."],
     note: "(otsesel viitamisel ümbritsevale reaalsusele) osutab lähedal asuvale või muidu tähelepanu objektiks olevale isikule, loomale, esemele või olukorrale",
+    semanticTypes: [],
     rus: ["этот", "это"], ukr: ["цей", "ця"],
   },
   {
@@ -10826,6 +11812,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seega pole romaan üldse kurb.", "Pilved olid väga madalal, seega polnud mäetippu näha.", "Homme on pühapäev, seega saab kaua magada."],
     note: "kokkuvõttena, järeldusena hrl eelnevast, sellest tulenevalt",
+    semanticTypes: ["ADV_põhjus"],
     rus: ["следовательно", "значит"], ukr: ["отже", "тому"],
   },
   {
@@ -10837,6 +11824,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lühike seelik.", "Kahar seelik.", "Siidseelik.", "Sitsiseelik."],
     note: "naiste riideese, mis ulatub vöökohalt allapoole, katab keha alumise osa ja osaliselt ka jalad",
+    semanticTypes: ["ese_riie"],
     rus: ["юбка", "юбочка"], ukr: ["спідниця"],
   },
   {
@@ -10848,6 +11836,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mürgised ja söödavad seened.", "Kas see seen on mürgine või söödav?", "Novembris võis veel seenel käia.", "Nikolai oli läinud hommikul metsa seenele ja polnud õhtuks tagasi jõudnud."],
     note: "hrl sügisel metsas kasvav hrl varrest ja kübarast koosneva viljakehaga organism, mille paljusid liike kasutatakse toiduna",
+    semanticTypes: ["taim_seen"],
     rus: ["гриб", "грибок"], ukr: ["гриб"],
   },
   {
@@ -10859,6 +11848,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kannus oli vesi sees.", "Mäed on paksu udu sees.", "Vaasis on vesi sees.", "Tassi sees on mahl."],
     note: "sisemuses, seespool, pealispinnast sügavamal",
+    semanticTypes: ["aeg"],
     rus: ["в", "внутри"], ukr: ["в", "у"],
   },
   {
@@ -10870,6 +11860,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaamera on korralikult katki ja seetõttu remondis.", "Uued saapad on kerged ja seetõttu mugavamad."],
     note: "sel põhjusel",
+    semanticTypes: ["ADV_põhjus"],
     rus: ["поэтому", "потому"], ukr: ["тому", "через те"],
   },
   {
@@ -10881,6 +11872,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laudu-toole on külluses, külastajaid seevastu vähevõitu.", "Jaanuar oli külm, veebruar seevastu üllatavalt soe.", "Mehel oli peol lõbus, naisel seevastu igav."],
     note: "nagu vastukaaluks, tasakaalustuseks, hüvituseks millelegi eespool mainitule",
+    semanticTypes: ["ADV_põhjus"],
     rus: ["зато", "напротив"], ukr: ["зате", "проте"],
   },
   {
@@ -10892,6 +11884,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seintelt pudenes krohvi ja kive.", "Ruumi seintel rippus palju pilte.", "Majasein.", "Kirikusein."],
     note: "hoonet, tuba vm ruumi piirav püstine, katuseni või laeni ulatuv osa",
+    semanticTypes: ["koht_hoone"],
     rus: ["стена", "стенка"], ukr: ["стіна", "стінка"],
   },
   {
@@ -10903,6 +11896,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelle/mille eest · milles (inessive)",
     usages: ["Poiss seisis purskkaevu juures ja ootas.", "Hobune jäi oja ette seisma.", "Ma ei oska pea peal seista.", "Pidin bussis terve tee seisma."],
     note: "(inimeste, loomade kohta:) püstiasendis hrl jalgadele toetudes ühe koha peal paigal olema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["стоять", "постоять"], ukr: ["стояти", "постояти"],
   },
   {
@@ -10914,6 +11908,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaitseminister esines jõulise seisukohavõtuga."],
     note: "omapoolne arvamus, veendumus millegi suhtes",
+    semanticTypes: ["abstr", "tegevus"],
     rus: ["мнение", "позиция"], ukr: [],
   },
   {
@@ -10925,6 +11920,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen seisukohal, et ..", "Kindel seisukoht puudus ligi pooltel küsitletuil.", "Komisjon jõudis eelarve suhtes ühisele seisukohale.", "Mul seisukoht puudub."],
     note: "väljakujunenud arvamus, suhtumine millessegi, kindel veendumus",
+    semanticTypes: ["abstr", "abstr/konkr"],
     rus: ["убеждение", "воззрение"], ukr: ["думка", "погляд"],
   },
   {
@@ -10936,6 +11932,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viiskümmend seitse.", "Nädalas on seitse päeva.", "Ärkasin kell seitse.", "Teater algab kell seitse."],
     note: "põhiarv 7",
+    semanticTypes: ["esitus_arv"],
     rus: ["семь", "семеро"], ukr: ["сім"],
   },
   {
@@ -10947,6 +11944,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millesse (illative)",
     usages: ["Mind noomiti, et ma sekkun pereasjadesse.", "\"Mul on paar küsimust,” sekkus Sulev.", "Turvamehed ei sekkunud.", "Politseinik sekkus kaklusesse."],
     note: "millessegi toimuvasse (nt sündmusse, vestlusse) osavõtmise või katkestamise eesmärgil vahele segama",
+    semanticTypes: ["VERB_suhtlus", "VERB_tegevus"],
     rus: ["вмешиваться", "вмешаться"], ukr: ["втручатися", "втрутитися"],
   },
   {
@@ -10958,6 +11956,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative) · mida* (partitive)",
     usages: ["Lubage, et ma seletan olukorda.", "Arst seletas, et tüdruku süda ja kopsud ei pidanud vastu.", "Palun seleta mulle, mis siin juhtus.", "Isa seletas pojale, miks ta peab kooli minema."],
     note: "midagi selgitamise ja lisaandmete esitamisega selgeks või selgemaks, arusaadavamaks tegema",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["объяснять", "объяснить"], ukr: ["пояснювати", "пояснити"],
   },
   {
@@ -10969,6 +11968,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanamehe sirge selg vajus kühmu.", "Seisin, käed selja taga.", "Jalad on väsinud ja selg valutab.", "Õpetaja seisis seljaga klassi poole."],
     note: "inimese keha tagaosa õlgadest tuharateni",
+    semanticTypes: ["kehaosa"],
     rus: ["спина", "хребет"], ukr: ["спина"],
   },
   {
@@ -10980,6 +11980,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vee pladin oli tuppa selgesti kuulda.", "Sammud kajasid kumedalt, ent selgesti.", "Tema iroonia oli selgesti tajutav.", "Mäletan seda päeva väga selgesti."],
     note: "(meeltega tajumise, mäletamise kohta:) hästi, puhtalt (esilduvana)",
+    semanticTypes: ["ADV_viis"],
     rus: ["ясно", "чётко"], ukr: ["ясно", "зрозуміло"],
   },
   {
@@ -10991,6 +11992,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Selgesõnaline programm, ometi võimatu täita."],
     note: "selgesti väljendatud, ühemõtteline, otse öeldud",
+    semanticTypes: ["omadus_kval"],
     rus: ["ясный", "недвусмысленный"], ukr: [],
   },
   {
@@ -11002,6 +12004,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative)",
     usages: ["Surma täpse põhjuse selgitab ekspertiis.", "Linnapea selgitas, et sõiduteed ei talu liiga raskeid liinibusse ja veoautosid.", "Palun selgitage, kuidas see õnnetus juhtus.", "Selgita oma seisukohta lähemalt."],
     note: "millegi sisu, olemust üksikasjalikult avama, midagi põhjendama",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["объяснять", "объяснить"], ukr: ["пояснювати", "пояснити"],
   },
   {
@@ -11013,6 +12016,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõni sõna selgituseks.", "Suur tänu, et saime täpsema selgituse!", "Rahvas nõudis valitsuselt selgitust."],
     note: "põhjendus, täpsustus millegi kohta, selgitamine",
+    semanticTypes: ["tegevus", "tegevus_kõnetegu"],
     rus: ["разъяснение", "объяснение"], ukr: ["роз’яснення", "пояснення"],
   },
   {
@@ -11024,6 +12028,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pole selgust, mis on hea, mis halb.", "Järgmised kuus kuud annavad selguse, kellel on õigus.", "Seaduste tõlgendamisel läheb vaja suurt täpsust ja selgust.", "Selguse huvides vältisin ettekandes keerulisi sõnu."],
     note: "arusaadavus, (üheselt) mõistetavus",
+    semanticTypes: ["abstr"],
     rus: ["ясность", "отчётливость"], ukr: ["ясність", "чіткість"],
   },
   {
@@ -11035,6 +12040,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sellepärast ta mulle meeldibki, et ta on nii lärmakas.", "Tahtsin sind näha, sellepärast ma siia tulingi.", "Küsin seda sellepärast, et .."],
     note: "sel põhjusel",
+    semanticTypes: ["ADV_põhjus"],
     rus: ["поэтому", "потому"], ukr: ["тому", "через те"],
   },
   {
@@ -11046,6 +12052,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õigusaktides toimunud muudatusi käsitlev seminar.", "Rahvusvaheline seminar.", "Äriseminar.", "Koostööseminar."],
     note: "kitsama teemaga nõupidamine (suhteliselt väikese osavõtjate arvuga)",
+    semanticTypes: ["sündmus"],
     rus: ["семинар", "семинария"], ukr: ["семінар"],
   },
   {
@@ -11057,6 +12064,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega/kellega (comitative)",
     usages: ["Mälestused seonduvad pigem vanaemaga.", "Tehinguga seonduvad kulud.", "Valk seondub närvidega."],
     note: "millegagi tihedalt liituma või seoses, seotud olema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["соединяться", "соединиться"], ukr: [],
   },
   {
@@ -11068,6 +12076,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tunded ja energia on tihedas omavahelises seoses.", "Sündmuste ajaline seos võiks olla järgnev.", "Tähendusseos.", "Sugulusseos."],
     note: "vastastikune tingitus või sõltuvus, millestki olenevus või vahekord millegagi",
+    semanticTypes: ["abstr"],
     rus: ["связь", "отношение"], ukr: ["звʼязок", "відношення"],
   },
   {
@@ -11079,6 +12088,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kool algab 1. septembril."],
     note: "aasta 9. kuu, põhjapoolkeral esimene sügiskuu",
+    semanticTypes: ["aeg_kuu"],
     rus: ["сентябрь", "вересень"], ukr: ["вересень"],
   },
   {
@@ -11090,6 +12100,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koole pannakse kinni, sest laste arv jääb väiksemaks.", "Kohus andis hagi tagasi, sest see olevat puudulikult koostatud.", "Katrin läks tuppa, sest tal hakkas külm.", "Ma ei saa kooki teha, sest jahu sai otsa."],
     note: "sellepärast et, sel põhjusel et",
+    semanticTypes: [],
     rus: ["поскольку", "так как"], ukr: ["бо", "тому що"],
   },
   {
@@ -11101,6 +12112,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sidesõnad on näiteks ja, aga, sest."],
     note: "lauseosi või osalauseid siduv muutumatu sõna (nt ja, või)",
+    semanticTypes: ["esitus_keel"],
     rus: ["союз"], ukr: ["сполучник"],
   },
   {
@@ -11112,6 +12124,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ühiskonna sidusus.", "Nõrk sotsiaalne sidusus.", "Euroopa Liit liigub suurema sidususe suunas.", "Repliigi sidusus."],
     note: "mitmest osast, kihist vm koosneva nähtuse, asja terviklikkus, mõtteline seostatus",
+    semanticTypes: ["omadus_kval"],
     rus: ["связность"], ukr: [],
   },
   {
@@ -11123,6 +12136,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahvusvaheliselt siduv leping.", "Peaasi on mitte anda siduvaid lubadusi."],
     note: "(lepingu, kokkuleppe, kohustuse vms kohta:) kedagi millekski kohustav",
+    semanticTypes: ["omadus_kval"],
     rus: ["обязывающий", "связывающий"], ukr: ["який зобовʼязує"],
   },
   {
@@ -11134,6 +12148,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lähtekeele sõna on võimalik sihtkeelde tõlkida mitmel viisil."],
     note: "keel, millesse sõna, väljend või tekst tõlgitakse",
+    semanticTypes: ["esitus_keel"],
     rus: ["целевой язык"], ukr: [],
   },
   {
@@ -11145,6 +12160,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jää siia seisma.", "Siia ei käi ei buss ega rong.", "Siia turiste ligi ei lasta.", "Tule siia!"],
     note: "osutab lähemal, kõneleja ligidal olevale kohale, kuhu keegi või miski suundub",
+    semanticTypes: ["ADV_koht"],
     rus: ["сюда"], ukr: ["сюди"],
   },
   {
@@ -11156,6 +12172,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poole tunni pärast on nad siin.", "Mida sina siin poe juures teed?", "Mina ei tunne siin kedagi.", "Siin kerkib sigala, seal laut."],
     note: "kõneleja ligidal, lähedal olevas kohas",
+    semanticTypes: ["ADV_koht"],
     rus: ["здесь", "тут"], ukr: ["тут"],
   },
   {
@@ -11167,6 +12184,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üks aasta veel ja siis on kõik.", "See oli siis, kui ema veel elas.", "Kui ma koju jõudsin, siis teised juba magasid.", "Esmalt tuleb minna otse, siis keerata paremale."],
     note: "osutab teatavale (olnud või tulevale) ajahetkele: sel ajal, sel hetkel",
+    semanticTypes: ["ADV_aeg"],
     rus: ["тогда", "в то время"], ukr: ["тоді", "то"],
   },
   {
@@ -11178,6 +12196,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Siit politsei mind ei leia.", "Kui kaua me siit Tallinna sõidame?", "Minge siit ära, minge sinna.", "Lähme siit ära."],
     note: "osutab kohale, mis on lähemal, kõneleja ligidal ning kust midagi lähtub, minema, eemale liigutakse vms",
+    semanticTypes: ["ADV_koht"],
     rus: ["отсюда"], ukr: ["звідси", "звідсіля"],
   },
   {
@@ -11189,6 +12208,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pirita jõe sild.", "Elava liiklusega tänavale tehti jalakäijate sild.", "Raudsild.", "Betoonsild."],
     note: "üle veekogu, sõidutee vms ulatuv rajatis, mida mööda kulgeb liiklus",
+    semanticTypes: ["ese_instru"],
     rus: ["мост", "мостик"], ukr: ["міст", "місток"],
   },
   {
@@ -11200,6 +12220,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tal on lühikesed mustad juuksed ja pruunid silmad.", "Ta vaatas taevasse ja kissitas silmi.", "Tüdrukul on ilusad sinised silmad.", "Tal tulid pisarad silma."],
     note: "inimese ja enamiku loomade paariline nägemiselund",
+    semanticTypes: ["kehaosa"],
     rus: ["глаз", "око"], ukr: ["око", "очі"],
   },
   {
@@ -11211,6 +12232,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuhu sina siis nüüd lähed?", "Olen sinuga nõus.", "Mis on sinu aadress?", "Elu, armastan sind!"],
     note: "sõna, millega kõneleja osutab kuulajale, sellele, kellega räägitakse (kes sageli on kõneleja hea tuttav)",
+    semanticTypes: ["esitus_keel", "inimene"],
     rus: ["ты", "твой"], ukr: ["ти"],
   },
   {
@@ -11222,6 +12244,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sinised silmad.", "Sinise vilkuriga politseiauto.", "Huuled on külmast sinised.", "Lõke põles sinise leegiga."],
     note: "rukkilille, linaõie, pilvitu taeva värvi, spektris tumesinise ja rohelise vahel",
+    semanticTypes: ["omadus_füüs"],
     rus: ["синий", "синий цвет"], ukr: ["синій"],
   },
   {
@@ -11233,6 +12256,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kavatsen millalgi sinna minna.", "Sinna on veel terve aasta!", "Mine tagasi sinna, kust tulid!", "Ära sinna tänavale üksi mine!"],
     note: "osutab kaugemal, kõnelejast eemal olevale kohale, kuhu keegi või miski suundub või ulatub",
+    semanticTypes: ["ADV_koht"],
     rus: ["туда", "там"], ukr: ["туди"],
   },
   {
@@ -11244,6 +12268,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Avasin ukse ja astusin sisse.", "Uksest astus sisse esimene klient.", "Pärast kontserti võiks sisse astuda mõnda Viini kuulsasse kohvikusse.", "Tallinnas käies astus Marge alati meie juurde sisse."],
     note: "kuskile sisenema",
+    semanticTypes: [],
     rus: ["входить", "войти"], ukr: [],
   },
   {
@@ -11255,6 +12280,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Raamatu sissejuhatuses on öeldud, et teos ilmus korraga kahes keeles.", "Põhiseaduse sissejuhatus.", "Lühike sissejuhatus tehtud, võisimegi siiditrükiga ise alustada.", "Kõne algas põhjaliku sissejuhatusega."],
     note: "teose, artikli, ettekande vms algusosa, kus kirjeldatakse lühidalt, millest juttu tuleb või antakse muid üldisi selgitusi",
+    semanticTypes: ["ese_kunst", "ese_semio", "tegevus_kõnetegu"],
     rus: ["введение", "вступление"], ukr: ["вступ"],
   },
   {
@@ -11266,6 +12292,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mehed olid valmis iga vastutulijaga pudeli sisu jagama.", "Arbuusi sisu.", "Paki sisust saavad söönuks neli inimest.", "Saiasisu."],
     note: "see, mis mingi ümbrise, koore, kesta, anuma vm sees leidub",
+    semanticTypes: ["konkr"],
     rus: ["содержимое", "внутренность"], ukr: ["вміст", "зміст"],
   },
   {
@@ -11277,6 +12304,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hakkasime sisustama ainekabinette.", "Maitsekalt sisustatud tuba.", "Viimast ööd sisustas ansambel Jää-äär.", "Suvel sisustan aega metsas hulkumisega."],
     note: "mööblit, seadmeid vms ruumi paigutama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["обставлять", "обставить"], ukr: [],
   },
   {
@@ -11288,6 +12316,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpilastega ma slängi ei kasuta.", "Relativistliku mudeli alghetk kannab astronoomide slängis nime Suur Pauk.", "Raamatus on rohkesti Ameerika slängi, aga ka Iirimaal, Šotimaal ja Austraalias kasutatavaid idioome.", "Vanglasläng."],
     note: "vabam, mitteametlik omavaheline kõnepruuk mingis inimrühmas, sellele rühmale omane erikeel",
+    semanticTypes: ["esitus_keel"],
     rus: ["сленг", "арго"], ukr: [],
   },
   {
@@ -11299,6 +12328,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelleks/milleks (translative) · kellele/millele (allative) · mida teha · kellega/millega (comitative)",
     usages: ["Magustoiduks sobib puuvili.", "Kui üks variant ei sobi, saab alati proovida teisi võimalusi.", "Mis töö mulle sobiks?", "See šampoon sobib kuivadele juustele."],
     note: "millekski hästi, igati kõlbama, millekski hea, õige olema, (kõigiti) mingitele tingimustele vastama",
+    semanticTypes: ["abstr"],
     rus: ["подходить", "подойти"], ukr: ["підходити", "підійти"],
   },
   {
@@ -11310,6 +12340,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Väga pehmele talvele järgneb soe suvi.", "Ahjus lõõmav tuli küttis toa soojaks.", "Naudin puhkust mõnel soojal maal.", "Soe plekkahi."],
     note: "mõõdukalt kõrge, hrl inimesele mõnusalt mõjuva, hästi vastuvõetava temperatuuriga",
+    semanticTypes: ["omadus_füüs"],
     rus: ["тёплый", "горячий"], ukr: ["тепло", "теплий"],
   },
   {
@@ -11321,6 +12352,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jalga tuleks panna villased sokid.", "Poe väiksust arvestades üllatas sokkide ja sukkpükste valik.", "Spordisokid.", "Ostsin kaks paari sokke."],
     note: "labajalga ja pahkluud kattev, ka poolde säärde ulatuv silmkoeline riietusese",
+    semanticTypes: ["ese_riie"],
     rus: ["носок"], ukr: ["шкарпетка"],
   },
   {
@@ -11332,6 +12364,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · millega (comitative)",
     usages: ["See on teema, mis solvab muulasi.", "Selline käitumine oli solvav.", "Tüdruk solvas oma sõpra sügavalt.", "Sa solvasid mind oma käitumisega."],
     note: "kelleski ülekohtu-, alandustunnet tekitama või tekitada püüdma",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["обижать", "обидеть"], ukr: ["ображати", "образити"],
   },
   {
@@ -11343,6 +12376,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lisasin oma praele soola ja pipart.", "Unustasin toidule soola panna.", "Libedatõrjeks puistatakse teele soola, graniiti või liiva.", "Ta lisab oma märkustega jutule soola."],
     note: "valkjas kristalne merevee maitsega aine, mida kasutatakse toidu maitsestamiseks ja konserveerimiseks",
+    semanticTypes: ["materjal/aine", "toit_maitseaine"],
     rus: ["соль", "поваренная соль"], ukr: ["сіль", "кухонна сіль"],
   },
   {
@@ -11354,6 +12388,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Endisaegsed Soome mündid."],
     note: "riik Põhja-Euroopas",
+    semanticTypes: ["koht_geogr"],
     rus: ["Финляндия", "Финка"], ukr: ["Фінляндія"],
   },
   {
@@ -11365,6 +12400,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rohkesti eestlasi on abiellunud soomlastega ja perekonnakeeleks on kujunenud soome keel.", "Enamik soomlasi käib saunas kord nädalas."],
     note: "Soome põhirahva liige",
+    semanticTypes: ["in_rahvas"],
     rus: ["финн", "финка"], ukr: ["фін", "фінка"],
   },
   {
@@ -11376,6 +12412,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mees üritas suure koguse unerohu neelamisega sooritada enesetappu.", "Traktor sooritas vasakpööret.", "NATO lennukid sooritasid ülelennu.", "Sõjaväevormis sooritatakse kuritegusid, mida erariietes üksi kunagi poleks tehtud."],
     note: "korda saatma, teoks või ära tegema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["совершать", "совершить"], ukr: ["робити", "зробити"],
   },
   {
@@ -11387,6 +12424,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · mida teha · kellele + mida*",
     usages: ["Naine soovib lahutust, mees mitte.", "Võib-olla soovite viskit?", "Soovid sa sellest rääkida?", "Kas te soovite teed või kohvi?"],
     note: "midagi tahtma, soovi omama või avaldama",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["хотеть", "желать"], ukr: ["бажати", "хотіти"],
   },
   {
@@ -11398,6 +12436,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · kellel + mida teha · kellele (allative) · keda* (partitive)",
     usages: ["Soovitan lugeda „Võlumäge“.", "Arst soovitas meil puugi vastu vaktsineerida.", "Mulle soovitati just seda hotelli.", "Väga mõnus, soovitan soojalt."],
     note: "kellelegi midagi nõuandvalt välja pakkuma",
+    semanticTypes: ["VERB_abstr", "VERB_suhtlus"],
     rus: ["советовать", "посоветовать"], ukr: ["радити", "порадити"],
   },
   {
@@ -11409,6 +12448,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Prügi sorteeritakse eri konteineritesse."],
     note: "mingi tunnuse järgi liigitama või eraldama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["сортировать", "рассортировать"], ukr: ["сортувати", "посортувати"],
   },
   {
@@ -11420,6 +12460,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanglal on oma spetsiifiline lõhn.", "Spetsiifilised teadmised."],
     note: "millelegi olemuslikult, tunnuslikult omane",
+    semanticTypes: ["omadus_kval"],
     rus: ["свойственный", "специфический"], ukr: ["властивий", "притаманний"],
   },
   {
@@ -11431,6 +12472,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Armastan sporti.", "Mõõdukas sport tuleb alati kasuks.", "Suurt sporti ei tehta igavesti.", "Noortesport."],
     note: "füüsilist pingutust nõudev mänguline või võistluslik kehaline tegevus, sportimine",
+    semanticTypes: ["tegevus"],
     rus: ["спорт", "вид спорта"], ukr: ["спорт", "вид спорту"],
   },
   {
@@ -11442,6 +12484,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Standardkeel, õppijakeel jt keele kasutusvariandid.", "Ametlikuks standardkeeleks on saksa keele Austria variant."],
     note: "ühtne, korrastatud keelekuju, mida kasutatakse eeskätt ameti- ja halduskeeles kirjas ja kõnes",
+    semanticTypes: ["esitus_keel", "abstr/konkr"],
     rus: ["стандартный язык", "стандартизированный язык"], ukr: [],
   },
   {
@@ -11453,6 +12496,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Matemaatiline statistika.", "Kuritegevuse statistika.", "Depressiooni leviku täpne statistika.", "Statistika näitab, et iga kolmas tänaval vastutulija on suitsetaja."],
     note: "teadus, mis käsitleb arvandmete kogumist, töötlemist ja analüüsimist",
+    semanticTypes: ["vald"],
     rus: ["статистика"], ukr: ["статистика"],
   },
   {
@@ -11464,6 +12508,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["1970-ndate stiilis pidu.", "Kirjaniku napp stiil.", "Gooti stiilis sambad.", "Muusikas kohtuvad Kuuba ja Aafrika stiilid."],
     note: "ajastule, autorile, koolkonnale, teosele vm omane väljendus- või kujutuslaad, sellele iseloomulikud ühtsed jooned",
+    semanticTypes: ["abstr/konkr"],
     rus: ["стиль", "образ"], ukr: ["стиль"],
   },
   {
@@ -11475,6 +12520,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Disainerina on tal hea stiilitaju ja värvimeel."],
     note: "võime stiili hästi, täpselt tajuda, tunnetada (ja edasi anda)",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["чувство стиля"], ukr: [],
   },
   {
@@ -11486,6 +12532,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "keelekasutuse laad, mis näitab väljenduse kuulumist mingisse kindlasse stiili või registrisse",
+    semanticTypes: ["esitus_keel"],
     rus: ["стилистический колорит", "стилистическая окраска"], ukr: [],
   },
   {
@@ -11497,6 +12544,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koorimuusika edendamise stipendium.", "„Ela ja sära“ stipendium.", "Pandi paika, kes sportlastest stipendiumi saama hakkavad.", "Magistrantide stipendium tõuseb."],
     note: "õpinguiks, teadus- või loometööks (korrapäraselt) makstav abiraha",
+    semanticTypes: ["ese_raha"],
     rus: ["стипендия"], ukr: ["стипендія"],
   },
   {
@@ -11508,6 +12556,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Halvad hinded tekitavad õpilastes stressi.", "Ta on stressis."],
     note: "organismi pingeseisund, mis tekib kaitsereaktsioonina teatud tugevate mõjurite (nt vaimse pinge, verekaotuse, hapnikuvaeguse) vastu",
+    semanticTypes: ["seisund_haigus"],
     rus: ["стресс", "стрессовое состояние"], ukr: ["стрес"],
   },
   {
@@ -11519,6 +12568,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kirjaniku peas on valmiva romaani struktuur.", "Majanduse struktuur korraldatakse ümber.", "Rahvastiku struktuur.", "Eesti runoviisi struktuur."],
     note: "süsteemi, teose vm keerulise objekti sisemised seosed, koostisosade paigutus ja liitumise või seostumise viis",
+    semanticTypes: ["omadus_füüs", "omadus_kval"],
     rus: ["структура", "строение"], ukr: ["структура", "будова"],
   },
   {
@@ -11530,6 +12580,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oma subjektiivse hinnangu andsid nii ametnikud kui ka lähedased.", "Lugejate subjektiivsed eelistused on väga erinevad.", "Tõde on siin suhteline, subjektiivne.", "Subjektiivne õigus."],
     note: "isiklikul arvamusel, hinnangul, isiklikel tundmustel põhinev või neid väljendav",
+    semanticTypes: ["omadus_kval"],
     rus: ["субъективный", "личный"], ukr: ["субʼєктивний", "особистий"],
   },
   {
@@ -11541,6 +12592,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pikkuse ja laiuse suhe on 1 : 2.", "Ostjale on oluline hinna ja kvaliteedi suhe.", "Lipu laiuse ja pikkuse suhe on 7 : 11.", "Kiriku ja riigi suhted."],
     note: "võrdlusel põhinev arvuline seos mõõdetavate suuruste või hulkade vahel",
+    semanticTypes: ["abstr"],
     rus: ["соотношение", "пропорция"], ukr: ["співвідношення", "пропорція"],
   },
   {
@@ -11552,6 +12604,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Valge suhkru asemel soovitatakse tarvitada pigem pruuni suhkrut.", "Kas sa jood kohvi suhkruga või ilma?"],
     note: "magus kristalne toiduaine, mida saadakse nt suhkruroost või suhkrupeedist",
+    semanticTypes: ["materjal/aine", "toit"],
     rus: ["сахар", "сахароза"], ukr: ["цукор"],
   },
   {
@@ -11563,6 +12616,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Saan hakkama igapäevastes suhtlusolukordades, keerulisemates mitte."],
     note: "olukord, milles toimub teiste inimestega suhtlemine",
+    semanticTypes: ["seisund"],
     rus: ["коммуникативная ситуация", "ситуация общения"], ukr: [],
   },
   {
@@ -11574,6 +12628,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sujuv üleminek ühest olekust teise.", "Mees eemaldus sujuval sammul.", "Tegin käega läbi õhu sujuva kaare.", "Maanteede pindamine segab sujuvat liiklust."],
     note: "ühtlaselt, äkiliste muutusteta, jõnksudeta kulgev, mitte järsk",
+    semanticTypes: ["omadus_füüs"],
     rus: ["плавный", "ровный"], ukr: [],
   },
   {
@@ -11585,6 +12640,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sulgesin aknad ja uksed.", "Opereerinud arstid sulgesid rebendi.", "Purgid suletakse keeratava korgiga.", "Sulgesin vihmavarju."],
     note: "midagi avatut, lahtist kinnisesse olekusse, kinni või kokku panema või katma millegagi",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["закрывать", "закрыть"], ukr: ["закривати", "закрити"],
   },
   {
@@ -11596,6 +12652,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kapsasupp.", "Frikadellisupp.", "Vürtsine supp viib keele alla.", "Vesi on soe nagu supp."],
     note: "hrl keetes valmistatud vedel toit, mis sisaldab liha, kala, köögivilja vm",
+    semanticTypes: ["toit"],
     rus: ["суп", "супец"], ukr: ["суп", "юшка"],
   },
   {
@@ -11607,6 +12664,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Prantsuse kuningas Philip III suri katku.", "Haige on suremas.", "Mu isa suri kolme aasta eest.", "Ta suri raske haiguse tõttu."],
     note: "elus olemast lakkama",
+    semanticTypes: ["VERB_muutus", "VERB_nähtus"],
     rus: ["умирать", "умереть"], ukr: ["умирати", "умерти"],
   },
   {
@@ -11618,6 +12676,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Venemaa survestas Gruusiat kaupade sisseveo keeluga.", "Kaablis oli survestatud lämmastik.", "Suve jooksul survestatakse kontrolliks kõik linna soojustorud."],
     note: "kedagi tugevalt mõjutama sunnimeetodite, ähvarduste abil vm viisil, kellelegi survet avaldama",
+    semanticTypes: ["VERB_psühh"],
     rus: ["оказывать давление", "прессовать"], ukr: [],
   },
   {
@@ -11629,6 +12688,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Haigutasin laia suuga.", "Lapsel tulid hambad suhu.", "Suus on paha maitse.", "Tüdruk ei teinud hambaarsti juures suud lahti."],
     note: "huultega ääristatud ava näo alumises pooles, elund, mida inimesed kasutavad eeskätt söömiseks ja kõnelemiseks",
+    semanticTypes: ["kehaosa"],
     rus: ["рот", "уста"], ukr: ["рот", "уста"],
   },
   {
@@ -11640,6 +12700,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üldised suundumused majanduses."],
     note: "tegevuse siht, teatud püüdlus, pürgimine millegi poole, valitud viis, kuidas midagi teha",
+    semanticTypes: ["abstr", "nähtus"],
     rus: ["направление", "направленность"], ukr: ["напрям", "напрямок"],
   },
   {
@@ -11651,6 +12712,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suur saal.", "Suur korvitäis seeni.", "Tal on suur ja selge käekiri.", "Suure ninaga mees."],
     note: "kogult, mahult vm mõõtmetelt üle keskmise",
+    semanticTypes: ["omadus_füüs"],
     rus: ["большой", "крупный"], ukr: ["великий", "чималий"],
   },
   {
@@ -11662,6 +12724,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kannu suurus.", "Õppelaenu suurus on 1000 eurot.", "Keskmise suurusega perearstikeskus.", "Meie leibkonna suurus on kolm inimest."],
     note: "millegi mõõtmed, ulatus, hulk või määr",
+    semanticTypes: ["omadus_füüs"],
     rus: ["размер", "величина"], ukr: ["розмір", "величина"],
   },
   {
@@ -11673,6 +12736,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ülim intellektuaalne suveräänsus.", "Tegevuskunsti suveräänsus.", "Suveräänsus läks pojale üle."],
     note: "riigi täielik sise- ja välispoliitiline sõltumatus teistest riikidest",
+    semanticTypes: ["seisund"],
     rus: ["самостоятельность", "независимость"], ukr: ["самостійність", "незалежність"],
   },
   {
@@ -11684,6 +12748,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suvi oli väga soe.", "Sõidan suvel reisile.", "Suvi on käes.", "Kaks suve tagasi."],
     note: "kõige soojem, kevade ja sügise vaheline aastaaeg",
+    semanticTypes: ["aeg_aastaaeg"],
     rus: ["лето", "год"], ukr: ["літо"],
   },
   {
@@ -11695,6 +12760,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kutsun sünnipäevale vaid lähedased sõbrad.", "Tahtsin saada uusi sõpru.", "Tõelisi sõpru on väga vähe.", "Oleme ikka sõbrad edasi!"],
     note: "kellegagi vastastikuse usalduse, sümpaatia, kiindumuse alusel seotud inimene vm olend",
+    semanticTypes: ["in_roll"],
     rus: ["друг", "приятель"], ukr: ["друг", "подруга"],
   },
   {
@@ -11706,6 +12772,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Teda kirjeldatakse kui sõbralikku meest.", "Pubi pakub head ja sõbralikku teenindust.", "Soe ja sõbralik meeleolu.", "Ülisõbralik."],
     note: "olekult lahke, kellegi suhtes heatahtlik, tähelepanelik ja abivalmis",
+    semanticTypes: ["omadus_kval", "omadus_psühh"],
     rus: ["дружелюбный", "приветливый"], ukr: ["дружелюбний", "дружній"],
   },
   {
@@ -11717,6 +12784,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["1796. aastal kuulutas Hispaania Suurbritanniale sõja.", "Vietnami sõda.", "Riigis käib sõda.", "Mahtra sõda."],
     note: "riikide, rahvaste vm rühmitiste vaheline relvastatud võitlus",
+    semanticTypes: ["sündmus", "tegevus"],
     rus: ["война", "битва"], ukr: ["війна"],
   },
   {
@@ -11728,6 +12796,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction) · millega (comitative)",
     usages: ["Sõitsime nädalavahetuseks pealinna.", "Sõitsin valge hobusega mööda Pärnut.", "Talle meeldib jalgrattaga sõita.", "Sõitsime Tallinnast Tartusse."],
     note: "mingi sõiduvahendiga (edasi) liikuma (ise sõiduvahendit juhtides või reisijana)",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["ехать", "ездить"], ukr: ["їхати", "їздити"],
   },
   {
@@ -11739,6 +12808,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellest/millest (elative) · kellest (elative)",
     usages: ["Hind sõltub disainist ja materjalist.", "Kõik sõltub inimesest endast.", "Milline ma välja näen, sõltub tujust.", "Naine ei tahtnud mehest sõltuda."],
     note: "millestki või kellestki määratud või (oluliselt) mõjutatud olema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["зависеть", "находиться в зависимости"], ukr: ["залежати"],
   },
   {
@@ -11750,6 +12820,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Armastusest võib sõltuvusse sattuda.", "Saareelanike elu on otseses sõltuvuses ilmastikust.", "Kohv tekitab sõltuvust.", "Seksisõltuvus."],
     note: "millegi või kellegi (ülemäärase) mõju all olemine, (ülemäärane, haiguslik) sõltumine millestki",
+    semanticTypes: ["seisund", "seisund_haigus"],
     rus: ["зависимость", "обусловленность"], ukr: ["залежність"],
   },
   {
@@ -11761,6 +12832,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mis see sõna tähendab?", "Tekstis oli palju võõrkeelseid sõnu.", "Sõnade järjekord lauses.", "Ühesilbiline sõna."],
     note: "iseseisva tähendusega keeleüksus, mida kasutatakse oma mõtete väljendamiseks tekstis ja kõnes (nt maailm, alla kirjutama, Rootsi laud)",
+    semanticTypes: ["esitus_keel"],
     rus: ["слово", "речь"], ukr: ["слово"],
   },
   {
@@ -11772,6 +12844,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kunstnik lõbustas publikut sürrealistlike sõnamängudega nagu „praetud kingad”.", "Tõlkija on püüdnud sõnamängud eesti lugejale ära seletada."],
     note: "sõnade ootamatutel seostel, hrl tähendustel rajanev vaimukas väljendus, nali vm",
+    semanticTypes: ["tegevus_mäng"],
     rus: ["каламбур", "игра слов"], ukr: [],
   },
   {
@@ -11783,6 +12856,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ettevõtted peavad õppima sõnastama teadlastele olulisi probleeme.", "Sõnastage eesmärgid, mida soovite saavutada.", "Küsimus oli halvasti sõnastatud."],
     note: "midagi sõnadesse panema, sõnadega väljendama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["формулировать", "сформулировать"], ukr: ["формулювати", "сформулювати"],
   },
   {
@@ -11794,6 +12868,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kunstnik väljendas kaunis sõnastuses omaenda luulelist kujutluspilti.", "Muutsin oma sõnastust ilmselt sinu postituse trükkimise hetkel."],
     note: "millegi sõnaline väljendus",
+    semanticTypes: ["esitus_info", "tegevus_kõnetegu"],
     rus: ["изложение", "формулировка"], ukr: ["виклад", "формулювання"],
   },
   {
@@ -11805,6 +12880,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["\"Tiergarten\" on sõnasõnalises tõlkes \"loomaaed\"."],
     note: "sõna-sõnalt toimuv, täpses vastavuses olev",
+    semanticTypes: ["omadus_kval"],
     rus: ["буквальный", "дословный"], ukr: [],
   },
   {
@@ -11816,6 +12892,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mees on oma sõnavalikus ääretult diplomaatiline."],
     note: "sõnalise väljenduse viis",
+    semanticTypes: ["abstr/konkr"],
     rus: ["словоупотребление", "употребление слова"], ukr: [],
   },
   {
@@ -11827,6 +12904,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minister keskendus oma sõnavõtus hariduse rahastamise probleemidele.", "Kirglik sõnavõtt."],
     note: "(lühem) suuline või kirjalik esinemine, arvamuseavaldus, seisukohavõtt mingis asjas või millegi puhul",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["слово", "выступление"], ukr: [],
   },
   {
@@ -11838,6 +12916,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ka bussis oli telefon kõnedest ja sõnumitest punane.", "Saada mulle sõnum, kui koju jõuad.", "Jaanuar algab ärevate sõnumitega sõjatandrilt.", "Mul on teile häid sõnumeid."],
     note: "mobiiltelefoni või arvuti teel saadetud (lühike) tekst",
+    semanticTypes: ["ese_semio"],
     rus: ["СМС", "эсэмэска"], ukr: ["повідомлення", "сповіщення"],
   },
   {
@@ -11849,6 +12928,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas meeste ja naiste vahel on siiras sõprus võimalik?", "Meid seob ammune sõprus.", "Neid seob tõeline sõprus.", "Sinu sõprus on mulle väga oluline."],
     note: "lähedane, usalduslik (püsiv) suhe sõprade vahel",
+    semanticTypes: ["seisund"],
     rus: ["дружба"], ukr: ["дружба"],
   },
   {
@@ -11860,6 +12940,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõrtsi kivihoone on tänaseni säilinud.", "Peaasi, et töökohad säilivad.", "Vanad hooned on hästi säilinud.", "Raamatust on säilinud vaid paar lehekülge."],
     note: "jätkuvalt olemas olema, (millestki) alles jääma, mitte kaduma või hävima",
+    semanticTypes: ["VERB_nähtus", "VERB_seisund"],
     rus: ["сохраняться", "сохраниться"], ukr: ["зберігатися", "зберегтися"],
   },
   {
@@ -11871,6 +12952,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Remont säilitas maja omapära.", "Kas lammutada või säilitada?", "Muuseumis säilitatakse vanu esemeid.", "Klaaspakend säilitab toote värskuse."],
     note: "(hoonete, asjade kohta:) teatavas korras, teatavates tingimustes hoidma, et vältida hävimist või kadumist",
+    semanticTypes: ["VERB_seisund"],
     rus: ["хранить", "сохранять"], ukr: ["зберігати", "зберегти"],
   },
   {
@@ -11882,6 +12964,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põhiseaduse järgi on Eesti riigi peaeesmärk eestluse säilitamine.", "Andmete säilitamisel järgime kõiki kohalikke ja rahvusvahelisi nõudeid.", "Sügavkülmiku tulek tähendas uusi mugavusi toidu säilitamisel."],
     note: "millegi alleshoidmine, nt ilmajäämise, kadumise vältimiseks või teatud eesmärgil kasutamiseks",
+    semanticTypes: ["nähtus", "tegevus"],
     rus: ["сохранность", "сохранение"], ukr: ["збереження", "зберігання"],
   },
   {
@@ -11893,6 +12976,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mees kandis kiiskavvalget särki ja peenikest lipsu.", "Jalgpallisärk.", "Valge särk sobib iga ülikonnaga.", "Noormees kandis ruudulist särki."],
     note: "ülakeha kattev hrl lühikeste või pikkade käistega riietusese (nt T-särk, triiksärk)",
+    semanticTypes: ["ese_riie"],
     rus: ["рубашка", "сорочка"], ukr: ["сорочка", "майка"],
   },
   {
@@ -11904,6 +12988,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vastav säte on ka koalitsioonileppes.", "Internet Exploreri sätted.", "Varukoopia sisselülitamine aitab taastada kadunud telefoni sätted ja äpid uude telefoni."],
     note: "õigusnormi kajastav õigusakti teksti osa (nt paragrahv, lõige, punkt)",
+    semanticTypes: ["ese_semio"],
     rus: ["положение", "предписание"], ukr: ["положення", "положення закону"],
   },
   {
@@ -11915,6 +13000,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Soomes on elukeskkonna arendamine sätestatud riigi põhiseaduses.", "Andmekogusse kantavate andmete koosseis ja andmeandjad sätestatakse andmekogu pidamise põhimääruses."],
     note: "seaduse vm normatiivse dokumendiga kindlaks määrama, seadusesättena kirja panema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["устанавливать", "установить"], ukr: [],
   },
   {
@@ -11926,6 +13012,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Ostsin kontserdile odavama pileti ja säästsin kümme eurot.", "Nii säästab ettevõte kaks miljonit eurot aastas.", "Kaks-ühes tooted säästavad aega.", "Hea monitor säästab silmi."],
     note: "võimalikult vähe (raha, aega) kulutama, varusid alles või edaspidiseks jätma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["экономить", "сэкономить"], ukr: ["заощаджувати", "заощадити"],
   },
   {
@@ -11937,6 +13024,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lõuna ajal tuleb süüa sooja sööki.", "Söök ja majutus on hinna sees.", "Kõik söögid olid ise tehtud.", "Söök on laual."],
     note: "see, mida süüakse, et hankida eluspüsimiseks vajalikke aineid",
+    semanticTypes: ["toit"],
     rus: ["еда", "пища"], ukr: ["їда", "їжа"],
   },
   {
@@ -11948,6 +13036,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Söö suu tühjaks!", "Armastan seeni süüa.", "Sa sööd kole palju.", "Püüton on söömata olnud viis kuud."],
     note: "midagi toiduks tarvitades suhu panema, mäluma ja alla neelama, toitu manustama",
+    semanticTypes: ["VERB_toituma"],
     rus: ["есть", "поесть"], ukr: ["їсти", "поїсти"],
   },
   {
@@ -11959,6 +13048,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tal on süda haige.", "Süda jäi seisma.", "Mees haaras südamest ja kukkus.", "Hautatud süda tomatikastmes."],
     note: "lihaseline elund, mille kokkutõmbed panevad vere soontes liikuma",
+    semanticTypes: ["kehaosa"],
     rus: ["сердце", "сердечко"], ukr: ["серце"],
   },
   {
@@ -11970,6 +13060,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sügav jõgi.", "Kaevas kuni kaelani sügava augu.", "Sügav kauss.", "Sügava dekolteega kostüüm."],
     note: "pealmisest pinnast või ülemisest äärest tugevasti allapoole ulatuv",
+    semanticTypes: ["omadus_füüs"],
     rus: ["глубокий", "значительный"], ukr: ["глибокий"],
   },
   {
@@ -11981,6 +13072,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Värviline sügis on kätte jõudnud.", "Sügis on sel aastal külm ja vihmane.", "Sügisel hakkavad lehed puudelt langema.", "Sügis on käes."],
     note: "jahe, sageli vihmane, suve ja talve vaheline aastaaeg",
+    semanticTypes: ["aeg_aastaaeg"],
     rus: ["осень"], ukr: ["осінь"],
   },
   {
@@ -11992,6 +13084,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Dalai-laama on budistide jaoks usujuht ning muule maailmale pigem vaimsete väärtuste ja vabaduse sümbol.", "Valge tuvi on rahu sümbol.", "Matemaatiline sümbol."],
     note: "miski, mis esindab tajutava seosena mingit ideed või teatavat omadust",
+    semanticTypes: ["abstr", "esitus_kujutis", "abstr/konkr"],
     rus: ["символ", "знак"], ukr: ["символ"],
   },
   {
@@ -12003,6 +13096,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kopsupõletiku sümptomid.", "Haigussümptom.", "Gripisümptom.", "Armumise sümptomid on üsna kergesti äratuntavad."],
     note: "haiguse, haigusliku seisundi tunnus (nt palavik, nahalööve)",
+    semanticTypes: ["nähtus", "omadus"],
     rus: ["симптом", "признак"], ukr: [],
   },
   {
@@ -12014,6 +13108,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelleks (translative)",
     usages: ["Perekonda sündisid poeg ja tütar.", "Laps sündis enneaegsena seitsmendal raseduskuul.", "Ta on sündinud 1981. aastal.", "Koeral sündisid kutsikad."],
     note: "(inimese ja loomade kohta:) emaihust ilmale tulema ja elu alustama",
+    semanticTypes: ["VERB_muutus", "VERB_nähtus"],
     rus: ["рождаться", "родиться"], ukr: ["народжуватися", "народитися"],
   },
   {
@@ -12025,6 +13120,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viga käivitas sündmuste ahela.", "Pärast nii dramaatilisi sündmusi tundub nüüdne elu lahjana.", "Sündmus tekitas paljudes linnaelanikes pahameelt.", "Muusikasündmus."],
     note: "millegi poolest oluline või eriline asi, nähtus, olukord vm, mis juhtub või toimub",
+    semanticTypes: ["sündmus"],
     rus: ["событие", "происшествие"], ukr: ["подія", "захід"],
   },
   {
@@ -12036,6 +13132,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mul on täna sünnipäev.", "Palju õnne sünnipäevaks!", "Oma aastasel sünnipäeval kõndis laps kaks korda üle toa.", "Eesti Vabariigi 100. sünnipäev."],
     note: "päev, millal keegi on sündinud või miski on rajatud, loodud",
+    semanticTypes: ["aeg", "aeg_tähtpäev", "sündmus"],
     rus: ["день рождения", "дата рождения"], ukr: ["день народження"],
   },
   {
@@ -12047,6 +13144,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Haarav süžee ja eluline intriig.", "Erilist sündmustikku või süžeed filmis tegelikult ei olegi.", "Arkadio Laigo eelistas artistlikke süžeesid."],
     note: "kirjandusteose, filmi või lavateose kunstiliselt organiseeritud sündmustiku esitus, sündmustiku kunstiline vorm",
+    semanticTypes: ["abstr"],
     rus: ["сюжет", "сюже́т"], ukr: ["сюжет"],
   },
   {
@@ -12058,6 +13156,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millesse (illative)",
     usages: ["Sotsiaalsed lõhed süvenesid kiiresti.", "Vaesus aina süveneb.", "Samal kombel jätkates kriis ainult süveneb.", "Üha enam süveneb veendumus, et peame minema oma teed."],
     note: "(vaesuse, puuduse vm keerulise, raske olukorra kohta:) suuremaks, intensiivsemaks, raskemini talutavaks muutuma",
+    semanticTypes: ["VERB_muutus"],
     rus: ["усугубиться", "усугубляться"], ukr: [],
   },
   {
@@ -12069,6 +13168,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olen langenud alusetu süüdistuse ohvriks.", "Kohe tuleb süüdistus laimus ja kõiges muus pahas.", "Ligi sada naisnäitlejat tulid välja süüdistustega filmimoguli vastu.", "Pärast rahutusi esitati meedias mitmeid süüdistusi politseivägivalla kohta."],
     note: "süüdistavad sõnad vms kellegi milleski süüdioleku kohta",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["обвинение", "укор"], ukr: ["обвинувачення", "звинувачення"],
   },
   {
@@ -12080,6 +13180,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tapetud on sadu süütuid inimesi.", "Valetada oskavad isegi need, kes näevad süütud tallekesed välja.", "Süütu ilme kadus mehe näolt kohe.", "See oli süütu nali."],
     note: "süü- või pahategu mitte teinud, mitte süüdi olev",
+    semanticTypes: ["omadus_kval", "omadus_psühh"],
     rus: ["невиновный", "невинный"], ukr: [],
   },
   {
@@ -12091,6 +13192,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tähtis on, et vanapaber taaskasutusse jõuaks.", "Energia taaskasutus.", "Korterit sisustades mõtlesime vanaisa mööbli taaskasutusele.", "Maria leidis taaskasutusest halli pitskleidi."],
     note: "pakendite, paberi jt jäätmete ümbertöötamine toormaterjaliks ja seekaudu nende uus kasutussevõtt",
+    semanticTypes: ["nähtus", "tegevus"],
     rus: ["повторное использование", "вторичное использование"], ukr: ["повторне використання"],
   },
   {
@@ -12102,6 +13204,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hoone taastati sõjaeelsel kujul.", "Opereeritud rinda on võimalik taastada.", "Kuidas taastada investorite usaldust?", "Ehitajad taastasid ajaloolise hoone."],
     note: "endist kuju andma, endisesse seisukorda seadma",
+    semanticTypes: ["VERB_muutus", "VERB_tegevus"],
     rus: ["восстанавливать", "восстановить"], ukr: ["відновлювати", "відновити"],
   },
   {
@@ -12113,6 +13216,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pean põlvevigastuse tõttu minema taastusravile."],
     note: "töövõimet, toimetulekut taastav ravi",
+    semanticTypes: ["vald"],
     rus: ["восстановительное лечение", "медицинская реабилитация"], ukr: [],
   },
   {
@@ -12124,6 +13228,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · millega (comitative) · millelt (ablative) · keda/mida (partitive)",
     usages: ["Pall tabas korvi.", "Kopra asemel tabas jahimees hoopis rebast.", "Löök tabas meest näkku.", "Kuul tabas paremat jalga."],
     note: "viskest, löögist, lasust märki, pihta minema",
+    semanticTypes: ["VERB_liikuma/liigutama"],
     rus: ["попадать", "попасть"], ukr: ["влучати", "влучити"],
   },
   {
@@ -12135,6 +13240,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tabav vise.", "Mõelge oma meeskonnale tabav nimi."],
     note: "märgile pihta saav või minev",
+    semanticTypes: ["omadus_kval"],
     rus: ["меткий", "находчивый"], ukr: [],
   },
   {
@@ -12146,6 +13252,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vabavisete tabavus polnud kiita.", "Karlo viskas eestlaste vastu sajaprotsendilise tabavusega 17 punkti.", "Viletsa tabavuse tõttu said pihta ka tsiviilhooned ja hukkusid tsiviilisikud.", "Olin kirjelduse lihtsusest ja tabavusest rabatud."],
     note: "pihtasaamine sihtmärgile viskest, löögist, lasust vms",
+    semanticTypes: ["omadus_kval"],
     rus: ["меткость"], ukr: [],
   },
   {
@@ -12157,6 +13264,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Meie oleme viimased, taga ei ole enam kedagi tulemas.", "Laps kõnnib isa taga.", "Sel autol on mootor taga.", "Kes seal taga seisab?"],
     note: "selja, tagakülje pool (teatud kaugusel), tagumisest küljest tagapool",
+    semanticTypes: ["ADV_koht"],
     rus: ["позади", "сзади"], ukr: ["позаду", "ззаду"],
   },
   {
@@ -12168,6 +13276,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põhjus ja tagajärg.", "Nõukogude okupatsiooni tagajärjed.", "Põhjust ja tagajärge ei tohi segi ajada.", "Fännid ootavad sportlastelt häid tagajärgi."],
     note: "asjaolu, nähtus, tegu, mille on esile kutsunud mingi teine asjaolu, nähtus, tegu",
+    semanticTypes: ["nähtus", "tegevus_tegu"],
     rus: ["последствие", "следствие"], ukr: ["наслідок", "результат"],
   },
   {
@@ -12179,6 +13288,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ei pääse kõrvale ega tagasi, vaid ainult edasi.", "Kella tuleb tagasi keerata.", "Kirves põrkas pakult tagasi.", "Mees vaatas üle õla tagasi."],
     note: "seljataha, tagumise külje või otsa suunas",
+    semanticTypes: ["ADV_koht"],
     rus: ["назад", "обратно"], ukr: ["назад", "у відповідь"],
   },
   {
@@ -12190,6 +13300,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tagasihoidliku loomuga naine.", "Minister jäi oma ütlemistes tagasihoidlikuks.", "Tagasihoidlikul häälel küsis ta, kas võib suvel mulle külla tulla.", "Ära ole tagasihoidlik, sa oskad ju väga hästi laulda."],
     note: "olemuselt, käitumiselt vaoshoitud, mitte esiletükkiv või pealetükkiv",
+    semanticTypes: ["omadus_kval"],
     rus: ["скромный", "сдержанный"], ukr: ["скромний"],
   },
   {
@@ -12201,6 +13312,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oleme ostjatelt saanud positiivset tagasisidet.", "Küsisime lapsevanematelt tagasisidet."],
     note: "reageering või hinnang millelegi",
+    semanticTypes: ["nähtus_psühh", "tegevus_kõnetegu"],
     rus: ["обратная связь", "отзыв"], ukr: ["відгук", "зворотний звʼязок"],
   },
   {
@@ -12212,6 +13324,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida/keda* (partitive) · mida teha · kuhu (direction) · keda* (partitive)",
     usages: ["Miia tahab modelliks saada.", "Tahan riigikokku!", "Haige tahab juua.", "Maantee tahetakse neljarealiseks teha."],
     note: "soovi, tungi, püüdu, vajadust omama midagi saada, teha, saavutada",
+    semanticTypes: ["VERB_psühh"],
     rus: ["хотеть", "желать"], ukr: ["хотіти", "захотіти"],
   },
   {
@@ -12223,6 +13336,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aistingud ja tajud.", "Uinutite pideva kasutamise tagajärjel taju nõrgeneb.", "Kujutad ette, missugune taju – tunda, et sulle lähedane inimene on surnud.", "Ametnikud meie probleeme ei tajunud."],
     note: "(psühholoogias:) esemete ja nähtuste terviklik peegeldus teadvuses meelte kaudu, pertseptsioon",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["перцепция", "восприятие"], ukr: ["перцепція", "сприйняття"],
   },
   {
@@ -12234,6 +13348,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · et",
     usages: ["Kõrbes ei taju ilmakaari – hoomab üksnes taevast ja terendavat silmapiiri.", "Tajusin käe all lahkunu külma ihu.", "Mart oli harjunud vaistuga tajuma, kui teda ei tahetud.", "Imikud ei taju veel ohtu."],
     note: "tegelikkust vahetult tunnetama, meeltega vastu võtma",
+    semanticTypes: ["VERB_psühh"],
     rus: ["ощущать", "ощутить"], ukr: ["відчувати", "відчути"],
   },
   {
@@ -12245,6 +13360,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · kellel + mida teha · mida tegemast",
     usages: ["Valu takistas hingamist.", "Kõnniteele pargitud autod takistavad jalakäijaid.", "Poisse pidanuks tormisele merele minekul takistama.", "Edevus takistab nägemast asju selge pilguga."],
     note: "millegi toimumist või kellegi tegevust häirima, pidurdama või võimatuks tegema, kedagi tagasi või midagi ära hoidma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["мешать", "помешать"], ukr: ["заважати", "завадити"],
   },
   {
@@ -12256,6 +13372,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Selle looga ületas ta mu taluvuse piiri.", "Ühiskonna taluvus on pandud proovile."],
     note: "võime ebameeldivat olukorda välja kannatada",
+    semanticTypes: ["nähtus_füüs", "nähtus_psühh"],
     rus: ["терпение", "терпимость"], ukr: [],
   },
   {
@@ -12267,6 +13384,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Talv liigub juba kevade poole.", "Talv oli väga külm.", "Talvel sadas palju lund.", "Talv on käes."],
     note: "kõige külmem, sügise ja kevade vaheline aastaaeg",
+    semanticTypes: ["aeg", "aeg_aastaaeg"],
     rus: ["зима"], ukr: ["зима"],
   },
   {
@@ -12278,6 +13396,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tantsuks mängib külakapell.", "Noorpaar lööb tantsu.", "Õppisime uusi tantse.", "Tüdruk tantsis kõik tantsud sama partneriga."],
     note: "rütmiliste kehaliigutuste ja teatavate sammude tegemine hrl muusika saatel",
+    semanticTypes: ["tegevus", "tegevus_tegu", "vald"],
     rus: ["танец", "танцы"], ukr: ["танець"],
   },
   {
@@ -12289,6 +13408,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mari käib sõpradega ööklubides tantsimas.", "Tangot tantsitakse ennekõike paariti.", "Mees kutsus naise tantsima.", "Robert tantsib Mariaga."],
     note: "hrl muusika saatel rütmilisi kehaliigutusi ja teatud samme tegema",
+    semanticTypes: ["VERB_liikuma/liigutama"],
     rus: ["танцевать", "станцевать"], ukr: ["танцювати"],
   },
   {
@@ -12300,6 +13420,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · kust/kellelt",
     usages: ["Taotleme toetust.", "Prokurör taotles mehe karistamist 12-aastase vangistusega.", "Mida sa oma jutuga taotled?", "Akadeemia on kultuuriajakiri, mis taotleb vahendada eri teadusharude tänapäevast taset ja arengut."],
     note: "midagi saada või saavutada püüdma (nt asjakohaseid ametkondlikke protseduure läbides)",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["ходатайствовать", "добиваться"], ukr: ["подавати", "подати"],
   },
   {
@@ -12311,6 +13432,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uuringud näitavad, et alkoholi tarbimine on vähenenud."],
     note: "kaupade ja teenuste ostmise teel vajaduste rahuldamine; (üldisemalt:) millegi tarvitamine (tarvitatavat manustades)",
+    semanticTypes: [],
     rus: ["потребление", "употребление"], ukr: ["споживання", "витрата"],
   },
   {
@@ -12322,6 +13444,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Maa on oluline, mitte taristu seal peal.", "Peale ehituslubade väljastamist saab asuda ka vajalikku taristut ehitama."],
     note: "ühiskonna või ettevõtte tööks vajalikud vahendid, tegevused ja teenused (nt internetiühendus, tänavavõrk, veevarustus)",
+    semanticTypes: ["abstr/konkr"],
     rus: ["инфраструктура"], ukr: ["інфраструктура"],
   },
   {
@@ -12333,6 +13456,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Firma arvutites oli illegaalne tarkvara.", "Nutitelefoni tarkvara tuleb aeg-ajalt uuendada.", "Arvuti tarkvara on vaja uuendada.", "Ostetud arvutiga tuli kaasa palju tarkvara, kellast viirusetõrjeni."],
     note: "infotöötlussüsteemi programmid, protseduurid, reeglid ja nendega seotud dokumentatsioon",
+    semanticTypes: ["ese_semio"],
     rus: ["программное обеспечение", "софтвер"], ukr: ["програмне забезпечення"],
   },
   {
@@ -12344,6 +13468,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Probleemi arutati nii riiklikul kui kohalikul tasandil.", "Ülikoolid tegid koostööd peamiselt doktoriõppe tasandil.", "Inimlik tasand on ta jaoks kõige olulisem.", "Inimesed kapselduvad arvutisse nii suhtluse kui meelelahutuse tasandil."],
     note: "järk hierarhilises süsteemis",
+    semanticTypes: ["abstr/konkr"],
     rus: ["уровень", "плоскость"], ukr: ["рівень", "площина"],
   },
   {
@@ -12355,6 +13480,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta võtab taskust suure punaseruudulise taskurätiku ja pühib sellega oma nägu."],
     note: "väiksem kaasaskantav rätik nina nuuskamiseks vm puhastamiseks",
+    semanticTypes: ["ese_riie"],
     rus: ["носовой платок"], ukr: ["хустинка", "хусточка"],
   },
   {
@@ -12366,6 +13492,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Panin kohvivee keema ja seadsin tassid lauale.", "Marve kallas kohvi tassidesse.", "Tassis on kuum kohv.", "Valasin tassidesse teed."],
     note: "hrl kõrvaga varustatud (väiksem) jooginõu",
+    semanticTypes: ["ese_anum"],
     rus: ["чашка", "полная чашка"], ukr: ["чашка"],
   },
   {
@@ -12377,6 +13504,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ametlikku teadet veel pole.", "Täna öösel kell 00.22 sai häirekeskus teate tulekahju kohta Lääne-Virumaal.", "Suuline teade.", "Uudised ja teated."],
     note: "see, mis kellelegi (uudisena, kinnitusena) teatatakse, edastatav (lühike) infolõik",
+    semanticTypes: ["ese_semio"],
     rus: ["сообщение", "оповещение"], ukr: ["повідомлення", "сповіщення"],
   },
   {
@@ -12388,6 +13516,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rahvusvahelisse uurimisrühma kuulus kolm Eesti teadlast.", "Mõned teadlased väidavad, et kuna ämblikel ja putukatel pole silmalauge, siis nad ei saa magada.", "Konverentsil kohtusid mitme eriala teadlased."],
     note: "teadustööd tegev inimene, uurija teaduse alal",
+    semanticTypes: [],
     rus: ["учёный"], ukr: ["науковець", "науковиця"],
   },
   {
@@ -12399,6 +13528,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · kellest/millest (elative) · keda/mida* (partitive)",
     usages: ["Maur teab, kust kõrbes vett saab.", "Naine hakkas seda alles aimama, mida arst juba teadis.", "Kas sa tead, kus ta on?", "Ma tean, et ta valetab."],
     note: "millegi kohta infot, teadmist või teadmisi omama, millestki teadlik olema, milleski selgusel, kindel olema",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["знать", "ведать"], ukr: ["знати"],
   },
   {
@@ -12410,6 +13540,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõnikord on teadmatus parem kui teadmine.", "Teda oli kasvatatud teadmises, et abielu on igavene.", "Lahkusime politseist igasuguse teadmiseta kadunu kohta.", "Emal on vaja kindlat teadmist, et ta lapsega on kõik korras."],
     note: "milleski selgusel olek, faktidele, traditsioonile, kogemusele vm tuginev põhjendatud uskumus tegelikkuse kohta, info omamine millestki",
+    semanticTypes: ["seisund"],
     rus: ["знание", "сведение"], ukr: ["знання", "відомість"],
   },
   {
@@ -12421,6 +13552,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Teaduse areng.", "Alternatiivmeditsiin ei allu teaduse reeglitele.", "Raamat käsitleb teaduse ja tehnika arengut.", "Bioloogia on teadus, mis uurib elu."],
     note: "tegevus, mille eesmärk on saada, talletada ja rakendada uusi tõeseid teadmisi ning mis tugineb meetodil, mis tagab teadmiste võimalikult suure objektiivsuse ja kontrollitavuse",
+    semanticTypes: ["vald"],
     rus: ["наука", "сфера науки"], ukr: ["наука"],
   },
   {
@@ -12432,6 +13564,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Franki teadvuses polnud tapmine patt, vaid lahendus.", "Pajul on kreeklaste teadvuses ka kasinuse tähendus.", "Viimaks jõudis juhtunu mu teadvusesse.", "Ajalooteadvus."],
     note: "mõtete, emotsioonide, tajumuste, mälestuste vms vaimuseisundite omamine ja tundmine, psüühika võime peegeldada psüühikavälist maailma ja iseennast",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["сознание", "самосознание"], ukr: ["свідомість"],
   },
   {
@@ -12443,6 +13576,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative) · millest (elative) · et",
     usages: ["„Lendame otsekursil,” teatas lendur.", "Kui midagi leiad, teata kohe mulle.", "Kallaletungist teatati politseisse.", "Õde helistas ja teatas kurva uudise."],
     note: "teadet, uudist kellelegi edasi andma, millestki teada andma, midagi teatavaks tegema",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["сообщать", "сообщить"], ukr: ["повідомляти", "повідомити"],
   },
   {
@@ -12454,6 +13588,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Estonia teater.", "Ootan sind teatri ees.", "Ta armastab teatris käia.", "Lähen õhtul teatrisse."],
     note: "hrl sõna-, muusika-, tantsulavastusi esitav kunstiasutus",
+    semanticTypes: ["koht_asutus", "koht_hoone"],
     rus: ["театр", "спектакль"], ukr: ["театр"],
   },
   {
@@ -12465,6 +13600,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Asfalttee.", "Kruusatee.", "Teed on libedad.", "Kuhu see tee viib?"],
     note: "käimiseks ja sõitmiseks kasutatav (ning selleks ettevalmistatud) pinnaseriba",
+    semanticTypes: ["koht_ala"],
     rus: ["дорога", "путь"], ukr: ["дорога", "шлях"],
   },
   {
@@ -12476,6 +13612,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Turvafirma pakub uut teenust.", "Kasutame audiitorfirmade teenuseid.", "Millise panga teenuseid sa kasutad?"],
     note: "(ettevõtluse korras, riigi pakutav) inimese mõnd vajadust rahuldav toiming, tegevus või protsess, mittemateriaalne kaup",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["услуга"], ukr: ["послуга"],
   },
   {
@@ -12487,6 +13624,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Värvikate tegelastega modernne romaan.", "Muinasjututegelane.", "Meestegelane.", "Romaani tegelased on üliõpilased."],
     note: "autori loodud isik või olend filmis, romaanis vm teoses",
+    semanticTypes: ["esitus_kujutis", "in_roll"],
     rus: ["герой", "персонаж"], ukr: ["герой", "героїня"],
   },
   {
@@ -12498,6 +13636,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative) · kellega (comitative)",
     usages: ["Toivo tegeleb matemaatikaga.", "Firma tegeleb radiaatorite paigaldamisega.", "Ära tegele lollustega!", "Mees istus kõrtsis ja tegeles mingite oma asjadega."],
     note: "mingil alal või millegi kallal (pidevamalt) tegutsema või töötama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["заниматься", "заняться"], ukr: ["займатися", "зайнятися"],
   },
   {
@@ -12509,6 +13648,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas ta on tegelikult hoopis hiinlane?", "Tegelikult kulus töö peale aega rohkem, kui oli planeeritud.", "Tegelikult arvan, et ..", "Tegelikult on mul ükskõik."],
     note: "(täiel määral) tegelikkuses, reaalsuses, mitte näiliselt",
+    semanticTypes: ["ADV_aste"],
     rus: ["действительно", "в действительности"], ukr: ["справді", "дійсно"],
   },
   {
@@ -12520,6 +13660,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sünnipäevaks teeme tordi.", "Poiss tegi endale tuulelohe.", "Tee käsikirjast koopia.", "Kas sul on testament tehtud?"],
     note: "midagi valmistama, tekitama, looma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["делать", "сделать"], ukr: ["робити", "зробити"],
   },
   {
@@ -12531,6 +13672,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tehisintellekti looma.", "Masina tehisintellekt tabas ära võõra sissetungi ja andis häiret.", "Kiirmales võrdles võimeid kaheksa tehisintellekti.", "Eraldi tehisintellekti eriala ei ole plaanis luua, küll aga rohkem keskenduda andmeanalüütika suunale."],
     note: "tarkvara või süsteem, mis suudab andmete ja algoritmide abil iseseisvalt lahendada ülesandeid ja teha otsuseid inimmõtlemist jäljendaval moel",
+    semanticTypes: ["abstr/konkr", "ese_semio"],
     rus: ["искусственный интеллект", "ИИ"], ukr: [],
   },
   {
@@ -12542,6 +13684,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Käbi ja Pääsu, kas teie ei lähegi kinno?", "Ilma teieta poleks peost asja saanud, kallid sõbrad!", "Kutsun teid kõiki külla.", "Ma andestan teile."],
     note: "osutab kahele või enamale inimesele, kellest vähemalt üks on kuulaja (ütluse adressaat) ja kelle hulka ei kuulu kõneleja",
+    semanticTypes: ["esitus_keel", "inimene"],
     rus: ["вы", "Ваше"], ukr: ["ви"],
   },
   {
@@ -12553,6 +13696,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Puhkan juuli teisel nädalal.", "Elan teisel korrusel.", "Ostsin piletid teise ritta.", "Saime võistlusel teise koha."],
     note: "(järgarv:) järjestuses või järjekorras 2.",
+    semanticTypes: ["esitus_arv", "omadus_kval"],
     rus: ["второй", "другой"], ukr: ["другий", "інший"],
   },
   {
@@ -12564,6 +13708,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ühtpidi võime mõne miljoni kokku hoida, kuid teisalt palju enam kaotada.", "Muidugi on see risk, ent teisalt – kes ei riski, see ei võida.", "Bussiga minna on odavam, teisalt jõuab autoga kiiremini kohale.", "Nad on teisalt tulnud."],
     note: "(asjaolusid vaagides:) teise nurga alt, teisest küljest vaadates",
+    semanticTypes: ["ADV_viis"],
     rus: ["с другой стороны", "из других краёв"], ukr: ["з другого боку", "з іншого місця"],
   },
   {
@@ -12575,6 +13720,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koosolek toimub teisipäeval.", "Teisipäeval on vähese pilvisusega kuiv ilm."],
     note: "nädala 2. päev, esmaspäevale järgnev ja kolmapäevale eelnev päev",
+    semanticTypes: ["aeg_nädalapäev", "esitus"],
     rus: ["вторник"], ukr: ["вівторок"],
   },
   {
@@ -12586,6 +13732,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võlg tekkis aasta alguses.", "Küllap ülikoolis tekivad uued tutvused.", "Millal tekkis elu Maal?", "Remondi ajal tekkisid seintesse praod."],
     note: "algust saama, kujunema, moodustuma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["возникать", "возникнуть"], ukr: ["виникати", "виникнути"],
   },
   {
@@ -12597,6 +13744,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma ei näe teksti lugeda.", "Mees lasi silmadel üle teksti libiseda.", "Raamatus oli vähe teksti ja palju pilte.", "Ta uurib vanu tekste."],
     note: "kirjutatud või trükitud sõnade hrl mõtestatud järjend",
+    semanticTypes: ["ese_semio"],
     rus: ["текст", "слова"], ukr: ["текст"],
   },
   {
@@ -12608,6 +13756,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Emal on telefon välja lülitatud.", "Telefon heliseb.", "Seinatelefon.", "Telefon helises."],
     note: "telefonikõnede edastamiseks ja vastuvõtmiseks kasutatav seade",
+    semanticTypes: ["ese_instru"],
     rus: ["телефонный аппарат", "телефон"], ukr: ["телефон", "номер телефону"],
   },
   {
@@ -12619,6 +13768,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellelt (ablative)",
     usages: ["Toimetaja mõtleb, kellelt artiklit tellida.", "Takso on veel tellimata!", "Postimüügikataloogidest tellitakse järjest rohkem kaupa.", "Tellisime toidud juba tund aega tagasi."],
     note: "hrl tasu eest, teenusena või tellimustööna midagi teha, valmistada või sooritada laskma, millegi hankimist, kohaletoomist või -saatmist taotlema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["заказывать", "заказать"], ukr: ["замовляти", "замовити"],
   },
   {
@@ -12630,6 +13780,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tema küll nii ei tee.", "Ott ja tema sõbrad.", "Ega ma temaks ole.", "Tema oskab kõike."],
     note: "osutab inimesele, kes ei ole kõneleja ega kuulaja",
+    semanticTypes: ["esitus_keel", "inimene"],
     rus: ["он", "она"], ukr: ["він", "вона"],
   },
   {
@@ -12641,6 +13792,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Katsetega tõestatud teooria.", "Teooria lükati ümber.", "Teadusteooria.", "Ühiskonnateooria."],
     note: "teaduslike mõistete, väidete, mõtteliste eksperimentide ja tõestuste terviklik süsteem, mis kirjeldab mingit tegelikkuse valdkonda",
+    semanticTypes: ["abstr"],
     rus: ["теория", "мнение"], ukr: ["теорія"],
   },
   {
@@ -12652,6 +13804,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eduard Vilde „Kogutud teosed“.", "„Mona Lisa” on Leonardo da Vinci kõige kuulsam teos.", "Teos on originaalne, kui see on autori enda intellektuaalse loomingu tulemus."],
     note: "loova töö või tegevuse tulemus hrl kirjanduse, kunsti, teaduse valdkonnas (nt raamat, maal, helitöö, film vm)",
+    semanticTypes: ["ese_semio"],
     rus: ["опус", "произведение"], ukr: ["твір", "праця"],
   },
   {
@@ -12663,6 +13816,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Romaanis teostab peategelane oma unistused leiutajana ja armastajana.", "Tiina tahtis ennast teostada.", "Rahvas teostab oma võimu valimiste kaudu.", "Projekti hakatakse teostama järgmisel aastal."],
     note: "(mõeldut, plaanitsetut, kavandatut) ellu viima, ära tegema, täide viima",
+    semanticTypes: ["VERB_abstr", "VERB_tegevus"],
     rus: ["осуществлять", "осуществить"], ukr: ["здійснювати", "здійснити"],
   },
   {
@@ -12674,6 +13828,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõte on köitev, aga teostus jätab visandi mulje.", "Kehva teostusega dokumentaal.", "Projekti teostus on takerdunud."],
     note: "see, kuidas miski on teoks tehtud, täide viidud",
+    semanticTypes: ["seisund", "tegevus"],
     rus: ["осуществление", "выполнение"], ukr: [],
   },
   {
@@ -12685,6 +13840,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Terav nuga.", "Teravad hambad.", "Ettevaatust, nuga on väga terav!", "Kutsikal on teravad hambad."],
     note: "(lõiketera, lõikevahendi kohta:) õhukese servaga ja hästi lõikav",
+    semanticTypes: ["omadus_füüs"],
     rus: ["острый", "наточенный"], ukr: ["гострий", "різкий"],
   },
   {
@@ -12696,6 +13852,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Teravmeelne kolumnist.", "Tegid teravmeelse tähelepaneku."],
     note: "vaimukas, nutikas, leidlik",
+    semanticTypes: ["omadus_psühh"],
     rus: ["находчивый", "остроумный"], ukr: [],
   },
   {
@@ -12707,6 +13864,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kiideti presidendi teravmeelsust.", "Püüab kõiksugu teravmeelsustega teiste tähelepanu köita."],
     note: "vaimukas-olek, nutikus, leidlikkus",
+    semanticTypes: ["omadus_psühh", "seisund"],
     rus: ["остроумие", "острословие"], ukr: [],
   },
   {
@@ -12718,6 +13876,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tippvormist olen kaugel, teravust napib.", "Vaimne teravus.", "Ta parimaid lavastusi iseloomustab mõtte värskus ja sõnumi teravus.", "Kas saate probleemi teravusest aru?"],
     note: "erksus, hea reageerivus, terasus",
+    semanticTypes: ["omadus_kval"],
     rus: ["острота", "обострённость"], ukr: [],
   },
   {
@@ -12729,6 +13888,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["No tere, Juhan.", "Tere, mina olen Katrin."],
     note: "tervitussõna, mida kasutatakse kohtumisel või kellegi poole pöördumisel",
+    semanticTypes: ["esitus_keel_suhtlus"],
     rus: ["здравствуйте", "здравствуй"], ukr: ["привіт!", "добрий день!"],
   },
   {
@@ -12740,6 +13900,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Majandustermin.", "Õigustermin.", "Autor kasutab läbivalt terminit „autentne\", kuid ei selgita selle tähendust.", "Eestikeelsed terminid koos seletuste ning ladina, inglise ja soome vastetega."],
     note: "erialast mõistet tähistav, täpselt piiritletud tähendusega sõna või sõnaühend",
+    semanticTypes: ["esitus_keel"],
     rus: ["термин"], ukr: ["термін"],
   },
   {
@@ -12751,6 +13912,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["NATO terminoloogia sõnastik.", "Eesti keelekorraldajad on omakeelse terminoloogia väljatöötamisel teinud tublit tööd.", "Õigusterminoloogia.", "Meditsiiniterminoloogia."],
     note: "erialaste mõistete ja neid tähistavate terminite kogum, seda hõlmav kirjakeele osa",
+    semanticTypes: ["esitus_keel"],
     rus: ["терминология", "термины"], ukr: ["термінологія", "терміни"],
   },
   {
@@ -12762,6 +13924,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Terve sõdurpoiss.", "Terved hambad.", "Laps on terve kui purikas.", "Majaelanikud pääsesid põlengust tervena."],
     note: "tervise juures olev, mitte haige ega viga saanud",
+    semanticTypes: ["omadus"],
     rus: ["здоровый", "целый"], ukr: ["здоровий", "цілий"],
   },
   {
@@ -12773,6 +13936,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on hea vaimse tervise juures.", "Nõrga tervisega tüdrukud.", "Tulen, kui tervis lubab.", "Tervis vedas alt."],
     note: "organismi normaalne, häireteta elutegevus, sellest johtuv kehaline, sotsiaalne ja vaimne heaolu",
+    semanticTypes: ["seisund_haigus"],
     rus: ["здоровье", "здравие"], ukr: ["здоровʼя", "вітання"],
   },
   {
@@ -12784,6 +13948,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tervishoiu rahastamist reguleerib ravikindlustuse seadus.", "Tartu Tervishoiu Kõrgkool.", "Hammaste tervishoius on väga tähtis pesemisharjumuse tekkimine.", "Kuidas värvimine juuste tervishoiule mõjub?"],
     note: "tegevusvaldkond, mis hõlmab inimeste tervise edendamist, hoidmist ja taastamist",
+    semanticTypes: ["vald"],
     rus: ["здравоохранение", "гигиена"], ukr: ["охорона здоровʼя", "гігієна"],
   },
   {
@@ -12795,6 +13960,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · mida* (partitive)",
     usages: ["Tervitasime, aga pikemalt juttu ajama ei jäänud.", "Sõbrad tervitasid teineteist.", "President tervitas külalisi.", "Esinejat tervitati aplausiga."],
     note: "kedagi kohates tutvuse märgiks või kombekohaselt tervitussõnu lausuma või žestidega reageerima",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["приветствовать", "поприветствовать"], ukr: ["вітатися", "привітатися"],
   },
   {
@@ -12806,6 +13972,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õpilasi testitakse emakeeles, matemaatikas ja inglise keeles.", "Kõik toolid on kontrollitud ja testitud vastavalt nõuetele.", "Sõidan niisama tunnikese, testin suuski."],
     note: "testiga võimeid ja omadusi või teadmisi ja oskusi mõõtma, kellelegi testi tegema",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["тестировать", "протестировать"], ukr: ["тестувати", "протестувати"],
   },
   {
@@ -12817,6 +13984,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Liikluse üha kasvav tihedus tegi linnaelanikud pahaseks.", "Kas juuste tihedus on päritav?", "Rabaturba tahke osa tihedus varieerub vahemikus 1,5–1,6 Mg m3 ning tema üldine poorsus on suur (95–98%).", "Puidu põlemise kiirus oleneb puidu tihedusest."],
     note: "millegi hulk või kogus pinna-, ruumi-, pikkus- või harvemini ajaühiku kohta",
+    semanticTypes: ["abstr/konkr"],
     rus: ["плотность", "уплотнённость"], ukr: [],
   },
   {
@@ -12828,6 +13996,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mees on üsna tihti ilma lipsuta.", "Käime tihti kinos."],
     note: "väikeste vaheaegade järel, aina kordudes",
+    semanticTypes: ["ADV_aeg", "ADV_viis"],
     rus: ["часто", "очень часто"], ukr: ["часто"],
   },
   {
@@ -12839,6 +14008,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Töölepingus kokkulepitud tingimused.", "Esimene tingimus on, et ..", "Konkursi tingimused.", "Trass ei vasta tehnilistele tingimustele."],
     note: "(määratud, seatud) asjaolu, millest oleneb mingi muu asjaolu või nähtuse tekkimine või olemasolu",
+    semanticTypes: ["abstr/konkr"],
     rus: ["условие", "условия"], ukr: ["умова", "умови"],
   },
   {
@@ -12850,6 +14020,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · millele (allative) · vastu mida / mille vastu",
     usages: ["Viltust seina toetavad tugipostid.", "Haiget toetati trepist ülesminekul.", "Joodikut pidi kahelt poolt toetama.", "Postid toetavad katust."],
     note: "midagi või kedagi ülal või püsti hoidma, millelegi või kellelegi teatud asendis püsimiseks kindlust andma",
+    semanticTypes: ["VERB_seisund"],
     rus: ["поддерживать", "поддержать"], ukr: ["підтримувати", "підтримати"],
   },
   {
@@ -12861,6 +14032,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millele (allative) · mille vastu · kellele (allative)",
     usages: ["Naine toetus mehe käsivarrele.", "Mees toetub käega vastu seina.", "Proovisin haigele jalale mitte toetuda.", "Ta toetus seljaga vastu seina."],
     note: "ennast, mingit oma kehaosa või mingit eset millegi või kellegi najale seadma, millestki tuge saama",
+    semanticTypes: ["VERB_seisund", "VERB_tegevus"],
     rus: ["поддерживать", "поддержать"], ukr: ["обпирати", "обперти"],
   },
   {
@@ -12872,6 +14044,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tegelen tõlkimise ja toimetamisega.", "Kas sa politseinike toimetamisi kardad?", "Küll on kokal köögis toimetamist!", "Salakauba Eestisse toomiseks kasutati reisirongi."],
     note: "teksti, väljaande, saate vms avaldamisvalmiks seadmine",
+    semanticTypes: ["tegevus"],
     rus: ["редактирование", "редактура"], ukr: [],
   },
   {
@@ -12883,6 +14056,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: ["функционирование"], ukr: [],
   },
   {
@@ -12894,6 +14068,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Inimene vajab toitu ja kehakatet.", "Tellida saab pitsat või Hiina toitu.", "Toit pandi lauale.", "Vürtsikate toitude juurde sobib punane vahuvein."],
     note: "see, mida süüakse, et hankida eluspüsimiseks vajalikke aineid",
+    semanticTypes: ["toit"],
     rus: ["еда", "пища"], ukr: ["їда", "їжа"],
   },
   {
@@ -12905,6 +14080,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Too seal pildil on minu õde.", "Kes too tüüp oli?", "Vanaisa oli tolle aja kohta haritud mees.", "Küsis poja käest, kelleks too tahab saada."],
     note: "(otsesel viitamisel ümbritsevale reaalsusele) osutab kaugemal asuvale inimesele, esemele või olukorrale",
+    semanticTypes: [],
     rus: ["тот", "та"], ukr: ["той", "та"],
   },
   {
@@ -12916,6 +14092,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Supermarketis on suur valik kodumaiseid tooteid.", "Mesilasvaha sisaldav toode.", "Graafiline disain hõlmab raamatuid, ajalehti, visiitkaarte ja muid tooteid.", "Teraviljatoode."],
     note: "tootmise teel valmistatud asi, tootmise tulemus, materiaalne kaup (nt tarbeese, materjal, tööstusseade)",
+    semanticTypes: ["ese_instru"],
     rus: ["изделие", "продукт"], ukr: ["виріб", "продукт"],
   },
   {
@@ -12927,6 +14104,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vineertool.", "Pidin üllatusest tooli pealt maha kukkuma.", "Madis tõmbas tooli arvutile ligemale.", "Külaline istus toolile."],
     note: "hrl nelja jalaga ja seljatoega iste ühe inimese jaoks",
+    semanticTypes: ["abstr", "ese_instru"],
     rus: ["стул", "стульчик"], ukr: ["стілець", "крісло"],
   },
   {
@@ -12938,6 +14116,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida (partitive) · kust (source) · kust + kuhu · kuhu + millega",
     usages: ["Kohv toodi lauda sekundiga.", "Jõuluvana tõi kõigile kingitusi.", "Paat tõi merehädalised meie saarele.", "Tuul toob metsa poolt suitsuvingu."],
     note: "kedagi või midagi kellelegi või kuhugi toimetama (kaugemalt lähemale)",
+    semanticTypes: ["VERB_liikuma/liigutama"],
     rus: ["приносить", "принести"], ukr: ["приносити", "принести"],
   },
   {
@@ -12949,6 +14128,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Küll on tore tüdruk!", "Tegime lastega toredaid asju: joonistasime, meisterdasime, mängisime.", "Oli tore pidu.", "Ta on igati tore inimene."],
     note: "(inimese olemuse, mingi nähtuse, tegevuse vm kohta:) selline, kes või mis kutsub esile poolehoidu, meeldimust, sümpaatiat",
+    semanticTypes: ["omadus_kval"],
     rus: ["замечательный", "отличный"], ukr: ["чудовий", "дуже гарний"],
   },
   {
@@ -12960,6 +14140,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tuisk ja torm tekitasid lennujaamas kaose.", "Merel tõusis tugev torm.", "Torm murdis puu maha.", "Kalamehed jäid tormi kätte."],
     note: "väga tugev tuul",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["ураган", "буря"], ukr: ["ураган", "буря"],
   },
   {
@@ -12971,6 +14152,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oleks mul ometi oma tuba!", "Hotellis on sada tuba.", "Pööningutuba.", "Mitu tuba nende uues korteris on?"],
     note: "elamiseks kasutatav ruum majas või korteris",
+    semanticTypes: ["koht_hoone"],
     rus: ["комната", "жилище"], ukr: ["кімната", "житло"],
   },
   {
@@ -12982,6 +14164,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanaisa oli tugev nagu karu.", "Kehalt tugev mees.", "Minu isa on väga tugev mees.", "Tugeva jää peal võivad sõita ka autod."],
     note: "(inimese, looma kohta:) suure kehajõuga, suurt füüsilist jõudu omav või ilmutav",
+    semanticTypes: ["omadus_füüs"],
     rus: ["сильный", "крепкий"], ukr: ["сильний", "міцний"],
   },
   {
@@ -12993,6 +14176,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millele (allative) · millel (adessive)",
     usages: ["Süüdistus tugineb autost leitud asitõenditele.", "Kriitiline artikkel tugineb vaid ühel ja erapoolikul allikal.", "Minu väide tugineb faktidele.", "Kõik tugineb usaldusele."],
     note: "midagi aluseks võtma, millestki lähtuma",
+    semanticTypes: ["VERB_abstr"],
     rus: ["опираться", "опереться"], ukr: ["ґрунтуватися", "базуватися"],
   },
   {
@@ -13004,6 +14188,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaks tuhat kolmsada.", "Sain töö eest tuhat eurot.", "Väljakule kogunes tuhandeid inimesi.", "Tuhat autot."],
     note: "põhiarv 1000 (103)",
+    semanticTypes: ["esitus_arv"],
     rus: ["тысяча", "тыс."], ukr: ["тисяча"],
   },
   {
@@ -13015,6 +14200,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction) · kust (source) · millega (comitative) · mida tegema",
     usages: ["Tule ruttu!", "Tuli mööda tänavat.", "Nägin, et rong tuleb.", "Kraanist ei tule vett."],
     note: "lähenedes, lähemale liikuma",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["идти", "приходить"], ukr: ["іти", "приходити"],
   },
   {
@@ -13026,6 +14212,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ravi tulemus on ennustamatu.", "Rõõmu teeb Virgele oma töö juures see, et kohe on näha tulemusi.", "Ravi andis häid tulemusi.", "Sõnaraamat valmis paljude inimeste töö tulemusena."],
     note: "(sihikindla) tegevuse või mingi protsessi tagajärg",
+    semanticTypes: ["abstr"],
     rus: ["результат", "итог"], ukr: ["результат", "підсумок"],
   },
   {
@@ -13037,6 +14224,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative) · kellele (allative)",
     usages: ["Minu küsimus tuleneb teie eelnevast vastusest.", "Rehvide märgistamise nõue tuleneb Euroopa Liidu määrusest.", "Seadusest tuleneb tööandjale kohustus maksta mõistlikku hüvitist.", "Segadus tulenes uuest seadusest."],
     note: "põhjustatud, tingitud olema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["следовать", "вытекать"], ukr: ["виходити", "випливати"],
   },
   {
@@ -13048,6 +14236,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tume ülikond.", "Tume ja ähvardav pilv.", "Ta naine on tumeda nahaga.", "Praegu on moes tumedat värvi riided."],
     note: "värvilt, toonilt rohkem musta- kui valgepoolne, mitte palju valgust peegeldav",
+    semanticTypes: ["omadus_füüs"],
     rus: ["тёмный", "сумрачный"], ukr: ["темний"],
   },
   {
@@ -13059,6 +14248,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kursused vältavad 60 tundi.", "Tüdrukud šoppasid tundide viisi poodides.", "Sõit kestis kaks tundi.", "Kontsert algab tunni aja pärast."],
     note: "1/24 ööpäevast, 60 minutiga võrduv ajaühik",
+    semanticTypes: ["aeg"],
     rus: ["ч.", "час"], ukr: ["година", "урок"],
   },
   {
@@ -13070,6 +14260,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · kuidas · millisena · keda* (partitive)",
     usages: ["Toas oli tunda magusat viirukilõhna.", "Tundsin torget talla all.", "Järsku tundsin tugevat nälga.", "Janu tundma."],
     note: "aistinguid (füüsiliselt) vastu võtma, puudutust, temperatuuri, valu, lõhna, maitset, näljatunnet vms tajuma",
+    semanticTypes: ["seisund"],
     rus: ["чувствовать", "почувствовать"], ukr: ["відчувати", "відчути"],
   },
   {
@@ -13081,6 +14272,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "milline + millisena · mida tegevat · et",
     usages: ["Teine kleit tundub ilusam.", "See ainult tundub sulle nii.", "Tundub uskumatu, et nii suur auto võtab nii vähe kütust.", "Autor tundub olevat sümpaatne mees."],
     note: "mingit muljet jätma (nägemistaju, tunde või mõtlemise põhjal)",
+    semanticTypes: ["VERB_modaalsus", "VERB_seisund"],
     rus: ["казаться", "показаться"], ukr: ["здаватися", "здатися"],
   },
   {
@@ -13092,6 +14284,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Usulised tunded.", "Kõhe tunne oli paksus metsas üksi olla.", "Poisil tekkisid tüdruku vastu tunded.", "Tunded keesid üle."],
     note: "inimese subjektiivne elamus, hingeline läbielamine",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["чувство", "ощущение"], ukr: ["почуття", "відчуття"],
   },
   {
@@ -13103,6 +14296,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olime ajaloolise sündmuse tunnistajaks.", "Õnnetuse tunnistaja kutsus kiirabi.", "Politsei otsib avarii tunnistajaid.", "Oluline tunnistaja ei ilmunud kohtusse."],
     note: "inimene, kes ise on mingi sündmuse, nähtuse juures, näeb toimuvat pealt",
+    semanticTypes: ["in_omadus"],
     rus: ["очевидец", "очевидица"], ukr: ["свідок", "свідчиня"],
   },
   {
@@ -13114,6 +14308,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kohtus said määravaks kahe inimese tunnistused.", "Õnnetuse pealtnägijate tunnistused.", "Ta nägi õnnetust pealt ja andis kohtus tunnistuse.", "Aumärgi kandmise õigust tõendav tunnistus."],
     note: "tunnistaja antud seletus mingi sündmuse või teo asjaolude kohta",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["показание", "свидетельство"], ukr: ["свідчення", "показання"],
   },
   {
@@ -13125,6 +14320,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Stenokardia tunnused.", "Kõik tunnused viitavad, et siin on käinud vargad.", "Kõhklus on intelligentsuse tunnus.", "Naturaalset lambasoolt peetakse hea vorsti tunnuseks."],
     note: "iseloomulik omadus, mille alusel esemed, organismid, nähtused vms on üksteisega võrreldavad ja üksteisest eristatavad",
+    semanticTypes: ["abstr"],
     rus: ["признак", "симптом"], ukr: ["ознака", "симптом"],
   },
   {
@@ -13136,6 +14332,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Isa tõi turult värsket liha.", "Nõmme turg.", "Kalaturg.", "Ostsin turult liha, mune ja piima."],
     note: "müügilaudadega kauplemiskoht (lahtine plats, tänapäeval ka hoone)",
+    semanticTypes: ["koht_ala", "koht_asutus"],
     rus: ["рынок", "базар"], ukr: ["ринок", "базар"],
   },
   {
@@ -13147,6 +14344,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanad bussid ohustavad reisijate turvalisust.", "Kes vastutab sõitjate turvalisuse eest?", "Turvalisuse huvides kandke rattaga sõites kiivrit.", "Turvalisus on mõõtja kaitstus biotoimeainete, nagu bakterid, seened, viirused, viroidid, endo- ja ektoparasiidid, eest."],
     note: "inimese kaitstus, ohutus teatavas olukorras",
+    semanticTypes: ["seisund"],
     rus: ["безопасность", "защищённость"], ukr: ["безпека", "безпечність"],
   },
   {
@@ -13158,6 +14356,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Püssi hoiti tuttava küti juures.", "See nimi on mulle tuttav.", "Tuttav tunne!", "Külas on kõik omavahel tuttavad."],
     note: "selline, kes või mis on varasemate kokkupuudete põhjal tuntud või teada, varem nähtud, kohatud või kogetud, mitte võõras ega tundmatu",
+    semanticTypes: ["omadus"],
     rus: ["знакомый", "знакомая"], ukr: ["знайомий", "знайома"],
   },
   {
@@ -13169,6 +14368,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Väljas tõusis tugev tuul.", "Tuul puhub tormi ajal kuni 30 meetrit sekundis.", "Kael on kange, tuul on vist läbi tõmmanud.", "Tuul pöördus läände (= hakkas puhuma lääne poolt)."],
     note: "õhu tuntav liikumine looduslikel põhjustel",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["ветер", "настроение"], ukr: ["вітер"],
   },
   {
@@ -13180,6 +14380,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tasapisi selgus ka tõde.", "Kogu tõde Amsterdami punaste laternate tänavast.", "Ajaloolise tõega pole siin pistmist.", "Uurija tahab teada tõde."],
     note: "see, mis vastab tegelikkusele, on tõsiasjadega vm viisil tõendatud, tegelikud asjaolud, asjade tegelik seis, hrl vastandatuna kujutletule",
+    semanticTypes: ["abstr"],
     rus: ["правда", "истина"], ukr: ["правда", "істина"],
   },
   {
@@ -13191,6 +14392,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Paleodieedi tõhususe kohta vettpidavaid tõendeid pole.", "Advokaat esitas kohtule uued tõendid.", "Asuti tõendeid koguma.", "Kas see tõend kohut veenab?"],
     note: "millestki tunnistust andev, mingit oletust kinnitav ese, fakt või asjaolu",
+    semanticTypes: ["ese", "nähtus"],
     rus: ["доказательство", "свидетельство"], ukr: ["доказ", "довід"],
   },
   {
@@ -13202,6 +14404,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Piirivalve ei suutnud ebaseaduslikku piiriületamist tõendada.", "Varaste süü tuleb tõendada.", "Isikut tõendav dokument.", "Analüüsi tulemused tõendasid, et Mihkel ei ole tüdruku isa."],
     note: "millegi tõesust, tõelevastavust kinnitama või näitama, millegi kohta tõendeid esitama",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["доказывать", "доказать"], ukr: [],
   },
   {
@@ -13213,6 +14416,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta väljanägemine annab tõendust kehvast tervisest.", "Pole ühtki tõendust, et poiss oleks välismaale sõitnud.", "Ilma dokumentaalse tõenduseta ei saa kulutust arvesse võtta.", "Kui oma väidete tõenduseks puuduvad faktid ja argumendid, siis jääbki alles ainult labane sõim."],
     note: "seik, asjaolu vm, mis annab millestki tunnistust, kinnitab millegi paikapidavust",
+    semanticTypes: ["nähtus", "tegevus", "abstr/konkr"],
     rus: ["доказательство", "свидетельство"], ukr: [],
   },
   {
@@ -13224,6 +14428,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Süüalune tunnistati piisava tõendusmaterjali puudumisel õigeks."],
     note: "millegi tõenduseks olev, midagi tõendav materjal (nt kellegi süüdimõistmise üle otsustamisel)",
+    semanticTypes: ["materjal/aine", "objekt"],
     rus: ["доказательный материал", "доказательная база"], ukr: [],
   },
   {
@@ -13235,6 +14440,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kui kiusamine on kord alanud, on tõenäoline, et see ka jätkub.", "Kui tõenäoline on kolmas ilmasõda?", "Tema osalemine ei ole tõenäoline.", "On üsna tõenäoline, et ma kukkusin eksamil läbi."],
     note: "selline, mis arvatavasti toimub või teoks saab, oletatav, usutav, võimalik",
+    semanticTypes: ["omadus_kval"],
     rus: ["вероятный", "возможный"], ukr: ["імовірний", "можливий"],
   },
   {
@@ -13246,6 +14452,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "et",
     usages: ["Mul on ju vastupidist tõestavad faktid värskelt võtta.", "Teadlased tõestasid, et vihavimm suurendab südamehaiguse tekkimise ohtu.", "Teadlased on selle ammu katsetega tõestanud.", "Notar peab tehingu tõestama."],
     note: "uurimistulemustele, faktidele või loogikale toetudes millegi olemasolu või tõesust kindlaks tegema või midagi veenvalt põhjendama",
+    semanticTypes: ["VERB_abstr"],
     rus: ["доказывать", "доказать"], ukr: ["доводити", "довести"],
   },
   {
@@ -13257,6 +14464,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tõesti, Oleviste kirik oli kunagi maailma kõrgeim ehitis.", "Mul on tõesti väga kahju.", "Ma tõesti ei tea, kes seda tegi.", "Etendus oli tõesti hea."],
     note: "(suhtluses ütlust, väidet kinnitava sõnana:) (päris) kindlasti",
+    semanticTypes: ["esitus_keel_suhtlus"],
     rus: ["на самом деле", "правда"], ukr: ["справді", "насправді"],
   },
   {
@@ -13268,6 +14476,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuum lõunamaalase veri ei ole kuriteo tõestuseks.", "Notariaalset tõestust ei nõuta.", "Ma olen elav tõestus, et inimene võib muutuda.", "Matemaatiline tõestus."],
     note: "millegi olemasolu või tõesuse kinnitamine või veenev põhjendamine, hrl uurimistulemustele, faktidele või loogikale toetudes",
+    semanticTypes: ["abstr/konkr", "tegevus"],
     rus: ["доказательство", "подтверждение"], ukr: [],
   },
   {
@@ -13279,6 +14488,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Georg Meri \"Hamleti” tõlge on pisut vananenud.", "Katekismuse tõlge liivi keelde.", "Suuline tõlge.", "Automaatne Google'i tõlge."],
     note: "teise keelde tõlgitud tekst",
+    semanticTypes: ["ese_semio", "tegevus"],
     rus: ["перевод"], ukr: ["переклад"],
   },
   {
@@ -13290,6 +14500,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mu hetkelist pausi tõlgendas ta kui äraütlemist.", "Igaüks tõlgendas statistilisi andmeid, nagu talle kasulik oli.", "Seadust tõlgendati valesti."],
     note: "millestki teatud viisil aru saama, millelegi teatud tähendust või sisu andma",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["толковать", "истолковывать"], ukr: [],
   },
   {
@@ -13301,6 +14512,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Faktide väär tõlgendus.", "Seaduse tõlgendust küsiti riigikohtult.", "Laulja pälvis eripreemia Kodaly laulu parima tõlgenduse eest."],
     note: "teatud arusaam millestki, seletus millegi kohta",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["толкование", "истолкование"], ukr: [],
   },
   {
@@ -13312,6 +14524,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: ["ошибка в переводе", "неверный перевод"], ukr: [],
   },
   {
@@ -13323,6 +14536,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ungari kirjanduse tõlkija.", "Näidendi tõlkija on Anu Lamp.", "Otsin tööd tõlkijana."],
     note: "inimene, kes teksti hrl kirjalikult ühest keelest teise tõlgib",
+    semanticTypes: ["in_elukutse"],
     rus: ["переводчик", "переводчица"], ukr: ["перекладач", "перекладачка"],
   },
   {
@@ -13334,6 +14548,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mis keelest + mis keelde",
     usages: ["Materjalid tõlgiti soome keelest eesti keelde poole päevaga.", "Otsesaateid on raske tõlkida.", "\"Die Hard\" tõlgiti meie filmilevis \"Visaks hingeks\".", "Romaani on tõlkinud Kai Kask."],
     note: "suulist või kirjalikku teksti teises keeles edasi andma, teksti ühest keelest teise keelde vahendama",
+    semanticTypes: ["VERB_psühh_mõistus", "VERB_suhtlus", "VERB_tegevus"],
     rus: ["переводить", "перевести"], ukr: ["перекладати", "перекласти"],
   },
   {
@@ -13345,6 +14560,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Algas tõus Everestile.", "Mäkketõus.", "Alustasime järsku tõusu mäkke.", "Kuutõus."],
     note: "ülespoole, kõrgemale liikumine",
+    semanticTypes: ["tegevus"],
     rus: ["подъём", "восхождение"], ukr: ["піднімання", "підіймання"],
   },
   {
@@ -13356,6 +14572,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vanarahval on ilma kohta hulk vanasõnu ja tähelepanekuid."],
     note: "see, mida on märgatud, märkamisel põhinev fakt, arvamus, mulje vm",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["наблюдение", "мнение"], ukr: ["спостереження", "зауваження"],
   },
   {
@@ -13367,6 +14584,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lause tähendus muutub, kui sellest jätta ära osa sõnu.", "Kõik räägivad, aga keegi ei tea selle mõiste tähendust.", "Sõna tähendust vaata sõnaraamatust.", "Kitsam tähendus."],
     note: "sisu või mõte, millele sõna, sõnaühend või märk osutab, viitab, see, mida ta väljendab",
+    semanticTypes: ["abstr", "esitus"],
     rus: ["значение", "смысл"], ukr: ["значення", "значущість"],
   },
   {
@@ -13378,6 +14596,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hakkasin igal ööl nägema tähenduslikke unenägusid.", "Milline tähenduslik vahe on mõistetel „tühistamine” ja „kehtetuks tunnistamine”?"],
     note: "erilise, eriti olulise tähendusega, selgelt millelegi vihjav või viitav",
+    semanticTypes: ["omadus_kval"],
     rus: ["многозначительный", "многозначащий"], ukr: [],
   },
   {
@@ -13389,6 +14608,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Esineja pidas tähendusrikka pausi."],
     note: "erilise, eriti olulise tähendusega, selgelt millelegi vihjav või viitav",
+    semanticTypes: ["omadus_kval"],
     rus: ["многозначительный", "многозначащий"], ukr: [],
   },
   {
@@ -13400,6 +14620,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sõna esmane tähendus 'vaenlane' omandas hiljem muid tähendusvarjundeid nagu 'teener', 'sulane', 'ori'."],
     note: "sõna või sõnaühendi põhitähendusega seotud, sellest tulenev pisut erinev tähendus",
+    semanticTypes: ["esitus_keel"],
     rus: ["оттенок значения", "нюанс значения"], ukr: [],
   },
   {
@@ -13411,6 +14632,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hoonestusõigus tähtajaga 50 aastat.", "Pärand läheb pärast kolmekuulise tähtaja möödumist pärijale üle.", "Mu passi tähtaeg on läbi.", "Töö esitamise tähtaeg on järgmine esmaspäev kell 12."],
     note: "määratud ajavahemik, mille jooksul miski toimub, kehtib vms",
+    semanticTypes: ["aeg"],
     rus: ["срок", "назначенный срок"], ukr: ["термін", "строк"],
   },
   {
@@ -13422,6 +14644,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Onu tähistab sügisel ümmargust tähtpäeva.", "Müügil olid ilusad kaardid pulmadeks, sünnipäevadeks ja teisteks tähtpäevadeks.", "Läheneb laenu tagastamise tähtpäev.", "Aruande esitamise tähtpäev on 15. juuni."],
     note: "tähtis, tähistatav päev, nt mingi sündmuse toimumise aastapäev, kellegi sünnipäev",
+    semanticTypes: ["aeg"],
     rus: ["знаменательная дата", "торжественный день"], ukr: ["річниця", "роковини"],
   },
   {
@@ -13433,6 +14656,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lauses saab ja-tuletisi kasutada nimisõna iseloomustava täiendina: haukuja koer, muneja kana.", "Liitsõnu moodustatakse ka da-tegevusnimelise täiendiga nimisõnafraasist: kirg mängida &gt; mängukirg, mängimiskirg."],
     note: "(grammatikas:) lauseliige, mis laiendab nimisõna, nimisõnalist asesõna või põhiarvu",
+    semanticTypes: ["esitus_keel"],
     rus: ["определение", "атрибут"], ukr: [],
   },
   {
@@ -13444,6 +14668,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta lebas täies riides voodis.", "On ta ikka täie aruga?", "Talle pole vaja täit palka maksta.", "Ülesanne nõudis õpilastelt täit tähelepanu."],
     note: "kogu, terve",
+    semanticTypes: ["omadus_kval"],
     rus: ["полный", "весь"], ukr: ["повний", "весь"],
   },
   {
@@ -13455,6 +14680,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative) · mida (partitive)",
     usages: ["Tellimus täideti suure hilinemisega.", "Seadust tuleb täita.", "Lubadusi tuleb täita.", "Täitsin oma ülesande."],
     note: "midagi teoks tegema, täide viima",
+    semanticTypes: ["VERB_abstr"],
     rus: ["выполнять", "выполнить"], ukr: ["виконувати", "виконати"],
   },
   {
@@ -13466,6 +14692,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuidas tagatakse selle seaduse täitmist?"],
     note: "NATO standardimises standardikokkuleppest tulenevate kohustuste täitmine liikmesriigi poolt",
+    semanticTypes: ["tegevus"],
     rus: ["выполнение", "исполнение"], ukr: ["виконання"],
   },
   {
@@ -13477,6 +14704,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võib-olla hakkab täna sadama.", "Mida me täna teeme?", "Täna on kolmapäev.", "Täna teame teda kui tipp-poliitikut."],
     note: "käesoleval, tänasel päeval",
+    semanticTypes: ["aeg"],
     rus: ["сегодня"], ukr: ["сьогодні", "нині"],
   },
   {
@@ -13488,6 +14716,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mille eest · mida tegemast",
     usages: ["Ämm tänas jumalat, et kõik eluga pääsesid.", "Ajakirjanik ei tänanudki intervjuu eest.", "Publik tänas lauljat.", "Tüdruk tänas sõpra lillede eest."],
     note: "(sõnadega, teoga) tänutunnet väljendama, tänu avaldama",
+    semanticTypes: ["VERB_suhtlus", "VERB_tegevus"],
     rus: ["благодарить", "поблагодарить"], ukr: ["дякувати", "подякувати"],
   },
   {
@@ -13499,6 +14728,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Elan Palli tänaval.", "Asus elama Toominga tänavasse.", "Suveniiripoed on linna kõige käidavamas tänavas.", "Talvel on tänavad libedad."],
     note: "linnas vm asulas asuv (kõnniteega varustatud) tee",
+    semanticTypes: ["koht_ala"],
     rus: ["улица", "ул."], ukr: ["вулиця"],
   },
   {
@@ -13510,6 +14740,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uurija esitatud andmed peavad olema täpsed.", "GPS näitas kätte meie täpse asukoha.", "Tõlge ei olnud täpne.", "Oled oma ema täpne koopia."],
     note: "täiesti õige, vigadeta, tegelikkusele või eeskujule, millelegi etteantule vastav",
+    semanticTypes: ["omadus_kval"],
     rus: ["точный", "конкретный"], ukr: ["точний", "докладний"],
   },
   {
@@ -13521,6 +14752,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta mäletas juhtunut täpselt.", "Ma ei tea täpselt, millal ma jõuan.", "Ma tean täpselt, kui palju mul arvel raha on.", "Seletage palun täpsemalt, mis teiega juhtus."],
     note: "õigesti, tegelikkusele või etteantule vastavalt",
+    semanticTypes: ["ADV_viis"],
     rus: ["точно", "в точности"], ukr: ["точно", "достоту"],
   },
   {
@@ -13532,6 +14764,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Palun kirjeldage seda täpsemalt.", "Oleme mõlemad melomaanid, täpsemalt ooperihuvilised.", "Seletage palun täpsemalt, mis teiega juhtus."],
     note: "rohkem täpselt",
+    semanticTypes: ["ADV_viis"],
     rus: ["точнее", "более точно"], ukr: ["точніше"],
   },
   {
@@ -13543,6 +14776,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Turvamehed jälgivad sisenejaid piinliku täpsusega.", "Kõik oli organiseeritud väga sujuvalt, saksaliku täpsusega.", "Taktika töötas sajaprotsendilise täpsusega.", "Õpetaja päevaplaan on minutilise täpsusega paigas."],
     note: "tegevuse, soorituse vm täielik vastavus soovitule, nõutule, õigele vms, mitte kõrvalekalle ega segasus",
+    semanticTypes: ["omadus_kval"],
     rus: ["точность", "меткость"], ukr: ["точність"],
   },
   {
@@ -13554,6 +14788,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Määrus täpsustab keeleoskusnõudeid.", "Pean täpsustama, kui palju lend hilineb.", "Palun täpsusta, kas ööbid telgis või majas.", "Palun täpsustage oma küsimust."],
     note: "üksikasjalikumaks, selgemaks, täpsemaks tegema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["уточнять", "уточнить"], ukr: ["уточнювати", "уточнити"],
   },
   {
@@ -13565,6 +14800,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Täpsustuseks olgu öeldud, et ..", "Kommentaarid, täpsustused ja vigade parandused tuleb saata projekteerijale.", "Ametinimetusi on lubatud kasutada koos tööülesannet või tegevusala määrava täpsustusega."],
     note: "täpsustamine",
+    semanticTypes: ["esitus_keel_suhtlus", "tegevus_kõnetegu"],
     rus: ["уточнение", "конкретизация"], ukr: ["уточнення"],
   },
   {
@@ -13576,6 +14812,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Füüsiline töö.", "Tööd tehti kõvasti.", "Roosidega on palju tööd.", "Tal on praegu väga palju tööd."],
     note: "inimese vaimset või füüsilist pingutust eeldav tegevus, mille siht on endale elatusvahendeid luua",
+    semanticTypes: ["tegevus"],
     rus: ["работа", "труд"], ukr: ["праця", "робота"],
   },
   {
@@ -13587,6 +14824,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tööpuudus ulatub 11 protsendini."],
     note: "töötamisvõimaluste puudumine inimestel, kes tahavad ja võivad töötada",
+    semanticTypes: ["nähtus"],
     rus: ["безработица"], ukr: ["безробіття"],
   },
   {
@@ -13598,6 +14836,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kus (location) · kellena (essive)",
     usages: ["Töötati hommikust õhtuni.", "Maakoolis ei saanud täie koormusega töötada.", "Ta ei töötagi kusagil.", "Kus sinu abikaasa töötab? – Ta töötab pangas."],
     note: "vaeva nägema, pingutama selle nimel, et elatusvahendeid luua või midagi ära teha",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["работать", "трудиться"], ukr: ["працювати"],
   },
   {
@@ -13609,6 +14848,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tühi tass.", "Söö suu tühjaks!", "Põõsad on marjadest tühjaks korjatud.", "Mu pangaarve on tühi mis tühi."],
     note: "mitte millegagi täidetud, mitte midagi sisaldav",
+    semanticTypes: ["omadus_füüs"],
     rus: ["пустой", "чистый"], ukr: ["порожній", "пустий"],
   },
   {
@@ -13620,6 +14860,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mõnikord vihastan, harilikult tühisel põhjusel.", "37. sünnipäev on nii mõttetu ja tühine asi.", "Tühine eksimus.", "Tühine seiklusjutt."],
     note: "tähtsuselt ebaoluline, suurema mõju, kaalukuse või ulatuseta",
+    semanticTypes: ["omadus_kval"],
     rus: ["ничтожный", "незначительный"], ukr: [],
   },
   {
@@ -13631,6 +14872,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida (partitive) · keda (partitive)",
     usages: ["Valimistulemused tühistati.", "Tühistasin broneeringu.", "Kohtunik tühistas võistluse tulemused.", "Tühistasin broneeritud piletid."],
     note: "dokumenti, otsust vms kehtetuks tunnistama",
+    semanticTypes: ["VERB_muutust põhjustama"],
     rus: ["аннулировать", "отменять"], ukr: ["скасовувати", "скасувати"],
   },
   {
@@ -13642,6 +14884,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Varem või hiljem lõppeb see suure tüliga.", "Tihti tekib tüli tühiste asjade pärast.", "Kahe õigeusu kiriku tüli Eestis on küdenud aastaid.", "Millest tüli alguse sai?"],
     note: "sõbralike suhete katkemine või katkestamine hrl oma pahameelt (sõnaliselt) väljendades, tülitsemine",
+    semanticTypes: ["sündmus", "tegevus_kõnetegu"],
     rus: ["ссора", "раздор"], ukr: ["сварка", "розбрат"],
   },
   {
@@ -13653,6 +14896,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega (comitative) · mille pärast",
     usages: ["Tülitsesime öösel naisega.", "Hea küll, poisid, ärge tülitsege!", "Ärme enam tülitse!", "Vend tülitseb õega."],
     note: "eriarvamuste, lahkhelide tõttu üksteisega vihaselt, pahandades rääkima",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["ссориться", "поссориться"], ukr: ["сваритися", "посваритися"],
   },
   {
@@ -13664,6 +14908,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Perre sündisid kaksikud tütred.", "Kuningatütar.", "Neil on kaks last, poeg ja tütar.", "Füürer kutsus ja kodumaa ausad pojad ja tütred läksid."],
     note: "naisisik oma vanema(te) suhtes, otsene naissoost järglane",
+    semanticTypes: ["in_sugulane"],
     rus: ["дочь", "дочка"], ukr: ["дочка", "донька"],
   },
   {
@@ -13675,6 +14920,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eksisime tihedas udus ära.", "Hommikuudu.", "Mereudu.", "Eksisime tiheda udu tõttu teelt."],
     note: "veepiisakeste või jääkristallide või nende mõlema kogum Maa vm pinna kohal",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["туман", "мгла"], ukr: ["туман"],
   },
   {
@@ -13686,6 +14932,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lapsed ei tohi kaldast kaugele ujuda.", "Tiigil ujusid luiged.", "Karu ujus Ruhnult minema.", "Ta ujub väga hästi."],
     note: "(inimese, kala, looma kohta:) vees (käte, jalgade, uimede abil) edasi liikuma ilma põhja toetumata",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["плавать", "плыть"], ukr: ["плавати", "плисти"],
   },
   {
@@ -13697,6 +14944,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Auto juhipoolne uks on mõlkis.", "Ära pauguta ustega!", "Õde tuli uksele.", "Koduuks."],
     note: "hoone, sõiduki vm sisse- ja väljapääsu sulgev hingedel või rullidel liikuv ese",
+    semanticTypes: ["ese_instru"],
     rus: ["дверь", "дверка"], ukr: ["двері"],
   },
   {
@@ -13708,6 +14956,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Suure ulatusega madalrõhuala liigub itta.", "Signaal levib umbes keskmise maja ulatuses.", "Püsime silmside ulatuses!", "Selgitati välja vigastuste ulatus."],
     note: "ala suurus, mida miski hõlmab",
+    semanticTypes: ["abstr/konkr"],
     rus: ["протяжение", "протяжённость"], ukr: ["протяжність", "відстань"],
   },
   {
@@ -13719,6 +14968,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ulatuslik elektrikatkestus.", "Keskaeg on ulatuslik periood inimkonna ajaloos.", "Alustati ulatuslikke ümberehitustöid.", "Eesti maalikunsti ulatuslik ülevaade."],
     note: "suure ulatusega, ruumiliselt laialdane, suurt ala hõlmav",
+    semanticTypes: ["omadus"],
     rus: ["обширный", "огромный"], ukr: [],
   },
   {
@@ -13730,6 +14980,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kuhu (direction) · mida teha · mida tegemata",
     usages: ["Hommikuks olin unenäo unustanud.", "Kas unustasid parooli?", "Lubadused unustati kiiresti.", "Ma ei unusta seda õhtut mitte kunagi."],
     note: "mäletamast lakkama, midagi või kedagi mälus mitte säilitama, meelest või tundemaailmast kaduda laskma",
+    semanticTypes: ["VERB_psühh", "VERB_psühh_mõistus"],
     rus: ["забывать", "забыть"], ukr: ["забувати", "забути"],
   },
   {
@@ -13741,6 +14992,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · mida* (partitive) · mida teha · kellele (allative)",
     usages: ["Ma usaldan oma sõpru.", "Usalda ennast!", "Sa võid mind usaldada.", "Seda lukku ei saa usaldada."],
     note: "kelleski kindel olema, nt kellegi aususes, heatahtlikkuses, tarkuses mitte kahtlema",
+    semanticTypes: ["VERB_psühh"],
     rus: ["доверять", "полагаться"], ukr: ["довіряти", "покладатися"],
   },
   {
@@ -13752,6 +15004,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta tark nägu äratas usaldust.", "Uus treener võitis meeskonna usalduse õige pea.", "Ära kuritarvita mu usaldust!", "Sõprus põhineb vastastikusel usaldusel."],
     note: "kindel tunne või teadmine, et kedagi või midagi võib usaldada, et keegi või miski ei peta ootusi ega valmista pettumust",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["доверие", "кредит"], ukr: ["довіра"],
   },
   {
@@ -13763,6 +15016,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Usaldusväärsed sõbrad.", "Info pärineb usaldusväärsest allikast.", "Info on pärit usaldusväärsest allikast."],
     note: "selline, kelles või milles on võimalik kindel olla, usaldust vääriv",
+    semanticTypes: ["omadus_kval"],
     rus: ["проверенный", "достоверный"], ukr: ["перевірений", "вірогідний"],
   },
   {
@@ -13774,6 +15028,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uurimuse usaldusväärsus on suuresti seotud valimi varieeruvusega.", "peetakse silmas selgust/arusaadavust/täpsust minevikusündmuste kajastamisel"],
     note: "olukord, kus asjaolud (nt andmed, info) on tõesed, mitte juhuslikud või valed ning kus tegevust korrates saadakse sama tulemus",
+    semanticTypes: [],
     rus: ["надёжность", "достоверность"], ukr: ["надійність", "певність"],
   },
   {
@@ -13785,6 +15040,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellesse/millesse (illative) · keda/mida* (partitive) · et",
     usages: ["Ta usub Jumalasse.", "Ma ei usu jumalaid, ma ei usu saatust, vaid ennast.", "Kas sa usud jumalasse/jumalat?", "Kas sa horoskoope usud?"],
     note: "kellegi või millegi olemasolu ja mõjujõudu kindlaks pidama (ilma et seda tõestatud oleks)",
+    semanticTypes: ["VERB_psühh"],
     rus: ["верить", "веровать"], ukr: ["вірити", "вірувати"],
   },
   {
@@ -13796,6 +15052,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuulsime seda kurba uudist juba eile.", "Sain täna rõõmsa uudise: sõbranna ootab last.", "Mis tööl uudist on?", "Talle meeldib hommikul värskeid uudiseid lugeda."],
     note: "uus, märkimist väärt teave millegi hrl äsja toimunu kohta",
+    semanticTypes: ["ese_semio"],
     rus: ["новость", "весть"], ukr: ["новина", "звістка"],
   },
   {
@@ -13807,6 +15064,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Andmeid uuendatakse iga poole tunni tagant.", "Sportlane tahab rekordit uuendada.", "Teekate uuendati kogu ulatuses.", "Telefoni tarkvara peab iga natukese aja tagant uuendama."],
     note: "uueks, ajakohasemaks või paremaks tegema",
+    semanticTypes: ["VERB_muutus"],
     rus: ["обновлять", "обновить"], ukr: [],
   },
   {
@@ -13818,6 +15076,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uuendused jalgpallireeglistikus.", "Lepingusse pole veel uuendusi sisse viidud.", "Laulupidu on uuenduste teel.", "Ülikool vajab uuendusi."],
     note: "uuenduslik muutus, ümberkorraldus mingis valdkonnas vm",
+    semanticTypes: ["tegevus_muutus"],
     rus: ["нововведение", "новшество"], ukr: ["нововведення", "реформа"],
   },
   {
@@ -13829,6 +15088,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Päike tõuseb alati uuesti.", "Hakkas uuesti sadama.", "Kui keegi ei vasta, siis helista hiljem uuesti.", "See seadus tuleks algusest lõpuni uuesti kirjutada."],
     note: "(teatud aja järel) uut puhku",
+    semanticTypes: ["ADV_aeg"],
     rus: ["снова", "вновь"], ukr: ["знов", "знову"],
   },
   {
@@ -13840,6 +15100,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on tuntud Eesti ajaloo uurija.", "Politseiuurija.", "Töötan politseis uurijana."],
     note: "teadlane, teadustöötaja",
+    semanticTypes: ["in_elukutse"],
     rus: ["исследователь", "исследовательница"], ukr: ["дослідник", "дослідниця"],
   },
   {
@@ -13851,6 +15112,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive)",
     usages: ["Arheoloog uurib leidu igast kandist.", "Kirjuta Kaarlile, las uurib asja.", "Tüdrukud uurivad võimalusi, kuhu õppima minna.", "Politsei uurib kuritegusid."],
     note: "milleski selgusele jõudmiseks objekti tähelepanelikult vaatlema",
+    semanticTypes: ["VERB_psühh_mõistus", "VERB_tegevus"],
     rus: ["изучать", "изучить"], ukr: ["вивчати", "вивчити"],
   },
   {
@@ -13862,6 +15124,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Uurimus ilmub järgmisel nädalal teadusajakirjas Differentiation.", "Mainekas ajakirjas publitseeritud uurimus.", "Sel teemal on ilmunud mitu põhjalikku uurimust.", "Kanada teadlased korraldasid uurimuse, mille eesmärgiks oli selgitada seost südameasjade ja tervise vahel."],
     note: "teemaga määratud uurimise tulemuste kirjalik jäädvustus (nt artiklina, monograafiana)",
+    semanticTypes: ["ese_semio"],
     rus: ["исследование", "исследовательская работа"], ukr: ["дослідження", "дослідна робота"],
   },
   {
@@ -13873,6 +15136,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Enne valdade ühinemist tehakse põhjalik uuring.", "Kardioloogi juures tehti täiendavad uuringud.", "Uuring selgitas välja, millist maiust ostjad eelistavad.", "Arheoloogilised uuringud algavad augustis."],
     note: "mingi probleemi lahendust taotlev ajaliselt piiratud tegevus (nt küsitlus, teaduslik analüüs, meditsiiniline protseduur)",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["исследование", "обследование"], ukr: ["дослідження", "обстеження"],
   },
   {
@@ -13884,6 +15148,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kuressaares avati uus pood.", "Uue filmi esilinastus.", "Kas sa oled tema uut filmi juba näinud?", "Kalev ostis endale uue ülikonna."],
     note: "selline, mis on hiljaaegu valminud, tehtud, loodud või omandatud",
+    semanticTypes: ["omadus_füüs", "omadus_kval"],
     rus: ["новый", "незнакомый"], ukr: ["новий", "новоспечений"],
   },
   {
@@ -13895,6 +15160,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Meie reliikvia on vabadus!", "Vabadus, võrdsus, vendlus.", "Riik piiras inimeste isiklikku vabadust.", "Igaühel on vabadus otsustada oma elu üle."],
     note: "olukord, olek, kus saab toimida oma tahte järgi ja ilma sunnita",
+    semanticTypes: ["seisund"],
     rus: ["свобода", "независимость"], ukr: ["свобода", "воля"],
   },
   {
@@ -13906,6 +15172,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sul on õigus vabalt otsustada.", "Koerad jooksid vabalt ringi.", "Kapp mahub ukseavast vabalt sisse.", "Liiga vabalt tõlgitud tekst."],
     note: "oma tahtmise kohaselt, sunnita",
+    semanticTypes: ["ADV_viis"],
     rus: ["свободно", "беспрепятственно"], ukr: ["вільно"],
   },
   {
@@ -13917,6 +15184,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelle ees · et · mida* (partitive) · millega (comitative)",
     usages: ["Mees vabandas meeskonnakaaslaste ees.", "Peaminister keeldus nii vabandamast kui tagasi astumast.", "Vabandan, et vastan nii hilja, aga olin vahepeal puhkusel ja Eestist ära.", "Ja ma vabandasin end mister Browni ees oma öise nurjatuse pärast."],
     note: "kelleltki paluma, et ta andestaks mingi halva teo või ebameeldiva käitumise, mille on põhjustanud ütleja",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["извиняться", "извиниться"], ukr: ["вибачатися", "вибачитися"],
   },
   {
@@ -13928,6 +15196,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative) · kust (source)",
     usages: ["Kuidas küll muremõtteist vabaneda?", "Arst andis soovitusi, kuidas stressist vabaneda.", "Ma ei suutnudki krambist vabaneda.", "Püüan halbadest harjumustest vabaneda."],
     note: "kellestki või millestki segavast, koormavast, rõhuvast lahti saama",
+    semanticTypes: ["VERB_muutus"],
     rus: ["освобождаться", "освободиться"], ukr: ["звільнятися", "звільнитися"],
   },
   {
@@ -13939,6 +15208,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tsitaat kõlab minu vabatõlkes järgmiselt .."],
     note: "umbkaudne, mittetäpne tõlge",
+    semanticTypes: ["esitus_keel_suhtlus"],
     rus: ["вольный перевод"], ukr: [],
   },
   {
@@ -13950,6 +15220,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Laps istub ema ja isa vahel.", "Mees hoidis politseiniku töötõendit näpu vahel.", "Lausa uskumatu, et suurlinna vahel on peidus nii palju rohelust.", "Uks ei lähe kinni, sest midagi on vahel."],
     note: "osutab kellegi või millegi paiknemisele hrl kahe asja või isiku vahemikus nii, et üks neist on ühel ja teine teisel pool",
+    semanticTypes: ["koht"],
     rus: ["между", "меж"], ukr: ["між", "поміж"],
   },
   {
@@ -13961,6 +15232,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative) · millesse (illative)",
     usages: ["Relvatehingut vahendas Boriss.", "Tööotsijaid ja tööandjaid vahendav firma.", "Reporter vahendab võtteplatsil toimunut.", "President astus tagasi, vahendab uudisteagentuur."],
     note: "kahe või mitme poole vahel asju korraldama, ühendajaks, sobitajaks, vahetalitajaks olema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["посредничать", "быть посредником"], ukr: [],
   },
   {
@@ -13972,6 +15244,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olümpiavõitja on tänavu võitnud vaid ühe võistluse.", "Kõhklesin vaid hetke.", "Mul on vaid paar eurot.", "Sain vaid korraks puhata."],
     note: "osutab, et midagi on vähem kui vaja või eeldatud",
+    semanticTypes: ["ADV_aste"],
     rus: ["только", "лишь"], ukr: ["тільки", "лише"],
   },
   {
@@ -13983,6 +15256,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellega (comitative) · mille üle",
     usages: ["Ära vaidle minuga!", "Alailma kogunes noori tulipäid vaidlema.", "Kõik hakkasid omavahel vaidlema.", "Mängija vaidles kohtunikuga."],
     note: "kellelegi oma eriarvamust väljendama, talle vastuväiteid esitama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["спорить", "вести спор"], ukr: ["сперечатися"],
   },
   {
@@ -13994,6 +15268,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Film lõppes vaimuka puändiga."],
     note: "teravmeelne, ootamatu ja (väljenduselt) leidlik",
+    semanticTypes: ["omadus_kval"],
     rus: ["острый", "остроумный"], ukr: [],
   },
   {
@@ -14005,6 +15280,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive)",
     usages: ["Iga inimene vajab sõpru.", "Organism vajab taastumiseks puhkust.", "Vajasime otsustamiseks aega.", "Laps vajab ema."],
     note: "kedagi või midagi tarvis olema, vaja minema, mingit vajadust tundma",
+    semanticTypes: ["VERB_psühh"],
     rus: ["нуждаться", "требоваться"], ukr: ["потребувати", "мати потребу"],
   },
   {
@@ -14016,6 +15292,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["HI-viiruse vaktsiini väljatöötamiseks on kulunud miljardeid dollareid.", "Sügisel lasen teha vaktsiini gripi vastu.", "Epidemioloogilisel näidustusel vaktsineeritakse noorukeid ja täiskasvanuid vaktsiini ühe doosiga."],
     note: "aine, mis sisaldab haigust tekitava mikroorganismi toimeainet ning mille manustamine organismi tekitab immuunsuse selle haiguse suhtes",
+    semanticTypes: ["materjal/aine"],
     rus: ["вакцина"], ukr: ["вакцина"],
   },
   {
@@ -14027,6 +15304,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · keda/mida* (partitive)",
     usages: ["Ei ole mõtet kirjutada teemal, mida ei valda.", "Ta valdab prantsuse ja vanakreeka keelt.", "Valdan vabalt saksa, inglise ja prantsuse keelt.", "Mind valdas hirm."],
     note: "mingeid oskusi, teadmisi omama, millekski võimeline olema, millegagi (ladusalt) toime tulema",
+    semanticTypes: ["VERB_abstr"],
     rus: ["владеть", "знать"], ukr: ["володіти", "знати"],
   },
   {
@@ -14038,6 +15316,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: ["владение"], ukr: [],
   },
   {
@@ -14049,6 +15328,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Valge pruutkleit.", "Poiss oli ikka veel näost valge.", "Hallikasvalge.", "Pruut kandis valget kleiti."],
     note: "lume, piima värvi, väga hele või kahvatu",
+    semanticTypes: ["omadus_füüs_värv"],
     rus: ["белый", "белое"], ukr: ["білий", "світлий"],
   },
   {
@@ -14060,6 +15340,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Žüriil valiku tegemisega probleeme ei tekkinud.", "Ravi valik sõltub diagnoosist.", "Kodakondsuse valik.", "Valikuga võis rahule jääda."],
     note: "valimine teatud hulgast või mitme võimaluse seast",
+    semanticTypes: ["abstr", "abstr/konkr", "tegevus"],
     rus: ["выбор", "отбор"], ukr: ["вибір", "асортимент"],
   },
   {
@@ -14071,6 +15352,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koostati esinduslik valim Eesti kodanikuühendustest."],
     note: "(statistikas:) üldkogumist juhuslikult valitud osa",
+    semanticTypes: ["abstr"],
     rus: ["выборка", "отборка"], ukr: ["вибірка"],
   },
   {
@@ -14082,6 +15364,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kas · mille vahel · millest / mille hulgast · kelleks (translative)",
     usages: ["Valisin praeks kala.", "Kumb teeots valida?", "Vali välja, kus sa puhata tahad.", "Meil oli valida, kas minna kontserdile või mitte."],
     note: "mitme võimaluse puhul ühe kasuks otsustama (nt sobivuse, otstarbe vm järgi)",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["выбирать", "выбрать"], ukr: ["вибирати", "вибрати"],
   },
   {
@@ -14093,6 +15376,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Euroopa Parlamendi valimised.", "Vabariigi Presidendi valimised.", "Ühing lükkas uue esimehe valimised edasi.", "Presidendivalimised."],
     note: "riigi, organisatsiooni vms juhi või esindusorgani liikmete ametisse nimetamine hääletamise teel",
+    semanticTypes: ["sündmus"],
     rus: ["выборы", "избрание"], ukr: ["вибори"],
   },
   {
@@ -14104,6 +15388,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Eesti Vabariigi Valitsus.", "Käib valitsuse istung.", "Moodustati uus valitsus.", "Valitsus arutab seda küsimust järgmisel nädalal."],
     note: "täidesaatva riigivõimu kõrgeim organ",
+    semanticTypes: ["inimene", "koht_asutus"],
     rus: ["правительство", "правление"], ukr: ["уряд", "правління"],
   },
   {
@@ -14115,6 +15400,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Toots oli vallatu poiss.", "Poseerisime vallatutel piltidel.", "Kodus tuli meil vallatu mõte vaadata pornofilmi.", "Vaba, vallatu ning kena neiu otsib meeldivat meest."],
     note: "lapselikult tembutav, rõõmus ja ülemeelik",
+    semanticTypes: ["omadus_kval"],
     rus: ["шаловливый", "резвый"], ukr: [],
   },
   {
@@ -14126,6 +15412,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Rootsi väed vallutasid 1581. aastal Narva.", "Bastion vallutati tormijooksuga.", "Vaenlase sõjavägi vallutas pealinna.", "Kindlus vallutati."],
     note: "mingit ala või objekti relva jõul oma valdusse võtma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["захватывать", "захватить"], ukr: ["завойовувати", "завоювати"],
   },
   {
@@ -14137,6 +15424,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Maja valmis tänavu jaanuaris.", "Romaani põhjal on valmimas film.", "Uus maja valmib sel aastal.", "Laulja uus album valmis kahe kuuga."],
     note: "tehtuks, lõpetatuks saama",
+    semanticTypes: ["VERB_seisund"],
     rus: ["быть готовым", "стать готовым"], ukr: ["бути готовим"],
   },
   {
@@ -14148,6 +15436,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Küll me selle staadioni valmis teeme.", "Pildid on homseks valmis.", "Valmis tainas pane 20–30 minutiks külmkappi.", "Kõik me tahame Jaani kirikut varsti valmina näha."],
     note: "seisus, kus miski on lõpetatud, tehtud, täielikult soovitud olukorras",
+    semanticTypes: ["ADV_seisund"],
     rus: ["готовый", "готов"], ukr: ["готовий", "достиглий"],
   },
   {
@@ -14159,6 +15448,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põlv on hakanud valu tegema.", "Tuim valu külje sees.", "Morfium aitas valusid leevendada.", "Hambavalu."],
     note: "mingis kehaosas esinev ebameeldiv, vaeva valmistav tunne, mille on tekitanud närvilõpmete erutus",
+    semanticTypes: ["nähtus_füüs"],
     rus: ["боль", "желание"], ukr: ["біль"],
   },
   {
@@ -14170,6 +15460,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hammas valutab.", "Kõik luud-liikmed valutasid.", "Mu pea valutab.", "Lapsel hakkas hammas valutama."],
     note: "(kehaosa või kogu keha kohta:) valu tunda andma",
+    semanticTypes: ["VERB_seisund"],
     rus: ["болеть", "заболеть"], ukr: ["боліти", "заболіти"],
   },
   {
@@ -14181,6 +15472,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vana mees võttis noore naise.", "Vanu inimesi tuleb aidata.", "Vana kuusk murdub kergesti.", "Mõeldi, kuidas tuua noori kooli ja saada vanad eest ära."],
     note: "kaua elanud, pika eaga",
+    semanticTypes: ["omadus_aeg", "omadus_vanus"],
     rus: ["пожилой", "немолодой"], ukr: ["старий", "літній"],
   },
   {
@@ -14192,6 +15484,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poiss elas isapoolse vanaema juures.", "Ta on juba kolmekordne vanaema.", "Minu vanaema ja vanaisa elavad maal.", "Klubis käib koos vanaemade tantsurühm."],
     note: "isa ema või ema ema",
+    semanticTypes: ["in_sugulane"],
     rus: ["бабушка", "бабуля"], ukr: ["баба", "бабуся"],
   },
   {
@@ -14203,6 +15496,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minul – nagu igal normaalsel inimesel – on kaks vanaisa.", "Ta on oma lapselastele väga hea vanaisa."],
     note: "isa või ema isa",
+    semanticTypes: ["in_sugulane"],
     rus: ["дедушка", "дед"], ukr: ["дід", "дідусь"],
   },
   {
@@ -14214,6 +15508,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kus kogu, seal väge, ütleb Jüri kandi vanasõna."],
     note: "lühike rahvapärane õpetliku sisuga ja lõpetatud lause kujuga ütlus",
+    semanticTypes: ["esitus_keel"],
     rus: ["пословица"], ukr: ["прислівʼя"],
   },
   {
@@ -14225,6 +15520,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kirja tuli panna nimi, vanus ja sugu.", "Sünnitajate keskmine vanus kasvab.", "Isa suri kõrges vanuses.", "Ülevaatuse sagedus sõltub auto vanusest."],
     note: "aeg (aastates), mille keegi või miski on käesoleva või mingi teatava hetkeni elanud või olemas olnud",
+    semanticTypes: ["aeg"],
     rus: ["возраст", "годы"], ukr: ["вік", "літа"],
   },
   {
@@ -14236,6 +15532,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seda on juhtunud ka varem.", "Mäng algas tund aega varem.", "Ma pole kunagi varem nii õnnelik olnud kui praegu.", "Varem õppisid sa palju paremini."],
     note: "varasemal ajal, praeguse või teatava aja eel, millalgi minevikus",
+    semanticTypes: ["ADV_aeg"],
     rus: ["прежде", "перед"], ukr: ["перше", "до"],
   },
   {
@@ -14247,6 +15544,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kollaka varjundiga pärlid.", "Poliitilise varjundiga näidend.", "Veini vürtsine varjund."],
     note: "ühe ja sama põhivärvuse pisut erinev toon",
+    semanticTypes: ["omadus", "omadus_füüs_värv"],
     rus: ["оттенок", "оттенок краски"], ukr: [],
   },
   {
@@ -14258,6 +15556,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Küll asjad saavad varsti korda.", "Ta peaks üsna varsti tulema.", "Küll sa varsti terveks saad.", "Varsti näeme!"],
     note: "natukese aja pärast",
+    semanticTypes: ["ADV_aeg", "aeg"],
     rus: ["вскоре", "в скором времени"], ukr: ["скоро", "швидко"],
   },
   {
@@ -14269,6 +15568,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vasak põlv valutab.", "Auto vasak suunatuli ei põle.", "Mu vasak silm näeb halvemini kui parem.", "Usutakse, et Niiluse jõe vasak kallas on Surma Org."],
     note: "keha keskjoonest südame pool asuv või selline, mis asetseb vaataja suhtes tema südame pool",
+    semanticTypes: ["abstr_asend/suund", "omadus_füüs"],
     rus: ["левый", "изнаночный"], ukr: ["лівий"],
   },
   {
@@ -14280,6 +15580,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Minust vasakul seisis kaks meest.", "Istusin Raulist vasakul."],
     note: "keha keskjoonest südame pool",
+    semanticTypes: ["abstr_asend/suund"],
     rus: ["слева", "налево"], ukr: ["ліворуч", "зліва"],
   },
   {
@@ -14291,6 +15592,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele/millele (allative) · millega (comitative) · kellele (allative) · millele (allative)",
     usages: ["Poisike küsis suitsu, aga ma ei vaevunud vastamagi.", "Ta vastas naljale naljaga.", "Palun vasta mulle ausalt!", "Ma ei oska sulle vastata."],
     note: "küsimuse, ettepaneku, arvamuse vms peale midagi ütlema või muul moel (nt liigutusega) reageerima",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["отвечать", "ответить"], ukr: ["відповідати", "відповісти"],
   },
   {
@@ -14302,6 +15604,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Isa tavatses lauas ema vastas istuda.", "Kirjanike Maja on otse Niguliste kiriku vastas.", "Pood on siinsamas vastas üle tänava.", "Ta istus lauas otse minu vastas."],
     note: "asendilt esiküljega kellegi või millegi esikülje poole, millegagi kohakuti (nt asetuselt üle tee)",
+    semanticTypes: ["koht"],
     rus: ["напротив", "против"], ukr: ["напроти", "навпроти"],
   },
   {
@@ -14313,6 +15616,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Selle sõna täpne vaste ei ole saksakeelne sõna „Nation”.", "Ingliskeelne vaste.", "Rooma jumalanna Minerva Kreeka vaste on Athena."],
     note: "sõna või väljend, mis väljendab sama sisu teises keeles",
+    semanticTypes: ["esitus_keel"],
     rus: ["соответствие", "эквивалент"], ukr: ["відповідник", "еквівалент"],
   },
   {
@@ -14324,6 +15628,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nohune nina ei ole vaktsineerimise vastunäidustus.", "Ravimi infoleht peab sisaldama teavet kõrvaltoimete ja vastunäidustuste kohta.", "Kolmanda ravimina tuleks vastunäidustuste puudumisel lisada beetablokaator.", "Kõigile laste toiduainepakenditele tuleb kirjutada toidu täpne koostis ja kalorsus ning võimalikud vastunäidustused."],
     note: "mingit hrl meditsiinilist toimingut takistav asjaolu või seisund",
+    semanticTypes: ["nähtus", "seisund"],
     rus: ["противопоказание"], ukr: [],
   },
   {
@@ -14335,6 +15640,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tekstis leidub mitmeid ilmseid vastuolusid ja põhjendamatuid väiteid.", "Vorm ja sisu on karjuvas vastuolus.", "Seni pole isikutevaheliste vastuolude tõttu suudetud koostööd teha.", "Ajalookirjutuse ja lugejate ootuste vahel on vastuolu."],
     note: "olukord või asjaolu, kus miski ei sobi millegagi kokku või kus valitseb (sisemine) vastasseis millegi või kellegi vahel",
+    semanticTypes: ["seisund"],
     rus: ["противоречие", "расхождение"], ukr: ["суперечність", "розбіжність"],
   },
   {
@@ -14346,6 +15652,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Andmed hukkunute ja haavatute kohta on vastuolulised.", "Inimene on üldse üks vastuoluline olevus."],
     note: "teise või teistega mitte kooskõlas olev, ebakõlasid, vastuolusid sisaldav",
+    semanticTypes: ["omadus_kval"],
     rus: ["разноречивый", "несовместный"], ukr: ["суперечливий", "суперечний"],
   },
   {
@@ -14357,6 +15664,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["„Jah,” kõlas vastus.", "Mees urahtas vastuseks midagi arusaamatut.", "Ma ei tea õiget vastust.", "Ootan kirjale vastust."],
     note: "sõnaline väljendus, liigutus vms märk, millega vastatakse küsimusele, ettepanekule, arvamusele vms",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["ответ"], ukr: ["відповідь"],
   },
   {
@@ -14368,6 +15676,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kelle/mille eest",
     usages: ["Inimene tahab ise otsustada ja vastutada.", "Koera eest vastutab tema omanik.", "Tuleohutuse eest vastutab Meeli.", "Vanemad vastutavad oma laste eest."],
     note: "olema kohustatud tagama, et miski toimiks ladusalt või seaduspäraselt või et kellegi heaolu oleks kindlustatud",
+    semanticTypes: ["VERB_abstr"],
     rus: ["отвечать", "нести ответственность"], ukr: ["відповідати", "бути відповідальним"],
   },
   {
@@ -14379,6 +15688,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Keegi ei tahtnud endale vastutust võtta.", "Vastne rektor kinnitas, et ametiga kaasnevat vastutust ta ei karda.", "Moraalne vastutus.", "Turistid liiguvad vulkaani ümber omal vastutusel."],
     note: "kohustus tagada millegi ladus toimimine, kellegi hea käekäik, õige käitumine",
+    semanticTypes: ["abstr", "seisund"],
     rus: ["ответственность", "ответ"], ukr: ["відповідальність"],
   },
   {
@@ -14390,6 +15700,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tal pole kübetki vastutustunnet."],
     note: "tunne, et oled vastutav",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["ответственность", "чувство ответственности"], ukr: ["відповідальність", "почуття відповідальності"],
   },
   {
@@ -14401,6 +15712,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kas alustame kell kaheksa või on vastuväiteid?", "Kaitsja esitas vastuväite kohtu tegevuse kohta.", "Ainus vastuväide tuumajaama rajamisele on Eesti väiksus.", "Kostja on kohustatud kohtule teatama mis vastuväited tal on hagile ja kas ta soovib vastuhagi esitada."],
     note: "millelegi vastuseisu sisaldav väide",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["возражение", "антитеза"], ukr: ["заперечення"],
   },
   {
@@ -14412,6 +15724,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Veebruar on tavaliselt aasta kõige külmem kuu."],
     note: "aasta 2. kuu, põhjapoolkeral kolmas talvekuu",
+    semanticTypes: ["aeg_kuu", "esitus"],
     rus: ["февраль", "февр."], ukr: ["лютий"],
   },
   {
@@ -14423,6 +15736,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on veel kogenematu.", "Koer lonkas veel nädalapäevad.", "Lapsed veel magavad.", "Ta on ikka veel tööl."],
     note: "näitab, et tegevus või olukord kestab või kestis (mõnikord vihjates, et see on või oli lõpule jõudmas, peab või pidi lõppema või oleks võinud olla juba lõppenud)",
+    semanticTypes: ["ADV_aeg"],
     rus: ["ещё", "ещё бы"], ukr: ["ще"],
   },
   {
@@ -14434,6 +15748,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "milles (inessive) · et",
     usages: ["Vaata arve ja veendu ise, et pankrot on käes.", "Naine on veendunud, et sünnib poiss.", "Päästjad eemaldasid alajaama võrgust ja  veendusid  tuleohutuses.", "Olen tema süüs veendunud."],
     note: "kindlale arvamusele, veendumusele jõudma",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["убеждаться", "убедиться"], ukr: ["переконуватися", "переконатися"],
   },
   {
@@ -14445,6 +15760,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on kasvatanud oma lapsi veendumuses, et nad on ise oma elu peremehed.", "Jõudsin veendumusele, et tuleb minna õppima.", "Tugeval isiksusel on ka tugevad veendumused.", "Jõudsin veendumusele, et teda ei tasu usaldada."],
     note: "kindel ja kahtluseta arusaam, tõekspidamine, seisukoht",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["убеждение", "уверенность"], ukr: ["переконання", "впевненість"],
   },
   {
@@ -14456,6 +15772,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Veenvad argumendid.", "Veenev süütõend.", "Võitsime veenva edumaaga."],
     note: "millessegi uskuma panev",
+    semanticTypes: ["omadus"],
     rus: ["убедительный", "доказательный"], ukr: ["переконливий"],
   },
   {
@@ -14467,6 +15784,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda* (partitive) · milles (inessive) · mida tegema",
     usages: ["Kuidas veenda isa rahakotiraudu avama?", "Mäng veenis, et pärnakad on tartlastest paremad.", "Ta oskab inimesi hästi veenda.", "Veensin oma vanemaid uue arvuti vajalikkuses."],
     note: "(seletuste, põhjendamisega) kellelegi oma arvamust, tõekspidamisi, seisukohti vms sisendama, kedagi midagi uskuma panema",
+    semanticTypes: ["VERB_psühh_mõistus", "VERB_psühh"],
     rus: ["убеждать", "убедить"], ukr: ["переконувати", "переконати"],
   },
   {
@@ -14478,6 +15796,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: ["убеждение", "уверение"], ukr: [],
   },
   {
@@ -14489,6 +15808,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kirjandusteaduslikku veenvust ja täpsust on essees vähevõitu.", "Kõik argumendid said piisava veenvusega ümber lükatud.", "Karakterosa mängis ta suure veenvusega."],
     note: "veenev-olek, kahtlusi välistav usutavus",
+    semanticTypes: ["omadus_kval"],
     rus: ["убедительность", "состоятельность"], ukr: [],
   },
   {
@@ -14500,6 +15820,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vennad Jürgensonid.", "Mul on oma vennaga telepaatiline side.", "Mul on üks vend ja üks õde.", "Mihkel ja Jaan on vennad."],
     note: "poiss või mees oma vanemate teiste laste suhtes",
+    semanticTypes: ["in_sugulane"],
     rus: ["брат", "братья"], ukr: ["брат"],
   },
   {
@@ -14511,6 +15832,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Muistne Novgorod oli venelaste kaubakoht, mis asus sügaval keset soome-ugri alasid."],
     note: "Venemaa põhirahva liige",
+    semanticTypes: ["in_rahvas"],
     rus: ["русский", "русская"], ukr: ["росіянин", "росіянка"],
   },
   {
@@ -14522,6 +15844,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Venemaal vahetus valitsus."],
     note: "riik Euraasia mandri põhjaosas",
+    semanticTypes: ["koht_geogr"],
     rus: ["Россия", "Русь"], ukr: ["Росія"],
   },
   {
@@ -14533,6 +15856,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vee ringkäik looduses.", "Kingad lasevad vett läbi.", "Vanaema majas pole siiani sooja vett.", "Jõin klaasi vett."],
     note: "läbipaistev, värvitu ja lõhnatu looduslik vedelik, mis täidab veekogusid, sajab alla vihmana ning mida kasutatakse joogiks",
+    semanticTypes: ["materjal/aine"],
     rus: ["вода", "слеза"], ukr: ["вода"],
   },
   {
@@ -14544,6 +15868,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Puhkusepäevade arvestuses on tehtud viga.", "Viie veaga mängija peab platsilt lahkuma.", "Inglise keeles kirjutades teen vigu.", "Oma vigadest õpitakse."],
     note: "eksimus millegi, nt reegli või tõsiasja vastu, kõrvalekaldumine õigest sooritusest",
+    semanticTypes: ["abstr/konkr"],
     rus: ["ошибка", "погрешность"], ukr: ["помилка", "хиба"],
   },
   {
@@ -14555,6 +15880,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Naine ladus vihaga kõik välja.", "Küll teeb viha!", "Miks ta peakski meie peale viha kandma.", "Isa pikka viha ei pea."],
     note: "vaenulikkuse ja ärritatusega seotud tugev tunne, äge pahameel või sallimatus",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["гнев", "ненависть"], ukr: ["гнів", "злість"],
   },
   {
@@ -14566,6 +15892,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ema oli minu peale väga vihane.", "Altminek ajas meid vihaseks.", "Vihane pilk.", "Isa sai vihaseks."],
     note: "viha, ägedat pahameelt tundev",
+    semanticTypes: ["omadus_psühh"],
     rus: ["сердитый", "злой"], ukr: ["сердитий", "злий"],
   },
   {
@@ -14577,6 +15904,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele/millele (allative) · et",
     usages: ["Tüdruk vihjas, et kodus on pahandusi.", "Moosisuhkur, nagu nimigi vihjab, on mõeldud mooside keetmiseks.", "Briti välisminister vihjas võimalusele olümpiamänge boikoteerida.", "Esineja vihjas ühele tuntud isikule."],
     note: "kaudselt mainima või märku andma, mõista andma",
+    semanticTypes: ["VERB_abstr", "VERB_suhtlus"],
     rus: ["намекать", "намекнуть"], ukr: ["натякати", "натякнути"],
   },
   {
@@ -14588,6 +15916,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jaan ei teinud vihjest välja.", "Tema jutus peitus mingi varjatud vihje."],
     note: "kaudne ütlus või märguanne, aimata laskmine",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["намёк", "полунамёк"], ukr: ["натяк"],
   },
   {
@@ -14599,6 +15928,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive)",
     usages: ["Ta armastas ja vihkas meest ühekorraga.", "Vihka pattu, mitte patustajat.", "Üle kõige vihkab ta kaotamist.", "Jaan vihkab Juhanit."],
     note: "kellegi või millegi suhtes vaenulikult meelestatud olema, kellegi või millegi vastu viha tundma",
+    semanticTypes: ["VERB_psühh_emots"],
     rus: ["испытывать неприязнь", "испытывать отвращение"], ukr: ["ненавидіти"],
   },
   {
@@ -14610,6 +15940,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vihma sadas mitu päeva järjest.", "Ilm kisub vihmale.", "Eile sadas terve päeva vihma.", "Ilmateade ennustab vihma ja tugevat tuult."],
     note: "veepiiskadena langevad sademed",
+    semanticTypes: ["nähtus_loodus"],
     rus: ["дождь"], ukr: ["дощ"],
   },
   {
@@ -14621,6 +15952,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võltsitud allkiri on ju selge viide, et tegemist on petturiga.", "Ehk annad mõned viited, kust edasi otsida.", "Raamatus on palju viiteid autori lapsepõlvele.", "Artiklis polnud ainustki viidet."],
     note: "märk millestki",
+    semanticTypes: ["esitus_tähis", "tegevus_kõnetegu"],
     rus: ["намёк", "указание"], ukr: ["натяк", "вказівка"],
   },
   {
@@ -14632,6 +15964,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida (partitive) · kuhu (direction) · kust + kuhu · mida (partitive)",
     usages: ["Isa viis hommikul lapsed kooli.", "Ära unusta naisele sünnipäevaks lilli viia.", "Limusiin viib presidendi otse lennujaama.", "Tuul viis mütsi peast."],
     note: "midagi või kedagi toimetama kusagilt kuhugi, kellelegi või ära",
+    semanticTypes: ["VERB_liikuma/liigutama"],
     rus: ["нести", "отнести"], ukr: ["нести", "віднести"],
   },
   {
@@ -14643,6 +15976,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kakskümmend viis.", "Kaks korda viis.", "Viis pluss viis on kümme.", "Peres on viis last."],
     note: "põhiarv 5",
+    semanticTypes: ["esitus_arv"],
     rus: ["пять", "пятеро"], ukr: ["пʼять"],
   },
   {
@@ -14654,6 +15988,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ole viisakas!", "Ettekandja on viisakas, naeratav ja püüdlik.", "Jahedalt viisakas olek.", "See asi vajas mingit viisakat lahendust."],
     note: "meeldiva käitumisega, heade kommetega",
+    semanticTypes: ["omadus_kval"],
     rus: ["вежливый", "порядочный"], ukr: ["ввічливий", "чемний"],
   },
   {
@@ -14665,6 +16000,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millele (allative) · millele/kellele (allative)",
     usages: ["Piletikontrolör viitas juhi kabiini uksel rippuvale eeskirjale.", "Nool viitas paremale.", "Mehed viitasid suurele vastutusele, mis ametiga kaasneb.", "Nagu nimigi viitab, on Summerman ja Superman sugulased."],
     note: "(käega viibates) suunda või kohta näitama",
+    semanticTypes: ["VERB_liigutama"],
     rus: ["указывать", "указать"], ukr: ["показувати", "показати"],
   },
   {
@@ -14676,6 +16012,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viitamine tundub olevat autorile üks suuremaid probleeme.", "Töös on läbivalt kasutatud tekstisisest viitamist.", "Tänapäeval ei ole aastaajale viitamine haikus enam kohustuslik.", "Eriti ülbe oli pidev mäluaugule viitamine."],
     note: "(teadustöös, õigusaktis, artiklis vm:) allikaviidete esitamine",
+    semanticTypes: ["esitus_info"],
     rus: [], ukr: [],
   },
   {
@@ -14687,6 +16024,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tikkimine ja muu peenem näputöö nõuab vilumust.", "Kõik oskused ja vilumused on ta omandanud treipingi taga."],
     note: "õppides ja harjutades omandatud, osalt automaatseks muutunud oskus teha midagi otstarbekalt ja tulemuslikult",
+    semanticTypes: ["omadus_psühh"],
     rus: ["навык", "умение"], ukr: [],
   },
   {
@@ -14698,6 +16036,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma jään vist haigeks.", "Ema vist magab juba.", "Kas sa tuled matkale? – Vist küll.", "Hakkab vist sadama."],
     note: "osutab ebakindlale teadmisele, oletusele, suhteliselt suurele tõenäosusele",
+    semanticTypes: ["ADV_modaalsus"],
     rus: ["видимо", "вероятно"], ukr: ["мабуть", "певно"],
   },
   {
@@ -14709,6 +16048,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Paksule mehele tehti ase kahele kõrvuti asetatud voodile.", "Õhtul kukkusin voodisse nagu niidetud.", "Magamistoas on pehme ja lai voodi.", "Päris esimesel kohtumisel voodisse ei minda, arvab sõbranna."],
     note: "magamiseks mõeldud mööbliese",
+    semanticTypes: ["ese_instru"],
     rus: ["кровать", "постель"], ukr: ["ліжко"],
   },
   {
@@ -14720,6 +16060,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hõõru kartulid harjaga voolava vee all puhtaks.", "Magamistuppa voolava külma õhu kohin segunes kerge müraga.", "Poola ralli on tuntud oma kiirete ning voolavate teede poolest.", "... ta käekiri oli jõuline ja voolav, peegeldades ta iseloomu."],
     note: "(vee vm vedeliku kohta:) hooga ühes suunas liikuv",
+    semanticTypes: ["omadus_füüs"],
     rus: ["текущий", "проточный"], ukr: [],
   },
   {
@@ -14731,6 +16072,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kandilise vormiga klaas.", "Talle meeldib ümara vormiga mööbel.", "Kingad on kaotanud oma esialgse vormi.", "Ümarate vormidega kaunitar."],
     note: "eseme, keha välistest joontest moodustuv (ruumiline) tervik, (väline) kuju",
+    semanticTypes: ["omadus_füüs"],
     rus: ["форма", "формы"], ukr: ["форма", "формочка"],
   },
   {
@@ -14742,6 +16084,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Määrib koogivormi võiga.", "Ostsin poest paki võid.", "Lisa tainasse 150 grammi võid.", "Joome üheskoos jakivõiga teed ning räägime nepaallastega täna kogetust ja homsest ilmast."],
     note: "peamiselt lehmapiima koorest valmistatud toiduaine",
+    semanticTypes: ["toit"],
     rus: ["масло", "сливочное масло"], ukr: ["масло"],
   },
   {
@@ -14753,6 +16096,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olla või mitte olla.", "Kas kohvi või teed?", "Varem või hiljem lahkuvad lapsed kodust.", "Kas te maksate sularahas või ülekandega?"],
     note: "seob sisu poolest vastanduvaid, üksteist välistavaid, teist võimalust väljendavaid sõnu ja lauseosi",
+    semanticTypes: ["esitus"],
     rus: ["или", "иль"], ukr: ["або", "чи"],
   },
   {
@@ -14764,6 +16108,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Võim on äärmuslaste käes.", "Võimul on demokraadid.", "Võimule tulid parempoolsed.", "Mul pole sinu üle mingit võimu."],
     note: "suutlikkus ja võimalus oma tahet teostada, kedagi valitseda, millegi üle otsustada",
+    semanticTypes: ["abstr"],
     rus: ["власть", "сила"], ukr: ["влада"],
   },
   {
@@ -14775,6 +16120,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kunagi ei usutud isegi allveelaeva ehitamise võimalikkust.", "Võimalikkus ja tegelikkus on eri asjad."],
     note: "kõik, mis võib teostuda, potentsiaalne tegelikkus",
+    semanticTypes: ["abstr"],
     rus: ["возможность"], ukr: ["можливість"],
   },
   {
@@ -14786,6 +16132,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta on kaalunud võimalust minna elama või tööle Soome.", "Kaotatud võimalus.", "Mul pole olnud võimalust temaga rääkida.", "Nii kui võimalus tekib, teen eksami uuesti."],
     note: "miski, mis võib toimuda või on teatavatel tingimustel võimalik",
+    semanticTypes: ["abstr/konkr"],
     rus: ["возможность"], ukr: ["можливість", "нагода"],
   },
   {
@@ -14797,6 +16144,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seda on võimatu kirjeldada.", "Pole olemas võimatuid unistusi.", "See tundus võimatu ülesandena.", "Tema jutust oli võimatu aru saada."],
     note: "selline, mis ei saa toimuda, olemas olla või mis pole teostatav",
+    semanticTypes: ["omadus_kval"],
     rus: ["невозможный", "немыслимый"], ukr: ["неможливий", "нездійсненний"],
   },
   {
@@ -14808,6 +16156,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Sel võistlusel ei hinnata laulja võimekust, vaid laulu.", "Hakkasin oma võimekuses kahtlema.", "Sisseastujatest tehti pingerida akadeemilise võimekuse testi põhjal.", "Kaitseministrid analüüsisid NATO sõjalise võimekuse hetkeseisu."],
     note: "mingi tegevuse jaoks sobilike vaimsete või kehaliste omaduste, võimete olemasolu (ja nende tase)",
+    semanticTypes: ["omadus_kval"],
     rus: ["способность", "ресурс"], ukr: ["здібність", "здібності"],
   },
   {
@@ -14819,6 +16168,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kutsemeisterlikkuse võistlused.", "Maakondlik võistlus.", "Fotovõistlus.", "Lauluvõistlus."],
     note: "kindlate reeglite järgi korraldatav üritus parima selgitamiseks mingil spordialal, kutsealal vm",
+    semanticTypes: ["sündmus"],
     rus: ["соревнование", "состязание"], ukr: ["змагання", "конкурс"],
   },
   {
@@ -14830,6 +16180,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "milles (inessive)",
     usages: ["Mart võitis novellivõistluse.", "Võnnu lahingu võitsid eestlased.", "Valged alustavad – ja ei võida.", "Võistluse võitis meie meeskond."],
     note: "(võitluses, võistluses, konkurentsis) vastas(t)e vastupanu murdma, vastas(t)est parem olema",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["побеждать", "победить"], ukr: ["перемагати", "перемогти"],
   },
   {
@@ -14841,6 +16192,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · kellega/millega (comitative)",
     usages: ["Karin võrdles mõttes mehi.", "Kuidas ma saan end kõigevägevamaga võrrelda, kui võrdlusalus puudub.", "Obinitsa elu ei anna võrreldagi Viimsiga.", "Tulekahjusid oli eelmise aastaga võrreldes vähem."],
     note: "olendeid, esemeid, nähtusi omavahelise sarnasuse või erinevuse esiletoomiseks kõrvu seadma",
+    semanticTypes: ["VERB_abstr"],
     rus: ["сравнивать", "сравнить"], ukr: ["порівнювати", "порівняти"],
   },
   {
@@ -14852,6 +16204,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Aastases võrdluses kallinesid kõige rohkem alkoholi ja tubaka hinnad.", "Firmade omavahelises võrdluses sisulisi erinevusi välja ei tulnud.", "Hindade võrdlus näitab, millist poodi eelistada.", "Võib tunduda kohatu võrdlusena, kuid peab ometi paika."],
     note: "objektide kõrvutamine nende sarnasuse või erinevuse leidmise eesmärgil",
+    semanticTypes: ["tegevus"],
     rus: ["сравнение", "сравнивание"], ukr: ["порівняння", "порівнювання"],
   },
   {
@@ -14863,6 +16216,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Oskari jaoks oli elu võrdpilt üks paraja pikkusega rongireis, kus üleliigseid asju ei ole vaja kaasa vedada."],
     note: "miski, mis esindab tajutava seosena mingit ideed või teatavat omadust",
+    semanticTypes: ["abstr", "esitus_kujutis", "abstr/konkr"],
     rus: ["символ"], ukr: ["символ"],
   },
   {
@@ -14874,6 +16228,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Inimeste võrdsus seaduse ees.", "Eelneva võrdsuse korral otsustab paremuse loos.", "Võrdsus püsis teise veerandaja keskpaigani."],
     note: "käsitus, mille järgi peavad inimesed ühiskonnas olema ühesuguses seisundis",
+    semanticTypes: ["abstr"],
     rus: ["равенство", "равноправие"], ukr: ["рівність", "рівноправність"],
   },
   {
@@ -14885,6 +16240,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mul ei õnnestu võrku sisse logida.", "Suhtleme tavaliselt võrgus.", "Pane pildid võrku üles.", "Eri arvutite vahel saab faile vahetada nii kohalikus võrgus kui üle interneti."],
     note: "internetis toimiv ja hüpertekstil põhinev elektrooniliste dokumentide ehk veebisaitide süsteem",
+    semanticTypes: ["abstr/konkr"],
     rus: ["Сеть", "Веб"], ukr: ["Мережа", "Веб"],
   },
   {
@@ -14896,6 +16252,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Korterivõti.", "Kus on seifi võtmed?", "Kaotasin võtmed ära.", "Poisi ümberkasvamise võti peitub vanemates."],
     note: "vahend luku avamiseks ja sulgemiseks",
+    semanticTypes: ["ese_instru"],
     rus: ["ключ", "ключ зажигания"], ukr: ["ключ"],
   },
   {
@@ -14907,6 +16264,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida (partitive) · mida* (partitive) · keda (partitive) · mida (partitive)",
     usages: ["Võta kott ja lähme!", "Vares võttis leivatüki noka vahele.", "Võtsin laua pealt võtmed.", "Võta kott ja lähme."],
     note: "enda kätte (loomade-lindude korral suhu, nokka, küünte vahele vms) toimetama",
+    semanticTypes: ["VERB_liigutama"],
     rus: ["брать", "взять"], ukr: ["брати", "взяти"],
   },
   {
@@ -14918,6 +16276,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Te olete väga sarnased.", "Ema tahaks väga Pariisi näha.", "Mul on väga-väga kahju.", "Õues on väga külm."],
     note: "(omaduse või tegevuse tõhusust ja mõju rõhutades:) suurel määral",
+    semanticTypes: ["ADV_aste"],
     rus: ["очень", "весьма"], ukr: ["дуже"],
   },
   {
@@ -14929,6 +16288,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive)",
     usages: ["Iga hinnatõus vähendab nõudlust.", "Kreem vähendab kortse.", "Pilte saab vähendada ja suurendada.", "Aivari täpne vise vähendas vahe 40 : 41-le."],
     note: "(mõõtmetelt, arvult, koguselt) väiksemaks, vähemaks tegema, osa ära võtma",
+    semanticTypes: ["VERB_muutus"],
     rus: ["уменьшать", "уменьшить"], ukr: ["зменшувати", "зменшити"],
   },
   {
@@ -14940,6 +16300,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Väited ei vastanud tõele.", "Olen nõus kahe peamise väitega, mis minu jaoks kõlama jäid.", "Kumbki eitas ajakirjanduses kulutulena levima hakanud väiteid armuloost.", "Millel teie väide põhineb?"],
     note: "esitaja seisukohta väljendav ütlus",
+    semanticTypes: ["tegevus_kõnetegu"],
     rus: ["утверждение", "положение"], ukr: ["твердження"],
   },
   {
@@ -14951,6 +16312,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Väike saar.", "Anna väiksem lusikas!", "Korterisse saab võtta ainult väikese koera.", "Väikest kasvu naine."],
     note: "mõõtmetelt, ulatuselt, kogult, mahult alla keskmise",
+    semanticTypes: ["omadus_füüs"],
     rus: ["маленький", "небольшой"], ukr: ["малий", "маленький"],
   },
   {
@@ -14962,6 +16324,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Korraldati avalik väitlus infoühiskonna üle.", "Akadeemiline väitlus."],
     note: "argumenteeritud, põhjendatud seisukohtadega (avalik) arutlus või vaidlus",
+    semanticTypes: ["sündmus", "tegevus_kõnetegu"],
     rus: ["дискуссия", "дебаты"], ukr: [],
   },
   {
@@ -14973,6 +16336,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "et",
     usages: ["Meeskonnaliikmed väidavad, et laev läks põhja poole tunniga.", "Mees väidab end mitte teadvat, kuhu ta auto jättis.", "Mees väitis, et ta ei ole kuriteos süüdi."],
     note: "oma seisukohta esitama või kinnitama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["утверждать", "доказывать"], ukr: ["стверджувати", "ствердити"],
   },
   {
@@ -14984,6 +16348,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Välismaalasi satub siia kolkasse harva.", "Sellel erialal õpib palju välismaalasi."],
     note: "välisriigist pärit inimene, mitteoma maa või riigi elanik või kodanik",
+    semanticTypes: ["in_roll"],
     rus: ["иностранец", "иностранка"], ukr: ["іноземець", "іноземка"],
   },
   {
@@ -14995,6 +16360,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vabariigi Valitsus: 1) viib ellu riigi sise- ja välispoliitikat; 2) suunab ja koordineerib valitsusasutuste tegevust ..."],
     note: "riigi välissuhetele keskenduv poliitika",
+    semanticTypes: ["tegevus", "vald"],
     rus: ["внешняя политика", "международная политика"], ukr: ["зовнішня політика"],
   },
   {
@@ -15006,6 +16372,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "milline",
     usages: ["Mees nägi välja rõõsa ja ümarik.", "Sa näed hea välja.", "Sa näed täna väga kaunis välja.", "Auto näeb üsna uus välja."],
     note: "(inimese kohta:) teatud välimusega olema",
+    semanticTypes: ["VERB_seisund"],
     rus: ["выглядеть"], ukr: ["мати вигляд"],
   },
   {
@@ -15017,6 +16384,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Peetri kiriku esine väljak.", "Tänavad ja väljakud olid rahvast täis.", "Linnaväljak.", "Külaväljak."],
     note: "hrl hoonetega ümbritsetud lage ala linnas vm asulas",
+    semanticTypes: ["koht_ala"],
     rus: ["площадь", "площадка"], ukr: ["майдан", "площа"],
   },
   {
@@ -15028,6 +16396,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Täiesti tabav väljend: ei liha ega kala.", "Väljend „Käi minema!” oli üks leebemaid solvanguid.", "Väga labane väljend.", "Kujundlik väljend."],
     note: "omaette tähendusega sõnapaar või sõnade rühm, terviklik tekstilõik või ütlus",
+    semanticTypes: ["ese_semio", "tegevus_kõnetegu"],
     rus: ["выражение", "фраза"], ukr: ["вислів", "вираз"],
   },
   {
@@ -15039,6 +16408,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kriis on kiirete muutuste väljendus.", "Visuaalne väljendus.", "Igatsuse väljenduseks on film vast sobivamgi kui raamat.", "Hea küll, pehmendan oma väljendust."],
     note: "mingi mõtte, tunde või suhtumise väljendamine või väljendumine (nt reaktsioonina, olekuga)",
+    semanticTypes: ["nähtus", "tegevus"],
     rus: ["выражение", "проявление"], ukr: [],
   },
   {
@@ -15050,6 +16420,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Jaani järsuvõitu väljenduslaad pani Reinu hetkeks sõnu otsima."],
     note: "omapära, kuidas midagi väljendatakse (nt sõnadega, kunstis)",
+    semanticTypes: ["abstr/konkr"],
     rus: ["способ выражения"], ukr: [],
   },
   {
@@ -15061,6 +16432,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: ["выразительность", "образность"], ukr: [],
   },
   {
@@ -15072,6 +16444,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: "viis, kuidas midagi väljendatakse (nt sõnadega, kunstis)",
+    semanticTypes: ["abstr/konkr"],
     rus: ["способ выражения"], ukr: [],
   },
   {
@@ -15083,6 +16456,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · keda* (partitive)",
     usages: ["Ta väldib olukordi, kus tuleb otsuseid langetada.", "Õpetati, kuidas lepingu sõlmimisel vigu vältida.", "Tüli ei õnnestunud vältida.", "Ta püüab alati konflikte vältida."],
     note: "millegi eest kõrvale hoidma, midagi tegemast hoiduma",
+    semanticTypes: ["VERB_abstr"],
     rus: ["избегать", "избежать"], ukr: ["уникати", "уникнути"],
   },
   {
@@ -15094,6 +16468,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Värbamine ja valik peavad põhinema eelnevalt avalikustatud tingimustel ning kandidaatide võrdsel kohtlemisel."],
     note: "vabatahtlike kutsumine ja võtmine sõjaväkke",
+    semanticTypes: [],
     rus: ["вербовка", "привлечение"], ukr: [],
   },
   {
@@ -15105,6 +16480,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Lõpuvärss.", "Luulevalimik sisaldab ka seni avaldamata värsse.", "Lastevärsid."],
     note: "luuleteose rütmiline üksus (hrl rida), mis on värsimõõdu ja mõtte poolest suhteline tervik",
+    semanticTypes: ["ese_kunst"],
     rus: ["стих", "стихотворная строка"], ukr: ["вірш", "віршовий рядок"],
   },
   {
@@ -15116,6 +16492,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mere sinine värv.", "Värvide mäng õhtutaevas.", "Putuka värv sulas kokku puukoore värviga.", "Mis värvi su uued kingad on? – Mustad."],
     note: "nägemismeelega tajutav keha omadus, mille määrab sellelt kehalt peegelduv või seda läbiv valgus",
+    semanticTypes: ["abstr/konkr", "omadus_füüs_värv"],
     rus: ["цвет", "окраска"], ukr: ["колір", "барва"],
   },
   {
@@ -15127,6 +16504,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ma pole elu sees end nii väsinuna tundnud kui praegu.", "Ta on vana ja väsinud mees.", "Väsinud peaga ei suuda keskenduda.", "Väsinud inimesed on pahased ja kurjad."],
     note: "tööst, pingutusest vms jõuetu, puhkust vajav",
+    semanticTypes: ["omadus_kval"],
     rus: ["уставший", "усталый"], ukr: ["втомлений", "стомлений"],
   },
   {
@@ -15138,6 +16516,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nad olid uhked ega kaotanud väärikust.", "Mamma oli väärikus ise.", "Kaunis ja puhas põll lisab perenaisele väärikust."],
     note: "inimese seisund, milles väljendub inimese enesehinnang ja tema ühiskonnapoolne väärtustamine",
+    semanticTypes: ["omadus_psühh", "seisund"],
     rus: ["человеческое достоинство", "достоинство"], ukr: [],
   },
   {
@@ -15149,6 +16528,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Päästeamet hoiatab ilutulestiku väärkasutuse eest.", "Maksusoodustuse väärkasutus.", "Uudne veretest tõotab vähendada antibiootikumide väärkasutust."],
     note: "millegi ebaõige kasutamine",
+    semanticTypes: ["nähtus", "tegevus"],
     rus: ["ненадлежащее использование", "неправильное использование"], ukr: [],
   },
   {
@@ -15160,6 +16540,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Omaette väärtus on koha õnnestunud sisekujundus.", "Ajaloolise väärtusega dokument.", "Kahtlase väärtusega kaup.", "Loodusväärtus."],
     note: "hrl paljude inimeste, eriti asjatundjate (püsiv) hinnang asja, nähtuse või olendi positiivse või negatiivse tähenduse kohta",
+    semanticTypes: ["konkr", "omadus_abstr", "omadus_kval"],
     rus: ["ценность", "значение"], ukr: ["цінність", "цінності"],
   },
   {
@@ -15171,6 +16552,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Nahkvöö.", "Sõdalane haaras vööl rippuva mõõga.", "Kleidi juurde kuulub lai vöö.", "Vööst saadik paljas mees."],
     note: "keha keskosa ümber kantav rõivaste kinnitamise ja kaunistamise vahend",
+    semanticTypes: ["ese_riie"],
     rus: ["пояс", "кушак"], ukr: ["пояс", "талія"],
   },
   {
@@ -15182,6 +16564,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Triinele sündis eile õde.", "Meil on küll erinevad isad, aga oleme koos kasvanud, ja mina ei ütle ühegi oma õe või venna kohta „pool”.", "Mul on kaks venda ja üks õde.", "Nad on õde ja vend."],
     note: "tüdruk või naine oma vanemate teiste laste suhtes",
+    semanticTypes: ["in_sugulane"],
     rus: ["сестра", "сестричка"], ukr: ["сестра", "сестричка"],
   },
   {
@@ -15193,6 +16576,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Olime hommikust õhtuni rakkes.", "Jõuan artikli õhtuks valmis.", "Reede õhtu.", "Läksin eile õhtul hilja magama."],
     note: "päeva lõpuosa (hrl umbes kella kuuest kuni magamaminekuajani)",
+    semanticTypes: ["aeg"],
     rus: ["вечер", "ужин"], ukr: ["вечір", "вечеря"],
   },
   {
@@ -15204,6 +16588,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õhuke jää.", "Õhukesed pannkoogid.", "Lõika õunad õhukesteks viiludeks.", "Õhukese jää peale on ohtlik minna."],
     note: "selline, mille vastasküljed või vastaspinnad on üksteisele suhteliselt lähedal, väikese ristlõikepinnaga",
+    semanticTypes: ["omadus_füüs", "omadus_kval"],
     rus: ["тонкий", "тоненький"], ukr: ["тонкий", "тоненький"],
   },
   {
@@ -15215,6 +16600,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kõik on õige, mis ma räägin.", "Salasõna oli õige.", "Mees ei taha, et ajakirjanduses ilmuks ta õige nimi.", "Õiged vastused on: 1a, 2b, 3d, 4a."],
     note: "tõele, tegelikkusele, tõsiasjadele vastav",
+    semanticTypes: ["omadus_kval"],
     rus: ["правильный", "верный"], ukr: ["правильний"],
   },
   {
@@ -15226,6 +16612,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Mees oli harjunud ennast ikka ausaks ja õiglaseks pidama.", "Linnaelanikud on täis õiglast pahameelt.", "Vajasime võitu, kuid viik oli õiglane tulemus.", "Õpetaja on karm, aga õiglane."],
     note: "(ühiskonnas, kohtus) kõiki võrdselt, erapooletusega kohtlev, kõiki asjaolusid arvestav",
+    semanticTypes: ["omadus_kval", "omadus_psühh"],
     rus: ["справедливый", "честный"], ukr: ["справедливий", "чесний"],
   },
   {
@@ -15237,6 +16624,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Viimaks ometi pääses õiglus võidule.", "Õiglus seati jalule ja põgenikud võisid koju tagasi pöörduda.", "Tahame elada riigis, kus valitsevad õigus ja õiglus.", "Olen kaotanud usu nii inimlikku kui jumalikku õiglusesse."],
     note: "sotsiaalne vahekord, mida peetakse (moraalselt) õigeks (nt võrdsust ja erapooletust), hrl eetikas, poliitikas, õiguses, ka igapäevaelus",
+    semanticTypes: ["abstr"],
     rus: ["справедливость", "правда"], ukr: ["справедливість", "правда"],
   },
   {
@@ -15248,6 +16636,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Igaühel on põhiseaduslik õigus vabalt liikuda ja elukohta valida.", "Vanemlikud õigused.", "Autori varalised õigused.", "Õiguste kaitse."],
     note: "riigis seadustega kehtestatud õigusnormid, mille järgimist riik tagab",
+    semanticTypes: ["abstr/konkr"],
     rus: ["право", "юриспруденция"], ukr: ["право", "правда"],
   },
   {
@@ -15259,6 +16648,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põhiõiguste ja vabaduste piiranguid kehtestatakse seadusjõuliste õigusaktidega."],
     note: "ametliku dokumendina esitatud õigusnormide kogum (nt seadus, määrus, otsus), mille järgimine on kõigile kohustuslik",
+    semanticTypes: ["ese_semio"],
     rus: ["правовой акт", "акт"], ukr: ["правовий акт", "акт"],
   },
   {
@@ -15270,6 +16660,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Euroopa Liidu õiguskord."],
     note: "riigi (või riikide liidu) õigusnormid",
+    semanticTypes: ["abstr/konkr"],
     rus: ["правовой порядок", "правопорядок"], ukr: [],
   },
   {
@@ -15281,6 +16672,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · mida* (partitive)",
     usages: ["Emad õigustavad ikka poegi.", "Ära õigusta ennast!", "Varas püüdis oma tegu õigustada.", "Hea eesmärk ei õigusta kurje vahendeid selle saavutamiseks."],
     note: "end mingi ütlusega kaitsma",
+    semanticTypes: ["VERB_abstr", "VERB_psühh", "VERB_suhtlus"],
     rus: ["оправдывать", "оправдать"], ukr: ["виправдовувати", "виправдати"],
   },
   {
@@ -15292,6 +16684,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Noorte õnne ei tumestanud miski.", "Poisi nägu säras õnnest.", "Ta hakkas suurest õnnest tantsima.", "Oma kodu on suur õnn."],
     note: "rõõm ja sügav rahulolu oma olukorraga, õnnelik olek",
+    semanticTypes: ["nähtus_psühh"],
     rus: ["счастье", "удача"], ukr: ["щастя"],
   },
   {
@@ -15303,6 +16696,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Õnnetuses hukkus mitu inimest.", "Perekond jäi õnnetuses ilma kogu oma varast.", "Õnnetus juhtus Kose ristmikul.", "Buss sattus õnnetusse."],
     note: "ootamatu ja ettekavatsemata halb sündmus, kus keegi või miski saab viga või muud märkimisväärset kahju",
+    semanticTypes: ["sündmus"],
     rus: ["несчастье", "несчастный случай"], ukr: ["нещастя", "нещасний випадок"],
   },
   {
@@ -15314,6 +16708,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ajalooõpetaja.", "Gümnaasiumiõpetaja.", "Ta töötab Sõle gümnaasiumis eesti keele õpetajana.", "Õpetaja parandas õpilaste kontrolltöid."],
     note: "eriharidusega inimene, kes õpetab lapsi koolis",
+    semanticTypes: ["in_elukutse"],
     rus: ["учитель", "учительница"], ukr: ["учитель", "учителька"],
   },
   {
@@ -15325,6 +16720,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "keda/mida* (partitive) · kellele (allative) · mida tegema",
     usages: ["Õpeta mind tantsima!", "Vanemad õpetasid lapsi naabritele „tere“ ütlema.", "Õpetasin lapsele numbreid.", "Bussijuht õpetas, kuidas sadamasse minna."],
     note: "kellelegi teadmisi ja oskusi andma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["учить", "научить"], ukr: ["учити", "навчати"],
   },
   {
@@ -15336,6 +16732,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaheksanda klassi õpilane.", "Medrese hämaratest soppidest valgusid õpilased õuele.", "Paul Ariste õpilased.", "Martin on 6. klassi õpilane."],
     note: "koolis õppiv laps või (noor) inimene",
+    semanticTypes: ["in_roll"],
     rus: ["ученик", "ученица"], ukr: ["учень", "учениця"],
   },
   {
@@ -15347,6 +16744,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Gümnaasiumi riiklik õppekava.", "Koolide õppekavad kooskõlastab ministeerium.", "Erakoolis saab õppida ka riikliku õppekava alusel."],
     note: "õppe ja kasvatuse alusdokument, mis määrab õppe- ja kasvatuseesmärgid, õppe sisu ja mahu, metoodika põhimõtted ning hindamise alused, nõuded õppekeskkonnale vms",
+    semanticTypes: ["ese_semio"],
     rus: ["учебная программа", "программа обучения"], ukr: ["навчальна програма"],
   },
   {
@@ -15358,6 +16756,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mida* (partitive) · mida tegema · kelleks (translative)",
     usages: ["Ütle, mis homseks õppida jäi.", "Õpin ülikoolis arstiks.", "Laps alles õpib rääkima.", "Õpi ometi lipsusõlme tegema!"],
     note: "harjutades ja korrates teadmisi, oskusi, vilumusi omandama (koolis, kellegi juhendamisel, iseseisvalt)",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["учить", "изучать"], ukr: ["учити", "вивчати"],
   },
   {
@@ -15369,6 +16768,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ujuma õppimist alustatakse vettehingamisest.", "Huvi iiri keele õppimise ja kasutamise vastu on kasvanud.", "Ei saa eeldada, et üliõpilane peaks õppimise ajal tööl käima.", "Välismaal õppimine annab väärtuslikke kogemusi."],
     note: "teadmiste, oskuste, vilumuste, väärtuste, hoiakute omandamine",
+    semanticTypes: ["tegevus"],
     rus: ["учёба", "изучение"], ukr: ["навчання", "вивчення"],
   },
   {
@@ -15380,6 +16780,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Magushapu õun oli suurepärase maitsega.", "Suvemenüüsse kuuluvad koduaia õunad ja tomatid.", "Terved või tükeldatud õunad.", "Õunad on alles toored."],
     note: "õhukese kesta ja mahlaka viljalihaga hrl kerajas õunapuu vili",
+    semanticTypes: ["taim", "toit_vili"],
     rus: ["яблоко"], ukr: ["яблуко"],
   },
   {
@@ -15391,6 +16792,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vassimine õõnestas usaldust.", "Korruptsioon õõnestab riiki.", "Kellegi jalgealust õõnestama.", "Mesipuud, kunstlikult õõnestatud puud, ei asunud külas, vaid metsas."],
     note: "(varjatud) vastutegevusega või oma mõjuga midagi nõrgestama või kahjustama",
+    semanticTypes: ["VERB_abstr"],
     rus: ["подрывать", "подорвать"], ukr: [],
   },
   {
@@ -15402,6 +16804,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Prillid on ähmaseks läinud.", "Peegel oli ähmane.", "Ähmased fotod.", "Silmad on pisaraist ähmased."],
     note: "halvasti läbipaistev või ebaselgelt nähtav, ilma kindlate piirjoonteta",
+    semanticTypes: ["omadus_kval"],
     rus: ["тусклый", "мутный"], ukr: [],
   },
   {
@@ -15413,6 +16816,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: ["тусклость", "туманность"], ukr: [],
   },
   {
@@ -15424,6 +16828,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Äkki läks pimedaks.", "Nüüd äkki taipas ta, mis teoksil on.", "Äkki helises uksekell.", "Koer hakkas äkki haukuma."],
     note: "üllatuslikult (kiiresti, sel samal hetkel), ette nägematult, ette teatamata vms",
+    semanticTypes: ["ADV_aeg", "ADV_viis"],
     rus: ["внезапно", "непредвиденно"], ukr: ["раптом", "враз"],
   },
   {
@@ -15435,6 +16840,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Erki tuli koolist ära ja läks tööle.", "Ta otsustas töölt ära tulla ja välismaale õppima minna.", "Saapal tuli konts ära.", "Mantlil tuli nööp eest ära."],
     note: "kusagilt (jäädavalt) lahkuma",
+    semanticTypes: ["VERB_liikuma"],
     rus: ["уходить", "уйти"], ukr: ["іти", "піти"],
   },
   {
@@ -15446,6 +16852,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "mille peale",
     usages: ["Ärkan kell seitse, joon kohvi.", "Tukastasin, kuid ärkasin sebimise peale.", "Ärkasin täna hommikul väga vara.", "Ärkasin müra peale."],
     note: "unest, uneseisundist toibuma, magamast ärkvele tõusma",
+    semanticTypes: ["VERB_psühh"],
     rus: ["просыпаться", "проснуться"], ukr: ["прокидатися", "прокинутися"],
   },
   {
@@ -15457,6 +16864,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Veetsin enne eksamit unetu öö.", "Isa suri ööl vastu laupäeva.", "Jõudsime koju hommikupoole ööd.", "Sügisöö."],
     note: "õhtu ja hommiku vaheline pimedam osa ööpäevast, hrl magamise aeg",
+    semanticTypes: ["aeg"],
     rus: ["ночь"], ukr: ["ніч"],
   },
   {
@@ -15468,6 +16876,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üheksa pluss üks on kümme.", "Kolm korda kolm on üheksa.", "Projekt kestis üheksa kuud.", "Kell sai üheksa."],
     note: "põhiarv 9",
+    semanticTypes: ["esitus_arv"],
     rus: ["девять", "девятеро"], ukr: ["девʼять"],
   },
   {
@@ -15479,6 +16888,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millega (comitative) · kellega/millega (comitative)",
     usages: ["Juhtmeotsad tuleb ühendada.", "Arvuti on vooluvõrku ühendatud.", "Elektrik ühendab juhtmeid.", "Kas arvuti on võrku ühendatud?"],
     note: "mingit eset või selle osa millegi külge kinnitama, siduma, millegagi ühendusse viima",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["соединять", "соединить"], ukr: ["зʼєднувати", "зʼєднати"],
   },
   {
@@ -15490,6 +16900,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kui auto ei lähe käima, vaata ühendused üle.", "Maja ühendus gaasitrassiga on rajamata.", "Ühendus mandri ja saare vahel on tormi tõttu katkenud.", "Mandri ja saare vahel on regulaarne ühendus."],
     note: "ühendatud olek, kokkupuude, kontakt",
+    semanticTypes: ["abstr/konkr"],
     rus: ["соединение", "связь"], ukr: ["сполучення", "звʼязок"],
   },
   {
@@ -15501,6 +16912,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üheselt mõistetav avaldus.", "Põngerjas päterdas käia juba üheselt."],
     note: "ühel võimalikul viisil",
+    semanticTypes: ["ADV_viis"],
     rus: ["однозначно", "одинаково"], ukr: [],
   },
   {
@@ -15512,6 +16924,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Kaheksa riiki tegid ühisavalduse."],
     note: "ühine avaldus",
+    semanticTypes: ["ese_semio"],
     rus: ["совместное заявление", "общее заявление"], ukr: [],
   },
   {
@@ -15523,6 +16936,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ta tahab ühiskonnale kasulik olla.", "Aidsi nakatunuid ühiskonnast ei eraldata.", "Postindustriaalne ühiskond.", "Ühiskond peab aitama haigeid ja vanureid."],
     note: "inimeste hrl ajalooliselt kujunenud kooselu vorm ja sellest sugenevate sotsiaalsete suhete ja institutsioonide kogum",
+    semanticTypes: ["abstr/konkr"],
     rus: ["общество"], ukr: ["суспільство"],
   },
   {
@@ -15534,6 +16948,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üks pluss üks on kaks.", "Kell on üks öösel.", "Selles majas elab ainult üks inimene.", "Olen Rootsis käinud vaid ühe korra."],
     note: "põhiarv 1",
+    semanticTypes: ["esitus_arv"],
     rus: ["один", "час"], ukr: ["один", "одиниця"],
   },
   {
@@ -15545,6 +16960,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üksteist ja pool.", "Buss nr 11.", "Registreerinud on üksteist võistkonda.", "See juhtus üksteist aastat tagasi."],
     note: "arv 11",
+    semanticTypes: ["esitus_arv"],
     rus: ["одиннадцать"], ukr: ["одинадцять", "одинадцята"],
   },
   {
@@ -15556,6 +16972,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Põhjalik, ent samas üldarusaadav raamat."],
     note: "kõigile arusaadav, hõlpsasti mõistetav",
+    semanticTypes: ["omadus"],
     rus: ["общепонятный", "общедоступный"], ukr: [],
   },
   {
@@ -15567,6 +16984,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üldine maksukoormus ei tohi tõusta.", "Üldine põhimõte on, et riigid ise otsustavad.", "Üldine sõjaväekohustus.", "Aasta jooksul üldist palgatõusu ei tule."],
     note: "kõiki (asjaosalisi) hõlmav, kõigi kohta käiv",
+    semanticTypes: ["omadus_kval"],
     rus: ["общий", "всеобщий"], ukr: ["загальний", "універсальний"],
   },
   {
@@ -15578,6 +16996,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ei tohi üldistada, et kõik õpetajad on kiusakad.", "Töötati välja üldistatud IT-lahendus, mida on hõlbus kohalikele tingimustele kohandada."],
     note: "ühel või mõnel juhul rajanevat tähelepanekut, järeldust vms teistele samasugustele juhtudele laiendama",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["обобщать", "обобщить"], ukr: ["узагальнювати", "узагальнити"],
   },
   {
@@ -15589,6 +17008,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Naiste suust kuuleb ühtepuhku üldistust, et Eesti mees ei kõlba kuhugi.", "Ühe juhtumi põhjal ei saa teha üldistusi."],
     note: "üldistamine",
+    semanticTypes: ["tegevus", "tegevus_tegu"],
     rus: ["обобщение"], ukr: ["узагальнення"],
   },
   {
@@ -15600,6 +17020,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koolitusel osalejad omandavad lisaks üldkeelele ka oma ametikohal toimetulekuks vajaliku erialase sõnavara.", "Kevadsemestril võib valida inglise üldkeele või inglise teaduskeele ettevalmistuskursuse.", "Üldkeele sõnaraamat."],
     note: "kirjakeele üldtarvitatav osa, mida kasutavad kõik keelekõnelejad vanusest, ametist, haridusest, elupaigast olenemata (hrl vastandub oskuskeelele)",
+    semanticTypes: ["esitus_keel"],
     rus: ["общенародный язык"], ukr: [],
   },
   {
@@ -15611,6 +17032,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üldkehtivad normid.", "Üldkehtiv soodustus."],
     note: "kõigi ja kõige kohta kehtiv",
+    semanticTypes: ["omadus"],
     rus: ["общеустановленный", "общепринятый"], ukr: [],
   },
   {
@@ -15622,6 +17044,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vaevalt et keegi üldse teadis, et ta siin on.", "Meie ema on üldse hirmus tige.", "Kas sul üldse on praegu raha?", "Kuidas selline asi üldse võimalik on?"],
     note: "(aitab väidet rõhutada)",
+    semanticTypes: ["ADV_aste"],
     rus: ["вообще", "вовсе"], ukr: ["взагалі", "аж ніяк не"],
   },
   {
@@ -15633,6 +17056,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Leping jäi üldsuse eest saladusse.", "Rahvusvaheline üldsus otsib võimalusi konflikti lõpetamiseks."],
     note: "rahvas, ühiskonnaliikmed kõige üldisemas mõttes",
+    semanticTypes: ["inimene"],
     rus: ["общественность", "общность"], ukr: ["громадськість"],
   },
   {
@@ -15644,6 +17068,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Poiss ronis üle aia.", "Läksin üle tänava.", "Istusin, jalg üle põlve.", "Üle järve on veel üks maja."],
     note: "(liikumise või asendi kohta:) osutab teatava pinna või takistuse ületamisele",
+    semanticTypes: ["ADV_koht"],
     rus: ["через", "над"], ukr: ["через", "за"],
   },
   {
@@ -15655,6 +17080,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "millest (elative)",
     usages: ["Poisid vaatasid enne sõitu rattad üle.", "Pean töö enne esitamist veel kord üle vaatama.", "Eksperdid lähevad Pühavaimu kiriku torni kahjustusi üle vaatama esimesel võimalusel.", "Käisin oma valdusi üle vaatamas."],
     note: "millegi korrasolekut, nõuetele vastavust kontrollima",
+    semanticTypes: ["VERB_abstr"],
     rus: ["осмотреть", "осматривать"], ukr: ["переглядати", "переглянути"],
   },
   {
@@ -15666,6 +17092,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tulin üleeile õhtul.", "Sa pidid ju üleeile külla tulema."],
     note: "eilsele eelnenud päeval",
+    semanticTypes: ["aeg"],
     rus: ["позавчера", "накануне вчерашнего дня"], ukr: ["позавчора"],
   },
   {
@@ -15677,6 +17104,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Saan tagasi maksta homme või ülehomme.", "Puhkus lõpeb ülehomme."],
     note: "homsele järgneval päeval",
+    semanticTypes: ["aeg"],
     rus: ["послезавтра"], ukr: ["післязавтра"],
   },
   {
@@ -15688,6 +17116,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ülekantud tähenduses kujutame inimest maailma nabana.", "Ülekantud rasedus kestab üle 42 nädala."],
     note: "(sõnatähenduse kohta:) mingile ebatavalisele seosele, hrl võrdlusele toetuv, mitte otsene",
+    semanticTypes: ["omadus_kval"],
     rus: ["переносный"], ukr: [],
   },
   {
@@ -15699,6 +17128,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Üleminek uuele töökohale.", "Üleminek kohustuslikule keskharidusele.", "Eurole üleminek toimus 2011. aastal.", "Teose sujuvad üleminekud tõsielust fantaasiasse."],
     note: "varasemalt olukorralt, seisundilt, tegevuselt uuele, teistsugusele siirdumine",
+    semanticTypes: ["sündmus", "tegevus"],
     rus: ["переход", "переезд"], ukr: ["перехід", "переїзд"],
   },
   {
@@ -15710,6 +17140,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Hommikul vara tõusime üles ja sõitsime lennujaama.", "Miks sa nii vara üles tõusid?", "Mis kell sa tavaliselt üles tõused?", "Ma ei tahtnud veel üles tõusta."],
     note: "ärkama, asemelt tõusma",
+    semanticTypes: ["VERB_muutus"],
     rus: ["вставать", "встать"], ukr: ["уставати", "устати"],
   },
   {
@@ -15721,6 +17152,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tänaseks polnud märkmikus ühtki ülesannet.", "Külastan teid peaministri ülesandel.", "Luureülesanne.", "Minu ülesanne oli süüa teha."],
     note: "kohustusena sooritatavaks antud või võetud töö või toiming",
+    semanticTypes: ["tegevus_tegu"],
     rus: ["задание", "задача"], ukr: ["завдання", "доручення"],
   },
   {
@@ -15732,6 +17164,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Ülesehituselt on raamat nagu lapitekk.", "Kursuse ülesehitus.", "Reklaami visuaalne ülesehitus."],
     note: "süsteemi, teose vm keerulise objekti sisemised seosed, koostisosade paigutus ja liitumise või seostumise viis",
+    semanticTypes: ["omadus_füüs", "omadus_kval"],
     rus: ["структура", "строение"], ukr: ["структура", "будова"],
   },
   {
@@ -15743,6 +17176,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Autojuht ületas kiirust.", "Dividendidena võeti välja summa, mis ületas aasta kasumit.", "Maailmarekord on ületatud!", "Poiss ületas teadmistes kõiki klassikaaslasi."],
     note: "mingist piirist, määrast, näitajast suurem, kõrgem, rohkem, parem vms olema",
+    semanticTypes: ["VERB_seisund"],
     rus: ["превышать", "превысить"], ukr: ["перевищувати", "перевищити"],
   },
   {
@@ -15754,6 +17188,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: [],
     note: null,
+    semanticTypes: [],
     rus: ["возвышенность", "величавость"], ukr: [],
   },
   {
@@ -15765,6 +17200,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Stanfordi ülikool.", "Sind ootab ülikoolist väljaheitmine.", "Ma õpin Tartu ülikoolis keemiat.", "Ta jättis ülikooli pooleli."],
     note: "õppe- ja teadusasutus, kus omandatakse akadeemiline kõrgharidus ja akadeemiline kraad",
+    semanticTypes: ["koht_asutus"],
     rus: ["университет"], ukr: ["університет"],
   },
   {
@@ -15776,6 +17212,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["„Mis siin toimub?“ kostis üllatunud hääl meie selja tagant.", "Selle peale ei osanud üllatunud mees enam midagi kosta.", "Vanaemal oli üllatunud nägu peas.", "Ta vaatas mind üllatunud pilguga."],
     note: "millegi ootamatu peale üllatust väljendav või tundev",
+    semanticTypes: ["omadus"],
     rus: ["удивлённый", "изумлённый"], ukr: ["здивований"],
   },
   {
@@ -15787,6 +17224,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Tüdruk pani käed ümber põlvede.", "Krundile tuleks aed ümber teha.", "Ei ühtki elavat hinge, ümber ainult lumi ja jää.", "Maja ümber kasvavad õunapuud."],
     note: "midagi või kedagi (sõõrina) ümbritsema või ümbritsemas",
+    semanticTypes: ["koht"],
     rus: ["вокруг", "кругом"], ukr: ["навколо", "довкола"],
   },
   {
@@ -15798,6 +17236,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Süüdistus õnnestus ümber lükata.", "Poliitik lükkas kõik süüdistused ümber.", "Buldooser lükkab ümber vanu maju, et teha ruumi pilvelõhkujatele.", "Lükkasin kogemata klaasi ümber."],
     note: "millegi õigsust olematuks tegema, millegi paikapidamatust tõestama",
+    semanticTypes: ["VERB_abstr", "VERB_muutust põhjustama"],
     rus: ["опровергать", "опровергнуть"], ukr: ["спростовувати", "спростувати"],
   },
   {
@@ -15809,6 +17248,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Seadus tuleks ümber sõnastada.", "Sõnasta see lause ümber."],
     note: "uuesti, teisiti (ka mõtet muutes) sõnastama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["изложить другими словами", "перефразировать"], ukr: ["перефразовувати", "перефразувати"],
   },
   {
@@ -15820,6 +17260,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["On tavaline, et seltskonnas püütakse napsust keeldujat ümber veenda.", "Näib, et põhimõttelisi vaktsineerimise vastaseid ei veena ümber ühegi ratsionaalse argumendiga."],
     note: "veenmise jõul kedagi oma arvamust, tõekspidamisi vms muutma panema",
+    semanticTypes: ["VERB_psühh_mõistus"],
     rus: ["переубеждать", "переубедить"], ukr: [],
   },
   {
@@ -15831,6 +17272,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: "kellele (allative) · kelle/mille kohta",
     usages: ["Ütle oma nimi!", "Oleks ta siis ühegi lohutava sõna öelnud.", "Hästi öeldud!", "Öelge palun, mis kell on?"],
     note: "infot, arvamust, suhtumist, tundeid vms sõnades suuliselt väljendama",
+    semanticTypes: ["VERB_suhtlus"],
     rus: ["сказать", "произнести"], ukr: ["сказати", "промовити"],
   },
   {
@@ -15842,6 +17284,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Vana hea ütlus, et iga kingsepp jäägu oma liistude juurde, võiks siingi kehtida.", "See ema ütlus ei unune mul surmatunnini.", "Mind kutsuti kohtusse ütlusi andma.", "Kokkupõrke tunnistajalt on ütlused veel võtmata."],
     note: "teatav kindlakskujunenud väljend, kõnekäänd, fraas vms",
+    semanticTypes: ["esitus_keel_suhtlus"],
     rus: ["выражение", "изречение"], ukr: [],
   },
   {
@@ -15853,6 +17296,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Koorid ei suuda kontserdisaali kõrget üüri maksta.", "Igakuine üür.", "Üür jälle tõusis.", "Omanik tõstis üüri."],
     note: "tasu, mis makstakse omanikule tema vara kasutamise eest",
+    semanticTypes: ["ese_raha"],
     rus: ["арендная плата", "аренда"], ukr: ["орендна плата", "оренда"],
   },
   {
@@ -15864,6 +17308,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Pere üüris endale kolmeks aastaks korteri.", "Kust saaks suuski üürida?", "Üürisime nädalavahetuseks korteri.", "Tüdrukud üürivad kolme peale korterit."],
     note: "midagi kokkulepitud tingimustel, tasu eest kelleltki kasutada võtma",
+    semanticTypes: ["VERB_tegevus"],
     rus: ["снимать", "снять"], ukr: ["наймати", "найняти"],
   },
   {
@@ -15875,6 +17320,7 @@ export const HARVESTED: readonly HarvestedWord[] = [
     government: null,
     usages: ["Omanik ja üürnik.", "Üürniku kasutada on maja esimene korrus.", "Selle maja üürnikud maksavad oma üüri alati õigel ajal."],
     note: "kelleltki hrl eluruumi üüriv isik",
+    semanticTypes: ["in_roll"],
     rus: ["арендатор", "съёмщик"], ukr: ["квартирант", "квартирантка"],
   },
 ];

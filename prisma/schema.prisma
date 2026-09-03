@@ -57,6 +57,19 @@ model Lexeme {
   /// syllabus existed, and the seed dropped all 1,359 of them, because `notes`
   /// is written only for entries that carry the key and the harvest never did.
   definition    String?
+  /// The Institute's own semantic type codes for the word's primary sense,
+  /// space separated: `loom` for a horse, `in_elukutse` for a teacher,
+  /// `koht_hoone` for a room.
+  ///
+  /// Not decoration. Estonian picks between two whole sets of local cases on a
+  /// fact about meaning, and nothing in a word's spelling carries it, so every
+  /// animate noun in the dictionary was being drilled on `hobusesse` and
+  /// `koeras` (see lib/estonian/semantics.ts). Ekilex has been answering this
+  /// in the same response the forms come from since before the app existed;
+  /// nothing here is generated, and the codes are stored exactly as the
+  /// Institute spells them so the reading of them can be corrected without
+  /// asking a service somebody else runs all over again.
+  semanticTypes String?
   provenance    String  @default("SEED") // SEED | EKILEX | AI | USER
   ekilexWordId  Int?
 

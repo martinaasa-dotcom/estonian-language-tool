@@ -2,6 +2,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { CASES } from "@/lib/estonian/cases";
+import { caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { courseLevelFor } from "@/lib/progress/level";
 import { describeRound } from "@/lib/progress/describe";
@@ -69,7 +70,15 @@ export default async function DescribePage() {
       // is the rule every screen in this app that names a case follows.
       caseEt: grammarTerm(spec.key)?.et ?? spec.et,
       caseEn: spec.en,
-      caseQuestion: spec.question,
+      // The question *this* word answers. Half the pictured nouns are people
+      // and animals, so the `mille-` series was asking `millega?` about a
+      // horse; and `kus?` names two cases at once, which is not a question a
+      // task wanting one form can print. See lib/estonian/caseQuestion.ts.
+      caseQuestion: caseQuestionFor(spec, {
+        lemma: asked.lemma,
+        semanticTypes: asked.semanticTypes,
+        nomSg: asked.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+      }),
     };
   });
 

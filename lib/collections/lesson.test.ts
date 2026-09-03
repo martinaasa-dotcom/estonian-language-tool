@@ -19,6 +19,7 @@ const noun = (lemma: string, gloss: string, extra: Partial<LessonWord> = {}): Le
   examples: [],
   parts: { NOM_SG: lemma, GEN_SG: `${lemma}i`, PART_SG: `${lemma}it` },
   government: null,
+  semanticTypes: null,
   ...extra,
 });
 
@@ -195,12 +196,12 @@ describe("what a step is built from", () => {
     // options should be other phrases, not the noun distractors sitting
     // right beside them.
     const greeting: LessonWord = {
-      lemma: "tere", gloss: "Hello!", pos: "PHRASE", examples: [], parts: {}, government: null,
+      lemma: "tere", gloss: "Hello!", pos: "PHRASE", semanticTypes: null, examples: [], parts: {}, government: null,
     };
     const otherPhrases: LessonWord[] = [
-      { lemma: "aitäh", gloss: "Thank you!", pos: "PHRASE", examples: [], parts: {}, government: null },
-      { lemma: "palun", gloss: "Please!", pos: "PHRASE", examples: [], parts: {}, government: null },
-      { lemma: "vabandust", gloss: "Sorry!", pos: "PHRASE", examples: [], parts: {}, government: null },
+      { lemma: "aitäh", gloss: "Thank you!", pos: "PHRASE", semanticTypes: null, examples: [], parts: {}, government: null },
+      { lemma: "palun", gloss: "Please!", pos: "PHRASE", semanticTypes: null, examples: [], parts: {}, government: null },
+      { lemma: "vabandust", gloss: "Sorry!", pos: "PHRASE", semanticTypes: null, examples: [], parts: {}, government: null },
     ];
     const steps = planLesson({
       unit, words: [greeting], distractors: [...otherPhrases, ...DISTRACTORS], seed: 9,
@@ -221,8 +222,8 @@ describe("what a step is built from", () => {
 
   it("asks about government only where Ekilex recorded one", () => {
     const verbs: LessonWord[] = [
-      { lemma: "aitama", gloss: "to help", pos: "VERB", examples: [], parts: { INF_MA: "aitama", GEN_SG: "" }, government: "keda" },
-      { lemma: "jooksma", gloss: "to run", pos: "VERB", examples: [], parts: { INF_MA: "jooksma" }, government: null },
+      { lemma: "aitama", gloss: "to help", pos: "VERB", semanticTypes: null, examples: [], parts: { INF_MA: "aitama", GEN_SG: "" }, government: "keda" },
+      { lemma: "jooksma", gloss: "to run", pos: "VERB", semanticTypes: null, examples: [], parts: { INF_MA: "jooksma" }, government: null },
     ];
     const steps = planLesson({ unit, words: verbs, distractors: DISTRACTORS, seed: 2 });
     const govern = steps.filter((s) => s.kind === "govern");

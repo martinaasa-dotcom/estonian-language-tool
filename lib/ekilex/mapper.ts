@@ -121,6 +121,16 @@ export interface MappedLexeme {
    * Estonian, in a box with no heading and no `lang`.
    */
   definition: string | null;
+  /**
+   * The Institute's semantic type codes for the word's primary sense, space
+   * separated, or null where it classifies none.
+   *
+   * Joined here rather than kept as a list because `Lexeme.semanticTypes` is
+   * one column and `lib/estonian/semantics.ts` reads either shape. Null rather
+   * than an empty string, so the column can say "the Institute was asked and
+   * had nothing" the way every other nullable column here does.
+   */
+  semanticTypes: string | null;
   /** Attested sentences using the word — the source of every cloze exercise. */
   examples: Example[];
   forms: MappedForm[];
@@ -196,6 +206,7 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
     gradationNote: gradation.note ?? null,
     government: formatGovernment(details.governments),
     definition: details.definitions[0] ?? null,
+    semanticTypes: details.semanticTypes.length > 0 ? details.semanticTypes.join(" ") : null,
     examples: usableExamples(details.usages.map((et) => ({ et, source: "EKILEX" as const }))),
     forms: forms.sort((a, b) => a.orderIndex - b.orderIndex),
   };

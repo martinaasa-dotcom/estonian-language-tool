@@ -74,6 +74,33 @@ The dictionary UI renders this as a **generated table clearly marked as derived*
 five stored forms marked as authoritative. The learner sees which forms they must memorise and which
 they get for free. That framing *is* the pedagogy.
 
+### 1.2a Two sets of local cases, and which one a word takes
+
+Six of the ten above are *local* cases and they come in two sets. The inside three (*seesütlev*,
+*seestütlev*, *sisseütlev*) are about being in something; the outside three (*alalütlev*,
+*alaltütlev*, *alaleütlev*) are about being on it, and are also the ones Estonian uses for the
+person or animal a thing is given to, taken from, or belongs to.
+
+| | Inside | Outside |
+|---|---|---|
+| A room | toas, toast, tuppa | |
+| A country in *-maa* | | Saksamaal, Saksamaalt, Saksamaale |
+| A horse | | hobusel, hobuselt, hobusele |
+| A teacher | | õpetajal, õpetajalt, õpetajale |
+
+Which set a word takes is a fact about its **meaning**, so no rule over its spelling reaches it:
+`hobusesse` is a perfectly derivable word and is not how anybody talks about a horse. The app reads
+the Institute's own semantic type for the word's primary sense (`loom`, `in_elukutse`,
+`koht_hoone`), which arrives in the same Ekilex response as the forms, and
+`lib/estonian/caseQuestion.ts` is the one module every generator asks. A word the Institute
+classifies as both a being and a place (`politsei`, `grupp`) takes both sets in ordinary Estonian
+and is drilled on neither, the same answer `maa` gets.
+
+The two interrogative pronouns follow the same fact and decline alike through all fourteen cases:
+`kes` for a person or an animal, `mis` for a thing. So a card asks `hobune → kellega?` and `raamat →
+millega?`. The adverbial questions `kus?`, `kuhu?` and `kust?` each name one case from **each** set,
+so they are part of a case's name and never the question on a card about one word.
+
 ### 1.3 Consonant gradation (*astmevaheldus*)
 
 The reason principal parts are unpredictable. A stem alternates between a **strong grade** and a

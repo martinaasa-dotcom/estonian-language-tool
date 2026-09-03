@@ -2,11 +2,11 @@ import { sameSpelling } from "@/lib/copy/values";
 import { sentenceContaining, type Example } from "@/lib/dict/examples";
 import { checkAnswer } from "@/lib/estonian/answer";
 import { CASES, caseByKey } from "@/lib/estonian/cases";
+import { caseFits, caseQuestionFor, type CaseSubject } from "@/lib/estonian/caseQuestion";
 import { buildCloze, mentions } from "@/lib/estonian/cloze";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { caseAnswer, shownForms, stemsFrom } from "@/lib/estonian/derive";
 import { gapForms } from "@/lib/estonian/gapForms";
-import { INSIDE_CASES, OUTSIDE_CASES, localCasesFor } from "@/lib/estonian/place";
 import { caseIndex, tidyForm } from "@/lib/estonian/whichCase";
 import { looksLikeSentence } from "@/lib/estonian/writing";
 import { attestedForms, conjugationAnswer } from "@/lib/srs/cards";
@@ -72,6 +72,15 @@ export interface FlashWord {
   pos: string;
   forms: readonly { formType: string; value: string; morphCode?: string | null }[];
   examples: readonly Example[];
+  /**
+   * The Institute's semantic type codes, as the dictionary stores them.
+   *
+   * Required rather than optional, which is the whole of what makes it stick:
+   * `null` says the dictionary was asked and holds no classification, and a
+   * caller that never asked does not compile. Without it this round asked a
+   * horse for its sisseütlev and wanted `hobusesse`, which is not Estonian.
+   */
+  semanticTypes: string | null;
 }
 
 /** One thing a word can be asked, with the answer the dictionary vouches for. */
@@ -216,23 +225,18 @@ export function askableSlots(word: FlashWord): FlashSlot[] {
   }
 
   /*
-    AND NOT THE LOCAL CASES THIS WORD DOES NOT TAKE.
+    AND NOT A CASE THIS WORD DOES NOT TAKE.
 
-    Estonian has two sets of them and a place name in `-maa` uses the outside
-    one: `Venemaal` is how you say "in Russia" and `Venemaas` is not a way of
-    saying it at all. `lib/estonian/place.ts` is where that already lives,
-    because the A1 unit of countries shipped a card asking `Venemaa → milles?
-    kus?` and marked a learner wrong for writing what their teacher would mark
-    right. This round walked straight back into it by offering all eleven
-    cases, and the first real round it drew asked exactly that question.
+    Estonian has two sets of local cases and a word takes one: `toas` for a
+    room, `hobusel` for a horse, `Saksamaal` for a country. This round shipped
+    with the half of that rule a spelling can see, so it stopped asking
+    `Venemaa → milles? kus?` and went on asking a horse for its sisseütlev.
+    `caseFits` is the one answer, and it refuses a singular of a word that has
+    no singular besides.
   */
-  const wrongTrio = new Set<string>(
-    [...INSIDE_CASES, ...OUTSIDE_CASES].filter((k) => !localCasesFor(word.lemma).includes(k)),
-  );
-
   const stems = stemsFrom(word.forms);
   for (const key of ASKABLE_CASES) {
-    if (wrongTrio.has(key)) continue;
+    if (!caseFits(key, subjectOf(word))) continue;
     const answer = caseAnswer(stems, key);
     if (!answer) continue;
     if (answer.accepted.some((f) => f.trim().toLocaleLowerCase("et") === lemma)) continue;
@@ -406,7 +410,13 @@ export function flashTask(input: {
     translation: word.translation,
     pos: word.pos,
     shape,
-    label: slotLabel(slot.slot),
+    /*
+      The question this word answers, not the case's own name. `kus?` is
+      answered by the seesütlev and the alalütlev both, so a card wanting one
+      of them that prints the adverb can be answered correctly and marked
+      wrong, and a horse is a `kes` rather than a `mis`.
+    */
+    label: caseLabel(word, slot.slot),
     /*
       The sentence belongs to the two shapes that are about one.
 
@@ -596,4 +606,26 @@ export const isForm = isFormSlot;
 /** The English cross-reference for a case slot, where there is one. */
 export function englishName(slot: string): string | null {
   return caseByKey(slot)?.en.toLowerCase() ?? null;
+}
+
+/** What the case rule needs to know about a word, in the shape it takes it. */
+export function subjectOf(word: FlashWord): CaseSubject {
+  return {
+    lemma: word.lemma,
+    semanticTypes: word.semanticTypes,
+    nomSg: word.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+  };
+}
+
+/**
+ * What a slot is called on this word's card.
+ *
+ * A case is named by the question *this* word answers, which is
+ * `caseQuestionFor`'s job; everything else is the same on every word and comes
+ * off the one table in `lib/srs/slots.ts`.
+ */
+export function caseLabel(word: FlashWord, slot: string): string {
+  const spec = caseByKey(slot);
+  if (!spec) return slotLabel(slot);
+  return `${spec.et} · ${caseQuestionFor(spec, subjectOf(word))}`;
 }

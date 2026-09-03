@@ -106,6 +106,9 @@ export default async function FlashcardsPage() {
       where: { id: { in: lexemeIds } },
       select: {
         id: true, lemma: true, translation: true, pos: true, examples: true,
+        // Which local cases the word takes and which pronoun asks for it, both
+        // of which are facts about the meaning rather than the spelling.
+        semanticTypes: true,
         forms: { select: { formType: true, value: true, morphCode: true }, orderBy: { id: "asc" } },
       },
       orderBy: { id: "asc" },
@@ -161,6 +164,7 @@ function promptFor(
   word: MasteredWord,
   lexeme: {
     id: string; lemma: string; translation: string; pos: string; examples: string;
+    semanticTypes: string | null;
     forms: { formType: string; value: string; morphCode: string | null }[];
   } | undefined,
   cards: { id: string; lexemeId: string | null; cardType: string; targetCase: string | null }[],
@@ -174,6 +178,7 @@ function promptFor(
     lemma: lexeme.lemma,
     translation: lexeme.translation,
     pos: lexeme.pos,
+    semanticTypes: lexeme.semanticTypes,
     forms: lexeme.forms,
     examples: usableExamples(parseExamples(lexeme.examples)),
   };

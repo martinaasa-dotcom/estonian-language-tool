@@ -9,6 +9,7 @@ const TUBA: FlashWord = {
   lemma: "tuba",
   translation: "room",
   pos: "NOUN",
+  semanticTypes: null,
   forms: [
     { formType: "NOM_SG", value: "tuba" },
     { formType: "GEN_SG", value: "toa" },
@@ -28,6 +29,7 @@ const LUGEMA: FlashWord = {
   lemma: "lugema",
   translation: "to read",
   pos: "VERB",
+  semanticTypes: null,
   forms: [
     { formType: "INF_MA", value: "lugema" },
     { formType: "INF_DA", value: "lugeda" },
@@ -43,6 +45,7 @@ const TERE: FlashWord = {
   lemma: "Tere hommikust!",
   translation: "Good morning!",
   pos: "PHRASE",
+  semanticTypes: null,
   forms: [],
   examples: [],
 };
@@ -93,7 +96,7 @@ describe("askableSlots", () => {
       asking the same slot has to take the same answers.
     */
     const olema: FlashWord = {
-      lexemeId: "lex-olema", lemma: "olema", translation: "to be", pos: "VERB", examples: [],
+      lexemeId: "lex-olema", lemma: "olema", translation: "to be", pos: "VERB", examples: [], semanticTypes: null,
       forms: [
         { formType: "INF_MA", value: "olema" },
         { formType: "PRES_1SG", value: "olen" },
@@ -175,7 +178,7 @@ describe("askableSlots", () => {
     // `kallis` has the genitive `kalli`, so its seesütlev is `kallis` again:
     // the question would print its own answer and nobody could get it wrong.
     const kallis: FlashWord = {
-      ...TUBA, lexemeId: "lex-kallis", lemma: "kallis", pos: "ADJECTIVE", examples: [],
+      ...TUBA, lexemeId: "lex-kallis", lemma: "kallis", pos: "ADJECTIVE", examples: [], semanticTypes: null,
       forms: [
         { formType: "NOM_SG", value: "kallis" },
         { formType: "GEN_SG", value: "kalli" },
@@ -256,6 +259,7 @@ describe("flashTask", () => {
     */
     const pori: FlashWord = {
       lexemeId: "lex-pori", lemma: "pori", translation: "mud", pos: "NOUN",
+      semanticTypes: null,
       forms: [
         { formType: "NOM_SG", value: "pori" },
         { formType: "GEN_SG", value: "pori" },
@@ -386,7 +390,7 @@ describe("the local cases", () => {
     module drew asked exactly the same question.
   */
   const VENEMAA: FlashWord = {
-    lexemeId: "lex-venemaa", lemma: "Venemaa", translation: "Russia", pos: "NOUN", examples: [],
+    lexemeId: "lex-venemaa", lemma: "Venemaa", translation: "Russia", pos: "NOUN", examples: [], semanticTypes: null,
     forms: [
       { formType: "NOM_SG", value: "Venemaa" },
       { formType: "GEN_SG", value: "Venemaa" },
@@ -404,6 +408,42 @@ describe("the local cases", () => {
 
   it("still asks a place for the cases that have nothing to do with place", () => {
     expect(slotKeys(VENEMAA)).toContain("COMITATIVE");
+  });
+
+  it("asks an animal the trio it takes, and asks it with kes", () => {
+    /*
+      The half of this rule no spelling can see, and the fault it shipped with:
+      nothing about the letters in `hobune` says it is an animal, so the round
+      asked for `hobusesse` and would have marked `hobusele` wrong. The
+      Institute records `loom` against the meaning, in the same response the
+      forms come from.
+    */
+    const hobune: FlashWord = {
+      lexemeId: "lex-hobune", lemma: "hobune", translation: "horse", pos: "NOUN",
+      examples: [], semanticTypes: "loom",
+      forms: [
+        { formType: "NOM_SG", value: "hobune" },
+        { formType: "GEN_SG", value: "hobuse" },
+        { formType: "PART_SG", value: "hobust" },
+      ],
+    };
+    const keys = slotKeys(hobune);
+    expect(keys).toContain("ALLATIVE");
+    expect(keys).not.toContain("ILLATIVE");
+    expect(keys).not.toContain("INESSIVE");
+
+    // And the question is the one a horse answers, without the place adverb:
+    // `kus?` is answered by two cases, so a card wanting one of them cannot
+    // print it.
+    const task = flashTask({
+      word: hobune,
+      slot: askableSlots(hobune).find((s) => s.slot === "ADESSIVE")!,
+      cardId: "card-1",
+      step: 0,
+    })!;
+    expect(task.label).toContain("kellel?");
+    expect(task.label).not.toContain("kus?");
+    expect(task.accepted).toContain("hobusel");
   });
 
   it("asks an ordinary noun the inside trio", () => {

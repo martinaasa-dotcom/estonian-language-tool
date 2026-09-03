@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { CASES } from "@/lib/estonian/cases";
+import { caseFits, caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { decoyOptions } from "@/lib/dict/facts";
@@ -88,6 +89,9 @@ export async function targetRound(ownerId: string): Promise<TargetQuestion[]> {
     include: {
       lexeme: {
         select: { id: true, lemma: true, translation: true, pos: true, cefr: true,
+          // Which of the two sets of local cases the word takes, and whether
+          // it answers `kes?` or `mis?`. See lib/estonian/caseQuestion.ts.
+          semanticTypes: true,
           forms: { select: { formType: true, morphCode: true, value: true } } },
       },
     },
@@ -159,11 +163,15 @@ export async function targetRound(ownerId: string): Promise<TargetQuestion[]> {
 export function caseQuestion(
   lexeme: {
     lemma: string;
+    semanticTypes: string | null;
     forms: readonly { formType: string | null; morphCode: string | null; value: string }[];
   },
   cardId: string,
 ): TargetQuestion | null {
   const stems = stemsFrom(lexeme.forms);
+  const subject = {
+    lemma: lexeme.lemma, semanticTypes: lexeme.semanticTypes, nomSg: stems.nomSg ?? null,
+  };
 
   /*
     AND NOT A CASE THE WORD IS ALREADY SPELLED AS. The prompt is the lemma and
@@ -190,6 +198,11 @@ export function caseQuestion(
   const built: { key: string; value: string }[] = [];
   for (const spec of CASES) {
     if (spec.principal) continue;
+    // And not a local case this word does not take: the quest was offering
+    // `hobuses` and `hobusesse` as options against each other, which is a
+    // question about the half of the language a horse is not in. See
+    // lib/estonian/caseQuestion.ts.
+    if (!caseFits(spec.key, subject)) continue;
     const answer = caseAnswer(stems, spec.key);
     if (!answer) continue;
     if (answer.value.trim().toLocaleLowerCase("et") === spelt) continue;
@@ -214,7 +227,7 @@ export function caseQuestion(
     cardId,
     kind: "case",
     lemma: lexeme.lemma,
-    question: spec.question,
+    question: caseQuestionFor(spec, subject),
     caseEt: grammarTerm(spec.key)?.et ?? spec.et,
     options: picked.options,
     answer: picked.answer,

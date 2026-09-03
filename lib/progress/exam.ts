@@ -89,6 +89,7 @@ export async function examPool(ownerId: string, level: ExamLevel): Promise<PoolW
     translation: lexeme.translation,
     pos: lexeme.pos,
     cefr: lexeme.cefr,
+    semanticTypes: lexeme.semanticTypes,
     forms: lexeme.forms.map((f) => ({
       formType: f.formType,
       value: f.value,

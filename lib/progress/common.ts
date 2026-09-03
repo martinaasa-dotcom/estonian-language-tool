@@ -197,6 +197,9 @@ export async function nextCommonBatch(
     select: {
       id: true, lemma: true, translation: true, pos: true, provenance: true,
       gradation: true, gradationNote: true, government: true, examples: true,
+      // Which case cards the word can carry at all: see
+      // lib/estonian/caseQuestion.ts.
+      semanticTypes: true,
       forms: { select: { formType: true, value: true, morphCode: true } },
     },
     orderBy: [{ lemma: "asc" }, { id: "asc" }],

@@ -61,22 +61,33 @@ export interface DemoStems {
    * for thirty-three nouns that have no plural at all.
    */
   readonly nomPl: string | null;
+  /**
+   * The Institute's semantic type codes, copied from the seed like the forms.
+   *
+   * Two of these five are people. Without this the card printed
+   * `seesütlev · milles? kus?` over `mehes` and `sõbras`, which is the
+   * `mis`-series asked about a `kes` on the app's own front page. It names
+   * the question only; every row of the table is still shown, because a table
+   * of forms is a reference rather than a question. See
+   * lib/estonian/caseQuestion.ts.
+   */
+  readonly semanticTypes: string | null;
 }
 
 export const DEMO_STEMS: readonly DemoStems[] = [
   { lemma: "raamat",
     nomSg: "raamat", genSg: "raamatu", partSg: "raamatut", partPl: "raamatuid", genPl: "raamatute",
-    illSgShort: null, nomPl: "raamatud" },
+    illSgShort: null, nomPl: "raamatud", semanticTypes: "esitus" },
   { lemma: "tuba",
     nomSg: "tuba", genSg: "toa", partSg: "tuba", partPl: "tube", genPl: "tubade",
-    illSgShort: "tuppa", nomPl: "toad" },
+    illSgShort: "tuppa", nomPl: "toad", semanticTypes: "koht_hoone" },
   { lemma: "sõber",
     nomSg: "sõber", genSg: "sõbra", partSg: "sõpra", partPl: "sõpru", genPl: "sõprade",
-    illSgShort: "sõpra", nomPl: "sõbrad" },
+    illSgShort: "sõpra", nomPl: "sõbrad", semanticTypes: "in_roll" },
   { lemma: "käsi",
     nomSg: "käsi", genSg: "käe", partSg: "kätt", partPl: "käsi", genPl: "käte",
-    illSgShort: "kätte", nomPl: "käed" },
+    illSgShort: "kätte", nomPl: "käed", semanticTypes: "kehaosa" },
   { lemma: "mees",
     nomSg: "mees", genSg: "mehe", partSg: "meest", partPl: "mehi", genPl: "meeste",
-    illSgShort: null, nomPl: "mehed" },
+    illSgShort: null, nomPl: "mehed", semanticTypes: "inimene" },
 ];
