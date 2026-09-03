@@ -150,6 +150,14 @@ const ROUTES = [
   */
   "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
   "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
+  /*
+    And the conversations, which is the third time this list has been caught by
+    the fault its own header names. A scene is a whole session rendered from one
+    component with a log region, a disclosure and a form in it, which is exactly
+    the shape that was once found drawing a card and four buttons with no
+    heading at all.
+  */
+  "/situations", "/situations/arsti-aeg",
 ];
 
 const browser = await launchChromium();

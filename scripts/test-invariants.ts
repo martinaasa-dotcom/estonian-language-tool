@@ -8993,6 +8993,31 @@ check("a scene is marked by the server, and its grades go to the shared log", ()
   );
 });
 
+check("a scene's debrief points at a drill that exists", () => {
+  /*
+    `lib/scenes/drills.ts` reads the drill off what the beat needed rather than
+    linking the same one whatever happened, which means it holds hrefs, and an
+    href in a pure module is a string nothing checks. `DrillLink` returns null
+    on one it cannot resolve rather than throwing, deliberately, so a retired
+    drill would leave the debrief silently missing its one piece of advice on a
+    screen somebody reached by failing.
+
+    `lib/ux/modes.ts` is what a mode is, and this is the same pairing every
+    other reader of that table is held to.
+  */
+  const table = code("lib/scenes/drills.ts");
+  const hrefs = [...table.matchAll(/"(\/review\/[a-z-]+)"/g)].map((m) => m[1]!);
+  assert.ok(hrefs.length >= 2, `drills.ts names ${hrefs.length} drills, which is not a table`);
+
+  const modes = code("lib/ux/modes.ts");
+  for (const href of hrefs) {
+    assert.match(
+      modes, new RegExp(`href:\\s*"${href}"`),
+      `the scene debrief links ${href}, which lib/ux/modes.ts does not have`,
+    );
+  }
+});
+
 check("nothing but the dictionary can advance a scene", () => {
   const turn = code("lib/scenes/turn.ts");
   const state = code("lib/scenes/state.ts");

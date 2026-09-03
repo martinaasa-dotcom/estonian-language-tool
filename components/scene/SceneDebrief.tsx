@@ -6,6 +6,7 @@ import { Card, Chip } from "@/components/ui";
 import { AddWordButton } from "@/components/AddWordButton";
 import { DrillLink } from "@/components/DrillLink";
 import type { SceneSpec } from "@/lib/scenes/types";
+import { drillFor } from "@/lib/scenes/drills";
 
 /** So "words your conversations needed" is a query and never a counter (ADR-014). */
 export const SCENE_SOURCE = "SCENE";
@@ -41,6 +42,8 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
   const { scene, objectives, outcome, gaps, turns, graded } = debrief;
   const byId = new Map(scene.beats.map((beat) => [beat.id, beat]));
   const required = scene.beats.filter((beat) => beat.required);
+  const missed = objectives.missed.length > 0 ? byId.get(objectives.missed[0]!) : undefined;
+  const drill = missed ? drillFor(missed.needs) : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -114,19 +117,21 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
         </section>
       )}
 
-      {objectives.missed.length > 0 && (
+      {missed && (
         <section>
           <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>One thing to work on</h3>
-          <p className="mb-2 text-sm" style={{ color: "var(--ink-2)" }}>
-            {byId.get(objectives.missed[0]!)?.goal}
-          </p>
+          <p className="mb-2 text-sm" style={{ color: "var(--ink-2)" }}>{missed.goal}</p>
           {/*
             A link into a drill that already exists rather than advice this
-            screen invented. `assessReadiness` makes the same move on the exam
-            hub, and for the same reason: the app knows what it can drill and
-            does not know what to say.
+            screen invented, and the drill is read off what the beat needed
+            rather than being the same one every time. `assessReadiness` makes
+            the same move on the exam hub and for the same reason: the app knows
+            what it can drill and does not know what to say. Where no drill
+            rehearses what was missed there is no link, because a link to the
+            wrong drill is a screen saying "go and practise this" about
+            something else.
           */}
-          <DrillLink href="/review/write" />
+          {drill && <DrillLink href={drill} />}
         </section>
       )}
 
