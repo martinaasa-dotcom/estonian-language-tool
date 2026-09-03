@@ -6,6 +6,7 @@ import { gapForms } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { CONJUGATION_SLOTS, type ConjugationSlot } from "@/lib/srs/slots";
 import type { CaseKey } from "@/lib/estonian/types";
 
 export type CardType =
@@ -97,43 +98,27 @@ export function inTeachingOrder<T extends { lexemeId: string | null; cardType: s
  * only ever met the English name cannot follow the question. The English name
  * is on the reference page this card links back to, which is the right place
  * for a cross-reference and the wrong place for the prompt.
+ *
+ * The table itself is `CONJUGATION_SLOTS` in `lib/srs/slots.ts`, which is the
+ * one answer to what facet of a word an answer was about. It moved rather than
+ * being copied: the flash round asks for a named part of a verb on a card that
+ * is not about that part, and a second table of morph codes is two tables
+ * disagreeing about what `IndPrSg3` is called.
  */
-const CONJUGATION_SLOTS: {
-  code: string; formType?: string; label: string; negative?: boolean;
-  /** A second Ekilex code whose form is also a right answer for this slot. */
-  alsoCode?: string;
-}[] = [
-  { code: "IndPrSg1", formType: "PRES_1SG", label: "olevik · ma" },
-  { code: "IndPrSg3", label: "olevik · ta" },
-  { code: "IndPrPl1", label: "olevik · me" },
-  // The negative is one form for every person, said after `ei`. The card
-  // shows and accepts the two words together, since `loe` on its own is not
-  // what anybody says.
-  //
-  // `pole` is the other half of that for the one verb that has one. Estonian
-  // contracts `ei ole` and the contraction is what people say and write, so a
-  // learner typing it was being marked wrong on the commonest verb in the
-  // language. Ekilex records it as `IndPrPsN`, for `olema` and for nothing
-  // else the course asks about, and the card carries both answers the way the
-  // illative does: joined with the separator `acceptedAnswers` splits on, so
-  // what the screen shows and what the marker takes are one string.
-  { code: "IndPrPs_", label: "eitus · ma ei", negative: true, alsoCode: "IndPrPsN" },
-  { code: "IndIpfSg1", formType: "PAST_1SG", label: "lihtminevik · ma" },
-  { code: "IndIpfSg3", label: "lihtminevik · ta" },
-  { code: "KndPrSg1", label: "tingiv kõneviis · ma" },
-  { code: "ImpPrSg2", label: "käskiv kõneviis · sa!" },
-  /*
-    The polite imperative, which is the one a learner is addressed with. Every
-    counter, every receptionist and every official in the country says `öelge`,
-    `andke`, `täitke` and `oodake`, and the app could not produce one for any
-    verb in the language: it is not a suffix on anything the rule holds, since
-    `annan` goes to `andke`, `lähen` to `minge` and `loen` to `lugege`. It is
-    stored now, like every other form no rule reaches, and it was found by
-    `eval:scene`, where a model writing a `teie` scene reached for it over and
-    over and the gate withheld every line.
-  */
-  { code: "ImpPrPl2", label: "käskiv kõneviis · te!" },
-];
+
+/**
+ * What reading a verb's forms needs, which is less than a whole entry.
+ *
+ * The flash round asks these same nine slots of a word the learner has already
+ * met and holds no `gradation` or `examples` to hand over, and a second
+ * reading of "which form is this" is a round and a card putting two different
+ * answers on two screens. `LexemeForCards` satisfies it, so the card builder
+ * passes itself unchanged.
+ */
+export interface VerbForms {
+  lemma: string;
+  forms: readonly { formType: string; value: string; morphCode?: string | null }[];
+}
 
 /**
  * Every spelling the dictionary holds under one Ekilex code.
@@ -144,7 +129,7 @@ const CONJUGATION_SLOTS: {
  * illative's rule, and `Form`'s unique key carries the value so that both rows
  * can sit under one code.
  */
-function attestedForms(lex: LexemeForCards, code: string, formType?: string): string[] {
+export function attestedForms(lex: VerbForms, code: string, formType?: string): string[] {
   const out: string[] = [];
   for (const f of lex.forms) {
     const matches = f.morphCode === code
@@ -158,8 +143,12 @@ function attestedForms(lex: LexemeForCards, code: string, formType?: string): st
 /**
  * The form for one conjugation slot: attested where the dictionary has it,
  * derived where the rule reaches, and nothing otherwise.
+ *
+ * Exported because the flash round asks these same eight of a word the learner
+ * has already met, and a second reading of "which form is this" is a round and
+ * a card putting two different answers on two screens.
  */
-function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string[] {
+export function conjugationAnswer(lex: VerbForms, slot: ConjugationSlot): string[] {
   const attested = attestedForms(lex, slot.code, slot.formType);
   if (attested.length > 0) return attested;
   const derived = derivedVerbForms({ lemma: lex.lemma, pres1sg: pres1sgFrom(lex.forms) })

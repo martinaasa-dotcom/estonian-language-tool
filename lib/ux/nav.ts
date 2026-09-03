@@ -196,6 +196,20 @@ export const SECTIONS: NavSection[] = [
         within: "/progress",
       },
       {
+        /*
+          Which words are known, which are nearly, and which keep going wrong.
+          Reached from the deck it counts and from Practice, which is where
+          somebody standing in front of the flash round wants it, and it is in
+          the table so the palette goes there: the first version of this list
+          was a panel three cards down `/words` and the learner reported that
+          they could not find it anywhere.
+        */
+        href: "/words/mastery", label: "Word mastery",
+        blurb: "Mastered, almost there, and what needs work", icon: "Trophy", tone: "mint",
+        keywords: "mastered known struggling almost progress words list stuck weak",
+        within: "/words",
+      },
+      {
         href: "/assess", label: "Level check", blurb: "Reading, listening, writing and speaking, measured",
         icon: "Compass", tone: "blush",
         keywords: "assessment placement cefr level a1 a2 b1 b2 c1 goal plan timeline",

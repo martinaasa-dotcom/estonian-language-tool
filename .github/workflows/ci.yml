@@ -358,6 +358,12 @@ jobs:
       # picture leaving the device, the confirmation list, a ticked word
       # becoming a card, and the review session asking about it.
       - run: node scripts/test-scan.mjs
+      # The flash round, and the lists it moves. It grades, so it writes reviews
+      # and deletes the ones it wrote; the two faults it was written after were
+      # both about a whole round rather than one word, which is why no unit test
+      # could have seen either: seven questions out of ten asking for the same
+      # case, and a place name asked for the local case it does not take.
+      - run: node scripts/test-flash.mjs
       # The mock paper. This list is written out rather than deferring to
       # `npm run test:browser`, so a suite added to that script alone is a suite
       # CI never runs: `test-exam.mjs` sat here unrun for its first two builds,

@@ -98,6 +98,43 @@ describe("the navigation table", () => {
     expect(DESTINATIONS.some((d) => d.within), "nothing lives inside anything").toBe(true);
   });
 
+  it("puts each of those on a page that really does link to it", () => {
+    /*
+      The half of the rule a table cannot state, and the same check the drills
+      have one describe block down. A destination kept out of the rail because
+      it lives inside another screen is only findable if that screen offers it,
+      and a `within` nobody wired up leaves it reachable through the palette
+      alone, which is worse than the row it gave up.
+
+      Read against the route's own directory rather than one file, because a
+      page splits into a client component as often as not, and through `code()`
+      so a comment naming the href cannot vouch for a link nobody drew. Made to
+      fail by taking the button off `/words`.
+    */
+    for (const item of DESTINATIONS.filter((d) => d.within)) {
+      /*
+        A `within` is usually a route and is sometimes a control. Anu's is "the
+        button in the corner of every screen", which is a true answer and not a
+        path, so the place to look is the components rather than one page. The
+        rule is the same either way: something has to draw the link.
+      */
+      const inRoute = item.within!.startsWith("/");
+      const segment = item.within!.split("/").filter(Boolean)[0];
+      const files = !inRoute
+        ? filesUnder("components")
+        : segment
+          ? filesUnder(join("app/(app)", segment))
+          : [join("app/(app)", "page.tsx")];
+
+      expect(files.length > 0 && files.every((f) => existsSync(f)),
+        `${item.href} says it is reached from ${item.within}, which is not a route`).toBe(true);
+      expect(
+        files.some((f) => code(readFileSync(f, "utf8")).includes(item.href)),
+        `${item.href} is reached from ${item.within} and nothing there links to it`,
+      ).toBe(true);
+    }
+  });
+
   it("says where each of those is reached from", () => {
     // A blank here is the next reader having to go and find out, which is how
     // one quietly becomes unreachable.

@@ -150,6 +150,7 @@ const ROUTES = [
   */
   "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
   "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
+  "/words/mastery",
   /*
     The frequency rounds. `/review/common` is the index and one of its four
     lists stands for the round, which is a whole `ReviewSession` rendered from
@@ -168,6 +169,12 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
 
 
 /*
+  Floor: raised by eleven when `/words/mastery` joined the list, which is the
+  arithmetic this block describes: one more route is eight checks in the light
+  and a contrast pass in the dark. A floor that stays put while the list grows
+  is a floor going slack, which is what happened when the level check added
+  three routes and nobody moved it.
+
   Floor: 335, which is what this list reaches: thirty-seven routes at eight
   checks each, a contrast pass over the same thirty-seven in dark mode, and the
   two that run once at the end.
@@ -210,10 +217,14 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   eighty-six for these, and the floor keeps the same five under it.
 */
 /*
-  And 420: two routes for the frequency rounds, at nine checks each, counted
-  off the list rather than off a run, with the same five of slack under it.
+  And then three routes at once, from two branches that did not know about each
+  other: two for the frequency rounds and one for the word mastery lists.
+  Measured on the merged tree at 429 rather than added from either side, which
+  is what the paragraph above says to do and what neither branch could have
+  done on its own: one had 420 and the other 413, and neither number is right.
+  The same five of slack under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 415 });
+const { check, absent, done } = suite("Accessibility", { floor: 424 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.

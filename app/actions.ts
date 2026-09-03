@@ -233,6 +233,14 @@ export type SchedulingSnapshot = z.infer<typeof SchedulingSchema>;
  */
 export async function gradeCard(
   cardId: string, rating: RatingValue, durationMs: number, reviewedAt?: string,
+  /**
+   * What the round actually asked about, where that is narrower than the card.
+   *
+   * Checked against a closed list inside `writeGrade` rather than trusted,
+   * exactly as `CARD_SOURCES` is above: this is a public endpoint and the
+   * value lands in the one table that is never updated and never deleted.
+   */
+  practisedSlot?: string,
 ) {
   const ownerId = await requireUserId();
 
@@ -264,6 +272,7 @@ export async function gradeCard(
     rating,
     durationMs,
     reviewedAt: reviewedAt ? new Date(reviewedAt) : new Date(),
+    practisedSlot,
   });
 
   revalidatePath("/");

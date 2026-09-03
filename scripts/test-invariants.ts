@@ -838,6 +838,7 @@ check("every generator that picks a case asks which ones the word takes", () => 
     "lib/progress/caseExamples.ts",
     "lib/progress/target.ts",
     "lib/games/describe.ts",
+    "lib/games/flash.ts",
     "app/(app)/review/emoji/page.tsx",
   ];
   const asks = /caseFits\(|localCasesFor\(/;
@@ -886,6 +887,7 @@ check("a question about one word is worded for that word", () => {
     "lib/estonian/writing.ts",
     "lib/collections/lesson.ts",
     "lib/progress/target.ts",
+    "lib/games/flash.ts",
     "app/(app)/review/emoji/page.tsx",
     "app/(app)/dictionary/Forms.tsx",
     "app/(app)/dictionary/DictionaryClient.tsx",
@@ -7573,21 +7575,34 @@ check("a frequency list is named once, asked one way, and never built by a rende
     `"${label}" is written down somewhere other than the one table of what a list is called`,
   );
 
-  const rounds = [
-    "app/(app)/review/flashcards/page.tsx",
-    "app/(app)/review/common/[group]/page.tsx",
-  ];
+  /*
+    THE FREQUENCY ROUND ASKS ONE PLACE WHICH CARD OF A WORD TO PUT UP.
+
+    This named the Flash cards page too, and it should not any more, which is a
+    narrowing rather than a loss. That round stopped rendering `ReviewSession`
+    and stopped picking a *card*: it picks a **slot** off `askableSlots`, which
+    can be a form no card of this learner's carries, and then grades whichever
+    card comes closest (ADR-016). Asking it to call a function that chooses
+    among cards would be asking it to answer a question it no longer has.
+
+    What the rule was protecting is the half that still holds and is asserted
+    below: nobody grows a second copy of the picker. That reaches every file
+    rather than the two that happened to render a session.
+  */
+  const rounds = ["app/(app)/review/common/[group]/page.tsx"];
   for (const file of rounds) {
-    const source = code(file);
     assert.match(
-      source, /leastPractisedSlot\(/,
+      code(file), /leastPractisedSlot\(/,
       `${file} no longer asks lib/srs/mastery.ts which card of a word to put up`,
     );
-    assert.doesNotMatch(
-      source, /function leastPractised/,
-      `${file} has grown its own copy of the slot rule, which is two answers to one question`,
-    );
   }
+  const copies = [...APP, ...LIB, ...COMPONENTS]
+    .filter((f) => f !== "lib/srs/mastery.ts")
+    .filter((f) => /function leastPractised/.test(code(f)));
+  assert.deepEqual(
+    copies, [],
+    "a second copy of the slot rule, which is two answers to one question",
+  );
 
   const deepen = /export async function deepenCommonWords\(([\s\S]*?)\n\}/
     .exec(code("app/actions.ts"))?.[1] ?? "";
@@ -7605,7 +7620,7 @@ check("a frequency list is named once, asked one way, and never built by a rende
     "deepenCommonWords stopped bounding what one press builds",
   );
 
-  for (const file of [...rounds.slice(1), "app/(app)/review/common/page.tsx"]) {
+  for (const file of [...rounds, "app/(app)/review/common/page.tsx"]) {
     assert.doesNotMatch(
       code(file), /addPlanToDeck|deepenCommonWords|addCommonWords|card\.createMany/,
       `${file} writes to the deck while rendering, and a settled pointer is enough to fetch it`,
@@ -9052,6 +9067,85 @@ check("every secret-shaped variable the app reads is marked in the CI canary bui
  * parts have to be in the index: they are there in order to *collide*, and
  * leaving them out is what makes a short illative look unambiguous.
  */
+/**
+ * WHAT AN ANSWER WAS ABOUT IS RECORDED, AND ONLY EVER FROM A CLOSED LIST.
+ *
+ * `Review.slot` is what the flash round exists on top of: it asks a word for a
+ * form no card of the learner's carries, grades the nearest card they do have
+ * (ADR-016), and without the column that answer goes down as being about
+ * whatever the card happened to be. `lib/srs/slots.ts` is the one table of
+ * what may go in it, and the value arrives through a `"use server"` export, so
+ * it is checked rather than trusted: this is the one table that is never
+ * updated and never deleted, and a forged slot would not break a count, it
+ * would tell somebody they had mastered a word in a form nobody ever asked
+ * them for. `CARD_SOURCES` makes the same argument about a column that only
+ * breaks a count.
+ *
+ * And `targetCase` stays what it is. It feeds `caseAccuracy`, which tallies
+ * whatever string it finds and hands it to a panel that prints the key in
+ * lower case where it recognises nothing, so a morph code written there puts
+ * `indprsg3` on the Progress page beside `osastav`. Two questions, two
+ * columns, and neither bent to be the other.
+ */
+check("an answer records which form it was about, from a list nothing can widen", () => {
+  const grade = code("lib/srs/grade.ts");
+  assert.match(
+    grade,
+    /slot:\s*slotFor\(/,
+    "writeGrade no longer records the slot, so the flash round's answers stop " +
+    "counting towards the variety half of mastery",
+  );
+  assert.match(
+    grade,
+    /isKnownSlot\(practised\)/,
+    "writeGrade no longer checks the slot against lib/srs/slots.ts. It arrives " +
+    "from a browser through a public endpoint, into the one table that is never repaired.",
+  );
+  assert.match(
+    grade,
+    /targetCase:\s*card\.targetCase/,
+    "writeGrade stopped recording the card's own case. That column is what the " +
+    "case charts read and it is not the slot's to take over.",
+  );
+
+  // And nothing writes a conjugation code into the column the charts read.
+  const slots = code("lib/srs/slots.ts");
+  assert.match(
+    slots,
+    /export function slotOfCard/,
+    "lib/srs/slots.ts no longer says what an ordinary review's slot is",
+  );
+  const writers = sourceFiles("lib").concat(sourceFiles("app"))
+    .filter((file) => !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /targetCase:\s*(?:slot|CONJUGATION_SLOTS|verb)/.test(code(file)));
+  assert.deepEqual(writers, [], "a conjugation slot is being written into targetCase");
+});
+
+/**
+ * The round grades through the log like every other mode, and marks against
+ * the dictionary rather than a model.
+ *
+ * ADR-016 and ADR-005 together, on a mode that is new enough for both to be
+ * easy to lose: the marking is a string comparison in a pure module, and the
+ * answer reaches `gradeCard` with the slot it was about. A provider anywhere
+ * on this path would be a model deciding whether a morpheme is correct.
+ */
+check("the flash round grades what it asked, and no model marks it", () => {
+  assert.match(
+    code("app/(app)/review/flashcards/FlashSession.tsx"),
+    /gradeCard\([\s\S]{0,120}task\.slot\)/,
+    "the flash round no longer tells the log which form it asked",
+  );
+  for (const file of sourceFiles("lib/games").concat(["app/(app)/review/flashcards/page.tsx"])) {
+    if (!/flash/i.test(file)) continue;
+    assert.doesNotMatch(
+      code(file),
+      /resolveProviders?\(|openWithFallback|\bask\(/,
+      `${file} reaches a provider. Whether a form is right is the dictionary's answer.`,
+    );
+  }
+});
+
 check("a case is named only when one case claims the spelling", () => {
   const src = code("lib/estonian/whichCase.ts");
   assert.match(

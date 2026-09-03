@@ -2,6 +2,7 @@ import type { Card } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 import { grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
+import { isKnownSlot, slotOfCard } from "@/lib/srs/slots";
 
 /**
  * Writing one grade down.
@@ -52,6 +53,20 @@ export interface GradeWrite {
   reviewedAt: Date;
   now?: Date;
   /**
+   * The facet of the word this answer was about, where the round asked for one
+   * the card is not itself about.
+   *
+   * The flash round asks a word the learner has met for a form no card of
+   * theirs carries, and grades the nearest card they do have (ADR-016). The
+   * card then says the answer was about a meaning when it was about the
+   * kaasaütlev, and the variety half of mastery is counted off exactly that.
+   * So the round says what it asked and this writes it down. Anything else, and
+   * anything the closed list in `lib/srs/slots.ts` does not recognise, falls
+   * back to what the card itself is about, because a slot nobody can read is
+   * worse than the one fact we are sure of.
+   */
+  practisedSlot?: string | null;
+  /**
    * The client-generated Review id, on the offline path.
    *
    * That path is idempotent because the id comes from the device, so a replay
@@ -79,6 +94,7 @@ export async function writeGrade(ownerId: string, write: GradeWrite): Promise<Sc
       durationMs: Math.min(Math.max(durationMs, 0), 600_000),
       stateBefore: card.state,
       targetCase: card.targetCase,
+      slot: slotFor(card, write.practisedSlot),
     },
   });
 
@@ -106,4 +122,16 @@ export async function writeGrade(ownerId: string, write: GradeWrite): Promise<Sc
   });
 
   return next;
+}
+
+/**
+ * The slot one answer goes down as.
+ *
+ * `targetCase` is untouched above and stays the case the *card* is about, which
+ * is what the case charts read. This is the narrower question the flash round
+ * can answer and an ordinary review cannot: which form was actually asked.
+ */
+function slotFor(card: Card, practised: string | null | undefined): string {
+  if (practised && isKnownSlot(practised)) return practised;
+  return slotOfCard(card);
 }

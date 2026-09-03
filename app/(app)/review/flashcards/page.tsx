@@ -1,70 +1,56 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
-import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
-import { shuffle } from "@/lib/random/shuffle";
-import { masteryFor } from "@/lib/progress/mastery";
-import { leastPractisedSlot } from "@/lib/srs/mastery";
+import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { askableSlots, flashTask, type FlashWord } from "@/lib/games/flash";
+import { masteryFor, type MasteredWord } from "@/lib/progress/mastery";
+import { MASTERY_CORRECT, MASTERY_ORDER } from "@/lib/srs/mastery";
+import { slotOfCard } from "@/lib/srs/slots";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
-import { ReviewSession } from "../ReviewSession";
-import { include, withChoices } from "../cards";
+import { FlashSession, type FlashPrompt } from "./FlashSession";
 
 export const metadata = { title: "Flash cards" };
 
 export const dynamic = "force-dynamic";
 
-/** Cards in one round. Long enough to be worth opening, short enough to finish. */
-const ROUND = 20;
+/** Words in one round. Long enough to be worth opening, short enough to finish. */
+const ROUND = 10;
 
 /**
- * FLASH CARDS: THE WORDS YOU HAVE MET, ASKED IN A WAY YOU HAVE NOT.
+ * FLASH CARDS: THE WORDS YOU HAVE MET, ASKED IN A WAY REVIEW DOES NOT ASK THEM.
  *
  * `/practice` used to open with a tile linking back to `/review`, which is the
  * page most people arrive from. The learner asked for that slot to hold
- * something that does work review does not: the words already met, "now used in
- * other ways too", across "a huge variety of case endings and grammar", with a
- * word leaving only once the app can be confident it is known.
+ * something that does work review does not, and the first answer to that was
+ * this round rendering `ReviewSession` over a different queue, which is review
+ * again: the same four shapes, drawn from another list. Their report was that
+ * it "reverts back to what is in the Review section", and it did.
  *
- * The rule for known is `lib/srs/mastery.ts` and it is two thresholds: five
- * correct answers across three distinct slots. This round is the other side of
- * the same rule. It draws words that are **not** mastered yet and, for each
- * one, the card in the slot that learner has answered *least* often. So the
- * round is what closes the variety half of mastery rather than piling more
- * answers into a slot already full, and a word answered right five times as a
- * meaning gets asked for its partitive instead of a sixth meaning.
+ * `lib/games/flash.ts` is the round proper. Five shapes rather than four, and
+ * three of them are things review cannot ask: a sentence heard and never
+ * shown, a gap with the meaning rather than the lemma beside it, and a
+ * sentence the learner writes themselves around a named form. Typed
+ * throughout, because producing a form is a different memory from picking it
+ * out of four and picking is what stops telling you anything about a word that
+ * is nearly known.
  *
- * WHY THIS IS A SESSION AND NOT A GAME. Every mode grades through `gradeCard`
- * (ADR-016), so the scheduler sees what was actually practised and this is not
- * a side score. Rendering `ReviewSession` rather than a fifth copy of a card
- * runner is the same argument: undo, the offline outbox, the rating keys, the
- * letter bar and the audio prefs are one implementation, and a mode that
- * reimplements them is a mode that loses one of them quietly.
+ * WHAT IT DRAWS. Words that are not mastered, hardest first, and for each one
+ * a slot it has not been right in yet. `Verdict.filled` is what makes that
+ * possible: mastery counts distinct slots, so the round can ask for the ones
+ * missing rather than piling a sixth correct answer into a slot already full.
+ * A word right five times as a meaning is asked for its kaasaütlev instead.
  *
- * `mode="type"` because this is the harder pass over words already met.
- * Producing a form is a different and much stronger memory than picking it out
- * of four, and a word that is nearly mastered is exactly where the weaker shape
- * stops telling you anything. Cards that cannot be typed still fall back to
- * four options, which `withChoices` attaches.
+ * WHY IT IS STILL A REVIEW. Every mode grades through the same log (ADR-016),
+ * so the scheduler sees what was practised and this is not a side score. What
+ * is new is that the answer says which form it was about: the round asks for
+ * kaasaütlev on a card that may be a recognition card, and without
+ * `Review.slot` the log would record the answer as being about a meaning and
+ * the variety half of mastery would never move. See `lib/srs/slots.ts`.
  */
 export default async function FlashcardsPage() {
   const ownerId = await requireUserId();
 
-  /*
-    Two questions that do not need each other, asked at once. Where a word
-    stands is a read over the deck; which language the meaning is printed in is
-    one settings row, and neither waits on the other. On the deployment's own
-    pooler each `await` is a round trip, so a page that asks them in a line is
-    a round trip longer than it has to be for nothing.
-
-    An empty deck pays for a settings row it will not show. That is the trade
-    `/words` already takes for the same reason: one cheap read for the learner
-    with nothing, one round trip saved for everybody else.
-  */
-  const [words, glossSetting] = await Promise.all([
-    masteryFor(ownerId),
-    readSetting(ownerId, SETTING_KEYS.glossLanguage),
-  ]);
+  const words = await masteryFor(ownerId);
   const unfinished = words.filter((w) => w.verdict.mastery !== "mastered");
 
   if (unfinished.length === 0) {
@@ -77,43 +63,193 @@ export default async function FlashcardsPage() {
               ? "This round works on words review has already introduced."
               : undefined
           }
-          action={<ButtonLink href="/review" variant="primary">Open review</ButtonLink>}
+          action={
+            words.length === 0
+              ? <ButtonLink href="/review" variant="primary">Open review</ButtonLink>
+              : <ButtonLink href="/words/mastery" variant="primary">See the list</ButtonLink>
+          }
         />
       </Page>
     );
   }
 
   /*
-    ONE CARD PER WORD, IN THE SLOT THAT LEARNER HAS PRACTISED LEAST.
+    Hardest first, and then whatever is furthest from being finished.
 
-    Read for the words that are not mastered rather than for the whole deck, and
-    ordered, because this is a `take`: without one, which of a word's cards the
-    round asks would be the query plan's answer rather than this one, and the
-    whole point of the round is which card it picks.
+    `MASTERY_ORDER` already says which list is worth reading first and this is
+    the same judgement about which word is worth asking first, read from the
+    same table rather than from a second one that would drift from it.
   */
-  const cards = await prisma.card.findMany({
-    where: {
-      ownerId,
-      suspended: false,
-      state: { not: 0 },
-      lexemeId: { in: unfinished.map((w) => w.lexemeId) },
-    },
-    orderBy: [{ lapses: "desc" }, { due: "asc" }, { id: "asc" }],
-    take: ROUND * 8,
-    include,
-  });
+  const candidates = [...unfinished]
+    .sort(
+      (a, b) =>
+        MASTERY_ORDER.indexOf(a.verdict.mastery) - MASTERY_ORDER.indexOf(b.verdict.mastery) ||
+        a.verdict.slots - b.verdict.slots ||
+        a.verdict.correct - b.verdict.correct ||
+        a.lemma.localeCompare(b.lemma, "et"),
+    )
+    .slice(0, ROUND * 3);
+  const lexemeIds = candidates.map((w) => w.lexemeId);
 
-  const picked = leastPractisedSlot(
-    cards, new Set(unfinished.map((w) => w.lexemeId)),
-  ).slice(0, ROUND);
   /*
-    A first meeting gives the meaning in the language the learner thinks in, and
-    this round can hold one: a word that is not mastered may still be new to a
-    card it has never been asked on. Read from the setting above rather than
-    defaulted, so the two routes rendering this session do not disagree about it.
-  */
-  const gloss = glossLanguageFrom(glossSetting);
-  const round = await withChoices(shuffle(picked), gloss);
+    The entries and the cards, at once. Neither needs the other, and on the
+    deployment's own pooler each `await` is a round trip.
 
-  return <ReviewSession cards={round} totalCards={round.length} mode="type" title="Flash cards" />;
+    Three times the round is read rather than exactly the round, because a word
+    can turn out to have nothing askable left: a phrase whose only slot is
+    already full, or an entry whose cards have since been deleted. Taking the
+    shortfall out of a longer list is one query; discovering it afterwards
+    would be another.
+  */
+  const [lexemes, cards] = await Promise.all([
+    prisma.lexeme.findMany({
+      where: { id: { in: lexemeIds } },
+      select: {
+        id: true, lemma: true, translation: true, pos: true, examples: true,
+        // Which local cases the word takes and which pronoun asks for it, both
+        // of which are facts about the meaning rather than the spelling.
+        semanticTypes: true,
+        forms: { select: { formType: true, value: true, morphCode: true }, orderBy: { id: "asc" } },
+      },
+      orderBy: { id: "asc" },
+    }),
+    prisma.card.findMany({
+      where: { ownerId, lexemeId: { in: lexemeIds }, suspended: false },
+      select: { id: true, lexemeId: true, cardType: true, targetCase: true },
+      orderBy: { id: "asc" },
+    }),
+  ]);
+
+  const byLexeme = new Map(lexemes.map((l) => [l.id, l]));
+  const cardsFor = new Map<string, typeof cards>();
+  for (const card of cards) {
+    if (!card.lexemeId) continue;
+    cardsFor.set(card.lexemeId, [...(cardsFor.get(card.lexemeId) ?? []), card]);
+  }
+
+  const prompts: FlashPrompt[] = [];
+  for (const word of candidates) {
+    if (prompts.length >= ROUND) break;
+    const prompt = promptFor(
+      word, byLexeme.get(word.lexemeId), cardsFor.get(word.lexemeId) ?? [], prompts.length,
+    );
+    if (prompt) prompts.push(prompt);
+  }
+
+  if (prompts.length === 0) {
+    return (
+      <Page title="Flash cards" lead="The words you have met, asked in a way you have not.">
+        <Empty
+          title="Nothing to ask yet"
+          body="Every word you have met is either mastered or has no form left to ask for."
+          action={<ButtonLink href="/words/mastery" variant="primary">See where you are</ButtonLink>}
+        />
+      </Page>
+    );
+  }
+
+  return <FlashSession prompts={prompts} />;
+}
+
+/**
+ * One task for one word: the slot it has not been right in yet, in the shape
+ * its own history has opened.
+ *
+ * Returns nothing where the dictionary or the deck cannot support a question,
+ * which is a real case rather than a defensive one: an adverb has one slot and
+ * a learner may already have filled it, and a word whose cards were deleted
+ * has nothing for the answer to grade against (ADR-016).
+ */
+function promptFor(
+  word: MasteredWord,
+  lexeme: {
+    id: string; lemma: string; translation: string; pos: string; examples: string;
+    semanticTypes: string | null;
+    forms: { formType: string; value: string; morphCode: string | null }[];
+  } | undefined,
+  cards: { id: string; lexemeId: string | null; cardType: string; targetCase: string | null }[],
+  /** Where this word sits in the round, which is half of what varies the case. */
+  offset: number,
+): FlashPrompt | null {
+  if (!lexeme || cards.length === 0) return null;
+
+  const source: FlashWord = {
+    lexemeId: word.lexemeId,
+    lemma: lexeme.lemma,
+    translation: lexeme.translation,
+    pos: lexeme.pos,
+    semanticTypes: lexeme.semanticTypes,
+    forms: lexeme.forms,
+    examples: usableExamples(parseExamples(lexeme.examples)),
+  };
+
+  /*
+    A slot this word has not been right in, and a form ahead of a meaning.
+
+    The variety half of mastery is what this round exists to close, so asking
+    again for something already answered would be spending the question on the
+    half that is already done. Where every slot is filled and the word is still
+    not mastered, which is the count half being short, the first slot is asked
+    again: that is the honest thing to do rather than dropping the word.
+  */
+  const askable = askableSlots(source);
+  if (askable.length === 0) return null;
+  const filled = new Set(word.verdict.filled);
+  const open = askable.filter((s) => !filled.has(s.slot));
+  const preferred = open.length > 0 ? open : askable;
+  const forms = preferred.filter((s) => s.slot !== "PRODUCTION");
+  const pool = forms.length > 0 ? forms : preferred;
+
+  /*
+    WHICH OF THE OPEN SLOTS, WHICH IS NOT THE FIRST ONE.
+
+    This took the first open slot, and `CASES` is in the traditional order, so
+    the first open case is the sisseütlev for practically every noun in a
+    deck. The first round anybody drove asked for it seven times out of ten,
+    which is the opposite of the variety this round exists for.
+
+    Two numbers turn it, and both are already here. The word's own correct
+    answers move a word through its cases as it settles, so `tuba` is not the
+    illative for ever; the position in the round moves two words with the same
+    history apart, so a round of ten does not open with the same case ten
+    times. Deterministic in both, which is what lets a reloaded round ask the
+    same question rather than reshuffling under somebody who refreshed.
+  */
+  const slot = pool[(word.verdict.correct + offset) % pool.length]!;
+
+  const card = cardFor(cards, slot.slot);
+  const task = flashTask({ word: source, slot, cardId: card.id, step: word.verdict.correct });
+  if (!task) return null;
+
+  return {
+    ...task,
+    progress: {
+      correct: word.verdict.correct,
+      needCorrect: MASTERY_CORRECT,
+      slots: word.verdict.slots,
+      needSlots: word.verdict.slotsNeeded,
+    },
+  };
+}
+
+/**
+ * The card an answer grades.
+ *
+ * The card about this very slot where the learner has one, so its own
+ * scheduling moves with the answer; otherwise the card that comes closest to
+ * being about producing the word. Never a card at random: an answer graded
+ * against whichever row the plan returned first would move a schedule nobody
+ * practised.
+ */
+function cardFor(
+  cards: { id: string; cardType: string; targetCase: string | null }[],
+  slot: string,
+): { id: string } {
+  const exact = cards.find((c) => slotOfCard(c) === slot);
+  if (exact) return exact;
+  for (const type of ["CASE_FORM", "CLOZE", "PRODUCTION", "CONJUGATION", "RECOGNITION"]) {
+    const card = cards.find((c) => c.cardType === type);
+    if (card) return card;
+  }
+  return cards[0]!;
 }

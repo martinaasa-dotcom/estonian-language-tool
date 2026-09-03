@@ -26,6 +26,16 @@ export interface PendingGrade {
   durationMs: number;
   /** Epoch milliseconds, from the learner's device. Untrusted; see `clampReviewedAt`. */
   reviewedAt: number;
+  /**
+   * What the round asked about, where that is narrower than the card.
+   *
+   * A grade taken offline has to carry it or the flash round loses the one
+   * thing that makes its answers count towards a word's variety, silently and
+   * only for the learner who was on a train. Untrusted like everything else
+   * here: `writeGrade` checks it against `lib/srs/slots.ts` and falls back to
+   * the card's own facet.
+   */
+  slot?: string;
 }
 
 /** A grade recorded more than this long ago is too stale to trust as a timestamp. */
@@ -83,7 +93,8 @@ export function isValidPending(value: unknown): value is PendingGrade {
     typeof v.cardId === "string" && v.cardId.length > 0 &&
     (v.rating === 1 || v.rating === 2 || v.rating === 3 || v.rating === 4) &&
     typeof v.durationMs === "number" && Number.isFinite(v.durationMs) &&
-    typeof v.reviewedAt === "number" && Number.isFinite(v.reviewedAt)
+    typeof v.reviewedAt === "number" && Number.isFinite(v.reviewedAt) &&
+    (v.slot === undefined || typeof v.slot === "string")
   );
 }
 

@@ -15,6 +15,15 @@
  *   34 crossword clues that were the English gloss and the Estonian word at
  *     once, `film` clued as "film".
  *
+ * And then the flash round, which was written after all of that and walked
+ * into two more shapes of the same fault, neither visible on any one word:
+ *
+ *   13 asks whose answer was a word in the English gloss printed beside it,
+ *     the illative of `salv` being `salve` and its gloss "salve", `pagan`
+ *     glossed "pagan, heathen", `mink` "American mink";
+ *   1 gap that left the other half of a lexicographer's pair standing two
+ *     characters away, `Auto jäi porisse/____ kinni.`
+ *
  * A card nobody can get wrong is worse than no card. The scheduler reads every
  * pass as a recall and stretches the interval, so the slot is spent for ever,
  * and the learner is told they knew something they were shown.
@@ -43,6 +52,7 @@ import { mentions } from "../lib/estonian/cloze";
 import { SCENES } from "../lib/collections/scenes";
 import { emojiFor } from "../lib/collections/emoji";
 import { ASKABLE_CASES, taskFor, type SceneWord } from "../lib/games/describe";
+import { askableSlots, flashTask, type FlashWord } from "../lib/games/flash";
 import { caseQuestion } from "../lib/progress/target";
 
 interface Row { lemma: string; pos: string; cefr: string | null; translation: string;
@@ -89,6 +99,9 @@ const spent = new Map<string, number>();
 */
 const REACHES: Record<string, number> = {
   deck: 36_041, exam: 2_500, check: 627, crossword: 5_295, scene: 1_409, target: 4_658,
+  // Measured on the merged tree once the flash round read `caseFits`: the
+  // local cases it may ask narrowed with everything else's, from 46,851.
+  flash: 46_615,
 };
 
 /*
@@ -221,6 +234,57 @@ for (let seed = 1; seed <= SEEDS; seed++) {
       ask(`check ${skill} ${String(item.kind)}`, String(item.et ?? ""), answer);
     }
   }
+}
+});
+
+/* ── The flash round ─────────────────────────────────────────────────────── */
+/*
+  Five shapes over every word the dictionary can inflect, which is the widest
+  generator in the app and the newest, so it is the one most likely to print an
+  answer somewhere nobody looked.
+
+  Four of the five shapes put the lemma on the screen and ask for a form of it,
+  so the fault to look for is a form spelled like the word in the question:
+  `kallis` in the seesütlev is `kallis` again, and that is 115 cards this audit
+  already found once in the deck. The fifth, `recall`, prints the English and
+  asks for the Estonian, which is free on the thirty entries spelled the same
+  in both languages.
+
+  One task per word and slot, at a step that rotates the shape, so every shape
+  is exercised thousands of times without building a quarter of a million
+  tasks: the pool widens with the step, so walking the slots walks the ladder.
+  The `heard` shape is excluded from the comparison by the rule this file
+  already states about the exam's listening questions, since hiding the prompt
+  from the eye is what that exercise is.
+*/
+timed("flash", () => {
+for (const e of entries) {
+  const word: FlashWord = {
+    lexemeId: e.lemma,
+    lemma: e.lemma,
+    translation: e.translation,
+    pos: e.pos,
+    semanticTypes: e.semanticTypes ?? null,
+    forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null })),
+    examples: (e.examples ?? []).map((x) => ({ et: x.et, en: x.en ?? null, source: "EKILEX" })),
+  };
+
+  const slots = askableSlots(word);
+  slots.forEach((slot, i) => {
+    const task = flashTask({ word, slot, cardId: "audit", step: i });
+    if (!task || task.shape === "heard") return;
+
+    // Everything on the screen before the answer is given: the question, the
+    // meaning beside it, and the name of the form being asked for.
+    const shown = [
+      task.shape === "recall" ? task.translation : task.lemma,
+      task.shape === "gap" ? task.gapped ?? "" : "",
+      task.shape === "gap" || task.shape === "build" || task.shape === "inflect"
+        ? task.translation : "",
+      task.label,
+    ].filter(Boolean).join(" · ");
+    ask(`flash ${task.shape} ${e.lemma} ${task.slot}`, shown, task.accepted.join(" / "));
+  });
 }
 });
 
