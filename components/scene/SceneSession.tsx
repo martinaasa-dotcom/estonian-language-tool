@@ -6,7 +6,7 @@ import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Chip } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
-import { beginScene, finishScene } from "@/app/actions";
+import { beginScene, finishScene, sceneHelp } from "@/app/actions";
 import type { SceneSpec } from "@/lib/scenes/types";
 import type { Difficulty } from "@/lib/scenes/curveballs";
 import { BUDGETS } from "@/lib/scenes/curveballs";
@@ -77,6 +77,8 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     rather than a fact known at the briefing, and it belongs where it is true.
   */
   const [note, setNote] = useState<string | null>(null);
+  /** The word the help button last handed over, shown until the next turn. */
+  const [lent, setLent] = useState<{ lemma: string; gloss: string } | null>(null);
 
   const log = useRef<HTMLDivElement>(null);
   /*
@@ -164,6 +166,16 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     setPhase("talking");
   }
 
+  async function help() {
+    setBusy(true);
+    const result = await sceneHelp(opened?.runId, sent);
+    setBusy(false);
+    if (!result.ok) { setError(result.error); return; }
+    setHelped(true);
+    setLent({ lemma: result.lemma, gloss: result.gloss });
+    setAsked((was) => [...was, { lemma: result.lemma, lexemeId: result.lexemeId }]);
+  }
+
   async function say() {
     const said = draft.trim();
     if (!said || !beatId || busy) return;
@@ -172,6 +184,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     setTurns((was) => [...was, { who: "you", text: said }]);
     setDraft("");
     setHelped(false);
+    setLent(null);
     await speak(next);
   }
 
@@ -328,6 +341,12 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       {goal && (
         <p className="text-sm font-medium" aria-live="polite">{goal}</p>
       )}
+      {lent && (
+        <p className="text-sm" aria-live="polite">
+          <span lang="et" className="font-medium">{lent.lemma}</span>
+          <span style={{ color: "var(--ink-2)" }}> · {lent.gloss}</span>
+        </p>
+      )}
       {error && <p className="text-sm" style={{ color: "var(--peach-ink)" }}>{error}</p>}
 
       <div className="flex flex-col gap-2">
@@ -354,14 +373,16 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
           >
             <RotateCcw size={16} aria-hidden /> Say that again
           </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setHelped(true);
-              setAsked((was) => [...was, { lemma: beatId ?? "", lexemeId: null }]);
-            }}
-            disabled={busy || helped}
-          >
+          {/*
+            Asking costs the turn its `helped` flag and nothing else: no
+            objective is withheld and nothing is deducted, because somebody who
+            asks for four words and finishes has learned more than somebody who
+            gave up with none. The word is one of the beat's own, off the
+            scene's closed list, which is why this is a server call rather than
+            something the screen could work out: the client does not hold the
+            lexicon and should not.
+          */}
+          <Button variant="ghost" onClick={help} disabled={busy || helped}>
             <LifeBuoy size={16} aria-hidden /> I need a word
           </Button>
           <Button variant="ghost" onClick={() => hangUp(sent, true)} disabled={busy}>

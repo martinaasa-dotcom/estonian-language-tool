@@ -28,7 +28,7 @@ import { buildLexicon, type DictEntry, type Lexicon } from "@/lib/scenes/lexicon
 import { topicForms, type Line } from "@/lib/scenes/retrieval";
 import type { TurnContext } from "@/lib/scenes/turn";
 import type { RoleCard } from "@/lib/scenes/props";
-import type { SceneSpec } from "@/lib/scenes/types";
+import type { BeatSpec, SceneSpec } from "@/lib/scenes/types";
 import { planRun, RECENCY_WINDOW, type Recency, type SceneRun as SceneRunPlan } from "@/lib/scenes/run";
 import { randomUUID } from "node:crypto";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
@@ -529,8 +529,16 @@ export async function finishRun(input: {
   });
 
   const stalled = stalledWords(scene, state);
+  /*
+    The asked words come off the wire, so they are kept only where the scene
+    actually has them: `sceneHelp` hands out a lemma from the beat's own topic,
+    and anything else is a client writing whatever it likes into a table. It
+    costs nothing to check, since the lexicon is already in hand, and the
+    alternative is a debrief that lists words the conversation never needed.
+  */
+  const declared = input.asked.filter((one) => context.lexicon.byLemma.has(one.lemma));
   const gaps = [
-    ...input.asked.slice(0, MAX_GAPS).map((one) => ({
+    ...declared.slice(0, MAX_GAPS).map((one) => ({
       kind: "ASKED", lemma: one.lemma, lexemeId: one.lexemeId,
     })),
     ...stalled.map((lemma) => ({ kind: "STALLED", lemma, lexemeId: null })),
@@ -541,7 +549,7 @@ export async function finishRun(input: {
     });
   }
 
-  const wanted = [...new Set([...input.asked.map((a) => a.lemma), ...stalled])];
+  const wanted = [...new Set([...declared.map((a) => a.lemma), ...stalled])];
   const known = wanted.length === 0 ? [] : await prisma.lexeme.findMany({
     where: { lemma: { in: wanted } },
     select: { id: true, lemma: true },
@@ -564,6 +572,32 @@ export async function finishRun(input: {
     grades,
     gaps: wanted.map((lemma) => ({ lemma, lexemeId: byLemma.get(lemma) ?? null })),
   };
+}
+
+/**
+ * Which beat a run is on right now, off its own row.
+ *
+ * The help button needs the beat and nothing else, and the beat is a fact about
+ * a transcript rather than about a request, so it is read the same way every
+ * other reading is: the row, the stored draw, and `replay`. A client saying
+ * which beat it is on would be a client choosing which words it is offered.
+ */
+export async function beatNow(input: {
+  ownerId: string;
+  runId: string;
+  turns: readonly SentTurn[];
+}): Promise<BeatSpec | null> {
+  const row = await prisma.sceneRun.findFirst({
+    where: { id: input.runId, ownerId: input.ownerId, endedAt: null },
+    select: { sceneId: true, transcript: true },
+  });
+  if (!row) return null;
+
+  const context = await sceneContext(row.sceneId);
+  if (!context) return null;
+
+  const { state } = replay(context, readDraw(row.transcript), input.turns);
+  return currentBeat(context.scene, state) ?? null;
 }
 
 /**

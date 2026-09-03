@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { throttleAction } from "@/lib/security/actionLimits";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
-import { beginRun, finishRun, MAX_TURNS, MAX_TURN_CHARS } from "@/lib/progress/scene";
+import { beatNow, beginRun, finishRun, MAX_TURNS, MAX_TURN_CHARS } from "@/lib/progress/scene";
 import { resolveProviders } from "@/lib/tutor/provider";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { formName } from "@/lib/estonian/morph";
@@ -1006,6 +1006,85 @@ export async function beginScene(sceneId: unknown, difficulty: unknown) {
     runId: opened.runId,
     briefing: opened.briefing,
     composed: resolveProviders().length > 0,
+  };
+}
+
+/**
+ * One word the current beat is about, for the "I need a word" button.
+ *
+ * A LEARNER WHO ASKS IS NOT PENALISED, and this is where that is paid for: the
+ * scene's own beats declare what they are about as lemmas, so the help is a
+ * word out of the closed list rather than anything a model wrote, and the whole
+ * cost is that `advance` sees the next turn as helped. Nothing is deducted, no
+ * objective is withheld, and the word goes on the debrief with a button to keep
+ * it. Somebody who asks for four words and finishes has learned more than
+ * somebody who gave up with none (`docs/19-situations.md` §12).
+ *
+ * The first version of this button recorded the *beat id* as the word needed,
+ * so a debrief listed `reason` and `greet` under "words this conversation
+ * needed" and offered no way to keep any of them, which is the one screen in
+ * the feature whose whole job is turning a gap into a card.
+ *
+ * It reaches no provider and books nothing: it is the beat's own topic and one
+ * indexed read. The English gloss is the dictionary's, which is the only
+ * language this project may write.
+ */
+export async function sceneHelp(runId: unknown, turns: unknown) {
+  const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "sceneHelp");
+  if (busy) return busy;
+
+  const id = text(runId).slice(0, 64);
+  if (!id) return { ok: false as const, error: "That run is not open." };
+
+  const said = Array.isArray(turns)
+    ? turns.slice(0, MAX_TURNS).map((one) => {
+        const row = (one ?? {}) as Record<string, unknown>;
+        return {
+          beatId: text(row.beatId).slice(0, 64),
+          said: text(row.said).slice(0, MAX_TURN_CHARS),
+          helped: row.helped === true,
+        };
+      })
+    : [];
+
+  const beat = await beatNow({ ownerId, runId: id, turns: said });
+  if (!beat) return { ok: false as const, error: "That run is not open." };
+
+  /*
+    A word they have not already used, so pressing it twice on one beat is not
+    the same word twice. Ordered, because two entries can share a lemma and the
+    debrief offers exactly one to keep.
+  */
+  const typed = said.map((one) => one.said.toLowerCase()).join(" ");
+  const fresh = beat.topic.filter((lemma: string) => !typed.includes(lemma.toLowerCase()));
+  const wanted = (fresh.length > 0 ? fresh : beat.topic).slice(0, 12);
+  if (wanted.length === 0) return { ok: false as const, error: "Nothing to offer here." };
+
+  /*
+    Through `oneEntryPerLemma`, because a lemma can hold two entries and this
+    hands one of them to a button that keeps it. `hall` is a noun meaning frost
+    and an adjective meaning grey; a word confirmed off a photograph makes a
+    pair for any lemma at all, with no forms behind it. `bySubstance` is the
+    rule the dictionary itself leads with, so the entry the help offers and the
+    entry a search would show are the same entry.
+  */
+  const rows = await prisma.lexeme.findMany({
+    where: { lemma: { in: wanted } },
+    select: {
+      id: true, lemma: true, translation: true, pos: true, provenance: true,
+      forms: { select: { id: true } },
+    },
+    orderBy: [{ lemma: "asc" }, { id: "asc" }],
+  });
+  const entry = oneEntryPerLemma(rows, wanted)[0];
+  if (!entry) return { ok: false as const, error: "Nothing to offer here." };
+
+  return {
+    ok: true as const,
+    lemma: entry.lemma,
+    gloss: entry.translation,
+    lexemeId: entry.id,
   };
 }
 

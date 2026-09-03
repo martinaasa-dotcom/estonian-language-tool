@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { planRun } from "@/lib/scenes/run";
-import { beginRun, dataFor, finishRun, recencyFor, sceneContext } from "./scene";
+import { beatNow, beginRun, dataFor, finishRun, recencyFor, sceneContext } from "./scene";
 
 /**
  * A scene against the real dictionary, because most of what could go wrong here
@@ -130,6 +130,14 @@ describe("a scene against the dictionary", () => {
   });
 
   it("writes down the words the run needed and the learner did not have", async () => {
+    const context = await sceneContext(DOCTOR.id);
+    // A word this scene really is about, taken from the scene rather than
+    // typed here: the debrief lists what the conversation needed, so a word it
+    // never needed has no business on it.
+    const needed = DOCTOR.beats.flatMap((beat) => beat.topic)
+      .find((lemma) => context!.lexicon.byLemma.has(lemma))!;
+    expect(needed, "the scene declares no word the dictionary has").toBeTruthy();
+
     const opened = await beginRun({
       ownerId: OWNER, sceneId: DOCTOR.id, level: "A2", difficulty: "textbook",
     });
@@ -137,7 +145,7 @@ describe("a scene against the dictionary", () => {
       ownerId: OWNER,
       runId: opened!.runId,
       walkedOut: false,
-      asked: [{ lemma: "valutama", lexemeId: null }],
+      asked: [{ lemma: needed, lexemeId: null }],
       turns: [{ beatId: "greet", said: "Tere!", helped: false }],
     });
 
@@ -145,8 +153,65 @@ describe("a scene against the dictionary", () => {
       where: { ownerId: OWNER, runId: finished!.runId },
       orderBy: { id: "asc" },
     });
-    expect(gaps.some((g) => g.kind === "ASKED" && g.lemma === "valutama")).toBe(true);
-    expect(finished!.gaps).toContain("valutama");
+    expect(gaps.some((g) => g.kind === "ASKED" && g.lemma === needed)).toBe(true);
+    /*
+      With the entry resolved, because the debrief offers to keep the word and
+      `AddWordButton` adds by id. The caller sent `null` and the server found
+      it, which is the point: a client naming an id would be a client choosing
+      which entry a learner is offered.
+    */
+    const asked = finished!.gaps.find((gap) => gap.lemma === needed);
+    expect(asked, "the word the run needed is not on the debrief").toBeTruthy();
+    expect(asked!.lexemeId, "the entry was never resolved").toBeTruthy();
+  });
+
+  it("keeps only the words the scene actually has", async () => {
+    /*
+      `asked` arrives off the wire, and every export of `app/actions.ts` is a
+      public endpoint. `sceneHelp` hands out a lemma from the beat's own topic;
+      anything else is a client writing whatever it likes into a table, and a
+      debrief listing words the conversation never needed is the visible half
+      of that.
+    */
+    const opened = await beginRun({
+      ownerId: OWNER, sceneId: DOCTOR.id, level: "A2", difficulty: "textbook",
+    });
+    const finished = await finishRun({
+      ownerId: OWNER,
+      runId: opened!.runId,
+      walkedOut: false,
+      asked: [{ lemma: "kodukeelmitteolemassonatest", lexemeId: null }],
+      turns: [{ beatId: "greet", said: "Tere!", helped: false }],
+    });
+    expect(finished!.gaps.map((gap) => gap.lemma))
+      .not.toContain("kodukeelmitteolemassonatest");
+    const rows = await prisma.sceneGap.findMany({ where: { ownerId: OWNER, kind: "ASKED" } });
+    expect(rows.length, "a word the scene never had was written down").toBe(0);
+  });
+
+  it("hands the help button a word off the beat it is on", async () => {
+    const opened = await beginRun({
+      ownerId: OWNER, sceneId: DOCTOR.id, level: "A2", difficulty: "textbook",
+    });
+    const beat = await beatNow({ ownerId: OWNER, runId: opened!.runId, turns: [] });
+    expect(beat, "a fresh run is on no beat at all").not.toBeNull();
+    expect(beat!.id).toBe(DOCTOR.beats[0]!.id);
+
+    // And it moves with the conversation rather than staying where it opened.
+    const after = await beatNow({
+      ownerId: OWNER,
+      runId: opened!.runId,
+      turns: [{ beatId: DOCTOR.beats[0]!.id, said: "Tere!", helped: false }],
+    });
+    expect(after!.id, "the beat did not move after a turn that landed")
+      .not.toBe(beat!.id);
+
+    // Another learner's run is not readable, which is the same rule the
+    // recency read is held to.
+    const theirs = await beatNow({
+      ownerId: "itest-owner-scene-other", runId: opened!.runId, turns: [],
+    });
+    expect(theirs, "one learner read another's run").toBeNull();
   });
 
   it("gives back what the last runs used, so a draw can avoid it", async () => {
