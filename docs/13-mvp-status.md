@@ -1950,3 +1950,106 @@ on Today is the number the review queue will fill.
   measured again after the bar changed.
 - A round driven end to end in a browser: five meetings, five choices, five gaps, then the words
   that were produced moving to Practice and the ones that were not coming back at the rung below.
+
+## 29. The twenty-third pass: the half of the language a horse is not in
+
+Reported from review. A new word came up, `hobune`, and the card asked for it in the sisseütlev and
+wanted `hobusesse`. The learner asked Anu about it in the same session and was told, correctly, that
+the ending goes on a place noun and never on a person or an animal by themselves. The app had
+contradicted its own tutor on a card it had built itself.
+
+### The fault
+
+Estonian has two sets of local cases and a word takes one. A room is somewhere you can be inside, so
+`tuba` goes `toas`, `toast`, `tuppa`. A person or an animal is not, so a mother goes `emal`,
+`emalt`, `emale`, and `emasse` is not a way of saying anything anybody says. Every course teaches
+that pair in its first fortnight.
+
+The app had one rule for it, `lib/estonian/place.ts`, written when the A1 country unit was found to
+be drilling `Venemaas`. It tests the ending `-maa`, and an ending is all a spelling can tell you:
+nothing about the letters in `hobune` says it is an animal. So every animate noun in the dictionary
+was drilled on the inside trio, 2,441 case cards across the shipped dictionary, and a learner who
+passed them had learned to say `ma annan raamatu õpetajasse`.
+
+### Where the missing fact came from
+
+Ekilex records a semantic type against each meaning, in the same `/word/details` the forms and the
+sentences come from: `hobune` is `loom`, `õpetaja` is `in_elukutse`, `tuba` is `koht_hoone`. Both
+the expansion and the course harvest have been fetching that response since the day they were
+written and dropping the field on the floor, exactly as they dropped the 1,359 Estonian definitions
+before them. `Lexeme.semanticTypes` holds the codes as the Institute spells them and
+`lib/estonian/semantics.ts` is the only module that reads them. Nothing is generated and nothing is
+Estonian this app wrote; ADR-005 is untouched.
+
+The codes are written out rather than matched by prefix, which is a correction to the first version:
+`in_rahvas_keel` is a language and opens like a person, and a prefix rule read `emakeel` as a being.
+A word the Institute called both a being and a place (`politsei`, `grupp`) gets neither trio,
+because both are ordinary Estonian for it and a card cannot ask which of two right answers a learner
+meant. That is 26 words and the same answer `maa` already gets.
+
+### Five more faults, found by looking
+
+- **The question word.** A horse is a `kes`, and every card asked with the `mille-` series.
+  `cases.ts` named the first three cases with both pronouns and the other eleven with one; the name
+  is built from its parts now, so the two halves cannot disagree.
+- **The place adverb.** `kus?` names the seesütlev *and* the alalütlev, so a card wanting one of a
+  pair that printed it could be answered correctly and marked wrong. It stays in the case's name and
+  is off the card.
+- **`place.ts` reached two of eight generators.** The lesson planner, the writing exercise, the
+  daily quest, the picture round and the scene description were all still asking `Saksamaa → milles?
+  kus?` after the flashcards had been fixed.
+- **The government card was asked of 110 nouns and adjectives.** `laps takes which case?` is a
+  question worded as a fact the entry does not support. The exam builder filters to verbs and says
+  in its own comment that the drill always has; this was the third builder.
+- **81 gap-fills were built from things that are not sentences.** `naturalSentence` was the gate on
+  four of eight doors. `Nii ____ on öelda, et ..` trails off; `Ta kannab tumedaid ____/teksasid.`
+  leaves the answer standing beside the gap in its other spelling. The lesson planner was not
+  calling `usableExamples` at all.
+
+### Two more, found by looking from the other end
+
+**A word with no singular was asked for singular cases.** Nineteen entries are headed by a plural
+because that is the only number the word has, and Ekilex records the whole singular of the word
+underneath, so `prillid → milles?` wanted `prillis`. It is `prillides`, and the entry's plural column
+has said so all along. Eight are graded and ordinary: `prillid`, `teksad`, `käärid`, `jõulud`,
+`aluspüksid`, `kõrvaklapid`, `päikeseprillid`, `lihavõtted`. 231 questions.
+
+**A gloss described one word and the forms beside it another.** The built dictionary is a join on
+the spelling and `expand-seed.ts` takes the first Ekilex homonym, which is the fault the course
+harvest fixed with pins for its own 1,185 words and nothing checked for the other four thousand.
+`kurk` shipped as "throat" with the forms of a cucumber, `maks` as "liver" with the forms of a tax,
+`vaht` as "foam" with the forms of a guard. `npm run audit:homonyms` compares the dictionary's
+principal parts with the ones the Wiktionary block that supplied the gloss declares: 96 of 4,681
+nominals disagree, 88 of them Wiktionary's own slips. It reports and a person pins, because choosing
+automatically was measured and moved `aste` off the word `astmevaheldus` is built on. Fifteen pinned.
+
+**And the level check gave a free mark on a word spelled the same in both languages.** `moment`
+against "moment". On a card that costs a deck slot; here it costs the placement.
+
+### The column on the other half of the dictionary
+
+Found only by running a real seed. The built dictionary has two writers: `LEXEME_COLUMNS` drives the
+seed's bulk upsert and writes the 1,422 course words, and `prisma/expanded.ts` is a raw insert with
+its own hand-written column list and writes the 4,612 the expansion adds. The new column went into
+the first list, every check passed, and `politsei` came out of a fresh seed with no classification,
+because it is not a course word. `columns.test.ts` reads the insert's own column list out of the
+statement now.
+
+### Measured
+
+- 5,299 of 5,363 built entries carry a classification and 5,939 of 6,101 rows do after a seed; the
+  rest are phrases and words the Institute types nothing on, which read as unknown and keep the
+  behaviour they had.
+- 2,441 case cards moved from the inside trio to the outside one or were withdrawn; 110 government
+  cards, 95 case cards for words with no singular and 81 gap-fills went; the deck the shipped
+  dictionary can build is 46,767 cards against 47,130.
+- The mock exam still fills every task at every level, and the level check is unchanged at 74 items
+  from a 100-word band.
+- `npm run audit:sense` builds 74,074 questions and sentences and asks the five questions no unit
+  test can. It was made to fail on each.
+- 221 invariants, four of them new and every one made to fail before it was left passing. 2,021 unit
+  tests, 187 integration tests against a real Postgres, and the browser suites driven against a real
+  server in CI's own order.
+- The scene game's floor in `audit-questions` came down from 1,972 to 1,409, which is the narrowing
+  arriving where it should: the words with a picture are the ones a third of which are animals and
+  people.

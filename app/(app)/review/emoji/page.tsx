@@ -6,6 +6,7 @@ import { oneEntryPerLemma } from "@/lib/dict/search";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { CASES } from "@/lib/estonian/cases";
+import { caseFits, caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { courseLevelFor } from "@/lib/progress/level";
 import { bandsAround } from "@/lib/collections/levels";
@@ -16,6 +17,25 @@ import { EmojiSession, type EmojiPair } from "./EmojiSession";
 export const metadata = { title: "Picture match" };
 
 export const dynamic = "force-dynamic";
+
+/**
+ * The three facts `lib/estonian/caseQuestion.ts` needs about a word, off a row.
+ *
+ * One reader rather than three, because this page asks about a word from the
+ * deck and about a word from the dictionary and the two rows are shaped
+ * differently only in what else they carry.
+ */
+function subjectOf(row: {
+  lemma: string;
+  semanticTypes: string | null;
+  forms?: readonly { formType?: string; value: string }[];
+}) {
+  return {
+    lemma: row.lemma,
+    semanticTypes: row.semanticTypes,
+    nomSg: row.forms?.find((f) => f.formType === undefined || f.formType === "NOM_SG")?.value ?? null,
+  };
+}
 
 /** Pairs on the board. Six rather than eight, because each tile is two lines. */
 const PAIRS = 6;
@@ -81,7 +101,18 @@ export default async function EmojiPage() {
       },
       orderBy: [{ due: "asc" }, { id: "asc" }],
       take: POOL,
-      include: { lexeme: { select: { id: true, lemma: true } } },
+      // `semanticTypes` so the tile can name the question this word answers:
+      // a horse is a `kes`. See lib/estonian/caseQuestion.ts.
+      include: {
+        lexeme: {
+          select: {
+            id: true, lemma: true, semanticTypes: true,
+            // The nominative singular, so a word that has none is not asked
+            // for a singular case. See lib/estonian/caseQuestion.ts.
+            forms: { where: { formType: "NOM_SG" }, select: { value: true } },
+          },
+        },
+      },
     }),
   ]);
 
@@ -136,7 +167,7 @@ export default async function EmojiPage() {
       // The card's own back, which is the form the dictionary vouches for and
       // may be a pair (`tuppa / toasse`). The first is the one to print.
       form: card.back.split(" / ")[0]!.trim(),
-      question: spec.question,
+      question: caseQuestionFor(spec, subjectOf(card.lexeme!)),
       caseEt: grammarTerm(spec.key)?.et ?? spec.et,
     });
   }
@@ -207,6 +238,10 @@ export default async function EmojiPage() {
       */
       let picked: { form: string; key: string } | null = null;
       for (const spec of shuffle(askable)) {
+        // AND NOT A LOCAL CASE THE WORD DOES NOT TAKE. 🐴 beside `hobuses` is
+        // the wrong half of the language, and a picture round is full of
+        // animals. See lib/estonian/caseQuestion.ts.
+        if (!caseFits(spec.key, subjectOf(row))) continue;
         const answer = caseAnswer(stems, spec.key);
         if (!answer) continue;
         if (answer.accepted.some((f) => f.trim().toLocaleLowerCase("et") === lemma)) continue;
@@ -224,7 +259,7 @@ export default async function EmojiPage() {
         emoji,
         lemma: row.lemma,
         form: picked.form,
-        question: spec.question,
+        question: caseQuestionFor(spec, subjectOf(row)),
         caseEt: grammarTerm(spec.key)?.et ?? spec.et,
       });
     }

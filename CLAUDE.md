@@ -758,6 +758,167 @@ asserts that too, so the illative is singled out rather than the whole table dis
 long form stays *accepted* everywhere the short one is shown, since both are Estonian and marking
 somebody wrong for the other true answer is the fault this started as, pointed the other way.
 
+**A form being derivable is not the same as its being the form anybody says, and Estonian has two
+sets of local cases.** `deriveCase` is right about every word: `hobune` plus `sse` really is
+`hobusesse`, and that is a correct Estonian word. It is also not how anybody talks about a horse. A
+room is somewhere you can be inside, so `tuba` goes `toas`, `toast`, `tuppa`; a person or an animal
+is not, so a mother goes `emal`, `emalt`, `emale`, and every course teaches that pair in its first
+fortnight, usually as `Kellele sa helistad? Emale.` The app was drilling the inside trio on every
+animate noun in the dictionary, and a learner who passed those cards had learned to say `ma annan
+raamatu õpetajasse`. It was reported by somebody using it, who asked Anu about the card and was
+told, correctly, that the ending goes on a place noun and never on a person or an animal by
+themselves. The app had contradicted its own tutor on a card it built itself.
+
+`lib/estonian/place.ts` is the half of this rule that already existed and its own header says why it
+could not reach the rest: it tests the ending `-maa`, and an ending is all a spelling can tell you.
+Nothing about the letters in `hobune` says it is an animal.
+
+**So it is read from Ekilex rather than decided here, and it was in the response all along.** The
+Institute records a semantic type against each meaning, in the same `/word/details` the forms and
+the sentences come from: `hobune` is `loom`, `õpetaja` is `in_elukutse`, `tuba` is `koht_hoone`.
+Both the expansion and the course harvest have been fetching that response since the day they were
+written and dropping this field on the floor, exactly as they dropped the 1,359 Estonian
+definitions before them. `Lexeme.semanticTypes` holds the codes as the Institute spells them and
+`lib/estonian/semantics.ts` is the only module that reads them, which is the shape `government`
+already takes: Ekilex's own question words are stored and `parseGovernment` interprets, so a
+correction to the reading is a code change rather than a re-harvest of a service somebody else
+runs. ADR-005 is untouched, because a classifier code is not a form and not a sentence, nothing is
+generated, and nothing reaches a screen but the choice of which case set to ask about.
+
+**The primary sense, not the union, and all of that sense's codes.** A word's later senses wander
+far enough to be wrong about it: `jõgi` carries `inimene` on a metaphor about a river of people and
+`pilv` carries `loom_putukas`, so a union would drill a river as though it were a person. Taking
+the source's own sense order is the rule the gloss pipeline already follows over a Wiktionary page.
+Within that one sense every code counts, because the one that matters is not always first: `arst`
+is `esitus_tiitel in_elukutse` and only the second says it is a person.
+
+**The codes are written out rather than matched by prefix**, and that is a correction to the first
+version rather than a preference. They look segmented, and `in_elukutse`, `in_roll` and
+`in_sugulane` are all people while `loom_lind` and `loom_putukas` are both animals, so a rule
+reading the first segment is the obvious thing to write. It gets `in_rahvas_keel` wrong, which is
+not a person at all: it is the code on `emakeel`, and `emakeeles` is how you say "in one's mother
+tongue", so that rule would have taken the commonest form of the word off the card and put
+`emakeelele` on it. The neighbours that are deliberately absent are worth as much as the entries.
+`kehaosa_loom` is an animal's tail rather than the animal; `organism` is on `keha` and `sugu` as
+well as on `loom`, and a body is something you are inside; `taim` is a plant, which is a `mis` in
+Estonian.
+
+**And a word the Institute called both a being and a place gets neither trio.** It uses `inimene`
+for a person and for a body of people alike, so `politsei` is `in_elukutse koht_asutus`, `grupp` is
+`ese inimene` and `orkester` carries `grupp` beside three person codes. Both sets are ordinary
+Estonian for every one of them: you join `politseisse` and you work `politseis`, you are `grupis`
+and you speak `grupile`. That is exactly the position `bothSetsOrdinary` describes for `maa` and it
+gets the same answer, because a card cannot ask which of two right answers a learner meant. It
+costs 26 words their three local cards, a tenth of a percent of the deck, and it is the side to err
+on. A word with no classification at all keeps the inside trio, which is what it had before this
+existed: an unclassified word is one somebody added by hand, confirmed off a photograph or pasted
+in, and reading "we do not know" as "it is a person" would break cards that are currently right.
+
+**The question word was wrong with it, and the place adverb could not ask about one case.** A horse
+is a `kes`, so `hobune → millega?` asks with the interrogative for a thing, which is the first
+distinction anybody learning Estonian is taught. `cases.ts` named the first three cases with both
+pronouns and the other eleven with the `mille-` one alone, so a screen printing a case's question
+said something true of every word for three cases and something true of half the dictionary for the
+rest; the name is built from its parts now, so the two halves of that table cannot disagree. And
+`kus?` is answered by the seesütlev *and* the alalütlev, `kuhu?` by the sisseütlev and the
+alaleütlev, `kust?` by the seestütlev and the alaltütlev. A card wanting one of a pair that prints
+the adverb can be answered correctly and marked wrong, so `caseQuestionFor` leaves it off a card and
+`CaseSpec.question` keeps it in the case's own name, where the pair is the point.
+
+**One predicate rather than one list, because the generators legitimately ask about different
+numbers of cases.** A flashcard drills five, the lesson planner seven, the writing exercise ten and
+the daily quest all eleven, and each of those is a decision about how much to ask. Which of them
+make sense for the word in front of you is not. That distinction is what let the fault spread:
+`localCasesFor` was written to fix the `-maa` words and two of the eight places that pick a case
+ever called it, so the lesson planner, the writing exercise, the daily quest, the picture round and
+the scene description all went on asking `Saksamaa → milles? kus?` after the flashcards were fixed.
+`lib/estonian/caseQuestion.ts` is the one answer and an invariant fails on a ninth generator that
+picks a local case without asking.
+
+**The government card was asked of 110 words that are not verbs.** The dictionary records a
+government for 76 nouns and 34 adjectives as well: `osa` genuinely takes the partitive and the
+elative, and `laps` the genitive, and asking about one of those as though it were a verb is a
+question worded as a fact the entry does not support. `lib/exam/paper.ts` filters this way and says
+in its own comment that the drill always has; `lib/srs/cards.ts` was the third builder and the one
+nobody told. Its front led in English too, `aitama takes which case?`, over a back that is a list of
+Estonian question words including `mida teha`, which is not a case at all; it asks `aitama →
+rektsioon` now, like every other card in that file.
+
+**And an exercise is built out of a sentence, which was the gate on four of the eight doors.**
+Ekilex records a usage against a *sense*, so what comes back under a headword is sometimes
+lexicography rather than something somebody said, and `usableExamples` keeps what is worth printing
+on a dictionary entry, which is the right rule for a page and too loose for a question. The mock
+exam and the level check have gone through `naturalSentence` since a real sitting turned three of
+these up. The deck, the printable worksheet, the lesson planner, speaking practice, dictation and
+sentence building did not, and between them made 81 gap-fill cards out of `Nii ____ on öelda, et
+..`, `Vanemametnikud on: ... 9) ____;` and `Ta kannab tumedaid ____/teksasid.`, which leaves the
+answer standing beside the gap in its other spelling. The lesson planner was not calling
+`usableExamples` at all, so it had no length rule either. `nominalOpener` moved into `cloze.ts`
+beside the rule it is an argument to, since it lived in the level check and that is why the deck
+never had it.
+
+**And the gloss and the forms have to be about one word, which nothing checked outside the course.**
+The built dictionary is a join: Wiktionary supplies the English gloss and Ekilex the Estonian forms,
+joined on the spelling. Ekilex numbers its homonyms and `scripts/expand-seed.ts` takes the first
+exact match, which is the fault `scripts/harvest-ekilex.ts` fixed with pins and reported at length
+for the 1,185 course words. The other four thousand were never asked. `kurk` shipped as "throat"
+with the forms of a cucumber, `maks` as "liver" with the forms of a tax, `vaht` as "foam" with the
+forms of a guard, and `kohus` as "court" with the forms of a moral duty, which is the very word the
+harvest's own comment names.
+
+**It is checkable, because the page the gloss came off says which word it is.** A Wiktionary
+Estonian block opens with `{{et-noun|<genitive>|<partitive>}}`, so the same block that supplied the
+gloss declares two of the three principal parts. `extractEstonianEntries` returns them, positional
+arguments only so a superlative is not read as a principal part, and `null` where the template
+declares neither, which is a page saying nothing rather than a page disagreeing.
+`npm run audit:homonyms` compares those two strings with the two the dictionary stores: 96 of 4,681
+nominals disagree.
+
+**A HOMONYM IS RESOLVED BY A PERSON OR REPORTED, NEVER GUESSED THROUGH**, which is the harvest's own
+rule and the reason this reports rather than repairs. Wiktionary cannot settle it alone: it is often
+thinner than Ekilex and 88 of those 96 are its own slips on obscure words, `kasutamiset` for a
+partitive that is `kasutamist`. Choosing automatically was tried and measured and is worse than it
+looks. `aste` really does have two nouns and the page declares both, so the rule moved a B1 entry
+off `aste : astme : astet`, which is the word `astmevaheldus` is built on, and onto a rarer one that
+matched the block the gloss came from. Consistent, and not what a learner wants.
+
+So the report names the Ekilex word whose principal parts *are* the ones the page declares, in the
+shape a pin is written in, and `prisma/data/homonym-pins.json` is where a person puts it. `--write`
+re-reads a pinned entry from that word as `expand-seed.ts` would have: the forms, the sentences, the
+level, the gradation and the Institute's semantic type all belong to whichever homonym was taken, so
+all of them are read again, and only the gloss and the part of speech stay, because those came from
+Wiktionary and are not what was wrong. Fifteen are pinned, each checked against Ekilex's own Estonian
+definition; ten of them are the entry a learner actually meets and five are shadowed by the course
+harvest, which had already pinned the same words.
+
+**A question nobody can get wrong is worse in a measurement than on a card.** Thirty entries in the
+shipped dictionary are spelled the same in both languages, and the level check's meaning question
+put the Estonian word up with its English gloss among the options: `moment` against "moment". On a
+flashcard that costs a deck slot, and `SAME_SPELLING` already says the fact out loud after the
+answer. Here it costs the placement, because a band's score is what decides a learner's level and an
+item nobody can fail measures nothing. The mock exam's `gloss-choice` had it too, which is the
+fallback a thin deployment gets when the dictionary has no sentence to build a reading task from:
+measured over 120 papers built from a pool with no sentences, six free marks in 1,480 items.
+
+**`npm run audit:sense` is the mechanical half.** It builds every card, every writing task and every
+sentence the shipped dictionary can make, 74,294 of them, and asks the four questions no unit test
+can: a local case the word does not take, an interrogative for the wrong kind of thing, a place
+adverb on a card about one word, and an exercise built out of something that is not a sentence. It
+was made to fail on each. `npm run audit:questions` is its neighbour and asks the question before
+it, whether the answer is printed in the question; this asks whether anybody would ask the question
+at all.
+
+**The built dictionary has two writers and they cover different halves of it.** `LEXEME_COLUMNS`
+drives the seed's bulk upsert and writes the 1,422 course words; `prisma/expanded.ts` is a raw
+insert with its own hand-written column list and writes the 4,612 the expansion adds. A column added
+to one of them is written for about a fifth of the dictionary, and nothing failed: `semanticTypes`
+went into the first list, every check passed, and `politsei` came out of a fresh seed with no
+classification, because it is not a course word. On screen that reads as a word the Institute never
+typed rather than as a column nobody wrote. `columns.test.ts` reads the insert's own column list out
+of the statement now and checks it against the keys `expanded.json` carries. Its first version
+passed with the column deleted, because the paragraph explaining why it mattered still mentioned it
+by name, which is the trap `code()` exists for one directory over.
+
 **And "the other ten are one ending each" was an assertion about five words until it was measured.**
 The verbs had `npm run audit:verbs` and 797 of them checked against Ekilex; the nouns, which is the
 larger half of the language and every case table in the app, had a note saying somebody had run the
@@ -3864,7 +4025,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`,
 `billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`,
 `MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`, `rungOf`,
-`LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`. Most of them now
+`LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`, `caseFits`,
+`caseQuestionFor`, `semanticGroup`, `ANIMATE_CODES`, `nominalOpener`, `asksPerson`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -3882,10 +4044,13 @@ npm run audit:verbs      # derive every verb's present, negative, conditional an
 npm run audit:decks      # case cards already in a deck whose answer spells the word in the question (--write removes)
 npm run audit:cases      # derive every case of every noun, both columns, and compare with Ekilex (--write fills the gaps)
 npm run audit:senses     # re-check every course gloss against the sense Ekilex files it under
+npm run audit:sense      # does every question make sense for the word it is about
+npm run audit:homonyms   # does each gloss describe the word whose forms sit beside it (--write applies the pins)
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
 npm run harvest          # re-ask Ekilex for the syllabus vocabulary (cached, needs EKILEX_API_KEY)
+npm run harvest:semantics # ask what kind of thing each word is, for the built dictionary (--write applies)
 npm run build:frequency  # recount the commonest words (cached corpus, --refresh to re-fetch)
 npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
 npm run scenes:import    # read it back, gated word by word through the dictionary

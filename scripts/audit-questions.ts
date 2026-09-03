@@ -47,7 +47,8 @@ import { caseQuestion } from "../lib/progress/target";
 
 interface Row { lemma: string; pos: string; cefr: string | null; translation: string;
   forms: { formType: string; value: string }[]; examples: { et: string; en?: string | null }[];
-  government: string | null; gradation?: string | null; gradationNote?: string | null }
+  government: string | null; gradation?: string | null; gradationNote?: string | null;
+  semanticTypes?: string | null }
 
 const entries = readExpanded() as unknown as Row[];
 
@@ -87,8 +88,23 @@ const spent = new Map<string, number>();
   the only way to know it is to print it, which the line below now does.
 */
 const REACHES: Record<string, number> = {
-  deck: 36_404, exam: 2_500, check: 619, crossword: 5_295, scene: 1_972, target: 4_677,
+  deck: 36_041, exam: 2_500, check: 627, crossword: 5_295, scene: 1_409, target: 4_658,
 };
+
+/*
+  `deck`, `scene` and `target` came down when the app stopped asking a word for
+  a case it does not take. Estonian has two sets of local cases and a word takes
+  one, so an animate noun is drilled on `hobusel` and never on `hobuses`, and a
+  word headed by a plural has no singular to ask for at all (see
+  `lib/estonian/caseQuestion.ts`). The scene game is the one that moved most,
+  because its words are the ones that have a picture and a third of those are
+  animals and people: 1,972 to 1,409.
+
+  Re-measured rather than left to the four-fifths margin, which the scene game
+  had already fallen through. Lowering a floor to make a run pass is what the
+  paragraph above forbids; this is the other thing, a generator that was asked
+  to produce less and now does, with the reason written down beside the number.
+*/
 
 const askedIn = new Map<string, number>();
 function timed<T>(what: string, run: () => T): T {
@@ -117,7 +133,8 @@ for (const e of entries) {
   const lex = {
     id: e.lemma, lemma: e.lemma, translation: e.translation, pos: e.pos,
     gradation: e.gradation ?? null, gradationNote: e.gradationNote ?? null,
-    government: e.government ?? null, examples: JSON.stringify(e.examples ?? []),
+    government: e.government ?? null, semanticTypes: e.semanticTypes ?? null,
+    examples: JSON.stringify(e.examples ?? []),
     forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null })),
   } as unknown as LexemeForCards;
   let cards;
@@ -136,6 +153,7 @@ for (const e of entries) {
 /* ── The mock exam ───────────────────────────────────────────────────────── */
 const pool: PoolWord[] = entries.map((e) => ({
   lexemeId: e.lemma, lemma: e.lemma, translation: e.translation, pos: e.pos, cefr: e.cefr,
+  semanticTypes: e.semanticTypes ?? null,
   forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null, morphName: null })),
   examples: (e.examples ?? []).map((x) => ({ et: x.et, en: x.en ?? null })),
   government: e.government, cardId: null,
@@ -161,7 +179,7 @@ for (const level of EXAM_LEVELS) {
 /* ── The level check ─────────────────────────────────────────────────────── */
 const words: WordRow[] = entries.map((e) => ({
   id: e.lemma, lemma: e.lemma, translation: e.translation, pos: e.pos, cefr: e.cefr,
-  government: e.government,
+  government: e.government, semanticTypes: e.semanticTypes ?? null,
   forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null })),
   examples: (e.examples ?? []).map((x) => ({ et: x.et, en: x.en ?? null })),
 }));
@@ -241,6 +259,7 @@ for (const scene of SCENES) {
       pos: "NOUN",
       translation: row.translation ?? "",
       emoji,
+      semanticTypes: row.semanticTypes ?? null,
       forms: (row.forms ?? []).map((f) => ({ formType: f.formType, value: f.value })),
     });
   }
@@ -287,7 +306,10 @@ for (const e of entries) {
   const forms = (e.forms ?? []).map((f) => ({
     formType: f.formType, morphCode: null, value: f.value,
   }));
-  const question = caseQuestion({ lemma: e.lemma, forms }, "audit");
+  const question = caseQuestion(
+    { lemma: e.lemma, semanticTypes: e.semanticTypes ?? null, forms },
+    "audit",
+  );
   if (!question) continue;
   // What the learner is shown: the word and the question its case answers.
   ask(

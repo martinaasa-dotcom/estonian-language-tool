@@ -20,7 +20,10 @@ describe("case notes", () => {
   it("pairs each note with its grammatical spec", () => {
     const inessive = caseReference("INESSIVE");
     expect(inessive?.spec.et).toBe("seesütlev");
-    expect(inessive?.spec.question).toBe("milles? kus?");
+    // Both interrogatives and the adverb, which is the case's own name and
+    // what a class writes on the board. A card about one word asks the half
+    // that fits it: see `caseQuestionFor`.
+    expect(inessive?.spec.question).toBe("kelles? milles? kus?");
     expect(inessive?.summary).toMatch(/inside/i);
   });
 

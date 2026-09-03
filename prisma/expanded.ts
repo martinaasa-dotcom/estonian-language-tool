@@ -45,6 +45,17 @@ interface ExpandedEntry {
   gradationNote: string | null;
   government: string | null;
   notes: string | null;
+  /**
+   * The Institute's semantic type codes for the word's primary sense.
+   *
+   * Written here as well as in `prisma/columns.ts` because the two writers
+   * cover different halves of the dictionary: the seed's bulk upsert writes
+   * the 1,422 course words, and this writes the 4,612 the expansion brings.
+   * Adding the column to one of them left `politsei` and every other word
+   * outside the course with no classification, which reads on screen as a
+   * word the Institute never typed rather than as a column nobody wrote.
+   */
+  semanticTypes: string | null;
   examples: { et: string; en: string | null }[];
   forms: { formType: string; value: string }[];
   ekilexWordId: number;
@@ -166,7 +177,7 @@ export async function writeExpanded(
       (e) => Prisma.sql`(
         ${crypto.randomUUID()}, ${e.lemma}, ${e.pos}, ${e.translation},
         ${e.cefr}::text, ${e.gradation}, ${e.gradationNote}::text,
-        ${e.government}::text, ${e.notes}::text,
+        ${e.government}::text, ${e.notes}::text, ${e.semanticTypes ?? null}::text,
         ${JSON.stringify(e.examples ?? [])}::text,
         'EKILEX', ${e.ekilexWordId}, NOW(), NOW()
       )`,
@@ -177,7 +188,7 @@ export async function writeExpanded(
     const inserted = await prisma.$queryRaw<{ id: string; lemma: string; pos: string }[]>`
       INSERT INTO "Lexeme" (
         id, lemma, pos, translation, cefr, gradation, "gradationNote",
-        government, notes, examples, provenance, "ekilexWordId", "fetchedAt", "updatedAt"
+        government, notes, "semanticTypes", examples, provenance, "ekilexWordId", "fetchedAt", "updatedAt"
       )
       VALUES ${Prisma.join(values)}
       ON CONFLICT (lemma, pos) DO NOTHING

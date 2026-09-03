@@ -35,6 +35,7 @@ const verb = (governments: string[], overrides: Partial<EkilexDetails> = {}): Ek
   governments,
   usages: [],
   cefr: null,
+  semanticTypes: [],
   translations: { rus: [], ukr: [] },
   ...overrides,
 });

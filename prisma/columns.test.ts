@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import { LEXEME_COLUMNS, MANAGED_COLUMNS, PRESERVED_COLUMNS } from "./columns";
@@ -62,6 +64,61 @@ describe("the seed's Lexeme columns", () => {
     for (const column of LEXEME_COLUMNS) {
       const field = lexeme.fields.find((f) => f.name === column.name)!;
       if (!field.isRequired) expect(column.cast, `${column.name} needs a cast`).toBeTruthy();
+    }
+  });
+});
+
+/**
+ * THE DICTIONARY HAS TWO WRITERS AND THEY COVER DIFFERENT HALVES OF IT.
+ *
+ * `LEXEME_COLUMNS` above drives the seed's bulk upsert, which writes the 1,422
+ * words the course harvest brought back. `prisma/expanded.ts` is the other one,
+ * a raw insert with its own hand-written column list, and it writes the 4,612
+ * the Wiktionary expansion adds. A column added to one of them is written for
+ * about a fifth of the dictionary.
+ *
+ * That is not hypothetical and it is invisible without a database in front of
+ * you: `semanticTypes` was added to the table above, every check passed, and
+ * `politsei` came out of a fresh seed with no classification at all, because it
+ * is not a course word. On screen that reads as a word the Institute never
+ * typed rather than as a column nobody wrote.
+ *
+ * So the check is against the data file rather than against either list: every
+ * key an entry in `expanded.json` carries that names a `Lexeme` column has to
+ * appear in that insert.
+ */
+describe("the built dictionary's own writer", () => {
+  const source = readFileSync("prisma/expanded.ts", "utf8");
+  const entry = (JSON.parse(readFileSync("prisma/data/expanded.json", "utf8")) as
+    Record<string, unknown>[])[0]!;
+
+  /*
+    The insert's own column list, read out of the statement rather than out of
+    the file. A comment naming a column is not a column being written, which is
+    the trap every check in this repository has fallen into at least once: the
+    first version of this passed with the column deleted, because the paragraph
+    explaining why it mattered still mentioned it by name.
+  */
+  const written = new Set(
+    (source.match(/INSERT INTO "Lexeme" \(([^)]*)\)/)?.[1] ?? "")
+      .split(",")
+      .map((name) => name.trim().replace(/^"|"$/g, ""))
+      .filter(Boolean),
+  );
+
+  it("has a column list at all", () => {
+    expect(written.size, "the insert into Lexeme could not be found").toBeGreaterThan(5);
+  });
+
+  it("writes every column the built dictionary carries", () => {
+    const columns = new Set(scalars);
+    const carried = Object.keys(entry).filter((key) => columns.has(key));
+    expect(carried.length, "expanded.json stopped carrying any Lexeme column").toBeGreaterThan(5);
+    for (const column of carried) {
+      expect(
+        written.has(column),
+        `prisma/expanded.ts does not write ${column}, so the built dictionary ships without it`,
+      ).toBe(true);
     }
   });
 });

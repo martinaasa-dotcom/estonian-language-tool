@@ -176,7 +176,23 @@ describe("extractEstonianEntries", () => {
       gloss: "expensive",
       pos: "ADJECTIVE",
       headword: "ADJECTIVE",
+      // The two principal parts the same template declares, which is the
+      // second opinion `scripts/audit-homonyms.ts` checks the join against:
+      // the gloss and the forms both have to be about one word.
+      stems: ["kalli", "kallist"],
     });
+  });
+
+  it("reads a template that declares no stems as silence, not disagreement", () => {
+    const wikitext = "==Estonian==\n\n===Noun===\n{{et-noun}}\n\n# [[harbour]]\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext)[0]?.stems).toBe(null);
+  });
+
+  it("keeps only the positional arguments, so a superlative is not a principal part", () => {
+    // `{{et-adj|ilusa|ilusat|s=ilusaim}}`: `s=` is the superlative.
+    const wikitext =
+      "==Estonian==\n\n===Adjective===\n{{et-adj|ilusa|ilusat|s=ilusaim}}\n\n# [[beautiful]]\n\n==Finnish==\n";
+    expect(extractEstonianEntries(wikitext)[0]?.stems).toEqual(["ilusa", "ilusat"]);
   });
 
   it("does not carry a headword across into the next block", () => {

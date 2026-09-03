@@ -812,6 +812,195 @@ check("every screen and marker that needs a case form asks the one function for 
 });
 
 
+/*
+  WHICH LOCAL CASES A WORD TAKES IS ONE ANSWER, AND IT WAS EIGHT.
+
+  Estonian has two sets of local cases and a word takes one: `toas` for a room,
+  `hobusel` for a horse, `Saksamaal` for a country. `lib/estonian/place.ts` was
+  written for the third of those, because the A1 country unit was drilling
+  `Venemaas`, and only two of the eight generators that pick a case ever called
+  it. So the lesson planner, the writing exercise, the daily quest, the picture
+  round and the scene description all went on asking `Saksamaa → milles? kus?`
+  after the flashcards had been fixed, and every one of them asked an animal
+  for its illative besides.
+
+  `lib/estonian/caseQuestion.ts` is the one answer now and this fails on a
+  ninth generator that picks a local case without asking. It is anchored on the
+  *call*, not on the import, because a file can import the helper and go on
+  reading its own list, which is the shape every check in this file has been
+  caught by at least once.
+*/
+check("every generator that picks a case asks which ones the word takes", () => {
+  const askers = [
+    "lib/srs/cards.ts",
+    "lib/estonian/writing.ts",
+    "lib/collections/lesson.ts",
+    "lib/progress/caseExamples.ts",
+    "lib/progress/target.ts",
+    "lib/games/describe.ts",
+    "app/(app)/review/emoji/page.tsx",
+  ];
+  const asks = /caseFits\(|localCasesFor\(/;
+  for (const file of askers) {
+    assert.match(
+      code(file),
+      asks,
+      `${file} picks a case without asking caseFits, so it can drill hobusesse`,
+    );
+  }
+  /*
+    And nobody outside that module answers it for themselves. `place.ts` holds
+    the two trios and the `-maa` ending; a second reader of those constants is
+    a second rule about which set a word takes, which is exactly how this came
+    to be wrong in eight places.
+  */
+  const owners = ["lib/estonian/caseQuestion.ts", "lib/estonian/place.ts"];
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !owners.includes(file) && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /\b(INSIDE_CASES|OUTSIDE_CASES|takesOutsideCases)\b/.test(code(file)));
+  assert.deepEqual(
+    offenders,
+    [],
+    "a second module decides which set of local cases a word takes",
+  );
+});
+
+/*
+  A CARD ABOUT ONE WORD ASKS THE QUESTION THAT WORD ANSWERS.
+
+  Two facts, and the app had neither. A horse is a `kes`, so `hobune →
+  millega?` asks with the interrogative for a thing, which is the first
+  distinction anybody learning Estonian is taught. And `kus?` is answered by
+  the seesütlev *and* the alalütlev, `kuhu?` by the sisseütlev and the
+  alaleütlev, `kust?` by the seestütlev and the alaltütlev: a card wanting one
+  of a pair that prints the adverb can be answered correctly and marked wrong.
+
+  `CaseSpec.question` is the case's own *name* and carries all three, which is
+  right on a grammar page and on an option label and wrong on a card. This
+  fails on a screen that prints one word's case question straight off the spec.
+*/
+check("a question about one word is worded for that word", () => {
+  const perWord = [
+    "lib/srs/cards.ts",
+    "lib/estonian/writing.ts",
+    "lib/collections/lesson.ts",
+    "lib/progress/target.ts",
+    "app/(app)/review/emoji/page.tsx",
+    "app/(app)/dictionary/Forms.tsx",
+    "app/(app)/dictionary/DictionaryClient.tsx",
+    "app/(chromeless)/welcome/page.tsx",
+    "app/(app)/review/describe/page.tsx",
+    "app/api/describe/route.ts",
+  ];
+  for (const file of perWord) {
+    const source = code(file);
+    assert.match(
+      source,
+      /caseQuestionFor\(/,
+      `${file} names a case for one word without asking caseQuestionFor`,
+    );
+    assert.doesNotMatch(
+      source,
+      /\b(?:spec|row\.spec|named|c)\.question\b/,
+      `${file} prints CaseSpec.question about one word, which names both series and a place adverb`,
+    );
+  }
+  /*
+    And the name itself still carries all three, because that is what a class
+    writes on the board and what the grammar reference and the option labels
+    are for. Derived from the parts rather than typed, so the two halves of the
+    table cannot disagree the way they did: the first three cases named both
+    pronouns and the other eleven named one.
+  */
+  const cases = code("lib/estonian/cases.ts");
+  assert.match(
+    cases,
+    /question: \[row\.asksPerson, row\.asksThing, row\.asksWhere\]/,
+    "a case's name stopped being built from its own parts",
+  );
+});
+
+/*
+  AND THE FACT BEHIND BOTH COMES FROM THE INSTITUTE.
+
+  Nothing in a word's spelling says it is an animal, so this is data rather
+  than a rule: `Lexeme.semanticTypes` holds Ekilex's own classification codes
+  and `lib/estonian/semantics.ts` is the only module that reads them. A second
+  reader is a second answer to "is this a person", which is how the two sets of
+  local cases came apart in the first place.
+*/
+check("the Institute's classification has one reader", () => {
+  /*
+    Two files, and the pair is the rule: `semantics.ts` decides what a code
+    means and `caseQuestion.ts` is the only thing that acts on the decision.
+    Every other file that names the column is carrying it rather than reading
+    it, which is a query selecting it, a type declaring it or a mapper joining
+    Ekilex's list into it.
+  */
+  const owners = ["lib/estonian/semantics.ts", "lib/estonian/caseQuestion.ts"];
+  const readers = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !owners.includes(file) && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /semanticGroup\(|isAnimate\(|bothLocalSetsOrdinary\(/.test(code(file)));
+  assert.deepEqual(
+    readers,
+    [],
+    "a module outside lib/estonian/semantics.ts decides what a semantic type means",
+  );
+  // And the codes stay written out rather than matched by prefix: `in_rahvas_keel`
+  // is a language and opens like a person, and a prefix rule read `emakeel` as
+  // a being.
+  assert.match(
+    code(owners[0]!),
+    /ANIMATE_CODES/,
+    "the animate codes stopped being written out, so a prefix rule decides again",
+  );
+});
+
+/*
+  AN EXERCISE IS BUILT OUT OF A SENTENCE.
+
+  Ekilex records a usage against a *sense*, so what comes back under a headword
+  is sometimes lexicography rather than something somebody said. `usableExamples`
+  keeps what is worth printing on a dictionary entry, which is the right rule
+  for a page and too loose for a question: `Nii ____ on öelda, et ..` trails
+  off, `Vanemametnikud on: ... 9) ____;` is an ordinance, and `Ta kannab
+  tumedaid ____/teksasid.` leaves the answer standing beside the gap in its
+  other spelling.
+
+  `naturalSentence` was the gate on four of the eight doors. The mock exam and
+  the level check had it; the deck's gap-fills, the printable worksheet, the
+  lesson planner and speaking practice did not, and built 81 cards out of them.
+*/
+check("every exercise built from a sentence checks that it is one", () => {
+  const builders = [
+    "lib/srs/cards.ts",
+    "lib/collections/worksheet.ts",
+    "lib/exam/paper.ts",
+    "lib/assessment/items.ts",
+    "lib/progress/describe.ts",
+    "app/(app)/learn/[unitId]/lesson/page.tsx",
+    "app/(app)/review/speaking/page.tsx",
+    "app/(app)/review/dictation/page.tsx",
+    "app/(app)/review/sentences/page.tsx",
+  ];
+  for (const file of builders) {
+    assert.match(
+      code(file),
+      /naturalSentence\(/,
+      `${file} builds an exercise from a usage without checking that it is a sentence`,
+    );
+  }
+  // One definition of the label pattern, beside the rule it is an argument to.
+  // It lived in the level check, which is why the deck never had it.
+  assert.match(
+    code("lib/estonian/cloze.ts"),
+    /export function nominalOpener\(/,
+    "the label pattern moved out of the module that owns naturalSentence",
+  );
+});
+
 check("the module that writes about Estonian holds no Estonian", () => {
   /*
     `lib/estonian/grammar.ts` is the one place that explains the case system at
