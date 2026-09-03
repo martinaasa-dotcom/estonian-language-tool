@@ -54,7 +54,7 @@ import { puzzleFor } from "@/lib/progress/sonad";
 import { courseLevelFor } from "@/lib/progress/level";
 import type { DayKey } from "@/lib/time/day";
 import { FREQUENCY_GROUPS, type FrequencyGroup } from "@/lib/collections/frequency";
-import { lemmasIn } from "@/lib/progress/common";
+import { lemmasIn, nextCommonBatch } from "@/lib/progress/common";
 import { MAX_STARTER_UNITS } from "@/lib/collections/starter";
 
 import { applyGradeBatch, type ReplayItem } from "@/lib/srs/replay";
@@ -1268,6 +1268,59 @@ export async function addCommonWords(group: string) {
   );
 
   revalidatePath("/dictionary/common");
+  revalidatePath("/words");
+  revalidatePath("/");
+  return { ok: true as const, added, words };
+}
+
+/**
+ * THE NEXT BATCH OF ONE LIST, BUILT OUT INTO EVERY CARD ITS WORDS SUPPORT.
+ *
+ * `addCommonWords` above is the browsing screen's button: a hundred words, a
+ * recognition card and a production card each, cheap. This is the round's, and
+ * it is the other half of the same list. A round that only ever asked what a
+ * word means would not be flash cards, it would be a vocabulary list read back
+ * at you, and the whole point of asking these hundred is that they are the
+ * words you meet in every form there is.
+ *
+ * So the plan is `CARD_TYPES` entire, read off the one table rather than a list
+ * typed here, and `generateCards` decides what each word can actually make: a
+ * noun gets its cases, a verb its persons and its government, an adverb gets
+ * the two it can support and no more. A unit asking for a card its own words
+ * cannot build is the `objekt` fault, and this cannot make it, because it never
+ * names a type at all.
+ *
+ * Bounded by `nextCommonBatch`, which is twenty words and only ones that are
+ * short of something. Pressing again takes the next twenty; pressing when the
+ * whole hundred is finished writes nothing and says so.
+ *
+ * The group rather than a list of words, for the reason `addCommonWords` gives:
+ * every export of this file is a public endpoint whose arguments are JSON off
+ * the wire whatever the types say, so a group name indexing a table checked
+ * into the repository is the argument that cannot name anything else.
+ */
+export async function deepenCommonWords(group: string) {
+  const ownerId = await requireUserId();
+  if (!FREQUENCY_GROUPS.includes(group as FrequencyGroup)) {
+    return { ok: false as const, error: "That list does not exist." };
+  }
+
+  const busy = throttleAction(ownerId, "deepenCommonWords");
+  if (busy) return busy;
+
+  const batch = await nextCommonBatch(ownerId, group as FrequencyGroup);
+  if (batch.length === 0) {
+    return { ok: true as const, added: 0, words: 0 };
+  }
+
+  const { added, words } = await addPlanToDeck(
+    ownerId,
+    planLemmas(batch, CARD_TYPES.map((spec) => spec.type)),
+    "DICTIONARY",
+  );
+
+  revalidatePath("/review/common");
+  revalidatePath("/practice");
   revalidatePath("/words");
   revalidatePath("/");
   return { ok: true as const, added, words };

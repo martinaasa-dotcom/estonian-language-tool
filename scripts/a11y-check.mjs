@@ -151,6 +151,17 @@ const ROUTES = [
   "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
   "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
   "/words/mastery",
+  /*
+    The frequency rounds. `/review/common` is the index and one of its four
+    lists stands for the round, which is a whole `ReviewSession` rendered from
+    one component: the shape this list's own header says was once found drawing
+    a progress bar, a card and four buttons with no heading in it at all.
+
+    One of the four rather than all four, because the group decides which words
+    are asked and not how the screen is built, so the other three would be the
+    same eight checks over the same markup.
+  */
+  "/review/common", "/review/common/noun",
 ];
 
 const browser = await launchChromium();
@@ -205,7 +216,15 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   the merged tree, which is the 307 above plus nine for /funding and
   eighty-six for these, and the floor keeps the same five under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 408 });
+/*
+  And then three routes at once, from two branches that did not know about each
+  other: two for the frequency rounds and one for the word mastery lists.
+  Measured on the merged tree at 429 rather than added from either side, which
+  is what the paragraph above says to do and what neither branch could have
+  done on its own: one had 420 and the other 413, and neither number is right.
+  The same five of slack under it.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 424 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.

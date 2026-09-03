@@ -61,6 +61,16 @@ export interface PracticeMode {
    * and there is an invariant that the page it names really does link to it.
    */
   within?: string;
+  /**
+   * Drawn as its own card at the top of `/practice`, not as a tile in a shelf.
+   *
+   * `GAMES` used to be "everything with `within: \"/practice\"` except Flash
+   * cards", which is a rule that names one row. A second such card arrived and
+   * the choice was a second name in that filter or a field saying what the
+   * difference actually is, which is that these open a card with something to
+   * choose inside it rather than a round you press once.
+   */
+  headline?: boolean;
 }
 
 export const PRACTICE_MODES: readonly PracticeMode[] = [
@@ -77,11 +87,30 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
     */
     href: "/review/flashcards", title: "Flash cards", subtitle: "Words you have met",
     icon: "Layers", tone: "accent", group: "targeted", note: "Typed, varied",
-    within: "/practice",
+    within: "/practice", headline: true,
     blurb:
       "The words review has already introduced, asked in ways it does not: hear a sentence and " +
       "type the form you heard, fill a gap from the meaning alone, or write a sentence of your " +
       "own around a named form. A word leaves once it is right five times across three of them.",
+  },
+  {
+    /*
+      The same round as Flash cards, pointed at one of the four frequency
+      lists instead of at the whole deck. A card rather than a tile for the
+      reason it carries `headline`: there is a choice inside it, which of the
+      four, and a tile has nowhere to put one.
+
+      Its own route is the index at `/review/common`, which is where the
+      palette lands and where the counts are. `/practice` draws the four
+      buttons straight onto its card, so pressing one is one press.
+    */
+    href: "/review/common", title: "Most common words", subtitle: "The ones you hear most",
+    icon: "TrendingUp", tone: "sky", group: "targeted", note: "Four lists",
+    within: "/practice", headline: true,
+    blurb:
+      "The hundred commonest small words, verbs, nouns and describing words, counted over film " +
+      "and television subtitles rather than chosen by anybody. Asked in a different form each " +
+      "time, the way Flash cards asks the rest of your deck.",
   },
   {
     /*
@@ -284,15 +313,14 @@ export const TARGETED_MODES = PRACTICE_MODES.filter((m) => m.within);
 /**
  * The rounds that are reached from `/practice` but are not one of its six.
  *
- * Flash cards is its headline card and the two games sit under a heading of
- * their own. Read from the table rather than listed on that page, so a game
+ * Flash cards and the frequency lists are its headline cards and the games sit
+ * under a heading of their own. Read from the table rather than listed on that
+ * page, so a game
  * added here appears without anybody remembering to edit a second file: both
  * games shipped claiming to be reached from `/practice` while nothing there
  * linked to them, which made them unfindable outside the command palette.
  */
-export const GAMES = PRACTICE_MODES.filter(
-  (m) => m.within === "/practice" && m.href !== "/review/flashcards",
-);
+export const GAMES = PRACTICE_MODES.filter((m) => m.within === "/practice" && !m.headline);
 
 /** Whichever mode drills a given thing, for the page that names it. */
 export function modeAt(href: string): PracticeMode | undefined {

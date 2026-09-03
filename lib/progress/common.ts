@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { commonWords, type FrequencyGroup } from "@/lib/collections/frequency";
+import { COMMON_BATCH, COMMON_GROUP_KEYS } from "@/lib/collections/commonGroups";
+import { availableCardTypes } from "@/lib/srs/cards";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
 /**
@@ -94,4 +96,136 @@ export async function commonSections(ownerId: string): Promise<CommonSection[]> 
 /** The lemmas of one group, for the action that adds them. */
 export function lemmasIn(group: FrequencyGroup): string[] {
   return commonWords(group).map((w) => w.lemma);
+}
+
+/**
+ * The dictionary entries behind one group's list, in the order the corpus put
+ * them, for the round that asks about them.
+ *
+ * `@@unique` is on `(lemma, pos)`, so this can return more rows than the group
+ * has words and `oneEntryPerLemma` settles which: the entry with a stated part
+ * of speech, a hand-written provenance and the most forms. The same rule the
+ * search box leads with, for the reason it is one function rather than two.
+ */
+export async function commonLexemeIds(group: FrequencyGroup): Promise<string[]> {
+  const lemmas = commonWords(group).map((w) => w.lemma);
+  const rows = await prisma.lexeme.findMany({
+    where: { lemma: { in: lemmas } },
+    select: {
+      id: true, lemma: true, pos: true, provenance: true, gradationNote: true,
+      forms: { select: { id: true } },
+    },
+    orderBy: [{ lemma: "asc" }, { id: "asc" }],
+  });
+  return oneEntryPerLemma(rows, lemmas).map((r) => r.id);
+}
+
+/** How many of each group the dictionary can answer for, and how many are held. */
+export interface CommonCount {
+  group: FrequencyGroup;
+  /** Words of this group the dictionary has an entry for. */
+  found: number;
+  /** How many of those the learner already has a card for. */
+  inDeck: number;
+}
+
+/**
+ * The four counts, for the screens that offer the rounds.
+ *
+ * Two queries whatever the size of the deck, and no `examples` column, which is
+ * the longest in the schema: this is a number under a button, not a list.
+ */
+export async function commonCounts(ownerId: string): Promise<CommonCount[]> {
+  const wanted = COMMON_GROUP_KEYS.flatMap((group) => commonWords(group).map((w) => w.lemma));
+  const rows = await prisma.lexeme.findMany({
+    where: { lemma: { in: wanted } },
+    select: {
+      id: true, lemma: true, pos: true, provenance: true, gradationNote: true,
+      forms: { select: { id: true } },
+    },
+    orderBy: [{ lemma: "asc" }, { id: "asc" }],
+  });
+  const byLemma = new Map(oneEntryPerLemma(rows, wanted).map((r) => [r.lemma, r.id]));
+
+  /*
+    Owner-scoped, so the `distinct` is bounded by this learner's own deck
+    whatever it says: a `take` beside a `distinct` bounds nothing at all,
+    because Prisma deduplicates in the client and emits no LIMIT.
+  */
+  const held = new Set(
+    (await prisma.card.findMany({
+      where: { ownerId, lexemeId: { in: [...byLemma.values()] } },
+      select: { lexemeId: true },
+      distinct: ["lexemeId"],
+    })).map((c) => c.lexemeId ?? ""),
+  );
+
+  return COMMON_GROUP_KEYS.map((group) => {
+    const ids = commonWords(group).flatMap((w) => {
+      const id = byLemma.get(w.lemma);
+      return id ? [id] : [];
+    });
+    return { group, found: ids.length, inDeck: ids.filter((id) => held.has(id)).length };
+  });
+}
+
+/**
+ * THE NEXT WORDS OF A GROUP THAT ARE NOT FINISHED YET.
+ *
+ * Finished means every card type the word can actually support has at least one
+ * card behind it. That is `availableCardTypes`, which is the same function the
+ * add-to-deck checklist asks, so a word is never counted as short of a card the
+ * dictionary could not build for it: an adverb has no genitive stem and so no
+ * case cards, and `ei` is finished at two.
+ *
+ * Comparing types rather than counting rows is what makes pressing twice
+ * progress. A word added from the dictionary's list holds a recognition card
+ * and a production card and is short of the rest; once the round has deepened
+ * it, it drops out and the next twenty come forward. Counting rows instead
+ * would leave a word that can only ever make two cards at the front of the
+ * queue for ever.
+ *
+ * Returns lemmas rather than ids because `planLemmas` takes lemmas, and because
+ * an id crossing an action boundary is a value the caller could choose.
+ */
+export async function nextCommonBatch(
+  ownerId: string, group: FrequencyGroup, size = COMMON_BATCH,
+): Promise<string[]> {
+  const lemmas = commonWords(group).map((w) => w.lemma);
+  const rows = await prisma.lexeme.findMany({
+    where: { lemma: { in: lemmas } },
+    select: {
+      id: true, lemma: true, translation: true, pos: true, provenance: true,
+      gradation: true, gradationNote: true, government: true, examples: true,
+      forms: { select: { formType: true, value: true, morphCode: true } },
+    },
+    orderBy: [{ lemma: "asc" }, { id: "asc" }],
+  });
+  const entries = oneEntryPerLemma(rows, lemmas);
+  if (entries.length === 0) return [];
+
+  const heldTypes = new Map<string, Set<string>>();
+  for (const card of await prisma.card.findMany({
+    where: { ownerId, lexemeId: { in: entries.map((e) => e.id) } },
+    select: { lexemeId: true, cardType: true },
+  })) {
+    const key = card.lexemeId ?? "";
+    const seen = heldTypes.get(key) ?? new Set<string>();
+    seen.add(card.cardType);
+    heldTypes.set(key, seen);
+  }
+
+  const byLemma = new Map(entries.map((e) => [e.lemma, e]));
+  const batch: string[] = [];
+  // Walked in the corpus's own order rather than the query's, so the commonest
+  // unfinished word is always the next one offered.
+  for (const lemma of lemmas) {
+    if (batch.length >= size) break;
+    const entry = byLemma.get(lemma);
+    if (!entry) continue;
+    const held = heldTypes.get(entry.id) ?? new Set<string>();
+    if (availableCardTypes(entry).every((type) => held.has(type))) continue;
+    batch.push(lemma);
+  }
+  return batch;
 }

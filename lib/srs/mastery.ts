@@ -62,6 +62,8 @@
  * `lib/progress/mastery.ts`.
  */
 
+import { slotOfCard } from "@/lib/srs/slots";
+
 /** Correct answers a word needs before it can be called mastered. */
 export const MASTERY_CORRECT = 5;
 
@@ -204,3 +206,56 @@ export const MASTERY_LABEL: Record<Mastery, string> = {
  * to act on. Mastered is last and is the one you read for the pleasure of it.
  */
 export const MASTERY_ORDER: readonly Mastery[] = ["struggling", "almost", "learning", "mastered"];
+
+/**
+ * ONE CARD PER WORD, IN THE SLOT THE LEARNER HAS PRACTISED LEAST.
+ *
+ * The half of "asked in a way you have not" that a query cannot express. A word
+ * short of `MASTERY_SLOTS` has room in some slot it has not been asked in, and
+ * this cannot see *which* from a verdict alone, so it works the other way
+ * round: walk the cards in the order the caller asked for them, keep the first
+ * card of each word, and let a later card take that place only when it opens a
+ * slot the word has not been asked in yet.
+ *
+ * The caller's order is the whole of the tie break, which is why it takes the
+ * rows already sorted rather than sorting them itself: both callers ask for
+ * `lapses` first, so among cards of equal novelty the one that keeps going
+ * wrong leads.
+ *
+ * WHAT COUNTS AS A SLOT IS `slotOfCard`, and this read `targetCase ?? ""` when
+ * it was written, on the argument that the round and the verdict must not
+ * disagree about what variety means. They agree, and the definition moved: a
+ * card that is not about a case is its own kind of question rather than one
+ * shared "everything else", because reading them as one is what made every
+ * verb in the dictionary unmasterable. So a word's recognition card and its
+ * production card are two slots here as well, and this round opens the second
+ * of them where it used to stop at the first.
+ *
+ * Generic over the row rather than typed to Prisma's, because `lib/srs/` is
+ * pure and both callers hand in a different select. Two routes render the Flash
+ * cards session now, the whole deck and one frequency list, and a second copy
+ * of this is two answers to "what should this word be asked as" that drift.
+ */
+export function leastPractisedSlot<
+  T extends { lexemeId: string | null; targetCase: string | null; cardType: string },
+>(cards: readonly T[], wanted: ReadonlySet<string>): T[] {
+  const chosen = new Map<string, T>();
+  const slotsSeen = new Map<string, Set<string>>();
+
+  for (const card of cards) {
+    const lexemeId = card.lexemeId;
+    if (!lexemeId || !wanted.has(lexemeId)) continue;
+
+    const slot = slotOfCard(card);
+    const seen = slotsSeen.get(lexemeId) ?? new Set<string>();
+    const held = chosen.get(lexemeId);
+
+    if (!held || !seen.has(slot)) {
+      if (!held) chosen.set(lexemeId, card);
+      else if (seen.size < MASTERY_SLOTS) chosen.set(lexemeId, card);
+    }
+    seen.add(slot);
+    slotsSeen.set(lexemeId, seen);
+  }
+  return [...chosen.values()];
+}

@@ -123,6 +123,15 @@ const ROUTES = [
   "/review/speaking",
   "/review/sprint",
   "/review/flashcards",
+  /*
+    The frequency rounds. The index is four cards each carrying a title, a
+    count chip and two controls on one row, which is the shape that goes over
+    at 768 where the rail appears and the column is at its narrowest; the round
+    is a whole `ReviewSession`, and it is walked as one of the four because the
+    group decides which words are asked and not how the screen is drawn.
+  */
+  "/review/common",
+  "/review/common/noun",
   "/review/emoji",
   "/review/describe",
   "/review/target",
@@ -263,7 +272,14 @@ const SPARSE = new Map([
 // from that one and `/review/describe` from this. Measured at 1160 on the
 // merged tree rather than added from either side, which is the same rule one
 // line up, and the floor keeps the same ten under it.
-const { check, absent, done } = suite("Containment", { floor: 1150 });
+/*
+  And 1190: two routes for the frequency rounds at twenty checks each, which is
+  five checks over three widths plus the dark sweep. Counted off the route list
+  rather than off a run, for the reason this file already gives about a floor
+  measured on one machine: a local run waives the twenty a classroom needs, so
+  the number a run reaches here is not the number CI reaches.
+*/
+const { check, absent, done } = suite("Containment", { floor: 1190 });
 
 const browser = await launchChromium();
 

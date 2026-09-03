@@ -157,6 +157,7 @@ export const A1 = [
       ["pilt", "picture"],
       ["sein", "wall"],
       ["põrand", "floor"],
+      ["korrus", "floor, storey"],
     ],
   }),
 
@@ -226,6 +227,7 @@ export const A1 = [
       ["reede", "Friday"],
       ["laupäev", "Saturday"],
       ["pühapäev", "Sunday"],
+      ["kellaaeg", "time of day"],
     ],
   }),
 
@@ -329,6 +331,7 @@ export const A1 = [
       ["raske", "difficult, heavy", "ADJECTIVE"],
       ["kerge", "easy, light", "ADJECTIVE"],
       ["lihtne", "simple", "ADJECTIVE"],
+      ["valmis", "ready", "ADJECTIVE"],
     ],
   }),
 
@@ -510,6 +513,9 @@ export const A1 = [
       ["otse", "straight on", "ADVERB"],
       ["edasi", "onwards, further", "ADVERB"],
       ["tagasi", "back", "ADVERB"],
+      ["asuma", "to be located"],
+      ["mujal", "elsewhere", "ADVERB"],
+      ["siia", "to here", "ADVERB"],
     ],
   }),
 
@@ -587,6 +593,8 @@ export const A1 = [
       ["igaüks", "everyone, each one", "PRONOUN"],
       ["mõni", "some, a few", "PRONOUN"],
       ["iga", "every, each", "PRONOUN", 171378],
+      // Three Ekilex entries carry this; 211037 is the possessive.
+      ["oma", "one's own", "PRONOUN", 211037],
     ],
   }),
 
@@ -669,6 +677,8 @@ export const A1 = [
       ["lähedal", "near, close to", "ADVERB"],
       ["kohal", "above, over", "ADVERB"],
       ["mööda", "along", "ADVERB"],
+      ["alates", "from, starting from", "ADVERB"],
+      ["kaasas", "along, with you", "ADVERB"],
     ],
   }),
 
