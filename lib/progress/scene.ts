@@ -29,6 +29,8 @@ import { topicForms, type Line } from "@/lib/scenes/retrieval";
 import type { TurnContext } from "@/lib/scenes/turn";
 import type { RoleCard } from "@/lib/scenes/props";
 import type { BeatSpec, SceneSpec } from "@/lib/scenes/types";
+import { isPhrase } from "@/lib/dict/pos";
+import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { planRun, RECENCY_WINDOW, type Recency, type SceneRun as SceneRunPlan } from "@/lib/scenes/run";
 import { randomUUID } from "node:crypto";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
@@ -176,9 +178,28 @@ async function readEntries(lemmas: readonly string[]): Promise<Row[]> {
   });
 }
 
-/** `Lexeme.examples` is a newline-separated column, as the seed writes it. */
+/**
+ * The recorded sentences behind one entry, read the way the app reads them.
+ *
+ * `Lexeme.examples` IS A JSON STRING COLUMN and this used to split it on
+ * newlines, which is not a near miss: a word with no sentences came back as one
+ * line reading `[]`, and a word with sentences came back as one line of raw
+ * JSON. `naturalSentence` then threw every one of them away, so the attested
+ * rung of the ladder had never once answered, on any beat of any scene. It
+ * looked exactly like a dictionary too thin to fill a conversation, which is a
+ * conclusion this project had already written down about itself.
+ *
+ * Through `parseExamples` and `usableExamples`, because those are what decide
+ * what a sentence is everywhere else: a fragment, a paragraph and a duplicate
+ * are not lines somebody says, and the scene and the dictionary entry
+ * disagreeing about what is worth showing would be two answers to one question.
+ * AI-sourced sentences are dropped, which `wordOfDay` does for the same reason:
+ * this is the rung whose whole claim is that a lexicographer wrote it.
+ */
 function splitExamples(examples: string | null): string[] {
-  return (examples ?? "").split("\n").map((line) => line.trim()).filter(Boolean);
+  return usableExamples(parseExamples(examples))
+    .filter((example) => example.source !== "AI")
+    .map((example) => example.et);
 }
 
 function formsOfLemmas(rows: readonly Row[], lemmas: readonly string[]): ReadonlySet<string> {
@@ -280,6 +301,28 @@ function poolsFor(scene: SceneSpec, rows: readonly Row[]): Map<string, Line[]> {
     for (const lemma of beat.topic) {
       const row = byLemma.get(lemma);
       if (!row) continue;
+      /*
+        A PHRASE IS ITS OWN SENTENCE, so it is a line rather than a word with
+        no lines. Ekilex records a usage against a *word*, to show it doing its
+        job in a sentence, and it holds none for `Tere!` or `Kuidas läheb?`
+        because those already are the sentence: the whole A1 greetings unit is
+        twenty entries with no usage between them, which is a fact about what a
+        phrase is rather than a gap in the dictionary (`isPhrase`).
+
+        Nothing had noticed, because it only shows on the beat that has nothing
+        else. Keyless, every scene in this app opened with the fallback: the
+        receptionist said "I do not understand" before the learner had said a
+        word, which is not a conversation, it is the ladder falling all the way
+        through on the one beat every scene starts with.
+
+        It is retrieval and not composition. The lemma is a headword a
+        lexicographer wrote down, and putting it on screen is the dictionary
+        speaking, which is exactly what the attested rung is.
+      */
+      if (isPhrase(row.pos) && row.usages.length === 0) {
+        lines.push({ text: row.lemma, lemma: row.lemma, cefr: row.cefr });
+        continue;
+      }
       for (const text of row.usages) lines.push({ text, lemma: row.lemma, cefr: row.cefr });
     }
     out.set(beat.id, lines);
@@ -406,14 +449,67 @@ export interface FinishedRun {
  */
 export interface Briefing {
   readonly you: string;
-  readonly props: readonly { slot: string; card: string }[];
+  readonly props: readonly {
+    slot: string;
+    card: string;
+    /**
+     * What you were dealt, **in English**, where the card says "the word below".
+     *
+     * A `word` or `weekday` prop draws a lemma and the card's own line points
+     * at it, and for a while nothing printed it: every scene shipped a card
+     * reading "What is wrong: read it off the word below" with nothing below
+     * it, so the learner could not know whether they had a fever or a sore
+     * throat and the beat could not be met except by guessing. Two of the
+     * doctor scene's three props were unanswerable and the third only worked
+     * because a time prints itself.
+     *
+     * The gloss rather than the lemma, and that is the exercise rather than a
+     * concession to ADR-005: the card tells you what is wrong and you say it
+     * in Estonian. Printing `valu` would leave nothing to produce, which is
+     * the fault `audit:questions` exists for one floor down. Empty where the
+     * card carries its own value, which a time and a floor number do.
+     */
+    given: readonly string[];
+  }[];
   readonly persona: string;
 }
 
-function briefingOf(run: SceneRunPlan): Briefing {
+/**
+ * The English of the words a card was dealt.
+ *
+ * One query for the run rather than one per prop, and `oneEntryPerLemma`'s
+ * question does not arise: what is wanted is the gloss, and where a lemma holds
+ * two entries their glosses are two true meanings of a word the scene named on
+ * purpose. Ordered, so which one leads is the app's answer rather than the
+ * plan's.
+ */
+async function glossesFor(run: SceneRunPlan): Promise<Map<string, string>> {
+  const lemmas = [...new Set(run.card.props.flatMap((prop) => prop.lemmas))];
+  if (lemmas.length === 0) return new Map();
+  const rows = await prisma.lexeme.findMany({
+    where: { lemma: { in: lemmas } },
+    select: { lemma: true, translation: true },
+    orderBy: [{ lemma: "asc" }, { id: "asc" }],
+  });
+  const out = new Map<string, string>();
+  for (const row of rows) if (!out.has(row.lemma)) out.set(row.lemma, row.translation);
+  return out;
+}
+
+function briefingOf(run: SceneRunPlan, glosses: ReadonlyMap<string, string>): Briefing {
   return {
     you: run.card.you,
-    props: run.card.props.map((prop) => ({ slot: prop.slot, card: prop.card })),
+    props: run.card.props.map((prop) => ({
+      slot: prop.slot,
+      card: prop.card,
+      /*
+        A lemma the dictionary cannot gloss is left out rather than printed as
+        itself: a scene names its words as a request the harvest either honours
+        or reports, so this is a gap to notice and not a place to fall back to
+        Estonian on a card that says it is English.
+      */
+      given: prop.lemmas.map((lemma) => glosses.get(lemma)).filter((v): v is string => !!v),
+    })),
     persona: run.persona.who,
   };
 }
@@ -465,7 +561,7 @@ export async function beginRun(input: {
     select: { id: true },
   });
 
-  return { runId: created.id, seed, run, briefing: briefingOf(run) };
+  return { runId: created.id, seed, run, briefing: briefingOf(run, await glossesFor(run)) };
 }
 
 /**

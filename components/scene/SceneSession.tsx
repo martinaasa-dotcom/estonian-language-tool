@@ -43,7 +43,7 @@ type Phase = "briefing" | "talking" | "debrief";
 
 interface Opened {
   runId: string;
-  card: { you: string; props: { slot: string; card: string }[] };
+  card: { you: string; props: { slot: string; card: string; given: readonly string[] }[] };
   persona: string;
   composed: boolean;
 }
@@ -114,6 +114,21 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ runId: opened.runId, turns: next, used }),
       });
+      /*
+        A FAILURE MAY NOT MISNAME ITS CAUSE. Reading the body without looking at
+        the status made a 500 and a dead network the same sentence, and the
+        first version of this said "that did not reach us" about a route that
+        had answered perfectly promptly with an error. That sends whoever reads
+        it to check their connection about a bug in this app.
+      */
+      if (!response.ok) {
+        setError(
+          response.status === 429
+            ? "That was a lot of turns at once. Give it a moment."
+            : "Something went wrong at our end. Your turn is still here.",
+        );
+        return;
+      }
       const data = await response.json() as {
         text?: string | null; provenance?: Turn["provenance"];
         beatId?: string | null; goal?: string | null; done?: string[];
@@ -135,9 +150,10 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       if (data.over) await hangUpRef.current(next, false);
     } catch {
       /*
-        A network that will not answer is not a failure a learner can act on,
-        so it says what happened and leaves the conversation where it was: the
-        turn they typed is still theirs and pressing again resends it.
+        The network, which is the case this catch is actually for now that a
+        refusal is read off the status. Either way the conversation stays where
+        it was: the turn they typed is still theirs and pressing again resends
+        it.
       */
       setError("That did not reach us. Try again.");
     } finally {
@@ -271,7 +287,22 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         <Card className="mt-2 flex flex-col gap-2">
           <p className="text-sm">{opened?.card.you}</p>
           <ul className="flex flex-col gap-1 text-sm" style={{ color: "var(--ink-2)" }}>
-            {(opened?.card.props ?? []).map((prop) => <li key={prop.slot}>{prop.card}</li>)}
+            {(opened?.card.props ?? []).map((prop) => (
+              <li key={prop.slot}>
+                {prop.card}
+                {/*
+                  What you were dealt, in English, because the card's own line
+                  points at it: "read it off the word below" with nothing below
+                  it is a card nobody can answer. Saying it in Estonian is the
+                  exercise, so the word itself is not here.
+                */}
+                {prop.given.length > 0 && (
+                  <span className="block font-medium" style={{ color: "var(--ink)" }}>
+                    {prop.given.join(" · ")}
+                  </span>
+                )}
+              </li>
+            ))}
           </ul>
           {opened?.persona && (
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>{opened.persona}</p>

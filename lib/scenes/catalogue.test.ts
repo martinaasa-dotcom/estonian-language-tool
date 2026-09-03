@@ -232,4 +232,46 @@ describe("the scene catalogue", () => {
       }
     }
   });
+
+  /*
+    A CARD THAT POINTS AT SOMETHING HAS TO SHOW IT, and for a while none of
+    them did. Six props across three scenes said "the word below" or "the day
+    below" and printed nothing below, so a learner could not know whether they
+    had been dealt a fever or a sore throat, and the beat that asks for it was
+    unanswerable except by guessing. Two of the doctor scene's three props were
+    in that state and the third only worked because a time prints itself.
+
+    The fix was the briefing carrying the English of what was dealt, so what
+    this holds is the copy that was covering for its absence: a card may not
+    tell somebody to read a word off a place, because there is no "below" any
+    more, there is the line and the meaning under it.
+  */
+  it("does not send a learner looking for a word somewhere else on the card", () => {
+    for (const scene of SCENES) {
+      for (const prop of scene.props) {
+        const says = "says" in prop ? prop.says : "";
+        expect(says, `${scene.id}'s ${prop.slot} points somewhere instead of saying what it is`)
+          .not.toMatch(/\b(below|above|beside|opposite)\b/i);
+      }
+    }
+  });
+
+  /*
+    And a word prop names words the scene teaches, which is what makes the
+    gloss reachable at all: the briefing looks the drawn lemma up, and a lemma
+    no unit of this scene declares comes back with nothing to print, which is
+    the unanswerable card again wearing a different cause.
+  */
+  it("draws its words from the units it declares", () => {
+    for (const scene of SCENES) {
+      const taught = new Set(scene.units.flatMap((id) => unitById(id)?.lemmas ?? []));
+      for (const prop of scene.props) {
+        if (prop.kind !== "word" && prop.kind !== "weekday") continue;
+        for (const lemma of prop.oneOf) {
+          expect(taught, `${scene.id}'s ${prop.slot} can draw ${lemma}, which no unit of it teaches`)
+            .toContain(lemma);
+        }
+      }
+    }
+  });
 });

@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
-import { bucketForOwner, checkRateLimit } from "@/lib/security/rateLimit";
+import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { reportError } from "@/lib/observability/report";
 import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
 import { MAX_TURNS, MAX_TURN_CHARS, readDraw, replay, sceneContext } from "@/lib/progress/scene";
@@ -70,8 +70,10 @@ export async function POST(request: Request) {
     exactly the shape that would refuse in its first few seconds. There is
     always an owner here, because `requireUserId` threw if there was not.
   */
-  const limited = checkRateLimit(bucketForOwner(ownerId), PER_MINUTE, 60_000);
-  if (limited) return limited;
+  const limit = checkRateLimit(`scene:${bucketForOwner(ownerId)}`, PER_MINUTE, 60_000);
+  if (!limit.ok) {
+    return rateLimited(limit, "That was a lot of turns at once. Give it a moment.");
+  }
 
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const runId = String(body.runId ?? "").slice(0, 64);
@@ -125,6 +127,14 @@ export async function POST(request: Request) {
   const { state, response } = replay(context, readDraw(row!.transcript), turns);
   const beat = currentBeat(scene, state);
 
+  /*
+    WHERE THE CONVERSATION IS, AND EVERY BRANCH RETURNS IT. Three of the four
+    used to return the line alone, so the screen was handed something to read
+    and never told which beat it was on: `beatId` stayed null, the objectives
+    never ticked, and "Say it" was disabled for the whole run. The line is what
+    the reader sees and this is what the screen runs on, and a branch that
+    answers one without the other has not answered.
+  */
   const progress = {
     voice,
     response,
@@ -170,7 +180,7 @@ export async function POST(request: Request) {
   */
   const attested = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
   if (attested.provenance === "attested") {
-    return Response.json({ ...attested, voice: voice }, { headers: NO_STORE });
+    return Response.json({ ...progress, ...attested }, { headers: NO_STORE });
   }
 
   /*
@@ -194,7 +204,7 @@ export async function POST(request: Request) {
       only the ledger knows which of the three limits was reached.
     */
     return Response.json(
-      { ...attested, voice: voice, composed: false, note: decision?.message ?? null },
+      { ...progress, ...attested, composed: false, note: decision?.message ?? null },
       { headers: NO_STORE },
     );
   }
@@ -225,7 +235,7 @@ export async function POST(request: Request) {
     after(() => releaseReservation(decision.reservation!));
   }
 
-  return Response.json({ ...line, voice: voice }, { headers: NO_STORE });
+  return Response.json({ ...progress, ...line }, { headers: NO_STORE });
 }
 
 /** Who is behind the desk, off the run's own row rather than out of a request. */

@@ -104,12 +104,12 @@ const DOCTOR: SceneSpec = {
   props: [
     {
       kind: "word", slot: "symptom", oneOf: ["valu", "palavik", "haigus", "haige", "väsinud"],
-      says: "What is wrong: read it off the words below and say it in your own sentence.",
+      says: "What is wrong. Say it in your own sentence.",
     },
     {
       kind: "weekday", slot: "since",
       oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
-      says: "It started earlier this week, on the day below.",
+      says: "It started earlier this week, on this day.",
     },
     { kind: "time", slot: "time", from: 9, to: 16 },
   ],
@@ -234,12 +234,12 @@ const LANDLORD: SceneSpec = {
   props: [
     {
       kind: "word", slot: "problem", oneOf: ["küte", "elekter", "remont", "mööbel", "aken", "uks"],
-      says: "What has gone wrong: the word is below, and the sentence is yours.",
+      says: "What has gone wrong. The sentence is yours.",
     },
     {
       kind: "weekday", slot: "since",
       oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
-      says: "It has been like this since the day below.",
+      says: "It has been like this since this day.",
     },
     { kind: "time", slot: "time", from: 8, to: 18 },
     { kind: "number", slot: "floor", min: 1, max: 5, says: "You live on floor" },
@@ -366,7 +366,7 @@ const COUNTER: SceneSpec = {
   props: [
     {
       kind: "word", slot: "paper", oneOf: ["avaldus", "dokument", "luba", "arve", "allkiri"],
-      says: "What you have come to hand in is the word below.",
+      says: "What you have come to hand in.",
     },
     /*
       A fictional reference, supplied rather than asked for. An identity code

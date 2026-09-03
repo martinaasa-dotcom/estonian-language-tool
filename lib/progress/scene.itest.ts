@@ -54,6 +54,49 @@ describe("a scene against the dictionary", () => {
     expect(context!.fallback.length, "the way out is empty").toBeGreaterThan(3);
   });
 
+  it("reads the sentences off the column the way the app reads them", async () => {
+    /*
+      `Lexeme.examples` is a JSON string column and the scene used to split it
+      on newlines, so a word with no sentences produced one line reading `[]`
+      and a word with sentences produced one line of raw JSON. `naturalSentence`
+      threw every one of them away, so the attested rung had never once
+      answered on any beat of any scene, and it looked exactly like a
+      dictionary too thin to hold a conversation.
+
+      Asked here rather than in a unit test because the shape of that column is
+      a fact about the seed. A parser fixture would have agreed with the broken
+      version, since the bug was reading the wrong shape and not reading a
+      shape wrongly.
+    */
+    const context = await sceneContext(DOCTOR.id);
+    const every = DOCTOR.beats.flatMap((beat) => context!.pool.get(beat.id) ?? []);
+    expect(every.length, "no beat drew a single line").toBeGreaterThan(0);
+    for (const line of every) {
+      expect(line.text, "a line is raw JSON rather than a sentence").not.toMatch(/^[[{]/);
+      expect(line.text.length, "an empty line reached the pool").toBeGreaterThan(2);
+    }
+  });
+
+  it("opens with a greeting rather than with not understanding", async () => {
+    /*
+      Ekilex records a usage against a *word*, to show it doing its job in a
+      sentence, and holds none for `Tere!` because that already is the
+      sentence: the whole A1 greetings unit is phrases with no usage between
+      them. So the beat every scene opens with had nothing, the ladder fell all
+      the way through, and keyless the receptionist said "I do not understand"
+      before the learner had said a word.
+
+      A phrase is its own line. It is retrieval rather than composition: the
+      lemma is a headword a lexicographer wrote down.
+    */
+    const context = await sceneContext(DOCTOR.id);
+    const greeting = DOCTOR.beats[0]!;
+    const pool = context!.pool.get(greeting.id) ?? [];
+    expect(pool.length, "the opening beat has nothing to say").toBeGreaterThan(0);
+    expect(pool.some((line) => line.text === line.lemma),
+      "no phrase was taken as its own line").toBe(true);
+  });
+
   it("finds recorded sentences for the beats that carry the encounter", async () => {
     const context = await sceneContext(DOCTOR.id);
     let withLines = 0;
