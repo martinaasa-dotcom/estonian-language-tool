@@ -130,4 +130,34 @@ describe("the words a run needed and the learner did not have", () => {
     expect(stalledWords(SCENE, play([{ reading: "complete", met: [true] }]))).toEqual([]);
     expect(stalledWords(SCENE, startScene(SCENE))).toEqual([]);
   });
+
+  it("names a few of a beat's words rather than all of them", () => {
+    /*
+      A `lemma` requirement lists every word that would satisfy it, and for
+      "say where it hurts" that is eleven body parts. Writing all of them down
+      handed somebody eleven words under a heading saying the conversation had
+      needed them, each with a button to put it in their deck. It had needed
+      one.
+    */
+    const wide: SceneSpec = {
+      ...SCENE,
+      beats: [{
+        ...SCENE.beats[0]!,
+        needs: [{
+          kind: "lemma",
+          oneOf: ["pea", "kõrv", "käsi", "jalg", "selg", "silm", "nina", "suu"],
+        }],
+      }],
+    };
+    const stalled = stalledWords(wide, play([
+      { reading: "unrecognised", met: [false] },
+      { reading: "unrecognised", met: [false] },
+      { reading: "unrecognised", met: [false] },
+    ]));
+    expect(stalled.length, "a stalled beat handed over its whole vocabulary")
+      .toBeLessThanOrEqual(3);
+    // And the head of the list, so what is offered is the beat's own first
+    // word rather than whichever three a set happened to iterate.
+    expect(stalled[0]).toBe("pea");
+  });
 });

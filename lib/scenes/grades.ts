@@ -113,10 +113,34 @@ export function stalledWords(scene: SceneSpec, state: SceneState): string[] {
   for (const beat of scene.beats) {
     if (met.has(beat.id)) continue;
     if (!state.turns.some((turn) => turn.beatId === beat.id)) continue;
+    /*
+      A FEW WORDS PER BEAT, NOT THE BEAT'S WHOLE VOCABULARY.
+
+      A `lemma` requirement lists every word that would satisfy it, which for
+      "say where it hurts" is eleven body parts. The first version wrote all of
+      them down, so stalling on one beat handed somebody eleven words under a
+      heading saying the conversation had needed them, each with a button to
+      put it in their deck. It had needed one. A list that long is not a gap
+      worth reporting, it is the unit, and offering to add a unit is what
+      `/learn` is for.
+
+      The cap is on the beat rather than on the total, because two beats that
+      stalled are two different things the learner could not say, and a total
+      would let the first one eat the second.
+    */
     for (const need of beat.needs) {
-      if (need.kind === "lemma") for (const lemma of need.oneOf) out.add(lemma);
+      if (need.kind === "lemma") for (const lemma of need.oneOf.slice(0, PER_BEAT)) out.add(lemma);
       if (need.kind === "case") out.add(need.lemma);
     }
   }
   return [...out];
 }
+
+/**
+ * How many of a beat's words a stall is worth.
+ *
+ * Three, which is enough to show the shape of what was wanted (`pea`, `kõrv`,
+ * `käsi` says "a body part" in a way one word does not) and few enough to read
+ * as a gap rather than as a vocabulary list.
+ */
+const PER_BEAT = 3;

@@ -363,6 +363,17 @@ jobs:
       # read back on the entry. Every part of it is in a different process, so
       # nothing smaller than this can say the loop closes.
       - run: node scripts/test-suggestions.mjs
+      # One conversation, played through. The pieces have tests and none of
+      # them can see the loop: a page, an action that draws and writes a run,
+      # a route that marks every turn and walks the ladder, a client that
+      # decides nothing, a second marking of the same transcript when it ends,
+      # and a debrief built out of that. Four faults were found by writing it
+      # and three of them looked exactly like an app with nothing in it.
+      #
+      # It runs keyless here and says so: the composed rung needs a provider
+      # key, so that one check is waived with the state that would lift it
+      # named, and every other rung and every screen is checked either way.
+      - run: node scripts/test-scene.mjs
       - run: node scripts/a11y-check.mjs
       # And the five this list had quietly lost. The comment above about
       # `test-exam.mjs` sitting here unrun describes the drift in one

@@ -2836,7 +2836,14 @@ check("every browser suite says how many checks it reached", () => {
     */
     const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
-    const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*\}/.exec(source);
+    /*
+      A trailing comma is ordinary and this used to reject one, which fired on
+      a suite whose floor was declared correctly and carried a paragraph saying
+      how the number was arrived at. A floor is exactly the sort of number that
+      deserves its reasoning written beside it, so the rule widens rather than
+      the declaration being squeezed onto one line.
+    */
+    const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*,?\s*\}/.exec(source);
     assert.ok(floor, `${file} does not declare a check floor`);
     assert.ok(Number(floor![1]) > 0, `${file} declares a floor of zero, which asserts nothing`);
     assert.equal(
