@@ -34,7 +34,7 @@ import { randomUUID } from "node:crypto";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
 import {
   advance, currentBeat, objectivesOf, outcomeOf, startScene, walkOut,
-  type Objectives, type TurnRecord,
+  type Objectives, type Response, type SceneState, type TurnRecord,
 } from "@/lib/scenes/state";
 import { gradesFor, stalledWords, type SceneGrade } from "@/lib/scenes/grades";
 import { readTurn } from "@/lib/scenes/turn";
@@ -373,7 +373,49 @@ export interface FinishedRun {
   readonly turns: readonly TurnRecord[];
   readonly grades: readonly SceneGrade[];
   /** Words the run needed and the learner did not have, for the debrief. */
-  readonly gaps: readonly string[];
+  /**
+   * Words the run needed and the learner did not have, for the debrief.
+   *
+   * With the entry where the dictionary has one, because the debrief offers to
+   * keep them and `AddWordButton` adds by id. A word with no entry is still
+   * listed: "the conversation needed this and you did not have it" is true
+   * whether or not the dictionary can teach it, and saying nothing would hide
+   * exactly the gaps worth reporting.
+   */
+  readonly gaps: readonly { lemma: string; lexemeId: string | null }[];
+}
+
+/**
+ * What crosses to the browser when a run opens, and it is deliberately small.
+ *
+ * The planned run holds the persona's leans, the seed, and the curveballs,
+ * which are the things that are supposed to *happen* to somebody rather than
+ * be read off a card. Sending the whole plan down was the first version of
+ * this and it hands anybody with a network tab the whole afternoon: which
+ * clerk they got, what is about to go wrong and in what order.
+ *
+ * Sonad already answered this question the other way round and said why: there
+ * the word crosses because marking without a round trip is most of how it
+ * plays, and the trade is written down. Here nothing is bought by sending it,
+ * because every turn is marked on the server anyway.
+ *
+ * So this is the briefing a person walking in would have: who you are, what
+ * you were given, and who is behind the desk. **English only**, both because
+ * the role card is English (a scene may not write Estonian, ADR-005) and
+ * because a prop's lemma is the word the learner is there to produce.
+ */
+export interface Briefing {
+  readonly you: string;
+  readonly props: readonly { slot: string; card: string }[];
+  readonly persona: string;
+}
+
+function briefingOf(run: SceneRunPlan): Briefing {
+  return {
+    you: run.card.you,
+    props: run.card.props.map((prop) => ({ slot: prop.slot, card: prop.card })),
+    persona: run.persona.who,
+  };
 }
 
 /**
@@ -397,7 +439,7 @@ export async function beginRun(input: {
   sceneId: string;
   level: string;
   difficulty: Difficulty;
-}): Promise<{ runId: string; seed: string; run: SceneRunPlan } | null> {
+}): Promise<{ runId: string; seed: string; run: SceneRunPlan; briefing: Briefing } | null> {
   const scene = sceneById(input.sceneId);
   if (!scene) return null;
 
@@ -423,7 +465,7 @@ export async function beginRun(input: {
     select: { id: true },
   });
 
-  return { runId: created.id, seed, run };
+  return { runId: created.id, seed, run, briefing: briefingOf(run) };
 }
 
 /**
@@ -464,23 +506,13 @@ export async function finishRun(input: {
 
   const { scene } = context;
   const draw = readDraw(row.transcript);
-  const data = draw ? dataFor(draw.card, context.lexicon) : new Map<string, ReadonlySet<string>>();
 
   /*
-    Replayed rather than trusted. Every turn goes back through the marker in the
-    order it was typed, so the objectives, the outcome and the grades are the
-    server's own reading of what the learner wrote.
+    Replayed rather than trusted, through the same `replay` the route runs on
+    every turn. Two markers would be two answers to "were you understood", and
+    the one nobody watches is the one that drifts.
   */
-  let state = startScene(scene);
-  let previous = "";
-  for (const sent of input.turns.slice(0, MAX_TURNS)) {
-    const beat = currentBeat(scene, state);
-    if (!beat) break;
-    const said = String(sent.said ?? "").slice(0, MAX_TURN_CHARS);
-    const evidence = readTurn(said, beat, { ...context.marker, data, previous });
-    ({ state } = advance(scene, state, evidence, said, Boolean(sent.helped)));
-    previous = said;
-  }
+  let { state } = replay(context, draw, input.turns);
   if (input.walkedOut) state = walkOut(state);
 
   const objectives = objectivesOf(scene, state);
@@ -509,18 +541,73 @@ export async function finishRun(input: {
     });
   }
 
+  const wanted = [...new Set([...input.asked.map((a) => a.lemma), ...stalled])];
+  const known = wanted.length === 0 ? [] : await prisma.lexeme.findMany({
+    where: { lemma: { in: wanted } },
+    select: { id: true, lemma: true },
+    /*
+      Ordered, because two entries can share a lemma by design (`hall` is a
+      noun and an adjective) and the debrief offers exactly one to keep. An
+      unordered read hands that choice to the query plan, which is the fault
+      `rankCandidates` has a comment about one layer up.
+    */
+    orderBy: [{ lemma: "asc" }, { id: "asc" }],
+  });
+  const byLemma = new Map<string, string>();
+  for (const entry of known) if (!byLemma.has(entry.lemma)) byLemma.set(entry.lemma, entry.id);
+
   return {
     runId: row.id,
     objectives,
     outcome: outcome ? { id: outcome.id, says: outcome.says } : null,
     turns: state.turns,
     grades,
-    gaps: [...new Set([...input.asked.map((a) => a.lemma), ...stalled])],
+    gaps: wanted.map((lemma) => ({ lemma, lexemeId: byLemma.get(lemma) ?? null })),
   };
 }
 
+/**
+ * Reads a whole transcript back through the marker.
+ *
+ * THE ONE REPLAY, used mid-run and at the end. A conversation is a dozen turns,
+ * so replaying the lot on every turn costs nothing measurable and buys the
+ * property that matters: the reading a learner sees while they are talking and
+ * the reading that is written down when they stop are produced by the same
+ * function over the same input. Two of them would be two answers to "were you
+ * understood", and the one nobody watches is the one that drifts.
+ *
+ * It also means the route holds no state. The client sends what it has typed so
+ * far, which it may of course lie about; a lie changes what that learner sees
+ * mid-run and nothing that is recorded, because this is what runs again at the
+ * end. That is ADR-022's split, and it is why the client never sends a mark.
+ */
+export function replay(
+  context: SceneContext,
+  draw: StoredDraw | null,
+  turns: readonly SentTurn[],
+): { state: SceneState; response: Response } {
+  const data = draw
+    ? dataFor(draw.card, context.lexicon)
+    : new Map<string, ReadonlySet<string>>();
+
+  let state = startScene(context.scene);
+  let response: Response = "answer";
+  let previous = "";
+  for (const sent of turns.slice(0, MAX_TURNS)) {
+    const beat = currentBeat(context.scene, state);
+    if (!beat) break;
+    const said = String(sent.said ?? "").slice(0, MAX_TURN_CHARS);
+    const evidence = readTurn(said, beat, { ...context.marker, data, previous });
+    ({ state, response } = advance(
+      context.scene, state, evidence, said, Boolean(sent.helped),
+    ));
+    previous = said;
+  }
+  return { state, response };
+}
+
 /** The draw a run was dealt, or null where the row predates the shape. */
-function readDraw(transcript: string): StoredDraw | null {
+export function readDraw(transcript: string): StoredDraw | null {
   try {
     const parsed = JSON.parse(transcript) as Partial<StoredDraw>;
     if (!parsed.card || !Array.isArray(parsed.card.props)) return null;

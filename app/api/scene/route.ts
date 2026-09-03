@@ -1,13 +1,14 @@
 import { after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { recordUsage } from "@/lib/usage/ledger";
+import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
 import { bucketForOwner, checkRateLimit } from "@/lib/security/rateLimit";
 import { reportError } from "@/lib/observability/report";
 import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
-import { sceneContext } from "@/lib/progress/scene";
+import { MAX_TURNS, MAX_TURN_CHARS, readDraw, replay, sceneContext } from "@/lib/progress/scene";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { sceneLine } from "@/lib/scenes/line";
+import { currentBeat, isOver } from "@/lib/scenes/state";
 import { personaById } from "@/lib/scenes/personas";
 import { DEFAULT_VOICE } from "@/lib/audio/voice";
 import { MAX_WORDS } from "@/lib/scenes/retrieval";
@@ -35,14 +36,21 @@ import { MAX_WORDS } from "@/lib/scenes/retrieval";
  * go in as conversation, the way the tutor's do, and are never concatenated
  * into an instruction.
  *
- * ONE BOOKING FOR THE WHOLE SCENE, CHECKED HERE AND MADE IN `beginScene`
- * (§16). Running out of allowance halfway through a conversation is the worst
- * failure available to this module, because the other side simply stops talking
- * and there is nothing honest to put on the screen. So a turn inside a scene
- * that was authorised does not ask the ledger again; it proves the booking
- * exists. The proof arrives in a request body, so it is *verified* rather than
- * believed: this owner's, of this kind, and a `CALL` row rather than anything
- * else. A forged one buys nothing.
+ * ONE BOOKING PER COMPOSED TURN (§16), and the first version of this booked one
+ * for the whole run instead. The argument for that was real, that running out
+ * of allowance halfway through a conversation is the worst failure available
+ * here, and it does not survive the arithmetic: the ledger books a call when it
+ * authorises one because two of the three limits count `CALL` rows, so a dozen
+ * turns behind one booking is eleven calls the allowance never saw, on the
+ * dearest path in the app. What is left of the argument is that the allowance
+ * running out mid-scene has to be *survivable*, and it is, because the rung
+ * below the model is a real conversational move rather than an error: the
+ * other side did not catch that, say it again.
+ *
+ * The ledger is asked only once the attested rung has failed, because a line
+ * the dictionary already had costs nothing and booking for it would ration a
+ * learner over a request nobody made. And a booking is handed back where
+ * nothing was composed.
  */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,9 +90,7 @@ export async function POST(request: Request) {
       })
     : null;
   const scene = row ? sceneById(row.sceneId) : null;
-  const beat = scene?.beats[Number(body.beat)];
-
-  if (!scene || !beat) {
+  if (!scene) {
     return Response.json({ error: "That is not a turn in a scene." }, { status: 400 });
   }
 
@@ -94,6 +100,47 @@ export async function POST(request: Request) {
   }
 
   const voice = personaVoice(row!.transcript);
+
+  /*
+    MARKED HERE, BY THE SAME FUNCTION THAT MARKS IT AT THE END.
+
+    The client sends everything it has typed so far and the server replays the
+    lot, which costs nothing at a dozen turns and buys the property that
+    matters: the reading a learner sees while they are talking and the reading
+    written down when they stop come from one function over one input. The route
+    therefore holds no state, and a client that lies about its own turns changes
+    only what it shows itself, because `finishRun` runs this again.
+  */
+  const turns = Array.isArray(body.turns)
+    ? body.turns.slice(0, MAX_TURNS).map((turn) => {
+        const one = (turn ?? {}) as Record<string, unknown>;
+        return {
+          beatId: String(one.beatId ?? "").slice(0, 64),
+          said: String(one.said ?? "").slice(0, MAX_TURN_CHARS),
+          helped: one.helped === true,
+        };
+      })
+    : [];
+
+  const { state, response } = replay(context, readDraw(row!.transcript), turns);
+  const beat = currentBeat(scene, state);
+
+  const progress = {
+    voice,
+    response,
+    beatId: beat?.id ?? null,
+    goal: beat?.goal ?? null,
+    done: state.done,
+    over: isOver(scene, state),
+    /*
+      What the last turn was read as, so the screen can answer in character
+      rather than with a verdict. Five readings, not two (§8).
+    */
+    reading: state.turns[state.turns.length - 1]?.reading ?? null,
+  };
+
+  // Nothing more to say: the conversation is over and the debrief is next.
+  if (!beat) return Response.json({ ...progress, text: null }, { headers: NO_STORE });
 
   const used = new Set(
     Array.isArray(body.used) ? body.used.filter((v): v is string => typeof v === "string") : [],
@@ -126,16 +173,28 @@ export async function POST(request: Request) {
     return Response.json({ ...attested, voice: voice }, { headers: NO_STORE });
   }
 
+  /*
+    THE BOOKING IS PER TURN, because a call is what the ledger counts. Booking
+    once when the run opened was the first version of this and it is the burst
+    limiter's own arithmetic broken: a conversation is a dozen turns, and one
+    `CALL` row in front of twelve settlements is eleven calls the allowance
+    never saw.
+  */
   const chain = resolveProviders();
-  const booked = await bookingFor(ownerId, String(body.reservation ?? ""));
-  if (chain.length === 0 || !booked) {
+  const decision = chain.length > 0
+    ? await authoriseCall(ownerId, "SCENE")
+    : null;
+
+  if (!decision?.allowed || !decision.reservation) {
     /*
-      A keyless deployment and an unbooked turn take the same path, and that is
+      A keyless deployment and a spent allowance take the same path, and that is
       the design rather than a shortcut: §16 says a deployment with no key runs
-      this module, marked identically, with the beats retrieval can fill.
+      this module, marked identically, with the beats retrieval can fill. The
+      difference between them is a sentence, and it is the ledger's own, since
+      only the ledger knows which of the three limits was reached.
     */
     return Response.json(
-      { ...attested, voice: voice, composed: false },
+      { ...attested, voice: voice, composed: false, note: decision?.message ?? null },
       { headers: NO_STORE },
     );
   }
@@ -155,6 +214,17 @@ export async function POST(request: Request) {
     }),
   });
 
+  /*
+    A booking is handed back where nothing was composed, which is the rule
+    `releaseReservation` states about itself: a release gives back the call and
+    not only the money, and two of the three limits count calls. The ladder
+    walking past the model to the fallback rung is exactly the case, and it is
+    an ordinary one here rather than an error.
+  */
+  if (line.provenance !== "composed") {
+    after(() => releaseReservation(decision.reservation!));
+  }
+
   return Response.json({ ...line, voice: voice }, { headers: NO_STORE });
 }
 
@@ -167,15 +237,6 @@ function personaVoice(transcript: string): string {
   } catch {
     return DEFAULT_VOICE;
   }
-}
-
-/** The scene's own booking, verified rather than believed. */
-async function bookingFor(ownerId: string, reservation: string) {
-  if (!reservation) return null;
-  return prisma.usageEvent.findFirst({
-    where: { id: reservation, ownerId, kind: "SCENE", entry: "CALL" },
-    select: { id: true },
-  });
 }
 
 /**

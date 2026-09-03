@@ -7,7 +7,6 @@ import { throttleAction } from "@/lib/security/actionLimits";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
 import { beginRun, finishRun, MAX_TURNS, MAX_TURN_CHARS } from "@/lib/progress/scene";
-import { authoriseCall } from "@/lib/usage/ledger";
 import { resolveProviders } from "@/lib/tutor/provider";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { formName } from "@/lib/estonian/morph";
@@ -951,19 +950,21 @@ export async function recordSonad(day: string, guesses: unknown) {
  * in an append-only table, which is the size of one review session.
  */
 /**
- * Starts a conversation: draws it, writes it down, and books the whole of it.
+ * Starts a conversation: draws it and writes it down.
  *
- * §16: a scene books **one call rather than one per turn**, because running out
- * of allowance halfway through a conversation is the worst failure available to
- * this module. The other side simply stops talking and there is nothing honest
- * to put on the screen. So the reservation is the whole scene's expected
- * tokens, and the real figures arrive as the settlements each composed line
- * reports, which are negative whenever the estimate was generous.
+ * It books nothing. §16 said a scene should book **one call rather than one per
+ * turn**, on the argument that running out of allowance halfway through a
+ * conversation is the worst failure available here, and that half of it is
+ * right and is not what a booking buys: the ledger writes a call down when it
+ * authorises one because two of its three limits count `CALL` rows, so a dozen
+ * turns behind one booking is eleven calls the allowance never saw. The route
+ * books each composed turn instead, and the mid-scene refusal is survivable for
+ * the reason it was always survivable: the rung below the model is a real
+ * conversational move rather than an error.
  *
- * **It is not a refusal to run the scene.** A deployment with no key, and a
- * learner who has spent the day's allowance, both get a real conversation built
- * from the beats retrieval can fill, and the screen says so. What the booking
- * buys is composition.
+ * **A refusal is never a refusal to run the scene.** A deployment with no key,
+ * and a learner who has spent the day's allowance, both get a real conversation
+ * built from the beats retrieval can fill, and the screen says so.
  *
  * The seed is the server's. A seed a learner picks is a learner picking their
  * persona, their card and their curveballs, which is every axis of §5 at once.
@@ -986,19 +987,26 @@ export async function beginScene(sceneId: unknown, difficulty: unknown) {
   });
   if (!opened) return { ok: false as const, error: "That scene could not be built." };
 
-  if (resolveProviders().length === 0) {
-    return { ok: true as const, ...opened, reservation: null, composed: false };
-  }
+  /*
+    Only the briefing crosses, never the plan: the curveballs and the persona's
+    leans are what is supposed to happen to somebody rather than be read off a
+    card, and nothing here is bought by sending them, because the route marks
+    every turn on the server anyway. `Briefing` is where that is written down.
 
-  const decision = await authoriseCall(ownerId, "SCENE");
-  if (!decision.allowed || !decision.reservation) {
-    return {
-      ok: true as const, ...opened, reservation: null, composed: false,
-      message: decision.message,
-    };
-  }
-
-  return { ok: true as const, ...opened, reservation: decision.reservation.id, composed: true };
+    And nothing is booked here either. A run is many turns and the ledger books
+    a call when it authorises one, so one booking at the door would let a whole
+    conversation through on the burst allowance for a single call, which is the
+    limit's own arithmetic broken rather than bent. The route books each
+    composed turn and hands the booking back where nothing was composed. What
+    this reports is the only part that is a fact about the deployment rather
+    than about the next minute: whether a provider is configured at all.
+  */
+  return {
+    ok: true as const,
+    runId: opened.runId,
+    briefing: opened.briefing,
+    composed: resolveProviders().length > 0,
+  };
 }
 
 /**

@@ -1048,6 +1048,18 @@ check("no counter column exists for anything the review log can reconstruct", ()
 // ── Every mode grades through gradeCard (ADR-016) ────────────────────────────
 
 /**
+ * Every door onto the shared review log, and there is one list of them.
+ *
+ * It was the same alternation typed out in three checks, which is two copies of
+ * one fact: the seventh door, `finishScene`, had to be added to all three or the
+ * newest and busiest mode would sit outside a rule that reported itself as held.
+ * That is the failure this file exists to catch, so it is not a shape this file
+ * may have itself.
+ */
+const GRADING_DOORS =
+  /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword|finishScene)\b/;
+
+/**
  * Sessions that measure rather than practise.
  *
  * The placement test asks about words the learner may never have had a card for,
@@ -1090,7 +1102,7 @@ check("every practice mode writes to the same review log", () => {
   for (const file of sessions) {
     assert.match(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
+      GRADING_DOORS,
       `${file} does not write to the shared review log`,
     );
   }
@@ -1107,7 +1119,7 @@ check("every practice mode writes to the same review log", () => {
     assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
     assert.doesNotMatch(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
+      GRADING_DOORS,
       `${file} now grades, so it is a practice mode and must come off the exemption list`,
     );
   }
@@ -1223,7 +1235,7 @@ check("a session never lets its questions change under the learner", () => {
     // The exam session hands its answers to a Server Action rather than grading
     // per card, and Next refreshes the route after that call just the same, so
     // the freeze matters here too.
-    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/.test(source)) continue;
+    if (!GRADING_DOORS.test(source)) continue;
     // Only the ones actually handed a list by the page can be caught out. The
     // `initial` naming convention is the reliable signal: a prop called
     // initialSteps or initialCards exists precisely because it is meant to be
@@ -8907,6 +8919,61 @@ check("the scene gate has one implementation, and a line says where it came from
     line,
     /if \(first && firstVerdict && passes\(firstVerdict\)\)/,
     "lib/scenes/line.ts no longer requires a composed line to pass the gate before showing it.",
+  );
+});
+
+check("a scene is marked by the server, and its grades go to the shared log", () => {
+  /*
+    `submitExam`'s shape and `recordSonad`'s, a third time, and for the reason
+    both give: a result anybody can type is not a measurement, and here it is
+    worse than that, because a conversation writes into the review log and a
+    forged one would schedule words nobody said.
+
+    The client sends which run it was and what it typed. `finishRun` reads the
+    row, replays every turn through the same `readTurn` the learner saw, and
+    hands what it found to `gradeCard`, which is the door ADR-016 names. Two
+    markers would be two answers to "were you understood", and the one nobody
+    watches is the one that drifts, so there is one `replay` and both ends call
+    it.
+  */
+  /*
+    `between` rather than a lazy match to the first line-starting brace, which
+    was the first version of this and was wrong twice in one check: both of
+    these take a destructured object type, so the parameter list itself closes
+    on a `}` in column nought, and the match read the signature and called it
+    the body. It found nothing and reported that the action no longer marks,
+    which is a check reporting its own regex. The helper was already here.
+  */
+  const actions = code("app/actions.ts");
+  const action = between(actions, "export async function finishScene(");
+  assert.ok(action, "finishScene has gone, or changed shape past recognition");
+  assert.match(action, /finishRun\(/, "finishScene no longer re-marks on the server");
+  assert.match(action, /gradeCard\(/, "a scene no longer grades through gradeCard (ADR-016)");
+
+  /*
+    The signature rather than the body, which is the lesson `recordSonad`'s own
+    check learned the hard way: a pattern for the word `rating` matches the
+    perfectly correct `gradeCard(card.id, grade.rating, 0)` inside, and a check
+    that fires on honest code is a check people waive.
+  */
+  const signature = /export async function finishScene\(([\s\S]*?)\)\s*\{/
+    .exec(actions)?.[1] ?? "";
+  assert.doesNotMatch(
+    signature, /rating|score|grade|objectives|outcome/i,
+    "finishScene takes a mark from its caller, which is a result anybody can type",
+  );
+
+  // And one replay, reached from both ends, rather than a marker per door.
+  const server = code("lib/progress/scene.ts");
+  assert.match(server, /export function replay\(/, "the shared replay has gone");
+  assert.match(
+    between(server, "export async function finishRun("),
+    /replay\(/,
+    "finishRun marks a run some other way than the replay the learner saw",
+  );
+  assert.match(
+    code("app/api/scene/route.ts"), /replay\(/,
+    "the route reads a turn some other way than the replay that writes the record",
   );
 });
 
