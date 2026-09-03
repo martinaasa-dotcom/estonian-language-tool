@@ -154,8 +154,13 @@ export async function targetRound(ownerId: string): Promise<TargetQuestion[]> {
  * forms: a question with a repeated option has two right answers, and
  * `differentText` is what refuses it. Plenty of words cannot, because several
  * cases can land on one spelling.
+ *
+ * Exported for `scripts/audit-questions.ts`, which builds one of these for
+ * every word the shipped dictionary can make one for and asks whether the
+ * answer is already visible in the prompt. The round itself is a database read
+ * and cannot be asked that question from a file; this function can.
  */
-function caseQuestion(
+export function caseQuestion(
   lexeme: {
     lemma: string;
     semanticTypes: string | null;
@@ -168,6 +173,28 @@ function caseQuestion(
     lemma: lexeme.lemma, semanticTypes: lexeme.semanticTypes, nomSg: stems.nomSg ?? null,
   };
 
+  /*
+    AND NOT A CASE THE WORD IS ALREADY SPELLED AS. The prompt is the lemma and
+    the question the case answers, and the options are forms of that same word,
+    so a form spelled like the lemma is an option the learner can pick straight
+    off the prompt without reading an ending, which is the whole of what this
+    question is for. Estonian spells some cases that way: `kallis` has the
+    genitive `kalli`, so its seesütlev is `kalli` plus `s`, and `kapsas`,
+    `kuningas`, `lusikas`, `maasikas`, `rahvas` and `taevas` do the same.
+    Measured on the shipped dictionary, 122 of 51,447 case slots.
+
+    THE TEST IS ON WHAT IS PRINTED, not on every accepted spelling, and that is
+    where this differs from `lib/srs/cards.ts`. A typed card takes any of them,
+    so any of them showing makes it free. Here one string is drawn on a target
+    and the learner hits it, so `voodi` in the illative is refused because
+    `voodi` is what the target would say, while a word whose long form is drawn
+    beside a short one spelled like the lemma is still a question worth asking.
+
+    Dropped from the pool rather than only from the answer, because a form
+    spelled like the prompt is no better as a wrong answer: it is the one option
+    nobody has to read.
+  */
+  const spelt = lexeme.lemma.trim().toLocaleLowerCase("et");
   const built: { key: string; value: string }[] = [];
   for (const spec of CASES) {
     if (spec.principal) continue;
@@ -177,7 +204,9 @@ function caseQuestion(
     // lib/estonian/caseQuestion.ts.
     if (!caseFits(spec.key, subject)) continue;
     const answer = caseAnswer(stems, spec.key);
-    if (answer) built.push({ key: spec.key, value: answer.value });
+    if (!answer) continue;
+    if (answer.value.trim().toLocaleLowerCase("et") === spelt) continue;
+    built.push({ key: spec.key, value: answer.value });
   }
   if (built.length < OPTIONS) return null;
 

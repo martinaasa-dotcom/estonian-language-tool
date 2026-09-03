@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { unitById } from "@/lib/collections/syllabus";
 import { prisma } from "@/lib/db";
 import { generateCards, type CardType, type GeneratedCard, type LexemeForCards } from "@/lib/srs/cards";
+import { alsoAcceptedByLemma } from "@/lib/dict/facts";
 import { emptyScheduling } from "@/lib/srs/scheduler";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
@@ -157,24 +158,41 @@ const cardKey = (lexemeId: string, cardType: string, front: string) => `${lexeme
  * produce ten.
  */
 async function loadLexemes(lemmas: readonly string[]): Promise<DeckLexeme[]> {
-  const rows = await prisma.lexeme.findMany({
-    where: { lemma: { in: [...lemmas] } },
-    select: {
-      id: true,
-      lemma: true,
-      translation: true,
-      pos: true,
-      provenance: true,
-      gradation: true,
-      gradationNote: true,
-      government: true,
-      // What kind of thing the word is, which decides whether its case cards
-      // ask for `õpetajale` or `õpetajasse`. See lib/estonian/caseQuestion.ts.
-      semanticTypes: true,
-      examples: true,
-      forms: { select: { formType: true, value: true, morphCode: true } },
-    },
-  });
+  /*
+    THE OTHER WORDS THE SAME PROMPT COULD BE ASKING FOR.
+
+    A production card is front `translation`, hint `pos`, back `lemma`, so two
+    entries with one gloss and one part of speech are one question with two
+    right answers and each card marks the other's answer wrong. The dictionary
+    ships 372 such prompts.
+
+    One read for the whole build rather than one per word, and cached across
+    requests by `lib/dict/facts.ts`, because which words share a prompt is a
+    fact about the shared dictionary and not about the person waiting. That
+    keeps this a fixed number of queries, which is the rule a deck build is
+    already held to.
+  */
+  const [rows, alsoAccepted] = await Promise.all([
+    prisma.lexeme.findMany({
+      where: { lemma: { in: [...lemmas] } },
+      select: {
+        id: true,
+        lemma: true,
+        translation: true,
+        pos: true,
+        provenance: true,
+        gradation: true,
+        gradationNote: true,
+        government: true,
+        // What kind of thing the word is, which decides whether its case cards
+        // ask for `õpetajale` or `õpetajasse`. See lib/estonian/caseQuestion.ts.
+        semanticTypes: true,
+        examples: true,
+        forms: { select: { formType: true, value: true, morphCode: true } },
+      },
+    }),
+    alsoAcceptedByLemma(),
+  ]);
 
   /*
     One entry per lemma, in the course's own order. `@@unique` is on
@@ -184,7 +202,10 @@ async function loadLexemes(lemmas: readonly string[]): Promise<DeckLexeme[]> {
     would silently keep whichever row Postgres returned last, which is the
     plan's choice rather than anybody's.
   */
-  return oneEntryPerLemma(rows, lemmas);
+  return oneEntryPerLemma(rows, lemmas).map((row) => ({
+    ...row,
+    alsoAccepted: alsoAccepted.get(`${row.lemma}|${row.pos}`) ?? [],
+  }));
 }
 
 export interface DeckPreview {

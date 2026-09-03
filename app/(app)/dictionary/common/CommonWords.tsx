@@ -5,7 +5,7 @@ import { Check, Plus } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Button } from "@/components/Button";
 import { Card, Chip, SectionTitle } from "@/components/ui";
-import type { FrequencyGroup } from "@/lib/collections/frequency";
+import { commonGroup } from "@/lib/collections/commonGroups";
 import type { CommonSection } from "@/lib/progress/common";
 import { addCommonWords } from "@/app/actions";
 
@@ -29,20 +29,6 @@ import { addCommonWords } from "@/app/actions";
  * is the part that gets read first.
  */
 
-const TITLE: Record<FrequencyGroup, string> = {
-  SMALL: "The small words",
-  VERB: "Verbs",
-  NOUN: "Nouns",
-  ADJECTIVE: "Describing words",
-};
-
-const BLURB: Record<FrequencyGroup, string> = {
-  SMALL: "The joins, the answers and the ones that say how much. Every sentence has several.",
-  VERB: "Shown as the dictionary shows them, in the ma-infinitive.",
-  NOUN: "Counted on the dictionary form, so the order is fair between them.",
-  ADJECTIVE: "What things are like, which is most of what a conversation is about.",
-};
-
 export function CommonWords({ sections }: { sections: CommonSection[] }) {
   return (
     <div className="flex flex-col gap-4">
@@ -54,6 +40,13 @@ export function CommonWords({ sections }: { sections: CommonSection[] }) {
 }
 
 function GroupCard({ section }: { section: CommonSection }) {
+  /*
+    What a list is called lives in lib/collections/commonGroups.ts, because
+    four screens print it now: this one, the card on /practice, the round
+    index and the round itself. It was two maps in this file, which is how
+    "Describing words" becomes "Adjectives" on one screen out of four.
+  */
+  const group = commonGroup(section.group);
   const [kept, setKept] = useState(section.kept);
   const [note, setNote] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -72,8 +65,8 @@ function GroupCard({ section }: { section: CommonSection }) {
 
   return (
     <Card>
-      <SectionTitle hint={`${kept} of ${section.found} in your deck`}>{TITLE[section.group]}</SectionTitle>
-      <p className="mt-1 text-sm" style={{ color: "var(--ink-2)" }}>{BLURB[section.group]}</p>
+      <SectionTitle hint={`${kept} of ${section.found} in your deck`}>{group.title}</SectionTitle>
+      <p className="mt-1 text-sm" style={{ color: "var(--ink-2)" }}>{group.blurb}</p>
 
       {left > 0 ? (
         <Button type="button" variant="primary" onClick={add} disabled={pending} className="mt-4">
@@ -85,6 +78,20 @@ function GroupCard({ section }: { section: CommonSection }) {
           <Check size={15} aria-hidden /> All of these are in your deck.
         </p>
       )}
+
+      {/*
+        Collecting a hundred words is half of it. The other half is being asked
+        them, and this list said nothing about where that happens.
+      */}
+      <p className="mt-3 text-sm" style={{ color: "var(--ink-2)" }}>
+        <Link
+          href={`/review/common/${group.slug}`}
+          className="underline"
+          style={{ color: "var(--accent-deep)" }}
+        >
+          Work through them as flash cards
+        </Link>
+      </p>
       {note && <p className="mt-2 text-sm" style={{ color: "var(--ink-2)" }}>{note}</p>}
 
       <details className="mt-4 rounded-[var(--r)] border" style={{ borderColor: "var(--rule-soft)" }}>

@@ -157,6 +157,7 @@ export const A1 = [
       ["pilt", "picture"],
       ["sein", "wall"],
       ["põrand", "floor"],
+      ["korrus", "floor, storey"],
     ],
   }),
 
@@ -226,6 +227,7 @@ export const A1 = [
       ["reede", "Friday"],
       ["laupäev", "Saturday"],
       ["pühapäev", "Sunday"],
+      ["kellaaeg", "time of day"],
     ],
   }),
 
@@ -329,6 +331,7 @@ export const A1 = [
       ["raske", "difficult, heavy", "ADJECTIVE"],
       ["kerge", "easy, light", "ADJECTIVE"],
       ["lihtne", "simple", "ADJECTIVE"],
+      ["valmis", "ready", "ADJECTIVE"],
     ],
   }),
 
@@ -510,6 +513,9 @@ export const A1 = [
       ["otse", "straight on", "ADVERB"],
       ["edasi", "onwards, further", "ADVERB"],
       ["tagasi", "back", "ADVERB"],
+      ["asuma", "to be located"],
+      ["mujal", "elsewhere", "ADVERB"],
+      ["siia", "to here", "ADVERB"],
     ],
   }),
 
@@ -587,6 +593,8 @@ export const A1 = [
       ["igaüks", "everyone, each one", "PRONOUN"],
       ["mõni", "some, a few", "PRONOUN"],
       ["iga", "every, each", "PRONOUN", 171378],
+      // Three Ekilex entries carry this; 211037 is the possessive.
+      ["oma", "one's own", "PRONOUN", 211037],
     ],
   }),
 
@@ -669,6 +677,8 @@ export const A1 = [
       ["lähedal", "near, close to", "ADVERB"],
       ["kohal", "above, over", "ADVERB"],
       ["mööda", "along", "ADVERB"],
+      ["alates", "from, starting from", "ADVERB"],
+      ["kaasas", "along, with you", "ADVERB"],
     ],
   }),
 
@@ -781,20 +791,24 @@ export const A1 = [
     words: [
       ["ja", "and", "ADVERB"],
       ["ning", "and (joining the last of a list)", "ADVERB"],
-      ["aga", "but", "ADVERB"],
-      ["vaid", "but rather", "ADVERB"],
-      ["et", "that", "ADVERB"],
+      // Also a noun meaning a troubling circumstance, and a district in Russia.
+      ["aga", "but", "ADVERB", 155181],
+      ["vaid", "only, and nothing else", "ADVERB"],
+      // Also the ISO code for Estonian, which Ekilex holds as a word.
+      ["et", "that", "ADVERB", 165201],
       ["sest", "because", "ADVERB"],
       ["kuna", "since, because", "ADVERB"],
       ["ega", "nor", "ADVERB"],
-      ["ehk", "or, that is to say", "ADVERB"],
+      // The conjunction, not the butter the food unit already teaches.
+      ["või", "or", "ADVERB", 258019],
+      ["ehk", "perhaps, maybe", "ADVERB"],
       ["kuni", "until", "ADVERB"],
       ["nagu", "like, as", "ADVERB"],
       ["sellepärast", "for that reason", "ADVERB"],
       ["seega", "so, therefore", "ADVERB"],
       ["siis", "then", "ADVERB"],
       ["nii", "so, like this", "ADVERB"],
-      ["mitte", "not", "ADVERB"],
+      ["mitte", "not", "ADVERB", 203249],
     ],
   }),
 
@@ -817,11 +831,15 @@ export const A1 = [
       ["kindlasti", "definitely", "ADVERB"],
       ["vist", "probably, I think", "ADVERB"],
       ["äkki", "maybe, suddenly", "ADVERB"],
-      ["küll", "indeed, do (an emphasising word)", "ADVERB"],
+      ["küll", "indeed, do (an emphasising word)", "ADVERB", 191080],
       ["eks", "right? (asking for agreement)", "ADVERB"],
       ["tõesti", "really", "ADVERB"],
       ["tegelikult", "actually", "ADVERB"],
-      ["õige", "right, correct", "ADVERB"],
+      // An adjective, not a particle, and the one word in this unit that
+      // declines: `õige, õige, õiget`. Labelled ADVERB it would be harvested
+      // formless, get no case table and no case cards, and `npm run
+      // audit:senses` says so, because Ekilex calls it `adj`.
+      ["õige", "right, correct", "ADJECTIVE"],
       ["tere", "hello", "ADVERB"],
       ["aitäh", "thank you", "ADVERB"],
     ],
@@ -846,11 +864,12 @@ export const A1 = [
       ["väga", "very", "ADVERB"],
       ["hästi", "well", "ADVERB"],
       ["ainult", "only", "ADVERB"],
-      ["enam", "any more", "ADVERB"],
+      ["enam", "any more", "ADVERB", 164013],
       ["isegi", "even", "ADVERB"],
       ["ikka", "still, always", "ADVERB"],
-      ["rohkem", "more", "ADVERB"],
-      ["liiga", "too (much)", "ADVERB"],
+      ["rohkem", "more", "ADVERB", 228501],
+      // Not the sports league.
+      ["liiga", "too (much)", "ADVERB", 194792],
       ["päris", "quite, fairly", "ADVERB"],
       ["natuke", "a little", "ADVERB"],
       ["üldse", "at all", "ADVERB"],
@@ -859,7 +878,8 @@ export const A1 = [
       ["uuesti", "again", "ADVERB"],
       ["varem", "earlier", "ADVERB"],
       ["kaua", "for a long time", "ADVERB"],
-      ["siin", "here", "ADVERB"],
+      // Not the steel rail a curtain runs along.
+      ["siin", "here", "ADVERB", 233338],
       ["siit", "from here", "ADVERB"],
       ["sinna", "to there", "ADVERB"],
     ],

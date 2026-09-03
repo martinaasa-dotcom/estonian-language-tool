@@ -2,7 +2,9 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { commonWords } from "@/lib/collections/frequency";
 import { addPlanToDeck, planLemmas } from "@/lib/srs/deck";
-import { commonSections, lemmasIn } from "./common";
+import { availableCardTypes, CARD_TYPES } from "@/lib/srs/cards";
+import { COMMON_BATCH } from "@/lib/collections/commonGroups";
+import { commonCounts, commonLexemeIds, commonSections, lemmasIn, nextCommonBatch } from "./common";
 
 /**
  * The commonest words, against the dictionary that ships.
@@ -73,6 +75,118 @@ describe("the commonest words", () => {
     expect(verbs.entries.every((e) => e.inDeck)).toBe(true);
     // And only that group: the four are separate lists, not one.
     expect(after.find((s) => s.group === "NOUN")!.kept).toBe(0);
+  });
+
+  /**
+   * THE ROUND'S BATCH, WHICH IS THE PIECE NO UNIT TEST CAN SEE.
+   *
+   * `nextCommonBatch` decides what one press of "add the next twenty" builds,
+   * and it decides it by comparing the card types a word could support against
+   * the ones it already has. Both halves are facts about the seeded dictionary:
+   * which words have a genitive stem, which have a recorded sentence, which
+   * have a government. Three invented rows would answer none of it.
+   */
+  it("offers the commonest words first, and only while they are short of a card", async () => {
+    const first = await nextCommonBatch(OWNER, "NOUN");
+    expect(first).toHaveLength(COMMON_BATCH);
+
+    // The corpus's own order, not the query's.
+    const ranked = lemmasIn("NOUN");
+    let at = -1;
+    for (const lemma of first) {
+      const next = ranked.indexOf(lemma, at + 1);
+      expect(next, `${lemma} is out of order`).toBeGreaterThan(at);
+      at = next;
+    }
+
+    // Building them out takes them off the front, and the next press moves on.
+    await addPlanToDeck(OWNER, planLemmas(first, CARD_TYPES.map((s) => s.type)), "DICTIONARY");
+    const second = await nextCommonBatch(OWNER, "NOUN");
+    expect(second).toHaveLength(COMMON_BATCH);
+    expect(second.filter((l) => first.includes(l))).toEqual([]);
+  });
+
+  /**
+   * The half that makes pressing twice progress rather than stall.
+   *
+   * A word added from the dictionary's list holds a recognition card and a
+   * production card and is short of everything else, so it comes back; a word
+   * that can only ever make those two is finished at two and must not. Counting
+   * rows instead of comparing types would leave `ei` at the front for ever.
+   */
+  it("counts a word finished by what it can build, not by how many cards it has", async () => {
+    await addPlanToDeck(
+      OWNER, planLemmas(lemmasIn("SMALL"), ["RECOGNITION", "PRODUCTION"]), "DICTIONARY",
+    );
+    const shallow = await nextCommonBatch(OWNER, "SMALL");
+    /*
+      A floor, for the reason `scripts/lib/checks.mjs` gives a suite one: the
+      loop below asserts nothing at all on an empty list, and the mutation this
+      test exists to catch, counting rows rather than comparing types, is
+      exactly the one that empties it.
+    */
+    expect(shallow.length, "nothing came back, so the loop below checked nothing")
+      .toBeGreaterThan(0);
+
+    // Whatever comes back is short of something it could actually build.
+    for (const lemma of shallow) {
+      const entry = await prisma.lexeme.findFirst({
+        where: { lemma },
+        select: {
+          lemma: true, translation: true, pos: true, gradation: true, gradationNote: true,
+          government: true, examples: true, semanticTypes: true,
+          forms: { select: { formType: true, value: true, morphCode: true } },
+        },
+      });
+      expect(entry, lemma).not.toBeNull();
+      expect(availableCardTypes(entry!).length, `${lemma} is finished and was offered`)
+        .toBeGreaterThan(2);
+    }
+
+    // And building out everything it offers empties it, which is what stops the
+    // button asking for ever.
+    let guard = 0;
+    for (;;) {
+      const batch = await nextCommonBatch(OWNER, "SMALL");
+      if (batch.length === 0) break;
+      await addPlanToDeck(OWNER, planLemmas(batch, CARD_TYPES.map((s) => s.type)), "DICTIONARY");
+      expect(guard++, "the batch never empties, so the button never stops asking").toBeLessThan(60);
+    }
+  });
+
+  /**
+   * What the round reads, and what the index prints, over one seeded
+   * dictionary. Two answers to "how many of these do I have" that could drift.
+   */
+  it("counts what the round can ask about", async () => {
+    const before = await commonCounts(OWNER);
+    expect(before).toHaveLength(4);
+    expect(before.every((c) => c.inDeck === 0)).toBe(true);
+
+    const ids = await commonLexemeIds("VERB");
+    expect(ids.length).toBeGreaterThanOrEqual(95);
+    // One entry per lemma, which is what `oneEntryPerLemma` is there for: the
+    // dictionary can hold `hall` twice and a round asking one word twice is a
+    // round reading its own answer off the card before.
+    expect(new Set(ids).size).toBe(ids.length);
+
+    await addPlanToDeck(
+      OWNER, planLemmas(lemmasIn("VERB"), ["RECOGNITION", "PRODUCTION"]), "DICTIONARY",
+    );
+    const after = await commonCounts(OWNER);
+    const verbs = after.find((c) => c.group === "VERB")!;
+    expect(verbs.inDeck).toBe(verbs.found);
+    expect(after.find((c) => c.group === "NOUN")!.inDeck).toBe(0);
+
+    // And it agrees with the page that lists them, because a learner reading
+    // "40 of 100" on one screen and "100 of 100" on the next has caught the app
+    // answering one question twice.
+    const sections = await commonSections(OWNER);
+    for (const count of after) {
+      const section = sections.find((s) => s.group === count.group)!;
+      expect(section.found, count.group).toBe(count.found);
+      expect(section.kept, count.group).toBe(count.inDeck);
+    }
   });
 
   /**
