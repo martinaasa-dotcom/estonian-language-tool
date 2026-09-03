@@ -1,5 +1,5 @@
 /**
- * Phase 0 of `docs/19-situations.md`: how much of a conversation the dictionary
+ * Phase 0 of `docs/21-situations.md`: how much of a conversation the dictionary
  * can already say.
  *
  *   npm run measure:scenes

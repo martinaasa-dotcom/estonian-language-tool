@@ -1,5 +1,5 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, TrendingUp } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { deckSnapshot } from "@/lib/progress/summary";
@@ -10,7 +10,8 @@ import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { isBuildable } from "@/lib/estonian/cloze";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
-import { GAMES, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
+import { GAMES, QUICK_MODES, modeAt, type PracticeMode } from "@/lib/ux/modes";
+import { COMMON_GROUPS } from "@/lib/collections/commonGroups";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
 import { WeakestCases } from "@/components/WeakestCases";
@@ -102,6 +103,14 @@ export default async function PracticePage() {
     round read one query, so the tile cannot promise words the round will not
     find.
   */
+  /*
+    What Review would put in front of them right now: due cards plus the unseen
+    ones it trickles in, drawn the same way Today draws it. A tile saying
+    "Nothing due" over a session with ten cards in it is the sort of small
+    inconsistency a reader catches once and then stops trusting.
+  */
+  const ready = Math.min(snapshot.dueCount + Math.min(snapshot.newForPractice, 10), 60);
+
   const counts = masteryCounts(words);
   const unfinished = counts.struggling + counts.almost + counts.learning;
   const flashMeta = unfinished > 0
@@ -123,26 +132,44 @@ export default async function PracticePage() {
   const metaFor = (mode: PracticeMode) => live[mode.href] ?? mode.note;
 
   return (
-    <Page title="Practice" lead="Every mode grades the same cards.">
+    <Page title="Practice" lead="Words you have already learned, asked every way there is.">
       {snapshot.totalCards === 0 ? (
         <Empty
           title="Nothing to practise yet"
           body="Every mode here draws on your own deck."
-          action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
+          action={<ButtonLink href="/learn" variant="primary">Learn some words first</ButtonLink>}
         />
       ) : (
         <Stack>
           {/*
-            THE TOP SLOT IS NOT A LINK BACK TO REVIEW.
+            THE TOP SLOT IS THE SCHEDULE, AND IT DID NOT USED TO BE.
 
-            It was, and `/review` is the page most people arrive here from, so
-            the first thing this page offered was the door they had just come
-            through. Flash cards is what the learner asked for in its place: the
-            words review has already introduced, asked in a way it does not ask
-            them, across a variety of case endings, until the app can be
+            It was Flash cards, on the argument that `/review` is the page most
+            people arrived here from, so leading with it offered somebody the
+            door they had just come through. That was true while Review was a
+            row in the rail. It is not any more: the daily row is Learn, review
+            lives inside this page (`lib/ux/nav.ts`), and a learner who opens
+            Practice with cards due has come here for exactly that. Leaving it
+            out would make the one thing this page is for reachable only from
+            Today.
+
+            Flash cards keeps its slot directly under it, which is what it is:
+            the words review has already introduced, asked in a way it does not
+            ask them, across a variety of case endings, until the app can be
             confident the word is known. See lib/srs/mastery.ts for what
-            confident means and app/(app)/review/flashcards for the round.
+            confident means.
           */}
+          <ModeCard
+            href="/review"
+            iconName="GraduationCap"
+            tone="accent"
+            title="Review"
+            subtitle="Everything due"
+            body="Timed to the moment before you forget. The schedule decides what comes back, not you."
+            meta={ready > 0 ? `${ready} waiting` : "Nothing due"}
+            primary={ready > 0}
+          />
+
           <ModeCard
             href="/review/flashcards"
             iconName="Layers"
@@ -151,8 +178,25 @@ export default async function PracticePage() {
             subtitle="Words you have met"
             body="A different form each time, typed rather than picked, until the word is solid."
             meta={flashMeta}
-            primary={unfinished > 0}
+            primary={unfinished > 0 && ready === 0}
           />
+
+          {/*
+            THE SAME ROUND, POINTED AT THE WORDS EVERYBODY MEETS FIRST.
+
+            Flash cards above works the deck you have. This works a deck
+            nobody has to build a decision about: the hundred commonest words
+            of each kind, counted over a corpus rather than chosen, which is
+            the one question the course cannot answer because it teaches in
+            themes. See lib/collections/frequency.ts.
+
+            Four buttons rather than one, because the four lists are four
+            different sittings and picking one is the whole decision. They go
+            straight to the round, so this is one press; the card's own title
+            goes to the index, which carries the counts and the way to build
+            the next twenty out.
+          */}
+          <CommonWordsCard />
 
           <section>
             <SectionTitle hint="a few minutes each">Rounds</SectionTitle>
@@ -269,6 +313,81 @@ function ModeTile({ mode, meta }: { mode: PracticeMode; meta: string }) {
         </span>
       </span>
     </Link>
+  );
+}
+
+/**
+ * THE FOUR FREQUENCY LISTS, AS FOUR DOORS.
+ *
+ * Shaped like `ModeCard` above, and not built out of it, because that one is a
+ * `Link` wrapping the whole card and this one has four links inside it. Nesting
+ * those would be a link inside a link, which is invalid and which no browser
+ * agrees about.
+ *
+ * Every string comes from `lib/ux/modes.ts` and
+ * `lib/collections/commonGroups.ts` rather than from here, so a list renamed
+ * once is renamed on the dictionary's page, the round index, the round and this
+ * card together. That is the fault this app has fixed four times over: the same
+ * mode was called two things on two screens because two files described it.
+ *
+ * Each button carries its own label for a screen reader, since "Verbs" on its
+ * own is a word rather than a destination, and clears the 44px floor under a
+ * coarse pointer like every other control here.
+ */
+function CommonWordsCard() {
+  const mode = modeAt("/review/common");
+  if (!mode) return null;
+
+  return (
+    <section
+      className="flex flex-col gap-3 rounded-[var(--r-lg)] border p-5"
+      style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+          style={{ background: `var(--${mode.tone})`, color: "var(--surface)" }}
+        >
+          <TrendingUp size={19} aria-hidden />
+        </span>
+        <span className="min-w-0">
+          <Link
+            href={mode.href}
+            className="block text-lg font-bold underline-offset-4 hover:underline"
+            style={{ color: "var(--ink)" }}
+          >
+            {mode.title}
+          </Link>
+          <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
+        </span>
+        <span className="ml-auto"><Chip tone="neutral">{mode.note}</Chip></span>
+      </div>
+
+      <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+        {"These are the ones you will hear most, so let's get them down."}
+      </p>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        {COMMON_GROUPS.map((group) => (
+          <Link
+            key={group.key}
+            href={`/review/common/${group.slug}`}
+            aria-label={`Flash cards: most common ${group.title.toLowerCase()}`}
+            className="tap-tint flex min-h-11 items-center gap-2.5 rounded-[var(--r)] border px-3 py-2"
+            style={{ borderColor: "var(--rule-soft)", background: "var(--raised)" }}
+          >
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ background: `var(--${group.tone})` }}
+              aria-hidden
+            />
+            <span className="min-w-0 text-sm font-semibold" style={{ color: "var(--ink)" }}>
+              {group.title}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

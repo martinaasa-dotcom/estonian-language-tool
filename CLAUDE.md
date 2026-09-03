@@ -343,7 +343,7 @@ Reading the ranked list rather than the total is what made it right, because the
 faults and only one is a missing unit: the untaught conjunctions and particles, the forms of
 `olema` that are neither stored nor derivable, and the short pronoun forms and the simple past that
 two rules above already say arrive with enrichment. A unit built off the total would have taught
-`oli` as a headword. `docs/19-situations.md` §26 has the measurements and §27 what
+`oli` as a headword. `docs/21-situations.md` §26 has the measurements and §27 what
 building them turned up, which was three things nothing had been checking.
 
 **A homonym was reported on one path out of two.** The rule that a homonym is resolved by a person
@@ -542,7 +542,7 @@ of what is withheld in every run, register is none of it, and the lines being th
 `kestma`, `sobima` and `valutama` are in no unit at any level, and nor are `asuma`, `esitama`,
 `korrus`, `katki` or `valmis`. The pattern is one sentence: the course teaches the nouns of a
 situation and not the verbs that do things with them, `valu` and `haige` but not `valutama`, a
-unit on housing but no `katki`. `docs/19-situations.md` §29 is the write-up and §19 is what it
+unit on housing but no `katki`. `docs/21-situations.md` §29 is the write-up and §19 is what it
 changed, which is that Phase 1 waits on that vocabulary rather than on any code.
 
 **Six runs of 63 lines cannot resolve eight points, and the table says so.** Two of the rows in
@@ -1080,6 +1080,47 @@ a case card apiece would be eight hundred cards for one press. The invariant tha
 name `addUnitsToDeck` and read its body; it counts inserts now, so a fifth caller fails it whatever it
 is called, which is what the refactor itself demonstrated by silently emptying the old check.
 
+**Reading a list of words and working through one are two different things, so they are two
+screens.** `/dictionary/common` is the four lists as lists: what is on them, in order, with a button
+that collects a hundred words cheaply. `/review/common` is what to do with them, which is a round per
+list, and `/practice` carries the four as buttons on a card under Flash cards because that is the
+screen somebody is on when they want one. The round is not a fifth card runner: it renders
+`ReviewSession`, fills it with `withChoices`, picks its cards with `leastPractisedSlot` and grades
+through `gradeCard` like every other mode (ADR-016), so it differs from Flash cards in its `where`
+clause and in nothing else.
+
+**Asking a word in a different form each time only works if the word has the cards to be asked
+with.** The dictionary's button builds a recognition card and a production card, which is the right
+trade for collecting a hundred words and is a round that can only ever ask what a word means.
+`deepenCommonWords` is the other half: it plans `CARD_TYPES` entire and lets `generateCards` decide
+what each word can actually build, so twenty nouns arrive with their cases and twenty verbs with
+their persons and their government, and an adverb arrives with the two it supports and no more. It
+names no card type of its own, which is what makes it proof against the `objekt` fault: a unit
+cannot ask for a card its words cannot make if it never names one. Measured on the shipped
+dictionary at 183 cards for twenty nouns and 223 for twenty verbs.
+
+**And it is twenty at a time, because a hundred nouns built out is over a thousand cards for one
+press.** That is the backlog first run already learned not to assemble by accident, and
+`nextCommonBatch` is the bound. A word counts as finished when every type `availableCardTypes` says
+it could support has a card behind it, which is what makes pressing twice progress rather than
+stall: a word holding only the dictionary button's pair comes back and is deepened, while `ei`,
+which can never make more than two, is finished at two and drops out. Counting rows instead would
+leave it at the front of the queue for ever.
+
+**No render writes cards, and this is the one that would have been invisible.** `PrefetchLink`
+fetches a whole page once a pointer has settled on a link for 90ms, so a round that topped the deck
+up while rendering would build somebody twenty words for hovering over the button, and no browser
+suite would ever see it because a suite clicks. The add is a Server Action behind a press, the two
+round screens may not reach a deck write at all, and that is asserted rather than remembered.
+
+**And what a list is called is one table.** `lib/collections/commonGroups.ts` holds the four titles,
+the four lines and the four slugs, because four screens print them now and it was two maps inside
+one client component. The invariant is that the label appears exactly once in the tree, since a
+screen that imports the table and then writes its own heading beside it satisfies any check that
+only looks for the import. It reads `code()` rather than `read()`, which took one go to learn: the
+comment in `CommonWords.tsx` explaining why the label moved out of that file names the label to do
+it, which is the oldest recurring mistake in this repository's own checks, made for the fifth time.
+
 **The seasonal row names units of the course, never words of its own.** `lib/collections/topical.ts`
 is a calendar of Estonia's year, and every window in it names unit ids from
 `lib/collections/syllabus/`; the words come out of the course, where a lemma is already a request
@@ -1468,6 +1509,24 @@ replace only the principal parts, and it must never touch a form retrieved from 
 scoped to a person (cards, reviews, tasks) is always filtered by `ownerId`, including in an
 `updateMany`. `lib/dict/edit.itest.ts` exists because all three of those were once wrong.
 
+**A panel nobody renders is a feature nobody has, and two of them were.** `DangerZone.tsx` and
+`UsagePanel.tsx` sat in `app/(app)/settings/` complete, commented and imported by nothing. Not
+dropped by a merge, which is the failure this repository already knows about: `git log -S` finds no
+commit on any branch where the settings page ever named either. So for the whole life of this app
+there was no way to delete an account from inside it, while `/privacy` promised somebody could take
+everything away and `deleteMyAccount` sat in `app/actions.ts` reachable from one file the router
+could not get to; and the tutor's spending meter, which four rules above describe as where a learner
+reads what they have used, was on no screen at all.
+
+What let it survive is the fault this file keeps finding in its own checks, pointed at a component
+instead of a comment. An invariant *reads* `DangerZone.tsx` and asserts the copy inside it, so it
+passed with feeling on a file no reader could reach. A file being right is a different claim from a
+reader being able to get to it, and only the first one was ever made. So the pairing is asserted
+now: every module beside `page.tsx` in that folder has to put something on the page, tested on a
+name the module exports being used as an element rather than on the import, because an import
+nobody renders is the same silence one line later. It has the floor every sweep here has, and it
+was made to fail first, on the real bug rather than on a hypothetical one.
+
 **A dead end offers a way out, and the way out is a queue somebody works.** Nothing here may tell
 somebody it cannot help them and then stop. A search that found nothing, an answer marked wrong that
 was right, a word off their own homework the dictionary would not vouch for, a grammar page that
@@ -1745,6 +1804,83 @@ Prisma maps `DateTime` to `timestamp without time zone`, and on a naive value on
 `AT TIME ZONE 'UTC'` that preceded this was the same mistake wearing a disguise, since its result is
 a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC session and a day out
 on any other.
+
+**Learning a word and reviewing one are two jobs, and one screen was doing both.** The daily row in
+the rail said Review, and what it opened was everything at once: the cards that were due, and a
+trickle of words the learner had never seen, taught in among them. That is one screen answering two
+questions. Reviewing is keeping a memory alive and needs a schedule; building one needs to be walked
+up. So the daily row is **Learn**, `/learn` is the ladder and the course the words come off, and what
+is due is Practice's, which is where every other way of asking a word you already know already lived.
+`/review` keeps its URL and every drill under it; what changed is that it is reached from `/practice`
+rather than standing beside it.
+
+**The ladder is three rungs, and they are the scheduler's own steps rather than a second
+progression.** A word is met, then asked what it means out of four options, then put back into the
+sentence it was met in. Pass the gap and it moves to Practice; miss it and it drops to the rung
+below, which is where somebody who nearly had it should be asked from. Five words at a time, and the
+batch size is also the gap a word waits before it comes round again, so one lap is one round: you
+meet five words, meet four others, and are asked the first one back at the point where you have to
+retrieve it rather than read it off the screen above.
+
+Nothing about that is stored. FSRS already keeps a card in Learning across two steps before it
+graduates to Review and already sends a missed card back to the first step, so a ladder of our own
+beside it would be two answers to when a word is known, drifting apart a grade at a time.
+`rungOf(state, learningSteps)` in `lib/learn/ladder.ts` is the whole of it, read off two columns
+`Card` has carried since the scheduler was written. Measured against ts-fsrs with its default steps
+of one minute and ten: New plus Good is Learning at step 1, which is the gap rung; Learning at step 1
+plus Good is Review, which is Practice; plus Again is step 0, which is back to the four options; plus
+Hard stays at step 1, which is "nearly, ask it again". `ladder.test.ts` drives the real scheduler
+rather than asserting that mapping from memory, because a change to those defaults upstream would
+otherwise leave every rung passing and the ladder silently flat.
+
+**One card per word, graded at every rung.** The rungs ask the same question at a greater depth each
+time, so the word's **recognition** card is what a rung reads and what a rung writes: it is the one
+row in a deck that stands for "do you know this word". The word's other cards, the production card,
+the case cards, the gap cards, are drills on a word you already know, and handing them over is what
+"moves to practice" means on the screen at the end. Every rung grades through `gradeCard` like every
+other mode (ADR-016), and a first meeting still writes nothing, because a card you have never seen
+cannot be recalled, only met.
+
+**Neither screen may teach a word the other one is teaching**, which is a rule in the queries rather
+than in the copy. The ladder puts its card ten minutes out between rungs, so a word being learned
+this evening is technically due, and serving it in review as well would ask for it cold on the screen
+that does not teach. The due read excludes the ladder's own card while it is in learning, which is a
+plain predicate on the row because that is the hottest read in the app; the unseen read excludes
+every card of a word the ladder still has hold of, which is a question about the word rather than the
+row and so is a `none` on the entry's own cards. `deckSnapshot` draws the same line, because a
+number on Today that the review queue then refuses to fill reads as a counting fault rather than as a
+rule, which is worse than either.
+
+**"I already know this one" is the one button on that screen that is a claim rather than an answer.**
+Plenty of people arrive here already speaking some Estonian, and being walked up three rungs for
+`kohv` is how a learner decides an app is beneath them. It grades Easy, which from a new card
+graduates it outright, so the word goes into the review rotation at about a week rather than out of
+the app: if the claim was optimistic, the schedule is what finds out.
+
+**The gap says which word it wants and never which spelling.** The rung before it asked what the word
+means, so the gap is about the form, and a gap with no cue at all is a memory test of which of five
+words this sentence belonged to. The cue is the review card's own fallback and for its reason: the
+lemma and the meaning, then the meaning alone, then nothing, because wherever the gap wants the
+dictionary form the lemma would be the answer printed a line under the question. The sentence's
+English translation is held to the same test, since thirty entries in the dictionary are spelled the
+same in both languages and `Vaatasin filmi` under "I watched the film" is a question about English.
+Nothing is written: `buildCloze` hides a form a lexicographer wrote, which is the one thing this app
+may do to an Estonian sentence, and it refuses a sentence that says the word twice.
+
+**And the question on screen is not the same as where the word now stands.** The rungs move the
+instant a grade lands, and the first version of the session rendered from the ladder directly, so a
+wrong answer at the gap replaced the correction with the next question in the same frame. Driven in a
+browser, the one moment worth stopping for went past without being drawn at all. The seat holds the
+card and the rung it is being *asked* at, and only advancing changes it.
+
+**Which words, and how hard, is the level doing real work rather than decorating a screen.**
+`challengeFirst` in `lib/collections/levels.ts` is a second ordering beside `aroundFirst` and the two
+answer different questions. `aroundFirst` asks "is this anywhere near them", which is right for a
+suggestion row, a pairs round and a review queue, all of which order a pool the learner already owns
+and must never drop from. Learn picks the next five words somebody will be taught from scratch, and a
+word one band below is one they very likely met in the class they are sitting in, so leading with it
+spends the session on revision. At level, then the band above, then their own untagged words, then
+below. Ordering and never filtering, for the reason `aroundFirst` gives at length.
 
 **Meeting a word is not answering it.** The intro screen ended in `submit(3)`: a card the learner
 had done nothing with but read was graded Good, in the append-only log, and the scheduler set its
@@ -2895,7 +3031,7 @@ shape that breaks this and it is the natural thing to write, so the invariant re
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/assessment/`, `lib/estonian/`, `lib/exam/`, `lib/games/`, `lib/gamification/`,
   `lib/stats/`, `lib/collections/`, `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`,
-  `lib/questions/`, `lib/ux/`, `lib/random/`, `lib/funding/` and `lib/copy/` stay free of
+  `lib/questions/`, `lib/ux/`, `lib/random/`, `lib/learn/`, `lib/funding/` and `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route. Asserted, because it
   had been prose alone and it is not a tidiness rule: the unit suite gates every
@@ -3750,7 +3886,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
 `nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`,
 `billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`,
-`MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`. Most of them now
+`MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`, `rungOf`,
+`LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -3767,6 +3904,7 @@ npm run audit:pos        # re-check every built part of speech the same way (sha
 npm run audit:verbs      # derive every verb's present, negative, conditional and imperative, and compare with Ekilex
 npm run audit:decks      # case cards already in a deck whose answer spells the word in the question (--write removes)
 npm run audit:cases      # derive every case of every noun, both columns, and compare with Ekilex (--write fills the gaps)
+npm run audit:senses     # re-check every course gloss against the sense Ekilex files it under
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run db:seed          # reload the built-in dictionary
@@ -3775,12 +3913,12 @@ npm run build:frequency  # recount the commonest words (cached corpus, --refresh
 npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
+npm run measure:scenes   # how much of a conversation the dictionary can already carry
+npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
 npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, suggestions, a11y
                          # (test-first-day runs first and needs an empty deck: reseed before it)
-
-npm run test:browser     # the newer browser suites: routes, modes, exam, offline, a11y
 npm run test:mobile      # the phone, measured; needs the server running
 npm run test:containment # text and icons inside their boxes, measured; needs the server running
 ```

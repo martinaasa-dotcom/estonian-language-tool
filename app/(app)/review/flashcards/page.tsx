@@ -4,11 +4,11 @@ import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
 import { shuffle } from "@/lib/random/shuffle";
 import { masteryFor } from "@/lib/progress/mastery";
-import { MASTERY_SLOTS } from "@/lib/srs/mastery";
+import { leastPractisedSlot } from "@/lib/srs/mastery";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ReviewSession } from "../ReviewSession";
-import { include, withChoices, type CardRow } from "../cards";
+import { include, withChoices } from "../cards";
 
 export const metadata = { title: "Flash cards" };
 
@@ -103,7 +103,9 @@ export default async function FlashcardsPage() {
     include,
   });
 
-  const picked = leastPractised(cards, unfinished).slice(0, ROUND);
+  const picked = leastPractisedSlot(
+    cards, new Set(unfinished.map((w) => w.lexemeId)),
+  ).slice(0, ROUND);
   /*
     A first meeting gives the meaning in the language the learner thinks in, and
     this round can hold one: a word that is not mastered may still be new to a
@@ -114,49 +116,4 @@ export default async function FlashcardsPage() {
   const round = await withChoices(shuffle(picked), gloss);
 
   return <ReviewSession cards={round} totalCards={round.length} mode="type" title="Flash cards" />;
-}
-
-/**
- * One card per word, choosing the slot with the fewest correct answers behind
- * it.
- *
- * `Verdict.slots` counts how many distinct slots a word has been answered
- * correctly in, so a word short of `MASTERY_SLOTS` has room in some slot it has
- * not filled. This cannot see *which* slot from the verdict alone, so it works
- * the other way round: a card whose `targetCase` the learner has never been
- * right on outranks one they have, and among equals the card with the most
- * lapses leads, which is the query's own order and is already the right tie
- * break for a round about what is not sticking.
- *
- * Untyped `targetCase` (a recognition or production card) is one shared slot,
- * exactly as `masteryOf` counts it, so the two cannot disagree about what
- * variety means.
- */
-function leastPractised(
-  cards: readonly CardRow[],
-  words: readonly { lexemeId: string; verdict: { slots: number } }[],
-): CardRow[] {
-  const wanted = new Map(words.map((w) => [w.lexemeId, w.verdict.slots]));
-  const chosen = new Map<string, CardRow>();
-  const slotsSeen = new Map<string, Set<string>>();
-
-  for (const card of cards) {
-    const lexemeId = card.lexemeId;
-    if (!lexemeId || !wanted.has(lexemeId)) continue;
-
-    const slot = card.targetCase ?? "";
-    const seen = slotsSeen.get(lexemeId) ?? new Set<string>();
-    const held = chosen.get(lexemeId);
-
-    // The first card of a word wins by default; a later one takes the place
-    // only if it opens a slot this word has not been asked in yet. The query's
-    // order does the rest, so the card kept is the most lapsed of the equals.
-    if (!held || !seen.has(slot)) {
-      if (!held) chosen.set(lexemeId, card);
-      else if (seen.size < MASTERY_SLOTS) chosen.set(lexemeId, card);
-    }
-    seen.add(slot);
-    slotsSeen.set(lexemeId, seen);
-  }
-  return [...chosen.values()];
 }

@@ -123,6 +123,15 @@ const ROUTES = [
   "/review/speaking",
   "/review/sprint",
   "/review/flashcards",
+  /*
+    The frequency rounds. The index is four cards each carrying a title, a
+    count chip and two controls on one row, which is the shape that goes over
+    at 768 where the rail appears and the column is at its narrowest; the round
+    is a whole `ReviewSession`, and it is walked as one of the four because the
+    group decides which words are asked and not how the screen is drawn.
+  */
+  "/review/common",
+  "/review/common/noun",
   "/review/emoji",
   "/review/describe",
   "/review/target",
@@ -275,20 +284,24 @@ const SPARSE = new Map([
 // merged tree rather than added from either side, which is the same rule one
 // line up, and the floor keeps the same ten under it.
 //
-// And 1180 rather than 1150: the conversations joined it, which is two routes
-// and a state no URL reaches. The briefing at 360 is a role card over a
-// two-column dial of labelled buttons, and the talking screen behind it is a
-// log of Estonian in a fixed-height scroller with a text field, the letter bar
-// and four controls under it, which is the tightest row of buttons in the app
-// after the rating keys. Measured at 1190 against a production build with the
-// demo fixture in place, and the floor keeps the same ten under it.
+// And then four routes rather than two, from two branches at once: the
+// frequency rounds from one, and the conversations plus a state no URL reaches
+// from the other. Each side set its own floor from its own two, which is
+// exactly the arithmetic the line above warns about, so this is measured on the
+// merged tree rather than added. The briefing at 360 is a role card over a
+// two-column dial of labelled buttons; the talking screen behind it is a log of
+// Estonian in a fixed-height scroller with a text field, the letter bar and four
+// controls under it, which is the tightest row of buttons in the app after the
+// rating keys; and `/review/common/noun` is a whole round.
 //
-// A production build rather than `next dev`, which is worth writing down
+// A PRODUCTION BUILD RATHER THAN `next dev`, which is worth writing down
 // because it cost an afternoon: the dev overlay mounts a `nextjs-portal`
 // element over the page, and this suite correctly reports it as drawn into the
 // phone bar on every route it walks. Measuring a floor off a dev server would
 // have baked that in.
-const { check, absent, done } = suite("Containment", { floor: 1180 });
+// Measured at 1231 on the merged tree against a production build with the demo
+// fixture in place, and the floor keeps the same ten under it.
+const { check, absent, done } = suite("Containment", { floor: 1220 });
 
 const browser = await launchChromium();
 

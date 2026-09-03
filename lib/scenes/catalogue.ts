@@ -8,7 +8,7 @@
  * harvest brought back. Nothing here is a sentence, and no line anybody reads
  * comes from this file.
  *
- * The three are the ones `docs/19-situations.md` §19 names, chosen because the
+ * The three are the ones `docs/21-situations.md` §19 names, chosen because the
  * course already promises all three in as many words:
  *
  *   keha-ja-tervis   "Describe a symptom to a doctor and understand the

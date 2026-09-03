@@ -151,6 +151,17 @@ const ROUTES = [
   "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
   "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
   /*
+    The frequency rounds. `/review/common` is the index and one of its four
+    lists stands for the round, which is a whole `ReviewSession` rendered from
+    one component: the shape this list's own header says was once found drawing
+    a progress bar, a card and four buttons with no heading in it at all.
+
+    One of the four rather than all four, because the group decides which words
+    are asked and not how the screen is built, so the other three would be the
+    same eight checks over the same markup.
+  */
+  "/review/common", "/review/common/noun",
+  /*
     And the conversations, which is the third time this list has been caught by
     the fault its own header names. A scene is a whole session rendered from one
     component with a log region, a disclosure and a form in it, which is exactly
@@ -206,14 +217,17 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   the merged tree, which is the 307 above plus nine for /funding and
   eighty-six for these, and the floor keeps the same five under it.
 
-  And 415 rather than 397: the conversations joined it, which is the third time
-  this list has been caught by the fault its own header names. A scene is a
-  whole session rendered from one component with a log region, a disclosure and
-  a form in it, which is exactly the shape that was once found drawing a card
-  and four buttons with no heading at all. Measured at 420 against a production
-  build, and the floor keeps the same five under it.
+  And then four routes rather than two, from two branches at once: the frequency
+  rounds from one and the conversations from the other. Each side measured 420
+  with its own two, which is exactly the arithmetic this file warns about two
+  paragraphs up, so the merged number is measured on the merged tree rather than
+  added from either side. A scene is a whole session rendered from one component
+  with a log region, a disclosure and a form in it, which is the shape this
+  header exists for, and `/review/common/noun` is the same claim about a round.
+  Measured at 438 against a production build, and the floor keeps the same five
+  under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 415 });
+const { check, absent, done } = suite("Accessibility", { floor: 433 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.

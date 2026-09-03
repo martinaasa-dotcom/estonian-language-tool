@@ -1,7 +1,7 @@
 /**
  * What a scene file is allowed to say.
  *
- * `docs/19-situations.md` §21 named this as invariant 1 and named it wrongly:
+ * `docs/21-situations.md` §21 named this as invariant 1 and named it wrongly:
  * "no file under the catalogue contains an Estonian letter", modelled on the
  * tripwire over `lib/estonian/grammar.ts`. Building the catalogue is what
  * showed the rule was incoherent, because a scene has to name the words its
