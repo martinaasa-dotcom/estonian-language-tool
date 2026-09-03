@@ -226,7 +226,14 @@ check("the phone sheet opens", sheet !== null);
 if (sheet && rail) {
   const missing = rail.links.filter((href) => !sheet.reachable.includes(href));
   check("a phone reaches every place a desktop does", missing.length === 0, missing.join(", "));
-  check("the sheet groups what it holds", sheet.headings.length >= 4, `${sheet.headings.length} headings`);
+  /*
+    Three rather than four, and the missing one is the bar doing its job. The
+    sheet holds everything the four cells do not, and the daily group is now
+    exactly those cells: Today, Learn and Practice. A heading for a group whose
+    every link is already on the screen in front of the reader would be a
+    heading over nothing.
+  */
+  check("the sheet groups what it holds", sheet.headings.length >= 3, `${sheet.headings.length} headings`);
 }
 
 /*
@@ -481,8 +488,14 @@ check("the phone bar marks the cell you are on too", barMark !== null && barMark
   see the pointer check above. Sampled every frame over the length of the
   travel rather than at one chosen millisecond, because how far along it is at
   a given moment is a fact about the machine.
+
+  Started two cells from the dictionary, which is what it has always been: the
+  stretch falls out of the arithmetic and scales with the distance, so the same
+  press one cell along measures 1.20x rather than 1.40x and reads as a marker
+  that stopped smearing. The route named here is a bar cell rather than a
+  particular screen, and the bar's second cell is Learn now.
 */
-await mobile.goto(`${BASE}/review`, { waitUntil: "networkidle" });
+await mobile.goto(`${BASE}/learn`, { waitUntil: "networkidle" });
 await mobile.waitForTimeout(500);
 const barTravel = await mobile.evaluate(async () => {
   const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]
@@ -538,7 +551,7 @@ check("a press the browser never turned into a click still goes where it was aim
   arrives home rather than travelling back, since reverting is a correction
   and not a journey.
 */
-await mobile.goto(`${BASE}/review`, { waitUntil: "networkidle" });
+await mobile.goto(`${BASE}/learn`, { waitUntil: "networkidle" });
 await mobile.waitForTimeout(500);
 const panned = await mobile.evaluate(async () => {
   const nav = [...document.querySelectorAll('nav[aria-label="Main"]')]

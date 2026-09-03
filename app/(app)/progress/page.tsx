@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Compass, Flame, Shield } from "lucide-react";
+import { ClipboardCheck, Compass, Flame, Shield } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
@@ -152,10 +152,22 @@ export default async function ProgressPage() {
     <Page
       title="Progress"
       lead="Worked out fresh from your reviews every time you check."
+      /*
+        The three other readings of "how am I doing", reached from the page
+        that asks it. Each is a `within` in `lib/ux/nav.ts` rather than a row
+        in the rail, and a `within` nobody wired up is a screen reachable only
+        through the command palette: the level check was linked here and the
+        mock paper and the deck were not.
+      */
       actions={
-        <ButtonLink href="/assess">
-          <Compass size={15} aria-hidden /> Level check
-        </ButtonLink>
+        <span className="flex flex-wrap gap-2">
+          <ButtonLink href="/assess">
+            <Compass size={15} aria-hidden /> Level check
+          </ButtonLink>
+          <ButtonLink href="/exam">
+            <ClipboardCheck size={15} aria-hidden /> Mock exam
+          </ButtonLink>
+        </span>
       }
     >
       <Stack>
@@ -359,7 +371,10 @@ export default async function ProgressPage() {
               </ul>
               <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
                 This counts a word only once you know every card for it, so the real number could
-                be a little higher.
+                be a little higher.{" "}
+                <Link href="/words" className="underline" style={{ color: "var(--accent-deep)" }}>
+                  See your deck card by card
+                </Link>.
               </p>
             </Card>
           </section>

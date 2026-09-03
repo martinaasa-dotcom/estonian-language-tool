@@ -15,9 +15,13 @@
  * the whole time. The groups are the questions a learner actually asks:
  *
  *   - what do I do now
- *   - where am I in the course
  *   - what does this word mean
  *   - how am I doing
+ *
+ * Three rather than the four it opened with. "Where am I in the course" turned
+ * out to be the same question as "what do I do now": Learn is the ladder the
+ * next five words climb and the map they come off, and a learner standing on
+ * one wants the other in the same breath.
  *
  * Nothing here decides *whether* to show a destination. That question is
  * `lib/ux/disclosure.ts`, it is about what a screen leads with, and it is a
@@ -76,6 +80,10 @@ export interface Destination {
    *     dictionary rather than a place beside it, and the screen somebody is
    *     standing on when they want a list of words to learn is the one with a
    *     search box on it.
+   *   - `/review` — the schedule working, which is one of the ways Practice
+   *     asks a word you have already learned rather than a place beside it.
+   *     It leads that page, because on a day with cards due it is the thing to
+   *     press.
    *
    * The value is where it is reached from, so this file says so rather than
    * leaving the next reader to find out.
@@ -103,42 +111,66 @@ export const SECTIONS: NavSection[] = [
   {
     id: "daily",
     title: "Every day",
-    blurb: "What is due, and the five minutes after it.",
+    blurb: "The new words, and the ones you have already met.",
     items: [
       {
         href: "/", label: "Today", blurb: "Due cards, your goal, the streak", icon: "Sun", tone: "butter",
         keywords: "home dashboard streak quests goal xp", bar: true,
       },
-      {
-        href: "/review", label: "Review", blurb: "Everything due, timed to when you are about to forget", icon: "GraduationCap",
-        tone: "accent", keywords: "flashcards srs study due", bar: true,
-      },
-      {
-        href: "/practice", label: "Practice", blurb: "Sprint, match, sentences, speaking, listening",
-        icon: "Swords", tone: "peach", keywords: "games modes drill weakest case",
-      },
       /*
-        A row of its own rather than a `within`, because a calendar is not
-        reached from the thing it is about: you open it to decide when to study,
-        which is before you have opened anything else. It sits in "Every day"
-        beside Review and Practice for the same reason, since what it holds is
-        the shape of a learner's week rather than a report on it.
+        WHERE THE "REVIEW" ROW USED TO BE, AND WHY IT IS NOT THAT ANY MORE.
+
+        The daily row said Review, and what it opened was everything at once:
+        the cards that were due, and a trickle of words the learner had never
+        seen, taught in among them. That is one screen answering two questions.
+        Reviewing is keeping a memory alive and needs a schedule; learning a
+        word is building one and needs to be walked up, met, then picked out of
+        four, then produced in a sentence.
+
+        So the daily row is Learn, and it goes to the ladder and to the course
+        the words come out of. What is due is Practice's, which is where every
+        other way of asking a word you already know already lived.
       */
       {
-        href: "/calendar", label: "Calendar", blurb: "Your classes, study slots and what is due",
-        icon: "CalendarDays", tone: "sky",
-        keywords: "calendar week class schedule timetable homework reminder due plan tasks",
+        href: "/learn", label: "Learn", blurb: "New words, five at a time, and the course they come from",
+        icon: "Sparkles", tone: "mint",
+        keywords: "new words learn course units path lessons syllabus vocabulary teach",
+        bar: true,
+      },
+      {
+        href: "/practice", label: "Practice", blurb: "What is due, plus sprint, match, sentences and games",
+        icon: "Swords", tone: "peach", keywords: "games modes drill weakest case review due srs flashcards",
+        bar: true,
+      },
+      /*
+        Reached from Practice rather than standing beside it, and this is the
+        one row that moved rather than being renamed. `/review` is the schedule
+        working: it asks the words a learner has already produced once, at the
+        moment they are about to forget them. Every other way of asking those
+        same words is already on Practice, so a row of its own put the daily
+        loop in two places and left the learner to work out which was which.
+      */
+      {
+        href: "/review", label: "Review", blurb: "Everything due, timed to when you are about to forget",
+        icon: "GraduationCap", tone: "accent", keywords: "flashcards srs study due schedule",
+        within: "/practice",
       },
     ],
   },
   {
     id: "course",
-    title: "Your course",
-    blurb: "The path through the levels, and how far along it you are.",
+    title: "How it is going",
+    blurb: "The weeks ahead, and how far along you are.",
     items: [
+      /*
+        A row of its own rather than a `within`, because a calendar is not
+        reached from the thing it is about: you open it to decide when to study,
+        which is before you have opened anything else.
+      */
       {
-        href: "/learn", label: "Course", blurb: "Units from A1 to C1", icon: "Map", tone: "mint",
-        keywords: "course units path lessons syllabus", bar: true,
+        href: "/calendar", label: "Calendar", blurb: "Your classes, study slots and what is due",
+        icon: "CalendarDays", tone: "sky",
+        keywords: "calendar week class schedule timetable homework reminder due plan tasks",
       },
       {
         href: "/class", label: "Classes", blurb: "Teach a class, or join one", icon: "School", tone: "sky",

@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { nextCardLine } from "@/lib/time/day";
@@ -9,6 +10,7 @@ import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseItems } from "@/lib/scan/items";
 import { inTeachingOrder } from "@/lib/srs/cards";
+import { LADDER_CARD_TYPE, LADDER_STATES } from "@/lib/learn/ladder";
 import { spaceSiblings } from "@/lib/srs/queue";
 import { readSettings, reviewModeFrom, SETTING_KEYS } from "@/lib/settings/store";
 import { ReviewSession } from "./ReviewSession";
@@ -160,7 +162,25 @@ export default async function ReviewPage({
   */
   const [due, freshPool, totalCards, level, mode] = await Promise.all([
     prisma.card.findMany({
-      where: { ownerId, suspended: false, due: { lte: now }, state: { not: 0 } },
+      where: {
+        ownerId, suspended: false, due: { lte: now }, state: { not: 0 },
+        /*
+          A WORD STILL ON THE LEARN LADDER IS NOT DUE HERE.
+
+          Learn walks a new word up three rungs on its recognition card, and
+          the scheduler puts that card ten minutes out between them, so within
+          one evening it comes back due. Serving it here as well would have
+          both screens teaching one word and, worse, would ask for it cold on
+          the screen that does not teach: the ladder is what holds the sentence
+          and the four options. Once the card graduates it is ordinary review
+          like everything else, which is what "moves to practice" means.
+
+          A plain predicate on the row rather than a subquery over the word,
+          because this is the hottest read in the app and the overlap is
+          exactly this one shape.
+        */
+        NOT: { cardType: LADDER_CARD_TYPE, state: 1 },
+      },
       orderBy: { due: "asc" },
       take: MAX_SESSION,
       include,
@@ -171,7 +191,7 @@ export default async function ReviewPage({
     // *within* a word, which is what stops a conjugation card being somebody's
     // first sight of a verb.
     prisma.card.findMany({
-      where: { ownerId, suspended: false, state: 0 },
+      where: { ownerId, suspended: false, state: 0, ...pastTheLadder(ownerId) },
       orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
       take: NEW_CANDIDATES,
       include,
@@ -240,6 +260,44 @@ export default async function ReviewPage({
   );
 }
 
+
+/**
+ * WHICH UNSEEN CARDS PRACTICE MAY INTRODUCE, WHICH IS THE ONES LEARN HAS
+ * FINISHED WITH.
+ *
+ * A deck arrives whole: a unit, a level or a photographed handout writes a
+ * recognition card, a production card and one per case the dictionary can
+ * build, all unseen, all at one `createdAt`. Learn teaches the word on its
+ * recognition card and Practice drills everything else, so the line between
+ * the two screens is drawn here: a word whose recognition card has not
+ * graduated is Learn's, and none of its cards is offered here yet. The moment
+ * it graduates the rest of them arrive in the ordinary trickle.
+ *
+ * A `none` on the word's own cards rather than a second query, so this costs a
+ * subquery on an indexed column instead of a round trip. `lexemeId` is
+ * nullable, and a card with no dictionary entry behind it has no ladder to be
+ * on, so it is let through rather than filtered out by a clause that cannot
+ * see it.
+ */
+function pastTheLadder(ownerId: string): Prisma.CardWhereInput {
+  return {
+    OR: [
+      { lexemeId: null },
+      {
+        lexeme: {
+          cards: {
+            none: {
+              ownerId,
+              cardType: LADDER_CARD_TYPE,
+              state: { in: [...LADDER_STATES] },
+            },
+          },
+        },
+      },
+    ],
+  };
+}
+
 /**
  * The window of unseen cards, widened when none of it is anywhere near the
  * learner's level.
@@ -274,6 +332,7 @@ async function inBandPool(
   const inBand = await prisma.card.findMany({
     where: {
       ownerId, suspended: false, state: 0,
+      ...pastTheLadder(ownerId),
       lexeme: { cefr: { in: [...bandsAround(level)] } },
     },
     orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],

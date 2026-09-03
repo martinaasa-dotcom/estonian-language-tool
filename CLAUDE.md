@@ -1782,6 +1782,83 @@ Prisma maps `DateTime` to `timestamp without time zone`, and on a naive value on
 a `timestamptz` that `TO_CHAR` renders in the *session's* zone: right on a UTC session and a day out
 on any other.
 
+**Learning a word and reviewing one are two jobs, and one screen was doing both.** The daily row in
+the rail said Review, and what it opened was everything at once: the cards that were due, and a
+trickle of words the learner had never seen, taught in among them. That is one screen answering two
+questions. Reviewing is keeping a memory alive and needs a schedule; building one needs to be walked
+up. So the daily row is **Learn**, `/learn` is the ladder and the course the words come off, and what
+is due is Practice's, which is where every other way of asking a word you already know already lived.
+`/review` keeps its URL and every drill under it; what changed is that it is reached from `/practice`
+rather than standing beside it.
+
+**The ladder is three rungs, and they are the scheduler's own steps rather than a second
+progression.** A word is met, then asked what it means out of four options, then put back into the
+sentence it was met in. Pass the gap and it moves to Practice; miss it and it drops to the rung
+below, which is where somebody who nearly had it should be asked from. Five words at a time, and the
+batch size is also the gap a word waits before it comes round again, so one lap is one round: you
+meet five words, meet four others, and are asked the first one back at the point where you have to
+retrieve it rather than read it off the screen above.
+
+Nothing about that is stored. FSRS already keeps a card in Learning across two steps before it
+graduates to Review and already sends a missed card back to the first step, so a ladder of our own
+beside it would be two answers to when a word is known, drifting apart a grade at a time.
+`rungOf(state, learningSteps)` in `lib/learn/ladder.ts` is the whole of it, read off two columns
+`Card` has carried since the scheduler was written. Measured against ts-fsrs with its default steps
+of one minute and ten: New plus Good is Learning at step 1, which is the gap rung; Learning at step 1
+plus Good is Review, which is Practice; plus Again is step 0, which is back to the four options; plus
+Hard stays at step 1, which is "nearly, ask it again". `ladder.test.ts` drives the real scheduler
+rather than asserting that mapping from memory, because a change to those defaults upstream would
+otherwise leave every rung passing and the ladder silently flat.
+
+**One card per word, graded at every rung.** The rungs ask the same question at a greater depth each
+time, so the word's **recognition** card is what a rung reads and what a rung writes: it is the one
+row in a deck that stands for "do you know this word". The word's other cards, the production card,
+the case cards, the gap cards, are drills on a word you already know, and handing them over is what
+"moves to practice" means on the screen at the end. Every rung grades through `gradeCard` like every
+other mode (ADR-016), and a first meeting still writes nothing, because a card you have never seen
+cannot be recalled, only met.
+
+**Neither screen may teach a word the other one is teaching**, which is a rule in the queries rather
+than in the copy. The ladder puts its card ten minutes out between rungs, so a word being learned
+this evening is technically due, and serving it in review as well would ask for it cold on the screen
+that does not teach. The due read excludes the ladder's own card while it is in learning, which is a
+plain predicate on the row because that is the hottest read in the app; the unseen read excludes
+every card of a word the ladder still has hold of, which is a question about the word rather than the
+row and so is a `none` on the entry's own cards. `deckSnapshot` draws the same line, because a
+number on Today that the review queue then refuses to fill reads as a counting fault rather than as a
+rule, which is worse than either.
+
+**"I already know this one" is the one button on that screen that is a claim rather than an answer.**
+Plenty of people arrive here already speaking some Estonian, and being walked up three rungs for
+`kohv` is how a learner decides an app is beneath them. It grades Easy, which from a new card
+graduates it outright, so the word goes into the review rotation at about a week rather than out of
+the app: if the claim was optimistic, the schedule is what finds out.
+
+**The gap says which word it wants and never which spelling.** The rung before it asked what the word
+means, so the gap is about the form, and a gap with no cue at all is a memory test of which of five
+words this sentence belonged to. The cue is the review card's own fallback and for its reason: the
+lemma and the meaning, then the meaning alone, then nothing, because wherever the gap wants the
+dictionary form the lemma would be the answer printed a line under the question. The sentence's
+English translation is held to the same test, since thirty entries in the dictionary are spelled the
+same in both languages and `Vaatasin filmi` under "I watched the film" is a question about English.
+Nothing is written: `buildCloze` hides a form a lexicographer wrote, which is the one thing this app
+may do to an Estonian sentence, and it refuses a sentence that says the word twice.
+
+**And the question on screen is not the same as where the word now stands.** The rungs move the
+instant a grade lands, and the first version of the session rendered from the ladder directly, so a
+wrong answer at the gap replaced the correction with the next question in the same frame. Driven in a
+browser, the one moment worth stopping for went past without being drawn at all. The seat holds the
+card and the rung it is being *asked* at, and only advancing changes it.
+
+**Which words, and how hard, is the level doing real work rather than decorating a screen.**
+`challengeFirst` in `lib/collections/levels.ts` is a second ordering beside `aroundFirst` and the two
+answer different questions. `aroundFirst` asks "is this anywhere near them", which is right for a
+suggestion row, a pairs round and a review queue, all of which order a pool the learner already owns
+and must never drop from. Learn picks the next five words somebody will be taught from scratch, and a
+word one band below is one they very likely met in the class they are sitting in, so leading with it
+spends the session on revision. At level, then the band above, then their own untagged words, then
+below. Ordering and never filtering, for the reason `aroundFirst` gives at length.
+
 **Meeting a word is not answering it.** The intro screen ended in `submit(3)`: a card the learner
 had done nothing with but read was graded Good, in the append-only log, and the scheduler set its
 first interval from a recall that never happened. The next real question was the next day, because
@@ -2931,7 +3008,7 @@ shape that breaks this and it is the natural thing to write, so the invariant re
 - TypeScript `strict` plus `noUncheckedIndexedAccess`. No `any` without a comment justifying it.
 - `lib/assessment/`, `lib/estonian/`, `lib/exam/`, `lib/games/`, `lib/gamification/`,
   `lib/stats/`, `lib/collections/`, `lib/time/`, `lib/offline/`, `lib/security/`, `lib/scan/`,
-  `lib/questions/`, `lib/ux/`, `lib/random/`, `lib/funding/` and `lib/copy/` stay free of
+  `lib/questions/`, `lib/ux/`, `lib/random/`, `lib/learn/`, `lib/funding/` and `lib/copy/` stay free of
   React, Next.js and Prisma: pure functions, unit tested. Anything that
   needs the database lives in `lib/progress/` or a route. Asserted, because it
   had been prose alone and it is not a tidiness rule: the unit suite gates every
@@ -3786,7 +3863,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
 `nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`,
 `billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`,
-`MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`. Most of them now
+`MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`, `rungOf`,
+`LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

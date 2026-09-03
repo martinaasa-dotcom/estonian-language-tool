@@ -8,6 +8,7 @@ import {
   dailyGoalFrom, numberSetting, readSettings, SETTING_KEYS, writeSetting,
 } from "@/lib/settings/store";
 import { dayClock, type DayClock } from "@/lib/time/day";
+import { isLearningWord, LADDER_CARD_TYPE } from "@/lib/learn/ladder";
 
 /**
  * One read of "where is this learner", shared by Today, the path, the progress
@@ -25,7 +26,37 @@ const KNOWN_STATE = 2;
 
 export interface DeckSnapshot {
   totalCards: number;
+  /**
+   * Cards Practice will actually serve: due, seen before, and not a word Learn
+   * still has hold of.
+   *
+   * The last clause is why this is not simply `due <= now && state !== 0`. The
+   * ladder walks a new word on its recognition card and the scheduler puts
+   * that card ten minutes out between rungs, so a word being learned this
+   * evening is technically due. Counting it here would put a number on Today
+   * that the review queue then refuses to fill, which is the worst kind of
+   * wrong: it looks like a counting fault in the app rather than a rule.
+   */
   dueCount: number;
+  /**
+   * Unseen cards Practice will introduce: the ones belonging to words the
+   * ladder has finished with.
+   *
+   * Every card of a word arrives unseen in one insert, so a deck of fifty words
+   * holds hundreds of these and almost all of them are Learn's. Counting the
+   * lot would put a number on Today that the review queue refuses to fill,
+   * which is the fault `dueCount` is written the way it is to avoid.
+   */
+  newForPractice: number;
+  /**
+   * Words waiting on the Learn ladder, counted as words rather than cards.
+   *
+   * `newCount` below is cards, which is the right unit for "how much is in
+   * this deck" and the wrong one for a screen offering to teach five things:
+   * one word is a recognition card, a production card and up to eight more, so
+   * a card count reads as ten times the work.
+   */
+  learnCount: number;
   newCount: number;
   knownCards: number;
   /** Lemmas with at least one card in the deck. */
@@ -78,7 +109,10 @@ export async function deckSnapshot(ownerId: string, now = new Date()): Promise<D
   const [cards] = await Promise.all([
     prisma.card.findMany({
       where: { ownerId },
-      select: { state: true, due: true, suspended: true, lexemeId: true },
+      // `cardType` rides along for the ladder count: which card a word is
+      // being learned on is a fact about the card type (lib/learn/ladder.ts),
+      // and asking for it separately would be a second read of the same rows.
+      select: { state: true, due: true, suspended: true, lexemeId: true, cardType: true },
     }),
     // Beside the deck rather than after it. On a warm instance this is free;
     // on a cold one it is the query that fills the cache, and paying for it
@@ -90,13 +124,32 @@ export async function deckSnapshot(ownerId: string, now = new Date()): Promise<D
   const perLemma = new Map<string, { total: number; known: number }>();
   let dueCount = 0;
   let newCount = 0;
+  let newForPractice = 0;
+  let learnCount = 0;
   let knownCards = 0;
+
+  /*
+    Which words the ladder still has hold of, read off the rows already
+    fetched. The review queue asks the database the same question with a `none`
+    clause; here the whole deck is in hand, so it is one pass over it.
+  */
+  const onLadder = new Set<string>();
+  for (const card of cards) {
+    if (card.cardType === LADDER_CARD_TYPE && isLearningWord(card.state) && card.lexemeId) {
+      onLadder.add(card.lexemeId);
+    }
+  }
 
   for (const card of cards) {
     if (card.state === KNOWN_STATE) knownCards++;
     if (!card.suspended) {
-      if (card.state === 0) newCount++;
-      else if (card.due <= now) dueCount++;
+      const ladderCard = card.cardType === LADDER_CARD_TYPE && isLearningWord(card.state);
+      if (ladderCard) learnCount++;
+      if (card.state === 0) {
+        newCount++;
+        if (!onLadder.has(card.lexemeId ?? "")) newForPractice++;
+      // The same line the review queue draws, for the reason `dueCount` gives.
+      } else if (card.due <= now && !ladderCard) dueCount++;
     }
     const lemma = card.lexemeId === null ? undefined : entries.get(card.lexemeId)?.lemma;
     if (!lemma) continue;
@@ -109,6 +162,8 @@ export async function deckSnapshot(ownerId: string, now = new Date()): Promise<D
   return {
     totalCards: cards.length,
     dueCount,
+    newForPractice,
+    learnCount,
     newCount,
     knownCards,
     startedLemmas: new Set(perLemma.keys()),
