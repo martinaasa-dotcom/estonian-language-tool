@@ -601,10 +601,21 @@ Four states, per `docs/08-ux-ia-a11y.md` §4:
   state is a door rather than an explanation. The body stays under 100 characters.
 - **Loading.** The pool query and the draw. A skeleton the shape of the header, which is the one
   part whose shape is known before the draw.
-- **Error.** `app/error.tsx`'s rules, and a scene interrupted mid-run is resumable rather than lost.
-- **Offline.** One scene pre-assembled and cached. Difficulty 0, attested lines only, marking is
-  mechanical so it needs nothing, and the finished run goes to the outbox with the grades. A
-  conversation you can have on a train is worth more than most of what this app can do offline.
+- **Error.** `app/error.tsx`'s rules. A turn that will not reach the server says so and leaves the
+  conversation where it was: the turn they typed is still theirs and pressing again resends it. The
+  status is read rather than the body alone, so a five hundred and a dead network stop reading
+  identically, which the first version got wrong and which sent whoever met it to check their wifi
+  about a bug in this app.
+- **Offline.** **Not in this build, and said here rather than left to be discovered.** A scene runs
+  on the scene's whole closed list, which is a few hundred entries with their forms, and on a
+  marker that has to be given them; the marking really is mechanical and needs nothing else, so the
+  piece that is missing is the lexicon reaching the browser at all, plus a service worker that
+  pre-assembles one scene. Nothing in the design blocks it: `readTurn`, `advance` and `gradesFor`
+  are pure and already run on data rather than on a database, the grades are the shape the outbox
+  already carries, and `Review` replays in order by construction. It is a piece of work rather than
+  a question, and a conversation you can have on a train is still worth more than most of what this
+  app can do offline. Until it exists, the scene needs a connection and the offline page says so
+  like any other route.
 
 The layout, at 360px first: the role card and the objectives at the top, collapsible and never gone;
 the turns in their own scroll container, per the containment rules; the input above the phone bar
@@ -619,6 +630,30 @@ this app may be carried by colour alone.
 
 You can walk out. Leaving is a real option in a real conversation, and the debrief handles it
 without a word of reproach.
+
+**What crosses to the browser is the briefing, not the run.** The planned run holds the seed, the
+persona's leans and the curveballs, which are the things that are supposed to *happen* to somebody
+rather than be read off a card, and the first version sent the lot: anybody with a network tab had
+the whole afternoon, which counter clerk they got and what was about to go wrong and in what order.
+Sonad answers the same question the other way and says why, because marking without a round trip is
+most of how it plays; here nothing is bought by sending it, since every turn is marked on the server
+anyway. `Briefing` in `lib/progress/scene.ts` is who you are, what you were given and who is behind
+the desk.
+
+**And the card shows what it points at.** Six props across the three scenes said "the word below" or
+"the day below" and printed nothing below, so a learner could not know whether they had a fever or a
+sore throat, and two of the doctor scene's three props were unanswerable: the beat could be met only
+by guessing. The briefing carries the English of what was dealt, which is the exercise rather than a
+concession to ADR-005. The card says what is wrong and you say it in Estonian; printing `valu` would
+leave nothing to produce, which is the fault `npm run audit:questions` exists for one floor down.
+
+**"I need a word" gives you a word.** It recorded the beat id, so a debrief listed `reason` and
+`greet` under "words this conversation needed" with no way to keep any of them, on the one screen
+whose whole job is turning a gap into a card. `sceneHelp` reads the run's own row, replays the
+transcript to find which beat it is on, and offers a lemma from that beat's declared topic with the
+dictionary's own English beside it: no provider, no booking, and through `oneEntryPerLemma`, because
+`hall` is a noun meaning frost and an adjective meaning grey and this hands one entry to a button
+that keeps it. Asking still costs the turn its `helped` flag and nothing else.
 
 ## 14. Where it lives
 
@@ -699,15 +734,33 @@ pure.
 
 ## 16. Cost, and what happens when there is none
 
-`UsageKind` gets `SCENE`, and a scene books **one call rather than one per turn**, because running
-out of allowance halfway through a conversation is the worst failure available to this module. The
-reservation is written at the start for the whole scene's expected tokens, exactly as the ledger
-already books a call before opening a provider, and the real figures arrive at the end as the
-settlement that corrects it, which is negative whenever the estimate was generous. A scene abandoned
-before it composed anything hands the booking back through `releaseReservation`, which is what that
-function is for: a call that reached nobody is not a question anybody asked. Booking per scene is
-also what makes the honest sentence possible, "two conversations left today", rather than "eleven
-calls left".
+`UsageKind` gets `SCENE`, and **each composed turn books its own call**. This section said the
+opposite when it was written, and the reasoning behind that is worth keeping because half of it is
+still right: running out of allowance halfway through a conversation is the worst failure available
+to this module, and one booking for the whole scene was the obvious way to make that impossible.
+
+It does not survive the ledger's own arithmetic. A call is written down when it is **authorised**,
+which is what stops ten tabs reading the same "under the limit", and two of the three limits count
+`CALL` rows. So a dozen composed turns behind a single booking is eleven calls the allowance never
+saw, on the dearest path in the app, and the burst limiter, which exists to stop exactly this, would
+have been counting one. It was also a reservation crossing to the browser and coming back, which is
+a value the caller picks even when it is verified.
+
+What survives is the requirement that a mid-scene refusal be **survivable**, and it is, because the
+rung below the model is a real conversational move rather than an error: the other side did not
+catch that, say it again. So the scene degrades where it runs out rather than stopping, which is the
+same behaviour §16 already promised a keyless deployment.
+
+Two rules fall out of the per-turn shape and both are the ledger's own. The attested rung is tried
+**before** the ledger is asked, because a line the dictionary already had costs nothing and booking
+for it would ration a learner over a request nobody made. And a booking is handed back through
+`releaseReservation` wherever nothing was composed, because a release gives back the *call* and not
+only the money.
+
+The honest sentence a learner is shown is therefore about the day rather than about scenes left:
+what the quota says when it refuses names no one feature, since a conversation, the tutor and the
+scanner all reach the same allowance and a receptionist screen saying "today's limit for Anu" is a
+screen naming a feature the reader is not using.
 
 The number itself needs the Phase 0 measurement, and the shape of the table is worth noting before
 somebody picks one. `ALLOWANCE` is a whole multiple of the base, which is the tutor's ten a day, so
@@ -788,13 +841,20 @@ reason to hold a module whose whole design is that a line it cannot vouch for is
 already says a withheld line is retried once and the attested line stands. What that rate costs is
 variety rather than correctness.
 
-**Phase 1.** Three scenes at A2 and B1, drawn from units the course already teaches: the health
-centre (`keha-ja-tervis`), the landlord (`eluase`), and the counter that wants a document
-(`linn-ja-teenused`). Typed turns, mechanical marking, attested and composed lines, four
-curveballs, the debrief, the offline scene. Every guard in §18 on day one, because a guard added
-afterwards is a guard that was missing for a release. Done means what `docs/09-roadmap.md` says it
-means, plus the suite in §21, plus one figure §29 asks for that no run of the eval can produce:
-**how often a beat falls back to its attested line**, which is what a learner actually feels.
+**Phase 1 is built, less the offline scene.** Three scenes at A2 and B1, drawn from units the
+course already teaches: the health centre (`keha-ja-tervis`), the landlord (`eluase`), and the
+counter that wants a document (`linn-ja-teenused`). Typed turns, mechanical marking, attested and
+composed lines, curveballs on a four-position dial, personas, the debrief, and every guard in §18,
+because a guard added afterwards is a guard that was missing for a release. `scripts/test-scene.mjs`
+plays one through in a browser and CI runs it.
+
+**The offline scene is the one piece not in it**, and §13 says what is missing rather than leaving
+it to be found: the lexicon reaching the browser, and a service worker that pre-assembles one scene.
+Nothing in the design blocks it and none of the pure modules would change.
+
+The figure §29 asked for that no run of the eval could produce, **how often a beat falls back to its
+attested line**, turned out to need no instrument at all once the module existed, and the answer was
+not the one anybody was measuring for. §30 is what playing one through found.
 
 **Phase 2.** The rest of the dials, the spoken unmarked mode, the two-way link from the unit pages,
 the full curveball catalogue, class assignment, and the loop that makes this more than practice:
@@ -868,12 +928,24 @@ it is a rule that drifts:
 11. A curveball is never drawn on the first beat.
 12. `SCORED_SKILLS` is unchanged. This module contributes nothing to any level.
 
-And one browser suite, `scripts/test-scene.mjs`, with the model stubbed the way `test-scan.mjs`
-stubs it: a whole scene played through, the provenance chips, the repair path, a curveball and its
-out, the debrief, the offline scene, and a run completed with no provider key at all. It declares a
-floor like every other suite, and it waives with a number and a reason rather than a line saying
-SKIP. It invents its own word if it writes to the shared dictionary, for the reason `test-scan.mjs`
-does.
+And one browser suite, `scripts/test-scene.mjs`, which is built and which CI runs: the chooser, the
+briefing, the role card, the first line and its provenance chip, a turn that lands, the help button,
+walking out, the debrief, and what was written down. It declares a floor like every other suite and
+waives with a number and a reason rather than a line saying SKIP.
+
+Two things about it are different from what was planned here, and both are corrections. **The model
+is not stubbed.** `test-scan.mjs` stubs it because a scanner without one has no camera and there is
+nothing to drive; a scene without one has a working ladder, so the honest test is the one that runs
+in whatever state the server is in and reports which, which is what `e2e.mjs` already does about the
+tutor. Keyed, the composed check runs; keyless, it is waived by one with the state that would lift
+it named, and every other rung and every screen is checked either way. The floor is the count in the
+full state, so both states are held to the same arithmetic.
+
+**And it writes to no shared table**, so it needs no invented word: a run is the learner's own row,
+and the cleanup is scoped to this scene's runs rather than to the table. The rule `test-scan.mjs`
+states still applies to anything that does write one.
+
+The offline scene is not in the suite because it is not in the build (§13).
 
 ## 22. For a language house pilot
 
@@ -1507,3 +1579,59 @@ daily allowance is not spent, because three is the sampling floor rather than a 
 nothing rather than a rate, and names which model refused with what status, because the first
 version of this reported `0/0 withheld (0%)` at a rate limit and that reads as a perfect score.
 
+
+## 30. Building it, and the rung that had never answered
+
+§29 measured the gate and asked for one more figure that no run of the eval could produce: how often
+a beat falls back to its attested line. Playing a scene through answered it and the answer was that
+**the attested rung had never answered at all**, on any beat of any scene, in any run, including
+every run of the eval that §29 is built on.
+
+`Lexeme.examples` is a JSON string column and `sceneContext` split it on newlines. So a word with no
+sentences came back as one line reading `[]`, and a word with sentences came back as one line of raw
+JSON; `naturalSentence` correctly threw every one of them away. That is not a near miss and it is
+not visible from any measurement the eval takes, because the eval measures **what the gate does to a
+composed line** and this fault is one rung above it: the composer was being asked on every beat of
+every run, including the beats retrieval was supposed to have filled for free. The rate §29 reports
+is still the rate the gate withholds. What it was not is a picture of the ladder.
+
+It reads through `parseExamples` and `usableExamples` now, which is what decides what a sentence is
+everywhere else in this app, so the scene and the dictionary entry cannot disagree about what is
+worth showing.
+
+**And a phrase is its own sentence.** Ekilex records a usage against a *word*, to show it doing its
+job in a sentence, and it holds none for `Tere!` or `Kuidas läheb?` because those already are the
+sentence. CLAUDE.md has said so for a while about the dictionary entry screen; nothing had connected
+it to retrieval. So the beat every scene opens with had nothing whatever in its pool, and keyless the
+receptionist said **"Ma ei saa aru" before the learner had said a word**. That is not a conversation,
+it is the ladder falling all the way through on the one beat every scene shares. A phrase entry is
+now its own line, which is retrieval rather than composition: the lemma is a headword a lexicographer
+wrote down, and putting it on a screen is the dictionary speaking.
+
+**What that does to the numbers is not measured here and should not be.** The honest thing to say is
+that §29's runs asked a model for lines a working retrieval rung would have supplied, so the split
+between rungs in those runs is unknown rather than what was reported, and the withheld *rate* is
+unaffected because it is a ratio over composed lines. Re-running the eval would produce a new
+number; it would not answer a question anybody has asked yet, and §29's own warning about six runs
+of 63 lines applies to it exactly as before.
+
+**Three more faults, all of the same kind: silent, and shaped like an app with nothing in it.** The
+route returned a line on three of its four branches without the progress beside it, so the screen was
+handed something to read and never told which beat it was on: `beatId` stayed null and "Say it" was
+disabled for the whole run. The rate limiter's verdict was returned as though it were a `Response`,
+which made every turn a five hundred. And the role card told a learner to read a word off a place on
+the card where nothing was printed.
+
+**None of the four is findable by a unit test and all four are trivial in a browser.** They are the
+argument for `scripts/test-scene.mjs` rather than an anecdote about it: the module is six processes
+and every one of these lived in the seam between two of them. §21's suite was written last, which is
+the wrong order, and the four faults are what that cost.
+
+**One design correction fell out of it too.** A scene booked one call for the whole conversation, on
+the argument that running out of allowance halfway through is the worst failure available here. The
+argument is real and the booking was wrong: the ledger writes a call down when it *authorises* one,
+because two of its three limits count `CALL` rows, so a dozen composed turns behind one booking is
+eleven calls the allowance never saw, on the dearest path in the app. Each composed turn books its
+own now and hands it back where nothing was composed. What survives of the original argument is that
+a mid-scene refusal has to be survivable, and it is, for the reason it always was: the rung below the
+model is a real conversational move rather than an error.
