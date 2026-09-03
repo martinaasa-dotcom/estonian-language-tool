@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "./syllabus";
-import { aroundFirst, bandsAround, isAround } from "./levels";
+import { aroundFirst, bandsAround, challengeFirst, challengeRank, isAround } from "./levels";
 
 describe("the level window", () => {
   it("covers every level the course has", () => {
@@ -60,5 +60,42 @@ describe("aroundFirst", () => {
   it("returns everything however far the level is from the deck", () => {
     expect(order("C1")).toHaveLength(deck.length);
     expect(new Set(order("C1"))).toEqual(new Set(deck.map((w) => w.lemma)));
+  });
+});
+
+describe("challengeFirst", () => {
+  it("teaches at the level, then the band above, then their own words, then below", () => {
+    const words = [
+      { id: "below", cefr: "A2" },
+      { id: "far", cefr: "C1" },
+      { id: "own", cefr: null },
+      { id: "above", cefr: "B2" },
+      { id: "at", cefr: "B1" },
+    ];
+    expect(challengeFirst(words, "B1", (w) => w.cefr).map((w) => w.id))
+      .toEqual(["at", "above", "own", "below", "far"]);
+  });
+
+  it("orders and never drops, whatever the learner set their level to", () => {
+    const words = [{ cefr: "C2" }, { cefr: "A1" }];
+    expect(challengeFirst(words, "B1", (w) => w.cefr)).toHaveLength(2);
+  });
+
+  it("keeps the caller's order inside a rank", () => {
+    // The caller has already answered a different question with that order,
+    // which for Learn is how long a card has been waiting.
+    const words = [{ id: 1, cefr: "A1" }, { id: 2, cefr: "A1" }, { id: 3, cefr: "A1" }];
+    expect(challengeFirst(words, "A1", (w) => w.cefr).map((w) => w.id)).toEqual([1, 2, 3]);
+  });
+
+  it("puts the band above ahead of the band below at every level", () => {
+    for (const level of ["A1", "A2", "B1", "B2", "C1"] as const) {
+      const window = bandsAround(level);
+      const above = window[window.indexOf(level) + 1];
+      const below = window[window.indexOf(level) - 1];
+      if (above) expect(challengeRank(above, level)).toBe(1);
+      if (below) expect(challengeRank(below, level)).toBe(3);
+      expect(challengeRank(level, level)).toBe(0);
+    }
   });
 });

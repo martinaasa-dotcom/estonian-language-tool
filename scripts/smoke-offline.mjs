@@ -39,6 +39,29 @@ async function gradedCount() {
 }
 
 /**
+ * Presses a control this driver has just counted, and does not mind if the
+ * screen moved first.
+ *
+ * Every press here is `count()` and then `click()`, and those are two moments.
+ * A review card grades itself on a clean hit, so between them the button can
+ * be pressed by a keystroke this driver already sent, be disabled while the
+ * grade is written, and then unmount with the card. Playwright's click waits
+ * its full timeout on a locator that now resolves to nothing and the suite
+ * reports that it threw, which is the least useful description available of a
+ * session that was working: the checks below already say whether a grade was
+ * written, and they say it in words. Bounded, and the outcome is reported by
+ * the check that cares rather than by a stack trace.
+ */
+async function press(locator) {
+  try {
+    await locator.first().click({ timeout: 4000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Answers whichever kind of card is on screen, and says whether it really
  * graded one.
  *
@@ -71,14 +94,14 @@ async function answerOneCard(depth = 0) {
   */
   const meet = app.getByRole("button", { name: /Got it, ask me later/ });
   if (await meet.count() && depth < 4) {
-    await meet.first().click();
+    await press(meet);
     await page.waitForTimeout(400);
     return answerOneCard(depth + 1);
   }
 
   const show = app.getByRole("button", { name: /Show answer/ });
   if (await show.count()) {
-    await show.first().click();
+    await press(show);
     await page.waitForTimeout(250);
     /*
       Two buttons, not four, and neither is named what it says. A self-grade
@@ -86,7 +109,7 @@ async function answerOneCard(depth = 0) {
       nothing and the flip was revealed and never graded.
     */
     const got = app.getByRole("button", { name: /^Got it(?!, ask me later)/ });
-    if (await got.count()) await got.first().click();
+    if (await got.count()) await press(got);
   } else if (await page.getByText(/Pick the meaning/).count()) {
     // The keyboard rather than a click on the option, because it is what the
     // app itself offers and what test-modes.mjs drives.
@@ -115,7 +138,7 @@ async function answerOneCard(depth = 0) {
   // "Got it, next Enter": the key cap inside the button is part of its name.
   const next = app.getByRole("button", { name: /^Got it, next/ });
   if (await next.count()) {
-    await next.first().click();
+    await press(next);
     await page.waitForTimeout(300);
   }
 
