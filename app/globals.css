@@ -1022,83 +1022,70 @@
   }
 
   /*
-    THE LANDING HERO IS AS TALL AS THE SCREEN, LESS A DELIBERATE PEEK.
+    ONE GAP BETWEEN EVERY TWO BEATS OF THE LANDING PAGE, AND THE HERO IS ONE
+    OF THE BEATS.
 
-    It used to be 483px whatever it was drawn on, because its height was two
-    paddings and whatever the copy came to. Measured: on a 1080px screen that
-    left 558px of window under the last line of the hero, which the browser
-    filled with the next section, so the first thing anybody saw was the hero
-    sitting in the top half and the whole of "You didn't fail Estonian" and its
-    paragraph crowded in under it. Two openings arguing at once, and a band of
-    dead air between them wide enough to read as a mistake. On a 780px phone
-    the same fault was 207px of it.
+    The hero used to be as tall as the window less the nav and a "peek" band,
+    on the argument that a hero ending exactly at the fold looks like a page
+    with nothing after it. The argument was right and the shape was wrong:
+    the column is about 450px of copy, so on a 900px window it sat in a 697px
+    box with 120px of leftover under it, and then the next section added its
+    own 80px on top of that, which was 230px of nothing between the claims
+    and the first eyebrow while every other pair of sections stood 160 apart.
+    A page reads as smooth when the distances repeat, and that one did not.
 
-    So the hero takes the window and centres its column in it, and the leftover
-    space goes above and below the copy in equal measure rather than into one
-    gap under it. What it does not take is `--hero-peek`, which is the point of
-    the whole rule: a hero that ends exactly at the fold is a page that looks
-    like it has nothing after it, and the honest way to say there is more is to
-    let the next section start where you can see it. The band is sized to clear
-    that section's own top padding and show its eyebrow with the heading rising
-    into the last of it, which is a beginning rather than an ornament. No arrow
-    and no second link: the page already made its one loud action, and the rule
-    the button primitive is written under is one per screen.
+    So there is one distance, `--section-gap`, and it lives on the page rather
+    than on any section: `main` is a column with that gap, no section carries
+    vertical padding of its own, the hero is as tall as what is in it, and the
+    footer stands the same distance off the close as the close stands off the
+    questions. Where the fold falls is then a fact about the window rather
+    than about the page, and it comes out where the old rule wanted it on the
+    laptops this is read on: at 1280 by 800 the next eyebrow is on screen.
 
-    `svh` rather than `vh` or `dvh`. `vh` is the tall viewport on a phone, so
-    the peek would be hidden under the browser's own toolbar exactly when the
-    toolbar is showing, which is on arrival. `dvh` re-lays the page out as the
-    toolbar retracts, which moves the copy under the reader's thumb mid-scroll.
-    `svh` is the small one: the peek is honest with the toolbar there and grows
-    a little when it goes, which is the direction that costs nothing.
-
-    `--landing-nav` is measured rather than reasoned about, and it is the same
-    79px at every width this app is drawn at, because the nav pill's height is
-    set by the button in it rather than by anything that reflows.
-    `scripts/test-design.mjs` measures the real nav against it, since a typed
-    constant standing in for something on screen is a constant that drifts.
+    `--landing-nav` stays declared and measured, because the hero's top
+    padding is the only thing between the pill and the headline and the pill
+    is 79px at every width this app is drawn at; `scripts/test-design.mjs`
+    reads the real nav against it. The padding is a `clamp` on `svh` for the
+    reason the three gaps below give: a tall window has air to spend and a
+    phone held sideways has none.
 
     Both numbers sit on the rule that reads them rather than in `:root` with
     the palette. They are two facts about one page, and a name in the token
     block is an invitation to the rest of the app to build on them.
   */
-  .hero-screen {
+  .landing { --section-gap: 5.5rem; }
+  .landing-flow { display: flex; flex-direction: column; gap: var(--section-gap); }
+  .landing-foot { margin-top: var(--section-gap); }
+  .hero-open {
     --landing-nav: 79px;
-    --hero-peek: 96px;
-
-    min-height: calc(100svh - var(--landing-nav) - var(--hero-peek));
+    padding-top: clamp(2.5rem, 8svh, 5.5rem);
   }
 
   @media (min-width: 768px) {
-    .hero-screen {
-      --hero-peek: 124px;
-    }
+    .landing { --section-gap: 8.5rem; }
   }
 
   /*
-    The three gaps down the hero grow with the window the hero now fills.
+    The three gaps down the hero grow with the window.
 
     Centring a fixed 363px column in an 877px box is the first fault wearing a
     better hat: the copy stops being piled at the top and becomes a postage
     stamp with a void over it and a void under it. What a tall screen is for is
     letting the three beats stand apart, so the space goes between them rather
-    than around them, and the block grows until the air left over is a margin
-    instead of a gap.
+    than around them.
 
     They keep their proportions to each other while they do it, which is the
     half that took two passes. Scaled apart, the gap over the button grew to
     four times the one over the paragraph and the button stopped belonging to
     the sentence that argues for it: a column read from the top down is one
     thing with air in it rather than three things with distance between them.
-    So all three step up together, by about a third on a tall screen, and the
-    rest of the height stays in the margins, which is where a hero's air is
-    supposed to be.
+    So all three step up together, by about a third on a tall screen.
 
     Every one of these is a `clamp`, and the floor is the spacing the hero had
     before any of this: on a short laptop or a phone held sideways nothing
     grows at all, which is the case where there is no room to spend. `svh`
-    rather than `vh` for the reason `.hero-screen` gives, and the same unit as
-    the box these sit in, since a gap measured against a taller viewport than
-    its own container is a gap that overflows it.
+    rather than `vh` because `vh` is the tall viewport on a phone, so a gap
+    sized to it is sized to a window that is not there while the toolbar is.
   */
   .hero-lead { margin-top: clamp(1.25rem, 3.2svh, 2.5rem); }
   .hero-action { margin-top: clamp(1.75rem, 6.4svh, 4.5rem); }
@@ -1349,18 +1336,24 @@
   /* Scroll-driven reveal, done in CSS so the content is never hidden behind a
      script. Browsers without scroll timelines simply get the finished state.
 
-     The range ends at `entry 100%`, which is the moment a section is wholly on
-     screen, and it ends there because that is the last moment a page can still
-     reach. This read `cover 20%` and left the bottom of the landing page
-     permanently dimmed: at maximum scroll the final call to action measured
-     opacity 0.51 and the last three questions above it 0.72, 0.77 and 0.82,
-     because completing a cover-based range needs scrolling that a page which
-     has hit its end has no more of. Every element in the last screenful was
-     affected, not just the last one. Anything ending at or before `entry 100%`
-     is reachable by construction, and the tallest section here is 745px
-     against a 780px phone viewport, so the fade still finishes as the section
-     lands rather than early. */
-  .reveal { animation: fade-up linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+     The range ends at `entry 100%`, which is the moment a section is wholly
+     inside the timeline's port, and it ends there because that is the last
+     moment a page can still reach. This read `cover 20%` and left the bottom
+     of the landing page permanently dimmed: at maximum scroll the final call
+     to action measured opacity 0.51, because completing a cover-based range
+     needs scrolling that a page which has hit its end has no more of.
+
+     THE PORT IS THE WINDOW AND FOUR TENTHS OF ONE MORE, which is the second
+     fault the first fix left behind. Against the window alone, a block is
+     wholly inside it only when its bottom edge has crossed the fold, and the
+     case explorer is 857px tall: on a 900px window it sat at half opacity and
+     a few pixels low until the reader had scrolled nearly all of it past, and
+     the page read as still loading. A negative end inset extends the port
+     below the fold, so a tall block finishes arriving while its top third is
+     on screen and a short one still fades in over its own height. Still
+     reachable at the end of the page, because the footer under the close is
+     taller than the extension. */
+  .reveal { animation: fade-up linear both; animation-timeline: view(block 0 -40%); animation-range: entry 0% entry 100%; }
   @supports not (animation-timeline: view()) { .reveal { animation: none; } }
   .float { animation: float 6s ease-in-out infinite; }
   /*
