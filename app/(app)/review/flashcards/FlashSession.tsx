@@ -463,11 +463,20 @@ function Feedback({ task, mark }: { task: FlashPrompt; mark: FlashMark }) {
         className="mt-4 rounded-md border px-3.5 py-3"
         style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
       >
-        <p lang="et" className="text-[22px] font-semibold leading-tight" style={{ color: "var(--ink)" }}>
+        {/* `data-flash-answer` and `data-flash-slot` are how `scripts/test-flash.mjs`
+            learns the form the dictionary holds without copying the app's own
+            derivation into the test. They used to be read off a `label: form`
+            line the panel no longer prints. */}
+        <p
+          lang="et"
+          data-flash-answer=""
+          className="text-[22px] font-semibold leading-tight"
+          style={{ color: "var(--ink)" }}
+        >
           {task.shown.join(" / ")}
         </p>
         <p className="mt-1 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
-          <span lang="et">{task.label}</span>
+          <span lang="et" data-flash-slot="">{task.label}</span>
           {english && <> · the {english}</>}
         </p>
       </div>
