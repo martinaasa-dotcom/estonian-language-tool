@@ -403,10 +403,12 @@ a couple of messages an hour for the whole project and says itself it is for tes
 public copy the second person to ask for a link does not get one. **Project Settings → Auth → SMTP
 Settings** takes any provider (Resend, Postmark, SES).
 
-Which is why the mailed link is **off until `EMAIL_SIGN_IN="on"`**, and why off is the default. A
-form that takes an address, says "check your email" and mails nobody is worse than no form: the
-learner waits, checks their spam and decides the app is broken. Google is the door that works
-until the day your mail does, and on that day this is a one-word change.
+The mailed link is **on by default**, and `EMAIL_SIGN_IN="off"` hides it. It was the other way
+round for a while, off until somebody set it on, on the argument that a form which takes an
+address and mails nobody is worse than no form. The argument holds and the default did not: the
+switch was one more thing to remember in a dashboard, and the one deployment this app has spent
+weeks offering Google as the only way in. Turn it off only for a copy whose mail really does not
+go out, and set up SMTP before anybody but you is asking for links.
 
 The link is opened in the browser that asked for it, because that is where the verifier lives, and
 the sign-in screen says so. If you would rather it survived being forwarded to a phone, change the

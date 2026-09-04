@@ -32,10 +32,11 @@ import { suite } from "./lib/checks.mjs";
   `EMAIL_SIGN_IN` is *not* a `NEXT_PUBLIC_` variable and the page is
   `force-dynamic`, so that half is read when the server starts. That is what
   lets one build cover both states from two processes, and it is worth checking
-  both: off is the default, and off is what a deployment without SMTP has to
-  show, because Supabase's own sender is a couple of messages an hour for the
-  whole project and a form that says "check your email" and mails nobody is
-  worse than no form at all.
+  both. On is the default, and the default is measured with the variable
+  absent rather than set, because a deployment that never heard of the switch
+  is the one the default is for: that is the state the app's own deployment
+  sat in for weeks with Google as its only door. `off` is what a copy whose
+  mail does not go out sets, and it has to still take the door away.
 
   Nothing here signs in. The keys below are shaped like Supabase's and belong
   to nobody, which is the point: this suite is about what the screen says and
@@ -128,7 +129,10 @@ if (built.status !== 0) {
 }
 
 /*
-  Start the built app on a port, with email sign-in on or off.
+  Start the built app on a port, with email sign-in left at its default or
+  switched off. The default is the variable being *absent*, so the on server
+  is given nothing at all and never `"on"`, which would pass whatever the
+  default happened to be.
 
   `detached` is the load-bearing word. `npx next start` is a launcher that
   spawns the actual server as a grandchild, so `child.kill()` kills the
@@ -138,8 +142,9 @@ if (built.status !== 0) {
   as a group and the server goes with it.
 */
 function serve(port, emailLink) {
+  const { EMAIL_SIGN_IN: _inherited, ...env } = hostedEnv;
   return spawn("npx", ["next", "start", "-p", String(port)], {
-    env: { ...hostedEnv, EMAIL_SIGN_IN: emailLink ? "on" : "" },
+    env: emailLink ? env : { ...env, EMAIL_SIGN_IN: "off" },
     stdio: "ignore",
     detached: true,
   });
@@ -208,10 +213,10 @@ check("and it says where to open the link, because the verifier lives in this br
 check("it does not tell a signed-out stranger this copy has no accounts",
   (await page.getByText(/running in local mode/i).count()) === 0);
 
-// ── The switch, which is off until a deployment has mail that goes out ──────
+// ── The switch, for a deployment whose mail does not go out ─────────────────
 const offPage = await ctx.newPage();
 await offPage.goto(`${OFF}/sign-in`, { waitUntil: "domcontentloaded" });
-check("with EMAIL_SIGN_IN unset the mailed link is not offered at all",
+check("with EMAIL_SIGN_IN=off the mailed link is not offered at all",
   (await offPage.getByRole("button", { name: /Email me a link/ }).count()) === 0);
 check("and Google is still there, so the door that works is the one drawn",
   (await offPage.getByRole("button", { name: /Continue with Google/ }).count()) > 0);

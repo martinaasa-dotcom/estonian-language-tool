@@ -37,16 +37,23 @@ export default async function SignInPage({ searchParams }: {
   const params = await searchParams;
   const operator = resolveOperator();
   /*
-    EMAIL SIGN-IN IS OFF UNTIL SOMEBODY HAS SET UP SMTP, and that is a switch
-    rather than a guess because the app cannot see the mail configuration.
+    THE MAILED LINK IS DRAWN UNLESS THE OPERATOR SAYS OTHERWISE.
 
-    Supabase's built-in email service sends a couple of messages an hour for
-    the whole project and says itself it is for testing. A form that takes an
-    address, says "check your email" and mails nobody is worse than no form:
-    the learner waits, checks spam, and concludes the app is broken, which it
-    is not. So the door is only drawn once the operator says it opens.
+    It used to be the other way round, off until `EMAIL_SIGN_IN="on"`, on the
+    argument that Supabase's built-in sender is a couple of messages an hour
+    for the whole project and a form that mails nobody is worse than no form.
+    That argument was right about the sender and wrong about the default: the
+    switch lived in a dashboard nobody was reminded of, so the one deployment
+    this app has ran for weeks with Google as the only door, and the person
+    who noticed was the person the door was for. A Google account may not be
+    the price of entry, and a default that quietly makes it one is the fault
+    the form exists to fix.
+
+    So the door is open unless a deployment closes it. `EMAIL_SIGN_IN="off"`
+    is for a copy whose mail really does not go out, and the README says what
+    to set up before the second person asks for a link.
   */
-  const emailLink = (process.env.EMAIL_SIGN_IN ?? "").trim().toLowerCase() === "on";
+  const emailLink = (process.env.EMAIL_SIGN_IN ?? "").trim().toLowerCase() !== "off";
   const denied = params.denied !== undefined;
   const failed = params.error !== undefined;
   /*
