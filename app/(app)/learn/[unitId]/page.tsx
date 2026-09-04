@@ -13,6 +13,10 @@ import { icon } from "@/components/icons";
 import { Card, Chip, Meter, Page, Ring } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { oneEntryPerLemma } from "@/lib/dict/search";
+import { readingFor } from "@/lib/progress/readiness";
+import { verdictFor } from "@/lib/readiness/narrative";
+import { EVIDENCE_LABEL } from "@/lib/exam/readiness";
+import { RungChip } from "@/components/readiness/Rung";
 
 export async function generateMetadata({ params }: { params: Promise<{ unitId: string }> }) {
   const { unitId } = await params;
@@ -36,7 +40,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
   if (!unit) notFound();
 
   const ownerId = await requireUserId();
-  const [snapshot, rows] = await Promise.all([
+  const [snapshot, rows, reading] = await Promise.all([
     deckSnapshot(ownerId),
     prisma.lexeme.findMany({
       where: { lemma: { in: [...unit.lemmas] } },
@@ -46,6 +50,8 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
         government: true, provenance: true, forms: { select: { formType: true } },
       },
     }),
+    // The claim two lines up, answered: could you actually do this yet.
+    readingFor(ownerId, unitId),
   ]);
 
   // One row per lemma, in the unit's own order. A lemma can hold two entries
@@ -97,6 +103,15 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
               {progress.state === "done" && <Chip tone="good">Finished</Chip>}
             </div>
             <p className="mt-1.5 text-md" style={{ color: "var(--ink)" }}>{unit.canDo}</p>
+            {reading && reading.rung !== "unmet" && (
+              <p className="mt-2 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
+                <RungChip rung={reading.rung} />
+                <span>{verdictFor(reading)} {EVIDENCE_LABEL[reading.evidence].charAt(0).toUpperCase()}{EVIDENCE_LABEL[reading.evidence].slice(1)}.</span>
+                <Link href={`/progress/readiness/${unit.id}`} className="underline" style={{ color: "var(--accent-deep)" }}>
+                  Where it would go wrong
+                </Link>
+              </p>
+            )}
             <p className="mt-1.5 text-sm" style={{ color: "var(--ink-2)" }}>
               {progress.known} of {progress.available} words known · {progress.started} started
               {lessons > 1 && ` · ${lessons} lessons`}

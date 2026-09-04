@@ -2915,6 +2915,34 @@ so the two can no longer point in opposite directions. The per-level figures sta
 stay non-monotone, which is honest: the app knows different amounts about each level and publishes
 the evidence tier beside each number.
 
+**How ready somebody is for real life is read in situations and on rungs, and never as a
+percentage.** "You would understand 81 percent of everyday situations" is the number a word count
+can produce and it answers the least useful question: knowing the words for a health centre is
+what lets you follow the receptionist, not what lets you answer her, and nothing like what lets you
+open the exchange and recover when she says one sentence too fast. The course's 82 `canDo` claims
+had never been checked against anything, `Review.durationMs` had never been read by anything, and
+between them they answer the honest version. `lib/readiness/` reads each claim on three rungs,
+**follow it, take part, lead it**, and places the learner on the highest one the log supports:
+recognition for the first, production more than once and the last time for the second, and for the
+third production with variety and at pace, plus the cases the encounter turns on, the machinery it
+runs on (numbers, question words, the clock) and, for a live exchange, some evidence the learner can
+follow *speech*, which only the level check and a sat paper supply. **Recognition alone never clears
+the second rung**, driven in the invariant suite with two hundred perfect flips of every card. The
+bars are shares of words rather than averages of scores, because the one word you are missing is the
+one the other person says. Thin evidence caps the rung itself rather than a confidence, since there
+is no percentage to cap: under a dozen answers the app says follow and no more, under forty take
+part and no more, and it says the cap bit. The headline over a level is a distribution, "4 you
+could lead, 7 you could take part in, 8 you would follow and 4 you would be lost in", and every
+rung is printed with `EVIDENCE_LABEL` beside it, asserted on the chip. What stands in the way is
+named and ranked by the rung it blocks, with the drill that moves it; what to go and try is one
+authored English line per situation, shown only once the log supports taking part, because an app
+sending somebody to book a doctor's appointment on nine recognised words is the false confidence
+this exists against. The situation table names unit ids and case keys and never a word, and holds
+no Estonian; nothing is stored, nothing is generated, and the module that reads the log for it may
+only read. A row written before `Review.slot` existed takes the slot of the card it points at, which
+is the safe direction pointed the right way: read as recognition, a year of production would have
+held everybody at the first rung. `docs/22-readiness.md` is the design and what it refuses to claim.
+
 **And the card does not write its own advice.** It said "speaking is the part standing in the way,
 predicted at 0 against the 60 a pass needs", which for somebody who has never sat a paper is not a
 prediction: a `Review` row carries no note of which mode wrote it, so the app cannot tell a dictation
@@ -4240,7 +4268,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `slotOfCard`, `isKnownSlot`, `practisedSlot`, `askableSlots`, `shapeFor`, `markFlash`,
 `formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `hoursFor`, `foundHours`, `weeklyExposure`,
 `weeksWithFound`, `measuredPace`, `currentLevelAnswer`, `AnuProse`, `parseReply`, `fixFrom`,
-`TAGGED_LINE`. Most of them now
+`TAGGED_LINE`, `readSituation`, `wordStanding`, `SITUATION_FACTS`, `readinessPicture`, `RungChip`.
+Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

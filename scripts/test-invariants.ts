@@ -43,6 +43,9 @@ import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
 import { allGlosses, occasionsFor } from "../lib/copy/almanac";
+import { readSituation, wordStanding } from "../lib/readiness/rungs";
+import { SITUATIONS } from "../lib/readiness/situations";
+import type { WordEvidence } from "../lib/readiness/evidence";
 import { glossSenses } from "../lib/dict/gloss";
 import {
   COUNT_ROUNDING, LEARNER_BANDS, MAX_LEARNER_SHARE, MIN_LEARNERS, MIN_REVIEWS,
@@ -5907,7 +5910,7 @@ check("the layers that promise to be pure import no database, React or Next", ()
   const pure = [
     "assessment", "estonian", "exam", "games", "gamification", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
-    "learn", "scenes",
+    "learn", "scenes", "readiness",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],
@@ -9874,6 +9877,119 @@ check("a destination reached from another one really is linked from there", () =
   }
 });
 
+/*
+  READINESS FOR A SITUATION IS READ ON THREE RUNGS, AND THE FIRST IS THE ONLY
+  ONE A WORD COUNT REACHES.
+
+  "You would understand 81 percent of everyday situations" is what a vocabulary
+  app computes and it answers the least useful question: knowing the words is
+  what lets you follow the receptionist, not what lets you answer her.
+  `lib/readiness/rungs.ts` reads the course's own can-do claims as follow, take
+  part and lead, and its one promise is that recognition on its own never
+  clears the second rung. Driven here rather than read out of the source,
+  because the rule is about what the function returns and a regex over the
+  arithmetic would pass on a rewrite that changed the answer.
+*/
+check("recognising a word on cards never clears the second rung of a situation", () => {
+  const recognised: WordEvidence = {
+    recognise: { asked: 200, right: 200, medianMs: 800, lastRight: true },
+    produce: { asked: 0, right: 0, medianMs: null, lastRight: null },
+    formsRight: 0,
+    daysSince: 0,
+  };
+  assert.equal(wordStanding(recognised), "follow", "two hundred perfect recognitions read as more than following");
+
+  const doctor = SITUATIONS.find((s) => s.id === "keha-ja-tervis")!;
+  const evidence = new Map<string, WordEvidence>();
+  const lemmas = [...doctor.lemmas, ...doctor.machineryUnits.flatMap((id) => SITUATIONS.find((s) => s.id === id)?.lemmas ?? [])];
+  for (const lemma of lemmas) evidence.set(lemma, recognised);
+  const reading = readSituation(doctor, {
+    evidence,
+    available: new Set(lemmas),
+    cases: new Map(doctor.cases.map((c) => [c, { pct: 100, reviews: 50 }])),
+    listening: { placed: "C1", sittings: 3 },
+  });
+  assert.equal(reading.uncapped, "follow", `every word recognised perfectly read as "${reading.uncapped}"`);
+  assert.equal(reading.tryThis, null, "a situation only ever followed was offered as something to try");
+});
+
+/*
+  AND EVERY DOOR A STRUGGLE OFFERS OPENS. A struggle carries an href, and a
+  struggle whose href is a typo is a dead end on the one screen whose whole
+  job is a way out. The readings are driven across the contexts that produce
+  every kind of struggle and each destination is checked against `app/`.
+*/
+check("every drill a readiness struggle points at is a route the app has", () => {
+  const routes = new Set(
+    APP.filter((f) => f.endsWith("page.tsx"))
+      .map((f) => "/" + f.replace(/^app\//, "").replace(/\([^)]+\)\//g, "").replace(/\/?page\.tsx$/, "")),
+  );
+  const exists = (href: string) => {
+    const path = href.split("?")[0]!;
+    if (routes.has(path) || routes.has(path.replace(/^\//, ""))) return true;
+    // A dynamic segment: /grammar/adessive is app/(app)/grammar/[caseKey].
+    return [...routes].some((r) => {
+      const pattern = "^" + r.replace(/\[[^\]]+\]/g, "[^/]+") + "$";
+      return new RegExp(pattern).test(path) || new RegExp(pattern).test(path.replace(/^\//, ""));
+    });
+  };
+
+  const word = (over: Partial<{ rec: number; prod: number; ms: number | null; lastRight: boolean; days: number }>): WordEvidence => ({
+    recognise: { asked: over.rec ?? 0, right: over.rec ?? 0, medianMs: 1_000, lastRight: over.rec ? true : null },
+    produce: {
+      asked: over.prod ?? 0, right: over.prod ?? 0,
+      medianMs: over.ms === undefined ? 2_000 : over.ms, lastRight: over.prod ? (over.lastRight ?? true) : null,
+    },
+    formsRight: (over.prod ?? 0) >= 3 ? 2 : 0,
+    daysSince: over.days ?? 1,
+  });
+  const contexts = [
+    word({ rec: 3 }),
+    word({ rec: 3, prod: 3, lastRight: false }),
+    word({ rec: 3, prod: 3, days: 60 }),
+    word({ rec: 3, prod: 6, ms: 12_000 }),
+    word({ rec: 3, prod: 6, ms: null }),
+    word({ rec: 3, prod: 6 }),
+  ];
+  const hrefs = new Set<string>();
+  for (const situation of SITUATIONS) {
+    for (const e of contexts) {
+      const evidence = new Map<string, WordEvidence>();
+      for (const lemma of situation.lemmas) evidence.set(lemma, e);
+      for (const listening of [{ placed: null, sittings: 0 }, { placed: "A1", sittings: 0 }]) {
+        const reading = readSituation(situation, {
+          evidence, available: new Set(situation.lemmas), cases: new Map(), listening,
+        });
+        for (const s of reading.struggles) if (s.href) hrefs.add(s.href);
+      }
+    }
+  }
+  assert.ok(hrefs.size >= 8, `the readings only ever pointed at ${hrefs.size} places, which is fewer than the struggles there are`);
+  const dead = [...hrefs].filter((h) => !exists(h));
+  assert.deepEqual(dead, [], `a readiness struggle points at a route that does not exist: ${dead.join(", ")}`);
+});
+
+/*
+  A RUNG IS PRINTED WITH THE EVIDENCE BEHIND IT, EVERYWHERE IT IS PRINTED.
+
+  The exam hub's rule (`EVIDENCE_LABEL` beside every `.confidence`), applied to
+  the rung: "take part" on eleven answers and on two hundred are two different
+  sentences, and a chip on its own is the number this screen exists to
+  replace. Anchored on the chip component, because a file that draws the chip
+  is a file printing a verdict, whatever it calls the variable.
+*/
+check("a screen that prints a situation's rung prints the evidence tier beside it", () => {
+  const screens = [...APP, ...COMPONENTS].filter((f) => /<RungChip\b/.test(code(f)));
+  assert.ok(screens.length >= 3, `only ${screens.length} screens draw a rung chip`);
+  for (const file of screens) {
+    const src = code(file);
+    assert.ok(
+      /EVIDENCE_LABEL|EVIDENCE_NOTE|standingLine/.test(src),
+      `${file} prints a rung and not what the evidence behind it is worth`,
+    );
+  }
+});
+
 /**
  * LIGHT IS THE DEFAULT AND DARK IS A CHOICE.
  *
@@ -9919,6 +10035,21 @@ check("the dark palette is a choice, never the system's", () => {
       `${file} no longer chooses the dark theme the way the toggle does, so nothing sweeps it`,
     );
   }
+});
+
+/*
+  NOTHING ABOUT READINESS IS STORED. It is derived from the append-only log on
+  every request (ADR-014), and the one module that reads the database for it
+  may only read.
+*/
+check("readiness is derived on every request and never written down", () => {
+  const src = code(join("lib", "progress", "readiness.ts"));
+  assert.doesNotMatch(
+    src,
+    /prisma\.\w+\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\b/,
+    "lib/progress/readiness.ts writes to the database, and a stored readiness is a second source of truth that drifts",
+  );
+  assert.doesNotMatch(SCHEMA, /readiness|\brung\b/i, "the schema grew a readiness column; it is derived, never stored");
 });
 
 /**

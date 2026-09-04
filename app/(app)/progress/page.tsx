@@ -16,6 +16,8 @@ import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
+import { ReadinessPanel } from "@/components/readiness/Summary";
+import { readinessPicture } from "@/lib/progress/readiness";
 import { caseReviewsFor } from "@/lib/progress/cases";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Board, BoardSkeleton } from "./Board";
@@ -42,7 +44,7 @@ export default async function ProgressPage() {
   // server, whose midnight is the deployment's. See lib/time/day.ts.
   const [clock, snapshot] = await Promise.all([learnerDayClock(ownerId), deckSnapshot(ownerId, now)]);
 
-  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow] = await Promise.all([
+  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow, readiness] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -87,6 +89,13 @@ export default async function ProgressPage() {
     // things, not where you find out how you are doing. Both are readings.
     prisma.achievement.findMany({ where: { ownerId }, select: { key: true }, orderBy: { key: "asc" } }),
     readSettings(ownerId, [SETTING_KEYS.streakShields]),
+    /*
+      Which of the course's situations this learner could follow, take part
+      in or lead, counted. Beside the case and vocabulary panels rather than
+      under them, because it is the reading of "how am I doing" that answers
+      in the terms somebody outside the app asks it in.
+    */
+    readinessPicture(ownerId, now),
   ]);
   const earnedKeys = new Set(earned.map((a) => a.key));
   const shields = numberSetting(shieldRow[SETTING_KEYS.streakShields], 0);
@@ -318,6 +327,8 @@ export default async function ProgressPage() {
             </Card>
           </section>
         </div>
+
+        {readiness.totalReviews > 0 && <ReadinessPanel summary={readiness.summary} />}
 
         {sticking.length > 0 && (
           <section>
