@@ -42,11 +42,24 @@ words never change, because a mumbled spelling would be this app writing Estonia
 does, made in the browser out of filtered noise and a band-pass, so nothing ships and nothing
 needs a licence.
 
-**Say it today** (`lib/collections/errands.ts`). One errand a day drawn from the units the learner
-has started, and one press to report how it went in one of three words: they understood me, they
-switched to English, I did not manage it. That report is an `Encounter` row, append-only, and
-Progress leads with it ahead of every chart. The research export carries the same figure under
-the same disclosure gate as everything else, labelled as self-reported.
+**Say it today** (`lib/collections/errands.ts`). Today asks each morning whether the learner spoke
+any Estonian to anybody yesterday, and the answer is one press: yes and they understood, they
+switched to English, not yesterday. Where the answer is no it offers an errand for today, drawn
+from the units the learner has started and naming a unit id rather than a word. That report is an
+`Encounter` row, append-only, and Progress leads with it ahead of every chart. The research export
+carries the errands under the same disclosure gate as everything else, labelled as self-reported.
+
+The question is about the learner's own day rather than about our errand, and that is the whole of
+what it buys. A card that sets a task in the morning and puts three answers under it is asking for
+a report on something that has not happened yet, and it can only ever see the conversations this
+app set: somebody who spent an hour with their Estonian mother-in-law and ignored the errand was
+recorded as having done nothing, in the one number this app says it is measured by. A report
+collected that way names no errand, which is why `Encounter.errandId` is nullable and why a
+conversation with a neighbour appears in no unit's row of the research file.
+
+A day answered is not a day with a conversation in it, and both readings of the table count only
+the two answers that are one (`isConversation`). Counting every row would report a fortnight of
+honest noes back as a fortnight of real conversations.
 
 **What you can do.** The course has made eighty-two claims of the form "you can book a doctor's
 appointment" since the day it was written, and none of them was ever tested. Each is read off the

@@ -2,93 +2,141 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Footprints, Search } from "lucide-react";
+import { Footprints } from "lucide-react";
 import { recordEncounter } from "@/app/actions";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Card, SectionTitle } from "@/components/ui";
-import { OUTCOMES, OUTCOME_LABEL, type Errand, type Outcome } from "@/lib/collections/errands";
+import {
+  isConversation, OUTCOMES, OUTCOME_LABEL,
+  type Conversation, type Errand, type Outcome,
+} from "@/lib/collections/errands";
 
 /**
- * One thing to say to a real person today, and how it went.
+ * Whether any Estonian was spoken to a real person yesterday, and a small
+ * thing to say today where the answer is no.
  *
- * The three answers are the whole of what is asked. No note, no where, no
- * who: a report that costs one press is one a person makes, and the switch
- * to English is the only detail worth a word, because it is the thing being
- * practised against. "I did not manage it" is an answer that counts too,
- * and it is worded as a thing that happened rather than a failing.
+ * THE QUESTION IS ABOUT A DAY THAT IS OVER. This card used to set an errand
+ * in the morning and put the three answers underneath it, which asked for a
+ * report on something that had not happened yet: at eight in the morning
+ * those are not three answers, they are three ways to make a card go away.
+ * And it could only see conversations this app had set, so a learner who
+ * spent an hour with their Estonian mother-in-law and ignored the errand was
+ * recorded as having done nothing, in the one number this app says it is
+ * measured by.
  *
- * The box underneath is the way back into the dictionary for a word you
- * caught half of: the search already folds what an English ear hears
- * (lib/estonian/sounds.ts), so "what did they say" is a search, not a guess.
+ * So it asks first and offers second. The three answers are the whole of what
+ * is asked: no note, no where, no who, because a report that costs one press
+ * is one a person makes. The switch to English is the only detail worth a
+ * word, because it is the thing being practised against, and "not yesterday"
+ * is worded as a day that happened rather than as a failing, which is also
+ * why it is answered with an errand instead of with encouragement.
  */
-export function SayItToday({ errand, reported, unitTitle }: {
+export function SayItToday({ errand, answered, conversations, days, unitTitle }: {
   errand: Errand;
-  /** How today's went, if it was already reported. */
-  reported: Outcome | null;
+  /** Today's answer, about yesterday, or null where the question is still open. */
+  answered: Outcome | null;
+  /** Conversations reported in the window, so the card can say what it is collecting. */
+  conversations: number;
+  days: number;
   unitTitle: string;
 }) {
-  const [answer, setAnswer] = useState<Outcome | null>(reported);
-  const [heard, setHeard] = useState("");
+  const [answer, setAnswer] = useState<Outcome | null>(answered);
   const [pending, start] = useTransition();
   const router = useRouter();
 
   const report = (outcome: Outcome) => {
     setAnswer(outcome);
     start(async () => {
-      await recordEncounter(errand.id, outcome);
+      // No errand id: this is the learner's own day rather than our homework,
+      // and a conversation with a neighbour is not ours to take credit for.
+      await recordEncounter(null, outcome);
       router.refresh();
     });
   };
 
-  return (
-    <Card>
-      <SectionTitle hint={errand.where}>Say it today</SectionTitle>
-      <p className="text-md leading-snug" style={{ color: "var(--ink)" }}>{errand.says}</p>
-      <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
-        The words are in <Link href={`/learn/${errand.unit}`} className="underline">{unitTitle}</Link>. Nobody will slow down for you, and that is the practice.
-      </p>
-      {answer ? (
-        <p className="mt-3 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
-          <Footprints size={14} aria-hidden /> {REPLY[answer]}
+  if (answer === null) {
+    return (
+      <Card>
+        <SectionTitle hint="yesterday">Out there</SectionTitle>
+        <p className="text-md leading-snug" style={{ color: "var(--ink)" }}>
+          Did you speak any Estonian to somebody yesterday?
         </p>
-      ) : (
-        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="How it went">
+        <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
+          Anything counts. A shop, a colleague, one sentence at the door.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Whether you spoke Estonian yesterday">
           {OUTCOMES.map((o) => (
             <button
               key={o}
               type="button"
               disabled={pending}
               onClick={() => report(o)}
-              className="choice-btn rounded-full px-3 py-2 text-sm"
+              /*
+                `border` and a height, which this card had never asked for:
+                `.choice-btn` paints a border colour and leaves the width to
+                the caller, and its resting fill is the card's own surface, so
+                three answers sat on Today as three runs of plain text. Every
+                other caller of the class says both.
+              */
+              className="choice-btn min-h-[44px] rounded-full border px-4 py-2 text-sm"
             >
               {OUTCOME_LABEL[o]}
             </button>
           ))}
         </div>
-      )}
-      <form
-        className="mt-3 flex items-center gap-2"
-        onSubmit={(e) => { e.preventDefault(); if (heard.trim()) router.push(`/dictionary?q=${encodeURIComponent(heard.trim())}`); }}
-      >
-        <label className="sr-only" htmlFor="heard">Something they said that you did not catch</label>
-        <input
-          id="heard"
-          value={heard}
-          onChange={(e) => setHeard(e.target.value)}
-          placeholder="Something they said, as you heard it"
-          className="min-w-0 flex-1 rounded-[var(--r-sm)] border px-3 py-2 text-sm"
-          style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
-        />
-        <button type="submit" className="press tap-tint rounded-full p-2" aria-label="Look it up the way it sounded" style={{ color: "var(--ink-2)" }}>
-          <Search size={16} aria-hidden />
-        </button>
-      </form>
+      </Card>
+    );
+  }
+
+  /*
+    A day with nothing in it is answered with something small to do about it,
+    and today's errand is that. It carries no buttons of its own: the report
+    comes tomorrow, when there is something to report, which is the whole
+    argument this card was rebuilt on.
+  */
+  if (!isConversation(answer)) {
+    return (
+      <Card>
+        <SectionTitle>Say it today</SectionTitle>
+        <p className="text-xs" style={{ color: "var(--ink-3)" }}>Then here is a small one for today.</p>
+        <p className="mt-1 text-md leading-snug" style={{ color: "var(--ink)" }}>{errand.says}</p>
+        {/*
+          The place reads as part of the errand rather than as a hint in the
+          corner of the card. It sat in the SectionTitle's hint slot, which on
+          every other card on Today holds a level or a count, so "A bus stop, a
+          corridor" was a caption belonging to nothing.
+        */}
+        <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
+          {errand.where}. The words are in{" "}
+          <Link href={`/learn/${errand.unit}`} className="underline">{unitTitle}</Link>.
+          {" "}Nobody will slow down for you, and that is the practice.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <SectionTitle hint="yesterday">Out there</SectionTitle>
+      <p className="flex items-start gap-2 text-md leading-snug" style={{ color: "var(--ink)" }}>
+        <Footprints size={16} aria-hidden className="mt-1" /> {REPLY[answer]}
+      </p>
+      <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+        {conversations === 1
+          ? `Your first in the last ${days} days. `
+          : `${conversations} in the last ${days} days. `}
+        <Link href="/progress" className="underline">Progress keeps the count</Link>.
+      </p>
     </Card>
   );
 }
 
-const REPLY: Record<Outcome, string> = {
+/*
+  Only the two answers that are a conversation. A day with nothing in it is
+  answered with an errand rather than with a sentence, so there is nothing to
+  say here about it, and a third entry would be copy no screen can reach.
+*/
+const REPLY: Record<Conversation, string> = {
   UNDERSTOOD: "They understood you. That is the whole point of all of this.",
-  SWITCHED: "They switched. Next time, answer in Estonian anyway; most people come back.",
-  BAILED: "Not today. The errand comes round again, and so does the person.",
+  SWITCHED: "They switched. Answer in Estonian anyway next time; most people come back.",
 };

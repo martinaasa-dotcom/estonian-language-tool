@@ -13,6 +13,7 @@ import { examCountdown } from "@/lib/progress/countdown";
 import { measuredPaceFor } from "@/lib/progress/plan";
 import { minutesForCards } from "@/lib/stats/pace";
 import { wordOfDay, wordOfDayCollection } from "@/lib/progress/wordOfDay";
+import { outThereToday } from "@/lib/progress/outThere";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
@@ -37,7 +38,7 @@ import { eventsOn, kindFrom, span, weekdayOf, KIND_LABEL, KIND_TONE, WEEKDAY_LON
 import { gameAfter, gameOn } from "@/lib/ux/weekGames";
 import { WordOfDayCard } from "@/components/WordOfDay";
 import { SayItToday } from "@/components/SayItToday";
-import { errandForDay, outcomeFrom, startedUnits } from "@/lib/collections/errands";
+import { errandForDay, startedUnits } from "@/lib/collections/errands";
 import { unitById } from "@/lib/collections/syllabus";
 import { BadgeCheck } from "./BadgeCheck";
 
@@ -171,22 +172,16 @@ export default async function TodayPage() {
     that still runs their queries has kept the cost and thrown away the reason.
   */
   const errand = shows(stage, "errand") ? errandForDay(summary.dayKey, startedUnits(snapshot.startedLemmas)) : null;
-  const [word, collection, struggle, countdown, todaysEncounter] = await Promise.all([
+  const [word, collection, struggle, countdown, outside] = await Promise.all([
     shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now), placement) : null,
     shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
     shows(stage, "struggle") ? loadStruggle(ownerId, now) : null,
     // The snapshot is handed over rather than fetched again: this page already
     // has one for the due counts, and the readiness figures only need the deck.
     shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot, pace) : null,
-    // Whether today's errand was already answered, so the card says so
-    // rather than asking twice.
-    errand
-      ? prisma.encounter.findFirst({
-        where: { ownerId, errandId: errand.id, createdAt: { gte: clock.startOfDay(now) } },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        select: { outcome: true },
-      })
-      : null,
+    // Whether the day's question has been answered, and the month behind it,
+    // off one read rather than one for each.
+    errand ? outThereToday(ownerId, clock, now) : null,
   ]);
 
   const today = dateLine(now, clock.zone);
@@ -714,14 +709,16 @@ export default async function TodayPage() {
   const examCard = countdown ? <ExamCountdownCard countdown={countdown} zone={clock.zone} /> : null;
 
   /*
-    The one panel that is about leaving the app. An errand a day, drawn from
-    the units this deck has started, and one press to say how it went. See
-    lib/collections/errands.ts.
+    The one panel that is about leaving the app. It asks whether any Estonian
+    was spoken to anybody yesterday, and offers an errand drawn from the units
+    this deck has started where the answer is no. See lib/collections/errands.ts.
   */
-  const errandCard = errand ? (
+  const errandCard = errand && outside ? (
     <SayItToday
       errand={errand}
-      reported={outcomeFrom(todaysEncounter?.outcome)}
+      answered={outside.answered}
+      conversations={outside.conversations}
+      days={outside.days}
       unitTitle={unitById(errand.unit)?.title ?? errand.unit}
     />
   ) : null;

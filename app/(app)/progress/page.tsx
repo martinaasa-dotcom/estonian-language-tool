@@ -404,16 +404,24 @@ export default async function ProgressPage() {
             <Card>
               {outside.total === 0 ? (
                 <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                  Nothing reported yet. Today sets one small errand a day; say how it went and it lands here.
-                  This is the one number that matters more than any chart on this page.
+                  Nothing reported yet. Today asks each morning whether you spoke any Estonian to somebody
+                  yesterday, and the answers land here. This is the one number that matters more than any
+                  chart on this page.
                 </p>
               ) : (
                 <div className="flex flex-col gap-4">
+                  {/*
+                    The first figure counts the days something was said, not the
+                    days the question was answered: "not yesterday" is an honest
+                    answer and counting it here would report a fortnight of them
+                    back as a fortnight of conversations. lib/collections/errands.ts
+                    is where that is decided, for this panel and Today alike.
+                  */}
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <Stat value={outside.total} label="conversations" tone="var(--accent-deep)" icon={<Footprints size={14} aria-hidden />} />
                     <Stat value={outside.byOutcome.UNDERSTOOD} label="understood you" tone="var(--good-ink)" />
                     <Stat value={outside.byOutcome.SWITCHED} label="switched to English" tone="var(--hard-ink)" />
-                    <Stat value={outside.byOutcome.BAILED} label="did not happen" tone="var(--ink-3)" />
+                    <Stat value={outside.byOutcome.BAILED} label="days with none" tone="var(--ink-3)" />
                   </div>
                   <p className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {outside.streak > 1 ? `${outside.streak} days in a row with a real conversation in them. ` : ""}

@@ -501,15 +501,21 @@ model Scan {
   @@index([ownerId, createdAt])
 }
 
-/// One real conversation the learner reported having outside the app: which
-/// errand Today set, and how it went in one of three words. Append-only. The
+/// One day's answer to whether the learner spoke any Estonian to somebody
+/// outside the app, and how it went in one of three words. Append-only. The
 /// one number this app keeps that a learning app does not usually want:
 /// conversations held outside it, and how often the other person switched to
 /// English.
 model Encounter {
   id        String   @id @default(uuid())
   ownerId   String
-  errandId  String
+  /// The errand Today set, where the report was about one, and null where the
+  /// conversation was the learner's own. Today asks about yesterday rather
+  /// than about our homework, so a report it collects names no errand: a
+  /// conversation with a neighbour is not this app's to take credit for, and
+  /// writing an errand id against one would be a lie the research export
+  /// would then group a unit by.
+  errandId  String?
   /// UNDERSTOOD | SWITCHED | BAILED
   outcome   String
   createdAt DateTime @default(now())

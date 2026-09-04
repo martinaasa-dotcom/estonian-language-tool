@@ -89,12 +89,38 @@ is: it would be this app writing Estonian and the scheduler drilling it.
 
 **A conversation outside the app is the number the app is measured by, and it is a fact the learner
 reports.** `lib/collections/errands.ts` names one errand a day by unit id, never by word, the way
-the seasonal row does, and `recordEncounter` stores one of three words about it: understood,
-switched to English, did not manage it. `Encounter` is append-only and the fourth exception to
-"progress is derived" (ADR-027). Progress leads with it, beside the readiness reading of the
-course's own "you can do this" claims (ADR-026). The research export publishes it under the same
-gate as everything else and labelled as self-reported. Nothing about it is a streak that punishes
-a day without one.
+the seasonal row does, and `recordEncounter` stores one of three words. `Encounter` is append-only
+and the fourth exception to "progress is derived" (ADR-027). Progress leads with it, beside the
+readiness reading of the course's own "you can do this" claims (ADR-026). The research export
+publishes the errands under the same gate as everything else and labelled as self-reported.
+Nothing about it is a streak that punishes a day without one.
+
+**The question is about the learner's day rather than about our errand, and it is asked about a day
+that is over.** The card used to set the errand in the morning and put the three answers under it,
+which asked for a report on something that had not happened yet: at eight in the morning those are
+not three answers, they are three ways to make a card go away. And it could only see the
+conversations this app had set, so somebody who spent an hour with their Estonian mother-in-law and
+ignored the errand was recorded as having done nothing, in the one number this app says it is
+measured by. So Today asks whether any Estonian was spoken to anybody yesterday, and offers the
+errand where the answer is no, which is also the only kind moment to offer one (ADR-027 amendment 1).
+
+Two things follow and both are asserted. **`Encounter.errandId` is nullable and Today writes none**,
+because a conversation with a neighbour is not this app's to file under a unit and the research
+export groups that column by the unit an errand drew its words from; that table now says out loud
+that it covers the reports tied to an errand rather than speaking for all of them. And **a day that
+was answered is not a day that held a conversation**: `isConversation` is the one place that is
+decided, both readings in `lib/progress/outThere.ts` ask it, and counting rows instead would report
+a fortnight of honest noes back as a fortnight of real conversations and a run of fourteen days, on
+the panel whose own heading says it matters more than any chart on the page.
+
+**And eighteen errands is thin for the days the answer is no.** Thirteen are A1 and five A2, none
+above, and the pool is filtered to the units a deck has started: four on a starter deck, thirteen
+with A1 finished, eighteen for ever after. The walk is `dayIndex`, so the repeat interval is the
+pool size exactly. That is survivable while the errand appears on a minority of days and it is not
+a table to build a screen out of that shows several days at once. What it needs before it grows is
+somebody who knows how an Estonian counter actually works, in the shape `docs/20-contributed-sentences.md`
+already describes, and a B1 tier that does not exist: holding the line when they switch, asking a
+follow-up, explaining why you were late.
 
 **Never write Estonian.** Not morphology, not example sentences. Forms come from Ekilex or the
 seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
