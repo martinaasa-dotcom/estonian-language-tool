@@ -2728,12 +2728,27 @@ nothing in it. Restraint that leaves a screen looking broken is not restraint. T
 to pass is "does this say something true and useful on a log with nothing in it".
 
 **Today is a dashboard, and its modules are declared before they are placed.** What a card is and
-which column it sits in are two questions, and they were one six-hundred-line return statement with
-a `shows()` wrapped round each branch. The page now names each module, then lays them out: the wide
-column is the day (what is due, what is written down, what keeps going wrong, how the run of days is
-going) and the narrow one is the material (a word, the next unit, the practice modes, Anu). Inside
-the wide column the two you can act on come before the two that report on you, since a streak is
-worth more on the way out than on the way in.
+where it sits are two questions, and they were one six-hundred-line return statement with a
+`shows()` wrapped round each branch. The page names each module, then lays them out, and the layout
+is one card across the top and the rest dealt into two columns that end level. The card across the
+top is the thing to do now, because it is the only card that is not one of several; on a wide
+screen it is a row, the figures on the left and the button on the right, so a wide card is not a
+wide empty card with a button in it, and on the first morning, where there are no figures worth
+printing, the left half says what the button is going to do in the ladder's own terms.
+
+**The columns used to be assigned by what a module was for, and that made a poor picture.** The
+wide column was the day and the narrow one the material, which is a sound reading order and a
+layout whose balance depends on how far in the learner is: on the first morning the wide column
+held one button and the narrow one held three tall cards, so the page read as having slid
+sideways, and moving the practice tiles across for that one stage only moved the lean. `Columns`
+in `components/ui.tsx` hands the cards to the browser instead. A multi-column layout fills the
+first column and then the second and balances the two by height, which is the one thing a server
+cannot do, since it knows which cards there are this morning and not how tall the word of the day
+turned out; a card never splits across the seam, and the wrapper carries the rhythm as padding
+rather than margin because a margin at a column break is truncated and a padding is not. Reading
+order is still the argument and is unchanged: down the first column and into the second it reads
+the two you can act on, what today holds, what keeps going wrong, the run of days, and then the
+material, and where the seam falls between those is the one thing the browser decides.
 
 **One word a day, chosen by the date, that nothing else on the page was going to show you.** Every
 other panel on Today reports on the learner's own deck, so every one of them is silent on the first
