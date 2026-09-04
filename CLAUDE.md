@@ -3479,7 +3479,20 @@ one. So a local-case card goes only where the dictionary positively says the wor
 trio, through `isAnimate` or the `-maa` ending, and the case asked for is an inside one. The word
 with no singular is the same discipline (`prillid → milles?` wanting `prillis`, a form of `prill`):
 what says so is a stored `NOM_SG` that is not the headword, and an entry holding none makes no
-claim. `audit:decks` reports both faults and `--write` removes them,
+claim. **And a family is a body of people, which the Institute marks with a code this file did not know.**
+`pere` and `perekond` are `inimene esitus`, and the Institute's own definition of the first is
+"ühe majandusliku üksusena elavad vanemad ja lapsed". Read as a person they take the outside trio
+alone, which refuses `peres`, `perre` and `perest`, and `meie peres räägitakse eesti keelt` is
+something anybody says. They are `MIXED` now, beside `politsei` and `grupp`, so neither trio is
+drilled and both stay right. Found by running the deck audit against a real deployment, which named
+nine `pere` cards beside 162 that really were `õpetajas` and `koeras`: a rule this narrow is not
+reachable by reading the code list, only by looking at what it condemns. **The bare code and never
+the prefix**, which is the difference between the entry and a bug: `esitus_tiitel` is a title rather
+than a person and sits beside `in_elukutse` on `arst`, `doktor` and `proua`, so a prefix rule makes
+all of them mixed and hands back the fault the module exists for. Bare `esitus` reaches a word that
+also carries a person code, which over the shipped dictionary is those two and nothing else.
+
+`audit:decks` reports both faults and `--write` removes them,
 which stays a command somebody runs rather than something the seed does: every row belongs to a
 learner, and that line was drawn when the first fault was found. What is new is a way to run it
 without a checkout, since the person who can see the bad card is rarely the person with the
