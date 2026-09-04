@@ -2996,16 +2996,56 @@ of their own, since a second answer to "has this learner started yet" is how the
 **And then the rule over-reached, and day one paid for it.** "A figure computed from an empty log"
 is a streak of nought, a goal ring at nought percent and a level bar at 40 XP, and those are still
 held back. It is not the word of the day, which is a dictionary lookup keyed on the date and reads
-the same on the first morning as in the second year, and it is not the practice tiles, which are
-doors rather than measurements. Both were withheld anyway on the strength of not being the review
-button, so `arriving` was two cards on an otherwise empty page, which a learner reads as an app with
-nothing in it. Restraint that leaves a screen looking broken is not restraint. The test a panel has
-to pass is "does this say something true and useful on a log with nothing in it".
+the same on the first morning as in the second year. It was withheld anyway on the strength of not
+being the review button, so `arriving` was two cards on an otherwise empty page, which a learner
+reads as an app with nothing in it. Restraint that leaves a screen looking broken is not restraint.
+The test a panel has to pass is "does this say something true and useful on a log with nothing in
+it".
+
+**And the table answers a question about the learner, which is not the question the page asks.**
+`shows` says whether a panel is worth drawing at all. It cannot say whether a panel is worth one of
+the six boxes on the one screen everybody opens, and Today was drawing everything a stage allowed:
+fourteen cards on a settled morning. The daily quest and the game of the day both said "press
+something short". The sticking points and the weakest cases were a second drawing of two sections
+Progress already has under their own headings, and one of them, `StruggleAreas`, described itself
+in its own header as "a heading and a link". Three quest meters and an XP bar reported how much had
+been done, which is what Progress is for. Six practice tiles were a menu on a screen whose job is a
+thing to press. The exam countdown was a forecast the hub prints in full. And a standing pitch for
+Anu sat under a button that is in the corner of every signed-in screen, which is the argument
+`lib/ux/nav.ts` already makes about refusing her a rail row. None of those is wrong on its own. All
+of them together is a page somebody scrolls rather than reads, reported as "way too busy" by
+somebody using it.
+
+So `TODAY_CARDS` is five, the page names its cards in priority order and draws the first five under
+the hero, and six is the whole screen. The order is the argument and it is what to do today: what
+to say to a real person, what is actually on today, the one short round, the run of days, a word,
+and then the course. What came off moved rather than went: the XP bar and the three quests are on
+Progress beside the ring that already carried the level, the countdown card is on the examination
+hub in place of the block that was hand-building the same four figures beside it, and the sticking
+points and the weakest cases were already there, which is why `StruggleAreas` was deleted rather
+than moved. Everything else is in the rail, in the palette and on its own page, exactly as with the
+table above.
+
+**One round a day, and the week table already decided which.** The quest card and the game card were
+two cards for one decision, and `lib/ux/weekGames.ts` had answered it in the only place it can be
+answered: Sunday is `/quest`. So they are one slot. Six days the table names a game and that is the
+round; on the seventh the quest is, and only then is the weakest case worth the query behind it,
+which takes three queries and a dictionary read off every other render of this page. The invariant
+is on the *slot* rather than on either card, because two rounds on this page is what the cap was
+added to stop.
+
+**The cap fails on the shape that rots, which is not the constant.** Nobody lowers `TODAY_CARDS` by
+accident. What happens is somebody adds `{newCard}` beside the sliced array, which reads as a card
+being added and is a card that cannot be cut, so what is asserted is that every child of `Columns`
+on that page comes out of the one expression the cap is applied to. Made to fail three ways before
+it was trusted: a card drawn loose beside the list, the `slice` deleted, and the quests orphaned on
+their way to Progress.
 
 **Today is a dashboard, and its modules are declared before they are placed.** What a card is and
 where it sits are two questions, and they were one six-hundred-line return statement with a
 `shows()` wrapped round each branch. The page names each module, then lays them out, and the layout
-is one card across the top and the rest dealt into two columns that end level. The card across the
+is one card across the top and at most `TODAY_CARDS` of the rest dealt into two columns that end
+level. The card across the
 top is the thing to do now, because it is the only card that is not one of several; on a wide
 screen it is a row, the figures on the left and the button on the right, so a wide card is not a
 wide empty card with a button in it, and on the first morning, where there are no figures worth
@@ -3021,9 +3061,9 @@ first column and then the second and balances the two by height, which is the on
 cannot do, since it knows which cards there are this morning and not how tall the word of the day
 turned out; a card never splits across the seam, and the wrapper carries the rhythm as padding
 rather than margin because a margin at a column break is truncated and a padding is not. Reading
-order is still the argument and is unchanged: down the first column and into the second it reads
-the two you can act on, what today holds, what keeps going wrong, the run of days, and then the
-material, and where the seam falls between those is the one thing the browser decides.
+order is still the argument: down the first column and into the second it reads the errand, what
+today holds, the one short round, the run of days, a word, and then the course, and where the seam
+falls between those is the one thing the browser decides.
 
 **One word a day, chosen by the date, that nothing else on the page was going to show you.** Every
 other panel on Today reports on the learner's own deck, so every one of them is silent on the first
@@ -4634,6 +4674,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `distanceLine`, `minutesForCards`, `describeSituation`, `conditionFor`, `describeHearing`,
 `playThrough`, `errandForDay`, `recordEncounter`, `outThere`, `reachedSlot`, `reachedFor`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
+`TODAY_CARDS`, `weakestCase`, `roundCard`,
 `lacksFiniteVerb`, `answerForms`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 

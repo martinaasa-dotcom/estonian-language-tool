@@ -302,9 +302,9 @@ describe("the practice modes", () => {
   });
 
   it("leads the quick rounds with the three that need only a deck", () => {
-    // Today shows the first `practiceTiles(stage)` of these, so the order is
-    // the promise that a beginner's three are not the ones needing a
-    // microphone or a recorded sentence.
+    // `/practice` draws these in order and the palette searches them in it,
+    // so the order is the promise that a beginner's three are not the ones
+    // needing a microphone or a recorded sentence.
     expect(QUICK_MODES.slice(0, 3).map((m) => m.href)).toEqual([
       "/review/sprint", "/review/match", "/review/sentences",
     ]);

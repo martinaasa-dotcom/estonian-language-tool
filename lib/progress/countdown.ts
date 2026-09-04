@@ -3,7 +3,7 @@ import { readinessSignals } from "@/lib/progress/exam";
 import type { DeckSnapshot } from "@/lib/progress/summary";
 import { countdownPhrase, daysUntil, reasonsFor, targetByBand, weeksUntil } from "@/lib/assessment/goals";
 import { distanceLine, foundHours, project, type MeasuredPace } from "@/lib/assessment/plan";
-import { assessReadiness, type Evidence, type Feedback } from "@/lib/exam/readiness";
+import { assessReadiness, type Evidence, type Feedback, type ReadinessSignals } from "@/lib/exam/readiness";
 import type { ExamLevel } from "@/lib/exam/spec";
 import type { DayClock } from "@/lib/time/day";
 import { minutesForCards } from "@/lib/stats/pace";
@@ -116,6 +116,16 @@ export async function examCountdown(
   snapshot?: DeckSnapshot,
   /** The learner's measured pace, when the caller already read it. Null before any review. */
   pace: MeasuredPace | null = null,
+  /**
+   * The readiness signals, when the caller already gathered them.
+   *
+   * The exam hub reads them for its own list of levels, and this is eight
+   * queries and a scan of the dictionary: asking twice inside one render is
+   * the cost of the card and none of its value. Optional rather than
+   * required, because nothing else that draws this card has a reason to have
+   * them in hand first.
+   */
+  gathered?: ReadinessSignals,
 ): Promise<ExamCountdown | null> {
   const goals = await goalsFor(ownerId);
 
@@ -127,7 +137,7 @@ export async function examCountdown(
     other.
   */
   const [signals, standing] = await Promise.all([
-    readinessSignals(ownerId, snapshot),
+    gathered ?? readinessSignals(ownerId, snapshot),
     standingFor(ownerId),
   ]);
   const readiness = assessReadiness(signals);

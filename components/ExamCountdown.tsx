@@ -8,13 +8,17 @@ import { LocalDate } from "@/components/LocalDate";
 import { Card, CardLink, Ring, SectionTitle } from "@/components/ui";
 
 /**
- * THE DATE THEY GAVE US, ON THE SCREEN THEY OPEN.
+ * THE DATE THEY GAVE US, AND WHETHER THEY ARE GOING TO MAKE IT.
  *
- * Somebody says at first run that they want B1 by March, and until now the one
- * page they see every morning had never mentioned it again. Two numbers side by
- * side are what make a morning decision: forty-seven days and sixty-two percent
- * is a different feeling from forty-seven days and thirty-one, and neither of
- * them is "43 cards due".
+ * Somebody says at first run that they want B1 by March. Two numbers side by
+ * side are what make that a decision: forty-seven days and sixty-two percent is
+ * a different feeling from forty-seven days and thirty-one.
+ *
+ * IT LIVES ON THE EXAMINATION HUB, AND IT USED TO BE ON TODAY. A forecast is
+ * not a thing to do in the next ten minutes, and Today has six boxes for the
+ * things that are; the hub is the page somebody with a date is already going
+ * to. What it replaced there was the same card assembled by hand out of the
+ * same four figures, so this is one drawing of them rather than two.
  *
  * AND WHERE NOBODY NAMED A BAND, THE CARD SAYS WHOSE IT IS. Skipping the goal
  * screen used to mean no confidence figure anywhere on the home page, which is
@@ -150,8 +154,10 @@ export function ExamCountdownCard({ countdown, zone, className }: {
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <ButtonLink href="/exam" variant="secondary" size="sm">
-          Where you stand <ArrowRight size={14} aria-hidden />
+        {/* The paper itself, which is what this whole card is about and is one
+            press from the page it sits on. */}
+        <ButtonLink href={`/exam/${countdown.band}`} variant="secondary" size="sm">
+          Sit the {countdown.band} paper <ArrowRight size={14} aria-hidden />
         </ButtonLink>
         <CardLink href="/settings#goals">
           {countdown.chosen ? "Change the goal" : "Set a goal of your own"}

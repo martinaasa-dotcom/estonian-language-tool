@@ -37,15 +37,19 @@
  *
  * The word of the day is not one of them: it comes out of the dictionary, it
  * is chosen by the date rather than by anything the learner has done, and it
- * reads exactly the same on the first morning as in the second year. Quick
- * practice is not one of them either; it is four doors, and a door is not a
- * measurement. Both were held back anyway, on the strength of not being the
- * review button, and the result was a home page with two cards on it that a
- * learner reasonably read as an app with nothing in it. Restraint that leaves
- * a screen looking broken is not restraint.
+ * reads exactly the same on the first morning as in the second year. It was
+ * held back anyway, on the strength of not being the review button, and the
+ * result was a home page with two cards on it that a learner reasonably read
+ * as an app with nothing in it. Restraint that leaves a screen looking broken
+ * is not restraint.
  *
  * So the test a panel has to pass is "does this say something true and useful
  * on a log with nothing in it", not "is this the way in".
+ *
+ * AND THE TABLE IS HALF THE ANSWER, WHICH IS WHAT `TODAY_CARDS` IS FOR. A
+ * panel worth drawing is not the same claim as a panel worth one of the six
+ * boxes on the screen everybody opens with two minutes to spare. See the
+ * constant at the foot of this file.
  *
  * Pure: counts in, names out. No React, no Prisma, no clock.
  */
@@ -94,44 +98,20 @@ export const PANELS = [
    * anybody has graded.
    */
   "word",
-  /** The practice and game modes. */
-  "practice",
   /** Streak, week strip, banked shields. */
   "streak",
-  /** XP, level and the bar towards the next one. */
-  "level",
-  /** The three daily quests. */
-  "quests",
   /** Homework, class tasks and what is due when. */
   "tasks",
-  /** The words and the cases that keep going wrong. */
-  "struggle",
   /**
    * The two-minute round aimed at whatever is going wrong most.
    *
-   * Withheld until `settled` for the same reason `struggle` is, and it is the
-   * same data one step further on: the round is drawn from which cases the
+   * Withheld until `settled` because the round is drawn from which cases the
    * learner is worst at, and on a thin log there is no such thing. A card
    * offering two minutes on weaknesses nobody has measured yet is a button
    * promising something the round behind it cannot deliver, which is the test
    * a panel has to pass here.
    */
   "quest",
-  /**
-   * The level the learner is aiming at, how long they have, and the chance of
-   * clearing it.
-   *
-   * Held to `settled` for the reason the figure itself gives: the confidence is
-   * capped by how much evidence stands behind it, and on a thin log it is a
-   * number the app has to caveat rather than one it can lead with. That is the
-   * whole of what gates it now: it used to need a target as well, so a learner
-   * who skipped one screen in first run had no confidence figure on the page
-   * they open every morning. `examCountdown` falls back to the band the climb
-   * stopped at and the card says the band is the app's rather than theirs.
-   */
-  "exam",
-  /** Anu, and the pitch for her when she is not set up. */
-  "tutor",
   /**
    * One thing to say to a real person today, and how it went. Held back
    * while arriving, because an errand is drawn from the units a learner has
@@ -145,19 +125,16 @@ export type Panel = (typeof PANELS)[number];
 
 const SHOWN: Record<Stage, readonly Panel[]> = {
   /*
-    Four things that are all true on a log with nothing in it: the way in, what
-    the course does next, a word out of the dictionary with a reason attached
-    to it, and the doors to the practice modes. Everything else here would be
-    reporting a nought.
+    Three things that are all true on a log with nothing in it: the way in,
+    what the course does next, and a word out of the dictionary with a reason
+    attached to it. Everything else here would be reporting a nought.
   */
-  arriving: ["review", "next", "word", "practice"],
+  arriving: ["review", "next", "word"],
   /*
-    The daily loop, the reason to come back tomorrow, what is due this week and
-    somewhere to go when stuck. Not the charts, and not the sticking points: a
-    level bar at 40 XP is noise, and four reviews is not enough to call any
-    word a problem.
+    The daily loop, the reason to come back tomorrow, and what is due this
+    week. Not the quest: four reviews is not enough to call any case a problem.
   */
-  starting: ["review", "next", "word", "practice", "streak", "quests", "tasks", "tutor", "errand"],
+  starting: ["review", "next", "word", "streak", "tasks", "errand"],
   /** Everything. By now every figure on it is drawn from enough to mean something. */
   settled: [...PANELS],
 };
@@ -167,19 +144,23 @@ export function shows(stage: Stage, panel: Panel): boolean {
 }
 
 /**
- * How many practice tiles a stage puts on Today.
+ * HOW MANY CARDS TODAY MAY LEAD WITH, UNDER THE ONE THAT IS NOT ONE OF SEVERAL.
  *
- * Six was the whole palette laid out at once, which reads as a menu to study
- * rather than a thing to press. Four is still a choice on a screen that has a
- * dozen other things on it, and two is a choice while everything else is new.
- * The rounds a stage does not show are on /practice, one row of the rail away,
- * which is where somebody looking for a game is already going.
+ * The table above answers "is this panel worth drawing at all", which is a
+ * question about the learner. It cannot answer "is this the fifth most useful
+ * thing on the page this morning", which is a question about the page, and
+ * that is the one Today was getting wrong: every panel a stage allowed was
+ * drawn, so a settled learner opened fourteen cards, ten of which were reports
+ * rather than things to do today. Somebody with two minutes before the bus
+ * reads the top of that and nothing else.
  *
- * Both figures are even, and that is the grid rather than a taste: Today lays
- * these out `grid-cols-2`, so an odd count leaves a hole in the corner. The
- * cut from six came in wanting three, which is the right instinct about how
- * many and the wrong number to draw two across.
+ * So the page names its cards in priority order and takes the first five. Five
+ * because the hero above them is the sixth, and six is what fits on a phone
+ * screen and a half: a card that has to be hunted for is a card that is not
+ * being glanced at, which is the whole job of this screen.
+ *
+ * Nothing is deleted by this either. A card the cap drops is on its own page,
+ * in the rail and in the palette, exactly as with the table above. What it
+ * decides is which five earn the one screen everybody opens every morning.
  */
-export function practiceTiles(stage: Stage): number {
-  return stage === "settled" ? 4 : 2;
-}
+export const TODAY_CARDS = 5;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FOUND_FOOTING, PANELS, practiceTiles, shows, stageOf, type Panel } from "./disclosure";
+import { FOUND_FOOTING, PANELS, shows, stageOf, TODAY_CARDS, type Panel } from "./disclosure";
 
 describe("stageOf", () => {
   it("calls a learner with no deck arriving", () => {
@@ -30,17 +30,17 @@ describe("stageOf", () => {
 });
 
 describe("shows", () => {
-  it("gives a beginner four things that are true on an empty log", () => {
+  it("gives a beginner three things that are true on an empty log", () => {
     const led = PANELS.filter((p) => shows("arriving", p));
-    expect(led).toEqual(["review", "next", "word", "practice"]);
+    expect(led).toEqual(["review", "next", "word"]);
   });
 
-  it("holds the exam countdown back until its own number is worth printing", () => {
-    // The confidence is capped by the evidence behind it, so on a thin log it
-    // is a figure the app has to caveat rather than one it can lead with.
-    expect(shows("arriving", "exam")).toBe(false);
-    expect(shows("starting", "exam")).toBe(false);
-    expect(shows("settled", "exam")).toBe(true);
+  it("holds the quest back until there is a weakness to name", () => {
+    // The round is drawn from which cases the learner is worst at, so on a
+    // thin log the card promises something the round cannot deliver.
+    expect(shows("arriving", "quest")).toBe(false);
+    expect(shows("starting", "quest")).toBe(false);
+    expect(shows("settled", "quest")).toBe(true);
   });
 
   it("never withholds the daily loop from anybody", () => {
@@ -53,7 +53,7 @@ describe("shows", () => {
     // The ones that read as a nought on day one, which is what this module is
     // for. Not the word of the day: that is a dictionary lookup keyed on the
     // date and it reads the same on the first morning as in the second year.
-    const furniture: Panel[] = ["streak", "level", "quests", "tasks", "struggle", "exam"];
+    const furniture: Panel[] = ["streak", "tasks", "quest", "errand"];
     for (const panel of furniture) expect(shows("arriving", panel)).toBe(false);
   });
 
@@ -61,12 +61,7 @@ describe("shows", () => {
     // A home page with two cards on it reads as an app with nothing in it,
     // which is the fault the other half of this table caused.
     expect(shows("arriving", "word")).toBe(true);
-    expect(shows("arriving", "practice")).toBe(true);
-  });
-
-  it("holds the charts and the sticking points back until they mean something", () => {
-    expect(shows("starting", "level")).toBe(false);
-    expect(shows("starting", "struggle")).toBe(false);
+    expect(shows("arriving", "next")).toBe(true);
   });
 
   it("shows everything once a learner is settled", () => {
@@ -84,15 +79,16 @@ describe("shows", () => {
   });
 });
 
-describe("practiceTiles", () => {
-  it("offers a choice rather than the whole palette while starting", () => {
-    expect(practiceTiles("starting")).toBe(2);
-    expect(practiceTiles("settled")).toBe(4);
+describe("TODAY_CARDS", () => {
+  it("leaves room for the hero and no more than six boxes in all", () => {
+    // The number the redesign was asked for: a screen somebody glances at
+    // before a bus, rather than one they scroll.
+    expect(TODAY_CARDS + 1).toBeLessThanOrEqual(6);
   });
 
-  it("never leaves a hole in a grid that is two across", () => {
-    for (const stage of ["arriving", "starting", "settled"] as const) {
-      expect(practiceTiles(stage) % 2).toBe(0);
-    }
+  it("cannot draw more cards than a settled learner has panels for", () => {
+    // A cap above the supply is a cap that never fires, which is the same
+    // thing as not having one.
+    expect(TODAY_CARDS).toBeLessThan(PANELS.length);
   });
 });
