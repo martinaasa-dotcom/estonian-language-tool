@@ -632,6 +632,76 @@ check("the room a clip is heard in is made in one module, and only the rounds th
   }
 });
 
+check("a scene is assembled from the dictionary, advanced by the dictionary, and says which lines a model wrote", () => {
+  /*
+    docs/21-situations.md §21, asserted rather than described.
+
+    The pure half may reach nothing that is not data: no provider, no React,
+    no Prisma, no key. `advance` takes `Evidence` and `readTurn` is its only
+    producer, so a caller holding a model's verdict cannot move a scene.
+    Every line reaching a screen comes out of `sceneLine`, which withholds
+    rather than caveats, and a composed one goes through `runGate` first.
+    The finish action re-reads every turn on the server and grades through
+    `writeGrade`, and nothing generated is written to Lexeme, Form or a card.
+  */
+  const pure = sourceFiles("lib/scenes").filter((f) => !/\.(test|itest)\.tsx?$/.test(f) && !f.endsWith("compose.ts"));
+  assert.ok(pure.length >= 8, `expected the scene modules, found ${pure.length}`);
+  for (const file of pure) {
+    const src = code(file);
+    assert.ok(!/from "react"|from "next\/|@\/lib\/db|@prisma\/client|process\.env|fetch\(/.test(src),
+      `${file} reaches past data: a scene module may not import React, Next, Prisma, a key or the network`);
+  }
+  assert.match(code("lib/scenes/compose.ts"), /runGate\(/, "a composed line no longer goes through the gate");
+  assert.doesNotMatch(code("lib/scenes/compose.ts"), /@\/lib\/db|@prisma\/client/, "the composer opened the database");
+
+  const run = code("lib/scenes/run.ts");
+  assert.match(run, /export function advance\(state: RunState, text: string, evidence: Evidence\)/, "advance stopped taking Evidence");
+  const producers = ALL.filter((f) => !/\.(test|itest)\.tsx?$/.test(f) && /outcome:\s*"(complete|incomplete|unrecognised)"/.test(code(f)));
+  assert.deepEqual(producers, ["lib/scenes/turn.ts"], `Evidence is produced outside readTurn: ${producers.join(", ")}`);
+
+  const line = code("lib/scenes/line.ts");
+  assert.match(line, /provenance: "narrated"/, "sceneLine no longer narrates when both rungs fail");
+  assert.doesNotMatch(line, /[õäöüšž]/i, "the narration holds Estonian, which this file may not write");
+  const session = code("app/(app)/situations/[sceneId]/SceneSession.tsx");
+  assert.match(session, /sceneLine\(/, "the screen gets its lines from somewhere other than sceneLine");
+  assert.match(session, /readTurn\(/, "the screen reads a turn through something other than readTurn");
+  assert.match(session, /PROVENANCE_WORD/, "the screen stopped saying where a line came from");
+  assert.match(session, /SuggestFix/, "a line lost its report button");
+
+  const actions = code("app/actions.ts");
+  const finish = actions.slice(actions.indexOf("export async function finishScene"));
+  const body = finish.slice(0, finish.indexOf("\nexport async function", 10));
+  assert.match(body, /readTurn\(/, "finishScene trusts the client's reading of a turn");
+  assert.match(body, /writeGrade\(/, "finishScene grades through something other than writeGrade");
+  assert.ok(!/input\.rating|raw\.rating|t\.rating|\brating:\s*(input|raw|t)\b/.test(body), "finishScene takes a rating from the client");
+  assert.match(body, /rating: grade\.rating/, "finishScene grades with something other than the debrief's own rating");
+  assert.doesNotMatch(body, /lexeme\.(create|update)|form\.(create|update)|card\.(create|update)/, "finishScene writes generated content into the shared dictionary or a card");
+  assert.match(body, /throttleAction\(ownerId, "finishScene"\)/, "finishScene has no throttle");
+
+  // Append-only: nothing updates or deletes a run or a gap outside the erasure.
+  for (const file of ALL) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    const src = code(file);
+    if (/sceneRun\.(update|updateMany)\(|sceneGap\.(update|updateMany)\(/.test(src)) assert.fail(`${file} updates a SceneRun or SceneGap`);
+    if (/sceneRun\.delete|sceneGap\.delete/.test(src) && file !== "app/actions.ts") assert.fail(`${file} deletes a SceneRun or SceneGap`);
+  }
+  assert.match(code("app/api/export/route.ts"), /sceneRun\.findMany/, "the export leaves conversations out");
+  assert.match(code("app/api/export/route.ts"), /sceneGap\.findMany/, "the export leaves the gaps out");
+
+  // The class never sees a transcript.
+  for (const file of sourceFiles("lib/classroom")) {
+    assert.doesNotMatch(code(file), /sceneRun|sceneGap/, `${file} reads a conversation into the class`);
+  }
+  // The scene contributes nothing to any level.
+  assert.doesNotMatch(code("lib/assessment/score.ts"), /scene/i, "the placement reads scenes");
+  // The route sends no-store, and is metered.
+  const route = code("app/api/scene/line/route.ts");
+  assert.match(route, /authoriseCall\(ownerId, "SCENE"\)/, "the compose route is not metered");
+  assert.match(route, /drawPlan\(/, "the compose route trusts the client's plan rather than drawing its own");
+  // A curveball is never drawn on the first beat.
+  assert.match(code("lib/scenes/draw.ts"), /i > 0 &&/, "the draw can place a curveball on the first beat");
+});
+
 check("a task's kind is the same set wherever it is written down", () => {
   const table = code("lib/ux/agenda.ts");
   const declared = [...table.matchAll(/^  ([A-Z_]+): "/gm)].map((m) => m[1] as string);
@@ -1320,6 +1390,11 @@ check("every practice mode writes to the same review log", () => {
     exempt from it; the invariant below on submitExam is what holds that door
     to applyGradeBatch rather than to Review rows of its own.
 
+    finishScene is the fifth, and it is the exam's shape again: the browser
+    plays the conversation and sends the turns, the server draws the same plan
+    from the same seed, reads every turn against the dictionary and grades
+    through writeGrade. The check below on that action holds it to writeGrade.
+
     recordSonad is the fourth, and it is the exam's shape exactly. The board
     knows the answer, because marking a guess without a round trip is most of
     how that game feels to play, so a rating posted from it would be a rating
@@ -1332,7 +1407,7 @@ check("every practice mode writes to the same review log", () => {
   for (const file of sessions) {
     assert.match(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword|finishScene)\b/,
       `${file} does not write to the shared review log`,
     );
   }
@@ -1349,7 +1424,7 @@ check("every practice mode writes to the same review log", () => {
     assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
     assert.doesNotMatch(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
+      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword|finishScene)\b/,
       `${file} now grades, so it is a practice mode and must come off the exemption list`,
     );
   }
@@ -4441,6 +4516,12 @@ check("nothing is stored on a device that would need asking first", () => {
     // minutes rather than three. Letters and which clues were shown, never the
     // answers, which are rebuilt on the server to mark it.
     "app/(app)/crossword/resume.ts",
+    // And a conversation in Situations, which is the exam's argument at five
+    // minutes: the run in progress, so a reload gives it back at the same
+    // turn, and a finished run that could not reach the server, which goes up
+    // on the next visit. Turns only, never marks; the plan is drawn again
+    // from the seed. /privacy says so under "Your conversations in Situations".
+    "app/(app)/situations/resume.ts",
   ];
   for (const file of storage) {
     assert.ok(

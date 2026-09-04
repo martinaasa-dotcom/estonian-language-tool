@@ -115,9 +115,18 @@ export const SITTING_KEY_PREFIX = "kodukeel.exam.";
  */
 export const PUZZLE_KEY_PREFIX = "kodukeel.puzzle.";
 
+/**
+ * And a conversation under this one, by `app/(app)/situations/resume.ts`:
+ * the run in progress, and a finished run that could not be sent yet. A
+ * transcript is fiction about a role card and it is still somebody's
+ * evening, on a shared machine.
+ */
+export const SCENE_KEY_PREFIX = "kodukeel.scene.";
+
 function forgetSittings(): void {
   forgetByPrefix(SITTING_KEY_PREFIX);
   forgetByPrefix(PUZZLE_KEY_PREFIX);
+  forgetByPrefix(SCENE_KEY_PREFIX);
 }
 
 function forgetByPrefix(prefix: string): void {

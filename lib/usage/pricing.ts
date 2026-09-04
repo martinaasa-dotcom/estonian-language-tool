@@ -119,7 +119,7 @@ export function estimateTokens(text: string): number {
  * not open a database to do it. `ledger.ts` re-exports the name, so nothing
  * that already meant "a metered call" had to move.
  */
-export type UsageKind = "TUTOR" | "GRADER" | "TTS" | "SCAN";
+export type UsageKind = "TUTOR" | "GRADER" | "TTS" | "SCAN" | "SCENE";
 
 /**
  * What one call of each kind is assumed to cost until it says otherwise.
@@ -152,6 +152,9 @@ export const EXPECTED_TOKENS: Readonly<Record<UsageKind, { input: number; output
   TTS: { input: 0, output: 0 },
   // A photograph, which is a few thousand input tokens of image.
   SCAN: { input: 3_000, output: 400 },
+  // One line of a conversation: a short system prompt, a word list of a few
+  // hundred lemmas, two turns of context, and one sentence back.
+  SCENE: { input: 1_500, output: 40 },
 };
 
 /**

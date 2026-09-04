@@ -91,6 +91,12 @@ export const ACTION_LIMITS = {
    * meets is a limit that stops the queue being cleared.
    */
   reviewSuggestion: { perMinute: 120 },
+  /**
+   * Re-reads every turn of a conversation against the dictionary, writes a
+   * grade per word it can vouch for and a row per gap. A scene is five to
+   * eight minutes, so six a minute is somebody hammering the button.
+   */
+  finishScene: { perMinute: 6 },
 } as const;
 
 export type ActionLimit = keyof typeof ACTION_LIMITS;

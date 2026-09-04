@@ -46,6 +46,13 @@ import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
 import { writeGrade } from "@/lib/srs/grade";
+import { sceneById } from "@/lib/scenes/catalogue";
+import { difficultyFrom } from "@/lib/scenes/curveballs";
+import { debriefOf, type Debrief } from "@/lib/scenes/debrief";
+import { drawPlan } from "@/lib/scenes/draw";
+import { advance, askedForHelp, currentBeat, otherSaid, startRun, walkOut, type Provenance } from "@/lib/scenes/run";
+import { readTurn } from "@/lib/scenes/turn";
+import { recentDraws, sceneMaterial, turnContext } from "@/lib/progress/scenes";
 import { emptyScheduling, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
 import { ratingFor, SONAD_GUESSES } from "@/lib/games/sonad";
@@ -92,7 +99,7 @@ import { safeMessage } from "@/lib/observability/report";
  * facts. A closed list costs nothing: every caller in the tree already names
  * one of these.
  */
-const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC"]);
+const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC", "SCENE"]);
 
 /**
  * Add a word to the deck.
@@ -2217,6 +2224,12 @@ export async function deleteMyAccount(confirmation: string) {
         is the row that ties the report to a person.
       */
       await tx.suggestion.deleteMany({ where: { ownerId } });
+      /*
+        Every conversation they played and every word one needed. A transcript
+        is fiction about a role card and it is still an evening of theirs.
+      */
+      await tx.sceneGap.deleteMany({ where: { ownerId } });
+      await tx.sceneRun.deleteMany({ where: { ownerId } });
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
       /*
         And the attribution on anything they reviewed, for the same reason the
@@ -2296,6 +2309,8 @@ const BackupSchema = z.object({
     read; rejoining is one code away.
   */
   examAttempts: z.array(z.record(z.unknown())).optional(),
+  sceneRuns: z.array(z.record(z.unknown())).optional(),
+  sceneGaps: z.array(z.record(z.unknown())).optional(),
 });
 
 export interface RestoreSummary {
@@ -2563,6 +2578,30 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         await tx.examAttempt.create({ data: data as never });
       }
 
+      /*
+        A conversation played through, with its transcript, and the words it
+        needed. Both append-only, so a row already here is left exactly as it
+        is; a gap whose run did not come back is still a fact about a word.
+      */
+      for (const raw of backup.sceneRuns ?? []) {
+        const data = revive(raw, ["startedAt", "endedAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.sceneRun.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        await tx.sceneRun.create({ data: data as never });
+      }
+      for (const raw of backup.sceneGaps ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.sceneGap.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        if (data.lexemeId) {
+          const lexeme = await tx.lexeme.findUnique({ where: { id: String(data.lexemeId) }, select: { id: true } });
+          if (!lexeme) data.lexemeId = null;
+        }
+        await tx.sceneGap.create({ data: data as never });
+      }
+
       for (const raw of backup.stars ?? []) {
         const data = revive(raw, ["createdAt"]);
         const lexemeId = String(data.lexemeId ?? "");
@@ -2629,6 +2668,129 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
  * with recognition and production cards only, exactly like a pasted line: no
  * case-form card, because there are no forms to derive one from.
  */
+/*
+  A CONVERSATION IS RE-READ HERE BEFORE ANYTHING IS WRITTEN (ADR-022).
+
+  The browser plays a scene and sends the turns: what the other side said and
+  where it came from, and what the learner typed. It never sends which beats
+  were met or what a word was worth. The plan is drawn again from the same
+  seed, every learner turn is read against the same dictionary sets, and the
+  grades and the gaps come out of that replay. A client that lies about a turn
+  gets a turn read by the server; a client that lies about a mark cannot,
+  because there is nowhere to put one.
+
+  What is written: one SceneRun, append-only, holding the plan and the turns;
+  a SceneGap per word the conversation needed; and a Review row per word the
+  replay can vouch for, through `writeGrade` like every other mode (ADR-016),
+  on the word's recognition card. Good on the first attempt, Hard after a
+  repair, Again where the help button supplied it, never Easy. A walk-out
+  writes the run and no grades.
+*/
+const MAX_SCENE_TURNS = 60;
+const PROVENANCES = new Set<Provenance>(["attested", "composed", "english", "narrated"]);
+
+export async function finishScene(input: {
+  sceneId: string;
+  seed: string;
+  difficulty: number;
+  turns: unknown;
+  helped: unknown;
+  walkedOut: boolean;
+}): Promise<{ ok: true; debrief: Debrief; runId: string } | { ok: false; error: string }> {
+  const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "finishScene");
+  if (busy) return busy;
+
+  const scene = sceneById(text(input.sceneId));
+  if (!scene) return { ok: false as const, error: "That situation is no longer available." };
+  const seed = text(input.seed).slice(0, 40);
+  if (!seed) return { ok: false as const, error: "That conversation has no seed." };
+  const difficulty = difficultyFrom(input.difficulty);
+
+  const rawTurns = Array.isArray(input.turns) ? input.turns.slice(0, MAX_SCENE_TURNS) : [];
+  const helped = Array.isArray(input.helped) ? input.helped.filter((h): h is string => typeof h === "string").slice(0, 40) : [];
+
+  const material = await sceneMaterial(scene.id);
+  if (!material) return { ok: false as const, error: "That situation is no longer available." };
+  const drawn = await recentDraws(ownerId, scene.id);
+  const plan = drawPlan({
+    scene, seed, difficulty, glossOf: material.glossOf,
+    recentProps: drawn.props, recentCurveballs: drawn.curveballs,
+  });
+  const ctx = turnContext(material, plan);
+
+  let state = startRun(plan);
+  for (const lemma of helped) state = askedForHelp(state, lemma);
+  let lastLine: string | null = null;
+  for (const raw of rawTurns) {
+    if (typeof raw !== "object" || raw === null) continue;
+    const t = raw as { role?: unknown; text?: unknown; provenance?: unknown; lemma?: unknown; repair?: unknown; quick?: unknown; slow?: unknown };
+    if (typeof t.text !== "string") continue;
+    const beat = currentBeat(state);
+    if (!beat) break;
+    if (t.role === "other") {
+      const provenance = PROVENANCES.has(t.provenance as Provenance) ? (t.provenance as Provenance) : "narrated";
+      const line = t.text.slice(0, 300);
+      state = otherSaid(state, {
+        beatId: beat.id, text: line, provenance, lemma: typeof t.lemma === "string" ? t.lemma : null,
+        repair: t.repair === true, quick: t.quick === true, slow: t.slow === true,
+      });
+      if (provenance !== "narrated") lastLine = line;
+      continue;
+    }
+    const spoken = t.text.slice(0, 300);
+    const evidence = readTurn({ text: spoken, needs: beat.needs, shape: beat.shape, ctx, lastLine });
+    state = advance(state, spoken, evidence).state;
+  }
+  if (input.walkedOut === true && !state.finished) state = walkOut(state);
+  if (!state.finished) return { ok: false as const, error: "That conversation is not over yet." };
+
+  const debrief = debriefOf(scene, state);
+  const now = new Date();
+
+  // The word's recognition card, where the deck holds one: the row that
+  // stands for "do you know this word", which is what a conversation asked.
+  const lexemeIds = [...new Set(debrief.grades.map((g) => material.idOf.get(g.lemma)).filter((id): id is string => Boolean(id)))];
+  const cards = lexemeIds.length > 0
+    ? await prisma.card.findMany({
+      where: { ownerId, suspended: false, lexemeId: { in: lexemeIds }, cardType: { in: ["RECOGNITION", "PRODUCTION"] } },
+      orderBy: [{ cardType: "desc" }, { createdAt: "asc" }, { id: "asc" }],
+    })
+    : [];
+  const cardFor = new Map<string, (typeof cards)[number]>();
+  for (const card of cards) if (card.lexemeId && !cardFor.has(card.lexemeId)) cardFor.set(card.lexemeId, card);
+
+  const run = await prisma.sceneRun.create({
+    data: {
+      ownerId, sceneId: scene.id, seed, level: scene.level, difficulty,
+      transcript: JSON.stringify({ plan, turns: state.turns, helped: state.helped }),
+      outcome: JSON.stringify({
+        outcome: debrief.outcome, objectives: debrief.objectives, done: debrief.done, of: debrief.of,
+        english: debrief.english, curveballs: debrief.curveballs, walkedOut: debrief.walkedOut,
+      }),
+      endedAt: now,
+    },
+  });
+  if (debrief.gaps.length > 0) {
+    await prisma.sceneGap.createMany({
+      data: debrief.gaps.map((g) => ({
+        ownerId, runId: run.id, lemma: g.lemma, lexemeId: material.idOf.get(g.lemma) ?? null, kind: g.kind,
+      })),
+    });
+  }
+  for (const grade of debrief.grades) {
+    const id = material.idOf.get(grade.lemma);
+    const card = id ? cardFor.get(id) : undefined;
+    if (!card) continue;
+    await writeGrade(ownerId, { card, rating: grade.rating, durationMs: 0, reviewedAt: now, now });
+  }
+
+  revalidatePath("/situations");
+  revalidatePath("/");
+  revalidatePath("/progress");
+  return { ok: true as const, debrief, runId: run.id };
+}
+
 const MAX_SCAN_TITLE = 80;
 
 export async function saveScan(input: {

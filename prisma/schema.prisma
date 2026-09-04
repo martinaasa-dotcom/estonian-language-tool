@@ -176,7 +176,7 @@ model Card {
   back       String
   hint       String?
   targetCase String? // for CASE_FORM cards — powers the weak-case breakdown
-  source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT | SCAN | ALMANAC
+  source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT | SCAN | ALMANAC | SCENE
   suspended  Boolean @default(false)
 
   // FSRS state (ts-fsrs) — ADR-003
@@ -491,6 +491,51 @@ model Scan {
   createdAt DateTime @default(now())
 
   @@index([ownerId, createdAt])
+}
+
+/// One conversation played through in Situations: who was behind the desk,
+/// what was on the role card, which curveballs fired, every turn and where
+/// each of the other side's lines came from.
+///
+/// Append-only, like Review and Assessment, with the same single exception
+/// (somebody erasing their own account). Nothing in the transcript is true
+/// about the learner: the role card is fiction (docs/21-situations.md §3).
+model SceneRun {
+  id         String    @id @default(uuid())
+  ownerId    String
+  sceneId    String
+  seed       String
+  level      String
+  difficulty Int
+  /// JSON: { plan, turns, helped }. The plan is the persona, the props and the
+  /// curveballs drawn; the turns carry their provenance.
+  transcript String    @default("{}")
+  /// JSON: which required beats were met, how it ended, how many turns were
+  /// in English, and whether the learner walked out.
+  outcome    String    @default("{}")
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+
+  @@index([ownerId, startedAt])
+  @@index([ownerId, sceneId, startedAt])
+}
+
+/// A word a conversation needed and the learner did not have: asked for with
+/// the help button, or the beat stalled on it. A child table rather than a
+/// field inside the transcript so "the words my conversations keep needing"
+/// is one indexed query rather than a JSON scan over every run.
+model SceneGap {
+  id        String   @id @default(uuid())
+  ownerId   String
+  runId     String
+  lexemeId  String?
+  lemma     String
+  /// ASKED | STALLED
+  kind      String
+  createdAt DateTime @default(now())
+
+  @@index([ownerId, createdAt])
+  @@index([ownerId, lexemeId])
 }
 
 /// A placement check the learner sat: reading, listening, writing, speaking.

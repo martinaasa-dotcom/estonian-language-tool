@@ -103,6 +103,16 @@ export default function PrivacyPage() {
           spoken part is marked by you and nothing you record leaves your device.
         </P>
         <P>
+          <strong>Your conversations in Situations.</strong> Each one you finish is kept whole: who was
+          behind the desk, what was on the role card, what went wrong on purpose, every turn, and
+          where each of the other side&apos;s lines came from. <strong>Nothing in a transcript is about
+          you.</strong> You play a patient, a tenant, a customer, with a card of invented facts and a
+          document number that is fiction, and you are never asked for your own. The words a
+          conversation needed and you did not have are kept as a list, so they can be handed back.
+          A conversation you walk out of is kept as one you walked out of; one you abandon by
+          closing the tab is kept on your device only, and goes nowhere until you finish it.
+        </P>
+        <P>
           <strong>Your class, if you are in one.</strong> Joining with a code stores which
           class you joined, when, and the name you chose to be known by in it, which is the
           one place you can be under a name of your own choosing rather than your account.

@@ -40,6 +40,8 @@ comment on every model that needs one; what belongs here is the map and the reas
 | `Suggestion` | One thing a learner said was wrong, and what they proposed instead. |
 | `Classroom`, `ClassroomMember` | A class, its join code, and who is in it. A view over what the learners already own. |
 | `UsageEvent` | One metered call to a paid service. Append-only, and the evidence behind the spend cap. |
+| `SceneRun` | One conversation played through in Situations: the persona, the props, the curveballs, every turn and where each line came from. Append-only. Fiction about a role card, never a fact about the learner. |
+| `SceneGap` | One word a conversation needed and the learner did not have, asked for or stalled on. A child table so "the words my conversations keep needing" is one indexed query. |
 
 ## The values a string column may take
 

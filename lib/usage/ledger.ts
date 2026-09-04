@@ -99,6 +99,13 @@ const ALLOWANCE: Record<UsageKind, { burst: number; daily: number }> = {
   GRADER: { burst: 1, daily: 3 },
   TTS: { burst: 6, daily: 30 },
   SCAN: { burst: 1, daily: 2 },
+  /*
+    A conversation is several lines and a line is one call, so the allowance
+    is counted in lines: sixty a day is about eight scenes when retrieval
+    fills none of the beats and more when it does. The burst is a whole scene
+    in a minute, which a brisk run of turns can reach.
+  */
+  SCENE: { burst: 2, daily: 6 },
 };
 
 /**

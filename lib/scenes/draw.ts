@@ -20,6 +20,7 @@
  * has no dictionary; what it draws is the lemma or the digits.
  */
 import { mulberry32, seedFrom } from "@/lib/random/seeded";
+import { shuffle } from "@/lib/random/shuffle";
 import { CURVEBALLS, budgetFor, curveballById, type Curveball } from "./curveballs";
 import { patienceUnder } from "./personas";
 import { drawProps, fillFacts, type PropValue } from "./props";
@@ -73,7 +74,7 @@ export function chooseCurveballs(input: {
   const chosen: Curveball[] = [];
   let spent = 0;
   // Fresh ones first, then anything, so a thin catalogue still fills a budget.
-  const order = [...admitted].sort(() => random() - 0.5);
+  const order = shuffle(admitted, random);
   const pool = [...order.filter((c) => !recent.has(c.id)), ...order.filter((c) => recent.has(c.id))];
   for (const c of pool) {
     if (spent + c.cost > budget) continue;

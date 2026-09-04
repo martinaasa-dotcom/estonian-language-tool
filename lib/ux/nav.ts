@@ -155,6 +155,19 @@ export const SECTIONS: NavSection[] = [
         icon: "GraduationCap", tone: "accent", keywords: "flashcards srs study due schedule",
         within: "/practice",
       },
+      /*
+        The one row that is about using the language on somebody rather than
+        studying it. A scene is five to eight minutes with a receptionist who
+        has an agenda of their own, and it is where the course's own "you can
+        do this" claims get checked. In Every day rather than under Practice,
+        because the rail answers "what do I do now" and this is the answer the
+        whole app is for.
+      */
+      {
+        href: "/situations", label: "Situations", blurb: "A desk, a person, and something to get done in Estonian",
+        icon: "MessagesSquare", tone: "blush",
+        keywords: "conversation roleplay situation real life doctor shop landlord counter speak talk",
+      },
     ],
   },
   {

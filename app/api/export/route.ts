@@ -114,7 +114,7 @@ export async function GET() {
   const [
     lexemes, cards, reviews, tasks, studyEvents, scans,
     settings, messages, assessments, stars, achievements,
-    examAttempts, classrooms, classroomMembers, suggestions,
+    examAttempts, classrooms, classroomMembers, suggestions, sceneRuns, sceneGaps,
   ] = await Promise.all([
     prisma.lexeme.findMany({ where: { id: { in: [...mine] } }, include: { forms: true } }),
     prisma.card.findMany({ where: { ownerId } }),
@@ -146,6 +146,10 @@ export async function GET() {
     // words on one side and a reply about them on the other, so it is theirs
     // twice over.
     prisma.suggestion.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
+    // Every conversation played through, with its transcript, and every word
+    // one needed. Fiction about a role card, and still theirs.
+    prisma.sceneRun.findMany({ where: { ownerId }, orderBy: { startedAt: "asc" } }),
+    prisma.sceneGap.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
   ]);
 
   const payload = {
@@ -159,10 +163,11 @@ export async function GET() {
       achievements: achievements.length, examAttempts: examAttempts.length,
       classrooms: classrooms.length, classroomMembers: classroomMembers.length,
       suggestions: suggestions.length, studyEvents: studyEvents.length,
+      sceneRuns: sceneRuns.length, sceneGaps: sceneGaps.length,
     },
     lexemes, cards, reviews, tasks, studyEvents, scans,
     settings, messages, assessments, stars, achievements,
-    examAttempts, classrooms, classroomMembers, suggestions,
+    examAttempts, classrooms, classroomMembers, suggestions, sceneRuns, sceneGaps,
   };
 
   const date = new Date().toISOString().slice(0, 10);

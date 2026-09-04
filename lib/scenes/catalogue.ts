@@ -26,6 +26,7 @@
  * words, pronouns, and the clock. A conversation is mostly those.
  */
 import type { SceneSpec } from "./types";
+import { unitById } from "@/lib/collections/syllabus";
 
 /** Greetings, question words, pronouns, time and number. Every scene needs them. */
 /*
@@ -46,16 +47,30 @@ import type { SceneSpec } from "./types";
 const COMMON = [
   "tervitused", "kusisonad", "asesonad", "aeg", "arvud", "korraldused", "pohiverbid",
   "sidesonad", "vastused", "maaramine", "millal", "ilm",
+  /*
+    And the units the second measurement found. With the encounter verbs in
+    the course, `npm run eval:scene` still withheld `sobib` fourteen times,
+    `valmis` ten, `katki` six and `asub` five, none of them starred: every one
+    is taught, in a unit no scene declared. A scene that declares too few
+    units produces a gate that withholds correct Estonian and a rate that
+    reads as a verdict on the model. `iga-paev` carries `ütlema` and
+    `rääkima`, which is how anybody at a desk says "tell me"; `kohasonad`
+    carries `alates` and `kaasas`, since when and what you have with you;
+    `plaanid` carries `sobima` and `kestma`; `minevik` carries `ootama`.
+  */
+  "iga-paev", "kus-ja-kuhu", "kohasonad", "omadussonad", "plaanid", "minevik",
 ] as const;
 
 /**
- * The same list for a scene at A1, which may not lean on an A2 unit.
+ * The same list for a scene at A1, which may not lean on a unit above it.
  *
- * `korraldused` is the polite request and is A2; a beginner's shop does
- * without it. `ilm` is in both, because small talk about the weather is the
- * one curveball every counter in the country shares.
+ * `korraldused`, `plaanid` and `minevik` are A2; a beginner's shop does
+ * without the polite request, the future and the past. `ilm` is in both,
+ * because small talk about the weather is the one curveball every counter in
+ * the country shares. Filtered by level rather than by name, so a unit that
+ * moves fails the level test in `catalogue.test.ts` instead of slipping in.
  */
-const COMMON_A1 = COMMON.filter((id) => id !== "korraldused");
+const COMMON_A1 = COMMON.filter((id) => unitById(id)?.level === "A1");
 
 /**
  * Who might be behind a desk. The voice is the name (see `personas.ts`), and
@@ -203,7 +218,8 @@ const LANDLORD: SceneSpec = {
   tests: "eluase",
   // `eluase` is the vocabulary of renting; `kodu` is the vocabulary of the flat
   // itself, and a scene about something broken in one needs both.
-  units: [...COMMON, "eluase", "kodu"],
+  // `kodutood` is where `katki` lives, and a call about a flat is about what is broken.
+  units: [...COMMON, "eluase", "kodu", "kodutood"],
   register: "teie",
   personas: [
     { voice: "peeter", agenda: "brisk" },
@@ -531,4 +547,9 @@ export const SCENES: readonly SceneSpec[] = [SHOP, DOCTOR, LANDLORD, COUNTER];
 
 export function sceneById(id: string): SceneSpec | undefined {
   return SCENES.find((s) => s.id === id);
+}
+
+/** The scene that checks a unit's own promise, if one does. */
+export function sceneTesting(unitId: string): SceneSpec | undefined {
+  return SCENES.find((s) => s.tests === unitId);
 }

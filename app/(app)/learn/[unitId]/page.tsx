@@ -1,6 +1,6 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, GraduationCap, PlayCircle, Printer } from "lucide-react";
+import { ArrowLeft, Check, GraduationCap, PlayCircle, MessagesSquare, Printer } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/syllabus";
@@ -10,6 +10,7 @@ import { splitIntoLessons } from "@/lib/collections/lesson";
 import { grammarPoint } from "@/lib/estonian/grammar";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
+import { sceneTesting } from "@/lib/scenes/catalogue";
 import { Card, Chip, Meter, Page, Ring } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { oneEntryPerLemma } from "@/lib/dict/search";
@@ -72,6 +73,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
     type !== "GRADATION" || words.some((w) => w.gradation && w.gradation !== "NONE"));
 
   const Icon = icon(unit.icon);
+  const tested = sceneTesting(unit.id);
   const missing = unit.lemmas.length - words.length;
   const lessons = splitIntoLessons(words).length;
 
@@ -144,6 +146,18 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
             <ButtonLink href={`/learn/${unit.id}/worksheet`} variant="ghost" size="sm" className="justify-center">
               <Printer size={14} aria-hidden /> Printable worksheet
             </ButtonLink>
+            {/*
+              And the scene that checks this unit's promise, where one exists.
+              A unit says the learner will be able to do something; a
+              situation is where that claim is tested against somebody with an
+              agenda of their own. The two-way link is what makes Situations
+              part of the course rather than a game beside it.
+            */}
+            {tested && (
+              <ButtonLink href={`/situations/${tested.id}`} variant="ghost" size="sm" className="justify-center">
+                <MessagesSquare size={14} aria-hidden /> Try it on somebody
+              </ButtonLink>
+            )}
           </div>
         </Card>
 
