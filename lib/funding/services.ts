@@ -223,7 +223,7 @@ export const SERVICES: readonly Service[] = [
     id: "speech",
     name: "Estonian speech",
     who: "TartuNLP, at the University of Tartu",
-    does: "Reads a word or a sentence aloud in any of twelve voices. Every clip is cached and asked for once.",
+    does: "Reads a word or a sentence aloud in any of ten voices. Every clip is cached and asked for once.",
     whenItIsGone: "Cards are silent, and the listening part of the mock exam says so rather than failing.",
     ref: SPEECH_MARKET.ref,
     bill(v: Volume, shape: Shape): ServiceCost {
@@ -231,7 +231,7 @@ export const SERVICES: readonly Service[] = [
         kind: "given",
         gives: shape.audio
           ? `${Math.round(v.spokenCharacters).toLocaleString("en-GB")} characters read aloud a month, in a real Estonian voice`
-          : "Speech in twelve Estonian voices, switched off on this deployment",
+          : "Speech in ten Estonian voices, switched off on this deployment",
         why: "A public research group at the University of Tartu, which asks for nothing and sends no invoice.",
         wouldCostUsd: shape.audio
           ? round2((v.spokenCharacters / 1e6) * SPEECH_MARKET.usdPerMillionCharacters)

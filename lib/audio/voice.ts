@@ -13,6 +13,13 @@
  * default rather than passed to a third party as typed. The names are the
  * service's own identifiers, which is why one is spelled without its umlaut.
  *
+ * Ten, not twelve. `lee` and `luukas` were on this list and are not in the
+ * worker's own speaker table, and the live service answers a request for
+ * either with a 408 after thirty seconds, measured twice on 2026-09-04. The
+ * listening round cycles every voice on this list from word to word, so two
+ * words in twelve waited out the route's timeout and took the speaker button
+ * away. A voice is on this list because it answers.
+ *
  * Pure. No React, no Prisma; the setting store holds the value and this says
  * what a valid one is.
  */
@@ -34,8 +41,6 @@ export const VOICES: readonly Voice[] = [
   { id: "peeter", name: "Peeter" },
   { id: "albert", name: "Albert" },
   { id: "indrek", name: "Indrek" },
-  { id: "lee", name: "Lee" },
-  { id: "luukas", name: "Luukas" },
 ];
 
 export const DEFAULT_VOICE = "mari";
