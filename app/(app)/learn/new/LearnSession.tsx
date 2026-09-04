@@ -550,38 +550,89 @@ export function LearnSession({
           {rung === "gap" && (
             <>
               {word.gap ? (
-                <>
-                  <p lang="et" className="max-w-md text-2xl font-semibold leading-snug" style={{ color: "var(--ink)" }}>
-                    {word.gap.text.split(BLANK).map((part, i, all) => (
-                      <span key={i}>
-                        {part}
-                        {i < all.length - 1 && (
-                          <span
-                            className="mx-1 inline-block rounded px-3 align-baseline"
-                            style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
-                          >
-                            ?
-                          </span>
-                        )}
-                      </span>
-                    ))}
-                  </p>
-                  {word.gap.en && (
-                    <p className="max-w-md text-sm" style={{ color: "var(--ink-3)" }}>{word.gap.en}</p>
-                  )}
-                  {/* Which word, never which spelling. See the gap's `hint`. */}
-                  {word.gap.hint && (
-                    <p className="text-sm font-semibold" style={{ color: "var(--accent-deep)" }}>
-                      {word.gap.hint}
+                /*
+                  THE WORD FIRST, THEN WHAT TO DO WITH IT, THEN THE SENTENCE.
+
+                  This read the other way round: a sentence with a hole in it,
+                  its translation, the word, and the question, four blocks of
+                  the same weight in four different colours. A learner reported
+                  that they could not tell at a glance what was being asked,
+                  which is exactly what that order produces. You read the
+                  sentence, work out that something is missing, read on to find
+                  out which word, and then go back.
+
+                  So it is put the way somebody would say it out loud: here is
+                  the word, put it in this sentence. The word leads because it
+                  is the one thing on the screen that does not change what it
+                  is asking; the instruction is one line under it; and the
+                  sentence is the thing to look at while typing, so it sits
+                  closest to the box.
+
+                  The gap itself is what the eye should land on inside the
+                  sentence, so it keeps the accent and everything else in the
+                  line is the ordinary ink. `max-w-md` on both blocks and the
+                  spacing carried by one wrapper rather than by whatever margin
+                  each element happened to have.
+                */
+                <div className="flex w-full max-w-md flex-col items-center gap-5">
+                  {/*
+                    AND NO FALLBACK TO THE LEMMA HERE, WHICH IS THE ONE WAY
+                    THIS REORDERING COULD HAVE GONE WRONG. `hint` is already a
+                    ladder: the lemma and the meaning, then the meaning alone,
+                    then nothing, because wherever the gap wants the dictionary
+                    form the lemma is the answer printed a line above the box.
+                    Thirteen cards in the shipped dictionary end up with no
+                    hint at all, and "which word goes in this gap" is still a
+                    question worth asking, so those lead with the instruction
+                    and nothing else. Writing `hint ?? lemma` to fill the space
+                    would put the answer back on the screen for exactly those
+                    cards.
+                  */}
+                  <div>
+                    {word.gap.hint ? (
+                      <>
+                        <p className="label-xs" style={{ color: "var(--ink-3)" }}>The word</p>
+                        <p className="mt-1 text-2xl font-bold leading-tight" style={{ color: "var(--accent-deep)" }}>
+                          {word.gap.hint}
+                        </p>
+                        <p className="mt-2 text-sm" style={{ color: "var(--ink-2)" }}>
+                          Put it in the sentence, in the form it needs.
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-base font-semibold" style={{ color: "var(--ink)" }}>
+                        Which word goes in the gap?
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p lang="et" className="text-xl font-semibold leading-snug" style={{ color: "var(--ink)" }}>
+                      {word.gap.text.split(BLANK).map((part, i, all) => (
+                        <span key={i}>
+                          {part}
+                          {i < all.length - 1 && (
+                            <span
+                              className="mx-1 inline-block rounded px-3 align-baseline"
+                              style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                            >
+                              ?
+                            </span>
+                          )}
+                        </span>
+                      ))}
                     </p>
-                  )}
-                </>
+                    {word.gap.en && (
+                      <p className="mt-1.5 text-sm" style={{ color: "var(--ink-3)" }}>{word.gap.en}</p>
+                    )}
+                  </div>
+                </div>
               ) : (
-                <p className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>{word.gloss}</p>
+                <>
+                  <p className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>{word.gloss}</p>
+                  <p className="text-xs" style={{ color: "var(--ink-3)" }}>Write it in Estonian.</p>
+                </>
               )}
-              <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-                {word.gap ? "Which form of the word goes in the gap?" : "Write it in Estonian."}
-              </p>
               <div className="w-full max-w-sm text-left">
                 <EstonianInput
                   value={typed}

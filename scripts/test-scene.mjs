@@ -100,8 +100,8 @@ const MAX_SPOKEN_WORDS = 14;
 await page.goto(`${B}/situations`, { waitUntil: "domcontentloaded" });
 await page.waitForSelector("main h1", { timeout: 20_000 });
 const chooser = await page.locator("main").innerText();
-check("the chooser says what a conversation is", /somebody who wants something from you/i.test(chooser));
-check("and says nothing you type is about you", /Nothing you write is about you/i.test(chooser));
+check("the chooser says what a conversation is", /wants something from you/i.test(chooser));
+check("and says nothing you type is about you", /Nothing you write here is\s+about you/i.test(chooser));
 check("a scene says how long it takes", /about \d+ min/.test(chooser));
 check("and how much there is to get done", /\d+ things to get done/.test(chooser));
 
@@ -111,13 +111,13 @@ await page.waitForSelector("main h1", { timeout: 20_000 });
 check("a scene names itself in the tab", (await page.title()).includes("Booking a doctor"));
 const briefing = await page.locator("main").innerText();
 check("the briefing says who you are today", /You are a patient/i.test(briefing));
-check("the difficulty dial is on the scene", (await page.getByRole("button", { name: /Ordinary day/i }).count()) > 0);
+check("the difficulty dial is on the scene", (await page.getByRole("radio", { name: /Normal/i }).count()) > 0);
 
 /*
-  Textbook, because this suite is about whether the loop closes rather than
-  about how hard a day is: a curveball is a beat that changes shape mid-run and
-  the four difficulties are covered in `curveballs.test.ts`, deterministically,
-  which is where a thing decided by a seeded draw belongs.
+  The easiest one, because this suite is about whether the loop closes rather
+  than about how hard a day is: a curveball is a beat that changes shape
+  mid-run and the four difficulties are covered in `curveballs.test.ts`,
+  deterministically, which is where a thing decided by a seeded draw belongs.
 */
 /*
   PRESSED UNTIL IT LANDS, WHICH IS NOT THE SAME AS WAITING LONGER.
@@ -130,14 +130,19 @@ check("the difficulty dial is on the scene", (await page.getByRole("button", { n
   works perfectly. Waiting longer would not have helped, because the click that
   was going to be lost had already happened.
 
-  The dial's own `aria-pressed` is the signal that hydration has happened, and
+  The dial's own chosen state is the signal that hydration has happened, and
   the same discipline covers Start below: a press is retried until the page
   shows it landed, and the failure then means the button really is dead.
+
+  `aria-checked` rather than `aria-pressed`, because the dial is a radio group
+  now: four mutually exclusive options announced as four unrelated toggle
+  switches and cost four tab stops, which is what `components/Choice.tsx` was
+  written to stop.
 */
-const textbook = page.getByRole("button", { name: /^Textbook/i });
+const easiest = page.getByRole("radio", { name: /^Easy/i });
 const chose = await eventually(async () => {
-  await textbook.click();
-  return (await textbook.getAttribute("aria-pressed")) === "true";
+  await easiest.click();
+  return (await easiest.getAttribute("aria-checked")) === "true";
 }, { timeoutMs: 20_000, everyMs: 250 });
 check("the dial answers a press", chose);
 await page.getByRole("button", { name: /Start the conversation/i }).click();
@@ -165,16 +170,31 @@ const chips = await page.getByRole("log").innerText();
   source spelling failed on a chip that was there and correct, which is a check
   reporting its own regex.
 */
-const provenance = /Recorded sentence|Written for this turn|They did not catch that/i.test(chips);
+const provenance =
+  /Recorded sentence|Written for this turn|They did not catch that|No Estonian line for this one/i
+    .test(chips);
 /*
   EVERY STATE, because the ladder's claim is that whichever rung answered says
-  so: the dictionary's own sentence, one written for this turn, or somebody who
-  did not catch what was said. A keyless run is not a broken one, and this is
-  the check that says so.
+  so: the dictionary's own sentence, one written for this turn, somebody who did
+  not catch what was said, or a move nothing could be said for at all. A keyless
+  run is not a broken one, and this is the check that says so.
+
+  The fourth is the one a keyless run mostly gets, and it is the reason it is
+  here: it used to come out as the third, so half a conversation was the desk
+  claiming not to have understood turns that were fine. See `wayOut`.
 */
 check("and the line says which rung it came from (ADR-025)", provenance,
   chips.split("\n").filter(Boolean).slice(0, 2).join(" | "));
-check("with a way to report it", (await page.getByRole("button", { name: /Report this line/i }).count()) > 0);
+/*
+  The report button belongs to a line somebody said, and the fourth rung is not
+  one: an `unspoken` turn is our own English about what the desk did, and
+  offering it to the queue would ask a learner to report our sentence to us. So
+  this is checked where an Estonian line is on screen, which the greeting
+  always is, because `Tere!` is its own sentence and the dictionary answers it.
+*/
+const spoken = await page.getByText(/Recorded sentence|Written for this turn/i).count();
+check("with a way to report a line somebody said",
+  spoken === 0 || (await page.getByRole("button", { name: /Report this line/i }).count()) > 0);
 
 /*
   Every line the desk said, with the rung it came from, over the whole

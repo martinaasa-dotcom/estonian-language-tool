@@ -3453,6 +3453,107 @@ the whole of why this is safe on somebody's own deck, and a word with no CEFR ta
 level, because a word typed in, pasted or photographed is one the learner went to the trouble of
 putting there.
 
+**A generator fix reaches a deck that has not been built yet, and one learner reported what that
+leaves behind.** The daily quest asked `isa → milles? kus?` and took `isas`. `lib/srs/cards.ts` has
+asked `caseFits` before building a case card since `lib/estonian/semantics.ts` existed, so nothing
+builds that card now; a `Card` row carries its own front, back and `targetCase` and nothing in this
+app rewrites one, so the deck kept it. It is worse than a card that prints its own answer, which is
+what `audit:decks` already found: that one is a question nobody can fail, and this one is a question
+you can only pass by learning that `isas` is a word. Somebody who passes it has learned to say
+`ma annan raamatu õpetajasse`, and the app has contradicted the teacher whose class they are
+sitting in.
+
+`lib/srs/retire.ts` is the rule and it is `caseFits` itself, the very function the builder asks, so
+a card the audit removes is exactly a card the builder would refuse to make and one change reaches
+both. It catches the word with no singular for the same reason (`prillid → milles?` wanting
+`prillis`, which is a form of `prill`), and it catches nothing at all on a word the dictionary
+cannot classify, because `localCasesFor` reads "we do not know" as the inside trio and those cards
+were built on exactly that reading. `audit:decks` reports both faults and `--write` removes them,
+which stays a command somebody runs rather than something the seed does: every row belongs to a
+learner, and that line was drawn when the first fault was found. What is new is a way to run it
+without a checkout, since the person who can see the bad card is rarely the person with the
+production password: `.github/workflows/audit-decks.yml` is the second of the two workflows that
+map a secret, written to `seed-production.yml`'s rules, and it prints the list before it will
+delete anything. It removes and never suspends, which the schema makes safe, and it does **not**
+build the right card in its place: adding rows to a stranger's deck is a larger claim than taking
+an unanswerable question out of it.
+
+**"I did not understand you" is a claim about the learner, and half a conversation was making it
+about nobody.** A learner opened a scene, was greeted with `Tere!`, was told to greet back, wrote
+`Tere`, watched the objective tick, and was answered with `Ma ei saa aru` under a chip reading
+"They did not catch that". Nothing had misread them. The ladder had fallen through on the *next*
+beat and the only sentence it had for that was the one that means "say it again".
+
+Measured over the catalogue: six of the eight `ask` beats have no recorded question anywhere in
+their topic words, because a lexicographer writes a usage to illustrate a word rather than to ask
+about one, and six of the thirteen other beats have no usage at all. So on a keyless deployment, or
+one whose allowance has gone, more than half of every conversation was the desk claiming not to
+have understood a turn that was fine. `wayOut` in `lib/scenes/line.ts` is the one function that
+decides between the two, and it takes the turn's *reading* rather than a boolean, so the decision
+cannot be made by a caller that has not marked the turn: `unrecognised` and `offtarget` get the
+repair phrase in character, and everything else gets a fourth rung. That rung is **English and not
+in character**: the other side made their move and we could not put it into Estonian, so the screen
+says what they did, one line per `MoveKind`, and the objective was already on the screen in English
+to answer it with. It carries no `lang="et"` and no report button, because there is nothing a
+lexicographer got wrong. The conversation carries on instead of stalling on a repair move that
+repairs nothing.
+
+**Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
+English game's ratio and not its game: Estonian has nine vowels where English is deducing among
+five, so a guesser who has placed the consonants can still be choosing between three words on the
+last row. The clues are a ladder in `cluesAt`, which is why "on the last try" is derived from
+`SONAD_GUESSES` rather than typed: what kind of thing the word is on the fourth try, how many of
+the six letters are vowels on the last, and the board says which is coming before it comes, because
+a clue that appears out of nowhere reads as the rules moving under you. The category is Ekilex's
+own classification read through `semanticCategory`, and that table is **deliberately partial** the
+way `lib/estonian/terms.ts` is: `VERB_tegevus` and a bare `abstr` say nothing a guesser could
+narrow with, and "something you do" over a chip already reading `verb` is the chip again in a longer
+form. 78% of the pool carries one and the rest get the vowels like everybody else.
+
+**And the keys are an Estonian keyboard, which is not the Estonian alphabet.** They were `a b c d
+e` in a grid, on the argument that it is the order a school poster uses. A poster is read and a
+keyboard is typed on: nobody has typed in alphabetical order since a typewriter was a machine, so
+every letter had to be hunted for and the hunting is what the player does instead of thinking about
+the word. `SONAD_KEY_ROWS` is QWERTY with Ü and Õ closing the top row and Ö and Ä closing the home
+row, which is where somebody who types Estonian already reaches; š and ž are AltGr keys on the real
+thing and sit at the end of the bottom row, because `KnownWord` holds loanwords and a letter with
+no key is a word nobody can type. The rows live beside `SONAD_LETTERS` and the pairing is tested in
+both directions, since a keyboard missing a letter looks exactly like a keyboard.
+
+**A card leads with the thing it is asking about.** The gap rung of the ladder printed a sentence
+with a hole in it, its translation, the word, and the question, four blocks of the same weight in
+four colours, and a learner said they could not tell at a glance what it wanted. That is what the
+order produces: you read the sentence, work out something is missing, read on to find which word,
+and go back. It is put the way somebody would say it aloud now, the word, then what to do with it,
+then the sentence closest to the box. What may **not** happen is filling the space with the lemma
+when there is no hint: `hint` is already a ladder that falls to the meaning alone and then to
+nothing, precisely because wherever the gap wants the dictionary form the lemma is the answer
+printed a line above the box, so those thirteen cards lead with the instruction and nothing else.
+
+**A dial that decides how hard a conversation is announced as four unrelated switches.** The
+situations briefing drew its four difficulties as bare `aria-pressed` buttons, so a screen reader
+was told about four toggles and cost four tab stops where a radio group is one and says "2 of 4",
+and the chosen one was told apart by a background alone on the one control where the background
+*is* the answer. `components/Choice.tsx` was written for exactly this and every other pick-one in
+the app already used it. The labels went with it: "Two or three, and one of them is real" is a note
+to whoever wrote the curveball table, and what somebody choosing between four buttons wants to know
+is what will happen to them.
+
+**The one number that answers "how am I doing" was behind a question somebody had skipped.** Today
+drew no confidence figure at all unless a target band had been set in first run, so a learner who
+skipped that screen had none on the page they open every morning. `examCountdown` falls back to
+`readiness.next`, the level the climb stopped at, which is derived from their own review log rather
+than chosen for them, and `chosen` travels with the figure so the card says whose band it is: a
+level the app worked out is never printed under a heading claiming the learner picked it. The
+evidence tier still travels with the number, which is ADR-022's rule and is not what changed.
+
+**A door is found by its name.** The calendar had one button and it said "Add to this week", so
+somebody looking for a task or a reminder found neither word on the screen and reported the
+calendar as having no way to add one. It is two buttons onto the same form, which stays one form
+because adding "class, Mondays, six o'clock" and adding "hand in the essay on Friday" are the same
+gesture; what was wrong was the door. Both words are on the second button, because a reminder and a
+task are one `Task` row under two names and which one somebody reaches for is not ours to decide.
+
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only. Never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 

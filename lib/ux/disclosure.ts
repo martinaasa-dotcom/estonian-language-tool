@@ -123,7 +123,11 @@ export const PANELS = [
    *
    * Held to `settled` for the reason the figure itself gives: the confidence is
    * capped by how much evidence stands behind it, and on a thin log it is a
-   * number the app has to caveat rather than one it can lead with.
+   * number the app has to caveat rather than one it can lead with. That is the
+   * whole of what gates it now: it used to need a target as well, so a learner
+   * who skipped one screen in first run had no confidence figure on the page
+   * they open every morning. `examCountdown` falls back to the band the climb
+   * stopped at and the card says the band is the app's rather than theirs.
    */
   "exam",
   /** Anu, and the pitch for her when she is not set up. */

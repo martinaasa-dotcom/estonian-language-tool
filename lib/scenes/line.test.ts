@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildLexicon, type DictEntry } from "./lexicon";
 import type { GateContext } from "./gate";
-import { pickAttested, sceneLine, type LineRequest } from "./line";
+import { pickAttested, sceneLine, wayOut, type LineRequest } from "./line";
 import { topicForms } from "./retrieval";
 import type { BeatSpec } from "./types";
 
@@ -141,5 +141,63 @@ describe("the ladder", () => {
       pool: [{ text: "Kas teil on peavalu?", lemma: "valu", cefr: "A2" }],
     }));
     expect(line).toBeNull();
+  });
+});
+
+/**
+ * THE REPAIR MOVE IS FOR A TURN NOBODY UNDERSTOOD, AND FOR NOTHING ELSE.
+ *
+ * The fault this was written for, in the order it happened to a learner: the
+ * scene said `Tere!`, the objective said "Greet them back", they wrote `Tere`,
+ * the tick appeared, and the next thing on the screen was "Ma ei saa aru". The
+ * ladder had fallen through on the *following* beat, which is a fact about an
+ * empty pool and a spent allowance, and the only sentence it had to say it
+ * with was the one that means "I did not understand you".
+ */
+describe("wayOut", () => {
+  const beat: BeatSpec = { ...BEAT, move: "ask" };
+
+  it("asks again in character when the turn was not understood", () => {
+    for (const reading of ["unrecognised", "offtarget"] as const) {
+      const line = wayOut({ beat, reading, fallback: "Vabandust?" });
+      expect(line.provenance).toBe("fallback");
+      expect(line.text).toBe("Vabandust?");
+    }
+  });
+
+  it("never claims that about a turn that landed", () => {
+    const line = wayOut({ beat, reading: "complete", fallback: "Vabandust?" });
+    expect(line.provenance).toBe("unspoken");
+    expect(line.text, "the repair move was printed at somebody who did nothing wrong")
+      .not.toBe("Vabandust?");
+  });
+
+  /* The opening line has no turn to have misread, so it cannot be a repair. */
+  it("never claims it before the learner has said anything", () => {
+    expect(wayOut({ beat, reading: null, fallback: "Vabandust?" }).provenance).toBe("unspoken");
+  });
+
+  it("says what the other side did, in the move's own words", () => {
+    expect(wayOut({ beat, reading: "complete", fallback: "x" }).text).toBe("They ask you about it.");
+    expect(wayOut({ beat: { ...BEAT, move: "close" }, reading: "complete", fallback: "x" }).text)
+      .toBe("They say goodbye.");
+  });
+
+  /*
+    English is written in English by construction, which is the point: an
+    `unspoken` line is not Estonian and the screen must not mark it as such.
+    ADR-005 has nothing to say about it because nothing was generated; this
+    only asserts the file did not grow an Estonian sentence.
+  */
+  it("writes no Estonian", () => {
+    for (const move of ["greet", "ask", "offer", "confirm", "instruct", "refuse", "correct", "close"] as const) {
+      const { text } = wayOut({ beat: { ...BEAT, move }, reading: "complete", fallback: "x" });
+      expect(text, move).toMatch(/^[A-Za-z ,.']+$/);
+    }
+  });
+
+  it("carries what the gate withheld, so the debrief can still say", () => {
+    const line = wayOut({ beat, reading: "complete", fallback: "x", withheld: ["vouching"] });
+    expect(line.withheld).toContain("vouching");
   });
 });

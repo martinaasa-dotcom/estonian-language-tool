@@ -16,6 +16,14 @@ import { Card, CardLink, Ring, SectionTitle } from "@/components/ui";
  * is a different feeling from forty-seven days and thirty-one, and neither of
  * them is "43 cards due".
  *
+ * AND WHERE NOBODY NAMED A BAND, THE CARD SAYS WHOSE IT IS. Skipping the goal
+ * screen used to mean no confidence figure anywhere on the home page, which is
+ * the one number here that answers "how am I doing" in a unit somebody outside
+ * this app would recognise. `examCountdown` falls back to the level the climb
+ * stopped at and `chosen` travels with it, so the heading and the line under
+ * the ring both change: a band the app worked out is never printed under a
+ * heading claiming the learner picked it.
+ *
  * THE TIER IS NOT OPTIONAL AND IS NOT A TOOLTIP. A confidence figure with no
  * account of what it rests on is the one thing this feature must not ship
  * (ADR-022), and a `title` attribute is a hover, which is nothing at all on the
@@ -38,7 +46,9 @@ export function ExamCountdownCard({ countdown, zone, className }: {
 
   return (
     <Card tone={passing ? "mint" : "accent"} className={className}>
-      <SectionTitle hint={countdown.phrase ?? "no date set"}>Your exam</SectionTitle>
+      <SectionTitle hint={countdown.chosen ? countdown.phrase ?? "no date set" : "no target set"}>
+        {countdown.chosen ? "Your exam" : "Where you stand"}
+      </SectionTitle>
 
       <div className="flex flex-wrap items-center gap-4">
         <Ring
@@ -58,7 +68,9 @@ export function ExamCountdownCard({ countdown, zone, className }: {
             {countdown.band}, {countdown.label}
           </p>
           <p className="mt-1 text-sm" style={{ color: "var(--ink-2)" }}>
-            {countdown.confidence}% likely to pass
+            {countdown.chosen
+              ? `${countdown.confidence}% likely to pass`
+              : `${countdown.confidence}% likely to pass it, and it is the one to aim at next`}
           </p>
           {/*
             What the number is worth, beside the number. The hub prints the long
@@ -141,7 +153,9 @@ export function ExamCountdownCard({ countdown, zone, className }: {
         <ButtonLink href="/exam" variant="secondary" size="sm">
           Where you stand <ArrowRight size={14} aria-hidden />
         </ButtonLink>
-        <CardLink href="/settings#goals">Change the goal</CardLink>
+        <CardLink href="/settings#goals">
+          {countdown.chosen ? "Change the goal" : "Set a goal of your own"}
+        </CardLink>
       </div>
     </Card>
   );

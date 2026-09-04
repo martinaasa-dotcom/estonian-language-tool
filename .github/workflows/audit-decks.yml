@@ -1,0 +1,107 @@
+name: Retire the case cards nobody can answer
+
+# Run by hand, and only by hand.
+#
+# `npm run audit:decks` finds the `CASE_FORM` cards a deck kept after
+# `lib/srs/cards.ts` stopped building them: a card whose answer is the word
+# printed in its own question, and a card asking a case the word does not take.
+# The second is the one a learner reported, `isa → milles? kus?` with `isas` on
+# the back, and it is the worse of the two, because it is a card you can only
+# pass by learning something Estonian does not do.
+#
+# The fix in the builder reaches every deck assembled from now on and no deck
+# that already exists, and the person who can see the bad card is rarely the
+# person with a checkout and the production password. That is the same gap
+# `seed-production.yml` exists to close, and this is written to the same rules:
+# `workflow_dispatch` only, so it never runs from a pull request and never for
+# anybody without write access; the connection string mapped into the two steps
+# that need a database and no others; and a word typed into a box, because a
+# workflow list is a list of buttons and this one deletes rows.
+#
+# It reports first and always. Removing is a second run with `remove` typed in
+# the confirmation box, so nobody deletes anything they have not read a list of.
+#
+# WHAT IT MAY TOUCH. `Card` rows of type `CASE_FORM`, and nothing else. Not a
+# scheduling column, not a `Review`, not a `Lexeme`. The review log survives by
+# construction rather than by care: `Review` has no foreign key to `Card` and
+# carries its own `ownerId` and `lexemeId`, so what the learner did is kept and
+# only the unanswerable question goes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Leave blank to see the list. Type remove to delete them.
+        required: false
+        default: ""
+
+concurrency:
+  group: audit-decks
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Check a connection string is configured
+        env:
+          DB_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "No database configured. Add DIRECT_URL (the direct connection," >&2
+            echo "port 5432, not the pooler) as a repository secret, or DATABASE_URL" >&2
+            echo "if that is the only one you have. Nothing was changed." >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+
+      - run: npm ci
+
+      - run: npx prisma generate
+
+      # Always, whichever way this was run: the list is the thing to read, and
+      # a removal that printed nothing first is a removal nobody checked.
+      - name: List the cards nobody can answer
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+        run: |
+          {
+            echo '```'
+            npm run --silent audit:decks
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Through the environment rather than interpolated into the script, so a
+      # crafted input is a string that fails the comparison rather than a line
+      # of shell.
+      - name: Remove them
+        if: ${{ inputs.confirm == 'remove' }}
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL || secrets.DATABASE_URL }}
+        run: |
+          {
+            echo '```'
+            npm run --silent audit:decks -- --write
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Say what was left alone
+        if: ${{ inputs.confirm != 'remove' }}
+        run: |
+          echo "Nothing was changed. Run this again with \`remove\` in the confirmation box to delete the cards listed above." >> "$GITHUB_STEP_SUMMARY"

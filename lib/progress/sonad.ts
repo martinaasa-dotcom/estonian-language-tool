@@ -4,6 +4,7 @@ import type { Level } from "@/lib/collections/syllabus/types";
 import { guessableWords } from "@/lib/dict/facts";
 import { dayIndex } from "@/lib/random/dayHash";
 import { SONAD_LENGTH } from "@/lib/games/sonad";
+import { semanticCategory } from "@/lib/estonian/semantics";
 import type { DayKey } from "@/lib/time/day";
 
 /**
@@ -42,6 +43,15 @@ export interface Puzzle {
   translation: string;
   pos: string;
   cefr: string | null;
+  /**
+   * What kind of thing it is, or null where the Institute said nothing useful.
+   *
+   * Read here rather than on the board because it is a dictionary column, and
+   * read through `semanticCategory` rather than passed raw because
+   * `lib/estonian/semantics.ts` is the one module allowed to interpret those
+   * codes. Null is an ordinary answer: `cluesAt` still gives the vowels.
+   */
+  category: string | null;
   /** Already in the deck, so finishing is evidence rather than an offer. */
   inDeck: boolean;
 }
@@ -93,7 +103,10 @@ export async function puzzleFor(
   */
   const entry = await prisma.lexeme.findUnique({
     where: { id: pool[dayIndex(day, "sonad", pool.length)]!.id },
-    select: { id: true, lemma: true, pos: true, translation: true, cefr: true },
+    select: {
+      id: true, lemma: true, pos: true, translation: true, cefr: true,
+      semanticTypes: true,
+    },
   });
   if (!entry) return null;
 
@@ -108,6 +121,7 @@ export async function puzzleFor(
     translation: entry.translation,
     pos: entry.pos,
     cefr: entry.cefr,
+    category: semanticCategory(entry.semanticTypes),
     inDeck: card !== null,
   };
 }
