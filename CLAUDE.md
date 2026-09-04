@@ -3748,6 +3748,26 @@ stream got that wrong in the way only a test finds, rewriting a corrected senten
 boundary at a time once the first half of its line had already been shown, so the line's character
 is now decided when it opens and carried until it ends.
 
+**Her reply is typography, shown once it is finished, and the two tagged lines have one shape.** Every
+model writes markdown whether asked or not, and the bubble drew it as text: `**raamatut**` with the
+asterisks in, on the one word the sentence was about, and a numbered list as four lines beginning
+`1.`. Drawn a chunk at a time it was worse, since bold that has opened and not yet closed is a pair
+of asterisks for as long as the model takes to reach the closing pair. `lib/tutor/markdown.ts` reads a
+reply into paragraphs, lists, headings and the three inline shapes, deliberately understanding nothing
+else, and never changing a character between the markers; `components/anu/Prose.tsx` is the one place
+those become elements, on the page, in the panel and under an exam composition. And `useAnuChat`
+gathers the stream and shows the finished reply in one go, with three dots in her bubble until it
+lands: the route still streams, because a two-minute route that says nothing until the end is what a
+proxy times out and the cleaning pass is built on the stream, but typography set a character at a
+time is never clean while it is being set, and the first thing a learner reads should be the answer
+as she meant it to look. The prompt says what formatting is allowed in the terms the renderer draws,
+bold for the word or form she is pointing at and a list only where the items are a list. A model
+allowed bold bolds its markers too, so `**FIX:**` arrives as readily as `FIX:`, and three modules
+that recognised those lines with three regexes read `lib/tutor/markers.ts` now. Asserted on all of
+it. What the prompt also asks for, and no check can see, is that she teaches like a person: name what
+was right first, one thing per answer, a reason a learner can hold onto beside every rule, and a
+next step at the end. `docs/18-voice.md` is still the standard for whether she managed it.
+
 **A class shows effort, never contents.** `lib/classroom/roster.ts` is the whole boundary: reviews
 this week, streak, words known, last-seen, the group's weakest cases in aggregate, and, amending
 ADR-019, each student's own weakest case as a rolled-up percentage over their own reviews, gated on
@@ -4219,7 +4239,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `caseQuestionFor`, `semanticGroup`, `ANIMATE_CODES`, `nominalOpener`, `asksPerson`,
 `slotOfCard`, `isKnownSlot`, `practisedSlot`, `askableSlots`, `shapeFor`, `markFlash`,
 `formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `hoursFor`, `foundHours`, `weeklyExposure`,
-`weeksWithFound`, `measuredPace`, `currentLevelAnswer`. Most of them now
+`weeksWithFound`, `measuredPace`, `currentLevelAnswer`, `AnuProse`, `parseReply`, `fixFrom`,
+`TAGGED_LINE`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
