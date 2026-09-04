@@ -41,6 +41,7 @@ comment on every model that needs one; what belongs here is the map and the reas
 | `Classroom`, `ClassroomMember` | A class, its join code, and who is in it. A view over what the learners already own. |
 | `UsageEvent` | One metered call to a paid service. Append-only, and the evidence behind the spend cap. |
 | `SceneRun` | One conversation played through in Situations: the persona, the props, the curveballs, every turn and where each line came from. Append-only. Fiction about a role card, never a fact about the learner. |
+| `Encounter` | One real conversation reported from outside the app: the errand Today set and how it went, in one of three words. Append-only. |
 | `SceneGap` | One word a conversation needed and the learner did not have, asked for or stalled on. A child table so "the words my conversations keep needing" is one indexed query. |
 
 ## The values a string column may take

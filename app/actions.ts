@@ -53,6 +53,7 @@ import { drawPlan } from "@/lib/scenes/draw";
 import { advance, askedForHelp, currentBeat, otherSaid, startRun, walkOut, type Provenance } from "@/lib/scenes/run";
 import { readTurn } from "@/lib/scenes/turn";
 import { recentDraws, sceneMaterial, turnContext } from "@/lib/progress/scenes";
+import { errandById, outcomeFrom } from "@/lib/collections/errands";
 import { emptyScheduling, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
 import { ratingFor, SONAD_GUESSES } from "@/lib/games/sonad";
@@ -2230,6 +2231,7 @@ export async function deleteMyAccount(confirmation: string) {
       */
       await tx.sceneGap.deleteMany({ where: { ownerId } });
       await tx.sceneRun.deleteMany({ where: { ownerId } });
+      await tx.encounter.deleteMany({ where: { ownerId } });
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
       /*
         And the attribution on anything they reviewed, for the same reason the
@@ -2311,6 +2313,7 @@ const BackupSchema = z.object({
   examAttempts: z.array(z.record(z.unknown())).optional(),
   sceneRuns: z.array(z.record(z.unknown())).optional(),
   sceneGaps: z.array(z.record(z.unknown())).optional(),
+  encounters: z.array(z.record(z.unknown())).optional(),
 });
 
 export interface RestoreSummary {
@@ -2602,6 +2605,14 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         await tx.sceneGap.create({ data: data as never });
       }
 
+      for (const raw of backup.encounters ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.encounter.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        await tx.encounter.create({ data: data as never });
+      }
+
       for (const raw of backup.stars ?? []) {
         const data = revive(raw, ["createdAt"]);
         const lexemeId = String(data.lexemeId ?? "");
@@ -2668,6 +2679,26 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
  * with recognition and production cards only, exactly like a pasted line: no
  * case-form card, because there are no forms to derive one from.
  */
+/**
+ * How a real conversation went, in one of three words.
+ *
+ * The learner's own report of something that happened outside the app, which
+ * no log can reconstruct and is therefore stored rather than derived
+ * (ADR-014's exception, the same one a placement sitting has). Append-only.
+ * The outcome is checked against the closed list and the errand against the
+ * table, because both arrive off the wire.
+ */
+export async function recordEncounter(errandId: string, outcome: string) {
+  const ownerId = await requireUserId();
+  const errand = errandById(text(errandId));
+  const result = outcomeFrom(outcome);
+  if (!errand || !result) return { ok: false as const, error: "That is not one of the three answers." };
+  await prisma.encounter.create({ data: { ownerId, errandId: errand.id, outcome: result } });
+  revalidatePath("/");
+  revalidatePath("/progress");
+  return { ok: true as const };
+}
+
 /*
   A CONVERSATION IS RE-READ HERE BEFORE ANYTHING IS WRITTEN (ADR-022).
 

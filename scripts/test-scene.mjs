@@ -23,11 +23,12 @@ const B = baseUrl();
 const OWNER = "local-single-user";
 const prisma = new PrismaClient({ datasourceUrl: requireLocalDatabase("write and delete scene runs") });
 
-const { check, done } = suite("Situations", { floor: 24 });
+const { check, done } = suite("Situations", { floor: 30 });
 
 async function cleanUp() {
   await prisma.sceneGap.deleteMany({ where: { ownerId: OWNER } });
   await prisma.sceneRun.deleteMany({ where: { ownerId: OWNER } });
+  await prisma.encounter.deleteMany({ where: { ownerId: OWNER } });
 }
 await cleanUp();
 
@@ -102,6 +103,7 @@ const doneCount = await page.getByText(/^done$/).count();
 check("a sentence with the word in it does the beat", doneCount >= 2, `${doneCount}`);
 
 /* Walk out, and read the debrief. */
+const reviewsBefore = await prisma.review.count({ where: { ownerId: OWNER } });
 await page.getByRole("button", { name: /Walk out/ }).click();
 await page.getByText(/How it went/).waitFor({ timeout: 30_000 });
 check("walking out reaches the debrief", (await page.locator("main h1, h1").count()) >= 1);
@@ -121,14 +123,37 @@ const transcript = runs[0] ? JSON.parse(runs[0].transcript) : {};
 check("the transcript carries the plan and the turns", Array.isArray(transcript.turns) && transcript.plan?.sceneId === "pood");
 const gaps = await prisma.sceneGap.findMany({ where: { ownerId: OWNER } });
 check("the gap was stored as asked", gaps.some((g) => g.kind === "ASKED" && g.lemma === "leib"));
-const reviewsAfter = await prisma.review.count({ where: { ownerId: OWNER, reviewedAt: { gte: runs[0]?.startedAt ?? new Date(0) } } });
-check("a walk-out writes no grades", reviewsAfter === 0, `${reviewsAfter}`);
+const reviewsAfter = await prisma.review.count({ where: { ownerId: OWNER } });
+check("a walk-out writes no grades", reviewsAfter === reviewsBefore, `${reviewsAfter - reviewsBefore}`);
 
 /* A reload of the same seed gives the same conversation back. */
 await page.goto(`${B}${href}`);
 await page.locator("main h1").first().waitFor({ timeout: 20_000 });
 const again = (await page.locator('[role="log"] p[lang="et"]').first().textContent().catch(() => "")) ?? "";
 check("the same seed opens the same conversation", again === firstLine || again === "", again);
+
+/* Say it today: one press, one row, and Progress reads it back. */
+await page.goto(`${B}/`);
+await page.locator("main h1").first().waitFor({ timeout: 20_000 });
+const errand = await page.getByText(/Say it today/).count();
+if (errand === 0) {
+  check("Today carries an errand once the learner has started", false, "no errand card: the deck may be empty (npm run demo)");
+} else {
+  check("Today carries an errand", true);
+  await page.getByRole("button", { name: /They switched to English/ }).click();
+  await page.getByText(/They switched/).first().waitFor({ timeout: 20_000 });
+  check("one press reports how it went", (await page.getByText(/answer in Estonian anyway/).count()) === 1);
+  const encounters = await prisma.encounter.findMany({ where: { ownerId: OWNER } });
+  check("the report is one row with one of three words", encounters.length === 1 && encounters[0]?.outcome === "SWITCHED");
+  await page.goto(`${B}/`);
+  await page.locator("main h1").first().waitFor({ timeout: 20_000 });
+  check("Today does not ask twice", (await page.getByRole("button", { name: /They understood me/ }).count()) === 0);
+  await page.goto(`${B}/progress`);
+  await page.locator("main h1").first().waitFor({ timeout: 20_000 });
+  check("Progress leads with what happened out there", (await page.getByText(/Out there/).count()) >= 1);
+  check("it counts the switch to English", (await page.getByText(/switched to English/).count()) >= 1);
+  check("the course's own promises are listed with a way to test them", (await page.getByText(/What you can do/).count()) >= 1);
+}
 
 await browser.close();
 await cleanUp();

@@ -7,6 +7,8 @@ import { courseLevelFor } from "@/lib/progress/level";
 import { SCENES } from "@/lib/scenes/catalogue";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { SceneList, type SceneRow } from "./SceneList";
+import { PLACES_TO_TALK } from "@/lib/collections/placesToTalk";
+import { Card, SectionTitle } from "@/components/ui";
 
 export const metadata = { title: "Situations" };
 
@@ -68,6 +70,30 @@ export default async function SituationsPage() {
     >
       <Stack>
         <SceneList scenes={scenes} level={level} />
+        {/*
+          THE WAY OUT OF THE APP, ON THE SCREEN CLOSEST TO IT.
+
+          A scene is rehearsal. The people are elsewhere, and a learning app
+          that never says where is one that would rather you stayed. These are
+          public programmes, credited by name, and every link was opened before
+          it was written down (lib/collections/placesToTalk.ts).
+        */}
+        <section>
+          <SectionTitle hint="the real thing">Where the people are</SectionTitle>
+          <Card>
+            <ul className="flex flex-col gap-3">
+              {PLACES_TO_TALK.map((p) => (
+                <li key={p.href} className="text-sm">
+                  <a href={p.href} target="_blank" rel="noreferrer noopener" className="font-semibold underline" style={{ color: "var(--accent-deep)" }}>{p.name}</a>
+                  <span style={{ color: "var(--ink-2)" }}> {p.what}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
+              Rehearse here, then go. The errand on Today is the smallest possible step, and a language café is the next one.
+            </p>
+          </Card>
+        </section>
         <p className="text-xs" style={{ color: "var(--ink-3)" }}>
           You play a role, never yourself, so nothing you type is about you. Every line the other side says is a
           sentence a lexicographer recorded or one composed inside the unit&rsquo;s own words and checked word by word,

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { ClipboardCheck, Compass, Flame, Shield } from "lucide-react";
+import { ClipboardCheck, Compass, Flame, Footprints, Shield } from "lucide-react";
+import { canDoClaims, outThere } from "@/lib/progress/outThere";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
@@ -42,7 +43,7 @@ export default async function ProgressPage() {
   // server, whose midnight is the deployment's. See lib/time/day.ts.
   const [clock, snapshot] = await Promise.all([learnerDayClock(ownerId), deckSnapshot(ownerId, now)]);
 
-  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow] = await Promise.all([
+  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow, outside, claims] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -87,6 +88,10 @@ export default async function ProgressPage() {
     // things, not where you find out how you are doing. Both are readings.
     prisma.achievement.findMany({ where: { ownerId }, select: { key: true }, orderBy: { key: "asc" } }),
     readSettings(ownerId, [SETTING_KEYS.streakShields]),
+    // Conversations reported from outside the app, and the course's own
+    // "you can do this" claims for the units this deck has started.
+    outThere(ownerId, clock, now),
+    canDoClaims(ownerId, { startedLemmas: snapshot.startedLemmas, knownLemmas: snapshot.knownLemmas }),
   ]);
   const earnedKeys = new Set(earned.map((a) => a.key));
   const shields = numberSetting(shieldRow[SETTING_KEYS.streakShields], 0);
@@ -333,6 +338,73 @@ export default async function ProgressPage() {
         )}
 
         <div className="grid gap-5 md:grid-cols-2">
+          {/*
+            THE TWO PANELS THIS PAGE IS FOR, PUT AHEAD OF THE CHARTS.
+
+            A level and a heatmap are what the app measures. What a person
+            cares about is whether they got through the conversation at the
+            counter, so the first thing here is what they reported from out
+            there, and the second is the course's own claims about what they
+            can do, each with a situation that tests it where one exists. Both
+            are derived on every request from rows that are facts (ADR-014):
+            an encounter is a report, a scene run is a transcript, and neither
+            is a counter.
+          */}
+          <section>
+            <SectionTitle hint={`last ${outside.days} days`}>Out there</SectionTitle>
+            <Card>
+              {outside.total === 0 ? (
+                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                  Nothing reported yet. Today sets one small errand a day; say how it went and it lands here.
+                  This is the one number that matters more than any chart on this page.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Stat value={outside.total} label="conversations" tone="var(--accent-deep)" icon={<Footprints size={14} aria-hidden />} />
+                    <Stat value={outside.byOutcome.UNDERSTOOD} label="understood you" tone="var(--good-ink)" />
+                    <Stat value={outside.byOutcome.SWITCHED} label="switched to English" tone="var(--hard-ink)" />
+                    <Stat value={outside.byOutcome.BAILED} label="did not happen" tone="var(--ink-3)" />
+                  </div>
+                  <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+                    {outside.streak > 1 ? `${outside.streak} days in a row with a real conversation in them. ` : ""}
+                    Self-reported, and the switch to English is the figure to watch: it falls as your Estonian holds.
+                  </p>
+                </div>
+              )}
+            </Card>
+          </section>
+
+          {claims.length > 0 && (
+            <section>
+              <SectionTitle hint="the course's own promises, checked">What you can do</SectionTitle>
+              <Card>
+                <ul className="flex flex-col divide-y" style={{ borderColor: "var(--rule-soft)" }}>
+                  {claims.map((c) => (
+                    <li key={c.unitId} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Chip>{c.level}</Chip>
+                        <Link href={`/learn/${c.unitId}`} className="text-sm font-semibold underline decoration-dotted" style={{ color: "var(--ink)" }}>{c.title}</Link>
+                        <span className="text-2xs tnum" style={{ color: "var(--ink-3)" }}>{c.pct}% of the words learned</span>
+                      </div>
+                      <p className="text-sm" style={{ color: "var(--ink-2)" }}>{c.canDo}</p>
+                      {c.scene && (
+                        <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+                          {c.scene.done !== null && c.scene.of !== null
+                            ? `Tested in ${c.scene.title.toLowerCase()}: ${c.scene.done} of ${c.scene.of} got done last time. `
+                            : "Never tested on anybody yet. "}
+                          <Link href={`/situations/${c.scene.id}`} className="underline" style={{ color: "var(--accent-deep)" }}>
+                            {c.scene.done !== null ? "Try it again" : "Try it"}
+                          </Link>
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </section>
+          )}
+
           <section>
             <SectionTitle hint="weakest first">Cases</SectionTitle>
             <Card>

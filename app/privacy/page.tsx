@@ -113,6 +113,12 @@ export default function PrivacyPage() {
           closing the tab is kept on your device only, and goes nowhere until you finish it.
         </P>
         <P>
+          <strong>What you said happened out there.</strong> Today sets one small errand a day, order a
+          coffee, ask the time, and you can say how it went in one of three words: they understood
+          me, they switched to English, I did not manage it. That word and the errand it answers are
+          kept, and nothing else: not where you were, not who you spoke to, not what was said.
+        </P>
+        <P>
           <strong>Your class, if you are in one.</strong> Joining with a code stores which
           class you joined, when, and the name you chose to be known by in it, which is the
           one place you can be under a name of your own choosing rather than your account.

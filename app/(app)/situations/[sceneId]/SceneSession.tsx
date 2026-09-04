@@ -315,7 +315,8 @@ export function SceneSession({ scene, plan, material, aiAvailable, canDo }: Scen
           ))}
         </ol>
         <p className="mt-3 text-2xs" style={{ color: "var(--ink-3)" }}>
-          Nothing on this card is about you. You are playing somebody, which is how it stays practice.
+          Nothing on this card is about you. You are playing somebody, which is how it stays practice.{" "}
+          <Link href={`/situations/${scene.id}/card`} className="underline">Print what they are likely to say</Link>, for the bus.
         </p>
       </details>
 
@@ -397,9 +398,15 @@ export function SceneSession({ scene, plan, material, aiAvailable, canDo }: Scen
             >
               <HelpCircle size={13} aria-hidden /> What is the word for
             </button>
+            {/*
+              Not right-aligned: Anu's button and the notices sit in the
+              bottom right corner of every signed-in screen, and a control
+              pushed under them cannot be pressed on a phone. The suite found
+              it there in its first run.
+            */}
             <button
               type="button"
-              className="press tap-tint ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
+              className="press tap-tint inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs"
               style={{ color: "var(--ink-3)" }}
               onClick={leave}
             >

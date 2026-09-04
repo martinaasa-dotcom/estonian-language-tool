@@ -34,6 +34,9 @@ import { TodayPlan } from "@/components/TodayPlan";
 import { eventsOn, kindFrom, span, weekdayOf, KIND_LABEL, KIND_TONE, WEEKDAY_LONG } from "@/lib/ux/schedule";
 import { gameAfter, gameOn } from "@/lib/ux/weekGames";
 import { WordOfDayCard } from "@/components/WordOfDay";
+import { SayItToday } from "@/components/SayItToday";
+import { errandForDay, outcomeFrom, startedUnits } from "@/lib/collections/errands";
+import { unitById } from "@/lib/collections/syllabus";
 import { BadgeCheck } from "./BadgeCheck";
 
 export const metadata = { title: "Today" };
@@ -158,13 +161,23 @@ export default async function TodayPage() {
     disclosure rule is to stop rendering panels nobody can read yet, and a page
     that still runs their queries has kept the cost and thrown away the reason.
   */
-  const [word, collection, struggle, countdown] = await Promise.all([
+  const errand = shows(stage, "errand") ? errandForDay(summary.dayKey, startedUnits(snapshot.startedLemmas)) : null;
+  const [word, collection, struggle, countdown, todaysEncounter] = await Promise.all([
     shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now), placement) : null,
     shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
     shows(stage, "struggle") ? loadStruggle(ownerId, now) : null,
     // The snapshot is handed over rather than fetched again: this page already
     // has one for the due counts, and the readiness figures only need the deck.
     shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot) : null,
+    // Whether today's errand was already answered, so the card says so
+    // rather than asking twice.
+    errand
+      ? prisma.encounter.findFirst({
+        where: { ownerId, errandId: errand.id, createdAt: { gte: clock.startOfDay(now) } },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { outcome: true },
+      })
+      : null,
   ]);
 
   const today = dateLine(now, clock.zone);
@@ -650,6 +663,19 @@ export default async function TodayPage() {
   */
   const examCard = countdown ? <ExamCountdownCard countdown={countdown} zone={clock.zone} /> : null;
 
+  /*
+    The one panel that is about leaving the app. An errand a day, drawn from
+    the units this deck has started, and one press to say how it went. See
+    lib/collections/errands.ts.
+  */
+  const errandCard = errand ? (
+    <SayItToday
+      errand={errand}
+      reported={outcomeFrom(todaysEncounter?.outcome)}
+      unitTitle={unitById(errand.unit)?.title ?? errand.unit}
+    />
+  ) : null;
+
   /* The one panel here that is not about this learner's own deck. */
   const wordCard = shows(stage, "word")
     ? <WordOfDayCard word={word} collection={collection} />
@@ -843,6 +869,7 @@ export default async function TodayPage() {
       <div className="grid gap-8 lg:gap-6 lg:grid-cols-[1.4fr_1fr]">
         <Stack className="min-w-0">
           {doNowCard}
+          {errandCard}
           {stage === "arriving" && practiceCard}
           {questCard}
           {scheduleCard}
