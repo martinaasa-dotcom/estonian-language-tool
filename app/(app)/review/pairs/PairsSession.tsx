@@ -9,6 +9,7 @@ import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { playClip } from "@/lib/audio/clip";
 import { useAudioPrefs } from "@/components/AudioPrefs";
+import { VOICES } from "@/lib/audio/voice";
 
 export interface PairQuestion {
   /** The form that is actually played. */
@@ -58,7 +59,17 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
   const finished = !question;
   const revealed = picked !== null;
 
-  const { voice } = useAudioPrefs();
+  /*
+    A different reader for each pair, walked from a random start the way the
+    listening round does it. A length contrast learned in one voice is that
+    voice's contrast; the point of the drill is to hear it from anybody. The
+    room and the rate stay clean here on purpose: this round is about a
+    difference one consonant long, and café noise would take away the very
+    thing it asks about.
+  */
+  const prefs = useAudioPrefs();
+  const [voiceStart] = useState(() => Math.floor(Math.random() * VOICES.length));
+  const voice = VOICES[(voiceStart + index) % VOICES.length]?.id ?? prefs.voice;
   const play = useCallback(async (text: string, slow = false, unasked = false) => {
     try {
       setPlaying(true);
@@ -224,7 +235,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
                 every arrival on a browser that blocks autoplay. */}
             {needsPress ? "Tap to hear it" : "Play again"} <kbd>R</kbd> · or hear it{" "}
             <span className="inline-flex items-center align-middle">
-              <Speak text={question.heard} slow label="Hear it slowly" />
+              <Speak text={question.heard} slow voice={voice} label="Hear it slowly" />
             </span>{" "}
             slowly
           </p>
@@ -293,7 +304,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
               {question.options.map((o) => (
                 <span key={o.value} className="flex items-center gap-1.5">
                   <span lang="et" className="text-[15px]" style={{ color: "var(--ink)" }}>{o.value}</span>
-                  <Speak text={o.value} />
+                  <Speak text={o.value} voice={voice} />
                 </span>
               ))}
             </div>

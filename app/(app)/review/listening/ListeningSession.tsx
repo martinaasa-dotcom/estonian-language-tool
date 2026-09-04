@@ -11,6 +11,8 @@ import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { VOICES } from "@/lib/audio/voice";
+import { conditionFor, describeHearing } from "@/lib/audio/conditions";
+import { useAudioPrefs } from "@/components/AudioPrefs";
 
 /**
  * A different speaker for each word, the way the examination's listening part
@@ -31,6 +33,12 @@ export interface ListeningCard {
   correct: string;
   /** 2–4 English options, correct one included, already shuffled. */
   choices: string[];
+  /**
+   * How many times this card has been reviewed, which is what decides how it
+   * may be heard: a new word is heard in a quiet room, a settled one at
+   * speed, over noise or down a phone line (lib/audio/conditions.ts).
+   */
+  reps: number;
 }
 
 export function ListeningSession({ cards: initialCards }: { cards: ListeningCard[] }) {
@@ -57,6 +65,15 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
 
   const card = cards[index];
   const voice = voiceFor(voiceStart, index);
+  /*
+    The room and the rate, decided per card from its own history and its
+    place in the round rather than drawn: a reload gives back the same
+    question. Which it was is said after the answer, beside the voice,
+    because a learner who missed a word wants to know if it was the word or
+    the room, and before the answer it would be a clue.
+  */
+  const { hearing } = useAudioPrefs();
+  const condition = card ? conditionFor(card.reps, index, hearing) : undefined;
   const finished = !card;
   const answered = selected !== null;
 
@@ -216,6 +233,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
                   text={card.lemma}
                   size={30}
                   voice={voice.id}
+                  condition={condition}
                   autoplay
                   onUnavailable={() => setNoAudio(true)}
                   className="press flex h-24 w-24 items-center justify-center rounded-full transition-ui hover:-translate-y-0.5"
@@ -228,9 +246,11 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-2">
                 <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--ink)" }}>{card.lemma}</p>
-                <Speak text={card.lemma} voice={voice.id} />
+                <Speak text={card.lemma} voice={voice.id} label={`Hear "${card.lemma}" clearly`} />
               </div>
-              <p className="text-2xs" style={{ color: "var(--ink-3)" }}>Read by {voice.name}. The next word gets another voice.</p>
+              <p className="text-2xs" style={{ color: "var(--ink-3)" }}>
+                {condition ? describeHearing(voice.name, condition) : `Read by ${voice.name}.`} The next word gets another voice.
+              </p>
             </div>
           )}
         </div>

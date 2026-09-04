@@ -128,6 +128,13 @@ export const PANELS = [
   "exam",
   /** Anu, and the pitch for her when she is not set up. */
   "tutor",
+  /**
+   * One thing to say to a real person today, and how it went. Held back
+   * while arriving, because an errand is drawn from the units a learner has
+   * started and on day one that is greetings alone; from `starting` on it is
+   * the panel the whole app points at.
+   */
+  "errand",
 ] as const;
 
 export type Panel = (typeof PANELS)[number];
@@ -146,7 +153,7 @@ const SHOWN: Record<Stage, readonly Panel[]> = {
     level bar at 40 XP is noise, and four reviews is not enough to call any
     word a problem.
   */
-  starting: ["review", "next", "word", "practice", "streak", "quests", "tasks", "tutor"],
+  starting: ["review", "next", "word", "practice", "streak", "quests", "tasks", "tutor", "errand"],
   /** Everything. By now every figure on it is drawn from enough to mean something. */
   settled: [...PANELS],
 };

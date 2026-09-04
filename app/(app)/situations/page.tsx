@@ -7,6 +7,7 @@ import { minutesFor } from "@/lib/scenes/run";
 import { unitById } from "@/lib/collections/syllabus";
 import { Card, Chip, Empty, Page, Stack } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
+import { PLACES_TO_TALK } from "@/lib/collections/placesToTalk";
 
 export const metadata = { title: "Situations" };
 export const dynamic = "force-dynamic";
@@ -80,6 +81,30 @@ export default async function SituationsPage() {
           You are handed a card and play somebody else. Nothing you write is about you,
           and no conversation here asks for a real document number.
         </p>
+
+        {/*
+          Where the people are. A learning app that never says so is one that
+          would rather you stayed (docs/22-real-life.md). Every entry is a public
+          programme, named, with a link that was opened before it was written down.
+        */}
+        <section aria-labelledby="places-heading">
+          <h2 id="places-heading" className="font-medium">Where the people are</h2>
+          <p className="mb-3 mt-1 text-sm" style={{ color: "var(--ink-2)" }}>
+            The rehearsal is here. The conversation is out there, and these are free.
+          </p>
+          <ul className="grid gap-3 sm:grid-cols-3">
+            {PLACES_TO_TALK.map((place) => (
+              <li key={place.href}>
+                <Card className="flex h-full flex-col gap-1">
+                  <a href={place.href} target="_blank" rel="noreferrer" className="font-medium underline">
+                    {place.name}
+                  </a>
+                  <p className="text-sm" style={{ color: "var(--ink-2)" }}>{place.what}</p>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </section>
       </Stack>
     </Page>
   );

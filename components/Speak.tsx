@@ -3,6 +3,7 @@
 import { Volume2, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { playClip } from "@/lib/audio/clip";
+import type { Condition } from "@/lib/audio/conditions";
 import { useAudioPrefs } from "./AudioPrefs";
 
 /**
@@ -21,9 +22,15 @@ import { useAudioPrefs } from "./AudioPrefs";
  * takes the button away.
  */
 export function Speak({
-  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children, autoplay, voice: askedVoice,
+  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children, autoplay, voice: askedVoice, condition,
 }: {
   text: string; slow?: boolean; label?: string;
+  /**
+   * The room and the rate it is heard in, for the rounds that vary them
+   * (`lib/audio/conditions.ts`). Absent means clean, which is every other
+   * screen.
+   */
+  condition?: Condition;
   /**
    * A voice other than the learner's own, by its identifier. For the
    * listening round, which changes speaker from word to word the way the
@@ -85,7 +92,7 @@ export function Speak({
         round paid for it: its own copy of this caught both and told a learner
         their connection was down. `playClip` is the one answer now.
       */
-      const outcome = await playClip({ text, slow, voice }, { unasked });
+      const outcome = await playClip({ text, slow, voice, condition }, { unasked });
       setState("idle");
       if (outcome === "played") onPlay?.();
     } catch {
@@ -96,14 +103,14 @@ export function Speak({
 
   useEffect(() => {
     if (!autoplay || wanted !== "on" || disabled) return;
-    const key = `${text}|${slow ? 1 : 0}|${voice}`;
+    const key = `${text}|${slow ? 1 : 0}|${voice}|${condition?.id ?? ""}`;
     if (played.current === key) return;
     played.current = key;
     void play(true);
     // `play` closes over the props it needs; re-running on them would replay
     // the same clip on an unrelated re-render, which `played` also guards.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoplay, wanted, disabled, text, slow, voice]);
+  }, [autoplay, wanted, disabled, text, slow, voice, condition?.id]);
 
   if (state === "gone") return null;
 

@@ -36,19 +36,19 @@ export const metadata: Metadata = {
     page and nothing else worth naming.
   */
   title: {
-    default: "Kodukeel. Estonian that finally sticks",
+    default: "Kodukeel. Ready for the real thing",
     template: "%s · Kodukeel",
   },
   description:
-    "A calm daily home for learning Estonian: real forms from Ekilex, spaced repetition that " +
-    "knows when to stop, native audio, and a grammar tutor that explains the rule.",
+    "Estonian for the counter, the clinic and the neighbour: practice that sticks, a conversation " +
+    "to rehearse with somebody who has an agenda of their own, and one thing to say out loud today.",
   icons: { icon: "/icon.svg" },
   applicationName: "Kodukeel",
   appleWebApp: { capable: true, title: "Kodukeel", statusBarStyle: "default" },
   openGraph: {
-    title: "Kodukeel. Estonian that finally sticks",
+    title: "Kodukeel. Ready for the real thing",
     description:
-      "Real forms from Ekilex, spaced repetition, native audio and a grammar tutor. Fifteen minutes a day.",
+      "Practice that sticks, a conversation to rehearse, and one thing to say to a real person today. Real forms from Ekilex, never from a model.",
     type: "website",
   },
 };

@@ -48,6 +48,20 @@ export const CORRECT_FROM_RATING = 3;
  */
 export const SECTIONS: readonly SectionSpec[] = [
   {
+    id: "encounters",
+    title: "Real conversations reported from outside the app, by the unit the errand drew on",
+    dimensions: ["unit"],
+    groupBy: 0,
+    note:
+      "Today sets one small errand a day, order a coffee, ask the time, and the learner says " +
+      "how it went in one of three words: they understood me, they switched to English, I did " +
+      "not manage it. This table counts those reports rather than answers to cards, and " +
+      "\"correct\" here means understood. It is self-reported and it is the only figure in " +
+      "this file about anything that happened away from a screen. The unit is the one the " +
+      "errand drew its words from, which is how the errand was chosen, not a measurement of " +
+      "what was said. Mature figures do not apply and are zero.",
+  },
+  {
     id: "case",
     title: "Accuracy by grammatical case",
     dimensions: ["case"],

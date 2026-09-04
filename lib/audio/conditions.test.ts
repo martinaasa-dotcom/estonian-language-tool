@@ -1,0 +1,79 @@
+import { describe, expect, it } from "vitest";
+import {
+  CLEAN, CONDITIONS, OPENS_AT, conditionById, conditionFor, describeHearing, hearingFrom, openConditions,
+} from "./conditions";
+
+describe("hearing conditions", () => {
+  it("reads a missing row as on and only the word off as off", () => {
+    expect(hearingFrom(null)).toBe("on");
+    expect(hearingFrom(undefined)).toBe("on");
+    expect(hearingFrom("nonsense")).toBe("on");
+    expect(hearingFrom("off")).toBe("off");
+  });
+
+  it("opens clean first and every condition eventually", () => {
+    expect(openConditions(0).map((c) => c.id)).toEqual(["clean"]);
+    expect(openConditions(1).map((c) => c.id)).toEqual(["clean"]);
+    const all = openConditions(1000).map((c) => c.id);
+    expect(all).toEqual(CONDITIONS.map((c) => c.id));
+  });
+
+  it("opens in table order, so a later condition never opens before an earlier one", () => {
+    let last = -1;
+    for (const c of CONDITIONS) {
+      expect(OPENS_AT[c.id]).toBeGreaterThanOrEqual(last);
+      last = OPENS_AT[c.id];
+    }
+  });
+
+  it("is clean throughout with the setting off", () => {
+    for (let reps = 0; reps < 40; reps++) {
+      for (let pos = 0; pos < 10; pos++) {
+        expect(conditionFor(reps, pos, "off")).toBe(CLEAN);
+      }
+    }
+  });
+
+  it("is deterministic and reaches every open condition across a round", () => {
+    const seen = new Set<string>();
+    for (let pos = 0; pos < 20; pos++) {
+      const a = conditionFor(12, pos, "on");
+      const b = conditionFor(12, pos, "on");
+      expect(a).toBe(b);
+      seen.add(a.id);
+    }
+    expect([...seen].sort()).toEqual(CONDITIONS.map((c) => c.id).sort());
+  });
+
+  it("never hands a new word anything but a quiet room", () => {
+    for (let pos = 0; pos < 20; pos++) {
+      expect(conditionFor(0, pos, "on").id).toBe("clean");
+      expect(conditionFor(1, pos, "on").id).toBe("clean");
+    }
+  });
+
+  it("falls back to clean on an unknown id", () => {
+    expect(conditionById("studio")).toBe(CLEAN);
+    expect(conditionById("phone").id).toBe("phone");
+  });
+
+  it("keeps every effect inside what a browser can do honestly", () => {
+    for (const c of CONDITIONS) {
+      expect(c.speed).toBeGreaterThanOrEqual(0.5);
+      expect(c.speed).toBeLessThanOrEqual(2);
+      // A room is mixed from a decoded buffer, which cannot hold the pitch at
+      // another rate, so a condition with a room keeps a normal one.
+      if (c.noise !== null || c.band !== null || c.skip > 0) expect(c.speed).toBe(1);
+      expect(c.skip).toBeGreaterThanOrEqual(0);
+      expect(c.skip).toBeLessThan(0.6);
+      if (c.noise) expect(c.noise.level).toBeLessThan(0.5);
+      if (c.band) expect(c.band.lowHz).toBeLessThan(c.band.highHz);
+      expect(c.said.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("says the room only when it was not a quiet one", () => {
+    expect(describeHearing("Mari", CLEAN)).toBe("Read by Mari.");
+    expect(describeHearing("Mari", conditionById("cafe"))).toBe("Read by Mari, over café noise.");
+  });
+});

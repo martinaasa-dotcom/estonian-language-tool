@@ -10,10 +10,10 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Kodukeel. Estonian study",
+    name: "Kodukeel. Ready for the real thing",
     short_name: "Kodukeel",
     description:
-      "Learn Estonian by its cases: a dictionary that shows every form, spaced-repetition flashcards, speed rounds and a grammar tutor.",
+      "Estonian you can use on somebody: practice that sticks, a conversation to rehearse, and one thing to say out loud today.",
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -34,6 +34,7 @@ export default function manifest(): MetadataRoute.Manifest {
     shortcuts: [
       { name: "Review", short_name: "Review", url: "/review" },
       { name: "The course", short_name: "Course", url: "/learn" },
+      { name: "Situations", short_name: "Situations", url: "/situations" },
       { name: "Dictionary", short_name: "Dictionary", url: "/dictionary" },
     ],
   };

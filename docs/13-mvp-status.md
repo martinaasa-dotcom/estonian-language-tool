@@ -2118,7 +2118,52 @@ learner two months in would be told: eight situations they would be lost in, non
 yet, and most of their words a month stale. That is a harder sentence than "74 percent recall",
 and it is the one that is true.
 
-## 31. The twenty-fifth pass: what the log knew and nobody read
+## 31. The twenty-fifth pass: ready for the real thing
+
+The brief was the purpose. Every learning app is built to keep a learner on the app, and the moment
+integration turns on is a receptionist who talks too fast and switches to English; nothing in the
+product rehearsed it and nothing counted it. `docs/22-real-life.md` is the argument, written for a
+funder as much as for a contributor. This section is what was built and measured.
+
+### What was built
+
+- **Situations**, played. `docs/21-situations.md` had the design and Phase 0; Phase 1 landed on
+  main from a second session the same day, and the copy this pass had built was deleted rather than
+  merged beside it (CLAUDE.md, "two sessions built this module"). What this pass adds around it: a
+  unit's page links to the scene that tests its claim, Anu is told which situation the learner last stalled in and on what, the situations screen
+  says where the people are, and the rows are in the export, the erasure and a restore. ADR-025.
+- **Hearing conditions.** One table of how people talk, applied in the browser: at speed, over café
+  noise, down a phone line, from halfway through, and a different voice each time, widening as the
+  word settles. Listening and dictation ask per card; minimal pairs rotates its reader and keeps the
+  room quiet; the mock exam is untouched because the real paper is read in a studio.
+- **Say it today.** An errand a day and one press to report it; Progress leads with what happened
+  out there, beside §30's forecast of it; the research export carries the figure. ADR-027.
+- **The brand.** "Ready for the real thing" replaces "Estonian that finally sticks" on the landing
+  page, the manifest, sign-in and the README; the first-run limits line says the app rehearses the
+  conversation and the people are out there; Practice carries Situations; Anu is told which
+  situation the learner last stalled in and on what.
+
+### Measured
+
+- The gate, three times. 60 to 70 percent withheld before this pass; 54 percent with the encounter
+  verbs in the course; 43.5 percent over 260 lines, 30 to 51 by scene, with the scenes declaring
+  the units those verbs live in. The ranked list of withheld words is what found the second fix,
+  and what it named next was the past participle and the polite imperative, forms no rule reaches,
+  which the harvest stores per verb now, and a government check that withholds more than vouching
+  does.
+- `scripts/test-scene.mjs` plays the doctor's through keyless. The route smoke, the accessibility
+  sweep and the containment suite pass over the new screens.
+- One invariant new in this pass and made to fail once: the room a clip is heard in has one
+  module and the exam may not use it. The errand table is held by its unit suite, which fails on
+  an errand naming a word rather than a unit.
+
+### What is honest
+
+Nothing here scores pronunciation, marks a conversation with a model, or writes Estonian. The
+switch-to-English figure is self-reported. The classroom has still not been piloted. And a keyless
+deployment gets a shorter scene than a keyed one, said on the screen.
+
+## 32. The twenty-sixth pass: what the log knew and nobody read
 
 Not reported. It came out of reading a product brief against the code. The brief argued that a
 language app should track more than right and wrong, response time and which forms a learner
@@ -2186,7 +2231,7 @@ a recall. Whether speed should move the rating, whether the confusion should gen
 question, and whether a mission format should sit on top of any of it are the three decisions
 still open from the brief, and each is a larger change than reading two columns.
 
-## 32. The twenty-sixth pass: the other side's line, written before anybody played
+## 33. The twenty-seventh pass: the other side's line, written before anybody played
 
 Situations shipped in §30 of `docs/21-situations.md` with a ladder whose load-bearing rung was a
 live model, and a keyless deployment therefore had a receptionist who could greet you and then say

@@ -114,7 +114,7 @@ export async function GET() {
   const [
     lexemes, cards, reviews, tasks, studyEvents, scans,
     settings, messages, assessments, stars, achievements,
-    examAttempts, classrooms, classroomMembers, suggestions, sceneRuns, sceneGaps,
+    examAttempts, classrooms, classroomMembers, suggestions, sceneRuns, sceneGaps, encounters,
   ] = await Promise.all([
     prisma.lexeme.findMany({ where: { id: { in: [...mine] } }, include: { forms: true } }),
     prisma.card.findMany({ where: { ownerId } }),
@@ -153,6 +153,8 @@ export async function GET() {
     prisma.sceneRun.findMany({ where: { ownerId }, orderBy: { startedAt: "asc" } }),
     // The words those conversations needed and they did not have.
     prisma.sceneGap.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
+    // Every real conversation they reported having, in one of three words.
+    prisma.encounter.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
   ]);
 
   const payload = {
@@ -166,11 +168,11 @@ export async function GET() {
       achievements: achievements.length, examAttempts: examAttempts.length,
       classrooms: classrooms.length, classroomMembers: classroomMembers.length,
       suggestions: suggestions.length, studyEvents: studyEvents.length,
-      sceneRuns: sceneRuns.length, sceneGaps: sceneGaps.length,
+      sceneRuns: sceneRuns.length, sceneGaps: sceneGaps.length, encounters: encounters.length,
     },
     lexemes, cards, reviews, tasks, studyEvents, scans,
     settings, messages, assessments, stars, achievements,
-    examAttempts, classrooms, classroomMembers, suggestions, sceneRuns, sceneGaps,
+    examAttempts, classrooms, classroomMembers, suggestions, sceneRuns, sceneGaps, encounters,
   };
 
   const date = new Date().toISOString().slice(0, 10);

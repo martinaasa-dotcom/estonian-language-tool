@@ -586,3 +586,13 @@ export const SCENES: readonly SceneSpec[] = [SHOP, DOCTOR, LANDLORD, COUNTER];
 export function sceneById(id: string): SceneSpec | undefined {
   return SCENES.find((s) => s.id === id);
 }
+
+/**
+ * The scene that tests a unit's own "you can do this" claim, if one does.
+ *
+ * Read by the unit page and by Progress's list of claims, so a unit is linked
+ * to the conversation that tests it from the two places somebody would look.
+ */
+export function sceneTesting(unitId: string): SceneSpec | undefined {
+  return SCENES.find((s) => s.tests === unitId);
+}

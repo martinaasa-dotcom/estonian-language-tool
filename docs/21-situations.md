@@ -4,8 +4,11 @@ A module where the learner uses Estonian on somebody rather than studying it. Wh
 one is drawn so that no two runs are alike, how the difficulty setting works, and the rule that
 keeps every Estonian word in it out of a model's hands.
 
-Nothing here is built. This is the design, the arithmetic behind it, the things it must never
-become, and the measurements that decide whether it can be built at all.
+This was the design before anything was built, the arithmetic behind it, the things it must never
+become, and the measurements that decided whether it could be built at all. **Phase 1 is built**, in
+September 2026, and §30 says what building it found; `docs/22-real-life.md` is why it was worth
+building and `docs/13-mvp-status.md` §30 what shipped with it. Everything above §30 is kept as the
+argument it was.
 
 ## 1. The promise the course already made
 

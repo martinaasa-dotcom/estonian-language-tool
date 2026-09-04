@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Ear, EarOff, Music, VolumeX } from "lucide-react";
-import { setAutoplay, setFeedbackSounds, setVoice } from "@/app/actions";
+import { AudioLines, Coffee, Ear, EarOff, Music, VolumeX } from "lucide-react";
+import { setAutoplay, setFeedbackSounds, setHearing, setVoice } from "@/app/actions";
+import { CONDITIONS, type Hearing } from "@/lib/audio/conditions";
 import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { Speak } from "@/components/Speak";
 import { playFeedback } from "@/lib/audio/feedback";
@@ -132,6 +133,60 @@ export function FeedbackSoundsPanel({ current }: { current: FeedbackSounds }) {
   return (
     <ChoiceGroup ariaLabel="Whether answers make a sound" className="grid gap-2 sm:grid-cols-2">
       {SOUNDS.map((o) => (
+        <ChoiceCard
+          key={o.value}
+          layout="stacked"
+          disabled={pending}
+          selected={value === o.value}
+          onSelect={() => pick(o.value)}
+          icon={<o.icon size={16} aria-hidden />}
+          title={o.label}
+          detail={o.detail}
+        />
+      ))}
+    </ChoiceGroup>
+  );
+}
+
+/**
+ * Whether the listening rounds sound like the street or like the studio.
+ *
+ * The varied option leads because it is the default, and the default is the
+ * point: nobody a learner will meet talks like a clean synthetic voice in a
+ * silent room. The studio stays one press away for somebody with a bad
+ * connection, a hearing aid, or a headache.
+ */
+const HEARING: { value: Hearing; label: string; detail: string; icon: typeof Coffee }[] = [
+  {
+    value: "on",
+    label: "The way people talk",
+    detail: `A word you know well comes back ${CONDITIONS.slice(1).map((c) => c.said).join(", ")}. A new one is always clear.`,
+    icon: Coffee,
+  },
+  {
+    value: "off",
+    label: "Always clear",
+    detail: "Every clip in a quiet room at an ordinary pace, in the voice you chose.",
+    icon: AudioLines,
+  },
+];
+
+export function HearingPanel({ current }: { current: Hearing }) {
+  const [value, setValue] = useState(current);
+  const [pending, start] = useTransition();
+  const router = useRouter();
+
+  const pick = (next: Hearing) => {
+    setValue(next);
+    start(async () => {
+      await setHearing(next);
+      router.refresh();
+    });
+  };
+
+  return (
+    <ChoiceGroup ariaLabel="How the listening rounds sound" className="grid gap-2 sm:grid-cols-2">
+      {HEARING.map((o) => (
         <ChoiceCard
           key={o.value}
           layout="stacked"

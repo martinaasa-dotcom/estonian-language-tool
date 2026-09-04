@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { ClipboardCheck, Compass, Flame, Shield } from "lucide-react";
+import { ClipboardCheck, Compass, Flame, Footprints, Shield } from "lucide-react";
+import { outThere } from "@/lib/progress/outThere";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { CEFR_LEVELS } from "@/lib/estonian/types";
@@ -47,7 +48,7 @@ export default async function ProgressPage() {
   // server, whose midnight is the deployment's. See lib/time/day.ts.
   const [clock, snapshot] = await Promise.all([learnerDayClock(ownerId), deckSnapshot(ownerId, now)]);
 
-  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow, readiness] = await Promise.all([
+  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow, readiness, outside] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
@@ -112,6 +113,9 @@ export default async function ProgressPage() {
       in the terms somebody outside the app asks it in.
     */
     readinessPicture(ownerId, now),
+    // Conversations reported from outside the app, which is the number the
+    // readiness reading is a forecast of.
+    outThere(ownerId, clock, now),
   ]);
   const earnedKeys = new Set(earned.map((a) => a.key));
   const shields = numberSetting(shieldRow[SETTING_KEYS.streakShields], 0);
@@ -384,6 +388,42 @@ export default async function ProgressPage() {
         )}
 
         <div className="grid gap-5 md:grid-cols-2">
+          {/*
+            THE PANEL THIS PAGE IS FOR, PUT AHEAD OF THE CHARTS.
+
+            A level and a heatmap are what the app measures. What a person
+            cares about is whether they got through the conversation at the
+            counter, so the first thing here is what they reported from out
+            there. The readiness panel beside the charts is the app's forecast
+            of the same thing; this is the result. Derived on every request
+            from rows that are facts (ADR-014): an encounter is a report, never
+            a counter.
+          */}
+          <section>
+            <SectionTitle hint={`last ${outside.days} days`}>Out there</SectionTitle>
+            <Card>
+              {outside.total === 0 ? (
+                <p className="text-sm" style={{ color: "var(--ink-2)" }}>
+                  Nothing reported yet. Today sets one small errand a day; say how it went and it lands here.
+                  This is the one number that matters more than any chart on this page.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Stat value={outside.total} label="conversations" tone="var(--accent-deep)" icon={<Footprints size={14} aria-hidden />} />
+                    <Stat value={outside.byOutcome.UNDERSTOOD} label="understood you" tone="var(--good-ink)" />
+                    <Stat value={outside.byOutcome.SWITCHED} label="switched to English" tone="var(--hard-ink)" />
+                    <Stat value={outside.byOutcome.BAILED} label="did not happen" tone="var(--ink-3)" />
+                  </div>
+                  <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+                    {outside.streak > 1 ? `${outside.streak} days in a row with a real conversation in them. ` : ""}
+                    Self-reported, and the switch to English is the figure to watch: it falls as your Estonian holds.
+                  </p>
+                </div>
+              )}
+            </Card>
+          </section>
+
           <section>
             <SectionTitle hint="weakest first">Cases</SectionTitle>
             <Card>

@@ -439,8 +439,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
             */}
             <div className="mt-10">
               <Note tone="hard">
-                It will not score your pronunciation, teach you to hold a conversation, or replace a
-                teacher.
+                It will not score your pronunciation, let a model decide whether you were understood,
+                or replace a teacher. It rehearses the conversation; the people are out there.
               </Note>
             </div>
           </section>

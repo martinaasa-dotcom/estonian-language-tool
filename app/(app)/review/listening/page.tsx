@@ -108,7 +108,7 @@ export default async function ListeningPage() {
       // back to: it is four options or it is nothing.
       if (!picked) continue;
       listeningCards.push({
-        id: c.id, lemma: c.lexeme?.lemma ?? c.front, correct, choices: picked.options,
+        id: c.id, lemma: c.lexeme?.lemma ?? c.front, correct, choices: picked.options, reps: c.reps,
       });
     }
 
