@@ -132,6 +132,23 @@ table of Estonian ("Case", "Singular"), the English prose that explains a point,
 in URLs. The ids are keys that 83 syllabus entries and any bookmarked link point at, and renaming
 them buys a slug and risks the course.
 
+**And on the reference itself, the ending leads both names.** The rule above is about which of two
+*names* comes first, and the grammar pages had answered it and then put the name at the top of every
+card anyway, over four paragraphs a case. A learner mid-sentence is not looking for the inessive and
+is not looking for the seesütlev either; they are looking for -s, and for the one English word it
+means. So `CaseNote.plain` is that word ("in", "out of", "with"), a card is the ending, the meaning,
+one line, and both names under it in small type, and the page opens with one real word out of the
+dictionary wearing all eleven endings, built by `buildCaseTable` and never typed. The groups are
+headed by what the endings do, "Inside", "On top", with the endings read off the group's own keys
+by `groupEndings` rather than typed into the title, because a heading is set in `label-xs` and that
+uppercases: "-sse" reached the screen as "-SSE", which no Estonian word ends in. The same rule
+holds the case page's eyebrow and the table header, and it is `Chip`'s `caseSensitive` rule one
+level up. Every field in `grammar.ts` has a ceiling now beside its floor, since the floors were all
+met by the version somebody reported as unreadable: a floor stops a field being empty and says
+nothing about the paragraph growing back into it. Nothing about the invariants moved: the Estonian
+name and the question are still on every card and every page, and the Latin name is still there,
+labelled, on the page for the ending.
+
 **Knowing a word exists is a different job from teaching it, and thirty-two requests buys the
 first.** The dictionary ships 5,363 entries and every other Estonian word came back as "nothing
 found", which is the same blank a learner gets for a misspelling and for an English word. That was
@@ -4634,7 +4651,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `distanceLine`, `minutesForCards`, `describeSituation`, `conditionFor`, `describeHearing`,
 `playThrough`, `errandForDay`, `recordEncounter`, `outThere`, `reachedSlot`, `reachedFor`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
-`lacksFiniteVerb`, `answerForms`. Most of them now
+`lacksFiniteVerb`, `answerForms`, `groupEndings`, `CaseNote.plain`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

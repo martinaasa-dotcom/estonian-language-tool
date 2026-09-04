@@ -50,16 +50,22 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!topic) return { title: "Grammar" };
   const term = grammarTerm(id);
   return {
-    title: `Grammar · ${term ? `${term.et}, ${topic.title.toLowerCase()}` : topic.title}`,
+    title: `Grammar · ${term ? `${topic.title.toLowerCase()}, or ${term.et}` : topic.title}`,
     description: topic.summary,
   };
 }
 
 /**
- * One grammar point that is not a case.
+ * One grammar point that is not an ending.
+ *
+ * IT LEADS WITH WHAT THE POINT IS, in English, for the reason the case pages
+ * do. `kaudne kõneviis` is what a class calls it and is not what somebody
+ * opening this page is looking for, so the plain description is the heading and
+ * the term a course uses sits under it with the name an English reference
+ * grammar uses beside it.
  *
  * Deliberately sparser than the case pages, and the difference is honest rather
- * than unfinished. A case page can show the case on real words, because every
+ * than unfinished. A case page can show the ending on real words, because every
  * form on it is read out of the dictionary with its provenance. There is no
  * equally safe way to illustrate the quotative: picking sentences whose words
  * end in the right letters would be the app asserting a grammatical analysis it
@@ -97,8 +103,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
   return (
     <Page
       eyebrow="Reference"
-      title={term?.et ?? topic.title}
-      titleLang={term ? "et" : undefined}
+      title={topic.title}
       lead={topic.summary}
       actions={
         <Link href="/grammar" className="flex items-center gap-1.5 text-sm" style={{ color: "var(--accent-deep)" }}>
@@ -110,36 +115,8 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
         {(term || topic.marker) && (
           <Card tone="accent">
             <dl className="grid gap-4 sm:grid-cols-3">
-              {term?.question && (
-                <div>
-                  <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
-                    Answers
-                  </dt>
-                  <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
-                    {term.question}
-                  </dd>
-                </div>
-              )}
-              <div>
-                <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
-                  In plain English
-                </dt>
-                <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
-                  {topic.title}
-                </dd>
-              </div>
-              {term?.alsoCalled && (
-                <div>
-                  <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
-                    In English references
-                  </dt>
-                  <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
-                    {term.alsoCalled}
-                  </dd>
-                </div>
-              )}
               {topic.marker && (
-                <div>
+                <div className="min-w-0">
                   <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
                     The ending that carries it
                   </dt>
@@ -148,28 +125,30 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
                   </dd>
                 </div>
               )}
+              {term && (
+                <div className="min-w-0">
+                  <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>Called</dt>
+                  <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                    {term.et}
+                  </dd>
+                  {term.alsoCalled && (
+                    <dd className="text-xs" style={{ color: "var(--ink-3)" }}>
+                      {term.alsoCalled}, in an English grammar
+                    </dd>
+                  )}
+                </div>
+              )}
+              {term?.question && (
+                <div className="min-w-0">
+                  <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
+                    Answers
+                  </dt>
+                  <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                    {term.question}
+                  </dd>
+                </div>
+              )}
             </dl>
-            {/*
-              WHAT IS LEFT HERE IS THE ONE THING A READER WOULD OTHERWISE
-              WONDER ABOUT.
-
-              Every topic used to carry a paragraph explaining why the heading
-              is in Estonian and why the English name is under it, and a second
-              saying that the forms came from Ekilex. Both are true, both are
-              this app talking about itself on a page somebody opened to learn
-              a point of grammar, and the labels in the list above ("Answers",
-              "In plain English", "In English references") already say all of
-              it. What survives is the note for a topic that has no Estonian
-              term, because a heading in English on a page whose neighbours are
-              headed in Estonian looks like an omission until somebody says it
-              is not.
-            */}
-            {!term && (
-              <p className="mt-4 max-w-[68ch] text-sm" style={{ color: "var(--ink-2)" }}>
-                There is no settled Estonian term a class would use for this one, so it keeps its
-                English description rather than being given an invented name.
-              </p>
-            )}
           </Card>
         )}
 

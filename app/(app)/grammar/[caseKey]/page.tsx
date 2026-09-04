@@ -20,12 +20,22 @@ export function generateStaticParams() {
   return CASES.map((c) => ({ caseKey: c.key.toLowerCase() }));
 }
 
+/** The ending, or the word "memorised" where there is no ending to give. */
+function endingOf(ref: { spec: { principal: boolean; suffix: string } }): string {
+  return ref.spec.principal ? "memorised" : `-${ref.spec.suffix}`;
+}
+
+/** The plain meaning as a heading. Everything else about it stays as written. */
+function asTitle(plain: string): string {
+  return plain.charAt(0).toUpperCase() + plain.slice(1);
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ caseKey: string }> }) {
   const { caseKey } = await params;
   const ref = caseReference(caseKey.toUpperCase());
   if (!ref) return { title: "Grammar" };
   return {
-    title: `${ref.spec.et} · ${ref.spec.question} · Estonian grammar`,
+    title: `${endingOf(ref)} means ${ref.plain} · ${ref.spec.et}`,
     description: ref.summary,
   };
 }
@@ -48,8 +58,19 @@ const ORIGIN_LABEL: Record<CaseExample["origin"], { label: string; title: string
   },
 };
 
+/** How many attested sentences to print. Three is a sample; six is a wall. */
+const SENTENCES = 3;
+
 /**
- * One case, explained.
+ * One ending, explained.
+ *
+ * WHAT THE PAGE LEADS WITH IS WHAT THE ENDING MEANS. It used to lead with the
+ * Estonian name and carry the Latin one beside it, which is right on a card
+ * offering a choice between fourteen and wrong on the page somebody opens
+ * because they cannot remember whether it is -s or -st. So the heading is the
+ * English word, the eyebrow is the ending, and both names are in the card
+ * underneath: a class says one and an English reference grammar says the
+ * other, and neither is what a learner came here for.
  *
  * The prose is `lib/estonian/grammar.ts` and contains no Estonian. Every
  * Estonian word below it is read out of the dictionary by
@@ -70,13 +91,17 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
   const previous = index > 0 ? all[index - 1] : undefined;
   const next = index < all.length - 1 ? all[index + 1] : undefined;
 
-  const withSentence = examples.filter((e) => e.sentence);
+  const withSentence = examples.filter((e) => e.sentence).slice(0, SENTENCES);
 
   return (
     <Page
-      eyebrow={`Case ${index + 1} of ${all.length}`}
-      title={ref.spec.et}
-      titleLang="et"
+      eyebrow={
+        // As written. `label-xs` uppercases, and an ending is a piece of
+        // Estonian rather than a label: "-SSE" is not the ending. This is the
+        // same rule `Chip`'s `caseSensitive` exists for.
+        <span lang="et" style={{ textTransform: "none" }}>{endingOf(ref)}</span>
+      }
+      title={asTitle(ref.plain)}
       lead={ref.summary}
       actions={
         <Link
@@ -84,33 +109,43 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
           className="press inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition-ui hover:-translate-y-px"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink-2)" }}
         >
-          <ArrowLeft size={14} aria-hidden /> All cases
+          <ArrowLeft size={14} aria-hidden /> All endings
         </Link>
       }
     >
       <Stack>
         <Card tone="accent">
           <dl className="grid gap-4 sm:grid-cols-3">
-            <div>
+            <div className="min-w-0">
+              <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>The ending</dt>
+              <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                {ref.spec.principal ? (
+                  <span className="text-base font-semibold" style={{ color: "var(--ink-2)" }}>
+                    none, this one is memorised
+                  </span>
+                ) : (
+                  <>
+                    <span lang="et" className="text-2xl">-{ref.spec.suffix}</span>{" "}
+                    <span className="text-xs font-normal" style={{ color: "var(--ink-3)" }}>
+                      on the genitive
+                    </span>
+                  </>
+                )}
+              </dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>Called</dt>
+              <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
+                {ref.spec.et}
+              </dd>
+              <dd className="text-xs" style={{ color: "var(--ink-3)" }}>
+                the {ref.spec.en.toLowerCase()}, in an English grammar
+              </dd>
+            </div>
+            <div className="min-w-0">
               <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>Answers</dt>
               <dd lang="et" className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.question}
-              </dd>
-            </div>
-            <div>
-              <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>
-                In English references
-              </dt>
-              <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
-                the {ref.spec.en.toLowerCase()}
-              </dd>
-            </div>
-            <div>
-              <dt className="label-xs" style={{ color: "var(--accent-deep)" }}>Ending</dt>
-              <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
-                {ref.spec.principal
-                  ? <span className="text-base font-semibold" style={{ color: "var(--ink-2)" }}>memorised, not derived</span>
-                  : <>-{ref.spec.suffix} <span className="text-xs font-normal" style={{ color: "var(--ink-3)" }}>on the genitive</span></>}
               </dd>
             </div>
           </dl>
@@ -154,7 +189,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
 
         <section>
           <SectionTitle hint={examples.some((e) => e.inDeck) ? "words from your deck first" : "from the dictionary"}>
-            In real words
+            On real words
           </SectionTitle>
           {examples.length === 0 ? (
             <Empty
@@ -170,11 +205,17 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               <table className="w-full min-w-[460px] text-sm">
                 <thead>
                   <tr>
-                    {["Word", "Genitive", ref.spec.et, "From"].map((h) => (
+                    {["Word", "Genitive", endingOf(ref), "From"].map((h, i) => (
                       <th
                         key={h}
                         className="label-xs px-3 py-2.5 text-left"
-                        style={{ background: "var(--raised)", color: "var(--ink-3)" }}
+                        style={{
+                          background: "var(--raised)",
+                          color: "var(--ink-3)",
+                          // The third heading is the ending itself, and an
+                          // ending is not a label to be uppercased.
+                          textTransform: i === 2 ? "none" : undefined,
+                        }}
                       >
                         {h}
                       </th>
@@ -244,13 +285,13 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
                 <li key={`${example.lexemeId}-sentence`}>
                   <Card>
                     <div className="flex items-start gap-2">
-                      <p lang="et" className="flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
+                      <p lang="et" className="min-w-0 flex-1 text-base leading-snug" style={{ color: "var(--ink)" }}>
                         {example.sentence!.et}
                       </p>
                       <Speak text={example.sentence!.et} label="Hear the sentence" />
                     </div>
                     {example.sentence!.en && (
-                      <p className="mt-1 flex items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--ink-2)" }}>
                         {example.sentence!.en}
                         <Chip tone="again" title="Machine translation. Trust the Estonian above, not this.">
                           {AI_TAG}
@@ -272,7 +313,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
 
         <div className="flex flex-wrap gap-3">
           <ButtonLink href={`/review?case=${ref.key}`} variant="primary">
-            <Target size={15} aria-hidden /> Drill this case
+            <Target size={15} aria-hidden /> Drill it
           </ButtonLink>
           {/* Writing a sentence in a case is the hardest thing you can do with
               one, so it belongs on the page that just explained it rather than
@@ -289,9 +330,8 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
         </div>
 
         <Note tone="neutral">
-          A drill only opens for words in your deck that carry this case. If nothing comes up, add a
-          noun unit from the path. The case cards come from forms the dictionary actually holds,
-          never from a pattern applied blindly.
+          A drill only opens for words in your deck that carry this ending. If nothing comes up, add
+          a noun unit from the course.
         </Note>
 
         {/*
@@ -312,7 +352,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
         </div>
 
         <nav
-          aria-label="Cases"
+          aria-label="Endings"
           className="flex flex-wrap items-center justify-between gap-3 border-t pt-5"
           style={{ borderColor: "var(--rule-soft)" }}
         >
@@ -322,7 +362,8 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               className="flex items-center gap-1.5 text-sm"
               style={{ color: "var(--ink-2)" }}
             >
-              <ArrowLeft size={14} aria-hidden /> <span lang="et">{previous.spec.et}</span>
+              <ArrowLeft size={14} aria-hidden /> {endingOf(previous)}
+              <span style={{ color: "var(--ink-3)" }}>{previous.plain}</span>
             </Link>
           ) : <span />}
           {next && (
@@ -331,7 +372,8 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               className="flex items-center gap-1.5 text-sm"
               style={{ color: "var(--ink-2)" }}
             >
-              <span lang="et">{next.spec.et}</span> <ArrowRight size={14} aria-hidden />
+              {endingOf(next)} <span style={{ color: "var(--ink-3)" }}>{next.plain}</span>
+              <ArrowRight size={14} aria-hidden />
             </Link>
           )}
         </nav>
