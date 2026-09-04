@@ -27,11 +27,18 @@
  * rule catches a word with no singular, where the form asked for belongs to
  * another word entirely (`prillid → milles?` wanting `prillis`).
  *
- * `lib/srs/retire.ts` holds the second rule and it is `caseFits`, the very
- * function the builder asks before it writes one of these, so a card removed
- * here is exactly a card the builder would refuse to make. A word the
- * dictionary cannot classify keeps everything it has: `localCasesFor` reads
- * "we do not know" as the inside trio, which is what those cards were built on.
+ * `lib/srs/retire.ts` holds the second rule, and what it asks is **is the form
+ * on the back one Estonian does not use**, which is not the same question as
+ * "would the builder build this". The first version of it asked the second, on
+ * the argument that the audit's test and the builder's test should be one
+ * function, and the production database that reported the original fault is
+ * what showed the difference. `localCasesFor` reads "we do not know" as the
+ * inside trio, which is the right default for a builder and backwards for a
+ * deletion: on a deployment seeded before `semanticTypes` was filled, that
+ * rule condemned every correct *outside* card in the database. 6,952 entries,
+ * none of them classified, 318 cards named for removal, and every one of them
+ * right: `isa → isale`, `õpetaja → õpetajale`, `arst → arstile`. Silence is
+ * never evidence. See the header there for what counts as evidence instead.
  *
  * A COMMAND SOMEBODY RUNS, NOT SOMETHING THE APP DOES, because every row it
  * touches belongs to a learner. It reports by default and names every card it
@@ -65,7 +72,7 @@ const write = process.argv.includes("--write");
 /** What the report prints for each fault, so a reader knows which they have. */
 const WHY: Record<Retirement["why"] | "prints-its-answer", string> = {
   "prints-its-answer": "the answer is the word in the question",
-  "wrong-local-set": "the word takes the other set of local cases",
+  "wrong-local-set": "a being, asked for an inside case nobody says",
   "no-singular": "the word has no singular, so that form is another word's",
 };
 

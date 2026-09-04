@@ -3463,12 +3463,23 @@ you can only pass by learning that `isas` is a word. Somebody who passes it has 
 `ma annan raamatu õpetajasse`, and the app has contradicted the teacher whose class they are
 sitting in.
 
-`lib/srs/retire.ts` is the rule and it is `caseFits` itself, the very function the builder asks, so
-a card the audit removes is exactly a card the builder would refuse to make and one change reaches
-both. It catches the word with no singular for the same reason (`prillid → milles?` wanting
-`prillis`, which is a form of `prill`), and it catches nothing at all on a word the dictionary
-cannot classify, because `localCasesFor` reads "we do not know" as the inside trio and those cards
-were built on exactly that reading. `audit:decks` reports both faults and `--write` removes them,
+`lib/srs/retire.ts` is the rule, and what it asks is **whether the form on the back is one Estonian
+does not use**. The first version asked whether the builder would build the card, on the argument
+that the audit's test and the builder's test should be one function, and that was wrong in the one
+place a destructive command must not be wrong. `localCasesFor` reads "we do not know" as the inside
+trio, which is the right default for a builder and backwards for a deletion, so it refuses the
+*outside* trio on any word the dictionary cannot classify. Run against the deployment that reported
+the original fault: 6,952 entries, **none of them classified**, and 318 cards named for removal,
+every one of them correct Estonian. `isa → isale`, `õpetaja → õpetajale`, `arst → arstile`,
+`koer → koerale`. It was caught because the command reports before it writes, which is the whole
+reason it does. **Silence is never evidence**, and only one direction is ever a fault: `isas` is a
+form nobody says, `toale` is ordinary Estonian the builder happens not to choose for a room, and a
+word the Institute called both a being and a place has two ordinary readings rather than a wrong
+one. So a local-case card goes only where the dictionary positively says the word takes the outside
+trio, through `isAnimate` or the `-maa` ending, and the case asked for is an inside one. The word
+with no singular is the same discipline (`prillid → milles?` wanting `prillis`, a form of `prill`):
+what says so is a stored `NOM_SG` that is not the headword, and an entry holding none makes no
+claim. `audit:decks` reports both faults and `--write` removes them,
 which stays a command somebody runs rather than something the seed does: every row belongs to a
 learner, and that line was drawn when the first fault was found. What is new is a way to run it
 without a checkout, since the person who can see the bad card is rarely the person with the
