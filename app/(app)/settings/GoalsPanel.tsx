@@ -109,7 +109,7 @@ export function GoalsPanel({ current }: { current: Goals }) {
           onChange={(e) => setNote(e.target.value)}
           maxLength={280}
           placeholder="Something you want to be able to do"
-          className="w-full rounded-[var(--r-lg)] border px-4 py-3 text-base outline-none"
+          className="w-full rounded-[var(--r-lg)] border px-4 py-3 text-base"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
       </div>
