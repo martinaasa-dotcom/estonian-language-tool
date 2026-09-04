@@ -2625,6 +2625,45 @@ check("Today draws at most TODAY_CARDS under the hero, and every card goes throu
 });
 
 /*
+  AND THE ORDER IS THE LEARNER'S, READ THROUGH ONE MODULE, WITH THE CAP STILL
+  APPLIED AFTER IT.
+
+  A home page's reading order is a fact about the reader, so Settings lets
+  them set it. Three things have to stay true for that to be safe. Today has to
+  deal through `orderTodayCards`, so a card cannot be added to the page
+  outside the order the learner set; the cap has to be applied to what comes
+  out of it, so an order can never grow a seventh box; and the key has to be
+  declared once, in the settings store, like the goal keys, so a typo in a
+  page cannot store an order nobody reads.
+*/
+check("Today deals its cards in the learner's order, under the same cap", () => {
+  const today = code("app/(app)/page.tsx");
+  assert.match(
+    today, /orderTodayCards\(/,
+    "Today no longer deals through orderTodayCards, so the order in Settings changes nothing",
+  );
+  assert.match(
+    today, /todayOrderFrom\(settings\[SETTING_KEYS\.todayOrder\]\)/,
+    "Today reads the order from somewhere other than the settings row the panel writes",
+  );
+  // The cap on the deal, not on the candidates: an order must not grow the page.
+  assert.match(
+    today, /orderTodayCards\([\s\S]*?\)\.slice\(0, TODAY_CARDS\)/,
+    "the cap is no longer applied to what orderTodayCards returns",
+  );
+
+  const panel = code("app/(app)/settings/TodayOrderPanel.tsx");
+  assert.match(panel, /setTodayOrder\(/, "the Settings panel no longer writes the order");
+  assert.match(panel, /TODAY_CARDS/, "the panel stopped saying which rows fall past the cut");
+
+  assert.match(read("lib/settings/store.ts"), /todayOrder:/, "todayOrder is not declared in the settings store");
+  for (const file of ALL) {
+    if (file === "lib/settings/store.ts") continue;
+    assert.doesNotMatch(read(file), /["']todayOrder["']/, `${file} writes the todayOrder key as a literal`);
+  }
+});
+
+/*
   AND WHAT CAME OFF TODAY MOVED RATHER THAN WENT.
 
   The cut took the XP bar and the three daily quests off the home page on the

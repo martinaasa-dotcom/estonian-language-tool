@@ -126,6 +126,16 @@ export const SETTING_KEYS = {
    * Settings and turned it off. See lib/research/corpus.ts.
    */
   researchOptOut: "researchOptOut",
+  /**
+   * The order the cards on Today are dealt in, as slot ids space separated.
+   *
+   * A missing row is the shipped order, which is an argument about what to do
+   * first and is right for most people; a row is written only by somebody who
+   * went to Settings and moved a card. The ids, the default and the forgiving
+   * reader live in lib/ux/todayOrder.ts. The cap on how many cards are drawn
+   * is not part of this and cannot be changed by it.
+   */
+  todayOrder: "todayOrder",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

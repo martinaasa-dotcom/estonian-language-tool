@@ -23,6 +23,9 @@ import { ClassNamePanel, LetterBarPanel, ResearchPanel, ReviewModePanel } from "
 import { AutoplayPanel, CurrentVoiceSample, FeedbackSoundsPanel, HearingPanel, VoicePanel } from "./AudioPanel";
 import { hearingFrom } from "@/lib/audio/conditions";
 import { GlossLanguagePanel } from "./GlossLanguagePanel";
+import { TodayOrderPanel } from "./TodayOrderPanel";
+import { isDefaultTodayOrder, todayOrderFrom } from "@/lib/ux/todayOrder";
+import { TODAY_CARDS } from "@/lib/ux/disclosure";
 import { GLOSS_LANGUAGES, glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom, VOICES } from "@/lib/audio/voice";
 import { RestorePanel } from "./RestorePanel";
@@ -97,7 +100,7 @@ export default async function SettingsPage() {
       SETTING_KEYS.letterBar, SETTING_KEYS.researchOptOut,
       SETTING_KEYS.displayName,
       SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
-      SETTING_KEYS.hearing, SETTING_KEYS.glossLanguage,
+      SETTING_KEYS.hearing, SETTING_KEYS.glossLanguage, SETTING_KEYS.todayOrder,
     ]),
     currentLearner(),
     goalsFor(ownerId),
@@ -122,6 +125,7 @@ export default async function SettingsPage() {
   const sounds = feedbackSoundsFrom(settings[SETTING_KEYS.feedbackSounds]);
   const hearing = hearingFrom(settings[SETTING_KEYS.hearing]);
   const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
+  const todayOrder = todayOrderFrom(settings[SETTING_KEYS.todayOrder]);
   const glossLanguageName =
     GLOSS_LANGUAGES.find((l) => l.id === glossLanguage)?.label ?? "English";
   const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
@@ -204,6 +208,19 @@ export default async function SettingsPage() {
             response as the forms and the sentences: no model is anywhere near
             them.
           */}
+          <section id="today">
+            <SectionTitle hint={isDefaultTodayOrder(todayOrder) ? "the usual order" : "your order"}>
+              Today
+            </SectionTitle>
+            <Card>
+              <p className="mb-3 text-sm" style={{ color: "var(--ink-2)" }}>
+                Which card comes first on your home page. The button to review always stays at the
+                top, and Today draws the first {TODAY_CARDS} of these that have something to say.
+              </p>
+              <TodayOrderPanel current={todayOrder} />
+            </Card>
+          </section>
+
           <section id="meanings">
             <SectionTitle hint={glossLanguageName}>Meanings</SectionTitle>
             <Card>
