@@ -22,6 +22,7 @@ import {
 } from "@/lib/questions/distractors";
 import { BANDS, type Band, type ChoiceItem, type DictationItem, type Item, type SpeakItem, type WriteItem } from "./types";
 import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
+import { heardIndex, meaningsHeard, type HeardIndex } from "./heard";
 
 /**
  * Turning the dictionary into a placement test.
@@ -145,10 +146,16 @@ function usableWords(words: readonly WordRow[]): WordRow[] {
  * writing, and `npm run audit:glosses` and the report queue are the two ways
  * that happens. What this rules out is the half a rule can see.
  */
-function meaningTest(word: WordRow, pool: readonly WordRow[]): (a: string, b: string) => boolean {
+function meaningTest(
+  word: WordRow,
+  pool: readonly WordRow[],
+  /** Meanings that were also on the screen or in the recording, so may not be wrong answers. */
+  alsoRight: readonly string[] = [],
+): (a: string, b: string) => boolean {
   const senses = pool
     .filter((w) => w.lemma.toLowerCase() === word.lemma.toLowerCase() && w.id !== word.id)
-    .map((w) => w.translation);
+    .map((w) => w.translation)
+    .concat(alsoRight);
   if (senses.length === 0) return differentMeaning;
   return (a, b) => differentMeaning(a, b) && senses.every((sense) => differentMeaning(a, sense));
 }
@@ -583,10 +590,20 @@ export function dictatable(sentence: string, opensWithNominal?: (word: string) =
  * grammatical vocabulary they had, in the section that is supposed to measure
  * whether they can follow somebody speaking.
  */
-export function listeningItems(words: readonly WordRow[], rng: () => number): (ChoiceItem | DictationItem)[] {
+export function listeningItems(
+  words: readonly WordRow[],
+  rng: () => number,
+  /**
+   * What every spelling in the dictionary means, for the sentence question
+   * below. Optional because a test and the audit hold only a pool, and the
+   * pool's own index is always consulted as well.
+   */
+  heard: HeardIndex = new Map(),
+): (ChoiceItem | DictationItem)[] {
   const pool = usableWords(words);
   const glosses = pool.map(glossFor);
   const out: (ChoiceItem | DictationItem)[] = [];
+  const inPool = heardIndex(pool);
 
   for (const word of shuffle(pool, rng)) {
     const set = pickOptions({
@@ -614,9 +631,16 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
   for (const word of shuffle(pool, rng)) {
     const sentence = word.examples.find((e) => gappable(e.et, openerFor(word)));
     if (!sentence) continue;
+    /*
+      THE QUESTION SAYS "A WORD YOU HEARD", SO EVERY WORD IN THE RECORDING IS
+      FAIR GAME, AND NONE OF THEIR MEANINGS MAY BE A WRONG ANSWER. `Moraali ja
+      eetika kategooriad.` offered "morality" against "ethics" and marked the
+      learner who heard `moraali` wrong. See `./heard.ts`.
+    */
     const set = pickOptions({
       answer: glossFor(word), candidates: glosses, rng,
-      distinct: meaningTest(word, pool), nearness: glossNearness,
+      distinct: meaningTest(word, pool, meaningsHeard(sentence.et, inPool, heard)),
+      nearness: glossNearness,
     });
     if (!set) continue;
     out.push({
@@ -861,7 +885,7 @@ export interface Paper {
  * Kinds are interleaved inside a skill so that eight reading questions are not
  * eight of the same question, and each kind gets its turn at each band.
  */
-export function buildPaper(words: readonly WordRow[], seed: number): Paper {
+export function buildPaper(words: readonly WordRow[], seed: number, heard: HeardIndex = new Map()): Paper {
   const rng = mulberry32(seed);
   const spent = new Set<string>();
 
@@ -880,7 +904,7 @@ export function buildPaper(words: readonly WordRow[], seed: number): Paper {
   };
 
   const reading = section(interleave(readingItems(words, rng)), BLUEPRINT.reading);
-  const listening = section(interleave(listeningItems(words, rng)), BLUEPRINT.listening);
+  const listening = section(interleave(listeningItems(words, rng, heard)), BLUEPRINT.listening);
   const writing = section(writingItems(words, rng), BLUEPRINT.writing);
   const speaking = section(speakingItems(words, rng), BLUEPRINT.speaking);
 

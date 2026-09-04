@@ -969,6 +969,23 @@ Wiktionary and are not what was wrong. Fifteen are pinned, each checked against 
 definition; ten of them are the entry a learner actually meets and five are shadowed by the course
 harvest, which had already pinned the same words.
 
+**And a wrong answer may be tricky, never true.** The listening check plays a whole sentence and asks
+for the meaning of "a word you heard in it", without saying which, so the meaning of *any* word in
+the recording is a right answer. `Moraali ja eetika kategooriad.` was asked about `eetika` with
+"morality" among the wrong ones, and somebody who heard `moraali` and chose it was marked wrong for
+listening correctly. Measured over ten pools drawn the way the placement draws them, 22 of 4,320
+such questions carried one: "Isa ja ema ei olnud kodus" offered "mother" against "father", "Märg ja
+külm sügis" offered "cold" against "wet". `lib/assessment/heard.ts` reads the sentence the way a
+gap-fill does, every spelling `gapForms` reaches indexed to the glosses of the words spelled that
+way, and the builder treats everything the recording holds as a sense no distractor may share.
+Nothing is guessed about which word a token *is*: `tule` is the imperative of `tulema` and the
+genitive of `tuli`, and both meanings go, which costs a distractor and never a mark. **The pool
+alone reaches half of it**, because the placement draws two hundred words a band and the word that
+makes a distractor true is usually outside that window, so `paperFor` hands the builder the whole
+dictionary's index from `lib/dict/facts.ts`, where it is a fact about the shared dictionary like the
+rest. `npm run audit:questions` asks the same question of every `heard` item it builds, which it
+had excluded from the "is the answer shown" question and was therefore checking with nothing.
+
 **A question nobody can get wrong is worse in a measurement than on a card.** Thirty entries in the
 shipped dictionary are spelled the same in both languages, and the level check's meaning question
 put the Estonian word up with its English gloss among the options: `moment` against "moment". On a
@@ -4151,6 +4168,23 @@ asked**, not always `pre-A1`: writing sets no A1 question and structurally canno
 was being read as "below A1" on the strength of a band nobody had been asked about, on most
 sittings. `session.ts` stops a skill one band past the first it was not passed at, which is what
 keeps an eighty question paper at about fifteen questions for a beginner.
+
+**And a near miss the band above has confirmed is a pass, because that is what the extra band was
+asked for.** The session's own comment says why it asks one band past a failure: a learner who
+came in just under two thirds and then does the next band comfortably was having a bad six
+questions, and that is worth several minutes to find out. The scorer never learned that rule. It
+asked the question and threw the answer away: a real sitting came back writing A2 at 53% and B1 at
+73%, scored writing A1, and read **A2 overall beside B1 in reading and B1 in listening**, on a
+screen printing the B1 pass in green. Six typed questions with partial credit is a band where one
+answer is the difference between 53 and 67, and the band above is the second opinion the paper went
+to the trouble of collecting. So `levelFrom` reads a band between `FLOOR` and `PASS` as passed when
+the next band asked clears `PASS`, and `ladderStopped` keeps climbing past it, since a learner who
+just missed A2 and passed B1 may be a B2. Three things do not change: under half still ends the
+climb whatever sits above, a near miss with a near miss above it is two bands not passed, and a
+near miss with nothing asked above it is a miss. `npm run measure:placement` is a simulation of
+the shape the paper's size was set by, kept in the repository this time so a rule change is
+measured rather than argued: it drives the real ladder and the real scorer over a stated learner
+model, and it is what the figures on `levelFrom` came from.
 
 **Two numbers for one paper is how a finished sitting stops being stored.** `recordAssessment`
 capped its posted arrays at a literal 60, written when the paper was nineteen, and the blueprint
