@@ -1,5 +1,5 @@
 import { CASES } from "@/lib/estonian/cases";
-import { buildCloze, ESTONIAN_WORD, naturalSentence } from "@/lib/estonian/cloze";
+import { buildCloze, ESTONIAN_WORD, naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { CASE_NOTES } from "@/lib/estonian/grammar";
@@ -153,20 +153,9 @@ function meaningTest(word: WordRow, pool: readonly WordRow[]): (a: string, b: st
   return (a, b) => differentMeaning(a, b) && senses.every((sense) => differentMeaning(a, sense));
 }
 
-/**
- * The label pattern, as `naturalSentence` needs to be told about it.
- *
- * A usage that opens with its own headword and a comma is a dictionary
- * illustrating a sense rather than a sentence somebody said, and the sense is
- * often not the one the gloss beside it names: `Kahvel, lipp kukub!` is filed
- * under `kahvel` and is a call about a sailing gaff, not about a fork. Only a
- * nominal, because a verb before a comma is an ordinary main clause and
- * `Usun, et ta ei valeta` is a sentence worth reading.
- */
-function nominalOpener(word: WordRow): ((opening: string) => boolean) | undefined {
-  if (word.pos === "VERB") return undefined;
-  const forms = attestedForms(word);
-  return (opening: string) => forms.has(opening.toLowerCase());
+/** The label pattern for one word, as `naturalSentence` needs to be told about it. */
+function openerFor(word: WordRow): ((opening: string) => boolean) | undefined {
+  return nominalOpener(word.pos, [...attestedForms(word)]);
 }
 
 // ── Gaps ─────────────────────────────────────────────────────────────────────
@@ -242,7 +231,7 @@ export function gapFrom(word: WordRow): Gap | null {
 
   for (const example of word.examples) {
     const sentence = example.et.trim().replace(/\s+/g, " ");
-    if (!gappable(sentence, nominalOpener(word))) continue;
+    if (!gappable(sentence, openerFor(word))) continue;
 
     const cloze = buildCloze(sentence, forms);
     if (!cloze || cloze.index === 0) continue;
@@ -461,6 +450,17 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
   const out: ChoiceItem[] = [];
 
   for (const word of shuffle(pool, rng)) {
+    /*
+      AND NOT A WORD SPELLED THE SAME IN BOTH LANGUAGES. Thirty entries in the
+      shipped dictionary are: `film`, `moment`, `sport`, `park`, `stress`. The
+      question is the Estonian word and the right option is the English gloss,
+      so for those two the question prints its own answer and the item cannot
+      be got wrong. On a card that costs a deck slot; here it costs the
+      placement, because a band's score is what decides a learner's level and
+      an item nobody can fail measures nothing. `meansLine` below already knew
+      about these words and only said so after the answer.
+    */
+    if (sameSpelling(word.lemma, word.translation)) continue;
     const band = bandOf(word.cefr)!;
     const set = pickOptions({
       answer: glossFor(word), candidates: glosses, rng,
@@ -519,7 +519,7 @@ export function readingItems(words: readonly WordRow[], rng: () => number): Choi
   }
 
   const translated = pool.flatMap((w) => {
-    const opener = nominalOpener(w);
+    const opener = openerFor(w);
     return w.examples
       .filter((e) => e.en && e.en.trim() && naturalSentence(e.et, opener))
       .map((e) => ({ word: w, et: e.et, en: e.en!.trim() }));
@@ -612,7 +612,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
   }
 
   for (const word of shuffle(pool, rng)) {
-    const sentence = word.examples.find((e) => gappable(e.et, nominalOpener(word)));
+    const sentence = word.examples.find((e) => gappable(e.et, openerFor(word)));
     if (!sentence) continue;
     const set = pickOptions({
       answer: glossFor(word), candidates: glosses, rng,
@@ -639,7 +639,7 @@ export function listeningItems(words: readonly WordRow[], rng: () => number): (C
   }
 
   for (const word of shuffle(pool, rng)) {
-    const sentence = word.examples.find((e) => dictatable(e.et, nominalOpener(word)));
+    const sentence = word.examples.find((e) => dictatable(e.et, openerFor(word)));
     if (!sentence) continue;
     out.push({
       id: `l-dict-${word.id}`,
@@ -712,7 +712,7 @@ export function writingItems(words: readonly WordRow[], rng: () => number): Writ
 export function speakingItems(words: readonly WordRow[], rng: () => number): SpeakItem[] {
   const out: SpeakItem[] = [];
   for (const word of shuffle(usableWords(words), rng)) {
-    const sentence = word.examples.find((e) => dictatable(e.et, nominalOpener(word)) && e.en);
+    const sentence = word.examples.find((e) => dictatable(e.et, openerFor(word)) && e.en);
     if (sentence) {
       out.push({
         id: `s-sent-${word.id}`,

@@ -15,6 +15,7 @@ function pool(count: number): PoolWord[] {
       translation: "gloss",
       pos: "NOUN",
       cefr: "A1",
+      semanticTypes: null,
       forms: [
         { formType: "NOM_SG", value: lemma, morphCode: null, morphName: null },
         { formType: "GEN_SG", value: `${lemma}a`, morphCode: null, morphName: null },

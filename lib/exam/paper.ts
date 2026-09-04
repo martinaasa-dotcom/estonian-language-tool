@@ -2,6 +2,7 @@ import { unitIntroducing } from "@/lib/collections/syllabus";
 import { buildCloze, ESTONIAN_WORD, isBuildable, naturalSentence, sentenceTiles } from "@/lib/estonian/cloze";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
 import { caseByKey } from "@/lib/estonian/cases";
+import { sameSpelling } from "@/lib/copy/values";
 import { dictationWords } from "@/lib/estonian/dictation";
 import { writingTasksFor } from "@/lib/estonian/writing";
 import {
@@ -52,6 +53,16 @@ export interface PoolWord {
   translation: string;
   pos: string;
   cefr: string | null;
+  /**
+   * Which of the two sets of local cases the word takes, and whether it
+   * answers `kes?` or `mis?`.
+   *
+   * A narrowing of what this paper asks rather than a widening of it, which is
+   * why it is here despite the rule about not changing a measurement in
+   * passing: the case-form task was setting the sisseütlev of `hobune` and
+   * marking `hobusesse` correct. See lib/estonian/caseQuestion.ts.
+   */
+  semanticTypes: string | null;
   /** Stored principal parts plus anything retrieved from Ekilex. */
   forms: { formType: string; value: string; morphCode: string | null; morphName: string | null }[];
   /** Attested sentences. Never generated. */
@@ -841,6 +852,16 @@ function buildGlossChoice(spec: TaskSpec, ctx: BuildContext): ExamTask {
   for (const word of shuffle(ctx.words, ctx.random)) {
     if (items.length >= spec.items) break;
     if (ctx.spent.has(word.lexemeId) || !word.translation) continue;
+    /*
+      AND NOT A WORD SPELLED THE SAME IN BOTH LANGUAGES. Thirty entries in the
+      shipped dictionary are: `film`, `moment`, `sport`, `park`. The question
+      is the Estonian word and the right option is the English gloss, so on
+      those two the question prints its own answer and the item cannot be got
+      wrong. It is a mark a candidate is given rather than one they earned,
+      and this paper's whole claim is that its marking is mechanical and
+      fair. The level check refuses the same shape for the same reason.
+    */
+    if (sameSpelling(word.lemma, word.translation)) continue;
     const set = pickOptions({
       answer: glossFor(word),
       candidates: glosses,

@@ -33,7 +33,7 @@ const TONES: Record<Mastery, "mint" | "butter" | "peach" | "sky"> = {
 
 /** What each tier means, in the learner's terms rather than the rule's. */
 const EXPLAINS: Record<Mastery, string> = {
-  mastered: `Right ${MASTERY_CORRECT} times across ${MASTERY_SLOTS} different forms.`,
+  mastered: `Right ${MASTERY_CORRECT} times across ${MASTERY_SLOTS} different forms, or every form it has.`,
   almost: "Coming along. A couple more forms and these are done.",
   struggling: "These keep going wrong. Worth a round of flash cards.",
   learning: "Met, but not answered enough times to say either way.",
@@ -63,6 +63,22 @@ export function MasteryLists({
           <TierRow key={tier} tier={tier} words={wordsAt(words, tier)} total={counts[tier]} />
         ))}
       </div>
+
+      {/*
+        The page this is a summary of. It is the same query and the same rule;
+        what the page adds is the per-word reading, which forms each word has
+        been right in and how far off it is, and room to show it.
+      */}
+      <p className="mt-4 text-sm" style={{ color: "var(--ink-3)" }}>
+        Word by word, with what each one still needs, is on{" "}
+        <Link
+          href="/words/mastery"
+          className="font-semibold underline underline-offset-2"
+          style={{ color: "var(--accent-deep)" }}
+        >
+          Where your words stand
+        </Link>.
+      </p>
     </Card>
   );
 }

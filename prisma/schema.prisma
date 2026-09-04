@@ -57,6 +57,19 @@ model Lexeme {
   /// syllabus existed, and the seed dropped all 1,359 of them, because `notes`
   /// is written only for entries that carry the key and the harvest never did.
   definition    String?
+  /// The Institute's own semantic type codes for the word's primary sense,
+  /// space separated: `loom` for a horse, `in_elukutse` for a teacher,
+  /// `koht_hoone` for a room.
+  ///
+  /// Not decoration. Estonian picks between two whole sets of local cases on a
+  /// fact about meaning, and nothing in a word's spelling carries it, so every
+  /// animate noun in the dictionary was being drilled on `hobusesse` and
+  /// `koeras` (see lib/estonian/semantics.ts). Ekilex has been answering this
+  /// in the same response the forms come from since before the app existed;
+  /// nothing here is generated, and the codes are stored exactly as the
+  /// Institute spells them so the reading of them can be corrected without
+  /// asking a service somebody else runs all over again.
+  semanticTypes String?
   provenance    String  @default("SEED") // SEED | EKILEX | AI | USER
   ekilexWordId  Int?
 
@@ -219,6 +232,14 @@ model Review {
   durationMs  Int      @default(0)
   stateBefore Int      @default(0)
   targetCase  String?
+  /// Which facet of the word this answer was about: a case, a named part of a
+  /// verb, or the card's own type. `lib/srs/slots.ts` is the one table of what
+  /// may go here and `lib/srs/mastery.ts` counts the distinct ones as the
+  /// variety half of its claim. Null on rows written before this column, where
+  /// `targetCase` and one shared meaning slot are the honest reading of what
+  /// was recorded at the time. Never widen `targetCase` to hold this: that
+  /// column feeds the case charts, which print whatever they find.
+  slot        String?
 
   @@index([ownerId, reviewedAt])
   @@index([ownerId, targetCase])

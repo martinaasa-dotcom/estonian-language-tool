@@ -134,7 +134,7 @@ describe("the commonest words", () => {
         where: { lemma },
         select: {
           lemma: true, translation: true, pos: true, gradation: true, gradationNote: true,
-          government: true, examples: true,
+          government: true, examples: true, semanticTypes: true,
           forms: { select: { formType: true, value: true, morphCode: true } },
         },
       });

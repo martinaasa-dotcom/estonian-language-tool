@@ -69,6 +69,26 @@ export interface EstonianSense {
    * coin toss.
    */
   headword: string | null;
+  /**
+   * The genitive and partitive that headword template declares, where it
+   * declares them: `{{et-noun|ea|iga}}` is `["ea", "iga"]`.
+   *
+   * A SECOND OPINION ABOUT WHICH WORD THIS IS, which is a different question
+   * from which part of speech it is. The gloss comes from this page and the
+   * forms come from Ekilex, joined on the spelling, and Ekilex numbers its
+   * homonyms: `iga` is the quantifier (`iga : iga : iga`) and the noun for age
+   * (`iga : ea : iga`), and `kohus` is a court (`kohtu`) and a moral duty
+   * (`kohuse`). Nothing checked that the forms the app stored belonged to the
+   * sense the gloss describes, so `scripts/audit-homonyms.ts` compares these
+   * two strings with the two the dictionary holds.
+   *
+   * Positional arguments only, and only the first two: every `{{et-noun}}` and
+   * `{{et-adj}}` on the pages this app reads writes the genitive first and the
+   * partitive second, and `s=` on an adjective is the superlative. Null where
+   * the template declares neither, which is a page saying nothing rather than
+   * a page disagreeing.
+   */
+  stems: readonly [string, string] | null;
 }
 
 /**
@@ -104,6 +124,27 @@ const HEADING = /^(={3,6})\s*([^=|]+?)\s*\1\s*$/;
  * silence Ekilex offers.
  */
 const HEADWORD = /^\{\{\s*(et-(?:noun|verb|adj|adv))\s*[|}]/;
+
+/**
+ * The whole headword template, so its arguments can be read as well as its name.
+ *
+ * `{{et-noun|ea|iga}}` and `{{et-adj|ilusa|ilusat|s=ilusaim}}`. Only the
+ * positional arguments are taken: `s=` is the superlative and `head=` is a
+ * display override, and neither is a principal part.
+ */
+const HEADWORD_ARGS = /^\{\{\s*et-(?:noun|adj)\s*\|([^}]*)\}\}/;
+
+/** The genitive and partitive a headword template declares, or null. */
+function stemsIn(line: string): readonly [string, string] | null {
+  const args = HEADWORD_ARGS.exec(line)?.[1];
+  if (!args) return null;
+  const positional = args
+    .split("|")
+    .map((arg) => arg.trim())
+    .filter((arg) => arg.length > 0 && !arg.includes("="));
+  const [genitive, partitive] = positional;
+  return genitive && partitive ? [genitive, partitive] : null;
+}
 
 const HEADWORD_POS: Record<string, string> = {
   "et-noun": "NOUN",
@@ -151,6 +192,7 @@ export function extractEstonianEntries(wikitext: string): EstonianSense[] {
   const senses: EstonianSense[] = [];
   let pos: string | null = null;
   let headword: string | null = null;
+  let stems: readonly [string, string] | null = null;
   for (const line of section[1].split("\n")) {
     const heading = HEADING.exec(line);
     if (heading) {
@@ -158,11 +200,13 @@ export function extractEstonianEntries(wikitext: string): EstonianSense[] {
       // A new block, so the previous block's headword no longer describes
       // anything below this line.
       headword = null;
+      stems = null;
       continue;
     }
     const declared = HEADWORD.exec(line);
     if (declared) {
       headword = HEADWORD_POS[declared[1]!] ?? null;
+      stems = stemsIn(line);
       continue;
     }
     if (!line.startsWith("# ")) continue;
@@ -170,7 +214,7 @@ export function extractEstonianEntries(wikitext: string): EstonianSense[] {
     if (NOT_A_DEFINITION.test(raw)) continue;
     const cleaned = cleanWikitext(raw);
     if (cleaned && !senses.some((s) => s.gloss === cleaned)) {
-      senses.push({ gloss: cleaned, pos, headword });
+      senses.push({ gloss: cleaned, pos, headword, stems });
     }
     if (senses.length >= 5) break;
   }

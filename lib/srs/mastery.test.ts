@@ -2,9 +2,15 @@ import { describe, expect, it } from "vitest";
 import { masteryOf, MASTERY_CORRECT, MASTERY_ORDER, MASTERY_SLOTS, type WordReview } from "./mastery";
 
 let clock = 0;
-/** A graded answer. `at` only matters where the order of two of them does. */
-const r = (rating: number, targetCase: string | null = null, at?: number): WordReview =>
-  ({ rating, targetCase, reviewedAt: new Date(at ?? (clock += 1000)) });
+/**
+ * A graded answer. `at` only matters where the order of two of them does.
+ *
+ * The slot is what the round asked, which is the column mastery counts;
+ * `targetCase` rides along as null because these are not case cards and the
+ * two questions are deliberately answered by two columns.
+ */
+const r = (rating: number, slot: string | null = null, at?: number): WordReview =>
+  ({ rating, targetCase: null, slot, reviewedAt: new Date(at ?? (clock += 1000)) });
 
 const right = (c: string | null = null, at?: number) => r(4, c, at);
 const wrong = (c: string | null = null, at?: number) => r(1, c, at);
@@ -12,7 +18,8 @@ const wrong = (c: string | null = null, at?: number) => r(1, c, at);
 describe("masteryOf", () => {
   it("says nothing about a word with no answers behind it", () => {
     expect(masteryOf([])).toEqual({
-      mastery: "learning", correct: 0, total: 0, slots: 0, accuracy: null, progress: 0,
+      mastery: "learning", correct: 0, total: 0, slots: 0, slotsNeeded: MASTERY_SLOTS,
+      filled: [], accuracy: null, progress: 0,
     });
   });
 
@@ -117,5 +124,52 @@ describe("MASTERY_ORDER", () => {
   it("names every tier exactly once", () => {
     expect(new Set(MASTERY_ORDER).size).toBe(MASTERY_ORDER.length);
     expect(MASTERY_ORDER).toHaveLength(4);
+  });
+});
+
+describe("the bar is what the word can carry", () => {
+  /*
+    The fault this parameter exists for. Every one of these words was
+    unmasterable before it, for ever, on any deck: the threshold was a flat
+    three and the log could not record more than one kind of answer about
+    them.
+  */
+  it("masters a phrase on the two questions a phrase has", () => {
+    const v = masteryOf(
+      [right("RECOGNITION"), right("PRODUCTION"), right("RECOGNITION"),
+       right("PRODUCTION"), right("RECOGNITION")],
+      2,
+    );
+    expect(v.mastery).toBe("mastered");
+    expect(v.slotsNeeded).toBe(2);
+  });
+
+  it("still asks three of a word that has more than three", () => {
+    const v = masteryOf(
+      [right("RECOGNITION"), right("PRODUCTION"), right("RECOGNITION"),
+       right("PRODUCTION"), right("RECOGNITION")],
+      9,
+    );
+    expect(v.mastery).toBe("almost");
+    expect(v.slotsNeeded).toBe(MASTERY_SLOTS);
+  });
+
+  it("never asks for nothing, however little a word can be asked", () => {
+    // A word with no cards at all cannot be asked anything, and dividing by
+    // that to say so would report it as finished on its first correct answer.
+    expect(masteryOf([right()], 0).slotsNeeded).toBe(1);
+  });
+
+  it("reads a row written before the slot column the way it always did", () => {
+    const legacy = (at: number): WordReview =>
+      ({ rating: 4, targetCase: "INESSIVE", slot: null, reviewedAt: new Date(at) });
+    const v = masteryOf([legacy(1), legacy(2), legacy(3), legacy(4), legacy(5)]);
+    expect(v.slots).toBe(1);
+    expect(v.filled).toEqual(["INESSIVE"]);
+  });
+
+  it("names the slots already answered, so a round can ask for another", () => {
+    const v = masteryOf([right("INESSIVE"), wrong("COMITATIVE"), right("RECOGNITION")]);
+    expect([...v.filled].sort()).toEqual(["INESSIVE", "RECOGNITION"]);
   });
 });

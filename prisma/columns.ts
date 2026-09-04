@@ -44,6 +44,16 @@ export interface SeedEntry {
    */
   definition?: string | null;
   /**
+   * The Institute's semantic type codes for the word's primary sense.
+   *
+   * Reseeded like the gloss beside it and for the same reason: it comes from
+   * Ekilex, nobody edits it by hand, and a reseed is how a corrected harvest
+   * reaches a deployment that was seeded before this column existed. Null
+   * where the Institute classifies nothing, which is a real answer and is what
+   * `semanticGroup` reads as `UNKNOWN`.
+   */
+  semanticTypes: string | null;
+  /**
    * `Lexeme.examples` JSON, for the harvested words that arrive with attested
    * sentences. Written on insert only — see the column's note below.
    */
@@ -86,6 +96,7 @@ export const LEXEME_COLUMNS: SeedColumn[] = [
   { name: "government", cast: "text", value: (e) => e.government, reseeded: true },
   { name: "notes", cast: "text", value: (e) => e.notes ?? null, reseeded: true, onlyWhenOwned: true },
   { name: "definition", cast: "text", value: (e) => e.definition ?? null, reseeded: true, onlyWhenOwned: true },
+  { name: "semanticTypes", cast: "text", value: (e) => e.semanticTypes, reseeded: true },
   // Insert-only, and the distinction matters. The built-in dictionary now ships
   // with the attested sentences the harvest brought back, so a brand-new
   // database has gap-fill, dictation and sentence-building on day one instead of

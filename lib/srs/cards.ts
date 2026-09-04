@@ -1,10 +1,12 @@
 import { CASES, caseByKey } from "@/lib/estonian/cases";
-import { localCasesFor } from "@/lib/estonian/place";
-import { buildCloze, mentions } from "@/lib/estonian/cloze";
+import { caseFits, caseQuestionFor, localCasesFor } from "@/lib/estonian/caseQuestion";
+import { buildCloze, mentions, naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
+import { grammarTerm } from "@/lib/estonian/terms";
 import { gapForms } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { CONJUGATION_SLOTS, type ConjugationSlot } from "@/lib/srs/slots";
 import type { CaseKey } from "@/lib/estonian/types";
 
 export type CardType =
@@ -96,43 +98,27 @@ export function inTeachingOrder<T extends { lexemeId: string | null; cardType: s
  * only ever met the English name cannot follow the question. The English name
  * is on the reference page this card links back to, which is the right place
  * for a cross-reference and the wrong place for the prompt.
+ *
+ * The table itself is `CONJUGATION_SLOTS` in `lib/srs/slots.ts`, which is the
+ * one answer to what facet of a word an answer was about. It moved rather than
+ * being copied: the flash round asks for a named part of a verb on a card that
+ * is not about that part, and a second table of morph codes is two tables
+ * disagreeing about what `IndPrSg3` is called.
  */
-const CONJUGATION_SLOTS: {
-  code: string; formType?: string; label: string; negative?: boolean;
-  /** A second Ekilex code whose form is also a right answer for this slot. */
-  alsoCode?: string;
-}[] = [
-  { code: "IndPrSg1", formType: "PRES_1SG", label: "olevik · ma" },
-  { code: "IndPrSg3", label: "olevik · ta" },
-  { code: "IndPrPl1", label: "olevik · me" },
-  // The negative is one form for every person, said after `ei`. The card
-  // shows and accepts the two words together, since `loe` on its own is not
-  // what anybody says.
-  //
-  // `pole` is the other half of that for the one verb that has one. Estonian
-  // contracts `ei ole` and the contraction is what people say and write, so a
-  // learner typing it was being marked wrong on the commonest verb in the
-  // language. Ekilex records it as `IndPrPsN`, for `olema` and for nothing
-  // else the course asks about, and the card carries both answers the way the
-  // illative does: joined with the separator `acceptedAnswers` splits on, so
-  // what the screen shows and what the marker takes are one string.
-  { code: "IndPrPs_", label: "eitus · ma ei", negative: true, alsoCode: "IndPrPsN" },
-  { code: "IndIpfSg1", formType: "PAST_1SG", label: "lihtminevik · ma" },
-  { code: "IndIpfSg3", label: "lihtminevik · ta" },
-  { code: "KndPrSg1", label: "tingiv kõneviis · ma" },
-  { code: "ImpPrSg2", label: "käskiv kõneviis · sa!" },
-  /*
-    The polite imperative, which is the one a learner is addressed with. Every
-    counter, every receptionist and every official in the country says `öelge`,
-    `andke`, `täitke` and `oodake`, and the app could not produce one for any
-    verb in the language: it is not a suffix on anything the rule holds, since
-    `annan` goes to `andke`, `lähen` to `minge` and `loen` to `lugege`. It is
-    stored now, like every other form no rule reaches, and it was found by
-    `eval:scene`, where a model writing a `teie` scene reached for it over and
-    over and the gate withheld every line.
-  */
-  { code: "ImpPrPl2", label: "käskiv kõneviis · te!" },
-];
+
+/**
+ * What reading a verb's forms needs, which is less than a whole entry.
+ *
+ * The flash round asks these same nine slots of a word the learner has already
+ * met and holds no `gradation` or `examples` to hand over, and a second
+ * reading of "which form is this" is a round and a card putting two different
+ * answers on two screens. `LexemeForCards` satisfies it, so the card builder
+ * passes itself unchanged.
+ */
+export interface VerbForms {
+  lemma: string;
+  forms: readonly { formType: string; value: string; morphCode?: string | null }[];
+}
 
 /**
  * Every spelling the dictionary holds under one Ekilex code.
@@ -143,7 +129,7 @@ const CONJUGATION_SLOTS: {
  * illative's rule, and `Form`'s unique key carries the value so that both rows
  * can sit under one code.
  */
-function attestedForms(lex: LexemeForCards, code: string, formType?: string): string[] {
+export function attestedForms(lex: VerbForms, code: string, formType?: string): string[] {
   const out: string[] = [];
   for (const f of lex.forms) {
     const matches = f.morphCode === code
@@ -157,8 +143,12 @@ function attestedForms(lex: LexemeForCards, code: string, formType?: string): st
 /**
  * The form for one conjugation slot: attested where the dictionary has it,
  * derived where the rule reaches, and nothing otherwise.
+ *
+ * Exported because the flash round asks these same eight of a word the learner
+ * has already met, and a second reading of "which form is this" is a round and
+ * a card putting two different answers on two screens.
  */
-function conjugationAnswer(lex: LexemeForCards, slot: (typeof CONJUGATION_SLOTS)[number]): string[] {
+export function conjugationAnswer(lex: VerbForms, slot: ConjugationSlot): string[] {
   const attested = attestedForms(lex, slot.code, slot.formType);
   if (attested.length > 0) return attested;
   const derived = derivedVerbForms({ lemma: lex.lemma, pres1sg: pres1sgFrom(lex.forms) })
@@ -173,6 +163,15 @@ export interface LexemeForCards {
   lemma: string;
   translation: string;
   pos: string;
+  /**
+   * The Institute's semantic type codes, which decide whether this word is
+   * drilled on `õpetajale` or on `õpetajasse`.
+   *
+   * Required rather than optional, which is what makes it stick: `null` says
+   * the dictionary holds no classification and a caller that never asked
+   * cannot satisfy the type. See `lib/estonian/caseQuestion.ts`.
+   */
+  semanticTypes: string | null;
   gradation: string;
   gradationNote: string | null;
   government: string | null;
@@ -206,12 +205,18 @@ export interface GeneratedCard {
 
 const form = (l: LexemeForCards, type: string) => l.forms.find((f) => f.formType === type)?.value;
 
-/** Cases worth drilling first — the ones a B1 learner actually reaches for. */
 /**
  * The cases every word is drilled on, whichever set of local ones it takes.
- * `localCasesFor` supplies the other three, because a place name in `-maa`
- * answers `kus?` with `Saksamaal` and not with `Saksamaas`. See
- * lib/estonian/place.ts for what that was doing to the A1 country unit.
+ *
+ * `localCasesFor` supplies the other three, and which three is a fact about
+ * the word rather than about its spelling: a place name in `-maa` answers with
+ * `Saksamaal` and not `Saksamaas`, and a person or an animal answers with
+ * `õpetajale` and `hobusele` and never with `õpetajasse` or `hobuses`. See
+ * lib/estonian/caseQuestion.ts, which is the one answer all six generators
+ * that pick a case now read.
+ *
+ * These two are asked of every word, because they are: `emaks` is how you say
+ * somebody became a mother and `hobusega` is how you say you went by horse.
  */
 const DRILL_CASES: readonly CaseKey[] = ["COMITATIVE", "TRANSLATIVE"];
 
@@ -223,6 +228,12 @@ const DRILL_CASES: readonly CaseKey[] = ["COMITATIVE", "TRANSLATIVE"];
 export function generateCards(lex: LexemeForCards, types: readonly CardType[]): GeneratedCard[] {
   const out: GeneratedCard[] = [];
   const genSg = form(lex, "GEN_SG");
+
+  /*
+    What the case questions are asked of. `lex` carries the forms; this is the
+    two facts `lib/estonian/caseQuestion.ts` needs off them, read once.
+  */
+  const subject = { lemma: lex.lemma, semanticTypes: lex.semanticTypes, nomSg: form(lex, "NOM_SG") ?? null };
 
   for (const type of types) {
     switch (type) {
@@ -259,7 +270,16 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
 
       case "CASE_FORM": {
         if (!genSg) break;
-        for (const key of [...localCasesFor(lex.lemma), ...DRILL_CASES]) {
+        for (const key of [...localCasesFor(subject), ...DRILL_CASES]) {
+          /*
+            AND NOTHING AT ALL FOR A WORD WITH NO SINGULAR. Nineteen entries
+            are headed by a plural because that is the only number the word
+            has, and Ekilex records the singular of the word underneath, so
+            this asked `prillid → milles?` and wanted `prillis`. `caseFits`
+            refuses every case for those, the comitative included, since
+            `jõuludega` is how you say it and `jõuluga` is a form of `jõul`.
+          */
+          if (!caseFits(key, subject)) continue;
           /*
             THE ANSWER SIDE IS WHAT THE DICTIONARY ATTESTS.
 
@@ -303,7 +323,18 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           const spec = CASES.find((c) => c.key === key)!;
           out.push({
             cardType: type,
-            front: `${lex.lemma} → ${spec.question}`,
+            /*
+              THE QUESTION IS THE ONE THIS WORD ANSWERS.
+
+              `spec.question` is the case's own name and names both
+              interrogatives and the place adverb, which is right on a grammar
+              page and wrong on a card about one word. A horse is a `kes`, so
+              the card asks `kellega?`; and `kus?` is answered by the
+              seesütlev and the alalütlev alike, so printing it makes the
+              question ambiguous between two cases and marks a learner wrong
+              for answering what was asked.
+            */
+            front: `${lex.lemma} → ${caseQuestionFor(spec, subject)}`,
             back: answer.accepted.join(" / "),
             hint: `${spec.et} · the ${spec.en.toLowerCase()}`,
             targetCase: key,
@@ -313,10 +344,12 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
       }
 
       case "GRADATION": {
-        if (lex.gradation === "NONE" || !genSg) break;
+        // The genitive singular of a word with no singular is another word's,
+        // so `jõulud → mille?` wanted `jõulu`. See `caseFits`.
+        if (lex.gradation === "NONE" || !genSg || !caseFits("GENITIVE", subject)) break;
         out.push({
           cardType: type,
-          front: `${lex.lemma} → ${caseByKey("GENITIVE")!.question}`,
+          front: `${lex.lemma} → ${caseQuestionFor(caseByKey("GENITIVE")!, subject)}`,
           back: genSg,
           /*
             The hint is shown before the answer, so it may not carry the
@@ -355,7 +388,31 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
         // Only ever built from a sentence Ekilex recorded, by hiding a form we
         // already hold. Nothing is written — the exercise is real Estonian with
         // one word taken out (see lib/estonian/cloze.ts).
-        const examples = usableExamples(parseExamples(lex.examples));
+        /*
+          AND ONLY FROM A SENTENCE, WHICH IS A STRONGER CLAIM THAN
+          `usableExamples` MAKES.
+
+          Ekilex records a usage against a *sense*, so what comes back under a
+          headword is sometimes lexicography rather than something somebody
+          said, and `usableExamples` keeps what is worth printing on a
+          dictionary entry, which is the right rule for a page and the wrong
+          one for a question. The mock exam and the level check have gone
+          through `naturalSentence` since the day a real sitting turned three
+          of these up; the deck never did, and built 95 gap-fill cards out of
+          them. `Nii ____ on öelda, et ..` trails off. `Vanemametnikud on: ...
+          9) ____;` is an ordinance. `Ta kannab tumedaid ____/teksasid.` leaves
+          the answer standing beside the gap in its other spelling, which is
+          the worst of them: the card cannot be got wrong and cannot be got
+          right either.
+
+          The opener is this word's own, which is all a card builder needs to
+          know: the label pattern is a usage that names its own headword and
+          then illustrates a sense the gloss beside it does not, and the
+          headword here is the word the card is for.
+        */
+        const opener = nominalOpener(lex.pos, [lex.lemma, ...lex.forms.map((f) => f.value)]);
+        const examples = usableExamples(parseExamples(lex.examples))
+          .filter((e) => naturalSentence(e.et, opener));
         if (examples.length === 0) break;
 
         // Every spelling of the word, stored or derived, so a sentence about
@@ -403,12 +460,32 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
       }
 
       case "GOVERNMENT": {
-        if (!lex.government) break;
+        /*
+          A VERB, BECAUSE THAT IS WHAT THE QUESTION ASKS.
+
+          The dictionary records a government for 76 nouns and 34 adjectives as
+          well: `osa` genuinely takes the partitive and the elative, and `laps`
+          the genitive. Asking about one of those as though it were a verb is a
+          question worded as a fact the entry does not support, and it was 110
+          of the 450 cards this built. `lib/exam/paper.ts` filters this way and
+          says in its own comment that the government drill always has; this
+          was the third builder and the one nobody had told.
+
+          AND THE ESTONIAN TERM LEADS, like every other card in this file. It
+          read `aitama takes which case?`, which is English metalanguage on the
+          front of a card whose back is a list of Estonian question words, and
+          "which case" is not even the question: `aitama` takes the partitive,
+          the elative *and* a `mida teha` clause, and the entry says so. The
+          card asks what the verb takes and the back is what the dictionary
+          answers.
+        */
+        if (lex.pos !== "VERB" || !lex.government) break;
+        const term = grammarTerm("government");
         out.push({
           cardType: type,
-          front: `${lex.lemma} takes which case?`,
+          front: `${lex.lemma} → ${term?.et ?? "rektsioon"}`,
           back: lex.government,
-          hint: "rektsioon",
+          hint: `${term?.alsoCalled ?? "verb government"} · ${lex.translation}`,
           targetCase: null,
         });
         break;
@@ -424,7 +501,7 @@ export function availableCardTypes(lex: LexemeForCards): CardType[] {
   const types: CardType[] = ["RECOGNITION", "PRODUCTION"];
   if (genSg) types.push("CASE_FORM");
   if (lex.gradation !== "NONE" && genSg) types.push("GRADATION");
-  if (lex.government) types.push("GOVERNMENT");
+  if (lex.pos === "VERB" && lex.government) types.push("GOVERNMENT");
   // Offered only when they can genuinely be built: an option that silently
   // produces no cards is worse than no option.
   if (generateCards(lex, ["CONJUGATION"]).length > 0) types.push("CONJUGATION");

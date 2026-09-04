@@ -11,6 +11,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
+import { caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
 import { isPhrase } from "@/lib/dict/pos";
@@ -35,6 +36,21 @@ export interface EntryForm {
   orderIndex: number;
 }
 
+/**
+ * The three facts `lib/estonian/caseQuestion.ts` needs about a word.
+ *
+ * Read off the entry rather than carried on it, because the nominative
+ * singular is already in `forms` and a second copy of a form is a second
+ * source of truth for it.
+ */
+function subjectOf(entry: EntryView) {
+  return {
+    lemma: entry.lemma,
+    semanticTypes: entry.semanticTypes,
+    nomSg: entry.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+  };
+}
+
 export interface EntryView {
   id: string;
   lemma: string;
@@ -53,6 +69,12 @@ export interface EntryView {
   gradation: string;
   gradationNote: string | null;
   government: string | null;
+  /**
+   * The Institute's semantic type codes, which decide which of the two sets of
+   * local cases this word takes and whether it answers `kes?` or `mis?`.
+   * See lib/estonian/caseQuestion.ts.
+   */
+  semanticTypes: string | null;
   notes: string | null;
   definition: string | null;
   provenance: string;
@@ -678,6 +700,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
       {retrieved.length > 0 ? (
         <WordForms
           pos={entry.pos}
+          subject={subjectOf(entry)}
           forms={retrieved.map((f) => ({ value: f.value, morphCode: f.morphCode, morphName: f.morphName }))}
         />
       ) : isVerb && form("PRES_1SG") ? (
@@ -738,7 +761,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
                     <td lang="et" className="px-3 py-2 text-base" style={{ color: "var(--ink-2)" }}>
                       {plural ?? <span style={{ color: "var(--ink-3)" }}>{NO_VALUE}</span>}
                     </td>
-                    <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{spec.question}</td>
+                    <td lang="et" className="px-3 py-2 text-xs" style={{ color: "var(--ink-3)" }}>{caseQuestionFor(spec, subjectOf(entry))}</td>
                   </tr>
                 ))}
               </tbody>
@@ -837,7 +860,7 @@ function AddToDeck({ entry }: { entry: EntryView }) {
   const available = availableCardTypes({
     lemma: entry.lemma, translation: entry.translation, pos: entry.pos,
     gradation: entry.gradation, gradationNote: entry.gradationNote,
-    government: entry.government, forms: entry.forms,
+    government: entry.government, semanticTypes: entry.semanticTypes, forms: entry.forms,
   });
   const [selected, setSelected] = useState<CardType[]>(
     CARD_TYPES.filter((t) => t.defaultOn && available.includes(t.type)).map((t) => t.type),

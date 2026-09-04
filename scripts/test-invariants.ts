@@ -812,6 +812,197 @@ check("every screen and marker that needs a case form asks the one function for 
 });
 
 
+/*
+  WHICH LOCAL CASES A WORD TAKES IS ONE ANSWER, AND IT WAS EIGHT.
+
+  Estonian has two sets of local cases and a word takes one: `toas` for a room,
+  `hobusel` for a horse, `Saksamaal` for a country. `lib/estonian/place.ts` was
+  written for the third of those, because the A1 country unit was drilling
+  `Venemaas`, and only two of the eight generators that pick a case ever called
+  it. So the lesson planner, the writing exercise, the daily quest, the picture
+  round and the scene description all went on asking `Saksamaa → milles? kus?`
+  after the flashcards had been fixed, and every one of them asked an animal
+  for its illative besides.
+
+  `lib/estonian/caseQuestion.ts` is the one answer now and this fails on a
+  ninth generator that picks a local case without asking. It is anchored on the
+  *call*, not on the import, because a file can import the helper and go on
+  reading its own list, which is the shape every check in this file has been
+  caught by at least once.
+*/
+check("every generator that picks a case asks which ones the word takes", () => {
+  const askers = [
+    "lib/srs/cards.ts",
+    "lib/estonian/writing.ts",
+    "lib/collections/lesson.ts",
+    "lib/progress/caseExamples.ts",
+    "lib/progress/target.ts",
+    "lib/games/describe.ts",
+    "lib/games/flash.ts",
+    "app/(app)/review/emoji/page.tsx",
+  ];
+  const asks = /caseFits\(|localCasesFor\(/;
+  for (const file of askers) {
+    assert.match(
+      code(file),
+      asks,
+      `${file} picks a case without asking caseFits, so it can drill hobusesse`,
+    );
+  }
+  /*
+    And nobody outside that module answers it for themselves. `place.ts` holds
+    the two trios and the `-maa` ending; a second reader of those constants is
+    a second rule about which set a word takes, which is exactly how this came
+    to be wrong in eight places.
+  */
+  const owners = ["lib/estonian/caseQuestion.ts", "lib/estonian/place.ts"];
+  const offenders = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !owners.includes(file) && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /\b(INSIDE_CASES|OUTSIDE_CASES|takesOutsideCases)\b/.test(code(file)));
+  assert.deepEqual(
+    offenders,
+    [],
+    "a second module decides which set of local cases a word takes",
+  );
+});
+
+/*
+  A CARD ABOUT ONE WORD ASKS THE QUESTION THAT WORD ANSWERS.
+
+  Two facts, and the app had neither. A horse is a `kes`, so `hobune →
+  millega?` asks with the interrogative for a thing, which is the first
+  distinction anybody learning Estonian is taught. And `kus?` is answered by
+  the seesütlev *and* the alalütlev, `kuhu?` by the sisseütlev and the
+  alaleütlev, `kust?` by the seestütlev and the alaltütlev: a card wanting one
+  of a pair that prints the adverb can be answered correctly and marked wrong.
+
+  `CaseSpec.question` is the case's own *name* and carries all three, which is
+  right on a grammar page and on an option label and wrong on a card. This
+  fails on a screen that prints one word's case question straight off the spec.
+*/
+check("a question about one word is worded for that word", () => {
+  const perWord = [
+    "lib/srs/cards.ts",
+    "lib/estonian/writing.ts",
+    "lib/collections/lesson.ts",
+    "lib/progress/target.ts",
+    "lib/games/flash.ts",
+    "app/(app)/review/emoji/page.tsx",
+    "app/(app)/dictionary/Forms.tsx",
+    "app/(app)/dictionary/DictionaryClient.tsx",
+    "app/(chromeless)/welcome/page.tsx",
+    "app/(app)/review/describe/page.tsx",
+    "app/api/describe/route.ts",
+  ];
+  for (const file of perWord) {
+    const source = code(file);
+    assert.match(
+      source,
+      /caseQuestionFor\(/,
+      `${file} names a case for one word without asking caseQuestionFor`,
+    );
+    assert.doesNotMatch(
+      source,
+      /\b(?:spec|row\.spec|named|c)\.question\b/,
+      `${file} prints CaseSpec.question about one word, which names both series and a place adverb`,
+    );
+  }
+  /*
+    And the name itself still carries all three, because that is what a class
+    writes on the board and what the grammar reference and the option labels
+    are for. Derived from the parts rather than typed, so the two halves of the
+    table cannot disagree the way they did: the first three cases named both
+    pronouns and the other eleven named one.
+  */
+  const cases = code("lib/estonian/cases.ts");
+  assert.match(
+    cases,
+    /question: \[row\.asksPerson, row\.asksThing, row\.asksWhere\]/,
+    "a case's name stopped being built from its own parts",
+  );
+});
+
+/*
+  AND THE FACT BEHIND BOTH COMES FROM THE INSTITUTE.
+
+  Nothing in a word's spelling says it is an animal, so this is data rather
+  than a rule: `Lexeme.semanticTypes` holds Ekilex's own classification codes
+  and `lib/estonian/semantics.ts` is the only module that reads them. A second
+  reader is a second answer to "is this a person", which is how the two sets of
+  local cases came apart in the first place.
+*/
+check("the Institute's classification has one reader", () => {
+  /*
+    Two files, and the pair is the rule: `semantics.ts` decides what a code
+    means and `caseQuestion.ts` is the only thing that acts on the decision.
+    Every other file that names the column is carrying it rather than reading
+    it, which is a query selecting it, a type declaring it or a mapper joining
+    Ekilex's list into it.
+  */
+  const owners = ["lib/estonian/semantics.ts", "lib/estonian/caseQuestion.ts"];
+  const readers = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => !owners.includes(file) && !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /semanticGroup\(|isAnimate\(|bothLocalSetsOrdinary\(/.test(code(file)));
+  assert.deepEqual(
+    readers,
+    [],
+    "a module outside lib/estonian/semantics.ts decides what a semantic type means",
+  );
+  // And the codes stay written out rather than matched by prefix: `in_rahvas_keel`
+  // is a language and opens like a person, and a prefix rule read `emakeel` as
+  // a being.
+  assert.match(
+    code(owners[0]!),
+    /ANIMATE_CODES/,
+    "the animate codes stopped being written out, so a prefix rule decides again",
+  );
+});
+
+/*
+  AN EXERCISE IS BUILT OUT OF A SENTENCE.
+
+  Ekilex records a usage against a *sense*, so what comes back under a headword
+  is sometimes lexicography rather than something somebody said. `usableExamples`
+  keeps what is worth printing on a dictionary entry, which is the right rule
+  for a page and too loose for a question: `Nii ____ on öelda, et ..` trails
+  off, `Vanemametnikud on: ... 9) ____;` is an ordinance, and `Ta kannab
+  tumedaid ____/teksasid.` leaves the answer standing beside the gap in its
+  other spelling.
+
+  `naturalSentence` was the gate on four of the eight doors. The mock exam and
+  the level check had it; the deck's gap-fills, the printable worksheet, the
+  lesson planner and speaking practice did not, and built 81 cards out of them.
+*/
+check("every exercise built from a sentence checks that it is one", () => {
+  const builders = [
+    "lib/srs/cards.ts",
+    "lib/collections/worksheet.ts",
+    "lib/exam/paper.ts",
+    "lib/assessment/items.ts",
+    "lib/progress/describe.ts",
+    "app/(app)/learn/[unitId]/lesson/page.tsx",
+    "app/(app)/review/speaking/page.tsx",
+    "app/(app)/review/dictation/page.tsx",
+    "app/(app)/review/sentences/page.tsx",
+  ];
+  for (const file of builders) {
+    assert.match(
+      code(file),
+      /naturalSentence\(/,
+      `${file} builds an exercise from a usage without checking that it is a sentence`,
+    );
+  }
+  // One definition of the label pattern, beside the rule it is an argument to.
+  // It lived in the level check, which is why the deck never had it.
+  assert.match(
+    code("lib/estonian/cloze.ts"),
+    /export function nominalOpener\(/,
+    "the label pattern moved out of the module that owns naturalSentence",
+  );
+});
+
 check("the module that writes about Estonian holds no Estonian", () => {
   /*
     `lib/estonian/grammar.ts` is the one place that explains the case system at
@@ -7470,21 +7661,34 @@ check("a frequency list is named once, asked one way, and never built by a rende
     `"${label}" is written down somewhere other than the one table of what a list is called`,
   );
 
-  const rounds = [
-    "app/(app)/review/flashcards/page.tsx",
-    "app/(app)/review/common/[group]/page.tsx",
-  ];
+  /*
+    THE FREQUENCY ROUND ASKS ONE PLACE WHICH CARD OF A WORD TO PUT UP.
+
+    This named the Flash cards page too, and it should not any more, which is a
+    narrowing rather than a loss. That round stopped rendering `ReviewSession`
+    and stopped picking a *card*: it picks a **slot** off `askableSlots`, which
+    can be a form no card of this learner's carries, and then grades whichever
+    card comes closest (ADR-016). Asking it to call a function that chooses
+    among cards would be asking it to answer a question it no longer has.
+
+    What the rule was protecting is the half that still holds and is asserted
+    below: nobody grows a second copy of the picker. That reaches every file
+    rather than the two that happened to render a session.
+  */
+  const rounds = ["app/(app)/review/common/[group]/page.tsx"];
   for (const file of rounds) {
-    const source = code(file);
     assert.match(
-      source, /leastPractisedSlot\(/,
+      code(file), /leastPractisedSlot\(/,
       `${file} no longer asks lib/srs/mastery.ts which card of a word to put up`,
     );
-    assert.doesNotMatch(
-      source, /function leastPractised/,
-      `${file} has grown its own copy of the slot rule, which is two answers to one question`,
-    );
   }
+  const copies = [...APP, ...LIB, ...COMPONENTS]
+    .filter((f) => f !== "lib/srs/mastery.ts")
+    .filter((f) => /function leastPractised/.test(code(f)));
+  assert.deepEqual(
+    copies, [],
+    "a second copy of the slot rule, which is two answers to one question",
+  );
 
   const deepen = /export async function deepenCommonWords\(([\s\S]*?)\n\}/
     .exec(code("app/actions.ts"))?.[1] ?? "";
@@ -7502,7 +7706,7 @@ check("a frequency list is named once, asked one way, and never built by a rende
     "deepenCommonWords stopped bounding what one press builds",
   );
 
-  for (const file of [...rounds.slice(1), "app/(app)/review/common/page.tsx"]) {
+  for (const file of [...rounds, "app/(app)/review/common/page.tsx"]) {
     assert.doesNotMatch(
       code(file), /addPlanToDeck|deepenCommonWords|addCommonWords|card\.createMany/,
       `${file} writes to the deck while rendering, and a settled pointer is enough to fetch it`,
@@ -8949,6 +9153,85 @@ check("every secret-shaped variable the app reads is marked in the CI canary bui
  * parts have to be in the index: they are there in order to *collide*, and
  * leaving them out is what makes a short illative look unambiguous.
  */
+/**
+ * WHAT AN ANSWER WAS ABOUT IS RECORDED, AND ONLY EVER FROM A CLOSED LIST.
+ *
+ * `Review.slot` is what the flash round exists on top of: it asks a word for a
+ * form no card of the learner's carries, grades the nearest card they do have
+ * (ADR-016), and without the column that answer goes down as being about
+ * whatever the card happened to be. `lib/srs/slots.ts` is the one table of
+ * what may go in it, and the value arrives through a `"use server"` export, so
+ * it is checked rather than trusted: this is the one table that is never
+ * updated and never deleted, and a forged slot would not break a count, it
+ * would tell somebody they had mastered a word in a form nobody ever asked
+ * them for. `CARD_SOURCES` makes the same argument about a column that only
+ * breaks a count.
+ *
+ * And `targetCase` stays what it is. It feeds `caseAccuracy`, which tallies
+ * whatever string it finds and hands it to a panel that prints the key in
+ * lower case where it recognises nothing, so a morph code written there puts
+ * `indprsg3` on the Progress page beside `osastav`. Two questions, two
+ * columns, and neither bent to be the other.
+ */
+check("an answer records which form it was about, from a list nothing can widen", () => {
+  const grade = code("lib/srs/grade.ts");
+  assert.match(
+    grade,
+    /slot:\s*slotFor\(/,
+    "writeGrade no longer records the slot, so the flash round's answers stop " +
+    "counting towards the variety half of mastery",
+  );
+  assert.match(
+    grade,
+    /isKnownSlot\(practised\)/,
+    "writeGrade no longer checks the slot against lib/srs/slots.ts. It arrives " +
+    "from a browser through a public endpoint, into the one table that is never repaired.",
+  );
+  assert.match(
+    grade,
+    /targetCase:\s*card\.targetCase/,
+    "writeGrade stopped recording the card's own case. That column is what the " +
+    "case charts read and it is not the slot's to take over.",
+  );
+
+  // And nothing writes a conjugation code into the column the charts read.
+  const slots = code("lib/srs/slots.ts");
+  assert.match(
+    slots,
+    /export function slotOfCard/,
+    "lib/srs/slots.ts no longer says what an ordinary review's slot is",
+  );
+  const writers = sourceFiles("lib").concat(sourceFiles("app"))
+    .filter((file) => !/\.i?test\.tsx?$/.test(file))
+    .filter((file) => /targetCase:\s*(?:slot|CONJUGATION_SLOTS|verb)/.test(code(file)));
+  assert.deepEqual(writers, [], "a conjugation slot is being written into targetCase");
+});
+
+/**
+ * The round grades through the log like every other mode, and marks against
+ * the dictionary rather than a model.
+ *
+ * ADR-016 and ADR-005 together, on a mode that is new enough for both to be
+ * easy to lose: the marking is a string comparison in a pure module, and the
+ * answer reaches `gradeCard` with the slot it was about. A provider anywhere
+ * on this path would be a model deciding whether a morpheme is correct.
+ */
+check("the flash round grades what it asked, and no model marks it", () => {
+  assert.match(
+    code("app/(app)/review/flashcards/FlashSession.tsx"),
+    /gradeCard\([\s\S]{0,120}task\.slot\)/,
+    "the flash round no longer tells the log which form it asked",
+  );
+  for (const file of sourceFiles("lib/games").concat(["app/(app)/review/flashcards/page.tsx"])) {
+    if (!/flash/i.test(file)) continue;
+    assert.doesNotMatch(
+      code(file),
+      /resolveProviders?\(|openWithFallback|\bask\(/,
+      `${file} reaches a provider. Whether a form is right is the dictionary's answer.`,
+    );
+  }
+});
+
 check("a case is named only when one case claims the spelling", () => {
   const src = code("lib/estonian/whichCase.ts");
   assert.match(

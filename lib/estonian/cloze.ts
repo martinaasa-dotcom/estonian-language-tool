@@ -173,6 +173,27 @@ export function isBuildable(sentence: string): boolean {
  * this rejects 101 of them, so it costs almost nothing and it removes the ones
  * that were being read as errors in the app.
  */
+/**
+ * The label pattern, as `naturalSentence` needs to be told about it.
+ *
+ * A usage that opens with its own headword and a comma is a dictionary
+ * illustrating a sense rather than a sentence somebody said, and the sense is
+ * often not the one the gloss beside it names. Only a nominal, because a verb
+ * before a comma is an ordinary main clause.
+ *
+ * It lives here rather than beside either caller because there are two: the
+ * level check has always passed it and the deck's gap-fill cards did not, so
+ * `Kahvel, lipp kukub!` was refused in an exam and made into a flashcard.
+ */
+export function nominalOpener(
+  pos: string,
+  forms: readonly string[],
+): ((opening: string) => boolean) | undefined {
+  if (pos === "VERB") return undefined;
+  const known = new Set(forms.map((f) => f.trim().toLowerCase()));
+  return (opening: string) => known.has(opening.trim().toLowerCase());
+}
+
 export function naturalSentence(sentence: string, opensWithNominal?: (word: string) => boolean): boolean {
   const text = sentence.trim();
   if (!/[.!?]$/.test(text)) return false;

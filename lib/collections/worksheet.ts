@@ -1,4 +1,4 @@
-import { buildCloze } from "@/lib/estonian/cloze";
+import { buildCloze, naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { gapForms } from "@/lib/estonian/gapForms";
 import { usableExamples, type Example } from "@/lib/dict/examples";
 
@@ -109,7 +109,17 @@ function firstGap(word: WorksheetWord): GapItem | null {
   // not do: `toas` is a derived case, so a stored-forms-only list could hide
   // it on an enriched entry and not on a seeded one.
   const forms = [...gapForms(word).keys()];
+  /*
+    And only out of something that is a sentence. `usableExamples` keeps what is
+    worth printing on a dictionary entry; a gap on a sheet a class works through
+    is a question, and the mock exam and the level check have put every sentence
+    through `naturalSentence` since a real sitting turned up a usage that trails
+    off and one that leaves the answer standing beside the gap in its other
+    spelling. This is paper, so nobody can ask about it afterwards.
+  */
+  const opener = nominalOpener(word.pos, [word.lemma, ...word.forms.map((f) => f.value)]);
   for (const example of usableExamples([...word.examples])) {
+    if (!naturalSentence(example.et, opener)) continue;
     const cloze = buildCloze(example.et, forms);
     if (!cloze) continue;
     return {

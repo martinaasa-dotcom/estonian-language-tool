@@ -18,14 +18,33 @@
  * different kind of evidence from `tuba` answered right five times as a
  * meaning.
  *
- * WHAT A SLOT IS. `Review` carries `targetCase` and, deliberately, no card
- * type: it has no foreign key to `Card` at all, because it must survive a card
- * being deleted or a backup being restored over a deck. So the variety this can
- * see is the case a review was about, with one shared slot for every review
- * that was not about a case. That undercounts rather than overcounts, which is
- * the safe direction for a claim like this: a recognition card and a production
- * card of one word land in the same slot and count once, so the app is harder
- * to convince than it looks rather than easier.
+ * WHAT A SLOT IS, AND WHY THE FIRST ANSWER WAS WRONG. This read `targetCase`,
+ * which is the case a *card* is about and null on every card that is not about
+ * a case, so every other answer landed in one shared slot. That was written
+ * down as undercounting in the safe direction, and it was not undercounting, it
+ * was a counter nothing could satisfy: a verb has no case cards at all, so its
+ * recognition, production, gap-fill and eight conjugation cards were one slot
+ * between them and no verb in any deck could ever reach three. A word added
+ * from the dictionary has recognition, production and a gap-fill, which is two
+ * slots at best. The round built on this draws the words that are *not*
+ * mastered, so the two faults compounded and it kept asking about words it was
+ * never going to let go of.
+ *
+ * `Review.slot` is the fix and `lib/srs/slots.ts` is the one table of what may
+ * go in it: a case, a named part of a verb, or the card's own type, because
+ * "what does this word mean" and "how do you say it" are two questions about
+ * one word and always were. A row written before that column reads
+ * `targetCase ?? ""`, exactly as it always did, so nobody's history is
+ * reinterpreted and the count only gets better from here.
+ *
+ * AND THE BAR IS WHAT THE WORD CAN CARRY. Three slots is right for a noun with
+ * eleven cases behind it and impossible for `Tere hommikust!`, which is a
+ * phrase with no forms to ask for, or for an adverb, which does not inflect.
+ * Asking a word for more variety than it has is the same fault in a smaller
+ * room, so the threshold is `min(MASTERY_SLOTS, askable)`: three where three
+ * can be asked, and everything there is otherwise. `askable` is counted from
+ * the learner's own cards by `lib/progress/mastery.ts`, since those are the
+ * questions this app can actually put to them.
  *
  * THE LAST ANSWER MATTERS. A word answered right five times last month and
  * wrong this morning is not mastered, and saying so would be the app telling
@@ -42,6 +61,8 @@
  * Pure: no React, no Prisma, no Estonian. The rows come from
  * `lib/progress/mastery.ts`.
  */
+
+import { slotOfCard } from "@/lib/srs/slots";
 
 /** Correct answers a word needs before it can be called mastered. */
 export const MASTERY_CORRECT = 5;
@@ -72,7 +93,19 @@ export interface WordReview {
   rating: number;
   /** The case the card was about, or null when it was not about a case. */
   targetCase: string | null;
+  /** What was actually asked. Null on a row written before the column existed. */
+  slot: string | null;
   reviewedAt: Date;
+}
+
+/**
+ * The slot one answer counts towards.
+ *
+ * The column where there is one, and the old reading where there is not, which
+ * is what keeps a deck full of history reading the way it always did.
+ */
+export function slotOfReview(review: WordReview): string {
+  return review.slot ?? review.targetCase ?? "";
 }
 
 export type Mastery = "mastered" | "almost" | "struggling" | "learning";
@@ -82,8 +115,12 @@ export interface Verdict {
   /** Answers graded Good or Easy. */
   correct: number;
   total: number;
-  /** Distinct case slots answered correctly. The variety half of the claim. */
+  /** Distinct slots answered correctly. The variety half of the claim. */
   slots: number;
+  /** How many this word has to span, which is three or everything it has. */
+  slotsNeeded: number;
+  /** The slots already answered correctly, so a round can ask for another. */
+  filled: readonly string[];
   /** 0 to 1, or null with too few answers to read. */
   accuracy: number | null;
   /** How far to mastered, 0 to 1, for a bar. 1 means there. */
@@ -102,15 +139,27 @@ const isCorrect = (r: WordReview) => r.rating >= 3;
  * the list a learner opens to find what to work on is the one that must not
  * quietly lose it.
  */
-export function masteryOf(reviews: readonly WordReview[]): Verdict {
+export function masteryOf(reviews: readonly WordReview[], askable = MASTERY_SLOTS): Verdict {
+  /*
+    The bar for this word: three, or everything it can be asked, whichever is
+    smaller. Floored at one, because a word with nothing askable at all is not
+    a word this app can put a question to, and dividing by zero to say so would
+    report every such word as finished.
+  */
+  const slotsNeeded = Math.max(1, Math.min(MASTERY_SLOTS, askable));
+
   const total = reviews.length;
   if (total === 0) {
-    return { mastery: "learning", correct: 0, total: 0, slots: 0, accuracy: null, progress: 0 };
+    return {
+      mastery: "learning", correct: 0, total: 0, slots: 0, slotsNeeded,
+      filled: [], accuracy: null, progress: 0,
+    };
   }
 
   const right = reviews.filter(isCorrect);
   const correct = right.length;
-  const slots = new Set(right.map((r) => r.targetCase ?? "")).size;
+  const filled = [...new Set(right.map(slotOfReview))];
+  const slots = filled.length;
   const accuracy = total >= ENOUGH_TO_JUDGE ? correct / total : null;
 
   // Sorted rather than assumed: a caller reading the log in any order, or an
@@ -122,19 +171,22 @@ export function masteryOf(reviews: readonly WordReview[]): Verdict {
   // Two thresholds, and the smaller share of the two is the honest reading of
   // how far along a word is: five correct answers in one slot is not
   // five-sixths of the way to mastered.
-  const progress = Math.min(1, Math.min(correct / MASTERY_CORRECT, slots / MASTERY_SLOTS));
+  const progress = Math.min(1, Math.min(correct / MASTERY_CORRECT, slots / slotsNeeded));
 
-  const mastery = verdict({ correct, slots, accuracy, lastWasRight: isCorrect(last) });
-  return { mastery, correct, total, slots, accuracy, progress };
+  const mastery = verdict({
+    correct, slots, slotsNeeded, accuracy, lastWasRight: isCorrect(last),
+  });
+  return { mastery, correct, total, slots, slotsNeeded, filled, accuracy, progress };
 }
 
 function verdict(input: {
-  correct: number; slots: number; accuracy: number | null; lastWasRight: boolean;
+  correct: number; slots: number; slotsNeeded: number;
+  accuracy: number | null; lastWasRight: boolean;
 }): Mastery {
-  const { correct, slots, accuracy, lastWasRight } = input;
+  const { correct, slots, slotsNeeded, accuracy, lastWasRight } = input;
 
   if (accuracy !== null && accuracy < STRUGGLING_ACCURACY) return "struggling";
-  if (correct >= MASTERY_CORRECT && slots >= MASTERY_SLOTS && lastWasRight) return "mastered";
+  if (correct >= MASTERY_CORRECT && slots >= slotsNeeded && lastWasRight) return "mastered";
   if (correct >= ALMOST_CORRECT) return "almost";
   return "learning";
 }
@@ -170,9 +222,14 @@ export const MASTERY_ORDER: readonly Mastery[] = ["struggling", "almost", "learn
  * `lapses` first, so among cards of equal novelty the one that keeps going
  * wrong leads.
  *
- * An untyped `targetCase` (a recognition or a production card) is one shared
- * slot, exactly as `masteryOf` counts it, so the round and the verdict cannot
- * disagree about what variety means.
+ * WHAT COUNTS AS A SLOT IS `slotOfCard`, and this read `targetCase ?? ""` when
+ * it was written, on the argument that the round and the verdict must not
+ * disagree about what variety means. They agree, and the definition moved: a
+ * card that is not about a case is its own kind of question rather than one
+ * shared "everything else", because reading them as one is what made every
+ * verb in the dictionary unmasterable. So a word's recognition card and its
+ * production card are two slots here as well, and this round opens the second
+ * of them where it used to stop at the first.
  *
  * Generic over the row rather than typed to Prisma's, because `lib/srs/` is
  * pure and both callers hand in a different select. Two routes render the Flash
@@ -180,7 +237,7 @@ export const MASTERY_ORDER: readonly Mastery[] = ["struggling", "almost", "learn
  * of this is two answers to "what should this word be asked as" that drift.
  */
 export function leastPractisedSlot<
-  T extends { lexemeId: string | null; targetCase: string | null },
+  T extends { lexemeId: string | null; targetCase: string | null; cardType: string },
 >(cards: readonly T[], wanted: ReadonlySet<string>): T[] {
   const chosen = new Map<string, T>();
   const slotsSeen = new Map<string, Set<string>>();
@@ -189,7 +246,7 @@ export function leastPractisedSlot<
     const lexemeId = card.lexemeId;
     if (!lexemeId || !wanted.has(lexemeId)) continue;
 
-    const slot = card.targetCase ?? "";
+    const slot = slotOfCard(card);
     const seen = slotsSeen.get(lexemeId) ?? new Set<string>();
     const held = chosen.get(lexemeId);
 

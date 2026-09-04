@@ -467,6 +467,7 @@ npm run typecheck        # tsc --noEmit
 npm run test             # unit tests, hermetic: no database, no network
 npm run test:db          # integration tests, needs a Postgres in DATABASE_URL
 npm run test:invariants  # the rules in CLAUDE.md, asserted
+npm run audit:sense      # does every question make sense for the word it is about
 npm run check:secrets    # fails if a credential reached the client bundle
 npm run test:e2e         # the browser suites, needs the server running
 npm run test:browser     # routes, modes, offline, the level check, scanning and accessibility

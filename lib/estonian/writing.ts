@@ -1,4 +1,5 @@
 import { CASES, type CaseSpec } from "./cases";
+import { caseFits, caseQuestionFor } from "./caseQuestion";
 import { caseAnswer, stemsFrom } from "./derive";
 import type { CaseKey } from "./types";
 
@@ -22,7 +23,15 @@ import type { CaseKey } from "./types";
  * morphology, which is the failure that would destroy trust fastest.
  */
 
-/** Cases that make a natural sentence and that a B1 learner actually reaches for. */
+/**
+ * Cases that make a natural sentence and that a B1 learner actually reaches for.
+ *
+ * Both local trios are here and `caseFits` decides which of them the word in
+ * front of the learner takes: `toas` for a room, `hobusel` for a horse,
+ * `Saksamaal` for a country. This file had the list and never asked, so it was
+ * setting `Kirjuta lause, kus on hobune sisseütlevas` and marking `hobusesse`
+ * right.
+ */
 const WRITABLE_CASES: readonly CaseKey[] = [
   "INESSIVE", "ELATIVE", "ILLATIVE", "ALLATIVE", "ADESSIVE",
   "ABLATIVE", "COMITATIVE", "TRANSLATIVE", "PARTITIVE", "GENITIVE",
@@ -32,6 +41,11 @@ export interface WritingSource {
   lemma: string;
   translation: string;
   pos: string;
+  /**
+   * Which of the two sets of local cases the word takes, and whether it
+   * answers `kes?` or `mis?`. See lib/estonian/caseQuestion.ts.
+   */
+  semanticTypes: string | null;
   /** Stored principal parts plus anything Ekilex supplied. */
   forms: { formType: string; value: string; morphCode?: string | null }[];
 }
@@ -108,7 +122,13 @@ export function writingTasksFor(source: WritingSource): WritingTask[] {
   if (source.pos !== "NOUN" && source.pos !== "ADJECTIVE") return [];
 
   const tasks: WritingTask[] = [];
+  const subject = {
+    lemma: source.lemma,
+    semanticTypes: source.semanticTypes,
+    nomSg: source.forms.find((f) => f.formType === "NOM_SG")?.value ?? null,
+  };
   for (const caseKey of WRITABLE_CASES) {
+    if (!caseFits(caseKey, subject)) continue;
     const form = authoritativeForm(source, caseKey);
     if (!form) continue;
     // A case whose form is identical to the headword teaches nothing here —
@@ -122,7 +142,8 @@ export function writingTasksFor(source: WritingSource): WritingTask[] {
       caseKey,
       caseEn: spec.en,
       caseEt: spec.et,
-      caseQuestion: spec.question,
+      // The question this word answers, not the case's whole name.
+      caseQuestion: caseQuestionFor(spec, subject),
       targetForm: form.value,
       alsoRight: form.alsoRight,
       provenance: form.provenance,

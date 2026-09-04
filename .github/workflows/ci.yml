@@ -99,6 +99,12 @@ jobs:
       #
       # 44,818 questions in about ninety seconds, most of it the deck.
       - run: npm run audit:questions
+      # And the question after it: not "is the answer printed in the question"
+      # but "would anybody ask this question about this word". It reads the
+      # same file and needs nothing else, and it found six faults the day it
+      # was written, the first of them reported by a learner who was drilled on
+      # the illative of a horse. Seconds, because it builds no papers.
+      - run: npm run audit:sense
 
   invariants:
     name: Invariants
@@ -352,6 +358,12 @@ jobs:
       # picture leaving the device, the confirmation list, a ticked word
       # becoming a card, and the review session asking about it.
       - run: node scripts/test-scan.mjs
+      # The flash round, and the lists it moves. It grades, so it writes reviews
+      # and deletes the ones it wrote; the two faults it was written after were
+      # both about a whole round rather than one word, which is why no unit test
+      # could have seen either: seven questions out of ten asking for the same
+      # case, and a place name asked for the local case it does not take.
+      - run: node scripts/test-flash.mjs
       # The mock paper. This list is written out rather than deferring to
       # `npm run test:browser`, so a suite added to that script alone is a suite
       # CI never runs: `test-exam.mjs` sat here unrun for its first two builds,
