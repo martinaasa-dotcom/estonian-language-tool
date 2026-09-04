@@ -472,7 +472,116 @@ const COUNTER: SceneSpec = {
   ],
 };
 
-export const SCENES: readonly SceneSpec[] = [DOCTOR, LANDLORD, COUNTER];
+/*
+  THE FIRST MISSION, AND THE DOCUMENT'S OWN EXAMPLE.
+
+  The MVP brief argued for one screen per situation and every question tied to
+  the errand, and its worked example was a trip to the shop for milk: going
+  *to* it, being *in* it, coming back *from* it, which is the one word `pood`
+  in the three local cases, and asking for the milk, which is the partitive. A
+  learner who has those four has the half of Estonian grammar every course
+  spends its first month on, met once each in the order an errand meets them.
+
+  `sina` rather than `teie`, because the other side is a friend on the phone
+  and not a counter, and that is what puts this at A1: a scene where the
+  learner is never asked to manage the polite register on top of the cases.
+  `kus-ja-kuhu` because the friend asks where three times, `iga-paev` because
+  it teaches `tahtma`, and `sook-ja-jook` because it teaches the milk.
+*/
+const SHOP: SceneSpec = {
+  id: "poodi-piima",
+  title: "Going to the shop for milk",
+  place: "Your kitchen, then the corner shop, with a friend on the phone",
+  level: "A1",
+  tests: "ostmine",
+  units: [...COMMON, "ostmine", "sook-ja-jook", "pohiverbid", "iga-paev", "kus-ja-kuhu"],
+  register: "sina",
+  role: "You are at home and there is no milk. You are going to the corner shop for some, and a friend keeps ringing to ask where you have got to.",
+  props: [],
+  curveballs: ["small-talk", "misheard", "interrupted", "faster", "english"],
+  beats: [
+    {
+      id: "greet",
+      goal: "Say hello back.",
+      move: "greet",
+      topic: [...HELLOS],
+      needs: [{ kind: "lemma", oneOf: [...HELLOS] }],
+      required: true,
+      patience: 2,
+      shape: "word",
+    },
+    {
+      id: "going",
+      goal: "Say where you are going.",
+      move: "ask",
+      topic: ["pood", "minema", "kuhu"],
+      needs: [{ kind: "case", lemma: "pood", grammCase: "ILLATIVE" }],
+      required: true,
+      patience: 3,
+      shape: "sentence",
+    },
+    {
+      id: "inside",
+      goal: "Say where you are now.",
+      move: "ask",
+      topic: ["pood", "olema", "kus"],
+      needs: [{ kind: "case", lemma: "pood", grammCase: "INESSIVE" }],
+      required: true,
+      patience: 3,
+      shape: "sentence",
+    },
+    {
+      id: "item",
+      goal: "Say what you want.",
+      move: "ask",
+      topic: ["piim", "tahtma", "ostma", "mis"],
+      needs: [{ kind: "case", lemma: "piim", grammCase: "PARTITIVE" }],
+      required: true,
+      patience: 3,
+      shape: "sentence",
+    },
+    {
+      id: "back",
+      goal: "Say where you are coming from.",
+      move: "ask",
+      topic: ["pood", "tulema", "kust"],
+      needs: [{ kind: "case", lemma: "pood", grammCase: "ELATIVE" }],
+      required: true,
+      patience: 3,
+      shape: "sentence",
+    },
+    {
+      id: "close",
+      goal: "Say goodbye.",
+      move: "close",
+      topic: [...FAREWELLS],
+      needs: [{ kind: "lemma", oneOf: [...FAREWELLS] }],
+      required: true,
+      patience: 1,
+      shape: "word",
+    },
+  ],
+  outcomes: [
+    {
+      id: "milk",
+      when: ["greet", "going", "inside", "item", "back", "close"],
+      says: "You are home with the milk, and your friend knew where you were the whole way.",
+    },
+    {
+      id: "milk-quiet",
+      when: ["going", "item", "back"],
+      says: "You are home with the milk. Your friend lost track of you for a while.",
+    },
+    {
+      id: "no-milk",
+      when: ["greet", "going"],
+      says: "The shop had no milk today. That happens, and it was nobody's fault.",
+    },
+    { id: "left", when: [], says: "You put the phone down and went on your own. That is also a way to get milk." },
+  ],
+};
+
+export const SCENES: readonly SceneSpec[] = [SHOP, DOCTOR, LANDLORD, COUNTER];
 
 export function sceneById(id: string): SceneSpec | undefined {
   return SCENES.find((s) => s.id === id);

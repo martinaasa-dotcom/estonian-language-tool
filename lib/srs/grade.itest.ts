@@ -119,3 +119,86 @@ describe("the replay path takes the same floor", () => {
     expect(Math.abs(review.reviewedAt.getTime() - answered)).toBeLessThan(1_000);
   });
 });
+
+
+/**
+ * The column that records what came back instead.
+ *
+ * Against a real database rather than a stub, because the claim is about a row
+ * in the one table that is never updated and never deleted: if the wrong thing
+ * lands here it is permanent, and it would not be a skewed count, it would be a
+ * sentence telling somebody they mix up two cases nobody has asked them for.
+ */
+describe("the form a learner reached for instead", () => {
+  it("records the pair where two forms were genuinely swapped", async () => {
+    const card = await makeCard(new Date("2026-08-01T09:00:00Z"));
+    await writeGrade(OWNER, {
+      card, rating: 2, durationMs: 3_800,
+      reviewedAt: new Date("2026-08-20T09:00:00Z"),
+      practisedSlot: "INESSIVE",
+      reachedSlot: "ELATIVE",
+    });
+
+    const row = await prisma.review.findFirstOrThrow({ where: { ownerId: OWNER } });
+    expect(row.slot).toBe("INESSIVE");
+    expect(row.reachedSlot).toBe("ELATIVE");
+    // And the column the case charts read is untouched by either of them.
+    expect(row.targetCase).toBe("INESSIVE");
+  });
+
+  it("writes nothing where the learner produced what was asked for", async () => {
+    const card = await makeCard(new Date("2026-08-01T09:00:00Z"));
+    await writeGrade(OWNER, {
+      card, rating: 3, durationMs: 900,
+      reviewedAt: new Date("2026-08-20T09:00:00Z"),
+      practisedSlot: "INESSIVE",
+      reachedSlot: "INESSIVE",
+    });
+    expect((await prisma.review.findFirstOrThrow({ where: { ownerId: OWNER } })).reachedSlot).toBeNull();
+  });
+
+  it("refuses a slot the app does not write, however it arrives", async () => {
+    const card = await makeCard(new Date("2026-08-01T09:00:00Z"));
+    await writeGrade(OWNER, {
+      card, rating: 1, durationMs: 1_000,
+      reviewedAt: new Date("2026-08-20T09:00:00Z"),
+      practisedSlot: "INESSIVE",
+      reachedSlot: "'; drop table \"Review\"; --",
+    });
+    expect((await prisma.review.findFirstOrThrow({ where: { ownerId: OWNER } })).reachedSlot).toBeNull();
+  });
+
+  it("refuses a pair where either side is a question about meaning", async () => {
+    const card = await makeCard(new Date("2026-08-01T09:00:00Z"));
+    await writeGrade(OWNER, {
+      card, rating: 1, durationMs: 1_000,
+      reviewedAt: new Date("2026-08-20T09:00:00Z"),
+      practisedSlot: "RECOGNITION",
+      reachedSlot: "INESSIVE",
+    });
+    const row = await prisma.review.findFirstOrThrow({ where: { ownerId: OWNER } });
+    expect(row.slot).toBe("RECOGNITION");
+    expect(row.reachedSlot).toBeNull();
+  });
+
+  it("carries both slots back from a grade taken offline", async () => {
+    // The path the flash round takes on a train, and the one where the fields
+    // were being dropped between the outbox and the server.
+    const card = await makeCard(new Date("2026-08-01T09:00:00Z"));
+    const result = await applyGradeBatch(OWNER, [{
+      id: "replayed-confusion",
+      cardId: card.id,
+      rating: 2,
+      durationMs: 4_100,
+      reviewedAt: new Date("2026-08-20T09:00:00Z").getTime(),
+      slot: "ADESSIVE",
+      reachedSlot: "ALLATIVE",
+    }]);
+
+    expect(result.ok).toBe(true);
+    const row = await prisma.review.findUniqueOrThrow({ where: { id: "replayed-confusion" } });
+    expect(row.slot).toBe("ADESSIVE");
+    expect(row.reachedSlot).toBe("ALLATIVE");
+    expect(row.durationMs).toBe(4_100);
+  });
+});

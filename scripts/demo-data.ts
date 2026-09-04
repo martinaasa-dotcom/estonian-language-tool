@@ -31,6 +31,51 @@ const HISTORIES: number[][] = [
   [3, 3, 1, 3, 3, 1, 3, 3, 1, 3, 3, 1],
 ];
 
+/**
+ * HOW LONG EACH SLOT TAKES, AND WHICH TWO GET SWAPPED.
+ *
+ * The fixture wrote `durationMs: 4200` on every row and no slot at all, so the
+ * two columns `lib/stats/pace.ts` and `lib/stats/confusions.ts` read were
+ * constant and empty here. That is not a thin panel, it is a panel no browser
+ * suite can reach: the section only renders where there is something to say,
+ * so every check behind it would have waived itself for ever without saying
+ * so. `letterBar` and the class week are in this file for the same reason.
+ *
+ * The numbers make one learner rather than noise. The translative is the slot
+ * they get right and have to work out, at better than twice their own pace,
+ * which is what "not automatic yet" is for. It has to be *right* to qualify,
+ * above `FLUENT_ACCURACY`, and the shared histories below average under that,
+ * so its cards take a clean history of their own: the scheduling is computed
+ * from the same ratings, so the log and the card still agree. The inessive and
+ * the elative are the pair that get swapped, and a swap is a miss, so they
+ * cannot also be the accurate one. Everything else sits near the middle,
+ * because a fixture where every slot is interesting teaches nothing about
+ * which ones are.
+ */
+const SLOW_SLOT = "TRANSLATIVE";
+const SLOW_HISTORY = [3, 3, 4, 3, 3, 3];
+const SLOT_MS: Record<string, number> = {
+  TRANSLATIVE: 9_400,
+  ILLATIVE: 5_100,
+  ELATIVE: 3_800,
+  INESSIVE: 2_600,
+  ADESSIVE: 2_900,
+  ABLATIVE: 4_400,
+  ALLATIVE: 3_100,
+  COMITATIVE: 3_400,
+};
+
+/** What a learner reaches for when they miss one of these. Both are real pairs. */
+const SWAPPED_FOR: Record<string, string> = {
+  ELATIVE: "INESSIVE",
+  INESSIVE: "ELATIVE",
+  ABLATIVE: "ADESSIVE",
+  ADESSIVE: "ABLATIVE",
+};
+
+/** The pace of an answer that is not about a case. Near the middle on purpose. */
+const MEANING_MS = 4_200;
+
 /** Fixed, so re-running the fixture reuses the one class rather than adding another. */
 const DEMO_CLASS_CODE = "DEMOAA";
 const DEMO_WORKPLACE_CODE = "DEMOWK";
@@ -156,7 +201,7 @@ async function main() {
       // Eight weeks of history rather than two, so the heatmap, the forecast and
       // the accuracy trend on /progress all have something real to draw.
       let s = emptyScheduling(new Date(Date.now() - 56 * 86400000));
-      const history = HISTORIES[i % HISTORIES.length]!;
+      const history = c.targetCase === SLOW_SLOT ? SLOW_HISTORY : HISTORIES[i % HISTORIES.length]!;
       const reviews: { rating: number; at: Date; stateBefore: number }[] = [];
       history.forEach((r, n) => {
         const daysAgo = Math.max(0, 54 - n * 6 - (i % 5));
@@ -178,11 +223,24 @@ async function main() {
         },
       });
       for (const r of reviews) {
+        /*
+          Written the way `writeGrade` writes them, because a fixture that
+          fills a column differently from the app is a fixture that tests a
+          different app. The slot is the card's own facet, which is exactly
+          `slotOfCard`; the reached form is recorded only on a missed answer
+          of a case that has a partner, and only where the two differ, which
+          is the rule `reachedFor` applies on the way in.
+        */
+        const slot = c.targetCase ?? c.cardType;
+        const swapped = r.rating < 3 ? SWAPPED_FOR[slot] : undefined;
         await prisma.review.create({
           data: {
             ownerId, cardId: card.id, lexemeId: card.lexemeId,
-            rating: r.rating, reviewedAt: r.at, durationMs: 4200,
+            rating: r.rating, reviewedAt: r.at,
+            durationMs: SLOT_MS[slot] ?? MEANING_MS,
             stateBefore: r.stateBefore, targetCase: c.targetCase,
+            slot,
+            reachedSlot: swapped && swapped !== slot ? swapped : null,
           },
         });
       }

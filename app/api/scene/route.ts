@@ -169,6 +169,7 @@ export async function POST(request: Request) {
     topic: context.topic.get(beat.id) ?? new Set<string>(),
     hasFiniteVerb: context.hasFiniteVerb,
     fallback: context.fallback,
+    scripted: context.scripted.get(beat.id) ?? [],
     used,
   };
 
@@ -198,10 +199,18 @@ export async function POST(request: Request) {
       ? line
       : wayOut({ beat, reading: progress.reading, fallback: context.fallback, withheld: line.withheld });
 
-  const attested = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
-  if (attested.provenance === "attested") {
-    return Response.json({ ...progress, ...attested }, { headers: NO_STORE });
+  /*
+    Two rungs cost a comparison and are tried together here: a recorded
+    sentence, then a line drafted in advance and gated then (ADR-025
+    amendment 1). Either answers without a booking, which is what lets a
+    keyless deployment hold a conversation on a beat retrieval cannot fill.
+    Only the way out goes through `wayOut` below.
+  */
+  const cheap = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
+  if (cheap.provenance !== "fallback") {
+    return Response.json({ ...progress, ...cheap }, { headers: NO_STORE });
   }
+  const attested = cheap;
 
   /*
     THE BOOKING IS PER TURN, because a call is what the ledger counts. Booking
@@ -231,8 +240,9 @@ export async function POST(request: Request) {
 
   const line = await sceneLine({
     ...shared,
-    // The attested rung was already tried and did not answer.
+    // The attested and scripted rungs were already tried and did not answer.
     pool: [],
+    scripted: [],
     compose: (avoid) => compose(chain, {
       ownerId,
       move: beat.move,

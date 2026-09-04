@@ -2162,3 +2162,97 @@ funder as much as for a contributor. This section is what was built and measured
 Nothing here scores pronunciation, marks a conversation with a model, or writes Estonian. The
 switch-to-English figure is self-reported. The classroom has still not been piloted. And a keyless
 deployment gets a shorter scene than a keyed one, said on the screen.
+
+## 32. The twenty-sixth pass: what the log knew and nobody read
+
+Not reported. It came out of reading a product brief against the code. The brief argued that a
+language app should track more than right and wrong, response time and which forms a learner
+confuses among the rest, and that the review algorithm should target the confusion rather than the
+word. The comparison was that the app already collected the first and already computed the second,
+and read neither.
+
+### The fault
+
+`Review.durationMs` had been written since the scheduler was built, by every timed round, carried
+through the offline outbox and included in every backup. The plan began reading it as the length of
+a sitting in the same week this was written (section 11); nothing read it as the time on one
+answer, which is the reading that says something about a word rather than about an evening. No
+chart, no scheduler input and no round that decides how hard to ask next had ever asked.
+
+The second fact was computed twice. `markFlash` names the ending a learner reached for instead of
+the one asked, so it can print "That is the seestütlev. This one wanted the seesütlev.", and
+`markDescription` names it for a sentence. Both go through `whichCase`, which names a case only
+where exactly one case is spelled that way, so it is a claim the dictionary stands behind. Then the
+card went and the sentence went with it, and the fact lived for as long as it was on the screen.
+
+Two smaller faults were beside them. The scene round asked a named word for a named case and told
+the log nothing about either, so every one of its answers went down as being about whatever the
+nearest card happened to be, which is the fault `Review.slot` was added to fix, in a round written
+after the fix. And Match was dividing its round clock by the number of pairs and writing that into
+a column meant for the time on one answer, which is a figure that survives a `> 0` filter while
+measuring nothing.
+
+### What landed
+
+`Review.reachedSlot` holds the form that came back instead, written only where both sides are forms
+and only where they differ, checked against the closed list on the way in like `slot` and more
+narrowly. Both rounds that can name one now send it, the scene round sends the case it asked for as
+well, and the offline path carries both. `lib/stats/answerTime.ts` reads the duration column as a median
+over recalled, timed answers per slot and names the slots that are accurate and slow against the
+learner's own pace; `lib/stats/confusions.ts` counts unordered pairs above a floor of two.
+`components/NotAutomatic.tsx` draws both on Progress, under the cases panel, only where there is
+something to say. Match writes zero.
+
+And one bug this was not looking for. `OfflineProvider` mapped five named fields from the outbox
+into the replay and dropped `slot`, so every grade the flash round took offline lost the one thing
+its own comment says must survive a train. The invariant reads the field list off `PendingGrade`
+and checks each name reaches the replay.
+
+### What was measured
+
+Every text node of the panel in both themes, with the design suite's own arithmetic: the worst is
+4.68 and the slowest figure sits on butter at 5.31 light and 9.27 dark, which are the numbers
+`docs/14-design-system.md` already records for that ink on that tint. axe finds nothing on
+`/progress`. The eleven new assertions in `scripts/test-invariants.ts` were each made to fail on
+the fault they guard, and one did not on the first attempt: the check for a round clock divided
+into the duration column used a character class excluding `)`, which stopped at the paren inside
+`Math.round(` and passed against the live bug. It excludes `;` now and fails on the real line.
+
+The fixture had to be changed to reach any of it. `scripts/demo-data.ts` wrote a flat 4200 and no
+slot, so the panel would never have rendered in any browser suite and every check behind it would
+have waived itself for ever. The translative is right every time at 9.4 seconds against the
+learner's own 3.8, and the inessive and elative are swapped six times.
+
+### What it does not do
+
+It reads and it shows. Nothing about which shape the flash round asks next, which card the queue
+serves, or what the scheduler does with a slow correct answer has changed; a slow recall is still
+a recall. Whether speed should move the rating, whether the confusion should generate the next
+question, and whether a mission format should sit on top of any of it are the three decisions
+still open from the brief, and each is a larger change than reading two columns.
+
+## 33. The twenty-seventh pass: the other side's line, written before anybody played
+
+Situations shipped in §30 of `docs/21-situations.md` with a ladder whose load-bearing rung was a
+live model, and a keyless deployment therefore had a receptionist who could greet you and then say
+nothing answerable. The MVP brief asked for the simplest possible mission, "a visual story where
+language is the interaction", with no model at runtime. Both are one change: a fourth rung,
+*scripted*, between the lexicographer and the live model.
+
+`scripts/draft-lines.ts` drafts lines with the same chain and prompt the route uses, gates each one
+with the same four checks, and writes the survivors into `lib/scenes/bank.ts` with the model and
+the day. The diff is the review; a native speaker's later pass edits the same file and flips
+`reviewed`, which the chip reads. `lib/scenes/scripted.ts` decides which beats may have one (none
+that names a value the card draws per run) and reads the bank through that rule. The route tries
+the two rungs that cost a comparison before it books a call, and the screen prints which answered.
+
+**The first mission is the brief's own worked example**: `poodi-piima`, going to the shop for milk
+with a friend on the phone. `pood` in three local cases and `piim` in the partitive, at A1, in
+`sina`. Fourteen catalogue rules and the gate re-check hold it, and the bank test re-runs every
+scripted row through the gate on every run of the suite.
+
+**Two things were extracted rather than copied.** The eval script's chain, prompt and keyless
+context builders moved to `scripts/lib/sceneDraft.ts`, shared with the drafter, because a
+rejection rate measured with one prompt and a bank drafted with another is a rate for nothing. And
+the design's own Phase 3 argument, that a banked line may never be a card answer, an exam answer or
+a marking target, is an invariant now rather than a note, made to fail on each of its clauses.

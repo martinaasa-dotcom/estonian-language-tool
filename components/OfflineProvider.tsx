@@ -58,9 +58,27 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
         if (queued.length === 0) break;
 
         const batch = nextBatch(queued);
+        /*
+          EVERY FIELD THE OUTBOX HOLDS, NOT THE FIVE THIS WAS WRITTEN WITH.
+
+          `PendingGrade` carries `slot`, the outbox stores it, `ReplayItem`
+          accepts it and `writeGrade` reads it, and this `map` named five
+          fields and dropped it. So the one thing the flash round's own
+          comment says must survive a train ("replayed without it, an answer
+          about the kaasaütlev would go down as an answer about whatever the
+          card happens to be") was dropped one function later, on the server
+          action's doorstep, for every grade taken offline.
+
+          Spreading rather than listing, because the fault is the listing: a
+          column added to the outbox and to the server and not to the six
+          field names in the middle is a column that silently never arrives,
+          and nothing fails. `replayGrades` takes `ReplayItem`, so a field the
+          server does not know about is a type error here rather than a row.
+        */
         const result = await replayGrades(batch.map((g) => ({
           id: g.id, cardId: g.cardId, rating: g.rating,
           durationMs: g.durationMs, reviewedAt: g.reviewedAt,
+          slot: g.slot, reachedSlot: g.reachedSlot,
         })));
 
         if (!result.ok) break;

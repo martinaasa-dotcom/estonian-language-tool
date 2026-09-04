@@ -46,13 +46,15 @@ const prisma = new PrismaClient({
 
 const { check, absent, done } = suite("A conversation, end to end", {
   /*
-    THE COUNT IN THE FULL STATE, which is a key configured and the allowance
-    unspent: 36. Keyless, the composed check is waived and the target drops to
-    35, which is what runs. The two differ by exactly one check and exactly one
-    waiver, which is the arithmetic `absent` exists to keep honest and which
-    the first version of this got wrong in both directions at once.
+    THE COUNT IN THE FULL STATE, which is a key configured, the allowance
+    unspent and the bank holding a row for a beat the run reaches: 37.
+    Keyless, the composed check is waived and the target drops by one; with
+    an empty bank the scripted check is waived and it drops by one more. Each
+    state differs by exactly as many checks as waivers, which is the
+    arithmetic `absent` exists to keep honest and which the first version of
+    this got wrong in both directions at once.
   */
-  floor: 36,
+  floor: 37,
 });
 
 /*
@@ -333,6 +335,23 @@ if (composed) {
     dictionary had nothing, which is most beats and not the greeting.
   */
   absent(1, "no line was composed here: that needs a provider key and a beat the dictionary could not fill");
+}
+
+// ── A scripted line, where the bank holds one for a beat this run reached ───
+/*
+  The fourth rung (ADR-025 amendment 1): a line drafted before the run, gated
+  then, and read in the diff. What only a browser can show is that the screen
+  says which rung answered, since the chip is text and the unit tests cannot
+  see a render. Same shape as the composed check above: one check, or one
+  waiver naming the state that would lift it.
+*/
+const scripted = heard.find((line) => /Written for this scene/i.test(line.chip));
+if (scripted) {
+  check("a scripted line is one short sentence and says it was scripted",
+    scripted.text.length < 120 && scripted.text.split(/\s+/).length <= MAX_SPOKEN_WORDS,
+    scripted.text);
+} else {
+  absent(1, "no scripted line was said here: that needs lib/scenes/bank.ts to hold a row for a beat this run reached and retrieval did not fill");
 }
 
 check("nothing threw in the browser", errors.length === 0, errors.join(" · "));

@@ -75,13 +75,25 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
     saved.current = true;
     setPhase("done");
 
-    // A pair found first time is a clean recall; one that took a wrong guess is
-    // a Hard. Written through the same path as any other grade, so the review
-    // log and FSRS see exactly what happened.
+    /*
+      A pair found first time is a clean recall; one that took a wrong guess is
+      a Hard. Written through the same path as any other grade, so the review
+      log and FSRS see exactly what happened.
+
+      THE DURATION IS ZERO, AND THAT IS THE HONEST FIGURE. This used to send
+      the round's own clock divided by the number of pairs, which is not the
+      time on any one answer and is not close to it: a board is solved slowly
+      at the start and by elimination at the end, so the last two pairs take a
+      second between them and were each being recorded at the round's average.
+      `Review.durationMs` is the time on *this* answer, `lib/stats/pace.ts`
+      reads it as one, and zero is what every other round that grades in bulk
+      already writes for "this was not timed". A wrong measurement is worse
+      than an absent one, because only one of the two can be filtered out.
+    */
     for (const pair of pairs) {
       const rating = (missMap[pair.cardId] ?? 0) > 0 ? 2 : 3;
       try {
-        await gradeCard(pair.cardId, rating, Math.round((finalSeconds * 1000) / pairs.length));
+        await gradeCard(pair.cardId, rating, 0);
       } catch {
         // A failed write costs this one card's rep, not the round.
       }
