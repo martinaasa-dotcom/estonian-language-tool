@@ -22,7 +22,7 @@ import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export const metadata: Metadata = {
-  title: { absolute: "Kodukeel. Ready for the real thing" },
+  title: { absolute: "Kodukeel. Estonian that finally sticks" },
   description:
     "Kodukeel means home language. Practice that sticks, a conversation to rehearse with somebody who has an agenda of their own, and one small thing to say out loud today, for anybody making a home in Estonia.",
 };
@@ -242,11 +242,11 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         className="hero-display font-bold leading-[1.02] tracking-[-0.02em]"
         style={{ color: "var(--ink)" }}
       >
-        <span className="word-in" style={{ "--w": "60ms" } as React.CSSProperties}>Ready</span>{" "}
-        <span className="word-in" style={{ "--w": "160ms" } as React.CSSProperties}>for</span>{" "}
-        <span className="word-in" style={{ "--w": "220ms" } as React.CSSProperties}>the</span>
+        <span className="word-in" style={{ "--w": "60ms" } as React.CSSProperties}>Estonian</span>{" "}
+        <span className="word-in" style={{ "--w": "160ms" } as React.CSSProperties}>that</span>
         <br />
-        <span className="word-in grad-text grad-sweep" style={{ "--w": "380ms" } as React.CSSProperties}>real thing</span>.
+        <span className="word-in" style={{ "--w": "220ms" } as React.CSSProperties}>finally</span>{" "}
+        <span className="word-in grad-text grad-sweep" style={{ "--w": "380ms" } as React.CSSProperties}>sticks</span>.
       </h1>
 
       <p
