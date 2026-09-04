@@ -131,6 +131,42 @@ export function caseFits(key: CaseKey, subject: CaseSubject): boolean {
 }
 
 /**
+ * IS THIS CASE A FORM THE LANGUAGE DOES NOT USE FOR THIS WORD?
+ *
+ * `caseFits` is the builder's question and this is the deleter's, and they are
+ * not each other's negation. That distinction was learned the expensive way:
+ * `scripts/audit-decks.ts` removes cards from a learner's deck, its first
+ * version asked `caseFits` alone, and run against a deployment seeded before
+ * `semanticTypes` was filled it condemned 318 correct cards. 6,952 entries,
+ * none of them classified, and every correct *outside* card in the database
+ * named for removal: `isa → isale`, `õpetaja → õpetajale`, `arst → arstile`.
+ *
+ * The gap between the two questions is exactly where the dictionary is silent.
+ * `localCasesFor` reads "we do not know" as the inside trio, and its own header
+ * says why: an unclassified word is one somebody typed in or confirmed off a
+ * photograph, and reading the silence as "it is a person" would break cards
+ * that are currently right. That is the safe end for a builder, which *makes*
+ * things, and the dangerous end for anything that *removes* them.
+ *
+ * So this asks for positive evidence and only ever in one direction. `isas` is
+ * a form nobody says; `toale` is ordinary Estonian that the builder happens not
+ * to choose for a room, and `maa`, which the Institute calls both a place and
+ * an area, has two ordinary readings rather than a wrong one. A card is wrong
+ * where the word is *known* to take the outside trio, by Ekilex's own
+ * classification or by the `-maa` ending, and the case asked for is an inside
+ * one.
+ *
+ * Here rather than in `lib/srs/retire.ts` because this module and `place.ts`
+ * are the only two allowed to decide which set of local cases a word takes,
+ * which is asserted: a second module answering it is how the original fault
+ * reached eight generators.
+ */
+export function caseIsUnsaidFor(key: CaseKey, subject: CaseSubject): boolean {
+  if (!INSIDE_CASES.includes(key)) return false;
+  return takesOutsideCases(subject.lemma) || isAnimate(subject.semanticTypes);
+}
+
+/**
  * The question to print on a card about this word.
  *
  * THE DECLINING PRONOUN ALONE, NOT THE PLACE ADVERB. `kus?` is answered by the

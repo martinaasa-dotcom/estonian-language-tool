@@ -915,6 +915,69 @@ check("every screen and marker that needs a case form asks the one function for 
   reading its own list, which is the shape every check in this file has been
   caught by at least once.
 */
+/**
+ * A COMMAND THAT DELETES MAY NOT READ SILENCE AS EVIDENCE.
+ *
+ * `scripts/audit-decks.ts` removes `CASE_FORM` rows from a learner's deck. Its
+ * first version decided which by asking `caseFits`, the builder's own test, on
+ * the argument that the audit and the builder should share one rule. They are
+ * different questions and they come apart exactly where the dictionary has
+ * said nothing: `localCasesFor` reads "we do not know" as the inside trio,
+ * which is the safe end for something that *makes* cards and the dangerous end
+ * for something that *removes* them, because it then refuses the outside trio
+ * on every word the dictionary cannot classify.
+ *
+ * Run against the deployment that reported the original fault, that condemned
+ * 318 correct cards: 6,952 entries, none of them carrying `semanticTypes`, and
+ * every right answer for a person in the database named for removal.
+ * `isa → isale`, `õpetaja → õpetajale`, `arst → arstile`. It was caught because
+ * the command prints its list before it writes, which is the whole reason it
+ * does.
+ *
+ * So the rule is `caseIsUnsaidFor`, which asks for positive evidence and only
+ * ever in one direction. Asserted on the call rather than on today's prose: a
+ * removal path that has gone back to `caseFits` alone is the bug again, and it
+ * is invisible on any database whose dictionary happens to be classified.
+ */
+check("what a deck audit deletes rests on something the dictionary said", () => {
+  const rule = code("lib/srs/retire.ts");
+  assert.match(
+    rule,
+    /caseIsUnsaidFor\(/,
+    "lib/srs/retire.ts decides what to delete without asking caseIsUnsaidFor, so " +
+    "an unclassified dictionary condemns every correct outside-case card",
+  );
+
+  /*
+    And the predicate really does want evidence. Anchored on the two ways the
+    dictionary can supply it, because a version returning true on a bare
+    `!caseFits` would satisfy the call above and be the same fault.
+  */
+  /*
+    THE FUNCTION AND NOT THE REST OF THE FILE. Written first as a slice to the
+    end, which passed with the body replaced by `return true`, because
+    `caseQuestionFor` further down reads `isAnimate` too. A haystack that runs
+    past what it is about is the oldest recurring mistake in these checks.
+  */
+  const owner = code("lib/estonian/caseQuestion.ts");
+  const from = owner.indexOf("export function caseIsUnsaidFor");
+  assert.ok(from >= 0, "caseIsUnsaidFor is gone from lib/estonian/caseQuestion.ts");
+  const closes = owner.indexOf("\n}", from);
+  const predicate = owner.slice(from, closes < 0 ? undefined : closes);
+  assert.match(
+    predicate,
+    /isAnimate\(|takesOutsideCases\(/,
+    "caseIsUnsaidFor no longer reads the classification or the ending, so it is " +
+    "deciding a deletion on the absence of both",
+  );
+  assert.match(
+    predicate,
+    /INSIDE_CASES/,
+    "caseIsUnsaidFor no longer limits itself to the inside trio, so it would " +
+    "delete `isale`, which is the form people actually say",
+  );
+});
+
 check("every generator that picks a case asks which ones the word takes", () => {
   const askers = [
     "lib/srs/cards.ts",
