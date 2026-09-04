@@ -23,10 +23,36 @@ export interface ClipRequest {
   readonly voice?: string;
 }
 
-export const SLOW_SPEED = 0.6;
+/**
+ * SLOW IS THE SAME CLIP PLAYED SLOWER, WITH THE PITCH HELD.
+ *
+ * It used to be a second clip, asked of the speech service at speed 0.6.
+ * TartuNLP applies that number inside its acoustic model, as a duration
+ * regulator: every phoneme's predicted length is multiplied and the extra
+ * frames are copies, then the vocoder renders them. Measured on the live
+ * service, the pitch does not move (240 Hz against 237) and the speech gets
+ * 1.6 times longer, and what a learner hears is every vowel held flat and a
+ * buzz under it, which is exactly the "robotic" a person reports. That is
+ * what a neural model does when asked to say something no speaker ever said
+ * that slowly.
+ *
+ * A pitch-preserving time stretch over real speech is a different thing: it
+ * keeps the recording's own pitch contour and its formants and only repeats
+ * or drops short overlapping grains of waveform, which is how a video player's
+ * 0.75x sounds like the same person talking more slowly. Every browser ships
+ * one behind `playbackRate`, and `preservesPitch` is what asks for it rather
+ * than for the tape-slowed drop in pitch.
+ *
+ * So there is one clip per word and voice, and this is the rate it plays at
+ * when asked for slowly. 0.7 is where the stretch is still clean: at 0.6 the
+ * grains start to smear on consonants, which is the part of Estonian a slow
+ * play exists to make audible. The clip's own leading silence is already
+ * trimmed off on the server, so slowing it does not slow the wait for it.
+ */
+export const SLOW_RATE = 0.7;
 
-export function clipKey({ text, slow, voice }: ClipRequest): string {
-  return `${text}|${slow ? SLOW_SPEED : 1}|${voice ?? ""}`;
+export function clipKey({ text, voice }: ClipRequest): string {
+  return `${text}|${voice ?? ""}`;
 }
 
 /** The object URL for a clip, from the page cache or the network. */
@@ -39,7 +65,6 @@ export async function fetchClip(request: ClipRequest): Promise<string> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       text: request.text,
-      speed: request.slow ? SLOW_SPEED : 1,
       ...(request.voice ? { voice: request.voice } : {}),
     }),
   });
@@ -87,8 +112,13 @@ export async function playClip(
   { unasked = false }: { unasked?: boolean } = {},
 ): Promise<PlayOutcome> {
   const url = await fetchClip(request);
+  const audio = new Audio(url);
+  if (request.slow) {
+    audio.preservesPitch = true;
+    audio.playbackRate = SLOW_RATE;
+  }
   try {
-    await new Audio(url).play();
+    await audio.play();
   } catch (error) {
     if (unasked && error instanceof DOMException && error.name === "NotAllowedError") {
       return "blocked";

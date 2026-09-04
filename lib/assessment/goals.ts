@@ -43,6 +43,13 @@ export interface Reason {
    * set into one figure and says on screen where it came from.
    */
   exposure: HourRange;
+  /**
+   * The situation as a clause after "you": "live in Estonia". Only on a reason
+   * that puts Estonian in a week, because the plan's note and Anu's briefing
+   * both name what a learner lives in, and a goal is not lived in. One table
+   * rather than a copy in each screen, which is where two of them drift.
+   */
+  situation?: string;
 }
 
 export const REASONS: readonly Reason[] = [
@@ -54,6 +61,7 @@ export const REASONS: readonly Reason[] = [
     implies: "B1",
     // Errands, forms, the bus: real and shallow, and easy to live beside without using.
     exposure: { low: 1, high: 3 },
+    situation: "live in Estonia",
   },
   {
     id: "citizenship",
@@ -72,6 +80,7 @@ export const REASONS: readonly Reason[] = [
     implies: "B2",
     // Meetings and colleagues at full speed are the most exposure a week can hold.
     exposure: { low: 3, high: 8 },
+    situation: "work in Estonian",
   },
   {
     id: "study",
@@ -81,6 +90,7 @@ export const REASONS: readonly Reason[] = [
     implies: "B2",
     // Class plus homework. A course with a syllabus is guided learning hours by definition.
     exposure: { low: 2, high: 5 },
+    situation: "are on a course",
   },
   {
     id: "family",
@@ -90,6 +100,7 @@ export const REASONS: readonly Reason[] = [
     implies: "B1",
     // The people at home, if the home runs in Estonian. Many couples default to English.
     exposure: { low: 2, high: 8 },
+    situation: "have Estonian at home",
   },
   {
     id: "roots",
@@ -99,6 +110,7 @@ export const REASONS: readonly Reason[] = [
     implies: "A2",
     // Visits and relatives. Occasional, so the range barely leaves zero.
     exposure: { low: 0, high: 1 },
+    situation: "have family who speak it",
   },
   {
     id: "travel",
@@ -142,6 +154,17 @@ export function reasonsFor(stored: string | null | undefined): Reason[] {
   if (!stored) return [];
   const chosen = new Set(stored.split(/[\s,]+/).filter(Boolean));
   return REASONS.filter((r) => chosen.has(r.id));
+}
+
+/**
+ * The situations among a set of reasons, as one clause after "you": "live in
+ * Estonia and have Estonian at home". Null when none of them is a situation.
+ */
+export function describeSituation(reasons: readonly Reason[]): string | null {
+  const parts = reasons.map((r) => r.situation).filter((p): p is string => !!p);
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return parts[0]!;
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
 
 /** The chosen reasons back as a stored value, or null for none. */

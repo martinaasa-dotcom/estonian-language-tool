@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CircleAlert, Loader2, MessageCircleQuestion, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Card, Note } from "@/components/ui";
+import { AnuProse } from "@/components/anu/Prose";
 import type { WithholdReason } from "@/lib/tutor/verify";
 
 interface Reading {
@@ -91,9 +92,7 @@ export function AnuReading({ text, level, title, marks }: {
               Anu read it back. None of this changed your marks.
             </p>
             {reading.comment ? (
-              <p className="text-md leading-relaxed" style={{ color: "var(--ink)" }}>
-                {reading.comment}
-              </p>
+              <AnuProse text={reading.comment} className="text-md" />
             ) : (
               <Note tone="neutral">
                 <ShieldCheck size={14} className="mr-1.5 inline" aria-hidden />

@@ -43,6 +43,9 @@ import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
 import { TELLS, VOICE_RULES, findTells } from "../lib/copy/voice";
 import { allGlosses, occasionsFor } from "../lib/copy/almanac";
+import { readSituation, wordStanding } from "../lib/readiness/rungs";
+import { SITUATIONS } from "../lib/readiness/situations";
+import type { WordEvidence } from "../lib/readiness/evidence";
 import { glossSenses } from "../lib/dict/gloss";
 import {
   COUNT_ROUNDING, LEARNER_BANDS, MAX_LEARNER_SHARE, MIN_LEARNERS, MIN_REVIEWS,
@@ -562,6 +565,36 @@ check("the mock paper's minutes and marks are the ones the exam doc cites", () =
   assert.equal(PASS_PCT, 60, "PASS_PCT drifted from the sixty percent the doc cites");
   assert.match(doc, /forty five percent/i, "the doc stopped stating the retake threshold");
   assert.equal(RETAKE_WAIT_PCT, 45, "RETAKE_WAIT_PCT drifted from the forty five percent the doc cites");
+});
+
+/*
+  SLOW IS PLAYBACK, NOT A SECOND CLIP.
+
+  TartuNLP's `speed` is a duration regulator inside the acoustic model, and a
+  clip asked for at 0.6 is every phoneme held on repeated frames: flat, buzzing,
+  and reported as robotic. The route forwards no speed, the one clip is played
+  slower with the pitch held in lib/audio/clip.ts, and every clip is trimmed,
+  levelled and written as 16-bit by lib/audio/wav.ts before it is cached. A
+  second file setting `playbackRate` would be a second answer to how slow is
+  done, and a `speed` reappearing in the route would be the model doing it.
+*/
+check("slow is the same clip played slower, and every clip is prepared before it is kept", () => {
+  const route = code("app/api/tts/route.ts");
+  assert.doesNotMatch(route, /\bspeed\b/, "the speech route is asking the model to slow down again");
+  assert.match(route, /prepareClip\(raw\)/, "the route stopped calling prepareClip on what the service sent");
+  assert.match(
+    route,
+    /const audio = Buffer\.from\(prepare\(raw\)\);[\s\S]{0,200}writeAudio\(hash, audio\)/,
+    "a clip reaches the cache without going through prepareClip",
+  );
+  const player = code("lib/audio/clip.ts");
+  assert.match(player, /preservesPitch\s*=\s*true/, "the slow play stopped holding the pitch");
+  assert.match(player, /playbackRate\s*=\s*SLOW_RATE/, "the slow play stopped reading SLOW_RATE");
+  const others = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== join("lib", "audio", "clip.ts"))
+    .filter((file) => /playbackRate|preservesPitch/.test(code(file)));
+  assert.deepEqual(others, [], "a second file decides how slow a clip plays");
 });
 
 check("nothing plays a clip outside lib/audio/clip.ts", () => {
@@ -2339,6 +2372,54 @@ check("the chat says which model actually replied", () => {
 
 check("Anu's prose is cleaned on its way to the learner", () => {
   assert.match(read("app/api/tutor/route.ts"), /ProseStream/, "the humanize pass is gone");
+});
+
+check("Anu's reply is drawn as typography, shown once finished, and the marker lines have one shape", () => {
+  /*
+    Every model writes markdown whether asked or not, and her bubble drew it
+    as text: `**raamatut**` with the asterisks in, on the one word the
+    sentence was about, and a list as four lines beginning `1.`. Drawn a
+    chunk at a time it was worse, because bold that has opened and not yet
+    closed is asterisks for as long as the model takes to reach the closing
+    pair. So `lib/tutor/markdown.ts` reads a reply into blocks, `AnuProse` is
+    the one place they become elements, and `useAnuChat` gathers the stream
+    and shows the finished reply once. The route still streams; the screen
+    waits.
+
+    And a model allowed bold bolds its markers, so `**FIX:**` arrives as
+    readily as `FIX:`. Three modules recognise those lines for three reasons
+    and each carried its own regex; `lib/tutor/markers.ts` is the one shape
+    now, and a reader that grows a copy back is a reader that stops agreeing
+    with the other two the day the model changes its typography.
+  */
+  const parts = code("components/anu/AnuParts.tsx");
+  assert.match(parts, /<AnuProse text=\{rest\}/, "Anu's reply is no longer drawn through AnuProse");
+  assert.match(parts, /from "\.\/Prose"/, "AnuParts stopped importing the one renderer");
+  assert.match(parts, /from "@\/lib\/tutor\/markers"/, "AnuParts stopped reading the marker table");
+  assert.doesNotMatch(parts, /\/\^[^\n]*(?:FIX|VOCAB)/, "AnuParts has grown its own FIX or VOCAB regex again");
+  assert.match(code("components/anu/Prose.tsx"), /parseReply\(/, "AnuProse no longer parses the reply");
+  assert.match(
+    code("app/(app)/exam/result/[id]/AnuReading.tsx"),
+    /<AnuProse/,
+    "Anu's reading of a composition is drawn as raw text again",
+  );
+
+  const hook = code("components/anu/useAnuChat.ts");
+  const loopStart = hook.indexOf("while (true)");
+  const loopEnd = hook.indexOf("acc += decoder.decode();");
+  assert.ok(loopStart !== -1 && loopEnd > loopStart, "the read loop in useAnuChat has changed shape; re-anchor this check");
+  assert.doesNotMatch(hook.slice(loopStart, loopEnd), /setMessages/, "the chat draws the reply a chunk at a time again");
+
+  for (const file of ["lib/tutor/humanize.ts", "lib/tutor/verify.ts"]) {
+    const source = code(file);
+    assert.match(source, /from "@\/lib\/tutor\/markers"/, `${file} stopped reading the marker table`);
+    assert.doesNotMatch(source, /\(\?:VOCAB\|FIX\)/, `${file} has grown its own copy of the marker regex`);
+  }
+
+  // The prompt says what formatting is allowed, in the terms the renderer understands.
+  const prompt = buildSystemPrompt("A2");
+  assert.match(prompt, /\*\*bold\*\*/, "the prompt no longer says what bold is for");
+  assert.match(prompt, /No headings, no tables/, "the prompt no longer rules out the shapes the renderer will not draw");
 });
 
 check("Anu's free chat prose is checked against the dictionary, not just her graded comments", () => {
@@ -5859,7 +5940,7 @@ check("the layers that promise to be pure import no database, React or Next", ()
   const pure = [
     "assessment", "estonian", "exam", "games", "gamification", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
-    "learn", "scenes",
+    "learn", "scenes", "readiness",
   ];
   const banned = [
     [/from "@\/lib\/db"/, "the database"],
@@ -6873,6 +6954,78 @@ check("the hours table is built from published hours and a per-step factor", () 
   assert.match(plan, /export const CUMULATIVE_HOURS[^=]*=\s*buildCumulative\(\)/, "CUMULATIVE_HOURS is a typed table again");
   assert.match(plan, /export const GUIDED_LEARNING_HOURS/, "the published hours are no longer named");
   assert.match(plan, /export const ESTONIAN_FACTOR/, "the surcharge is no longer a table of its own");
+});
+
+/*
+  One pace per card, and the log replaces it.
+
+  The plan budgeted three cards a minute and Today's "about N minutes" divided
+  by six, so the screen somebody opens every morning promised half the time the
+  plan was allowing for the same cards. `DEFAULT_CARDS_PER_MINUTE` is defined
+  once, every screen that turns cards into minutes goes through
+  `minutesForCards`, and a learner with a fortnight of log gets their own rate
+  rather than either constant.
+*/
+check("cards become minutes through one rate, measured where the log has one", () => {
+  const defs = ALL.filter((f) => /export const DEFAULT_CARDS_PER_MINUTE\s*=/.test(code(f)));
+  assert.deepEqual(defs, ["lib/stats/pace.ts"], `the default cards-a-minute figure lives in ${defs.join(", ")}`);
+  const today = code("app/(app)/page.tsx");
+  assert.match(today, /minutesForCards\(/, "Today no longer turns cards into minutes through the shared rate");
+  assert.match(today, /measuredPaceFor\(/, "Today no longer reads the learner's measured pace");
+  assert.doesNotMatch(
+    between(today, "function lead("), /\/\s*\d+\s*\)/,
+    "Today's lead divides the cards due by a literal again; the rate is the learner's own or the shared default",
+  );
+  assert.match(
+    between(code("components/assessment/PlanPanel.tsx"), "export function minutesFor"), /minutesForCards\(/,
+    "PlanPanel's minutesFor keeps a rate of its own again",
+  );
+});
+
+/*
+  The distance on Today and on the exam hub is the plan's, off the same
+  projection, in the plan's own sentence.
+
+  Today's countdown said how likely a pass was that morning and the hub said
+  how many weeks were left, and neither said whether the pace this learner
+  keeps arrives by then. Both print `distanceLine` over `project` now, built
+  from `standingFor`, the reasons and the measured pace, so a learner cannot
+  read one timeline on the level check screen and another on Today.
+*/
+check("Today and the exam hub print the plan's distance off the plan's own projection", () => {
+  const countdown = code("lib/progress/countdown.ts");
+  for (const name of ["project(", "distanceLine(", "standingFor(", "foundHours("]) {
+    assert.ok(countdown.includes(name), `lib/progress/countdown.ts no longer calls ${name}`);
+  }
+  assert.match(code("components/ExamCountdown.tsx"), /countdown\.distance/, "the countdown card no longer prints the distance");
+  const hub = code("app/(app)/exam/page.tsx");
+  for (const name of ["project(", "distanceLine(", "standingFor(", "measuredPaceFor("]) {
+    assert.ok(hub.includes(name), `the exam hub no longer calls ${name}`);
+  }
+  // Nobody phrases the distance for a screen by hand: the sentence is the plan's.
+  const rephrased = ALL.filter((f) =>
+    f !== "lib/assessment/plan.ts" && !/\.(i)?test\.ts$/.test(f)
+    && /weeksWithFound[^\n]*weeks (away|off)/.test(code(f)));
+  assert.deepEqual(rephrased, [], "a screen writes its own sentence over weeksWithFound rather than reading distanceLine");
+});
+
+/*
+  Anu is told how the level is known and what Estonian the learner lives in.
+
+  A tutor told "B1" and nothing else treats a guess and a measurement alike,
+  and a briefing that names the learner's situation reads it off the same
+  reasons table the plan prints, so she and the plan cannot describe one
+  learner two ways.
+*/
+check("Anu's briefing reads the shared level rule and the reasons table", () => {
+  const context = code("lib/progress/tutorContext.ts");
+  assert.match(context, /currentLevelAnswer\(/, "learnerContextFor no longer asks how the level is known");
+  assert.match(context, /describeSituation\(/, "learnerContextFor no longer reads the situation off the reasons table");
+  const note = between(code("lib/tutor/prompt.ts"), "export function learnerNote");
+  assert.match(note, /standing/, "learnerNote no longer says how the level is known");
+  assert.match(note, /situation/, "learnerNote no longer says what Estonian the learner lives in");
+  const phrases = ALL.filter((f) => f !== "lib/assessment/goals.ts" && /"live in Estonia"/.test(code(f)));
+  assert.deepEqual(phrases, [], "a situation phrase is typed outside the reasons table");
 });
 
 // ── Checks about the checks ──────────────────────────────────────────────────
@@ -10048,6 +10201,119 @@ check("a destination reached from another one really is linked from there", () =
   }
 });
 
+/*
+  READINESS FOR A SITUATION IS READ ON THREE RUNGS, AND THE FIRST IS THE ONLY
+  ONE A WORD COUNT REACHES.
+
+  "You would understand 81 percent of everyday situations" is what a vocabulary
+  app computes and it answers the least useful question: knowing the words is
+  what lets you follow the receptionist, not what lets you answer her.
+  `lib/readiness/rungs.ts` reads the course's own can-do claims as follow, take
+  part and lead, and its one promise is that recognition on its own never
+  clears the second rung. Driven here rather than read out of the source,
+  because the rule is about what the function returns and a regex over the
+  arithmetic would pass on a rewrite that changed the answer.
+*/
+check("recognising a word on cards never clears the second rung of a situation", () => {
+  const recognised: WordEvidence = {
+    recognise: { asked: 200, right: 200, medianMs: 800, lastRight: true },
+    produce: { asked: 0, right: 0, medianMs: null, lastRight: null },
+    formsRight: 0,
+    daysSince: 0,
+  };
+  assert.equal(wordStanding(recognised), "follow", "two hundred perfect recognitions read as more than following");
+
+  const doctor = SITUATIONS.find((s) => s.id === "keha-ja-tervis")!;
+  const evidence = new Map<string, WordEvidence>();
+  const lemmas = [...doctor.lemmas, ...doctor.machineryUnits.flatMap((id) => SITUATIONS.find((s) => s.id === id)?.lemmas ?? [])];
+  for (const lemma of lemmas) evidence.set(lemma, recognised);
+  const reading = readSituation(doctor, {
+    evidence,
+    available: new Set(lemmas),
+    cases: new Map(doctor.cases.map((c) => [c, { pct: 100, reviews: 50 }])),
+    listening: { placed: "C1", sittings: 3 },
+  });
+  assert.equal(reading.uncapped, "follow", `every word recognised perfectly read as "${reading.uncapped}"`);
+  assert.equal(reading.tryThis, null, "a situation only ever followed was offered as something to try");
+});
+
+/*
+  AND EVERY DOOR A STRUGGLE OFFERS OPENS. A struggle carries an href, and a
+  struggle whose href is a typo is a dead end on the one screen whose whole
+  job is a way out. The readings are driven across the contexts that produce
+  every kind of struggle and each destination is checked against `app/`.
+*/
+check("every drill a readiness struggle points at is a route the app has", () => {
+  const routes = new Set(
+    APP.filter((f) => f.endsWith("page.tsx"))
+      .map((f) => "/" + f.replace(/^app\//, "").replace(/\([^)]+\)\//g, "").replace(/\/?page\.tsx$/, "")),
+  );
+  const exists = (href: string) => {
+    const path = href.split("?")[0]!;
+    if (routes.has(path) || routes.has(path.replace(/^\//, ""))) return true;
+    // A dynamic segment: /grammar/adessive is app/(app)/grammar/[caseKey].
+    return [...routes].some((r) => {
+      const pattern = "^" + r.replace(/\[[^\]]+\]/g, "[^/]+") + "$";
+      return new RegExp(pattern).test(path) || new RegExp(pattern).test(path.replace(/^\//, ""));
+    });
+  };
+
+  const word = (over: Partial<{ rec: number; prod: number; ms: number | null; lastRight: boolean; days: number }>): WordEvidence => ({
+    recognise: { asked: over.rec ?? 0, right: over.rec ?? 0, medianMs: 1_000, lastRight: over.rec ? true : null },
+    produce: {
+      asked: over.prod ?? 0, right: over.prod ?? 0,
+      medianMs: over.ms === undefined ? 2_000 : over.ms, lastRight: over.prod ? (over.lastRight ?? true) : null,
+    },
+    formsRight: (over.prod ?? 0) >= 3 ? 2 : 0,
+    daysSince: over.days ?? 1,
+  });
+  const contexts = [
+    word({ rec: 3 }),
+    word({ rec: 3, prod: 3, lastRight: false }),
+    word({ rec: 3, prod: 3, days: 60 }),
+    word({ rec: 3, prod: 6, ms: 12_000 }),
+    word({ rec: 3, prod: 6, ms: null }),
+    word({ rec: 3, prod: 6 }),
+  ];
+  const hrefs = new Set<string>();
+  for (const situation of SITUATIONS) {
+    for (const e of contexts) {
+      const evidence = new Map<string, WordEvidence>();
+      for (const lemma of situation.lemmas) evidence.set(lemma, e);
+      for (const listening of [{ placed: null, sittings: 0 }, { placed: "A1", sittings: 0 }]) {
+        const reading = readSituation(situation, {
+          evidence, available: new Set(situation.lemmas), cases: new Map(), listening,
+        });
+        for (const s of reading.struggles) if (s.href) hrefs.add(s.href);
+      }
+    }
+  }
+  assert.ok(hrefs.size >= 8, `the readings only ever pointed at ${hrefs.size} places, which is fewer than the struggles there are`);
+  const dead = [...hrefs].filter((h) => !exists(h));
+  assert.deepEqual(dead, [], `a readiness struggle points at a route that does not exist: ${dead.join(", ")}`);
+});
+
+/*
+  A RUNG IS PRINTED WITH THE EVIDENCE BEHIND IT, EVERYWHERE IT IS PRINTED.
+
+  The exam hub's rule (`EVIDENCE_LABEL` beside every `.confidence`), applied to
+  the rung: "take part" on eleven answers and on two hundred are two different
+  sentences, and a chip on its own is the number this screen exists to
+  replace. Anchored on the chip component, because a file that draws the chip
+  is a file printing a verdict, whatever it calls the variable.
+*/
+check("a screen that prints a situation's rung prints the evidence tier beside it", () => {
+  const screens = [...APP, ...COMPONENTS].filter((f) => /<RungChip\b/.test(code(f)));
+  assert.ok(screens.length >= 3, `only ${screens.length} screens draw a rung chip`);
+  for (const file of screens) {
+    const src = code(file);
+    assert.ok(
+      /EVIDENCE_LABEL|EVIDENCE_NOTE|standingLine/.test(src),
+      `${file} prints a rung and not what the evidence behind it is worth`,
+    );
+  }
+});
+
 /**
  * LIGHT IS THE DEFAULT AND DARK IS A CHOICE.
  *
@@ -10093,6 +10359,58 @@ check("the dark palette is a choice, never the system's", () => {
       `${file} no longer chooses the dark theme the way the toggle does, so nothing sweeps it`,
     );
   }
+});
+
+/*
+  NOTHING ABOUT READINESS IS STORED. It is derived from the append-only log on
+  every request (ADR-014), and the one module that reads the database for it
+  may only read.
+*/
+check("readiness is derived on every request and never written down", () => {
+  const src = code(join("lib", "progress", "readiness.ts"));
+  assert.doesNotMatch(
+    src,
+    /prisma\.\w+\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\b/,
+    "lib/progress/readiness.ts writes to the database, and a stored readiness is a second source of truth that drifts",
+  );
+  assert.doesNotMatch(SCHEMA, /readiness|\brung\b/i, "the schema grew a readiness column; it is derived, never stored");
+});
+
+/**
+ * A TEXT FIELD KEEPS THE RING EVERY OTHER CONTROL GETS.
+ *
+ * `:focus-visible` in app/globals.css draws the accent ring on everything
+ * that can take focus, and `outline-none` on a field is a Tailwind utility
+ * that beats it. Twenty text fields carried it, from the wizard's name field
+ * (the first thing anybody types into here) to sign-in, every typed answer
+ * in review, the import box and the crossword's cells, and the design suite
+ * never met one because it tabs four routes and none of them has a text
+ * field on arrival. Some of the twenty swapped in a `focus:` shadow, which is
+ * a ring of a kind; most swapped in nothing, so a keyboard user typing their
+ * own name could not see where the caret was going.
+ *
+ * The rule is the one rule: no field switches the outline off. A field that
+ * wants a softer ring can add to it, never take it away.
+ */
+check("no text field switches its focus ring off", () => {
+  /*
+    A tag is read to its own close, `/>`, rather than to the first `>`: an
+    `onChange={(e) => ...}` sits inside every one of these tags and its arrow
+    is a `>`. The first version of this stopped there, never reached the
+    className, and passed with `outline-none` put back on the wizard's name
+    field, which is the fault it was written for.
+  */
+  const offenders: string[] = [];
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    for (const m of source.matchAll(/<(input|textarea)\b([\s\S]*?)\/>/g)) {
+      if (/\b(?:focus:|focus-visible:)?outline-none\b/.test(m[2] ?? "")) {
+        offenders.push(`${file}: <${m[1]}> with outline-none`);
+      }
+    }
+    if (/outline(?:Style)?:\s*["']none["']/.test(source)) offenders.push(`${file}: outline: none in a style`);
+  }
+  assert.deepEqual(offenders, [], "a text field takes the focus ring away, and a keyboard user cannot see where they are typing");
 });
 
 console.log(

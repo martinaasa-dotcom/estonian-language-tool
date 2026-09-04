@@ -269,7 +269,7 @@ export function DescribeSession({ prompts: initialPrompts, aiAvailable }: {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(); }
               }}
               placeholder="Kirjuta oma lause siia…"
-              className="mt-2 w-full resize-none rounded-md border px-3.5 py-3 text-[17px] outline-none disabled:opacity-70"
+              className="mt-2 w-full resize-none rounded-md border px-3.5 py-3 text-[17px] disabled:opacity-70"
               style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
             />
             {!marked && <div className="mt-2"><DiacriticBar /></div>}

@@ -1,10 +1,13 @@
 import { goalsFor } from "@/lib/progress/assessment";
 import { readinessSignals } from "@/lib/progress/exam";
 import type { DeckSnapshot } from "@/lib/progress/summary";
-import { countdownPhrase, daysUntil, targetByBand } from "@/lib/assessment/goals";
+import { countdownPhrase, daysUntil, reasonsFor, targetByBand, weeksUntil } from "@/lib/assessment/goals";
+import { distanceLine, foundHours, project, type MeasuredPace } from "@/lib/assessment/plan";
 import { assessReadiness, type Evidence, type Feedback } from "@/lib/exam/readiness";
 import type { ExamLevel } from "@/lib/exam/spec";
 import type { DayClock } from "@/lib/time/day";
+import { minutesForCards } from "@/lib/stats/pace";
+import { standingFor } from "./plan";
 
 /**
  * THE DATE SOMEBODY GAVE US, AND WHETHER THEY ARE GOING TO MAKE IT.
@@ -61,6 +64,18 @@ export interface ExamCountdown {
    * inventing a second opinion beside it.
    */
   gap: Feedback | null;
+  /**
+   * Whether the pace this learner keeps reaches the target by the date, in
+   * the plan's own sentence.
+   *
+   * The confidence above is "would you pass this morning" and this is "does
+   * the road you are on arrive in time", which are different questions with
+   * different evidence behind them, and the card used to answer only the
+   * first. It is `distanceLine` over the same `project` the level check
+   * screen renders, on the same standing, the same week and the same
+   * measured pace, so Today and `/assess` cannot give two timelines.
+   */
+  distance: string;
 }
 
 /**
@@ -76,6 +91,8 @@ export async function examCountdown(
   now: Date,
   clock: DayClock,
   snapshot?: DeckSnapshot,
+  /** The learner's measured pace, when the caller already read it. Null before any review. */
+  pace: MeasuredPace | null = null,
 ): Promise<ExamCountdown | null> {
   const goals = await goalsFor(ownerId);
   const target = targetByBand(goals.target);
@@ -84,8 +101,20 @@ export async function examCountdown(
   // Only now, once there is a target to spend it on. This is eight queries and
   // a scan of the dictionary, and running it for a learner who never named a
   // level would be the cost of the panel without the panel.
-  const signals = await readinessSignals(ownerId, snapshot);
+  const [signals, standing] = await Promise.all([
+    readinessSignals(ownerId, snapshot),
+    standingFor(ownerId),
+  ]);
   const readiness = assessReadiness(signals);
+  const plan = project({
+    standing,
+    to: target.band,
+    minutesPerDay: minutesForCards(goals.dailyGoal),
+    daysPerWeek: goals.daysPerWeek,
+    weeksAvailable: weeksUntil(goals.deadline, now),
+    found: foundHours(reasonsFor(goals.reason)),
+    pace,
+  });
   const level = readiness.levels.find((l) => l.level === target.band);
   if (!level) return null;
 
@@ -101,5 +130,6 @@ export async function examCountdown(
     evidence: level.evidence,
     measured: level.measured,
     gap: readiness.gaps[0] ?? null,
+    distance: distanceLine(plan),
   };
 }

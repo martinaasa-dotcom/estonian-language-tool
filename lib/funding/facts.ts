@@ -108,14 +108,14 @@ export const MEASURED: readonly Measurement[] = [
     how: "the two rows above, times the default daily goal in lib/settings/store.ts",
   },
   {
-    what: "One spoken phrase",
-    value: "188 KB for 2.1 seconds, which is 88 KB a second",
-    how: "one request to TartuNLP for a three-word sentence, read back off the WAV header",
+    what: "One spoken phrase, as stored",
+    value: "51 KB for 1.15 seconds, which is 43 KB a second",
+    how: "one request to TartuNLP for a three-word sentence, passed through prepareClip in lib/audio/wav.ts, read back off the WAV header",
   },
   {
     what: "What that speech actually is",
-    value: "32-bit float, 22,050 Hz, one channel, no compression",
-    how: "the fmt chunk of the same file",
+    value: "16-bit PCM, 22,050 Hz, one channel, no compression; the service sends 32-bit float with half a second of silence each end, 199 KB for the same sentence",
+    how: "the fmt chunk of the same file, before and after",
   },
   {
     what: "A page, as HTML over the wire",
@@ -386,7 +386,7 @@ export const PRICE_REFS: readonly PriceRef[] = [
 
 export const REVIEW_BYTES = 300;
 export const CARD_BYTES = 352;
-export const CLIP_KB = 188;
+export const CLIP_KB = 51;
 export const HTML_KB = 21;
 export const SHARED_JS_KB = 102;
 export const REQUESTS_PER_PAGE = 13;

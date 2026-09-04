@@ -107,7 +107,7 @@ export function ClozeSession() {
             maxLength={MAX_PASSAGE_CHARS}
             onChange={(e) => setText(e.target.value)}
             placeholder="Kleebi siia artikkel, kodutöö või sõnum…"
-            className="mt-2 w-full resize-y rounded-md border px-3.5 py-3 text-base outline-none"
+            className="mt-2 w-full resize-y rounded-md border px-3.5 py-3 text-base"
             style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
           />
           <div className="mt-2 flex items-center justify-between gap-3">
@@ -239,7 +239,7 @@ export function ClozeSession() {
               autoFocus
               disabled={checked}
               onChange={(e) => setAttempt(e.target.value)}
-              className="mt-2 w-full rounded-md border px-3.5 py-2.5 text-lg outline-none disabled:opacity-70"
+              className="mt-2 w-full rounded-md border px-3.5 py-2.5 text-lg disabled:opacity-70"
               style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
             />
             {!checked && <div className="mt-2"><DiacriticBar /></div>}

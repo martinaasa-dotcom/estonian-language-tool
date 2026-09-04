@@ -119,6 +119,24 @@ export function ExamCountdownCard({ countdown, zone, className }: {
         )}
       </p>
 
+      {/*
+        The other half of the morning decision. The ring says whether a pass is
+        likely today; this says whether the road arrives by the date, at the
+        pace this learner actually keeps, in the plan's own words. It comes off
+        the same projection the level check screen renders, so the two screens
+        cannot disagree about the timeline.
+      */}
+      <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        {countdown.distance}{" "}
+        <Link
+          href="/assess"
+          className="underline underline-offset-2"
+          style={{ color: "var(--accent-deep)" }}
+        >
+          The plan
+        </Link>
+      </p>
+
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <ButtonLink href="/exam" variant="secondary" size="sm">
           Where you stand <ArrowRight size={14} aria-hidden />

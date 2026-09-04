@@ -1,8 +1,8 @@
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
 const B = baseUrl();
-// Floor: four checks, all unconditional.
-const { check, done } = suite("Anu", { floor: 4 });
+// Floor: five checks, all unconditional.
+const { check, done } = suite("Anu", { floor: 5 });
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
 
@@ -16,7 +16,8 @@ await page.getByRole("button", { name: /Ask/ }).click();
 await page.waitForTimeout(18000);
 
 const reply = await page.locator("div").filter({ hasText: /^Anu/ }).last().innerText().catch(() => "");
-check("she answers, and streams into the page", reply.length > 60, `${reply.length} chars`);
+check("she answers, and the finished reply lands on the page", reply.length > 60, `${reply.length} chars`);
+check("and no markdown asterisk is left on screen", !/\*\*/.test(reply));
 check("the answer names the partitive rule", /partitiv/i.test(reply),
   reply.replace(/\n/g, " ").slice(0, 120));
 

@@ -502,8 +502,9 @@ sizes anybody starts at, so leaving it out implied the software maintains itself
 dollars a month before a single learner arrives, and most of it does not move when they do, so the
 first thousand people are close to free to serve. **Speech** is the fastest-growing thing on the
 page: TartuNLP returns uncompressed 32-bit audio at 88 KB a second, 188 KB for a three-word
-sentence, so the whole spoken dictionary is 2.8 GB, and at a hundred thousand learners buying that
-speech would come to more than every billed line put together. **What is given outgrows what is
+sentence, and what is stored is the same clip trimmed and written as 16-bit, 51 KB, so the whole
+spoken dictionary is about 0.8 GB, and at a hundred thousand learners buying that speech would
+still come to more than every billed line put together. **What is given outgrows what is
 paid for** at that size, which is worth knowing about a project this small. Each is asserted, and
 the per-learner curve was asserted three times before it was right: the first version claimed a
 smooth fall, failed twice, and both failures were the model telling the truth.
@@ -2011,6 +2012,24 @@ that held nothing keeps the stated pace and says so rather than dividing by zero
 this is measured on the app's learners as a population, and the copy still says that. What is
 measured is the one learner in front of it.
 
+**And the same person is quoted on every screen that quotes a pace or a date.** The plan was
+calibrated first and three other screens went on quoting the average beside it. Today's countdown
+card said how likely a pass was that morning and never whether the pace this learner keeps reaches
+the date; the exam hub printed the weeks left with no distance to set against them; and Today's
+"about N minutes" divided the cards due by six while the plan budgeted three, so the morning promised
+half the time the plan was allowing for the same cards. `distanceLine` in `lib/assessment/plan.ts`
+is the plan's own sentence over its own projection, Today and the hub both build that projection
+from `standingFor`, the reasons and the measured pace, and an invariant fails on a screen writing
+its own sentence over `weeksWithFound`. `DEFAULT_CARDS_PER_MINUTE` is defined once in
+`lib/stats/pace.ts`, `minutesForCards` is how cards become minutes anywhere, and the learner's own
+rate off the log replaces it after a fortnight, read at the edge of a believable band rather than
+raw: the log cannot tell Match from a typed review, and one evening of games read raw made the
+morning promise 26 cards in a minute. Anu is briefed the same way: `learnerNote` says
+whether a paper measured the level and which skills it found, so she does not pitch listening at a
+level a check has already said the learner has not reached, and it names what Estonian the learner
+lives in, off the `situation` phrase each reason in `goals.ts` carries beside its hours. One table,
+so the plan's note and her briefing cannot describe one learner two ways.
+
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
 Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
@@ -2594,7 +2613,7 @@ used to arrive on a button press only, in one voice chosen by whoever deployed t
 the daily path meant a learner clicking a speaker icon on every card or hearing nothing. A card
 now reads itself aloud when a word is first met and when its answer appears, the next card's clip
 is fetched while this one is being answered so the play is instant, and `lib/audio/voice.ts` is
-the allowlist of TartuNLP's twelve Estonian voices a learner may pick from in Settings. The state
+the allowlist of TartuNLP's ten Estonian voices a learner may pick from in Settings. The state
 examination's listening part is read by more than one speaker and so is the country, so a learner
 who has only ever heard one voice say a word has learned that voice rather than the word. A
 requested voice is checked against that list on the way into the speech route and never passed to
@@ -2603,8 +2622,42 @@ wrong answer makes a short sound made with the browser's own oscillator, so it c
 and works offline. All three are settings, on by default because a missing row has to read as
 the behaviour everybody had, and `components/AudioPrefs.tsx` publishes them once from the shell so
 every speaker button and every round reads one answer. `lib/audio/clip.ts` is the one place a
-clip's cache key is built, since three copies of "text, speed, voice" is where two of them stop
+clip's cache key is built, since three copies of "text, voice" is where two of them stop
 agreeing about what is in the cache.
+
+**Slow is the same clip played slower with the pitch held, never a second clip asked of the
+model.** The slow half of every speaker pill used to ask TartuNLP for the sentence again at speed
+0.6, and the service applies that number inside its acoustic model as a duration regulator: each
+phoneme's predicted length is multiplied and the extra frames are copies of the one before, then
+the vocoder renders the lot. Measured on the live service, the pitch does not move (240 Hz against
+237) and the speech is 1.6 times longer, and what a learner hears is every vowel held flat with a
+buzz under it, which was reported as robotic and is. No speaker ever said anything that slowly, so
+a model asked to has nothing to imitate. A pitch-preserving time stretch over real speech keeps
+the recording's own pitch contour and its formants, which is how a video player's 0.75x sounds like
+the same person speaking slowly, and every browser ships one behind `playbackRate` with
+`preservesPitch`. So there is one clip per word and voice, `SLOW_RATE` in `lib/audio/clip.ts` is
+the rate it plays at, and the route no longer accepts a speed at all: one clip rather than two
+halves what is asked of a free service and what three caches hold, and a slow play works offline
+wherever the normal one does. 0.7 rather than 0.6 because that is where the stretch stays clean on
+consonants, which is the part of Estonian a slow play exists to make audible.
+
+**And what the service sends is not what is kept.** The worker pads every sentence with half a
+second of digital silence on each side, so a word on a card arrived as 0.85 seconds of nothing,
+0.39 of speech and 0.5 of nothing again: most of a second between the press and the sound, which is
+the delay that makes a voice feel like a machine warming up, and it was being stored, shipped and
+slowed with the rest. `lib/audio/wav.ts` is what happens to a clip between the service and the
+cache, pure and unit tested: the dead air is cut to 40 ms in front and a natural release behind,
+the cuts are faded so nothing clicks, every voice is levelled to one peak so switching from Mari to
+Kalev in Settings does not mean reaching for the volume key, and the 32-bit float is written as
+16-bit PCM, which halves the store, the egress and the phone's cache for a signal that never
+carried more than sixteen bits out of a vocoder. Nothing in it touches what is said or how fast,
+and a response it cannot read is kept as it came and reported rather than lost. The cache key
+carries a version for it, since a clip under the old key is the untrimmed float. Two voices left
+the allowlist on the same day, `lee` and `luukas`, because the live service answers a request for
+either with a 408 after thirty seconds and the listening round cycles every voice, so two words in
+twelve waited out the route's timeout: a voice is on the list because it answers. Asserted: the
+route forwards no speed and prepares every clip before writing it, and `playbackRate` is set in one
+file.
 
 **A response built out of one learner's own rows says it is theirs and is never kept.** The
 framework's silence is not a cache policy: `ImageResponse` stamps `public, immutable,
@@ -3010,6 +3063,34 @@ whatever sits above it, and `next` is the level it stopped at, one above `assess
 so the two can no longer point in opposite directions. The per-level figures stay as they are and
 stay non-monotone, which is honest: the app knows different amounts about each level and publishes
 the evidence tier beside each number.
+
+**How ready somebody is for real life is read in situations and on rungs, and never as a
+percentage.** "You would understand 81 percent of everyday situations" is the number a word count
+can produce and it answers the least useful question: knowing the words for a health centre is
+what lets you follow the receptionist, not what lets you answer her, and nothing like what lets you
+open the exchange and recover when she says one sentence too fast. The course's 82 `canDo` claims
+had never been checked against anything, `Review.durationMs` had never been read by anything, and
+between them they answer the honest version. `lib/readiness/` reads each claim on three rungs,
+**follow it, take part, lead it**, and places the learner on the highest one the log supports:
+recognition for the first, production more than once and the last time for the second, and for the
+third production with variety and at pace, plus the cases the encounter turns on, the machinery it
+runs on (numbers, question words, the clock) and, for a live exchange, some evidence the learner can
+follow *speech*, which only the level check and a sat paper supply. **Recognition alone never clears
+the second rung**, driven in the invariant suite with two hundred perfect flips of every card. The
+bars are shares of words rather than averages of scores, because the one word you are missing is the
+one the other person says. Thin evidence caps the rung itself rather than a confidence, since there
+is no percentage to cap: under a dozen answers the app says follow and no more, under forty take
+part and no more, and it says the cap bit. The headline over a level is a distribution, "4 you
+could lead, 7 you could take part in, 8 you would follow and 4 you would be lost in", and every
+rung is printed with `EVIDENCE_LABEL` beside it, asserted on the chip. What stands in the way is
+named and ranked by the rung it blocks, with the drill that moves it; what to go and try is one
+authored English line per situation, shown only once the log supports taking part, because an app
+sending somebody to book a doctor's appointment on nine recognised words is the false confidence
+this exists against. The situation table names unit ids and case keys and never a word, and holds
+no Estonian; nothing is stored, nothing is generated, and the module that reads the log for it may
+only read. A row written before `Review.slot` existed takes the slot of the card it points at, which
+is the safe direction pointed the right way: read as recognition, a year of production would have
+held everybody at the first rung. `docs/22-readiness.md` is the design and what it refuses to claim.
 
 **And the card does not write its own advice.** It said "speaking is the part standing in the way,
 predicted at 0 against the 60 a pass needs", which for somebody who has never sat a paper is not a
@@ -3844,6 +3925,26 @@ stream got that wrong in the way only a test finds, rewriting a corrected senten
 boundary at a time once the first half of its line had already been shown, so the line's character
 is now decided when it opens and carried until it ends.
 
+**Her reply is typography, shown once it is finished, and the two tagged lines have one shape.** Every
+model writes markdown whether asked or not, and the bubble drew it as text: `**raamatut**` with the
+asterisks in, on the one word the sentence was about, and a numbered list as four lines beginning
+`1.`. Drawn a chunk at a time it was worse, since bold that has opened and not yet closed is a pair
+of asterisks for as long as the model takes to reach the closing pair. `lib/tutor/markdown.ts` reads a
+reply into paragraphs, lists, headings and the three inline shapes, deliberately understanding nothing
+else, and never changing a character between the markers; `components/anu/Prose.tsx` is the one place
+those become elements, on the page, in the panel and under an exam composition. And `useAnuChat`
+gathers the stream and shows the finished reply in one go, with three dots in her bubble until it
+lands: the route still streams, because a two-minute route that says nothing until the end is what a
+proxy times out and the cleaning pass is built on the stream, but typography set a character at a
+time is never clean while it is being set, and the first thing a learner reads should be the answer
+as she meant it to look. The prompt says what formatting is allowed in the terms the renderer draws,
+bold for the word or form she is pointing at and a list only where the items are a list. A model
+allowed bold bolds its markers too, so `**FIX:**` arrives as readily as `FIX:`, and three modules
+that recognised those lines with three regexes read `lib/tutor/markers.ts` now. Asserted on all of
+it. What the prompt also asks for, and no check can see, is that she teaches like a person: name what
+was right first, one thing per answer, a reason a learner can hold onto beside every rule, and a
+next step at the end. `docs/18-voice.md` is still the standard for whether she managed it.
+
 **A class shows effort, never contents.** `lib/classroom/roster.ts` is the whole boundary: reviews
 this week, streak, words known, last-seen, the group's weakest cases in aggregate, and, amending
 ADR-019, each student's own weakest case as a rolled-up percentage over their own reviews, gated on
@@ -4308,15 +4409,18 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
 `conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
-`nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`,
+`nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`, `prepareClip`, `SLOW_RATE`,
 `billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`,
 `MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`, `rungOf`,
 `LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`, `caseFits`,
 `caseQuestionFor`, `semanticGroup`, `ANIMATE_CODES`, `nominalOpener`, `asksPerson`,
 `slotOfCard`, `isKnownSlot`, `practisedSlot`, `askableSlots`, `shapeFor`, `markFlash`,
 `formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `hoursFor`, `foundHours`, `weeklyExposure`,
-`weeksWithFound`, `measuredPace`, `currentLevelAnswer`, `reachedSlot`, `reachedFor`,
-`answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`. Most of them now
+`weeksWithFound`, `measuredPace`, `currentLevelAnswer`, `AnuProse`, `parseReply`, `fixFrom`,
+`TAGGED_LINE`, `readSituation`, `wordStanding`, `SITUATION_FACTS`, `readinessPicture`, `RungChip`,
+`distanceLine`, `minutesForCards`, `describeSituation`, `reachedSlot`, `reachedFor`,
+`answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
+`lacksFiniteVerb`, `answerForms`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

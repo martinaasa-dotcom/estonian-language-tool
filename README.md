@@ -125,6 +125,13 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   six-month heatmap, a two-week forecast, per-case accuracy and vocabulary reach by CEFR, all
   computed live from the review log, never stored, so none of it can drift from what you actually
   did. An opt-in weekly leaderboard exists for classes; it is off until you set a name and join.
+- **How ready you actually are, in situations rather than a percentage.** Every unit of the course
+  makes a claim, "describe a symptom to a doctor and understand the advice", and the app reads each
+  one on three rungs off your own answers: whether you would follow it, take part in it, or lead
+  it. Recognising words on cards never clears the second rung. It names what stands in the way,
+  the endings that encounter turns on, how many seconds a word takes you to reach, whether anything
+  has ever tested your ear, and it offers a real thing to go and try only once your record supports
+  answering. `docs/22-readiness.md`.
 - **Offline.** Installable as an app; reviewing works with no connection and every grade is kept on
   the device with the time you actually answered, then sent when you are back. A daily reminder is
   offered as a calendar event, which fires whether or not the app is open.

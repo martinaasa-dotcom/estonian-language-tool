@@ -1243,7 +1243,7 @@ function MessageQuestion({ item, text, onWrite }: {
         rows={5}
         aria-label={`Write ${item.scenario}`}
         placeholder="Write in Estonian."
-        className="mt-3 w-full rounded-[var(--r-lg)] border px-4 py-3 text-md leading-relaxed outline-none focus:shadow-[var(--shadow)]"
+        className="mt-3 w-full rounded-[var(--r-lg)] border px-4 py-3 text-md leading-relaxed focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         lang="et"
       />
@@ -1316,7 +1316,7 @@ function ComposeQuestion({ item, response, onWrite }: {
         rows={10}
         aria-label={`Write about ${item.topic}`}
         placeholder="Write in Estonian."
-        className="mt-3 w-full rounded-[var(--r-lg)] border px-4 py-3 text-md leading-relaxed outline-none focus:shadow-[var(--shadow)]"
+        className="mt-3 w-full rounded-[var(--r-lg)] border px-4 py-3 text-md leading-relaxed focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         lang="et"
       />

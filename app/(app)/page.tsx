@@ -10,6 +10,8 @@ import { resolveProvider } from "@/lib/tutor/provider";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { examCountdown } from "@/lib/progress/countdown";
+import { measuredPaceFor } from "@/lib/progress/plan";
+import { minutesForCards } from "@/lib/stats/pace";
 import { wordOfDay, wordOfDayCollection } from "@/lib/progress/wordOfDay";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
@@ -118,7 +120,7 @@ export default async function TodayPage() {
   // with a deck or a finished setup never sees it again.
   if (!settings[SETTING_KEYS.onboardedAt] && snapshot.totalCards === 0) redirect("/start");
 
-  const [summary, units, tasks, events, weekReviews, learner] = await Promise.all([
+  const [summary, units, tasks, events, weekReviews, learner, pace] = await Promise.all([
     dailySummary(ownerId, snapshot, now, clock),
     pathWithProgress(ownerId, snapshot),
     /*
@@ -149,6 +151,13 @@ export default async function TodayPage() {
       select: { reviewedAt: true },
     }),
     currentLearner(),
+    /*
+      How much of this app the learner actually does, off the log. Read here
+      once for the two things below that quote a pace: the minutes the cards
+      waiting will take, at this learner's own rate, and the countdown's line
+      on whether that pace reaches the date.
+    */
+    measuredPaceFor(ownerId, now),
   ]);
 
   const stage = stageOf({ totalCards: snapshot.totalCards, reviewsAllTime: summary.reviewsAllTime });
@@ -164,7 +173,7 @@ export default async function TodayPage() {
     shows(stage, "struggle") ? loadStruggle(ownerId, now) : null,
     // The snapshot is handed over rather than fetched again: this page already
     // has one for the due counts, and the readiness figures only need the deck.
-    shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot) : null,
+    shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot, pace) : null,
   ]);
 
   const today = dateLine(now, clock.zone);
@@ -845,7 +854,7 @@ export default async function TodayPage() {
         )
       }
       title={name ? `${greeting(clock, now)}, ${name}` : greeting(clock, now)}
-      lead={lead(stage, toReview, toLearn)}
+      lead={lead(stage, toReview, toLearn, pace?.cardsPerMinute ?? null)}
     >
       {/*
         ONE CARD ACROSS THE TOP, AND THE REST DEALT INTO TWO COLUMNS THAT END
@@ -934,17 +943,30 @@ function NextUnitIcon({ name }: { name: string }) {
  * count and the minutes are the useful sentence once there is a routine, and
  * they are an instruction to nobody on the first morning.
  */
-function lead(stage: "arriving" | "starting" | "settled", toReview: number, toLearn: number): string {
+function lead(
+  stage: "arriving" | "starting" | "settled",
+  toReview: number,
+  toLearn: number,
+  /** This learner's own cards a minute, off the log. Null before it has one. */
+  cardsPerMinute: number | null,
+): string {
   // Nothing due is only "a good moment for something new" while there is
   // something new. A deck whose words are all learned needs a unit, and saying
   // otherwise sends somebody to a screen with nothing on it.
   if (toReview === 0 && toLearn > 0) return "Nothing due right now. A good moment to meet some new words.";
   if (toReview === 0) return "Nothing due, and no new words waiting. A good moment to open a unit.";
-  const minutes = Math.max(1, Math.round(toReview / 6));
+  /*
+    At the learner's own rate where the log has one, and at the one default
+    the plan uses otherwise. This divided by six while the plan divided by
+    three, so the morning promised half the time the plan was budgeting for
+    the same cards. lib/stats/pace.ts holds the figure.
+  */
+  const minutes = minutesForCards(toReview, cardsPerMinute);
+  const span = `${minutes} minute${minutes === 1 ? "" : "s"}`;
   if (stage === "arriving") {
-    return `Your deck is ready. ${toReview} card${toReview === 1 ? "" : "s"} to meet, about ${minutes} minutes.`;
+    return `Your deck is ready. ${toReview} card${toReview === 1 ? "" : "s"} to meet, about ${span}.`;
   }
-  return `${toReview} card${toReview === 1 ? "" : "s"} waiting, about ${minutes} minutes of your day.`;
+  return `${toReview} card${toReview === 1 ? "" : "s"} waiting, about ${span} of your day.`;
 }
 
 function weekdayLetter(day: string): string {

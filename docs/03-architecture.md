@@ -733,3 +733,22 @@ keeps `aberratsioon`; asking a model for topical words, which is ADR-005 with ex
 thin source up from the random draw, which buys four chips and spends the caption; and putting the
 feed on the recipients list, which would make a page about personal data harder to read by naming a
 service that receives none of it.
+
+**ADR-026: Readiness for real life is read per situation on three rungs, and recognition alone
+never clears the second.**
+*Context:* a vocabulary app can compute "you would understand 81 percent of everyday situations"
+and several do; it measures following, and sells it as readiness. This app had 82 untested can-do
+claims, a per-answer duration nothing read, and an exam model with an evidence tier. *Decision:*
+the unit of readiness is the course's own claim, read on follow it, take part and lead it. Follow
+is recognition; take part is production more than once and the last time; lead is production with
+variety and at pace, plus the cases the encounter turns on, the machinery it runs on and, for a
+live exchange, listening evidence from the level check or a sat paper. Bars are shares of words,
+never averages. Thin evidence caps the rung rather than a percentage. The headline is a
+distribution and never a percentage. The situation table is English, names unit ids and case keys,
+and holds no Estonian (ADR-005). Nothing is stored (ADR-014) and no model is reachable from it.
+*Consequences:* a learner is told plainly which encounters they would be lost in, what stands in
+the way of the next rung and where to go, and is offered a real thing to try only once the log
+supports answering; a live situation cannot reach the top rung on typed evidence alone, which is
+the app saying it has never heard them follow speech rather than guessing that they can.
+`docs/22-readiness.md`.
+

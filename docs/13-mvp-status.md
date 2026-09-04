@@ -433,6 +433,11 @@ screen says which.
 - **After a fortnight, the pace is what they did.** `lib/stats/pace.ts` reads sittings off
   `Review.durationMs` and the timestamps over the last four weeks, and the plan is built on that
   rather than on the days they said.
+- **And the rest of the app quotes the same person.** Today's countdown card and the exam hub
+  print the plan's distance in the plan's own sentence (`distanceLine`), off the same projection.
+  Today's "about N minutes" divided by six where the plan budgeted three; one figure now, and the
+  learner's own cards a minute once the log has one. Anu is told whether the level was measured,
+  which skills the check found, and what Estonian the learner already lives in.
 
 ### Known limitations, still
 
@@ -1519,7 +1524,7 @@ already in the deck grades its card (ADR-016).
 card's clip is fetched while this one is being answered so the play is instant. Speech had been a
 button, so on the daily path a learner either clicked a speaker icon on every card or heard
 nothing, in a language whose spelling only half records its length. **The voice is the learner's
-to choose**: TartuNLP offers twelve Estonian voices, the app had used one of them for everybody,
+to choose**: TartuNLP offers twelve Estonian voices, ten of which answer, the app had used one of them for everybody,
 and a learner who has only ever heard one voice say a word has learned that voice rather than the
 word. The state examination's listening part is read by more than one speaker. The list in
 `lib/audio/voice.ts` is the allowlist the speech route checks a request against, so a value not on
@@ -1769,7 +1774,8 @@ Two lines were missing from the bill: transactional mail, and the tooling that w
   indexes; 300 bytes for a review row and 352 for a card, over 80,000 synthetic rows; 21 KB of
   compressed HTML for a median page and 102 KB of shared JavaScript once per build; about 35
   requests behind a page view, of which 11 to 15 reach the server on a warm cache; 188 KB for a
-  2.1 second spoken phrase, which is 88 KB a second of uncompressed 32-bit audio.
+  2.1 second spoken phrase as the service sends it, which is 88 KB a second of uncompressed 32-bit
+  audio, and 51 KB for the same three words as stored, trimmed and written as 16-bit.
 - 184 invariants, eight of them new and every one made to fail before it was left passing. 1,634
   unit tests. The containment suite with `/funding` at three widths and in the dark, the
   accessibility suite with axe clean on it in both themes, and the design suite reporting no
@@ -2078,7 +2084,41 @@ statement now.
   arriving where it should: the words with a picture are the ones a third of which are animals and
   people.
 
-## 30. The twenty-fourth pass: what the log knew and nobody read
+## 30. The twenty-fourth pass: how ready you actually are
+
+Asked for directly. Not a vocabulary percentage sold as readiness, which is what most apps print
+and what a learner discovers is worthless at the first counter, but an honest reading of which
+real situations somebody could follow, take part in or lead, where each would go wrong, and what
+they could already go and try.
+
+### What was there
+
+Every course unit carries a `canDo` claim and none had ever been checked. `Review.durationMs` had
+been recorded on every answer since the scheduler was written and read by nothing. The exam hub had
+an evidence tier and a ceiling on what a thin log may claim. The Situations design had mapped
+encounters to units and named the machinery every conversation runs on.
+
+### What was built
+
+`lib/readiness/` is the arithmetic, pure and unit tested: a situation per unit, three rungs read
+word by word, pace off correct typed answers, the cases and machinery an encounter leans on, the
+ear off the level check, and a cap on the rung itself under thin evidence.
+`lib/progress/readiness.ts` reads the log for it in five parallel reads and one lookup, and it may
+only read. `/progress/readiness` is the list and `/progress/readiness/<unit>` the detail; Progress
+carries the distribution and every unit page prints its own rung under its claim. Four invariants,
+each made to fail once, and `docs/22-readiness.md` is the write-up.
+
+### What building it turned up
+
+Rows written before `Review.slot` existed, which on this deployment is most of them, read as
+recognition under the safe rule, and the safe rule held a learner who had produced every word of a
+unit at "follow it". The card the row points at still knows its type, so those rows take the
+card's slot, exactly as mastery reads them. And the demo fixture, run on this, reports what a real
+learner two months in would be told: eight situations they would be lost in, none they could lead
+yet, and most of their words a month stale. That is a harder sentence than "74 percent recall",
+and it is the one that is true.
+
+## 31. The twenty-fifth pass: what the log knew and nobody read
 
 Not reported. It came out of reading a product brief against the code. The brief argued that a
 language app should track more than right and wrong, response time and which forms a learner
@@ -2146,7 +2186,7 @@ a recall. Whether speed should move the rating, whether the confusion should gen
 question, and whether a mission format should sit on top of any of it are the three decisions
 still open from the brief, and each is a larger change than reading two columns.
 
-## 31. The twenty-fifth pass: the other side's line, written before anybody played
+## 32. The twenty-sixth pass: the other side's line, written before anybody played
 
 Situations shipped in §30 of `docs/21-situations.md` with a ladder whose load-bearing rung was a
 live model, and a keyless deployment therefore had a receptionist who could greet you and then say
