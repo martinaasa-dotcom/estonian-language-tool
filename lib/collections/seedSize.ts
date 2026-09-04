@@ -82,4 +82,4 @@
  * `valutama`, a unit on housing and no `katki`, and no way at all to ask
  * whether a time suits you. Each went to the unit whose subject it is.
  */
-export const SEED_SET_SIZE = { words: 6_110, forms: 38_607 };
+export const SEED_SET_SIZE = { words: 6_110, forms: 39_421 };

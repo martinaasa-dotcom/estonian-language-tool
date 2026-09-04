@@ -17,10 +17,9 @@ import { createClient } from "@/lib/supabase/client";
  * `/auth/callback`, so the allowlist and the `next=` narrowing are checked in
  * exactly one place for both.
  *
- * The mailed half is drawn only when the deployment says its mail actually
- * goes out (`EMAIL_SIGN_IN`), because Supabase's built-in sender is a couple
- * of messages an hour for the whole project. The reasoning is on the page
- * that reads the switch.
+ * The mailed half is drawn by default and a deployment whose mail does not
+ * go out hides it with `EMAIL_SIGN_IN="off"`. The reasoning for that being
+ * the way round it is lives on the page that reads the switch.
  *
  * THE LINK HAS TO BE OPENED IN THIS BROWSER, and the screen says so rather
  * than letting somebody find out. `signInWithOtp` mints a PKCE verifier and

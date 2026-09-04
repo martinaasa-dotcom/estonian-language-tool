@@ -28,6 +28,8 @@
  * Pure: no React, no Next, no Prisma, no clock.
  */
 import type { CaseKey } from "@/lib/estonian/types";
+import type { CurveballId } from "./curveballs";
+import type { PropSpec } from "./props";
 import type { Level } from "@/lib/collections/syllabus";
 
 /**
@@ -121,6 +123,28 @@ export interface BeatSpec {
   readonly shape: "word" | "sentence";
 }
 
+/**
+ * How a run can end, including badly.
+ *
+ * At least one outcome is a failure that is **not the learner's fault**,
+ * because a real encounter has those and a module where trying hard enough
+ * always works has stopped simulating anything. Walking out is an outcome too,
+ * and it is written kindly. `catalogue.test.ts` asserts both.
+ *
+ * `says` is one line of English, and it is what a person remembers, so it goes
+ * first in the debrief, before any teaching.
+ */
+export interface OutcomeSpec {
+  readonly id: string;
+  /** Which required beats have to have been met. Listed fullest first. */
+  readonly when: readonly string[];
+  /** One line, English, in the debrief. */
+  readonly says: string;
+}
+
+/** The id every scene reserves for the learner leaving. */
+export const LEFT_OUTCOME = "left";
+
 export interface SceneSpec {
   readonly id: string;
   /** English. What the scene is called on a screen. */
@@ -141,5 +165,13 @@ export interface SceneSpec {
   readonly units: readonly string[];
   /** What the other side calls you, and expects back. */
   readonly register: "teie" | "sina";
+  /** English, one line. Who the learner is today, and never themselves (§3). */
+  readonly role: string;
+  /** The facts the card hands them, which is what a `datum` requirement reads. */
+  readonly props: readonly PropSpec[];
+  /** Which curveballs this scene admits. The draw may take no others. */
+  readonly curveballs: readonly CurveballId[];
   readonly beats: readonly BeatSpec[];
+  /** Fullest first, because `outcomeOf` takes the first one that fits. */
+  readonly outcomes: readonly OutcomeSpec[];
 }

@@ -35,12 +35,15 @@
  * a script measures the script.
  */
 import { CASES } from "../lib/estonian/cases";
-import { caseAnswer, stemsFromParts } from "../lib/estonian/derive";
+import { buildCaseTable, caseAnswer, stemsFrom } from "../lib/estonian/derive";
 import { parseGovernment } from "../lib/estonian/government";
 import { FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS } from "../lib/tutor/provider";
 import { SCENES } from "../lib/scenes/catalogue";
-import { buildLexicon, formsOf, words, type DictEntry } from "../lib/scenes/lexicon";
-import { MAX_WORDS, isQuestion } from "../lib/scenes/retrieval";
+import { buildLexicon, formsOf, words, type DictEntry, type Lexicon } from "../lib/scenes/lexicon";
+import {
+  governmentSuspect, runGate, type Check, type GateContext, type GovernedWord,
+} from "../lib/scenes/gate";
+import { MAX_WORDS } from "../lib/scenes/retrieval";
 import { QUESTION_SHAPE, type BeatSpec, type SceneSpec } from "../lib/scenes/types";
 import { LEVELS, SYLLABUS, unitById } from "../lib/collections/syllabus";
 import { shippedDictionary } from "./lib/dictionary";
@@ -100,8 +103,6 @@ function sceneLexicon(scene: SceneSpec) {
  * whole rather than shown with a caveat.
  * ------------------------------------------------------------------ */
 
-type Check = "shape" | "vouching" | "register" | "government";
-
 /** The pronoun forms a register forbids. One lookup, per §2 check 3. */
 function wrongRegisterForms(scene: SceneSpec): ReadonlySet<string> {
   const forbidden = scene.register === "teie" ? ["sina"] : ["teie"];
@@ -119,14 +120,13 @@ function wrongRegisterForms(scene: SceneSpec): ReadonlySet<string> {
  * `parseGovernment` reads the whole string rather than the primary alone,
  * because a word governs every case its entry names and marking a learner
  * wrong for one of the others is the fault `buildOptions` exists to prevent.
+ *
+ * The shape is `lib/scenes/gate.ts`'s, because the gate lives there now: this
+ * script measured a rejection rate against an implementation of its own, which
+ * is a number measured on code that was not going to ship. Everything below
+ * builds the *context* the shipped checks need out of the shipped dictionary.
  */
-interface Governed {
-  readonly lemma: string;
-  readonly forms: ReadonlySet<string>;
-  readonly cases: ReadonlySet<CaseKey>;
-}
-
-const GOVERNED: Governed[] = [];
+const GOVERNED: GovernedWord[] = [];
 for (const entry of shipped) {
   const government = parseGovernment(entry.government ?? null);
   if (!government || entry.pos !== "VERB") continue;
@@ -139,75 +139,79 @@ for (const entry of shipped) {
   });
 }
 
-/** Every case form of every nominal, so a token can be asked which case it is. */
+/**
+ * Ekilex's own name for a case, in either number.
+ *
+ * `MORPH_TO_CASE` in `lib/estonian/derive.ts` is deliberately singular only,
+ * because what it feeds is a singular table. This asks a different question,
+ * whether a token in a line is in a case a verb governs, and a case is a case
+ * whether the word is singular or plural: `Ma andestan teile` and
+ * `Ma andestan talle` are one government.
+ *
+ * A pronoun is why this cannot be skipped. `teie` is stored with no principal
+ * parts at all and seventeen plural forms, because it has no singular for a
+ * lexicographer to record, so a table built off a genitive stem knows nothing
+ * about it. `teile` and `teil` are the commonest case forms in a conversation
+ * held in `teie`, which is every scene here.
+ */
+const CASE_BY_CODE: Record<string, CaseKey | undefined> = {
+  N: "NOMINATIVE", G: "GENITIVE", P: "PARTITIVE", Ill: "ILLATIVE", In: "INESSIVE",
+  El: "ELATIVE", All: "ALLATIVE", Ad: "ADESSIVE", Abl: "ABLATIVE", Tr: "TRANSLATIVE",
+  Ter: "TERMINATIVE", Es: "ESSIVE", Ab: "ABESSIVE", Kom: "COMITATIVE",
+};
+
+/**
+ * Every case form of every nominal, so a token can be asked which case it is.
+ *
+ * TWO SOURCES, AND THE FIRST RUN OF THIS HAD ONLY ONE. `stemsFromParts` returns
+ * `retrieved: {}` by design, so a table built through it is the rule's answer
+ * and nothing else: no `mulle`, no `teile`, no short illative, and nothing at
+ * all for the pronouns held as an attested set of forms with no principal parts.
+ * That made the government check report the polite register as ungoverned,
+ * which is the register every scene is set in, and `Kas kell kolm sobib teile?`
+ * was withheld over the one word in it that answers `kellele`. `formsOf` one
+ * file over had already learned this and said so; this had not.
+ */
 const CASE_OF = new Map<string, Set<CaseKey>>();
 for (const entry of shipped) {
   if (entry.pos !== "NOUN" && entry.pos !== "ADJECTIVE" && entry.pos !== "PRONOUN") continue;
+  const note = (form: string | null | undefined, key: CaseKey) => {
+    if (!form) return;
+    const lower = form.toLowerCase();
+    const seen = CASE_OF.get(lower) ?? new Set<CaseKey>();
+    seen.add(key);
+    CASE_OF.set(lower, seen);
+  };
+
+  const extra = entry.extraForms ?? [];
+  for (const form of extra) {
+    const key = CASE_BY_CODE[form.code.replace(/^(Sg|Pl)/, "")];
+    if (key) note(form.value, key);
+  }
   if (!entry.parts.GEN_SG) continue;
-  const stems = stemsFromParts(entry.parts);
-  for (const spec of CASES) {
-    const answer = spec.principal ? null : caseAnswer(stems, spec.key);
-    const forms = answer ? answer.accepted : [entry.parts[principalPart(spec.key)] ?? ""];
-    for (const form of forms) {
-      if (!form) continue;
-      const key = form.toLowerCase();
-      const seen = CASE_OF.get(key) ?? new Set<CaseKey>();
-      seen.add(spec.key);
-      CASE_OF.set(key, seen);
+
+  const rows = [
+    ...Object.entries(entry.parts).map(([formType, value]) => ({ formType, value })),
+    ...extra.map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
+  ];
+  for (const row of buildCaseTable(stemsFrom(rows))) {
+    for (const form of [row.singular, row.plural, row.alsoRight, ...row.accepted]) {
+      note(form, row.spec.key);
     }
   }
 }
 
-function principalPart(key: CaseKey): string {
-  return key === "NOMINATIVE" ? "NOM_SG" : key === "GENITIVE" ? "GEN_SG" : "PART_SG";
+/** The gate's context, built from the shipped dictionary rather than a database. */
+function gateContext(lexicon: Lexicon, wrongRegister: ReadonlySet<string>): GateContext {
+  return { lexicon, wrongRegister, governed: GOVERNED, caseOf: CASE_OF };
 }
 
-/**
- * The government check, as §2 proposes it and as generously as it can be read.
- *
- * There is no parser here, so nothing can say which noun is the verb's
- * complement. The strictest reading, that every noun must be in a governed
- * case, would fire on any sentence with an adjunct in it, which is most of
- * them. So this asks the weakest thing that is still a check: a line holding a
- * governed verb has to hold **at least one** nominal in a case that verb
- * governs. A line with no governed verb and a line with no nominal are both
- * outside what this can say, and it passes them.
- */
-function governmentSuspect(tokens: readonly string[]): boolean {
-  const lower = tokens.map((t) => t.toLowerCase());
-  const verb = GOVERNED.find((g) => lower.some((t) => g.forms.has(t)));
-  if (!verb) return false;
-  const nominals = lower.filter((t) => CASE_OF.has(t) && !verb.forms.has(t));
-  if (nominals.length === 0) return false;
-  return !nominals.some((t) => [...(CASE_OF.get(t) ?? [])].some((c) => verb.cases.has(c)));
+/** The one government check, so Part B measures what a learner would meet. */
+function suspect(tokens: readonly string[]): boolean {
+  return governmentSuspect(tokens, gateContext(EMPTY_LEXICON, new Set()));
 }
 
-function runGate(
-  text: string, beat: BeatSpec,
-  lexicon: { forms: ReadonlySet<string> }, wrongRegister: ReadonlySet<string>,
-): { failed: Check[]; unknown: string[] } {
-  const failed: Check[] = [];
-  const tokens = words(text);
-
-  const shape = QUESTION_SHAPE[beat.move];
-  const sentences = text.trim().split(/[.!?]+\s+/).filter(Boolean).length;
-  const punctuated = /[.!?]"?$/.test(text.trim());
-  const markdown = /[*_`#[\]]/.test(text);
-  if (
-    sentences !== 1 || !punctuated || markdown ||
-    tokens.length > MAX_WORDS || tokens.length === 0 ||
-    (shape === "required" && !isQuestion(text)) ||
-    (shape === "forbidden" && isQuestion(text))
-  ) failed.push("shape");
-
-  const unknown = tokens.filter((t) => !lexicon.forms.has(t.toLowerCase()));
-  if (unknown.length > 0) failed.push("vouching");
-
-  if (tokens.some((t) => wrongRegister.has(t.toLowerCase()))) failed.push("register");
-  if (governmentSuspect(tokens)) failed.push("government");
-
-  return { failed, unknown };
-}
+const EMPTY_LEXICON: Lexicon = { forms: new Set(), byLemma: new Map(), byCase: new Map() };
 
 /* ------------------------------------------------------------------ *
  * Part A: the rejection rate, against the chain a deployment gets.
@@ -337,13 +341,14 @@ async function partA() {
         const line = await compose(scene, beat, lemmas);
         if (!line) { refused++; continue; }
         asked++; sceneAsked++;
-        const first = runGate(line, beat, lexicon, wrongRegister);
+        const gate = gateContext(lexicon, wrongRegister);
+        const first = runGate(line, beat, gate);
         for (const word of first.unknown) reached.set(word, (reached.get(word) ?? 0) + 1);
         if (first.failed.length === 0) { firstPass++; continue; }
 
         // The one retry, with the words that failed named. §6.
         const second = await compose(scene, beat, lemmas, first.unknown);
-        const after = second ? runGate(second, beat, lexicon, wrongRegister) : null;
+        const after = second ? runGate(second, beat, gate) : null;
         if (after && after.failed.length === 0) { rescued++; continue; }
 
         withheld++; sceneWithheld++;
@@ -461,7 +466,16 @@ function labelledSet(): { good: string[]; bad: string[] } {
               .includes(token.toLowerCase()),
         );
         if (!owner) continue;
-        const other = caseAnswer(stemsFromParts(owner.parts), wrong.key);
+        /*
+          `stemsFrom` with the attested rows rather than the parts alone, for
+          the reason the case index above gives: the corrupted line should carry
+          the spelling a lexicographer recorded for the wrong case, not the
+          rule's answer where the two differ.
+        */
+        const other = caseAnswer(stemsFrom([
+          ...Object.entries(owner.parts).map(([formType, value]) => ({ formType, value })),
+          ...(owner.extraForms ?? []).map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
+        ]), wrong.key);
         if (!other || other.value.toLowerCase() === token.toLowerCase()) continue;
         swapped = { from: token, to: other.value };
         break;
@@ -481,8 +495,8 @@ function partB() {
     console.log("  No labelled pair could be built, so this says nothing.");
     return;
   }
-  const flaggedGood = good.filter((l) => governmentSuspect(words(l))).length;
-  const flaggedBad = bad.filter((l) => governmentSuspect(words(l))).length;
+  const flaggedGood = good.filter((l) => suspect(words(l))).length;
+  const flaggedBad = bad.filter((l) => suspect(words(l))).length;
 
   console.log(`  ${good.length} attested lines of a governed verb, and the same ${bad.length} with one`);
   console.log("  nominal moved into a case the verb does not govern.\n");

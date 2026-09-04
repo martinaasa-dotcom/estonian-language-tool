@@ -141,6 +141,12 @@ a panel, and every unit page prints its own rung under the claim it makes, since
 verdict on it belong on one screen. It is a `within` of Progress in `lib/ux/nav.ts`, so the palette
 reaches it and the rail does not grow a row.
 
+Where a scene in `lib/scenes/catalogue.ts` names the unit it tests, the detail offers it as a
+rehearsal, between "you could take part" and the counter. The two modules are the two halves of
+one question: Situations is where the claim is played out on somebody who wants something from you
+(`docs/21-situations.md`), and this is where every claim, including the 79 with no scene yet, is
+read off what the learner has actually done.
+
 ## 7. Nothing is stored, nothing is generated, nothing is guessed
 
 Every reading is derived on the request from the append-only log (ADR-014); the module that reads

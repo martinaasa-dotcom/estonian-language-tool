@@ -119,7 +119,7 @@ export function estimateTokens(text: string): number {
  * not open a database to do it. `ledger.ts` re-exports the name, so nothing
  * that already meant "a metered call" had to move.
  */
-export type UsageKind = "TUTOR" | "GRADER" | "TTS" | "SCAN";
+export type UsageKind = "TUTOR" | "GRADER" | "TTS" | "SCAN" | "SCENE";
 
 /**
  * What one call of each kind is assumed to cost until it says otherwise.
@@ -152,6 +152,23 @@ export const EXPECTED_TOKENS: Readonly<Record<UsageKind, { input: number; output
   TTS: { input: 0, output: 0 },
   // A photograph, which is a few thousand input tokens of image.
   SCAN: { input: 3_000, output: 400 },
+  /*
+    A WHOLE CONVERSATION, BOOKED ONCE.
+
+    A scene books one call rather than one per turn (docs/19-situations.md §16),
+    because running out of allowance halfway through a conversation is the worst
+    failure available to this module: the other side simply stops talking, and
+    there is no honest thing to put on the screen. So the reservation is the
+    whole scene and the settlement corrects it at the end, which is negative
+    whenever the estimate was generous, exactly as it is for every other kind.
+
+    Roughly five grader calls, which is what a scene composes: the beats
+    retrieval cannot fill, plus the one retry §6 allows on some of them. The
+    static half of the prompt is identical on every turn of every scene, so on
+    Anthropic it sits behind the `cache_control` breakpoint the tutor uses and
+    the real figure comes in under this.
+  */
+  SCENE: { input: 3_500, output: 1_000 },
 };
 
 /**

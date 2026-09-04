@@ -1244,6 +1244,18 @@ check("no counter column exists for anything the review log can reconstruct", ()
 // ── Every mode grades through gradeCard (ADR-016) ────────────────────────────
 
 /**
+ * Every door onto the shared review log, and there is one list of them.
+ *
+ * It was the same alternation typed out in three checks, which is two copies of
+ * one fact: the seventh door, `finishScene`, had to be added to all three or the
+ * newest and busiest mode would sit outside a rule that reported itself as held.
+ * That is the failure this file exists to catch, so it is not a shape this file
+ * may have itself.
+ */
+const GRADING_DOORS =
+  /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword|finishScene)\b/;
+
+/**
  * Sessions that measure rather than practise.
  *
  * The placement test asks about words the learner may never have had a card for,
@@ -1286,7 +1298,7 @@ check("every practice mode writes to the same review log", () => {
   for (const file of sessions) {
     assert.match(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
+      GRADING_DOORS,
       `${file} does not write to the shared review log`,
     );
   }
@@ -1303,7 +1315,7 @@ check("every practice mode writes to the same review log", () => {
     assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
     assert.doesNotMatch(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
+      GRADING_DOORS,
       `${file} now grades, so it is a practice mode and must come off the exemption list`,
     );
   }
@@ -1419,7 +1431,7 @@ check("a session never lets its questions change under the learner", () => {
     // The exam session hands its answers to a Server Action rather than grading
     // per card, and Next refreshes the route after that call just the same, so
     // the freeze matters here too.
-    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/.test(source)) continue;
+    if (!GRADING_DOORS.test(source)) continue;
     // Only the ones actually handed a list by the page can be caught out. The
     // `initial` naming convention is the reliable signal: a prop called
     // initialSteps or initialCards exists precisely because it is meant to be
@@ -2243,12 +2255,32 @@ check("nothing is suggested that the dictionary has not graded", () => {
     Asserted against every read of the table rather than against one query,
     because a fourth source added without both filters is exactly how this
     comes back.
+
+    AND A THIRD FILTER, which is about a different question and so is drawn
+    differently. A chip links to `/dictionary?q=<lemma>` and the dictionary
+    answers a lemma with one entry, `bySubstance`'s, while `@@unique` is on
+    `(lemma, pos)`: filtering the rows asks whether *some* entry has a table to
+    open and the chip's promise is about the one a learner lands on. `oma` is
+    the shipped instance, an adjective in the Wiktionary expansion and the
+    pronoun the course teaches. `withATable` is that gate, it drops a lemma any
+    of whose entries has nothing to open, and its own read is the one query here
+    that must constrain neither: it is looking for the entries the filters would
+    have hidden.
   */
   const suggest = read("lib/dict/suggest.ts");
   assert.match(suggest, /const POS = \[/, "the suggestion row stopped naming which parts of speech it offers");
 
-  for (const read_ of suggest.matchAll(/prisma\.lexeme\.\w+\(|FROM "Lexeme"/g)) {
-    const window = suggest.slice(read_.index, read_.index + 400);
+  const gate = between(suggest, "export async function withATable");
+  assert.match(gate, /opensATable/, "the gate stopped asking which parts of speech open a table");
+  assert.match(
+    suggest,
+    /const words = await withATable\(/,
+    "a source's words reach the row without passing the gate",
+  );
+
+  const chooses = suggest.replace(gate, "");
+  for (const read_ of chooses.matchAll(/prisma\.lexeme\.\w+\(|FROM "Lexeme"/g)) {
+    const window = chooses.slice(read_.index, read_.index + 400);
     assert.match(window, /cefr/, "a suggestion query does not constrain the CEFR level");
     assert.match(window, /pos/i, "a suggestion query does not constrain the part of speech");
   }
@@ -3000,7 +3032,14 @@ check("every browser suite says how many checks it reached", () => {
     */
     const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
-    const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*\}/.exec(source);
+    /*
+      A trailing comma is ordinary and this used to reject one, which fired on
+      a suite whose floor was declared correctly and carried a paragraph saying
+      how the number was arrived at. A floor is exactly the sort of number that
+      deserves its reasoning written beside it, so the rule widens rather than
+      the declaration being squeezed onto one line.
+    */
+    const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*,?\s*\}/.exec(source);
     assert.ok(floor, `${file} does not declare a check floor`);
     assert.ok(Number(floor![1]) > 0, `${file} declares a floor of zero, which asserts nothing`);
     assert.equal(
@@ -4279,8 +4318,55 @@ check("nothing reaches a paid provider without going through the ledger", () => 
 
   for (const file of callers) {
     const source = read(file);
-    assert.match(source, /authoriseCall\(/, `${file} opens a provider without asking the ledger first`);
+    /*
+      AUTHORISED IN THE SAME FILE, WITHOUT EXCEPTION.
+
+      This was widened once, to admit a route that proved a booking made
+      somewhere else: the scene booked one call for a whole conversation, on
+      the argument that running out of allowance halfway through one is the
+      worst failure available to it. The widening was wrong, and it was wrong
+      in the direction this file exists to catch. A call is written down when
+      it is *authorised*, because two of the three limits count `CALL` rows, so
+      one booking in front of a dozen composed turns is eleven calls the
+      allowance never saw. The rule was fine; the code was not, and widening a
+      rule to fit code is the one move that turns a check into a formality.
+
+      "A check that fires on honest code is a check people learn to waive" is
+      still true and is not a licence: the test of honest code is whether the
+      rule is right, and here it was.
+    */
+    assert.match(
+      source,
+      /authoriseCall\(/,
+      `${file} opens a provider without asking the ledger first`,
+    );
     assert.match(source, /recordUsage\(/, `${file} opens a provider and never files what it spent`);
+  }
+
+  /*
+    A RELEASE GIVES BACK THE CALL, NOT ONLY THE MONEY, and a route that books
+    before it knows whether it will compose is exactly where that comes due.
+    The scene's ladder walks past the model to the fallback rung as an ordinary
+    outcome rather than an error, and a booking left standing there rations a
+    learner over a line nobody was shown.
+  */
+  const scene = read("app/api/scene/route.ts");
+  assert.match(
+    scene, /releaseReservation\(/,
+    "the scene books a turn it may not compose and never hands the booking back",
+  );
+  /*
+    And the settlement and the release both go through `after()`, because the
+    deployment target suspends a function once its response is sent and does not
+    guarantee a pending promise runs. Comment-blind, since this is the shape the
+    rest of the app is already held to.
+  */
+  for (const call of ["recordUsage", "releaseReservation"]) {
+    assert.match(
+      code("app/api/scene/route.ts"),
+      new RegExp(`after\\(\\(\\) => ${call}\\(`),
+      `the scene leaves ${call} to a promise nobody is holding`,
+    );
   }
 });
 
@@ -6630,8 +6716,14 @@ check("the accessibility sweep runs axe, over both themes", () => {
     suite, /"best-practice"/,
     "axe runs without best-practice, which is the tag the broken list came in under",
   );
+  /*
+    The dark palette is chosen, never inherited, so the suite stores the choice
+    the way the toggle does rather than emulating a system preference the
+    stylesheet no longer reads; the theme invariant near the end of this file
+    is the other half of that.
+  */
   assert.match(
-    suite, /colorScheme:\s*"dark"/,
+    suite, /localStorage\.setItem\("theme", "dark"\)/,
     "the a11y suite stopped sweeping the dark palette, which is half of what ships",
   );
   // Both themes get the same sweep, so neither can be the one nobody looks at.
@@ -6675,26 +6767,115 @@ check("the plan is arithmetic on exact figures, rounded only on its way to a scr
   measured against the optimistic end of the range, while the note under it
   quoted the distance at five found hours a week. 335 of the 704 combinations a
   learner could click said the plan fitted over a sentence saying the date was
-  years out. Both now read FOUND_HOURS_PER_WEEK, so the band and the copy
-  cannot drift apart again. Asserted on the constant reaching both, not on the
-  number, which is the thing that is allowed to change.
+  years out. Both read one figure now, and the figure is no longer a constant:
+  it is what the learner's own week holds, built by `foundHours` from the
+  baseline plus the reasons they gave, drawn against by the verdict inside
+  `project`, and quoted by the panel off the projection it gets back. The
+  panel doing the arithmetic itself, with a number of its own, is the exact
+  shape the fault took; so is the panel quoting the baseline constant, which
+  would be right for somebody abroad and wrong for everybody the change was
+  made for.
 */
-check("the verdict band and the found-hours sentence read one constant", () => {
+check("the verdict band and the found-hours sentence read one figure", () => {
   const plan = read("lib/assessment/plan.ts");
   assert.match(
     plan, /export const FOUND_HOURS_PER_WEEK/,
-    "the found-hours figure has stopped being a named constant, so the copy can quote a different one",
+    "the baseline found-hours figure has stopped being a named constant",
   );
-  const verdictLine = plan.slice(plan.indexOf("const verdict: Verdict"), plan.indexOf("const verdict: Verdict") + 240);
   assert.match(
-    verdictLine, /FOUND_HOURS_PER_WEEK/,
-    "the verdict band no longer reads the constant the plan's own copy quotes",
+    between(code("lib/assessment/plan.ts"), "export function foundHours"), /FOUND_HOURS_PER_WEEK/,
+    "foundHours no longer starts from the baseline, so a learner with no exposure is told their week holds nothing",
   );
-  const panel = read("components/assessment/PlanPanel.tsx");
+  const verdictLine = plan.slice(plan.indexOf("const verdict: Verdict"), plan.indexOf("const verdict: Verdict") + 300);
+  assert.match(verdictLine, /found\.low/, "the verdict band no longer reads the least the learner's week holds");
+  assert.match(verdictLine, /found\.high/, "the verdict band no longer reads the most the learner's week holds");
+  const panel = code("components/assessment/PlanPanel.tsx");
+  assert.doesNotMatch(
+    panel, /weeksNeeded\(/,
+    "PlanPanel is doing the found-hours arithmetic itself again rather than reading it off the projection",
+  );
+  assert.doesNotMatch(
+    panel, /FOUND_HOURS_PER_WEEK/,
+    "PlanPanel quotes the baseline constant rather than the learner's own found hours",
+  );
+  assert.match(panel, /plan\.weeksWithFound/, "PlanPanel no longer quotes the weeks the projection computed");
+  assert.match(panel, /plan\.found\b/, "PlanPanel no longer quotes the found hours the verdict was drawn against");
+});
+
+/*
+  A plan is built on a standing, never on a bare level.
+
+  A level a paper measured and a level a stranger ticked ninety seconds into
+  the app are the same letter and are not worth the same distance, and for a
+  year every caller handed the panel the letter alone. `Standing` carries how
+  the level was arrived at, and the measured kind carries the per skill
+  levels, so a learner who reads at B2 and listens at A1 is costed skill by
+  skill rather than as a B1. The rule is asserted at the door: every
+  `<PlanPanel>` in the tree passes a standing, `/assess` gets its standing
+  from the same timestamp rule the course opens on (`currentLevelAnswer`), so
+  the plan and the course cannot disagree about whether a learner was measured,
+  and nobody outside `lib/progress/level.ts` compares those two timestamps.
+*/
+check("a plan is built on a standing that says how the level was arrived at", () => {
+  const callers = ALL.filter((f) => /<PlanPanel\b/.test(code(f)));
+  assert.ok(callers.length >= 2, "PlanPanel is rendered from fewer screens than it was");
+  for (const file of callers) {
+    const src = code(file);
+    for (const use of src.match(/<PlanPanel\b[^>]*>/g) ?? []) {
+      assert.match(use, /\bstanding=\{/, `${file} renders PlanPanel without a standing: ${use}`);
+      assert.doesNotMatch(use, /\blevel=\{/, `${file} hands PlanPanel a bare level again: ${use}`);
+    }
+  }
   assert.match(
-    panel, /weeksNeeded\([^)]*FOUND_HOURS_PER_WEEK\s*\)/,
-    "PlanPanel passes its own number to weeksNeeded rather than the constant the band is drawn at",
+    code("app/(app)/assess/page.tsx"), /standingFor\(/,
+    "/assess stopped asking standingFor, so its plan can disagree with the level the course opens on",
   );
+  const level = code("lib/progress/level.ts");
+  assert.match(level, /export async function currentLevelAnswer/, "the one level rule has lost its name");
+  assert.match(between(level, "export async function courseLevelFor"), /currentLevelAnswer\(/,
+    "courseLevelFor no longer reads the shared rule, so the course and the plan hold two answers");
+  const elsewhere = ALL.filter((f) =>
+    f !== "lib/progress/level.ts"
+    && /cefrPlacementAt[\s\S]{0,400}takenAt|takenAt[\s\S]{0,400}cefrPlacementAt/.test(code(f)));
+  assert.deepEqual(elsewhere, [], "a second file compares the declared level's timestamp with the check's, which is the two-answers fault again");
+});
+
+/*
+  The pace the plan quotes is the pace the log records, read once.
+
+  `Review.durationMs` and `reviewedAt` are written on every grade, so a
+  fortnight in, the app knows what a learner actually does and quoting what
+  they said instead is the app choosing not to look. `measuredPace` in
+  `lib/stats/pace.ts` is the one reading of that, `lib/progress/plan.ts` is
+  the one caller that fetches rows for it, and the sitting it counts in is the
+  same ten minutes `perfect_session` uses, defined once: a sitting cannot be
+  one length for a badge and another for a plan.
+*/
+check("the plan's pace is read off the review log through one module, in one sitting length", () => {
+  const progress = code("lib/progress/plan.ts");
+  assert.match(progress, /durationMs:\s*true/, "measuredPaceFor stopped selecting the durations it measures with");
+  assert.match(progress, /measuredPace\(/, "measuredPaceFor no longer hands its rows to lib/stats/pace.ts");
+  assert.match(code("app/(app)/assess/page.tsx"), /measuredPaceFor\(/, "/assess no longer reads the learner's real pace");
+  const gaps = ALL.filter((f) => /export const SESSION_GAP_MS\s*=/.test(code(f)));
+  assert.deepEqual(gaps, ["lib/stats/pace.ts"], `the sitting length is defined in ${gaps.join(", ")}; it is one figure`);
+  assert.match(code("lib/progress/session.ts"), /from "@\/lib\/stats\/pace"/, "the badge's session stopped reading the shared sitting length");
+});
+
+/*
+  The hours table is derived, not typed, and its surcharge is a shape.
+
+  `CUMULATIVE_HOURS` used to be five literals with a paragraph explaining that
+  they were "close to double" the published figures. A literal table can drift
+  from its own explanation without anything noticing; a table built from the
+  published hours and a factor per step cannot, and the factor's shape, the
+  surcharge peaking where the morphology is, is asserted in plan.test.ts. This
+  only checks the table has not gone back to being typed.
+*/
+check("the hours table is built from published hours and a per-step factor", () => {
+  const plan = code("lib/assessment/plan.ts");
+  assert.match(plan, /export const CUMULATIVE_HOURS[^=]*=\s*buildCumulative\(\)/, "CUMULATIVE_HOURS is a typed table again");
+  assert.match(plan, /export const GUIDED_LEARNING_HOURS/, "the published hours are no longer named");
+  assert.match(plan, /export const ESTONIAN_FACTOR/, "the surcharge is no longer a table of its own");
 });
 
 // ── Checks about the checks ──────────────────────────────────────────────────
@@ -8129,9 +8310,9 @@ check("a stored level carries the time it was stated", () => {
     without a line of it looking wrong.
   */
   assert.match(
-    between(level, "export async function courseLevelFor"),
+    between(level, "export async function currentLevelAnswer"),
     /readSettings\([^)]*SETTING_KEYS\.cefrPlacementAt/,
-    "courseLevelFor stopped asking the store when the declared level was stated, so the picker "
+    "currentLevelAnswer stopped asking the store when the declared level was stated, so the picker "
     + "in Settings is outranked by any level check however old",
   );
 });
@@ -9182,6 +9363,226 @@ check("a case is named only when one case claims the spelling", () => {
  * off the learner's own log, and the marking is over a task rebuilt from the
  * dictionary rather than over anything the browser sent (ADR-022).
  */
+/**
+ * NO MODEL DECIDES WHETHER A LEARNER WAS UNDERSTOOD.
+ *
+ * `docs/19-situations.md` §18 names the first way this module could fail: a
+ * chatbot in a costume. The guard is a type rather than a rule anybody has to
+ * remember. `readTurn` is the only producer of `Evidence` and `advance` is its
+ * only consumer, so a caller holding a model's opinion about a turn cannot
+ * satisfy the signature and cannot move a scene on by mistake. That is
+ * `buildOptions` taking a parsed `Government` rather than a case key, and
+ * `NounStems.illSgShort` being required rather than optional: both were prose
+ * that the code disagreed with until the type carried it.
+ *
+ * The other half is that the pure-layer check one screen up already covers
+ * `lib/scenes/`, so nothing in there can reach a database or a provider at
+ * all. What is asserted here is the shape those two functions have, because a
+ * later `advance(state, verdict: string)` would pass every other check in this
+ * file.
+ */
+/**
+ * THE RATE §29 PUBLISHES IS MEASURED ON THE CODE THAT SHIPS.
+ *
+ * `npm run eval:scene` exists to answer whether composition is safe, and the
+ * first version of it implemented the four checks inside the script. That is a
+ * number measured on code nobody was going to run: the script could drift from
+ * the module by one condition and the published rejection rate would go on
+ * describing the script. It is the fault `PROVIDER_KEY_ENV` was moved for, and
+ * the fault the unit suite had when it kept its own list of provider keys.
+ *
+ * So `lib/scenes/gate.ts` is the one copy and the script builds its context.
+ * Checked by reading the import rather than by counting conditions, because a
+ * fifth check added to the module is a fifth check the script should inherit
+ * without anybody remembering.
+ *
+ * The second half is ADR-025's: a line reaching a screen carries where it came
+ * from. `sceneLine` returns a provenance rather than a string, so a caller
+ * holding only the text cannot print the chip, and a composed line cannot be
+ * read as a lexicographer's by a screen that forgot to ask.
+ */
+/**
+ * A CLASS SEES EFFORT, NEVER A TRANSCRIPT.
+ *
+ * ADR-019 stands unchanged and `docs/19-situations.md` §18 names the way this
+ * module would break it: a roster row may say how many conversations somebody
+ * finished, and the class panel may say which objective the group most often
+ * misses, and a transcript belongs to one person. A `SceneRun` holds every turn
+ * a learner typed, so a teacher reading one would be reading their practice
+ * attempts, which is the thing the classroom boundary exists to prevent.
+ *
+ * Asserted as an absence, which is the only way to check a rule about what a
+ * query must not select. `lib/classroom/` is where a group is rolled up, and
+ * nothing in it may name the table at all: a count is a `count`, and a count
+ * cannot leak a sentence.
+ */
+check("a class cannot read a conversation", () => {
+  for (const file of LIB.filter((f) => f.startsWith("lib/classroom/") && !f.includes(".test."))) {
+    const src = code(file);
+    assert.doesNotMatch(
+      src,
+      /prisma\.sceneRun\.(findMany|findFirst|findUnique)/,
+      `${file} reads a scene transcript. A class sees effort and aggregate, never ` +
+      "one learner's turns (ADR-019, docs/19-situations.md §18).",
+    );
+    assert.doesNotMatch(
+      src,
+      /transcript/,
+      `${file} mentions a transcript. Nothing in a class roll-up may.`,
+    );
+  }
+});
+
+check("the scene gate has one implementation, and a line says where it came from", () => {
+  const evalScript = code("scripts/eval-scene.ts");
+  assert.match(
+    evalScript,
+    /from "\.\.\/lib\/scenes\/gate"/,
+    "scripts/eval-scene.ts no longer reads lib/scenes/gate.ts. A rejection rate measured " +
+    "against a copy of the checks is a rate for the copy.",
+  );
+  assert.doesNotMatch(
+    evalScript,
+    /function runGate\(/,
+    "scripts/eval-scene.ts has its own gate again. There is one, in lib/scenes/gate.ts.",
+  );
+
+  const line = code("lib/scenes/line.ts");
+  assert.match(
+    line,
+    /provenance: "attested"/,
+    "lib/scenes/line.ts stopped saying an attested line was attested.",
+  );
+  assert.match(
+    line,
+    /provenance: "composed"/,
+    "lib/scenes/line.ts stopped marking a composed line as composed (ADR-025).",
+  );
+  /*
+    Withheld whole, never caveated. A caveat still puts a wrong form in front of
+    somebody trying to learn one, which is the rule `lib/tutor/verify.ts`
+    follows about a grader's note.
+  */
+  assert.match(
+    line,
+    /if \(first && firstVerdict && passes\(firstVerdict\)\)/,
+    "lib/scenes/line.ts no longer requires a composed line to pass the gate before showing it.",
+  );
+});
+
+check("a scene is marked by the server, and its grades go to the shared log", () => {
+  /*
+    `submitExam`'s shape and `recordSonad`'s, a third time, and for the reason
+    both give: a result anybody can type is not a measurement, and here it is
+    worse than that, because a conversation writes into the review log and a
+    forged one would schedule words nobody said.
+
+    The client sends which run it was and what it typed. `finishRun` reads the
+    row, replays every turn through the same `readTurn` the learner saw, and
+    hands what it found to `gradeCard`, which is the door ADR-016 names. Two
+    markers would be two answers to "were you understood", and the one nobody
+    watches is the one that drifts, so there is one `replay` and both ends call
+    it.
+  */
+  /*
+    `between` rather than a lazy match to the first line-starting brace, which
+    was the first version of this and was wrong twice in one check: both of
+    these take a destructured object type, so the parameter list itself closes
+    on a `}` in column nought, and the match read the signature and called it
+    the body. It found nothing and reported that the action no longer marks,
+    which is a check reporting its own regex. The helper was already here.
+  */
+  const actions = code("app/actions.ts");
+  const action = between(actions, "export async function finishScene(");
+  assert.ok(action, "finishScene has gone, or changed shape past recognition");
+  assert.match(action, /finishRun\(/, "finishScene no longer re-marks on the server");
+  assert.match(action, /gradeCard\(/, "a scene no longer grades through gradeCard (ADR-016)");
+
+  /*
+    The signature rather than the body, which is the lesson `recordSonad`'s own
+    check learned the hard way: a pattern for the word `rating` matches the
+    perfectly correct `gradeCard(card.id, grade.rating, 0)` inside, and a check
+    that fires on honest code is a check people waive.
+  */
+  const signature = /export async function finishScene\(([\s\S]*?)\)\s*\{/
+    .exec(actions)?.[1] ?? "";
+  assert.doesNotMatch(
+    signature, /rating|score|grade|objectives|outcome/i,
+    "finishScene takes a mark from its caller, which is a result anybody can type",
+  );
+
+  // And one replay, reached from both ends, rather than a marker per door.
+  const server = code("lib/progress/scene.ts");
+  assert.match(server, /export function replay\(/, "the shared replay has gone");
+  assert.match(
+    between(server, "export async function finishRun("),
+    /replay\(/,
+    "finishRun marks a run some other way than the replay the learner saw",
+  );
+  assert.match(
+    code("app/api/scene/route.ts"), /replay\(/,
+    "the route reads a turn some other way than the replay that writes the record",
+  );
+});
+
+check("a scene's debrief points at a drill that exists", () => {
+  /*
+    `lib/scenes/drills.ts` reads the drill off what the beat needed rather than
+    linking the same one whatever happened, which means it holds hrefs, and an
+    href in a pure module is a string nothing checks. `DrillLink` returns null
+    on one it cannot resolve rather than throwing, deliberately, so a retired
+    drill would leave the debrief silently missing its one piece of advice on a
+    screen somebody reached by failing.
+
+    `lib/ux/modes.ts` is what a mode is, and this is the same pairing every
+    other reader of that table is held to.
+  */
+  const table = code("lib/scenes/drills.ts");
+  const hrefs = [...table.matchAll(/"(\/review\/[a-z-]+)"/g)].map((m) => m[1]!);
+  assert.ok(hrefs.length >= 2, `drills.ts names ${hrefs.length} drills, which is not a table`);
+
+  const modes = code("lib/ux/modes.ts");
+  for (const href of hrefs) {
+    assert.match(
+      modes, new RegExp(`href:\\s*"${href}"`),
+      `the scene debrief links ${href}, which lib/ux/modes.ts does not have`,
+    );
+  }
+});
+
+check("nothing but the dictionary can advance a scene", () => {
+  const turn = code("lib/scenes/turn.ts");
+  const state = code("lib/scenes/state.ts");
+
+  assert.match(
+    turn,
+    /export function readTurn\(/,
+    "lib/scenes/turn.ts no longer exports readTurn, which is the only producer of Evidence.",
+  );
+  assert.match(
+    state,
+    /export function advance\(\s*scene: SceneSpec,\s*state: SceneState,\s*evidence: Evidence,/,
+    "advance no longer takes Evidence. A caller holding a model's opinion must not be able " +
+    "to satisfy it: that is the whole guard on this module (docs/19-situations.md §8).",
+  );
+
+  /*
+    One producer, asserted by counting. A second function returning Evidence is
+    the door a model's verdict walks through, and it would look entirely
+    reasonable in review.
+  */
+  const producers = [...turn.matchAll(/\): Evidence \{/g)].length;
+  assert.equal(
+    producers, 1,
+    `lib/scenes/turn.ts has ${producers} functions returning Evidence. There is exactly one.`,
+  );
+  assert.doesNotMatch(
+    state,
+    /\): Evidence\b/,
+    "lib/scenes/state.ts builds Evidence. Only readTurn may, or the consumer becomes its own producer.",
+  );
+});
+
 check("the scene route marks mechanically before it reaches a provider", () => {
   const src = code("app/api/describe/route.ts");
   const marked = src.indexOf("markDescription(");
@@ -9537,6 +9938,53 @@ check("a screen that prints a situation's rung prints the evidence tier beside i
     assert.ok(
       /EVIDENCE_LABEL|EVIDENCE_NOTE|standingLine/.test(src),
       `${file} prints a rung and not what the evidence behind it is worth`,
+    );
+  }
+});
+
+/**
+ * LIGHT IS THE DEFAULT AND DARK IS A CHOICE.
+ *
+ * The palette used to follow the system: a `prefers-color-scheme: dark` block
+ * painted the dark tokens for anybody whose phone or laptop was set that way
+ * and who had never touched the toggle, which is most phones after dark. So
+ * the landing page, the one screen a stranger decides on, opened in a palette
+ * nobody here had chosen for it and that it had been designed against only
+ * second. Now bare `:root` is light for everybody and the dark palette lives
+ * under `[data-theme="dark"]` alone, written by the toggle and read back
+ * before first paint by the inline script in app/layout.tsx.
+ *
+ * Three things have to agree for that to be true, and each is read with its
+ * comments stripped, because the note explaining why the block went names the
+ * block: the stylesheet holds no system-preference palette, nothing in the
+ * app asks `matchMedia` which way the system leans, and the suites that
+ * measure the dark theme choose it the way a reader does rather than emulate
+ * a preference the palette no longer reads, since that would sweep the light
+ * theme twice and report the dark one clean.
+ */
+check("the dark palette is a choice, never the system's", () => {
+  const stripped = (file: string) => read(file).replace(/\/\*[\s\S]*?\*\//g, "");
+  const css = stripped("app/globals.css");
+  assert.equal(
+    /prefers-color-scheme/.test(css), false,
+    "app/globals.css reads the system's colour scheme again, so the default theme depends on the device",
+  );
+  assert.match(css, /:root\[data-theme="dark"\]\s*\{/, "app/globals.css has lost the chosen dark palette");
+  for (const file of [...APP, ...COMPONENTS]) {
+    assert.equal(
+      /prefers-color-scheme/.test(code(file)), false,
+      `${file} asks which way the system leans, and the theme is light until somebody chooses`,
+    );
+  }
+  for (const file of ["scripts/a11y-check.mjs", "scripts/test-containment.mjs"]) {
+    const src = stripped(file);
+    assert.equal(
+      /colorScheme:\s*["']dark["']/.test(src), false,
+      `${file} emulates a system preference the palette no longer reads, so its dark pass measures the light theme`,
+    );
+    assert.match(
+      src, /localStorage\.setItem\("theme", "dark"\)/,
+      `${file} no longer chooses the dark theme the way the toggle does, so nothing sweeps it`,
     );
   }
 });

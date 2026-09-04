@@ -8,6 +8,7 @@ import {
 import type { WordEvidence } from "@/lib/readiness/evidence";
 import { paceWords, verdictFor } from "@/lib/readiness/narrative";
 import { RUNG_INK, RungChip } from "./Rung";
+import { SCENES } from "@/lib/scenes/catalogue";
 
 /**
  * One situation, in full: the verdict, the three rungs as three bars, what
@@ -27,6 +28,13 @@ export function SituationDetail({
 }) {
   const { situation, rung, at, total, pace, struggles, evidence } = reading;
   const pct = (n: number) => (total === 0 ? 0 : Math.round((n / total) * 100));
+  /*
+    Where the course has a scene that takes this very claim apart, the honest
+    thing between "you could take part" and the counter is to rehearse it on
+    somebody who wants something from you. A scene names the unit it tests,
+    so this is a lookup rather than a second table.
+  */
+  const scene = SCENES.find((s) => s.tests === situation.id);
   const missing = words.filter((w) => {
     const s = wordStanding(w.evidence);
     return s === "unmet" || s === "met";
@@ -131,6 +139,21 @@ export function SituationDetail({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {scene && rung !== "unmet" && (
+        <section>
+          <SectionTitle hint="the same encounter, with somebody who wants something from you">Rehearse it first</SectionTitle>
+          <Card tone="sky">
+            <p className="text-base font-semibold" style={{ color: "var(--sky-ink)" }}>{scene.title}</p>
+            <p className="mt-1.5 text-sm" style={{ color: "var(--sky-ink)" }}>
+              {scene.place}. A scene is marked the way a card is and nothing in it is scored by a model, so it is the closest thing here to the real one.
+            </p>
+            <div className="mt-3">
+              <ButtonLink href={`/situations/${scene.id}`} size="sm">Play the scene</ButtonLink>
+            </div>
+          </Card>
         </section>
       )}
 

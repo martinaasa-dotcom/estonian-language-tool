@@ -32,7 +32,11 @@ const browser = await launchChromium();
 // +3: a narrow window with a real mouse keeps the letter bar, at three widths.
 // That combination is what the width-keyed rule got wrong and what `open()`
 // structurally cannot produce, since it ties `hasTouch` to the viewport.
-const { check, done } = suite("The phone", { floor: 60 });
+/*
+  62 rather than 60: the conversations joined the target sweep, which is two
+  routes and one check each. Measured against a production build.
+*/
+const { check, done } = suite("The phone", { floor: 62 });
 
 async function open(width, height, path) {
   const ctx = await browser.newContext({
@@ -152,10 +156,16 @@ for (const width of PHONES) {
 // drills, both of which were rebuilt onto components/Choice.tsx and .tap-tint.
 // Neither route was covered here before, which is why a whole screen of
 // controls could be redrawn without this suite having an opinion.
+// `/situations/arsti-aeg` is on it for the reason `/settings` and `/practice`
+// are: it is a screen that asks a question rather than answering one, and its
+// dial is four labelled buttons in a two-column grid at 390 with a start button
+// under them. The talking screen behind it has the tightest row of controls in
+// the app after the rating keys, and is measured by `test-containment.mjs`,
+// which knows how to press through to it.
 for (const path of [
   "/", "/review", "/dictionary", "/scan", "/assess", "/exam",
   "/learn", "/learn/kodu", "/learn/kodu/lesson", "/grammar",
-  "/settings", "/practice",
+  "/settings", "/practice", "/situations", "/situations/arsti-aeg",
 ]) {
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>

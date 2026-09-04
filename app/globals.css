@@ -212,67 +212,27 @@
     --key-cap: rgb(0 0 0 / 0.16);
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      color-scheme: dark;
+  /*
+    LIGHT IS THE DEFAULT, AND DARK IS A CHOICE.
 
-      --ground: #12101d;
-      --surface: #1a1729;
-      --raised: #221e36;
-      --ink: #f2eeff;
-      --ink-2: #c2bade;
-      /*
-        Nudged from #8f87ad, which was a near miss rather than a comfortable
-        pass. Secondary text sits on a tinted card as often as on the ground,
-        and against the soft tints in dark mode it measured 4.07 on butter,
-        4.08 on mint, 4.29 on accent and 4.45 on peach, every one of them under
-        the 4.5 that small text needs. This clears all four and is the same
-        hue: what was wrong was the lightness, not the colour.
-      */
-      --ink-3: #9a92b8;
-      --rule: #2e2848;
-      --rule-soft: #241f39;
+    There used to be a third state here: a `prefers-color-scheme: dark` block
+    that painted the dark palette for anybody whose operating system was set
+    to dark and who had never touched the toggle. That is most phones after
+    sunset and a good share of laptops all day, so the landing page, the one
+    screen a stranger decides on, opened dark for about half of them, and it
+    was designed and measured in the light. The same person then met the
+    sign-in screen and the first run in a palette nobody had chosen.
 
-      --accent: #a99bff;
-      --accent-ink: #171229;
-      --accent-soft: #2a2350;
-      --accent-deep: #c3b7ff;
-
-      --mint: #5fe3bc;
-      --mint-soft: #10332a;
-      --peach: #ff9f86;
-      --peach-soft: #38211b;
-      --butter: #ffcd6e;
-      --butter-soft: #372c14;
-      --sky: #7cc6f5;
-      --sky-soft: #132a3d;
-      --blush: #ff9cc7;
-      --blush-soft: #371c2c;
-
-      /* Dark tints are deep enough that each hue already reads as text on its
-         own tile — 7.5:1 and up — so the ink is the hue. */
-      --mint-ink: var(--mint);
-      --peach-ink: var(--peach);
-      --butter-ink: var(--butter);
-      --sky-ink: var(--sky);
-      --blush-ink: var(--blush);
-      --good-ink: var(--mint);
-      --hard-ink: var(--butter);
-      --again-ink: var(--peach);
-      --easy-ink: var(--sky);
-
-      --wash-1: #2b2358;
-      --wash-2: #3b1f36;
-      --wash-3: #123a33;
-
-      --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px -8px rgb(0 0 0 / 0.6);
-      --shadow: 0 1px 2px rgb(0 0 0 / 0.45), 0 14px 34px -18px rgb(0 0 0 / 0.8);
-      --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.5), 0 30px 60px -28px rgb(0 0 0 / 0.9);
-      --shadow-accent: 0 10px 24px -12px rgb(169 155 255 / 0.5);
-
-      --key-cap: rgb(255 255 255 / 0.28);
-    }
-  }
+    So the light palette on bare `:root` is what everybody gets until they
+    ask, and the dark palette lives under `[data-theme="dark"]` alone, which
+    only the toggle in the rail writes (through localStorage and the inline
+    script in app/layout.tsx that reads it before first paint). Two states
+    rather than three: a theme is either the default or the one you picked,
+    and `scripts/test-invariants.ts` fails on the system-dark block coming
+    back. The suites that measure the dark theme set the attribute the toggle
+    sets rather than emulating a system preference the palette no longer
+    reads.
+  */
 
   :root[data-theme="dark"] {
     color-scheme: dark;
@@ -1511,6 +1471,51 @@
     transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .ending-row:hover .ending, .ending-row:focus-within .ending { transform: translateY(-2px); }
+
+  /*
+    THE LANDING PAGE'S MOTION, AND WHAT EACH PIECE IS FOR.
+
+    A value arriving in a row that does not move. The case explorer draws the
+    same grid for every word, so what changes when a chip is pressed is the
+    word in each box and nothing else: the form fades in over four pixels,
+    one row after another down the column, and the lit ending draws in a beat
+    behind it. `--i` is the row's place in the column and is set inline by the
+    component, which is the one place that knows it.
+
+    The chip springs once when it becomes the chosen one, because the press
+    is the one gesture on the card and something should answer it. The wash
+    behind the page drifts on a slow loop so the ground is never quite still,
+    and each blob has its own period so the three do not breathe in step. The
+    headline arrives a word at a time. Anu hops once when the page moves on to
+    a new section, which is her following along rather than being carried.
+
+    All of it is `opacity` and `transform` on the compositor, none of it
+    reaches layout, and the reduced-motion block near the top of this file
+    shortens every one to nothing: a keyframe that ends where it started
+    leaves the element where it was drawn.
+  */
+  .settle {
+    animation: settle 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--i, 0) * 34ms);
+  }
+  .settle .ending {
+    animation: ending-in 0.5s ease-out both;
+    animation-delay: calc(var(--i, 0) * 34ms + 240ms);
+  }
+  .chip-spring { animation: chip-spring 0.42s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .wash-roam {
+    animation: wash-roam var(--wash-time, 26s) ease-in-out infinite;
+    animation-delay: var(--wash-delay, 0s);
+  }
+  .word-in {
+    display: inline-block;
+    animation: word-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--w, 0ms);
+  }
+  .feature-icon { transform-origin: 50% 50%; }
+  .lift:hover .feature-icon { animation: letter-wiggle 520ms ease-in-out; }
+  .anu-hop { animation: anu-hop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .anu-say { animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; transform-origin: 90% 100%; }
 }
 
 /*
@@ -1584,6 +1589,43 @@
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+@keyframes settle {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ending-in {
+  from { text-decoration-color: transparent; }
+  to { text-decoration-color: var(--accent); }
+}
+
+@keyframes chip-spring {
+  0% { scale: 1; }
+  45% { scale: 1.1; }
+  100% { scale: 1; }
+}
+
+/* Slow enough that nobody sees it move and everybody sees that it has. */
+@keyframes wash-roam {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(48px, -36px) scale(1.06); }
+  66% { transform: translate(-36px, 28px) scale(0.96); }
+}
+
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(0.4em) rotate(-2deg); }
+  to { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+/* One hop with a squash on landing, the way the tilde already does it. */
+@keyframes anu-hop {
+  0% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-14px) scale(0.96, 1.06); }
+  60% { transform: translateY(0) scale(1.06, 0.94); }
+  80% { transform: translateY(-4px) scale(0.99, 1.02); }
+  100% { transform: translateY(0) scale(1, 1); }
 }
 
 /*

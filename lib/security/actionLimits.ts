@@ -91,6 +91,27 @@ export const ACTION_LIMITS = {
    * meets is a limit that stops the queue being cleared.
    */
   reviewSuggestion: { perMinute: 120 },
+  /**
+   * Finishing a conversation, which re-marks every turn and writes a run.
+   *
+   * The expensive part is not the write, it is the rebuild: the server reads a
+   * few hundred lemmas with their forms, builds the scene's closed list and
+   * replays the whole transcript through the marker, because the client never
+   * sends a mark (ADR-022). Six a minute is more scenes than anybody plays and
+   * far under a loop.
+   */
+  finishScene: { perMinute: 6 },
+  /**
+   * The help button, which is the same rebuild without the writing.
+   *
+   * It is a button on a screen somebody is sitting in front of, so it is
+   * pressed rather than looped, and each press costs the scene's whole closed
+   * list: a few hundred lemmas with their forms, built to find out which beat
+   * the run is on. Higher than `finishScene` because a conversation has a
+   * dozen turns and asking on several of them is exactly what it is for; still
+   * far under anything a loop would reach.
+   */
+  sceneHelp: { perMinute: 30 },
 } as const;
 
 export type ActionLimit = keyof typeof ACTION_LIMITS;
