@@ -48,10 +48,11 @@ switched to English, I did not manage it. That report is an `Encounter` row, app
 Progress leads with it ahead of every chart. The research export carries the same figure under
 the same disclosure gate as everything else, labelled as self-reported.
 
-**What you can do.** The course has made eighty-one claims of the form "you can book a doctor's
-appointment" since the day it was written, and none of them was ever tested. Progress lists the
-claims for the units a learner has started, each with the situation that tests it and how the
-last run went.
+**What you can do.** The course has made eighty-two claims of the form "you can book a doctor's
+appointment" since the day it was written, and none of them was ever tested. Each is read off the
+review log now on three rungs, follow it, take part, lead it, with the evidence behind the rung
+printed beside it and never as a percentage (`docs/22-readiness.md`); the errand above is what
+tests the reading against a person.
 
 **Where the people are.** The situations screen names the Integration Foundation's Estonian
 Language Houses, the state's Settle in Estonia programme and the Keeleklikk course, with links

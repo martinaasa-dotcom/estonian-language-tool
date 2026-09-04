@@ -1,20 +1,16 @@
 /**
- * What happened outside the app, and what the course promised it would.
+ * What happened outside the app.
  *
- * Two readings for Progress, both derived on every request from rows that
- * are facts rather than counters (ADR-014). The first is the encounters the
- * learner reported from Today's errands over the last thirty days, by
- * outcome: how many conversations, how many understood, how often the other
- * person switched to English. The second is the course's own "you can do
- * this" claims for the units this deck has started, each with the share of
- * its words learned and, where a situation tests the claim, how the last
- * run of it went. A level is what the app measures; what you can do at a
- * counter is what a person cares about.
+ * One reading for Progress, derived on every request from rows that are
+ * facts rather than counters (ADR-014): the encounters the learner reported
+ * from Today's errands over the last thirty days, by outcome. How many
+ * conversations, how many understood, how often the other person switched
+ * to English. A level is what the app measures and the readiness panel is
+ * its forecast; this is what a person cares about, which is whether they got
+ * through the conversation at the counter.
  */
 import { prisma } from "@/lib/db";
 import { OUTCOMES, type Outcome } from "@/lib/collections/errands";
-import { SYLLABUS, unitProgress } from "@/lib/collections/syllabus";
-import { sceneTesting } from "@/lib/scenes/catalogue";
 import type { DayClock } from "@/lib/time/day";
 
 export const OUT_THERE_DAYS = 30;
@@ -47,59 +43,4 @@ export async function outThere(ownerId: string, clock: DayClock, now = new Date(
     streak += 1;
   }
   return { days: OUT_THERE_DAYS, total: rows.length, byOutcome, streak };
-}
-
-export interface CanDo {
-  readonly unitId: string;
-  readonly title: string;
-  readonly level: string;
-  readonly canDo: string;
-  readonly pct: number;
-  /** The scene that tests it, and how the last run went, or null. */
-  readonly scene: { id: string; title: string; done: number | null; of: number | null } | null;
-}
-
-export async function canDoClaims(ownerId: string, deck: {
-  startedLemmas: ReadonlySet<string>; knownLemmas: ReadonlySet<string>;
-}, limit = 8): Promise<CanDo[]> {
-  const started = SYLLABUS.filter((u) => u.lemmas.some((l) => deck.startedLemmas.has(l)));
-  const sceneIds = started.map((u) => sceneTesting(u.id)?.id).filter((id): id is string => Boolean(id));
-  const runs = sceneIds.length > 0
-    ? await prisma.sceneRun.findMany({
-      where: { ownerId, sceneId: { in: sceneIds } },
-      orderBy: [{ startedAt: "desc" }, { id: "desc" }],
-      take: 50,
-      select: { sceneId: true, outcome: true },
-    })
-    : [];
-  const latest = new Map<string, { done: number | null; of: number | null }>();
-  for (const r of runs) {
-    if (latest.has(r.sceneId)) continue;
-    try {
-      // `finishRun` writes the objectives whole: which required beats were
-      // met and which were missed, and never a percentage (ADR-022).
-      const o = JSON.parse(r.outcome) as { met?: string[]; missed?: string[] };
-      const met = Array.isArray(o.met) ? o.met.length : null;
-      const missed = Array.isArray(o.missed) ? o.missed.length : 0;
-      latest.set(r.sceneId, { done: met, of: met === null ? null : met + missed });
-    } catch {
-      latest.set(r.sceneId, { done: null, of: null });
-    }
-  }
-  return started
-    .map((u) => {
-      const progress = unitProgress({
-        availableLemmas: [...u.lemmas],
-        startedLemmas: [...deck.startedLemmas],
-        knownLemmas: [...deck.knownLemmas],
-      });
-      const scene = sceneTesting(u.id);
-      return {
-        unitId: u.id, title: u.title, level: u.level, canDo: u.canDo, pct: progress.pct,
-        scene: scene ? { id: scene.id, title: scene.title, ...(latest.get(scene.id) ?? { done: null, of: null }) } : null,
-      };
-    })
-    // The claims closest to being true first, and a tested one ahead of an untested one at a tie.
-    .sort((a, b) => b.pct - a.pct || Number(Boolean(b.scene)) - Number(Boolean(a.scene)))
-    .slice(0, limit);
 }

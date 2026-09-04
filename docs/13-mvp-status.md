@@ -2078,7 +2078,41 @@ statement now.
   arriving where it should: the words with a picture are the ones a third of which are animals and
   people.
 
-## 30. The twenty-fourth pass: ready for the real thing
+## 30. The twenty-fourth pass: how ready you actually are
+
+Asked for directly. Not a vocabulary percentage sold as readiness, which is what most apps print
+and what a learner discovers is worthless at the first counter, but an honest reading of which
+real situations somebody could follow, take part in or lead, where each would go wrong, and what
+they could already go and try.
+
+### What was there
+
+Every course unit carries a `canDo` claim and none had ever been checked. `Review.durationMs` had
+been recorded on every answer since the scheduler was written and read by nothing. The exam hub had
+an evidence tier and a ceiling on what a thin log may claim. The Situations design had mapped
+encounters to units and named the machinery every conversation runs on.
+
+### What was built
+
+`lib/readiness/` is the arithmetic, pure and unit tested: a situation per unit, three rungs read
+word by word, pace off correct typed answers, the cases and machinery an encounter leans on, the
+ear off the level check, and a cap on the rung itself under thin evidence.
+`lib/progress/readiness.ts` reads the log for it in five parallel reads and one lookup, and it may
+only read. `/progress/readiness` is the list and `/progress/readiness/<unit>` the detail; Progress
+carries the distribution and every unit page prints its own rung under its claim. Four invariants,
+each made to fail once, and `docs/22-readiness.md` is the write-up.
+
+### What building it turned up
+
+Rows written before `Review.slot` existed, which on this deployment is most of them, read as
+recognition under the safe rule, and the safe rule held a learner who had produced every word of a
+unit at "follow it". The card the row points at still knows its type, so those rows take the
+card's slot, exactly as mastery reads them. And the demo fixture, run on this, reports what a real
+learner two months in would be told: eight situations they would be lost in, none they could lead
+yet, and most of their words a month stale. That is a harder sentence than "74 percent recall",
+and it is the one that is true.
+
+## 31. The twenty-fifth pass: ready for the real thing
 
 The brief was the purpose. Every learning app is built to keep a learner on the app, and the moment
 integration turns on is a receptionist who talks too fast and switches to English; nothing in the
@@ -2090,16 +2124,14 @@ funder as much as for a contributor. This section is what was built and measured
 - **Situations**, played. `docs/21-situations.md` had the design and Phase 0; Phase 1 landed on
   main from a second session the same day, and the copy this pass had built was deleted rather than
   merged beside it (CLAUDE.md, "two sessions built this module"). What this pass adds around it: a
-  unit's page links to the scene that tests its claim, Progress lists the claims beside the last
-  run, Anu is told which situation the learner last stalled in and on what, the situations screen
+  unit's page links to the scene that tests its claim, Anu is told which situation the learner last stalled in and on what, the situations screen
   says where the people are, and the rows are in the export, the erasure and a restore. ADR-025.
 - **Hearing conditions.** One table of how people talk, applied in the browser: at speed, over café
   noise, down a phone line, from halfway through, and a different voice each time, widening as the
   word settles. Listening and dictation ask per card; minimal pairs rotates its reader and keeps the
   room quiet; the mock exam is untouched because the real paper is read in a studio.
 - **Say it today.** An errand a day and one press to report it; Progress leads with what happened
-  out there and with the course's own claims, each beside the situation that tests it; the research
-  export carries the figure. ADR-026.
+  out there, beside §30's forecast of it; the research export carries the figure. ADR-027.
 - **The brand.** "Ready for the real thing" replaces "Estonian that finally sticks" on the landing
   page, the manifest, sign-in and the README; the first-run limits line says the app rehearses the
   conversation and the people are out there; Practice carries Situations; Anu is told which

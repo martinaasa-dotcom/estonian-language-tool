@@ -151,6 +151,7 @@ const ROUTES = [
   "/quest", "/sonad", "/crossword", "/calendar", "/dictionary/common",
   "/review/emoji", "/review/target", "/review/flashcards", "/review/describe",
   "/words/mastery",
+  "/progress/readiness", "/progress/readiness/riigid",
   /*
     The frequency rounds. `/review/common` is the index and one of its four
     lists stands for the round, which is a whole `ReviewSession` rendered from
