@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatDurationRange } from "./duration";
+import { formatAnswerTime, formatDuration, formatDurationRange } from "./duration";
 
 describe("a duration on its way to a screen", () => {
   /*
@@ -53,5 +53,28 @@ describe("a range of durations", () => {
     expect(formatDurationRange(0, 0.0218, "long")).toBe("0 to 1 minute");
     expect(formatDurationRange(0.0282, 0.6051, "long")).toBe("2 to 36 minutes");
     expect(formatDurationRange(0.04, 3)).toBe("2 to 180 min");
+  });
+});
+
+
+describe("how long one answer took", () => {
+  it("keeps a tenth where a tenth is the whole signal", () => {
+    // 2.4 against 3.8 is the difference the pace panel exists to show.
+    expect(formatAnswerTime(2400)).toBe("2.4s");
+    expect(formatAnswerTime(3800)).toBe("3.8s");
+  });
+
+  it("drops the tenth once it is precision nobody measured", () => {
+    expect(formatAnswerTime(14_300)).toBe("14s");
+    expect(formatAnswerTime(10_000)).toBe("10s");
+  });
+
+  it("goes to minutes past a minute, where the seconds stop being the point", () => {
+    expect(formatAnswerTime(90_000)).toBe("1.5 min");
+  });
+
+  it("has an answer for nothing and for a negative", () => {
+    expect(formatAnswerTime(0)).toBe("0s");
+    expect(formatAnswerTime(-1)).toBe("0s");
   });
 });

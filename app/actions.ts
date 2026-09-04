@@ -241,6 +241,14 @@ export async function gradeCard(
    * value lands in the one table that is never updated and never deleted.
    */
   practisedSlot?: string,
+  /**
+   * The form that came back instead, where the round could name one.
+   *
+   * Checked the same way and against a narrower list: `writeGrade` keeps it
+   * only where both sides are forms, so a caller cannot file "asked what it
+   * meant, got a case" as a confusion between two cases.
+   */
+  reachedSlot?: string,
 ) {
   const ownerId = await requireUserId();
 
@@ -273,6 +281,7 @@ export async function gradeCard(
     durationMs,
     reviewedAt: reviewedAt ? new Date(reviewedAt) : new Date(),
     practisedSlot,
+    reachedSlot,
   });
 
   revalidatePath("/");

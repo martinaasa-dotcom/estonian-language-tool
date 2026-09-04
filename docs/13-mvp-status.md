@@ -2053,3 +2053,70 @@ statement now.
 - The scene game's floor in `audit-questions` came down from 1,972 to 1,409, which is the narrowing
   arriving where it should: the words with a picture are the ones a third of which are animals and
   people.
+
+## 30. The twenty-fourth pass: what the log knew and nobody read
+
+Not reported. It came out of reading a product brief against the code. The brief argued that a
+language app should track more than right and wrong, response time and which forms a learner
+confuses among the rest, and that the review algorithm should target the confusion rather than the
+word. The comparison was that the app already collected the first and already computed the second,
+and read neither.
+
+### The fault
+
+`Review.durationMs` had been written since the scheduler was built, by every timed round, carried
+through the offline outbox and included in every backup. No chart read it, no scheduler input read
+it, and no round that decides how hard to ask next read it. Months of it sat in every learner's log
+answering a question nobody had put.
+
+The second fact was computed twice. `markFlash` names the ending a learner reached for instead of
+the one asked, so it can print "That is the seestütlev. This one wanted the seesütlev.", and
+`markDescription` names it for a sentence. Both go through `whichCase`, which names a case only
+where exactly one case is spelled that way, so it is a claim the dictionary stands behind. Then the
+card went and the sentence went with it, and the fact lived for as long as it was on the screen.
+
+Two smaller faults were beside them. The scene round asked a named word for a named case and told
+the log nothing about either, so every one of its answers went down as being about whatever the
+nearest card happened to be, which is the fault `Review.slot` was added to fix, in a round written
+after the fix. And Match was dividing its round clock by the number of pairs and writing that into
+a column meant for the time on one answer, which is a figure that survives a `> 0` filter while
+measuring nothing.
+
+### What landed
+
+`Review.reachedSlot` holds the form that came back instead, written only where both sides are forms
+and only where they differ, checked against the closed list on the way in like `slot` and more
+narrowly. Both rounds that can name one now send it, the scene round sends the case it asked for as
+well, and the offline path carries both. `lib/stats/pace.ts` reads the duration column as a median
+over recalled, timed answers per slot and names the slots that are accurate and slow against the
+learner's own pace; `lib/stats/confusions.ts` counts unordered pairs above a floor of two.
+`components/NotAutomatic.tsx` draws both on Progress, under the cases panel, only where there is
+something to say. Match writes zero.
+
+And one bug this was not looking for. `OfflineProvider` mapped five named fields from the outbox
+into the replay and dropped `slot`, so every grade the flash round took offline lost the one thing
+its own comment says must survive a train. The invariant reads the field list off `PendingGrade`
+and checks each name reaches the replay.
+
+### What was measured
+
+Every text node of the panel in both themes, with the design suite's own arithmetic: the worst is
+4.68 and the slowest figure sits on butter at 5.31 light and 9.27 dark, which are the numbers
+`docs/14-design-system.md` already records for that ink on that tint. axe finds nothing on
+`/progress`. The eleven new assertions in `scripts/test-invariants.ts` were each made to fail on
+the fault they guard, and one did not on the first attempt: the check for a round clock divided
+into the duration column used a character class excluding `)`, which stopped at the paren inside
+`Math.round(` and passed against the live bug. It excludes `;` now and fails on the real line.
+
+The fixture had to be changed to reach any of it. `scripts/demo-data.ts` wrote a flat 4200 and no
+slot, so the panel would never have rendered in any browser suite and every check behind it would
+have waived itself for ever. The translative is right every time at 9.4 seconds against the
+learner's own 3.8, and the inessive and elative are swapped six times.
+
+### What it does not do
+
+It reads and it shows. Nothing about which shape the flash round asks next, which card the queue
+serves, or what the scheduler does with a slow correct answer has changed; a slow recall is still
+a recall. Whether speed should move the rating, whether the confusion should generate the next
+question, and whether a mission format should sit on top of any of it are the three decisions
+still open from the brief, and each is a larger change than reading two columns.

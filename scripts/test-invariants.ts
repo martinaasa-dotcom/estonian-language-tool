@@ -9089,11 +9089,23 @@ check("every secret-shaped variable the app reads is marked in the CI canary bui
  */
 check("an answer records which form it was about, from a list nothing can widen", () => {
   const grade = code("lib/srs/grade.ts");
+  /*
+    Anchored on the derivation rather than on the shape of the assignment. The
+    first version read `slot: slotFor(` and broke the day the value was lifted
+    into a `const` so that `reachedSlot` could be compared against it, which is
+    a refactor rather than a regression: what matters is that the column is
+    computed by the guarded helper and written, not which line it is written on.
+  */
   assert.match(
     grade,
-    /slot:\s*slotFor\(/,
-    "writeGrade no longer records the slot, so the flash round's answers stop " +
+    /slotFor\(card, write\.practisedSlot\)/,
+    "writeGrade no longer derives the slot, so the flash round's answers stop " +
     "counting towards the variety half of mastery",
+  );
+  assert.match(
+    between(grade, "prisma.review.create"),
+    /\bslot,?\n/,
+    "the Review row no longer carries the slot it was derived for",
   );
   assert.match(
     grade,
@@ -9133,7 +9145,7 @@ check("an answer records which form it was about, from a list nothing can widen"
 check("the flash round grades what it asked, and no model marks it", () => {
   assert.match(
     code("app/(app)/review/flashcards/FlashSession.tsx"),
-    /gradeCard\([\s\S]{0,120}task\.slot\)/,
+    /gradeCard\([\s\S]{0,200}task\.slot\b/,
     "the flash round no longer tells the log which form it asked",
   );
   for (const file of sourceFiles("lib/games").concat(["app/(app)/review/flashcards/page.tsx"])) {
@@ -9144,6 +9156,143 @@ check("the flash round grades what it asked, and no model marks it", () => {
       `${file} reaches a provider. Whether a form is right is the dictionary's answer.`,
     );
   }
+});
+
+/**
+ * WHAT CAME BACK INSTEAD IS RECORDED, AND ONLY WHERE IT IS TWO FORMS.
+ *
+ * Two rounds have always known the most useful thing in a wrong answer and
+ * neither wrote it down. `markFlash` names the ending that came back to print
+ * "That is the seestutlev. This one wanted the seesutlev."; `markDescription`
+ * does the same for a sentence. Both go through `lib/estonian/whichCase.ts`,
+ * which names a case only where exactly one case is spelled that way, so it is
+ * a claim the dictionary stands behind. Then the card went and took it with it.
+ *
+ * `Review.reachedSlot` holds it, and the guard is narrower than `slot`'s on
+ * purpose: `isFormSlot` rather than `isKnownSlot`, because the column means one
+ * sentence, "they wrote this form rather than the one asked for", and that
+ * sentence stops parsing the moment either side is a question about meaning.
+ * It is also the closed-list check, and it has to be: the value arrives from a
+ * browser into the one table that is never repaired, and a forged pair would
+ * not skew a count, it would tell somebody they mix up two cases nobody has
+ * asked them for.
+ */
+check("a wrong answer records the form it reached for, and only between forms", () => {
+  const grade = code("lib/srs/grade.ts");
+  assert.match(
+    between(grade, "prisma.review.create"),
+    /reachedSlot:\s*reachedFor\(/,
+    "writeGrade no longer records the form that came back instead, so the " +
+    "confusion panel goes quiet and nothing says why",
+  );
+  assert.match(
+    grade,
+    /isFormSlot\(reached\)[\s\S]{0,40}isFormSlot\(slot\)/,
+    "writeGrade stopped requiring both sides to be forms. A meaning slot in " +
+    "that column makes `poes vs poest` and `saying it vs seesutlev` one kind of row.",
+  );
+  assert.match(
+    grade,
+    /reached === slot/,
+    "writeGrade no longer refuses a row where the reached form is the one that " +
+    "was asked for, which is a right answer wearing a confusion's clothes",
+  );
+
+  // And the two rounds that can name one, do. Both grade a card that is not
+  // itself about the form they asked for, so neither fact survives without them.
+  for (const file of [
+    "app/(app)/review/flashcards/FlashSession.tsx",
+    "app/(app)/review/describe/DescribeSession.tsx",
+  ]) {
+    assert.match(
+      code(file),
+      /gradeCard\([\s\S]{0,260}reached/,
+      `${file} works out which form the learner reached for, prints it, and no ` +
+      "longer sends it. That was the whole life of the fact before this column.",
+    );
+  }
+});
+
+/**
+ * EVERY FIELD THE OUTBOX HOLDS REACHES THE SERVER.
+ *
+ * `PendingGrade` carried `slot`, IndexedDB stored it, `ReplayItem` accepted it
+ * and `writeGrade` read it, and the one `map` in the middle named five fields
+ * and dropped it. So the thing the flash round's own comment says must survive
+ * a train was dropped on the server action's doorstep, for every grade taken
+ * offline, and nothing failed: the row still landed, just about the wrong facet
+ * of the word.
+ *
+ * The rule is read off `PendingGrade` itself rather than from a list here,
+ * because a list here is the same fault one file further out.
+ */
+check("a grade taken offline arrives with every field it was queued with", () => {
+  const fields = [...between(code("lib/offline/outbox.ts"), "export interface PendingGrade")
+    .split("}")[0]!
+    .matchAll(/^\s{2}(\w+)\??:/gm)]
+    .map((m) => m[1]!);
+  assert.ok(fields.length >= 5, `PendingGrade's fields could not be read: ${fields.join(", ")}`);
+
+  const replay = between(code("components/OfflineProvider.tsx"), "replayGrades(");
+  const missing = fields.filter((f) => !new RegExp(`\\b${f}\\b`).test(replay));
+  assert.deepEqual(
+    missing, [],
+    `the offline replay drops ${missing.join(", ")} on the way to the server. ` +
+    "The row still lands, about the wrong thing, and nothing fails.",
+  );
+});
+
+/**
+ * A DURATION IN THE LOG IS THE TIME ON ONE ANSWER, OR IT IS ZERO.
+ *
+ * `Review.durationMs` had been written since the scheduler was built and read
+ * by nothing, so nothing had ever noticed that the rounds do not agree about
+ * what it holds. Six grade in bulk and write zero, which is honest. Match
+ * divided its round clock by the number of pairs, which is worse than zero,
+ * because a board is solved slowly at the start and by elimination at the end
+ * and the figure survives any `> 0` filter while measuring nothing.
+ *
+ * `lib/stats/pace.ts` reads the column as the time on one answer, so the two
+ * halves are asserted together: nothing averages a round into it, and the
+ * reader keeps its floor.
+ */
+check("a recorded answer time is one answer, and the pace reading knows it", () => {
+  const averaged = SESSION_FILES()
+    /*
+      `[^;]` rather than `[^)]`, and that correction is the reason this check
+      is worth having. The first spelling could not match the line it was
+      written for: `Math.round((finalSeconds * 1000) / pairs.length)` closes a
+      paren before it reaches the division, so a character class excluding `)`
+      stopped short and the check passed against the live bug. Made to fail on
+      the real line before being kept.
+    */
+    .filter((file) => /gradeCard\([^;]{0,200}\/\s*\w+\.length/.test(code(file)));
+  assert.deepEqual(
+    averaged, [],
+    `a round clock divided by the number of answers is being written into ` +
+    `Review.durationMs by ${averaged.join(", ")}. Zero is the honest figure ` +
+    "for an answer nothing timed.",
+  );
+
+  const pace = code("lib/stats/pace.ts");
+  assert.match(
+    pace,
+    /durationMs > 0/,
+    "lib/stats/pace.ts stopped skipping the answers no round timed, so the " +
+    "median is now over a pile of zeroes from the rounds that grade in bulk",
+  );
+  assert.match(
+    pace,
+    /rating >= 3/,
+    "lib/stats/pace.ts stopped keeping to recalled answers. Time on a wrong " +
+    "answer measures whether somebody gave up, which is temperament.",
+  );
+  assert.match(
+    pace,
+    /export function median/,
+    "lib/stats/pace.ts stopped taking a median. writeGrade caps the column at " +
+    "ten minutes, so a tab left open at lunch writes the cap and a mean carries it.",
+  );
 });
 
 check("a case is named only when one case claims the spelling", () => {

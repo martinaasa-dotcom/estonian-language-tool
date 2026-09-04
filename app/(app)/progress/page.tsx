@@ -16,6 +16,9 @@ import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
+import { NotAutomatic } from "@/components/NotAutomatic";
+import { confusions } from "@/lib/stats/confusions";
+import { paceReading } from "@/lib/stats/pace";
 import { caseReviewsFor } from "@/lib/progress/cases";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Board, BoardSkeleton } from "./Board";
@@ -47,7 +50,18 @@ export default async function ProgressPage() {
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
       where: { ownerId, reviewedAt: { gte: new Date(now.getTime() - HEATMAP_DAYS * 86_400_000) } },
-      select: { reviewedAt: true, rating: true, targetCase: true, stateBefore: true, cardId: true },
+      /*
+        `durationMs`, `slot` and `reachedSlot` are the three columns this app
+        has been writing and never reading. The first has been collected since
+        the scheduler was built; the other two are what the flash and scene
+        rounds work out about a wrong answer and used to print and drop.
+        `lib/stats/pace.ts` and `lib/stats/confusions.ts` are the readers, and
+        they cost this query three columns over rows it already reads.
+      */
+      select: {
+        reviewedAt: true, rating: true, targetCase: true, stateBefore: true, cardId: true,
+        durationMs: true, slot: true, reachedSlot: true,
+      },
       orderBy: { reviewedAt: "asc" },
     }),
     prisma.card.findMany({
@@ -116,6 +130,14 @@ export default async function ProgressPage() {
   // you knew actually came back. The recall rate above counts first sights too.
   const retention = retentionReading(reviews);
   const cases = caseAccuracy(caseReviews);
+  /*
+    Read off the rows the heatmap already fetched rather than a query of their
+    own: same owner, same half-year, and this page's own argument about
+    `caseReviewsFor` is that two windows over one question is how the two
+    answers drift.
+  */
+  const pace = paceReading(reviews);
+  const mixedUp = confusions(reviews);
   const hour = bestStudyHour(reviews, 20, clock);
 
   // Vocabulary reach by CEFR: known words per level, against what the deck holds.
@@ -329,6 +351,22 @@ export default async function ProgressPage() {
             <div className="mt-3">
               <DrillLink href="/review/clinic" />
             </div>
+          </section>
+        )}
+
+        {/*
+          Only where there is something to say, which is the shape the
+          sticking points above already take. A panel that draws a heading over
+          two empty lists is furniture, and this one has nothing to fall back
+          on: a learner whose rounds never timed an answer has no pace, and
+          that is a true and uninteresting state.
+        */}
+        {(pace.slow.length > 0 || mixedUp.length > 0) && (
+          <section>
+            <SectionTitle hint="from answers a round timed">Not automatic yet</SectionTitle>
+            <Card tone="butter">
+              <NotAutomatic slow={pace.slow} mixedUp={mixedUp} medianMs={pace.medianMs} />
+            </Card>
           </section>
         )}
 

@@ -11,6 +11,8 @@ export interface ReplayItem {
   reviewedAt: number;
   /** See `PendingGrade.slot`. Checked against the closed list by `writeGrade`. */
   slot?: string;
+  /** See `PendingGrade.reachedSlot`. Checked the same way, and more narrowly. */
+  reachedSlot?: string;
 }
 
 export interface ReplayResult {
@@ -116,6 +118,7 @@ export async function applyGradeBatch(
       now: new Date(now),
       reviewId: item.id,
       practisedSlot: item.slot,
+      reachedSlot: item.reachedSlot,
     });
 
     settled.push(item.id);

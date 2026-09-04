@@ -80,8 +80,23 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
 
     const duration = Date.now() - shownAt.current;
     const answeredAt = new Date().toISOString();
+    /*
+      The ending they reached for instead, which this round has always known
+      and has only ever said out loud. `markFlash` names it to print "That is
+      the seestütlev. This one wanted the seesütlev.", and that sentence was
+      the whole life of the fact: it left the screen with the card.
+
+      Only where it differs from what was asked, since `markFlash` also
+      returns the asked slot on a clean hit and on a typo. `writeGrade` checks
+      that again rather than trusting it, because this is a public endpoint.
+    */
+    const reached = result.wroteSlot && result.wroteSlot !== task.slot
+      ? result.wroteSlot
+      : undefined;
     try {
-      const res = await gradeCard(task.cardId, result.rating, duration, answeredAt, task.slot);
+      const res = await gradeCard(
+        task.cardId, result.rating, duration, answeredAt, task.slot, reached,
+      );
       if (!res.ok) throw new Error(res.error);
     } catch {
       // The grade is still a fact about something the learner did, and the slot
@@ -95,6 +110,7 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
         durationMs: duration,
         reviewedAt: Date.parse(answeredAt),
         slot: task.slot,
+        reachedSlot: reached,
       });
       refreshOutbox();
     }

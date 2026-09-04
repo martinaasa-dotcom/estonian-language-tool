@@ -36,6 +36,16 @@ export interface PendingGrade {
    * the card's own facet.
    */
   slot?: string;
+  /**
+   * The form that came back instead, where the round could name one.
+   *
+   * Carried for the same reason `slot` is: a learner on a train who mixes up
+   * the seesütlev and the seestütlev has produced the most useful thing in
+   * their log, and dropping it because the connection was down would leave the
+   * panel that names it silently thinner for exactly the sessions nobody was
+   * watching. Untrusted, and `writeGrade` is where it is checked.
+   */
+  reachedSlot?: string;
 }
 
 /** A grade recorded more than this long ago is too stale to trust as a timestamp. */
@@ -94,7 +104,8 @@ export function isValidPending(value: unknown): value is PendingGrade {
     (v.rating === 1 || v.rating === 2 || v.rating === 3 || v.rating === 4) &&
     typeof v.durationMs === "number" && Number.isFinite(v.durationMs) &&
     typeof v.reviewedAt === "number" && Number.isFinite(v.reviewedAt) &&
-    (v.slot === undefined || typeof v.slot === "string")
+    (v.slot === undefined || typeof v.slot === "string") &&
+    (v.reachedSlot === undefined || typeof v.reachedSlot === "string")
   );
 }
 

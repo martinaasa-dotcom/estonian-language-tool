@@ -2,7 +2,7 @@ import type { Card } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 import { grade, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
-import { isKnownSlot, slotOfCard } from "@/lib/srs/slots";
+import { isFormSlot, isKnownSlot, slotOfCard } from "@/lib/srs/slots";
 
 /**
  * Writing one grade down.
@@ -67,6 +67,24 @@ export interface GradeWrite {
    */
   practisedSlot?: string | null;
   /**
+   * The form the learner produced instead of the one they were asked for.
+   *
+   * Two rounds work this out already and both throw it away. `markFlash`
+   * names the ending that came back and prints "That is the seestütlev. This
+   * one wanted the seesütlev."; `markDescription` does the same for a
+   * sentence. It is the single most useful thing either of them knows, it is
+   * the one fact a learner cannot get anywhere else, and until now it lived
+   * for as long as the sentence was on the screen.
+   *
+   * Recorded only where it is a *form* on both sides. "They wrote this form
+   * rather than the one asked for" is the whole meaning of the column, and
+   * that sentence stops parsing the moment either side is a question about
+   * meaning: asked what a word means and given a case is a different
+   * observation, and putting it here would make `poes ↔ poest` and
+   * `saying it ↔ seesütlev` the same kind of row.
+   */
+  reachedSlot?: string | null;
+  /**
    * The client-generated Review id, on the offline path.
    *
    * That path is idempotent because the id comes from the device, so a replay
@@ -80,6 +98,7 @@ export interface GradeWrite {
 export async function writeGrade(ownerId: string, write: GradeWrite): Promise<SchedulingState> {
   const { card, rating, durationMs, reviewId } = write;
   const at = reviewMoment(write.reviewedAt, card.createdAt, write.now ?? new Date());
+  const slot = slotFor(card, write.practisedSlot);
 
   // The Review row goes first: the log is append-only and is the one thing
   // that cannot be reconstructed, so it must never be lost to a later failure.
@@ -94,7 +113,8 @@ export async function writeGrade(ownerId: string, write: GradeWrite): Promise<Sc
       durationMs: Math.min(Math.max(durationMs, 0), 600_000),
       stateBefore: card.state,
       targetCase: card.targetCase,
-      slot: slotFor(card, write.practisedSlot),
+      slot,
+      reachedSlot: reachedFor(slot, write.reachedSlot),
     },
   });
 
@@ -134,4 +154,27 @@ export async function writeGrade(ownerId: string, write: GradeWrite): Promise<Sc
 function slotFor(card: Card, practised: string | null | undefined): string {
   if (practised && isKnownSlot(practised)) return practised;
   return slotOfCard(card);
+}
+
+/**
+ * The form that came back instead, or nothing.
+ *
+ * Three things have to hold before this column says anything, and each of them
+ * is a way the row would otherwise be a claim nobody made:
+ *
+ * - **Both sides are forms**, which is `isFormSlot` and is deliberately
+ *   narrower than the `isKnownSlot` the asked slot is checked against. It is
+ *   the closed-list check as well as the meaning check, and it has to be:
+ *   the value arrives from a browser through a public endpoint into the one
+ *   table that is never repaired, and a forged confusion would not skew a
+ *   count, it would tell somebody they mix up two cases nobody has ever asked
+ *   them for.
+ * - **They differ.** Where they agree the learner wrote what was asked for,
+ *   and a row saying "they reached for the seesütlev when asked for the
+ *   seesütlev" is a right answer wearing a confusion's clothes.
+ */
+function reachedFor(slot: string, reached: string | null | undefined): string | null {
+  if (!reached || reached === slot) return null;
+  if (!isFormSlot(reached) || !isFormSlot(slot)) return null;
+  return reached;
 }

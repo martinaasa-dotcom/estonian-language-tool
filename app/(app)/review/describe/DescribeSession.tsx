@@ -124,8 +124,26 @@ export function DescribeSession({ prompts: initialPrompts, aiAvailable }: {
         nothing is written for it.
       */
       if (prompt.cardId) {
-        void gradeCard(prompt.cardId, result.mark.rating, Date.now() - startedAt.current)
-          .catch(() => {});
+        /*
+          WHAT WAS ASKED, AND WHAT CAME BACK.
+
+          This round asks a named word for a named case and grades the nearest
+          card the learner has (ADR-016), so without the fifth argument the log
+          says the answer was about whatever that card happens to be. That is
+          the fault `Review.slot` was added to fix, in a round written after
+          the fix and told about none of it: the mastery counter could not see
+          that the word had been practised in the kaasaütlev, and neither could
+          anything else.
+
+          The sixth is the case they reached for instead. `markDescription`
+          works it out through `whichCase`, which names one only where exactly
+          one case is spelled that way, and prints it. It was dropped here.
+        */
+        const reached = result.mark.verdict?.kind === "one" ? result.mark.verdict.key : undefined;
+        void gradeCard(
+          prompt.cardId, result.mark.rating, Date.now() - startedAt.current,
+          undefined, prompt.caseKey, reached,
+        ).catch(() => {});
       }
     } catch {
       setError("Marking needs a connection. Your sentence is still here.");

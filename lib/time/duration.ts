@@ -82,3 +82,37 @@ export function formatDurationRange(low: number, high: number, style: DurationSt
   const to = amountIn(hi, unit);
   return from === to ? write(from, unit, style) : `${from} to ${write(to, unit, style)}`;
 }
+
+
+/*
+  HOW LONG ONE ANSWER TOOK, WHICH IS THE OTHER END OF THE SAME SCALE.
+
+  Everything above is a stretch of *study*: hours a week, minutes a day, the
+  figures the plan is built out of. `Review.durationMs` is the opposite end,
+  one answer, and `lib/stats/pace.ts` reads it in the low seconds. It is here
+  rather than in a module of its own for the reason the two spellings above
+  share one file: turning a length of time into words is one job, and a second
+  file doing it in a third unit is where two of them stop agreeing.
+
+  The precision follows the size, exactly as the unit does above. Below ten
+  seconds a tenth is the whole signal, because the difference between
+  answering in 2.4 and in 3.8 is the difference this panel exists to show. At
+  ten and above a tenth is precision nobody measured: a browser's own
+  scheduling is worth more than that, and "14.3s" claims a stopwatch. Past a
+  minute it is minutes, since a median answer over a minute is somebody who
+  put their phone down and the seconds are not the point.
+*/
+const SECOND = 1000;
+/** Below this many seconds, a tenth is the signal rather than noise. */
+const TENTHS_BELOW_S = 10;
+
+/** One answer's time: "2.4s", "14s", "1.5 min". */
+export function formatAnswerTime(ms: number): string {
+  const seconds = Math.max(0, ms) / SECOND;
+  if (seconds >= MINUTES_PER_HOUR) {
+    return `${Math.round((seconds / MINUTES_PER_HOUR) * 10) / 10} min`;
+  }
+  return seconds < TENTHS_BELOW_S
+    ? `${Math.round(seconds * 10) / 10}s`
+    : `${Math.round(seconds)}s`;
+}

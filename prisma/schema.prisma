@@ -240,6 +240,14 @@ model Review {
   /// was recorded at the time. Never widen `targetCase` to hold this: that
   /// column feeds the case charts, which print whatever they find.
   slot        String?
+  /// The form the learner produced *instead*, where they produced a different
+  /// one and exactly one form is spelled that way. Null is the ordinary case:
+  /// the answer was right, or nothing nameable came back. Written only where
+  /// both sides are forms (`isFormSlot`), so the column means one sentence —
+  /// "they wrote this form rather than the one asked for" — and `slot` keeps
+  /// the direction, which `lib/stats/confusions.ts` merges and a later pass
+  /// could split. Closed-list checked in `writeGrade`, like `slot`.
+  reachedSlot String?
 
   @@index([ownerId, reviewedAt])
   @@index([ownerId, targetCase])

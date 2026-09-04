@@ -1343,6 +1343,80 @@ is read in the query that was already fetching the words. The part of speech was
 and is wrong for exactly the words this protects: an entry confirmed off a photograph is a `NOUN`
 with no forms behind it.
 
+**Two columns in the log were written by everything and read by nothing, and a third fact was
+worked out twice and thrown away.** `Review.durationMs` has been written since the scheduler was
+built, by every timed round, through the offline outbox and into every backup, and no chart, no
+scheduler input and no shape selector had ever read it. And two rounds already knew the most useful
+thing in a wrong answer: `markFlash` names the ending that came back and prints "That is the
+seestütlev. This one wanted the seesütlev.", `markDescription` does the same for a sentence, both
+through `whichCase`, which names a case only where exactly one case is spelled that way. Then the
+card went and took it with it. What those two facts answer between them is the one thing an
+accuracy chart cannot: the difference between a form somebody has and a rule they are applying.
+Nine in ten right at four seconds each and nine in ten right at under a second are two different
+states, and only the second one shows up in a conversation.
+
+**`Review.reachedSlot` is the form that came back instead, and it means exactly one sentence.** A
+third column rather than a wider `slot`, for the reason `slot` was not a wider `targetCase`: three
+questions, three columns, none bent to be another. It is written only where both sides are forms
+(`isFormSlot`, deliberately narrower than the `isKnownSlot` the asked slot is checked against),
+because "they wrote this form rather than the one asked for" stops parsing the moment either side
+is a question about meaning; and only where the two differ, since a row saying somebody reached for
+the seesütlev when asked for the seesütlev is a right answer wearing a confusion's clothes. It
+arrives through a `"use server"` export and is checked rather than trusted, into the one table that
+is never repaired, and the stakes are higher than a skewed count: a forged pair would tell somebody
+they mix up two cases nobody has ever asked them for. The scene round was the second half of the
+same fault, asking a named word for a named case and telling the log nothing about either, so the
+mastery counter could not see that the word had been practised in the kaasaütlev. It passes both.
+
+**The pace reading has three rules about which rows count, and each is a way the number would
+otherwise be about something else.** Only answers a round timed, because zero is not a fast answer,
+it is a round that never started a clock, and that is six of them. Only answers that were recalled,
+because time on a wrong answer measures whether somebody gave up or kept trying, which is
+temperament. And the median, because `writeGrade` caps the column at ten minutes, so a tab left open
+at lunch writes exactly the cap and a mean over twenty answers carries half a minute of it. What it
+compares against is the learner's own median across everything they were timed on, never a number
+of ours: the modes ask for different amounts of typing, so an absolute threshold would name the
+typing rather than the recall. A slot is worth naming when it is right at least `FLUENT_ACCURACY`
+of the time and takes at least `SLOW_RATIO` their own pace, and the accuracy floor is what keeps the
+panel from being `WeakestCases` in a different unit: that panel names what is wrong, this one names
+what is right and still has to be thought about. `lib/stats/pace.ts` and `lib/stats/confusions.ts`
+are the two readers and `components/NotAutomatic.tsx` is the one panel, on Progress, drawn only
+where there is something to say.
+
+**And Match was writing a per-round average into a per-answer column, which is worse than zero.**
+It divided the round's clock by the number of pairs, and a board is solved slowly at the start and
+by elimination at the end, so the last two pairs took a second between them and were each recorded
+at the round's average. That figure survives any `> 0` filter while measuring nothing, and only one
+of a wrong measurement and an absent one can be filtered out. It writes zero now, which is what
+every other round that grades in bulk already wrote. The invariant for it was made to fail on the
+real line and did not, the first time: a character class excluding `)` stopped at the paren inside
+`Math.round(` and never reached the division, so the check passed against the live bug. It excludes
+`;` now.
+
+**Confusions are counted as unordered pairs, and the floor is two.** Writing `poest` when asked for
+`poes` and `poes` when asked for `poest` are one gap seen from two sides, and splitting them halves
+the evidence behind a pair that is already rare. The column keeps the direction, so a later pass
+that wants to say which way somebody leans can have it without a migration. One is a slip; two is
+the smallest thing that is a pattern rather than an event, and the count is printed beside the pair
+so a reader can weigh a two against a nine.
+
+**And the offline replay was dropping the slot on the server's doorstep.** `PendingGrade` carried
+it, IndexedDB stored it, `ReplayItem` accepted it and `writeGrade` read it, and the one `map` in
+`OfflineProvider` between the outbox and the action named five fields and not that one. So the
+thing the flash round's own comment says must survive a train was lost for every grade taken
+offline, and nothing failed, because the row still landed, about the wrong facet of the word. The
+invariant reads the field list off `PendingGrade` itself and checks each name reaches the replay,
+because a list in the check is the same fault one file further out.
+
+**And the fixture had to reach it, or no browser suite ever would.** `scripts/demo-data.ts` wrote
+`durationMs: 4200` on every row and no slot at all, so both columns were constant and empty in
+exactly the state every screenshot suite runs in, and the panel only renders where there is
+something to say. The translative takes 9.4 seconds against the learner's own 3.8 and is right every
+time, which needed a clean history of its own because the shared ones average under the floor; the
+inessive and the elative are swapped six times. Measured in a browser in both themes: the slowest
+figure sits on butter at 5.31 and 9.27, which are the numbers the design system already records for
+that ink on that tint.
+
 **Flash cards is the round built on that, and it is not review with a different queue.** It used
 to render `ReviewSession` over the words already met, which is the same four shapes drawn from
 another list, and the learner's report was that it "reverts back to what is in the Review section".
@@ -4125,7 +4199,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`, `caseFits`,
 `caseQuestionFor`, `semanticGroup`, `ANIMATE_CODES`, `nominalOpener`, `asksPerson`,
 `slotOfCard`, `isKnownSlot`, `practisedSlot`, `askableSlots`, `shapeFor`, `markFlash`,
-`formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`. Most of them now
+`formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `reachedSlot`, `reachedFor`,
+`paceReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
