@@ -39,9 +39,19 @@
  * exactly the ones that made the old row embarrassing.
  *
  * A word must be a noun, a verb or an adjective. Those are the entries with a
- * paradigm behind them, and a paradigm is what the chip opens. A conjunction
- * has principal parts nobody can name and a case table nobody can build, so a
- * chip leading to one is a chip leading to a dead end.
+ * table of forms behind them, and that table is what the chip opens. A
+ * conjunction has principal parts nobody can name and a case table nobody can
+ * build, so a chip leading to one is a chip leading to a dead end.
+ *
+ * AND THAT SECOND FILTER IS ABOUT THE ENTRY A LEARNER LANDS ON, not about the
+ * rows. A chip links to `/dictionary?q=<lemma>` and the dictionary answers a
+ * lemma with one entry; `@@unique` is on `(lemma, pos)`, so a lemma can hold
+ * more than one. Filtering the rows asks whether *some* entry has a table,
+ * which is a different question and the one this used to ask: `oma` is an
+ * adjective in the Wiktionary expansion and the pronoun the course teaches, the
+ * row offered it on the strength of the adjective, and the dictionary leads
+ * with the pronoun, which has no case table. `withATable` is the gate and it is
+ * applied once, to whatever a source returned.
  */
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
@@ -50,6 +60,7 @@ import { learnerDayClock } from "@/lib/progress/dayClock";
 import { themeFor, themeLemmas } from "@/lib/collections/topical";
 import { newsWords } from "@/lib/news/feed";
 import { bandsAround } from "@/lib/collections/levels";
+import { opensATable } from "./pos";
 import { candidatesFor } from "./resolveScan";
 import { matchEstonianForm } from "./search";
 import { shuffle } from "@/lib/random/shuffle";
@@ -69,10 +80,14 @@ const ROW = 12;
 /** The fewest a source may fill before the next one is tried instead. */
 const MIN_ROW = 6;
 
-/** The parts of speech with a case or verb table to open. */
-// Not PRONOUN: a plural-only pronoun is harvested with no forms at all, and
-// the chip promises a table to open.
-const POS = ["NOUN", "VERB", "ADJECTIVE"];
+/**
+ * The parts of speech with a case or verb table to open.
+ *
+ * `lib/dict/pos.ts` is where that is decided, because the same question is
+ * asked one file over by `lemmasWithNoTable`, and a row filtering on one list
+ * while the gate below reads another is two answers to one question.
+ */
+const POS = ["NOUN", "VERB", "ADJECTIVE"].filter(opensATable);
 
 /**
  * How many headline words are worth asking the dictionary about.
@@ -111,10 +126,11 @@ export async function suggestWords(
   const today = clock.dayKey(now);
 
   for (const source of order(random())) {
-    const words =
+    const found =
       source === "news" ? await fromNews(band, random)
       : source === "season" ? await fromSeason(band, today, random)
       : await fromLevel(band);
+    const words = await withATable(found);
 
     if (words.length >= MIN_ROW) {
       return { source, label: labelFor(source, today), words: words.slice(0, ROW) };
@@ -197,6 +213,57 @@ async function vouchNews(): Promise<VouchedWord[]> {
 
   vouched = { key, words: out };
   return out;
+}
+
+/**
+ * ONE GATE RATHER THAN THREE, and it asks the question the chip's promise is
+ * about.
+ *
+ * Each source filters the *rows* by part of speech, which answers "does the
+ * table hold an entry with this lemma that has a table". A chip links to
+ * `/dictionary?q=<lemma>` and the dictionary answers a lemma with the one entry
+ * `bySubstance` leads with, so wherever a lemma holds more than one those are
+ * different questions. `oma` is the shipped instance: the Wiktionary expansion
+ * heads it `Adjective`, the course teaches it in the pronoun unit where Ekilex
+ * calls it an asesõna, the row offered it on the strength of the adjective, and
+ * the dictionary leads with the pronoun, which has no case table to open.
+ *
+ * A lemma is kept only when *every* entry under it has a table. That is
+ * stricter than asking `bySubstance` and needs neither its forms counts nor its
+ * provenance: whichever entry the dictionary leads with, the chip is good. What
+ * it costs is measured and is two words in the whole shipped dictionary, `oma`
+ * and `või`, butter and the conjunction both, which the row would have led to
+ * the noun for. Two out of six thousand, against a chip that dead-ends.
+ *
+ * A query rather than a read of `lib/dict/facts.ts`, which is where a fact
+ * about the shared dictionary usually belongs. The lemmas asked about change
+ * every render, since the front page moves and the level draw is random, so
+ * there is no stable key to hold; and a word added in the last minute would be
+ * offered ungated by a cache a minute old, which is the one promise this row
+ * makes. It is an indexed read of a couple of hundred lemmas on a page that is
+ * otherwise three queries.
+ *
+ * The level is deliberately not part of this. A CEFR band is a record that
+ * somebody vouched for *that entry*, which the offered entry answers for
+ * itself, and no lemma in the shipped dictionary holds two entries that
+ * disagree about it.
+ *
+ * Exported so the rule can be asked directly. Driving it through `suggestWords`
+ * cannot be made to fail on purpose: the level source draws twelve at random
+ * out of a couple of thousand words in band, so whether a planted pair is
+ * offered at all is a coin toss, and a check that passes because nothing was
+ * drawn is a check nobody knows the state of. The end-to-end guard is the test
+ * beside it, which asks what the dictionary shows for every word the row
+ * offered, and which is what caught `oma`.
+ */
+export async function withATable(lemmas: string[]): Promise<string[]> {
+  if (lemmas.length === 0) return lemmas;
+  const rows = await prisma.lexeme.findMany({
+    where: { lemma: { in: lemmas } },
+    select: { lemma: true, pos: true },
+  });
+  const dead = new Set(rows.filter((row) => !opensATable(row.pos)).map((row) => row.lemma));
+  return lemmas.filter((lemma) => !dead.has(lemma));
 }
 
 /** Those of them worth putting in front of a learner at this level. */

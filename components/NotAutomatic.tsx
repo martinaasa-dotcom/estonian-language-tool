@@ -3,7 +3,7 @@ import { caseByKey } from "@/lib/estonian/cases";
 import type { CaseKey } from "@/lib/estonian/types";
 import { slotLabel, slotShort } from "@/lib/srs/slots";
 import type { Confusion } from "@/lib/stats/confusions";
-import type { SlotPace } from "@/lib/stats/pace";
+import type { SlotAnswerTime } from "@/lib/stats/answerTime";
 import { formatAnswerTime } from "@/lib/time/duration";
 
 /**
@@ -34,7 +34,7 @@ import { formatAnswerTime } from "@/lib/time/duration";
 const MAX_ROWS = 5;
 
 export function NotAutomatic({ slow, mixedUp, medianMs }: {
-  slow: readonly SlotPace[];
+  slow: readonly SlotAnswerTime[];
   mixedUp: readonly Confusion[];
   /** The learner's own median, which is what "slow" is measured against. */
   medianMs: number | null;
@@ -82,7 +82,7 @@ export function NotAutomatic({ slow, mixedUp, medianMs }: {
  * one and that is the drill. A named part of the verb has no such door, so it
  * is a row and not a link rather than a link that goes somewhere vague.
  */
-function SlowRow({ pace }: { pace: SlotPace }) {
+function SlowRow({ pace }: { pace: SlotAnswerTime }) {
   const spec = caseByKey(pace.slot as CaseKey);
   /*
     The short name on the row and the question in the label, which is the

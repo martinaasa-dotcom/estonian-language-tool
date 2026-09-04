@@ -25,6 +25,20 @@ export const BANDS: readonly Band[] = ["A1", "A2", "B1", "B2", "C1"] as const;
 export const PRE_A1 = "pre-A1" as const;
 export type Level = Band | typeof PRE_A1;
 
+/**
+ * A figure published as a range, kept as one.
+ *
+ * Hours to a level, hours a week a situation holds, weeks to a date: every
+ * number the plan quotes comes from somebody's estimate and is honest only as
+ * a pair. It lives here rather than in `plan.ts` because the reasons table in
+ * `goals.ts` carries one per reason and the plan reads that table, and a type
+ * both need cannot live in either without the two importing each other.
+ */
+export interface HourRange {
+  low: number;
+  high: number;
+}
+
 /** Where the Estonian in an item came from, shown to the learner. */
 export type ItemSource =
   /** A form or gloss stored in the dictionary, seeded or retrieved. */

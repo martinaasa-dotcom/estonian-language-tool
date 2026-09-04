@@ -39,11 +39,34 @@ import type { SceneSpec } from "./types";
   the words, and the two commonest things the gate withheld a line over were
   `ja` and `või`: a scene that cannot say "and" or "or" cannot say much.
   `millal` carries `praegu` and `juba`, which is how anybody says when.
+
+  The last two arrived with the vocabulary pass and are the same argument once
+  more. `kohasonad` is the postpositions, which is one of the eight units the
+  seventeenth pass added for exactly this reason and the only one that was left
+  out here; `alates` and `kaasas` were both in the ranked list. And
+  `kus-ja-kuhu` is the adverbs of place, `siin`, `siia`, `mujal` and `asuma`,
+  which stands beside `millal`'s adverbs of time for the same reason: every one
+  of these scenes asks where something is before it asks anything else.
 */
 const COMMON = [
   "tervitused", "kusisonad", "asesonad", "aeg", "arvud", "korraldused", "pohiverbid",
-  "sidesonad", "vastused", "maaramine", "millal",
+  "sidesonad", "vastused", "maaramine", "millal", "kohasonad", "kus-ja-kuhu",
 ] as const;
+
+/**
+ * What the other side says when nothing could be built for a beat.
+ *
+ * A course phrase rather than a sentence written here, which is the rule this
+ * file lives under: a lemma is a request against the dictionary, so a
+ * misspelled one fails to arrive and `catalogue.test.ts` says so. `tervitused`
+ * teaches it and every scene declares that unit through `COMMON`.
+ *
+ * It is the honest move rather than an error message. Composition can fail
+ * twice and there is still a person standing there waiting, and what a learner
+ * sees is somebody who did not catch what they said, which is the truest thing
+ * that can happen in a conversation.
+ */
+export const FALLBACK_PHRASE = "Ma ei saa aru";
 
 /** The closing phrases, which are the same wherever you are leaving. */
 const FAREWELLS = ["Head aega!", "Nägemist!", "Aitäh!"] as const;
@@ -61,9 +84,39 @@ const DOCTOR: SceneSpec = {
     could not vouch for the word "doctor" is the shape of specification bug
     that only a measurement finds: nothing about the scene looked wrong, and
     the gate withheld every line the model wrote about one.
+
+    `plaanid` because the last two beats are agreeing a time, and `sobima` is
+    the verb Estonian agrees one with: it was the single commonest word the
+    gate withheld a line over. `minevik` because the `since` beat asks how long
+    this has been going on, which is a past tense. `omadussonad` because saying
+    what is wrong with you is a sentence with an adjective in it.
   */
-  units: [...COMMON, "keha-ja-tervis", "inimesed"],
+  units: [...COMMON, "keha-ja-tervis", "inimesed", "plaanid", "minevik", "omadussonad"],
   register: "teie",
+  /*
+    THE LEARNER NEVER PLAYS THEMSELVES (§3), and at a health centre that is a
+    legal rule as much as a marking one: a scene where somebody types about
+    their own symptoms is a database holding health data about an identified
+    person. Everything on this card is fiction, and nothing in a transcript is
+    true about whoever wrote it.
+  */
+  role: "You are a patient. Something has been wrong since earlier this week and you would like to be seen.",
+  props: [
+    {
+      kind: "word", slot: "symptom", oneOf: ["valu", "palavik", "haigus", "haige", "väsinud"],
+      says: "What is wrong. Say it in your own sentence.",
+    },
+    {
+      kind: "weekday", slot: "since",
+      oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
+      says: "It started earlier this week, on this day.",
+    },
+    { kind: "time", slot: "time", from: 9, to: 16 },
+  ],
+  curveballs: [
+    "slot-gone", "small-talk", "faster", "queue", "not-possible",
+    "other-register", "english", "missing-document", "place-instruction",
+  ],
   beats: [
     {
       id: "greet",
@@ -136,6 +189,30 @@ const DOCTOR: SceneSpec = {
       shape: "word",
     },
   ],
+  outcomes: [
+    {
+      id: "booked",
+      when: ["greet", "reason", "where", "since", "offer", "close"],
+      says: "You have an appointment, and they know what it is for.",
+    },
+    {
+      id: "booked-thin",
+      when: ["greet", "reason", "offer"],
+      says: "You have an appointment. They did not get the whole story, so bring it with you.",
+    },
+    /*
+      A failure that is not the learner's fault, which every scene needs one of
+      (§3). The receptionist cannot book what she cannot write down, and a
+      learner who said everything except when it started has met a real wall
+      rather than a marking rule.
+    */
+    {
+      id: "sent-away",
+      when: ["greet"],
+      says: "No appointment today. They ask you to call back when you can say how long it has been.",
+    },
+    { id: "left", when: [], says: "You left the desk. That is a thing people do, and you can come back." },
+  ],
 };
 
 const LANDLORD: SceneSpec = {
@@ -144,10 +221,39 @@ const LANDLORD: SceneSpec = {
   place: "A phone call to the person you rent from",
   level: "B1",
   tests: "eluase",
-  // `eluase` is the vocabulary of renting; `kodu` is the vocabulary of the flat
-  // itself, and a scene about something broken in one needs both.
-  units: [...COMMON, "eluase", "kodu"],
+  /*
+    `eluase` is the vocabulary of renting; `kodu` is the vocabulary of the flat
+    itself, and a scene about something broken in one needs both. `kodutood`
+    carries `katki`, which is the word this whole scene is about. `plaanid` for
+    the beat that agrees a time and `minevik` for the one that says since when,
+    the same two the health centre needs, and `omadussonad` for the same reason.
+  */
+  units: [...COMMON, "eluase", "kodu", "kodutood", "plaanid", "minevik", "omadussonad"],
   register: "teie",
+  role: "You rent a flat. Something in it stopped working earlier this week and you are ringing the person you rent from.",
+  props: [
+    {
+      kind: "word", slot: "problem", oneOf: ["küte", "elekter", "remont", "mööbel", "aken", "uks"],
+      says: "What has gone wrong. The sentence is yours.",
+    },
+    {
+      kind: "weekday", slot: "since",
+      oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
+      says: "It has been like this since this day.",
+    },
+    { kind: "time", slot: "time", from: 8, to: 18 },
+    { kind: "number", slot: "floor", min: 1, max: 5, says: "You live on floor" },
+  ],
+  /*
+    No queue: this one is a telephone call, so the only curveball in the
+    catalogue with no words in it has nowhere to happen. A scene admits what
+    could actually occur in it, which is the same discipline as declaring the
+    units its words come from.
+  */
+  curveballs: [
+    "slot-gone", "not-possible", "faster", "small-talk", "interrupted",
+    "english", "wrong-price", "other-register", "missing-document",
+  ],
   beats: [
     {
       id: "greet",
@@ -220,6 +326,24 @@ const LANDLORD: SceneSpec = {
       shape: "word",
     },
   ],
+  outcomes: [
+    {
+      id: "fixed",
+      when: ["greet", "problem", "where", "since", "refuse", "agree", "close"],
+      says: "Someone is coming to look at it, on a day you agreed to.",
+    },
+    {
+      id: "logged",
+      when: ["greet", "problem", "agree"],
+      says: "They know something is broken and roughly when. No day agreed yet.",
+    },
+    {
+      id: "no-slot",
+      when: ["greet", "problem"],
+      says: "They have your report and no free day this week. Nothing you said changed that.",
+    },
+    { id: "left", when: [], says: "You hung up. The heating is still broken, and you can ring again." },
+  ],
 };
 
 const COUNTER: SceneSpec = {
@@ -228,10 +352,34 @@ const COUNTER: SceneSpec = {
   place: "The desk at an office that wants your paperwork",
   level: "A2",
   tests: "linn-ja-teenused",
-  // `suhtlemine` teaches `aadress`, `kiri`, `teatama` and `helistama`, which is
-  // what a counter asks you for and what it tells you it will do next.
-  units: [...COMMON, "linn-ja-teenused", "suhtlemine"],
+  /*
+    `suhtlemine` teaches `aadress`, `kiri`, `teatama` and `helistama`, which is
+    what a counter asks you for and what it tells you it will do next.
+    `plaanid` for the beat that asks when it will be ready, and `omadussonad`
+    for `valmis`, which is the word the answer to that beat is made of. No
+    `minevik`: nothing at this counter happened in the past, which is what says
+    these three are declared per scene rather than added to `COMMON`.
+  */
+  units: [...COMMON, "linn-ja-teenused", "suhtlemine", "plaanid", "omadussonad"],
   register: "teie",
+  role: "You have a form to hand in. You were given a reference for it and you are at the desk that takes them.",
+  props: [
+    {
+      kind: "word", slot: "paper", oneOf: ["avaldus", "dokument", "luba", "arve", "allkiri"],
+      says: "What you have come to hand in.",
+    },
+    /*
+      A fictional reference, supplied rather than asked for. An identity code
+      typed into a practice app is the one thing this module could collect that
+      nobody could ever take back (§3), so no scene invites one.
+    */
+    { kind: "code", slot: "ref", says: "The reference you were given:" },
+    { kind: "number", slot: "floor", min: 1, max: 4, says: "The desk you were sent to is on floor" },
+  ],
+  curveballs: [
+    "missing-document", "their-order", "place-instruction", "queue", "faster",
+    "not-possible", "english", "small-talk", "other-register", "wrong-price",
+  ],
   beats: [
     {
       id: "greet",
@@ -303,6 +451,24 @@ const COUNTER: SceneSpec = {
       patience: 1,
       shape: "word",
     },
+  ],
+  outcomes: [
+    {
+      id: "accepted",
+      when: ["greet", "purpose", "document", "fill", "confirm", "close"],
+      says: "Your form is in, filled in the way they wanted it.",
+    },
+    {
+      id: "partial",
+      when: ["greet", "purpose", "document"],
+      says: "They took the form. Something on it still has to be filled in before it can be read.",
+    },
+    {
+      id: "turned-away",
+      when: ["greet", "purpose"],
+      says: "They cannot take it without the paper you do not have. That is their rule, not your Estonian.",
+    },
+    { id: "left", when: [], says: "You left the counter. The form is still in your bag." },
   ],
 };
 

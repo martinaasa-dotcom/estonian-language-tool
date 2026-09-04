@@ -411,6 +411,29 @@ saying it costs a few sign-ups and saves the ones who stay from finding out in M
 screen therefore reports what the app's own pace covers, what is left over, and what a moved
 deadline would look like, rather than a streak.
 
+### And why it is about the learner rather than the average
+
+Discouraging is not the same as one number for everybody, and for a while it was. The plan quoted
+one table, assumed the same five found hours a week of somebody in Tartu with an Estonian partner
+and somebody abroad with a textbook, built on a guessed level as though a paper had measured it,
+and never read the review log its own header promised it would. A B1 speaker was told B2 was 300
+to 350 hours off, further than A2 had been from B1. Four things each move a figure now, and the
+screen says which.
+
+- **The surcharge sits where the morphology is.** `CUMULATIVE_HOURS` is the published guided
+  learning hours times a factor per step, peaking at A2 to B1 and dipping at B1 to B2, and the
+  climb to C1 stays inside the FSI ratio. B1 to B2 is now 190 to 300 hours against A2 to B1 at
+  280 to 380; a beginner to C1 is still 940 to 1 260.
+- **A measured level is costed skill by skill, a guessed one is widened for the guess.** The mean
+  of what each scored skill still has to cover, so B2 reading beside A1 listening is not a B1's
+  distance; and half a band on the far end for a self-estimate, downward only.
+- **The week already holds something.** Each reason carries the hours a week of Estonian it puts
+  within reach; a goal carries none. The verdict gained `possible`, for the date that fits only if
+  the Estonian around the learner is used.
+- **After a fortnight, the pace is what they did.** `lib/stats/pace.ts` reads sittings off
+  `Review.durationMs` and the timestamps over the last four weeks, and the plan is built on that
+  rather than on the days they said.
+
 ### Known limitations, still
 
 1. **The paper is marked in the browser.** It has to be: the answers are in it, feedback is
@@ -418,9 +441,10 @@ deadline would look like, rather than a streak.
    forged result, it reaches no roster and no leaderboard, and the server still recomputes the level
    from the credits with `placement()` so a stale client cannot invent its own scale.
 2. **The hours table is not measured on this app's learners.** It combines published CEFR guided
-   hours with the FSI difficulty scale, both of which are about other people on other courses. It is
-   shown as a range with its sources named, and the copy says the app will use the learner's own
-   pace once there is a log worth reading.
+   hours with the FSI difficulty scale, both of which are about other people on other courses, and
+   the per-step shape of the surcharge is a stated judgement over them. It is shown as a range with
+   its sources named. What is the learner's own is their measured level, the Estonian their week
+   already holds, and their pace off the log; the hours a level costs are still the published ones.
 3. **No sentences without an Ekilex key.** The built-in dictionary carries principal parts and no
    `usages`, so on a seeded-only deployment there is no dictation and no sentence comprehension. The
    sections that survive say they are short rather than pretending to be full.
@@ -2065,9 +2089,10 @@ and read neither.
 ### The fault
 
 `Review.durationMs` had been written since the scheduler was built, by every timed round, carried
-through the offline outbox and included in every backup. No chart read it, no scheduler input read
-it, and no round that decides how hard to ask next read it. Months of it sat in every learner's log
-answering a question nobody had put.
+through the offline outbox and included in every backup. The plan began reading it as the length of
+a sitting in the same week this was written (section 11); nothing read it as the time on one
+answer, which is the reading that says something about a word rather than about an evening. No
+chart, no scheduler input and no round that decides how hard to ask next had ever asked.
 
 The second fact was computed twice. `markFlash` names the ending a learner reached for instead of
 the one asked, so it can print "That is the seestütlev. This one wanted the seesütlev.", and
@@ -2087,7 +2112,7 @@ measuring nothing.
 `Review.reachedSlot` holds the form that came back instead, written only where both sides are forms
 and only where they differ, checked against the closed list on the way in like `slot` and more
 narrowly. Both rounds that can name one now send it, the scene round sends the case it asked for as
-well, and the offline path carries both. `lib/stats/pace.ts` reads the duration column as a median
+well, and the offline path carries both. `lib/stats/answerTime.ts` reads the duration column as a median
 over recalled, timed answers per slot and names the slots that are accurate and slow against the
 learner's own pace; `lib/stats/confusions.ts` counts unordered pairs above a floor of two.
 `components/NotAutomatic.tsx` draws both on Progress, under the cases panel, only where there is

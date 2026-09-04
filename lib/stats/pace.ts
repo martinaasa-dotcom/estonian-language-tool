@@ -1,166 +1,107 @@
-import { isFormSlot } from "@/lib/srs/slots";
+import type { DayClock } from "@/lib/time/day";
+import type { MeasuredPace } from "@/lib/assessment/plan";
 
 /**
- * HOW LONG AN ANSWER TAKES, WHICH IS THE HALF OF LEARNING NOTHING HERE READ.
+ * HOW MUCH OF THIS APP A LEARNER ACTUALLY DOES, READ OFF THE LOG.
  *
- * `Review.durationMs` has been written since the scheduler was built. Every
- * timed round sends it, the offline outbox carries it, `writeGrade` bounds it,
- * and the backup includes it. Nothing has ever read it: not a chart, not the
- * scheduler, not the round that decides how hard to ask next. Months of it sit
- * in every learner's log answering a question nobody put.
+ * The plan asked "days a week you will really practise" and built a year on
+ * the answer, and the answer is a hope. Every grade a learner gives is written
+ * down with the moment it landed and how long the card was on screen, so once
+ * there is a fortnight of log the app knows the real figure and quoting the
+ * hope instead is the app choosing not to look. Somebody who said five days
+ * and does two is not told off for it; they are shown a plan built on two,
+ * which is the one they can actually keep.
  *
- * The question it answers is the one a deck of flashcards cannot: **the
- * difference between knowing a form and being able to reach for it.** Accuracy
- * says a learner gets the seesütlev right nine times in ten. It cannot say
- * whether that takes them half a second or eight, and those are two different
- * states: one is a word they have, the other is a rule they are applying. A
- * conversation only gives you the first.
+ * Time is counted the way a sitting is: the run of reviews with no gap longer
+ * than `SESSION_GAP_MS`, from the first card to the last plus the first card's
+ * own thinking time, because the timestamp is when the grade landed and the
+ * first card's minute sits before it. Reading a correction, opening the
+ * grammar page it links to and coming back is inside the sitting; lunch is
+ * not. Summing the card durations alone would miss all of that and call a
+ * forty-minute evening twelve minutes.
  *
- * THREE RULES DECIDE WHICH ROWS COUNT, AND EACH IS A WAY THE NUMBER WOULD
- * OTHERWISE BE ABOUT SOMETHING ELSE.
- *
- * **Only answers a round timed.** Zero is not a fast answer, it is a round
- * that never started a clock, and that is most of them: Sõnad, the crossword,
- * picture match, minimal pairs, the government drill and the paste-your-own
- * round all grade in bulk and write zero. Match used to divide its round clock
- * by the number of pairs, which is worse than zero because it survives a
- * `> 0` filter while measuring nothing; it writes zero now, for that reason.
- *
- * **Only answers that were recalled.** Time on a wrong answer measures how
- * long somebody stared at something they did not know, and that is dominated
- * by whether they gave up or kept trying, which is temperament rather than
- * memory. Retrieval speed is a fact about successful retrieval.
- *
- * **The median, never the mean.** `writeGrade` caps the column at ten
- * minutes, so a tab left open at lunch writes exactly 600,000 and the value is
- * a ceiling rather than a measurement. One of those moves a mean over twenty
- * answers by half a minute and moves a median not at all.
- *
- * AND THE COMPARISON IS AGAINST THE LEARNER'S OWN PACE, NEVER A NUMBER OF
- * OURS. Modes ask for different amounts of typing: producing `toas` and
- * writing a sentence around it are not the same keystrokes, so an absolute
- * threshold in milliseconds would name the typing rather than the recall, and
- * would be a different threshold on a phone. A slot is slow when it is slow
- * *for this learner*, against their own median across everything they were
- * timed on.
- *
- * Pure: no React, no Prisma, no clock. The rows come from the page.
+ * Pure, and hermetic: it takes rows and a clock and knows nothing of Prisma.
+ * `lib/progress/plan.ts` is what reads the rows.
  */
-
-/** Below this many timed, recalled answers, a slot's median is not a pace. */
-export const MIN_TIMED = 6;
 
 /**
- * How far above their own median a slot has to sit to be called slow.
+ * The longest pause that still counts as the same sitting.
  *
- * A ratio rather than a number of seconds, for the reason in the header. Half
- * as long again is wide enough that ordinary variation between modes does not
- * trip it and narrow enough to catch the slot that is genuinely being worked
- * out rather than remembered.
+ * Ten minutes rather than five, because a learner who reads the correction on
+ * a card they missed and thinks about it is still in the session, and rather
+ * than thirty, because coming back after lunch is a new one. `perfect_session`
+ * in `lib/progress/session.ts` reads the same figure, since a sitting cannot
+ * be one length for a badge and another for a plan.
  */
-export const SLOW_RATIO = 1.5;
+export const SESSION_GAP_MS = 10 * 60 * 1000;
+
+/** How far back the pace is read. Four weeks: long enough to average a holiday, short enough to be now. */
+export const PACE_WINDOW_DAYS = 28;
 
 /**
- * How accurate a slot has to be before slowness is the interesting thing
- * about it.
- *
- * Below this the slot is simply not known yet, `components/WeakestCases.tsx`
- * already names it, and a second panel saying the same thing in a different
- * unit is two answers to one question. What this panel is for is the slot the
- * accuracy chart calls fine.
+ * The most a single card may count for, matching the cap `lib/srs/grade.ts`
+ * writes. A tab left open overnight is not ten hours of study.
  */
-export const FLUENT_ACCURACY = 80;
+const MAX_CARD_MS = 600_000;
 
-/** One review, in the shape a pace reading needs it. */
-export interface PacePoint {
-  slot: string | null;
-  rating: number;
+const DAY_MS = 86_400_000;
+
+export interface TimedReview {
+  reviewedAt: Date;
   durationMs: number;
 }
 
-export interface SlotPace {
-  slot: string;
-  /** Timed, recalled answers behind the median. Never below `MIN_TIMED`. */
-  answers: number;
-  medianMs: number;
-  /** Over every timed answer of this slot, recalled or not. */
-  accuracy: number;
-}
-
-export interface PaceReading {
-  /** The learner's own median across every timed, recalled answer. */
-  medianMs: number | null;
-  /** Every slot with enough behind it, slowest first. */
-  slots: SlotPace[];
-  /**
-   * The slots they get right and still have to think about: accurate, and at
-   * least `SLOW_RATIO` times their own median. Slowest first.
-   */
-  slow: SlotPace[];
-}
-
-/** Whether one row is a timed answer at all. See the header. */
-function timed(r: PacePoint): boolean {
-  return r.durationMs > 0 && Number.isFinite(r.durationMs);
-}
-
-/**
- * The middle value, on a copy.
- *
- * Sorts numerically rather than by `sort()`'s default, which is lexicographic
- * and would put 10000 before 900.
- */
-export function median(values: readonly number[]): number | null {
-  if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 1
-    ? sorted[mid]!
-    : Math.round((sorted[mid - 1]! + sorted[mid]!) / 2);
-}
-
-/**
- * Pace per slot, and the slots that are accurate but slow.
- *
- * `forms` keeps this to cases and named parts of the verb, which is the
- * default and is what the panel wants: "what does this word mean" is a
- * different kind of question and its pace is a fact about reading speed. Pass
- * false to read everything.
- */
-export function paceReading(reviews: readonly PacePoint[], forms = true): PaceReading {
-  const perSlot = new Map<string, { times: number[]; ok: number; total: number }>();
-  const all: number[] = [];
-
-  for (const r of reviews) {
-    if (!r.slot || !timed(r)) continue;
-    if (forms && !isFormSlot(r.slot)) continue;
-
-    const entry = perSlot.get(r.slot) ?? { times: [], ok: 0, total: 0 };
-    entry.total++;
-    // Recalled only, and the same test the rest of the app uses for it.
-    if (r.rating >= 3) {
-      entry.ok++;
-      entry.times.push(r.durationMs);
-      all.push(r.durationMs);
+/** Hours spent in sittings, over whatever rows are handed in. */
+export function studyHours(reviews: readonly TimedReview[], gapMs = SESSION_GAP_MS): number {
+  const sorted = [...reviews].sort((a, b) => a.reviewedAt.getTime() - b.reviewedAt.getTime());
+  let ms = 0;
+  let start: TimedReview | null = null;
+  let last = 0;
+  for (const review of sorted) {
+    const at = review.reviewedAt.getTime();
+    if (start === null || at - last > gapMs) {
+      if (start !== null) ms += last - start.reviewedAt.getTime() + cardMs(start);
+      start = review;
     }
-    perSlot.set(r.slot, entry);
+    last = at;
   }
+  if (start !== null) ms += last - start.reviewedAt.getTime() + cardMs(start);
+  return ms / 3_600_000;
+}
 
-  const overall = median(all);
+function cardMs(review: TimedReview): number {
+  return Math.min(MAX_CARD_MS, Math.max(0, review.durationMs));
+}
 
-  const slots: SlotPace[] = [...perSlot.entries()]
-    .filter(([, v]) => v.times.length >= MIN_TIMED)
-    .map(([slot, v]) => ({
-      slot,
-      answers: v.times.length,
-      medianMs: median(v.times)!,
-      accuracy: Math.round((v.ok / v.total) * 100),
-    }))
-    .sort((a, b) => b.medianMs - a.medianMs || b.answers - a.answers || a.slot.localeCompare(b.slot));
+/**
+ * The learner's pace over the window, or null when there is no log at all.
+ *
+ * The window starts at the first review ever where that is more recent than
+ * `PACE_WINDOW_DAYS` ago, so a learner in their third week is measured over
+ * three weeks rather than over four with one of them empty. How many weeks
+ * that is travels with the figure: the plan decides whether it is enough to
+ * trust, and the screen says how long it was read over.
+ */
+export function measuredPace(
+  reviews: readonly TimedReview[],
+  opts: { now: Date; firstReviewAt: Date | null; clock: DayClock; windowDays?: number },
+): MeasuredPace | null {
+  if (!opts.firstReviewAt) return null;
+  const windowDays = opts.windowDays ?? PACE_WINDOW_DAYS;
+  const earliest = opts.now.getTime() - windowDays * DAY_MS;
+  const from = Math.max(earliest, opts.firstReviewAt.getTime());
+  const weeks = (opts.now.getTime() - from) / (7 * DAY_MS);
+  if (weeks <= 0) return null;
 
-  const slow = overall === null ? [] : slots.filter(
-    (s) => s.accuracy >= FLUENT_ACCURACY && s.medianMs >= overall * SLOW_RATIO,
-  );
+  const inWindow = reviews.filter((r) => {
+    const at = r.reviewedAt.getTime();
+    return at >= from && at <= opts.now.getTime();
+  });
+  const days = new Set(inWindow.map((r) => opts.clock.dayKey(r.reviewedAt)));
 
-  return { medianMs: overall, slots, slow };
+  return {
+    hoursPerWeek: studyHours(inWindow) / weeks,
+    daysPerWeek: days.size / weeks,
+    weeks,
+  };
 }

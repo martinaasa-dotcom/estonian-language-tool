@@ -1,132 +1,93 @@
 import { describe, expect, it } from "vitest";
-import {
-  FLUENT_ACCURACY, MIN_TIMED, SLOW_RATIO, median, paceReading, type PacePoint,
-} from "./pace";
+import { measuredPace, SESSION_GAP_MS, studyHours } from "./pace";
+import { dayClock } from "@/lib/time/day";
 
-/** `n` timed answers of one slot, `recalled` of them rated Good, each `ms` long. */
-const timed = (slot: string, n: number, recalled: number, ms: number): PacePoint[] =>
-  Array.from({ length: n }, (_, i) => ({
-    slot, rating: i < recalled ? 3 : 1, durationMs: ms,
-  }));
+const MIN = 60_000;
+const DAY = 86_400_000;
+const t0 = new Date("2026-03-01T18:00:00Z");
+const at = (offsetMs: number, durationMs = 20_000) => ({ reviewedAt: new Date(t0.getTime() + offsetMs), durationMs });
 
-describe("median", () => {
-  it("takes the middle value rather than sorting as strings", () => {
-    // `sort()` with no comparator puts 10000 before 900, which is the bug this
-    // guards: the median of these is 900 and the lexicographic answer is 10000.
-    expect(median([900, 10000, 200])).toBe(900);
-  });
-
-  it("averages the middle two on an even count", () => {
-    expect(median([100, 200, 300, 400])).toBe(250);
-  });
-
-  it("has no answer for nothing", () => {
-    expect(median([])).toBeNull();
-  });
-});
-
-describe("paceReading", () => {
-  it("reads a slot the learner is timed on", () => {
-    const reading = paceReading(timed("INESSIVE", MIN_TIMED, MIN_TIMED, 2000));
-    expect(reading.slots).toHaveLength(1);
-    expect(reading.slots[0]?.medianMs).toBe(2000);
-    expect(reading.slots[0]?.answers).toBe(MIN_TIMED);
-    expect(reading.medianMs).toBe(2000);
-  });
-
-  it("says nothing about a slot one answer short of the floor", () => {
-    expect(paceReading(timed("INESSIVE", MIN_TIMED - 1, MIN_TIMED - 1, 2000)).slots).toEqual([]);
+describe("time in a sitting", () => {
+  it("is nothing for no reviews and one card's own time for one", () => {
+    expect(studyHours([])).toBe(0);
+    expect(studyHours([at(0, 30_000)])).toBeCloseTo(30_000 / 3_600_000, 10);
   });
 
   /*
-    THE THREE RULES ABOUT WHICH ROWS COUNT. Each of these was a real shape in
-    the log rather than a hypothetical: six rounds grade in bulk and write
-    zero, Match used to write its round clock divided by the pair count, and
-    `writeGrade` caps the column at ten minutes so a tab left open at lunch
-    writes exactly the cap.
+    The timestamp is when the grade landed, so the first card's minute sits
+    before the first timestamp. The span from first to last plus that one
+    card is the sitting; summing durations alone would call a run of cards
+    with a correction read between them a fraction of what it took.
   */
-  it("ignores an answer no round timed, however many there are", () => {
-    const untimed: PacePoint[] = Array.from({ length: 50 }, () => ({
-      slot: "INESSIVE", rating: 3, durationMs: 0,
-    }));
-    expect(paceReading(untimed).slots).toEqual([]);
-    expect(paceReading(untimed).medianMs).toBeNull();
+  it("spans a run from its first card to its last, plus the first card's own time", () => {
+    const hours = studyHours([at(0, 20_000), at(1 * MIN, 5_000), at(2 * MIN, 5_000)]);
+    expect(hours).toBeCloseTo((2 * MIN + 20_000) / 3_600_000, 10);
   });
 
-  it("ignores the time on an answer that was wrong", () => {
-    // Twenty slow misses and six quick recalls: the pace is the recalls.
-    const reading = paceReading([
-      ...timed("INESSIVE", 20, 0, 30_000),
-      ...timed("INESSIVE", MIN_TIMED, MIN_TIMED, 1000),
-    ]);
-    expect(reading.slots[0]?.medianMs).toBe(1000);
-    // The accuracy still counts every timed answer, recalled or not.
-    expect(reading.slots[0]?.accuracy).toBe(23);
+  it("starts a new sitting after the gap and never counts the gap", () => {
+    const rows = [at(0), at(MIN), at(3 * 60 * MIN), at(3 * 60 * MIN + 2 * MIN)];
+    expect(studyHours(rows)).toBeCloseTo((MIN + 20_000 + 2 * MIN + 20_000) / 3_600_000, 10);
+    // Just inside the gap is still the same sitting.
+    expect(studyHours([at(0), at(SESSION_GAP_MS - 1)])).toBeCloseTo((SESSION_GAP_MS - 1 + 20_000) / 3_600_000, 10);
   });
 
-  it("is not moved by one tab left open at lunch", () => {
-    const reading = paceReading([
-      ...timed("INESSIVE", MIN_TIMED, MIN_TIMED, 2000),
-      { slot: "INESSIVE", rating: 3, durationMs: 600_000 },
-    ]);
-    expect(reading.slots[0]?.medianMs).toBe(2000);
+  it("does not care what order the rows arrive in", () => {
+    const rows = [at(2 * MIN), at(0), at(MIN)];
+    expect(studyHours(rows)).toBe(studyHours([...rows].reverse()));
   });
 
-  describe("the slots they know and still have to think about", () => {
-    it("names a slot that is accurate and slow against their own median", () => {
-      const reading = paceReading([
-        ...timed("GENITIVE", 30, 30, 1000),
-        ...timed("INESSIVE", MIN_TIMED, MIN_TIMED, 1000 * SLOW_RATIO + 500),
-      ]);
-      expect(reading.medianMs).toBe(1000);
-      expect(reading.slow.map((s) => s.slot)).toEqual(["INESSIVE"]);
-    });
+  it("caps one card at ten minutes, since a tab left open is not study", () => {
+    expect(studyHours([at(0, 5 * 60 * 60 * 1000)])).toBeCloseTo(600_000 / 3_600_000, 10);
+    expect(studyHours([at(0, -50)])).toBe(0);
+  });
+});
 
-    it("leaves a slow slot alone while it is also inaccurate", () => {
-      /*
-        Below `FLUENT_ACCURACY` the slot is simply not known yet and
-        `WeakestCases` already names it. A second panel saying the same thing
-        in a different unit is two answers to one question.
-      */
-      const wrong = Math.ceil(MIN_TIMED * ((100 - FLUENT_ACCURACY) / FLUENT_ACCURACY)) + MIN_TIMED;
-      const reading = paceReading([
-        ...timed("GENITIVE", 30, 30, 1000),
-        ...timed("INESSIVE", wrong, MIN_TIMED, 9000),
-      ]);
-      expect(reading.slots.map((s) => s.slot)).toContain("INESSIVE");
-      expect(reading.slots.find((s) => s.slot === "INESSIVE")!.accuracy).toBeLessThan(FLUENT_ACCURACY);
-      expect(reading.slow).toEqual([]);
-    });
+describe("the pace over the window", () => {
+  const clock = dayClock("UTC");
+  const now = new Date("2026-04-01T20:00:00Z");
 
-    it("leaves a slot that is merely a little slower alone", () => {
-      const reading = paceReading([
-        ...timed("GENITIVE", 30, 30, 1000),
-        ...timed("INESSIVE", MIN_TIMED, MIN_TIMED, 1200),
-      ]);
-      expect(reading.slow).toEqual([]);
-    });
-
-    it("has nothing to compare against with no timed answers at all", () => {
-      expect(paceReading([{ slot: "INESSIVE", rating: 3, durationMs: 0 }]).slow).toEqual([]);
-    });
+  it("is nothing to say before the first review", () => {
+    expect(measuredPace([], { now, firstReviewAt: null, clock })).toBeNull();
   });
 
-  it("keeps to forms by default, because a meaning slot measures reading speed", () => {
-    const rows = timed("RECOGNITION", MIN_TIMED, MIN_TIMED, 2000);
-    expect(paceReading(rows).slots).toEqual([]);
-    expect(paceReading(rows, false).slots).toHaveLength(1);
+  it("measures a new learner over the weeks they have actually had", () => {
+    const first = new Date(now.getTime() - 21 * DAY);
+    const rows = [0, 7, 14].map((d) => ({ reviewedAt: new Date(first.getTime() + d * DAY), durationMs: 6 * MIN }));
+    const pace = measuredPace(rows, { now, firstReviewAt: first, clock });
+    expect(pace?.weeks).toBeCloseTo(3, 10);
+    expect(pace?.hoursPerWeek).toBeCloseTo(0.3 / 3, 10);
+    expect(pace?.daysPerWeek).toBeCloseTo(1, 10);
   });
 
-  it("skips a review written before the column existed", () => {
-    expect(paceReading([{ slot: null, rating: 3, durationMs: 2000 }]).slots).toEqual([]);
+  it("reads an old hand over four weeks and ignores everything before them", () => {
+    const first = new Date(now.getTime() - 400 * DAY);
+    const rows = [
+      { reviewedAt: new Date(now.getTime() - 100 * DAY), durationMs: 6 * MIN },
+      { reviewedAt: new Date(now.getTime() - 10 * DAY), durationMs: 6 * MIN },
+      { reviewedAt: new Date(now.getTime() - 3 * DAY), durationMs: 6 * MIN },
+    ];
+    const pace = measuredPace(rows, { now, firstReviewAt: first, clock });
+    expect(pace?.weeks).toBeCloseTo(4, 10);
+    expect(pace?.hoursPerWeek).toBeCloseTo(0.2 / 4, 10);
+    expect(pace?.daysPerWeek).toBeCloseTo(2 / 4, 10);
   });
 
-  it("puts the slowest slot first", () => {
-    const reading = paceReading([
-      ...timed("GENITIVE", MIN_TIMED, MIN_TIMED, 1000),
-      ...timed("INESSIVE", MIN_TIMED, MIN_TIMED, 5000),
-      ...timed("ELATIVE", MIN_TIMED, MIN_TIMED, 3000),
-    ]);
-    expect(reading.slots.map((s) => s.slot)).toEqual(["INESSIVE", "ELATIVE", "GENITIVE"]);
+  it("reports a window that held nothing as a pace of nothing over real weeks", () => {
+    const first = new Date(now.getTime() - 60 * DAY);
+    const pace = measuredPace([], { now, firstReviewAt: first, clock });
+    expect(pace).toEqual({ hoursPerWeek: 0, daysPerWeek: 0, weeks: 4 });
+  });
+
+  it("counts days on the learner's own calendar", () => {
+    const first = new Date(now.getTime() - 28 * DAY);
+    // 23:30 and 00:30 UTC are two days on a UTC clock and one evening in Tallinn.
+    const rows = [
+      { reviewedAt: new Date("2026-03-30T23:30:00Z"), durationMs: MIN },
+      { reviewedAt: new Date("2026-03-31T00:30:00Z"), durationMs: MIN },
+    ];
+    const tallinn = measuredPace(rows, { now, firstReviewAt: first, clock: dayClock("Europe/Tallinn") });
+    const utc = measuredPace(rows, { now, firstReviewAt: first, clock });
+    expect(tallinn!.daysPerWeek * 4).toBeCloseTo(1, 10);
+    expect(utc!.daysPerWeek * 4).toBeCloseTo(2, 10);
   });
 });

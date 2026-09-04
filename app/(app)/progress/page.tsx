@@ -18,7 +18,7 @@ import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
 import { NotAutomatic } from "@/components/NotAutomatic";
 import { confusions } from "@/lib/stats/confusions";
-import { paceReading } from "@/lib/stats/pace";
+import { answerTimeReading } from "@/lib/stats/answerTime";
 import { caseReviewsFor } from "@/lib/progress/cases";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Board, BoardSkeleton } from "./Board";
@@ -51,12 +51,14 @@ export default async function ProgressPage() {
     prisma.review.findMany({
       where: { ownerId, reviewedAt: { gte: new Date(now.getTime() - HEATMAP_DAYS * 86_400_000) } },
       /*
-        `durationMs`, `slot` and `reachedSlot` are the three columns this app
-        has been writing and never reading. The first has been collected since
-        the scheduler was built; the other two are what the flash and scene
+        `durationMs`, `slot` and `reachedSlot`. The first has been collected
+        since the scheduler was built and, until the plan began reading it as
+        the length of a sitting, was read by nothing; nothing had ever read it
+        as the time on one answer. The other two are what the flash and scene
         rounds work out about a wrong answer and used to print and drop.
-        `lib/stats/pace.ts` and `lib/stats/confusions.ts` are the readers, and
-        they cost this query three columns over rows it already reads.
+        `lib/stats/answerTime.ts` and `lib/stats/confusions.ts` are the
+        readers, and they cost this query three columns over rows it already
+        reads.
       */
       select: {
         reviewedAt: true, rating: true, targetCase: true, stateBefore: true, cardId: true,
@@ -136,7 +138,7 @@ export default async function ProgressPage() {
     `caseReviewsFor` is that two windows over one question is how the two
     answers drift.
   */
-  const pace = paceReading(reviews);
+  const pace = answerTimeReading(reviews);
   const mixedUp = confusions(reviews);
   const hour = bestStudyHour(reviews, 20, clock);
 

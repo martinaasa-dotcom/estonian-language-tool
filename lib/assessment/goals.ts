@@ -1,5 +1,5 @@
 import type { DayClock } from "@/lib/time/day";
-import { BANDS, type Band } from "./types";
+import { BANDS, type Band, type HourRange } from "./types";
 
 /**
  * Why somebody is learning Estonian, and by when.
@@ -27,6 +27,22 @@ export interface Reason {
   detail: string;
   /** The level this reason usually needs. Offered, never imposed. */
   implies: Band;
+  /**
+   * Hours a week of Estonian this situation puts within reach on its own,
+   * before anybody opens an app or books a class.
+   *
+   * The plan used to assume the same five found hours a week for everybody,
+   * which described somebody abroad with a textbook and nobody living in
+   * Tartu with an Estonian partner. Where a life already has the language in
+   * it, the study the plan asks the learner to find is partly already there,
+   * and a plan that cannot see that tells the person best placed to make
+   * their date that they will not. These are hours the situation *offers*,
+   * not hours it guarantees: plenty of people live here for years inside an
+   * English or Russian bubble, so every figure is a range with a low end that
+   * assumes little of it is used. `lib/assessment/plan.ts` turns the chosen
+   * set into one figure and says on screen where it came from.
+   */
+  exposure: HourRange;
 }
 
 export const REASONS: readonly Reason[] = [
@@ -36,6 +52,8 @@ export const REASONS: readonly Reason[] = [
     label: "I live in Estonia",
     detail: "Shops, doctors, the bus, neighbours, forms. Everyday life in the language around you.",
     implies: "B1",
+    // Errands, forms, the bus: real and shallow, and easy to live beside without using.
+    exposure: { low: 1, high: 3 },
   },
   {
     id: "citizenship",
@@ -43,6 +61,8 @@ export const REASONS: readonly Reason[] = [
     label: "Citizenship or residence",
     detail: "There is a state exam at the end of this one, and it sets the level rather than you.",
     implies: "B1",
+    // A goal, not a situation. It puts no Estonian in anybody's week by itself.
+    exposure: { low: 0, high: 0 },
   },
   {
     id: "work",
@@ -50,6 +70,8 @@ export const REASONS: readonly Reason[] = [
     label: "Work",
     detail: "Meetings, email, colleagues talking at full speed. Precision matters more than politeness.",
     implies: "B2",
+    // Meetings and colleagues at full speed are the most exposure a week can hold.
+    exposure: { low: 3, high: 8 },
   },
   {
     id: "study",
@@ -57,6 +79,8 @@ export const REASONS: readonly Reason[] = [
     label: "School or university",
     detail: "A course with a syllabus, homework and a mark at the end of the term.",
     implies: "B2",
+    // Class plus homework. A course with a syllabus is guided learning hours by definition.
+    exposure: { low: 2, high: 5 },
   },
   {
     id: "family",
@@ -64,6 +88,8 @@ export const REASONS: readonly Reason[] = [
     label: "Family or a partner",
     detail: "The people you want to understand are not going to slow down for long.",
     implies: "B1",
+    // The people at home, if the home runs in Estonian. Many couples default to English.
+    exposure: { low: 2, high: 8 },
   },
   {
     id: "roots",
@@ -71,6 +97,8 @@ export const REASONS: readonly Reason[] = [
     label: "Roots and heritage",
     detail: "A language your family spoke, or a country you keep going back to.",
     implies: "A2",
+    // Visits and relatives. Occasional, so the range barely leaves zero.
+    exposure: { low: 0, high: 1 },
   },
   {
     id: "travel",
@@ -78,6 +106,8 @@ export const REASONS: readonly Reason[] = [
     label: "Travel",
     detail: "Enough to order, ask, thank and read a sign without reaching for a phone.",
     implies: "A2",
+    // Nothing until the trip, and a trip is not a week.
+    exposure: { low: 0, high: 0 },
   },
   {
     id: "curiosity",
@@ -85,6 +115,8 @@ export const REASONS: readonly Reason[] = [
     label: "Curiosity",
     detail: "Fourteen cases and a stem that changes when you look at it. Reason enough.",
     implies: "A2",
+    // Nothing in the week beyond what the learner goes and finds.
+    exposure: { low: 0, high: 0 },
   },
 ];
 

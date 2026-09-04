@@ -45,6 +45,25 @@ export function isPhrase(pos: string | null | undefined): boolean {
   return pos === "PHRASE";
 }
 
+/**
+ * Whether an entry of this part of speech has a table of forms to open.
+ *
+ * A noun, an adjective and a verb do. An adverb, a conjunction, a particle and
+ * a formless pronoun do not, and that is the language rather than a gap: an
+ * Estonian adverb does not inflect, and `meie` and `nemad` have no singular
+ * for a lexicographer to record, so the harvest keeps them attested and
+ * formless.
+ *
+ * A predicate rather than a list at each call site, for the reason `isPhrase`
+ * is one: two screens promising a learner a table are two readings of one fact
+ * about the entry. The dictionary's suggestion row kept its own copy of the
+ * list, and `lib/dict/facts.ts` needed the same answer to say which lemmas the
+ * row may offer at all.
+ */
+export function opensATable(pos: string | null | undefined): boolean {
+  return pos === "NOUN" || pos === "VERB" || pos === "ADJECTIVE";
+}
+
 /** Parts of speech a built entry may carry. `Lexeme.pos` also allows PHRASE and OTHER. */
 const NOMINALS = new Set(["NOUN", "ADJECTIVE", "ADVERB"]);
 

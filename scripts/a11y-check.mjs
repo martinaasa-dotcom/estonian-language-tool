@@ -162,6 +162,14 @@ const ROUTES = [
     same eight checks over the same markup.
   */
   "/review/common", "/review/common/noun",
+  /*
+    And the conversations, which is the third time this list has been caught by
+    the fault its own header names. A scene is a whole session rendered from one
+    component with a log region, a disclosure and a form in it, which is exactly
+    the shape that was once found drawing a card and four buttons with no
+    heading at all.
+  */
+  "/situations", "/situations/arsti-aeg",
 ];
 
 const browser = await launchChromium();
@@ -215,6 +223,16 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   where arithmetic on a number nobody re-ran goes wrong. Measured at 402 on
   the merged tree, which is the 307 above plus nine for /funding and
   eighty-six for these, and the floor keeps the same five under it.
+
+  And then four routes rather than two, from two branches at once: the frequency
+  rounds from one and the conversations from the other. Each side measured 420
+  with its own two, which is exactly the arithmetic this file warns about two
+  paragraphs up, so the merged number is measured on the merged tree rather than
+  added from either side. A scene is a whole session rendered from one component
+  with a log region, a disclosure and a form in it, which is the shape this
+  header exists for, and `/review/common/noun` is the same claim about a round.
+  Measured at 438 against a production build, and the floor keeps the same five
+  under it.
 */
 /*
   And then three routes at once, from two branches that did not know about each
@@ -223,8 +241,14 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   is what the paragraph above says to do and what neither branch could have
   done on its own: one had 420 and the other 413, and neither number is right.
   The same five of slack under it.
+
+  And once more with the conversations, which is the same arithmetic a third
+  time: the scene branch measured 438 with its two routes and without the
+  mastery board, main measured 429 with the board and without the scenes, and
+  the merged tree is neither sum. Measured at 447 on the merged tree against a
+  production build, and the floor keeps the same five under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 424 });
+const { check, absent, done } = suite("Accessibility", { floor: 442 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.
@@ -357,7 +381,19 @@ for (const route of ROUTES) {
   The structural checks above are not repeated: a landmark, a heading and a
   title are the same markup whichever palette is painted over them.
 */
-const dark = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark" });
+/*
+  The dark theme is chosen rather than inherited: the palette reads
+  `data-theme` alone and never the system preference (app/globals.css), so
+  emulating `prefers-color-scheme` here would sweep the light theme twice.
+  Storing the choice is what the toggle does, and the inline script in
+  app/layout.tsx reads it back before first paint, which is the path a real
+  reader who chose dark takes.
+*/
+const chooseDark = (page) =>
+  page.addInitScript(() => { try { localStorage.setItem("theme", "dark"); } catch { /* private mode */ } });
+
+const dark = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
+await chooseDark(dark);
 for (const route of ROUTES) {
   await open(dark, route, 200);
   const violations = await axeViolations(dark);
@@ -390,7 +426,8 @@ await dark.close();
   runs the next suite.
 */
 for (const theme of ["light", "dark"]) {
-  const graded = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: theme });
+  const graded = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
+  if (theme === "dark") await chooseDark(graded);
   await graded.goto(`${BASE}/review`, { waitUntil: "networkidle" });
   await graded.waitForTimeout(300);
   const shape = await revealAnswer(graded);

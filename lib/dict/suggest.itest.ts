@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/db";
 import { resetNewsCache } from "@/lib/news/feed";
 import { oneEntryPerLemma } from "./search";
-import { resetSuggestionCache, suggestWords } from "./suggest";
+import { resetSuggestionCache, suggestWords, withATable } from "./suggest";
 
 /**
  * What the dictionary offers somebody who has typed nothing, checked against a
@@ -94,6 +94,40 @@ describe("the suggestion row", () => {
       const row = await suggestWords(OWNER);
       expect(row.words, "a word with no paradigm reached the row").not.toContain(CONJUNCTION);
     }
+  });
+
+  it("keeps a lemma only when every entry under it has a table to open", async () => {
+    /*
+      THE ENTRY A LEARNER LANDS ON, not any entry sharing the lemma.
+
+      A chip links to `/dictionary?q=<lemma>` and the dictionary answers with
+      one entry, `bySubstance`'s. `@@unique` is on `(lemma, pos)`, so a lemma
+      can hold more than one, and every source here filters the *rows* by part
+      of speech: it kept a lemma on the strength of whichever entry its own
+      filter matched. `oma` is the shipped instance and the test above is what
+      caught it, the Wiktionary expansion heading it `Adjective` while the
+      dictionary leads with the pronoun the course teaches.
+
+      Asked of the rule directly rather than through the row, because the level
+      source draws twelve at random out of a couple of thousand words in band:
+      whether a planted pair is offered at all is a coin toss, and a check that
+      passes because nothing was drawn is worse than no check. The two halves
+      are the whole of the rule: a lone noun survives, and the same noun with a
+      pronoun beside it does not.
+    */
+    const alone = "itestomataolinea";
+    const paired = "itestomataolineb";
+    await prisma.lexeme.create({
+      data: { lemma: alone, pos: "NOUN", translation: "a thing", cefr: "A1" },
+    });
+    await prisma.lexeme.create({
+      data: { lemma: paired, pos: "NOUN", translation: "a thing", cefr: "A1" },
+    });
+    await prisma.lexeme.create({
+      data: { lemma: paired, pos: "PRONOUN", translation: "one's own", cefr: "A1" },
+    });
+
+    expect(await withATable([alone, paired]), `${paired} opens as a pronoun`).toEqual([alone]);
   });
 
   it("offers a word the feed mentioned as the lemma, never as the headline spelled it", async () => {

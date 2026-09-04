@@ -170,6 +170,17 @@ const ROUTES = [
   "/suggestions",
   "/admin/suggestions",
 
+  /*
+    The conversations. The briefing at 360 is a role card, a four-cell dial of
+    labelled buttons and a start button, and the scene behind it is a log of
+    Estonian in a fixed-height scroller with a text field, a letter bar and four
+    controls under it, which at 360 is the tightest row of buttons in the app
+    after the rating keys. The talking screen itself is not reached from a URL,
+    so it is one of the states the sweep opens by hand further down.
+  */
+  "/situations",
+  "/situations/arsti-aeg",
+
   // The pages that own the whole screen, plus the two a regulator reads and
   // the one shown when the network is gone.
   "/welcome",
@@ -272,14 +283,25 @@ const SPARSE = new Map([
 // from that one and `/review/describe` from this. Measured at 1160 on the
 // merged tree rather than added from either side, which is the same rule one
 // line up, and the floor keeps the same ten under it.
-/*
-  And 1190: two routes for the frequency rounds at twenty checks each, which is
-  five checks over three widths plus the dark sweep. Counted off the route list
-  rather than off a run, for the reason this file already gives about a floor
-  measured on one machine: a local run waives the twenty a classroom needs, so
-  the number a run reaches here is not the number CI reaches.
-*/
-const { check, absent, done } = suite("Containment", { floor: 1190 });
+//
+// And then four routes rather than two, from two branches at once: the
+// frequency rounds from one, and the conversations plus a state no URL reaches
+// from the other. Each side set its own floor from its own two, which is
+// exactly the arithmetic the line above warns about, so this is measured on the
+// merged tree rather than added. The briefing at 360 is a role card over a
+// two-column dial of labelled buttons; the talking screen behind it is a log of
+// Estonian in a fixed-height scroller with a text field, the letter bar and four
+// controls under it, which is the tightest row of buttons in the app after the
+// rating keys; and `/review/common/noun` is a whole round.
+//
+// A PRODUCTION BUILD RATHER THAN `next dev`, which is worth writing down
+// because it cost an afternoon: the dev overlay mounts a `nextjs-portal`
+// element over the page, and this suite correctly reports it as drawn into the
+// phone bar on every route it walks. Measuring a floor off a dev server would
+// have baked that in.
+// Measured at 1231 on the merged tree against a production build with the demo
+// fixture in place, and the floor keeps the same ten under it.
+const { check, absent, done } = suite("Containment", { floor: 1220 });
 
 const browser = await launchChromium();
 
@@ -1029,6 +1051,36 @@ async function askedForStates(ctx, at) {
       "so this deck genuinely has nothing due. Run `npm run demo`");
   }
 
+  /*
+    A CONVERSATION IN PROGRESS, which no URL reaches.
+
+    `/situations/[id]` loads on the briefing and the talking screen replaces it
+    in place, so the sweep above measures the card and the dial and never the
+    thing they lead to: a log of Estonian in a fixed-height scroller, a text
+    field, the letter bar, and four controls in a row, which at 360 is the
+    tightest row of buttons in the app after the rating keys.
+
+    Pressed until it lands rather than waited on, for the reason
+    `test-scene.mjs` gives at length: a button rendered on the server is
+    clickable and inert, so a single click into a hydrating page is swallowed
+    and waiting longer cannot recover it.
+  */
+  await page.goto(`${B}/situations/arsti-aeg`, { waitUntil: "networkidle", timeout: 60000 });
+  const start = page.getByRole("button", { name: /Start the conversation/i });
+  let talking = false;
+  for (let tries = 0; tries < 20 && !talking; tries += 1) {
+    if (await start.count()) await start.click().catch(() => {});
+    talking = (await page.getByRole("log").count()) > 0
+      && (await page.locator('[role="log"] p').count()) > 0;
+    if (!talking) await page.waitForTimeout(700);
+  }
+  if (talking) {
+    await measure(page, `a conversation in progress ${at}`);
+  } else {
+    absent(5, `a conversation in progress ${at}: the scene could not be opened, which ` +
+      "needs the dictionary seeded. Run `npm run db:seed`");
+  }
+
   await page.close();
 }
 
@@ -1053,8 +1105,10 @@ for (const width of WIDTHS) {
 
 /*
   AND THE WHOLE APP IN THE DARK, once, at the width where containment fails
-  first. `colorScheme` sets `prefers-color-scheme`, which is what the palette
-  in app/globals.css reads when nobody has picked a theme by hand.
+  first. The palette in app/globals.css reads `data-theme` and nothing else,
+  so the theme is chosen the way a reader chooses it: stored, and read back
+  by the inline script in app/layout.tsx before the first paint. Emulating
+  `prefers-color-scheme` would measure the light theme a second time.
 */
 {
   const ctx = await browser.newContext({
@@ -1062,8 +1116,8 @@ for (const width of WIDTHS) {
     hasTouch: true,
     isMobile: true,
     reducedMotion: "reduce",
-    colorScheme: "dark",
   });
+  await ctx.addInitScript(() => { try { localStorage.setItem("theme", "dark"); } catch { /* private mode */ } });
   await sweep(ctx, `at ${DARK_WIDTH} in the dark`);
   await ctx.close();
 }

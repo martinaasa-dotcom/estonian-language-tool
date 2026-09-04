@@ -148,6 +148,17 @@ export function secondsUntilUtcMidnight(now: Date): number {
  * Checked *before* a call, so the limits are boundaries the next call must stay
  * under. A user sitting exactly on `dailyCallsPerUser` has used their day.
  */
+/*
+  THE MESSAGES NAME NO ONE FEATURE, and they used to name Anu.
+
+  That was true when the tutor and the scan were the only paths that reached a
+  model. A conversation reaches one now, so a learner standing at a reception
+  desk was told "you have reached today's limit for Anu", which is a screen
+  naming a feature they are not using: a failure may not misname its cause, and
+  the cause here is the day's shared allowance rather than any one part of the
+  app. This module is pure and is handed a `kind`-free snapshot on purpose, so
+  the honest sentence is the one that is true of every caller.
+*/
 export function checkQuota(
   usage: UsageSnapshot,
   limits: QuotaLimits,
@@ -157,7 +168,7 @@ export function checkQuota(
     return {
       allowed: false,
       reason: "BURST",
-      message: "That is a lot of questions at once. Give it a few seconds.",
+      message: "That is a lot at once. Give it a few seconds.",
       retryAfterSeconds: limits.burstWindowSeconds,
     };
   }
@@ -167,8 +178,9 @@ export function checkQuota(
       allowed: false,
       reason: "DAILY_CALLS",
       message:
-        "You have reached today's limit for Anu. Everything else (review, the " +
-        "dictionary, your deck) keeps working, and the limit resets at midnight UTC.",
+        "You have used today's share of the parts that ask a model. Everything " +
+        "else (review, the dictionary, your deck) keeps working, and it resets " +
+        "at midnight UTC.",
       retryAfterSeconds: secondsUntilUtcMidnight(now),
     };
   }
@@ -178,7 +190,8 @@ export function checkQuota(
       allowed: false,
       reason: "DAILY_SPEND",
       message:
-        "You have used today's share of the tutor budget. It resets at midnight UTC.",
+        "You have used today's share of the budget for the parts that ask a " +
+        "model. It resets at midnight UTC.",
       retryAfterSeconds: secondsUntilUtcMidnight(now),
     };
   }
@@ -207,9 +220,9 @@ export function checkQuota(
       allowed: false,
       reason: "GLOBAL_BUSY",
       message:
-        "Anu is busy today. The rest of the shared budget is being kept for people " +
-        "who have not asked anything yet, and it resets at midnight UTC. Everything " +
-        "else (review, the dictionary, your deck) keeps working.",
+        "The rest of today's shared budget is being kept for people who have not " +
+        "asked anything yet, and it resets at midnight UTC. Everything else " +
+        "(review, the dictionary, your deck) keeps working.",
       retryAfterSeconds: secondsUntilUtcMidnight(now),
     };
   }
@@ -221,8 +234,8 @@ export function checkQuota(
       allowed: false,
       reason: "GLOBAL_SPEND",
       message:
-        "Anu is resting. The site has reached its shared daily budget for AI. " +
-        "This is not about your account. It resets at midnight UTC.",
+        "This deployment has reached its shared daily budget for AI. This is not " +
+        "about your account. It resets at midnight UTC.",
       retryAfterSeconds: secondsUntilUtcMidnight(now),
     };
   }
