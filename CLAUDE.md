@@ -3146,6 +3146,19 @@ which takes three queries and a dictionary read off every other render of this p
 is on the *slot* rather than on either card, because two rounds on this page is what the cap was
 added to stop.
 
+**And the order is the learner's, because a home page's reading order is a fact about the
+reader.** The shipped order is an argument and it is still the default, and it is not the only
+honest order: somebody in a class wants the homework first, somebody who plays the game every
+morning wants that first. `lib/ux/todayOrder.ts` is the one table of slots and the one reader of
+the stored row, Settings has a list with two arrows a row, and Today deals through
+`orderTodayCards` and applies `TODAY_CARDS` to what comes out, so an order can move a card past the
+cut and can never grow a seventh box. The reader is forgiving on purpose: an id it no longer knows
+is dropped, a duplicate kept once, and a slot the row leaves out is appended in the default order,
+so a card added to Today after somebody set theirs still appears. Not drag and drop, because a list
+reordered once a year does not earn a gesture library, a phone takes a drag for a scroll, and two
+buttons a row say in words what they did. The rows past the cut say so in words as well, since a
+greyer row is a hue carrying a distinction on its own.
+
 **The cap fails on the shape that rots, which is not the constant.** Nobody lowers `TODAY_CARDS` by
 accident. What happens is somebody adds `{newCard}` beside the sliced array, which reads as a card
 being added and is a card that cannot be cut, so what is asserted is that every child of `Columns`
@@ -4788,7 +4801,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `distanceLine`, `minutesForCards`, `describeSituation`, `conditionFor`, `describeHearing`,
 `playThrough`, `errandForDay`, `recordEncounter`, `outThere`, `reachedSlot`, `reachedFor`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
-`TODAY_CARDS`, `weakestCase`, `roundCard`,
+`TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 

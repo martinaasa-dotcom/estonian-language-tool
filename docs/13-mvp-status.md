@@ -2304,3 +2304,10 @@ a card drawn loose beside the sliced list, which reads as a card being added and
 cannot be cut, so what is asserted is that every child of `Columns` comes out of the one expression
 the cap is applied to, and that Progress actually renders what the cut sent it. Made to fail three
 ways before it was trusted.
+
+**And the order is the learner's.** The shipped order is an argument and stays the default, and
+Settings has a list with two arrows a row for anybody whose morning reads differently: the homework
+first for somebody in a class, the game first for somebody who plays it every day.
+`lib/ux/todayOrder.ts` is the table and the reader, Today deals through it and applies the cap to
+what comes out, so an order can move a card past the cut and never adds a box, and the rows past
+the cut say so in words on the Settings screen rather than by a tint alone.
