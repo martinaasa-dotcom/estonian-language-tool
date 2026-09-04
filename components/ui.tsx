@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { Children, type CSSProperties, type ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { Mascot } from "@/components/brand";
 import { PrefetchLink } from "@/components/PrefetchLink";
@@ -123,6 +123,43 @@ export function Card({ children, className = "", as: Tag = "div", tone = "plain"
  */
 export function Stack({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <div className={`flex flex-col gap-8 ${className}`}>{children}</div>;
+}
+
+/**
+ * Two columns of cards that end level with each other, and one on a phone.
+ *
+ * Today used to hand each module a column by what it was for: the wide one for
+ * what is due and what keeps going wrong, the narrow one for what is ahead.
+ * That is a sound reading order and a poor picture, because how much each
+ * column holds depends on how far in the learner is. On the first morning the
+ * wide column held one button and the narrow one held three tall cards, so the
+ * page read as having slid sideways, and moving one card across for that one
+ * stage only moved the lean.
+ *
+ * So the browser deals the cards. A multi-column layout fills the first column
+ * and then the second and balances the two by height, which is the one thing a
+ * server cannot do: it knows which cards there are this morning and not how
+ * tall the word of the day turned out. Reading order is unchanged, down the
+ * first column and then down the second, which is the order the children are
+ * given in. A card never splits across the seam, and every card keeps the
+ * rhythm `Stack` sets between sections.
+ *
+ * Children are wrapped rather than asked to carry the class themselves,
+ * because a card that forgot `break-inside: avoid` would be a card cut in half
+ * at the seam, and nothing would fail on it. The wrapper carries the rhythm as
+ * padding rather than margin, since a margin at a column break is truncated
+ * and a padding is not, so the two columns are balanced over the same air.
+ */
+export function Columns({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`-mb-8 gap-x-6 lg:columns-2 ${className}`}>
+      {Children.toArray(children).map((child, i) => (
+        <div key={i} className="break-inside-avoid pb-8" data-column-item>
+          {child}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function SectionTitle({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
