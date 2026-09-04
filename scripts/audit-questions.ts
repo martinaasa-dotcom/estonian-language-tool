@@ -100,7 +100,15 @@ const spent = new Map<string, number>();
   the only way to know it is to print it, which the line below now does.
 */
 const REACHES: Record<string, number> = {
-  deck: 36_041, exam: 2_500, crossword: 5_295, scene: 1_409, target: 4_658,
+  /*
+    36,041 until a case card needed a sentence behind it. The deck used to ask
+    a word for every case the morphology permitted, which was 23,106 case cards
+    over 4,664 words with an attested sentence behind 1,494; a case is drilled
+    in a sentence that uses it now, and where more than one case spells the
+    gapped form that way it is drilled by nobody, which is 996 over 914 words.
+    Measured, not estimated: 13,919.
+  */
+  deck: 13_919, exam: 2_500, crossword: 5_295, scene: 1_409, target: 4_658,
   // 627 while a `heard` item was skipped outright; the listening items are
   // asked the "also right" question now and counted.
   check: 740,

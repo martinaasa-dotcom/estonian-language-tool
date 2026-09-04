@@ -17,6 +17,7 @@ import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
+import { icon } from "@/components/icons";
 import { NotAutomatic } from "@/components/NotAutomatic";
 import { confusions } from "@/lib/stats/confusions";
 import { answerTimeReading } from "@/lib/stats/answerTime";
@@ -236,6 +237,71 @@ export default async function ProgressPage() {
           </div>
         </Card>
 
+        {/*
+          TODAY'S THREE QUESTS, WHICH USED TO BE A CARD OF THEIR OWN ON TODAY.
+
+          They are XP, and this is the page the XP story is told on: the ring
+          above already carries the level, the total and what is left to the
+          next one, and three meters counting towards the same currency belong
+          under it rather than on the screen somebody opens with two minutes to
+          spend. Nothing about them changed on the way over. They are still
+          derived per request off the append-only log (ADR-014) and still reset
+          on the learner's own midnight, and pressing anything they name is
+          still a row of the rail away.
+        */}
+        <section>
+          <SectionTitle hint={`${summary.questsDone} of ${summary.quests.length} done`}>
+            Today&rsquo;s quests
+          </SectionTitle>
+          <Card>
+            <ul className="flex flex-col gap-2">
+              {summary.quests.map((q) => {
+                const Icon = icon(q.icon);
+                return (
+                  <li
+                    key={q.key}
+                    className="flex items-center gap-3.5 rounded-[var(--r-lg)] border px-4 py-3.5"
+                    style={{
+                      borderColor: q.done ? "transparent" : "var(--rule)",
+                      background: q.done ? "var(--mint-soft)" : "var(--surface)",
+                      boxShadow: q.done ? "none" : "var(--shadow-sm)",
+                    }}
+                  >
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                      style={{
+                        background: q.done ? "var(--surface)" : "var(--accent-soft)",
+                        color: q.done ? "var(--good-ink)" : "var(--accent-deep)",
+                      }}
+                    >
+                      <Icon size={17} aria-hidden />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-3">
+                        <span className="text-base font-semibold" style={{ color: "var(--ink)" }}>{q.title}</span>
+                        <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
+                          {q.progress}/{q.target}
+                        </span>
+                      </span>
+                      <span className="mt-1.5 block">
+                        <Meter
+                          pct={(q.progress / q.target) * 100}
+                          label={`${q.title}: ${q.progress} of ${q.target}`}
+                          tone={q.done ? "var(--good)" : "var(--accent)"}
+                          height={5}
+                        />
+                      </span>
+                      <span className="mt-1.5 block text-xs" style={{ color: "var(--ink-3)" }}>
+                        {q.detail} · +{q.reward} XP
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        </section>
+
         {/* The number FSRS is actually steering, and what it means. Placed
             above the charts because it is the one that changes what to do. */}
         <section>
@@ -404,16 +470,24 @@ export default async function ProgressPage() {
             <Card>
               {outside.total === 0 ? (
                 <p className="text-sm" style={{ color: "var(--ink-2)" }}>
-                  Nothing reported yet. Today sets one small errand a day; say how it went and it lands here.
-                  This is the one number that matters more than any chart on this page.
+                  Nothing reported yet. Today asks each morning whether you spoke any Estonian to somebody
+                  yesterday, and the answers land here. This is the one number that matters more than any
+                  chart on this page.
                 </p>
               ) : (
                 <div className="flex flex-col gap-4">
+                  {/*
+                    The first figure counts the days something was said, not the
+                    days the question was answered: "not yesterday" is an honest
+                    answer and counting it here would report a fortnight of them
+                    back as a fortnight of conversations. lib/collections/errands.ts
+                    is where that is decided, for this panel and Today alike.
+                  */}
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <Stat value={outside.total} label="conversations" tone="var(--accent-deep)" icon={<Footprints size={14} aria-hidden />} />
                     <Stat value={outside.byOutcome.UNDERSTOOD} label="understood you" tone="var(--good-ink)" />
                     <Stat value={outside.byOutcome.SWITCHED} label="switched to English" tone="var(--hard-ink)" />
-                    <Stat value={outside.byOutcome.BAILED} label="did not happen" tone="var(--ink-3)" />
+                    <Stat value={outside.byOutcome.BAILED} label="days with none" tone="var(--ink-3)" />
                   </div>
                   <p className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {outside.streak > 1 ? `${outside.streak} days in a row with a real conversation in them. ` : ""}

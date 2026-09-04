@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   availableCardTypes, generateCards, inTeachingOrder, teachingRank, type LexemeForCards,
 } from "./cards";
+import { BLANK } from "@/lib/estonian/cloze";
 import { checkAnswer } from "@/lib/estonian/answer";
 
 const tuba: LexemeForCards = {
@@ -81,19 +82,19 @@ describe("generateCards", () => {
     expect(cards[1]).toMatchObject({ front: "room", back: "tuba" });
   });
 
-  it("derives case cards from the genitive stem", () => {
-    const cards = generateCards(tuba, ["CASE_FORM"]);
-    const inessive = cards.find((c) => c.targetCase === "INESSIVE");
-    expect(inessive?.back).toBe("toas");
-    expect(inessive?.front).toContain("tuba");
-    // Asked by the question, which is how a class is asked for a case, and by
-    // the half of it this word answers: a room is a `mis`, and `kus?` names
-    // the seesütlev and the alalütlev at once so it cannot ask for one of
-    // them. The Latin name is the cross-reference on the hint, not the prompt.
-    expect(inessive?.front).toBe("tuba → milles?");
-    expect(inessive?.front).not.toMatch(/inessive/i);
-    expect(inessive?.hint).toContain("seesütlev");
-    expect(inessive?.hint).toContain("inessive");
+  /*
+    A GENITIVE STEM IS NO LONGER A REASON TO ASK FOR A CASE.
+
+    It used to be the whole of it: `tuba` has `toa`, so eleven suffixes could
+    be attached and five cards existed. That is what produced
+    `ravim → millesse? kuhu?`, which a learner reported as pointless, and they
+    were right — no lexicographer has ever recorded a medicine being gone into,
+    so the card was asking somebody to attach `sse` to a stem. The stem is
+    still what builds the *answer*; what decides whether to ask is a sentence
+    that uses it. See the CASE_FORM block below.
+  */
+  it("no longer builds a case card from the stem alone", () => {
+    expect(generateCards(tuba, ["CASE_FORM"])).toEqual([]);
   });
 
   it("makes a gradation card only when the word actually alternates", () => {
@@ -114,7 +115,9 @@ describe("generateCards", () => {
 
 describe("availableCardTypes", () => {
   it("offers gradation and case drills for a gradating noun", () => {
-    expect(availableCardTypes(tuba)).toEqual(["RECOGNITION", "PRODUCTION", "CASE_FORM", "GRADATION"]);
+    // No CASE_FORM: this fixture carries no sentence, and a case with no
+    // sentence behind it is a card the builder will not make.
+    expect(availableCardTypes(tuba)).toEqual(["RECOGNITION", "PRODUCTION", "GRADATION"]);
   });
   it("offers government for a verb that records it", () => {
     expect(availableCardTypes(aitama)).toContain("GOVERNMENT");
@@ -234,75 +237,103 @@ describe("generateCards — CLOZE", () => {
 
 describe("generateCards — CASE_FORM", () => {
   /*
-    A CASE WHOSE FORM IS THE NOMINATIVE ASKS NOTHING, and Estonian has plenty:
-    `kallis` has the genitive `kalli`, so the inessive is `kalli` plus `s`,
-    which is `kallis` again. The card read `kallis → milles? kus?` with
-    `kallis` on the back, so the question printed its own answer on 115 cards
-    across the shipped dictionary. Nobody can get one wrong, the scheduler
-    reads every pass as a recall and pushes the interval out, and the deck slot
-    is spent for ever.
+    A CASE IS DRILLED IN A SENTENCE THAT USES IT, OR IT IS NOT DRILLED.
+
+    These fixtures carry the sentences the shipped dictionary actually holds
+    for these words, because that is now the thing under test. The card used to
+    be generated from the morphology alone: if the word was not a person and a
+    form could be built, a card existed, which is 23,106 of them over 4,664
+    words with a sentence behind 1,494. `ravim → millesse? kuhu?` was one, and
+    nobody has ever recorded a medicine being gone into.
   */
-  const dear = {
-    id: "kallis", lemma: "kallis", translation: "dear, expensive", pos: "ADJECTIVE",
-    gradation: "NONE", gradationNote: null, government: null, examples: null,
-    semanticTypes: "omadus_kval",
+  const bed = {
+    id: "voodi", lemma: "voodi", translation: "bed", pos: "NOUN",
+    gradation: "NONE", gradationNote: null, government: null,
+    semanticTypes: "ese_instru",
+    examples: JSON.stringify([
+      { et: "Tast pole voodis asjagi!", source: "EKILEX" },
+      { et: "Õhtul kukkusin voodisse nagu niidetud.", source: "EKILEX" },
+    ]),
     forms: [
-      { formType: "NOM_SG", value: "kallis", morphCode: "SgN" },
-      { formType: "GEN_SG", value: "kalli", morphCode: "SgG" },
-      { formType: "PART_SG", value: "kallist", morphCode: "SgP" },
+      { formType: "NOM_SG", value: "voodi", morphCode: "SgN" },
+      { formType: "GEN_SG", value: "voodi", morphCode: "SgG" },
+      { formType: "PART_SG", value: "voodit", morphCode: "SgP" },
+      { formType: "ILL_SG_SHORT", value: "voodi", morphCode: "SgAdt" },
     ],
   };
 
-  it("builds no card for a case whose only answer is the word in the question", () => {
-    const cards = generateCards(dear, ["CASE_FORM"]);
-    expect(cards.length).toBeGreaterThan(0);
-    for (const card of cards) {
-      expect(card.back.toLowerCase().split(" / ")).not.toContain("kallis");
-    }
-    expect(cards.some((c) => c.targetCase === "INESSIVE")).toBe(false);
-    // And the cases that do inflect are still there.
-    expect(cards.some((c) => c.targetCase === "COMITATIVE")).toBe(true);
+  it("builds the card out of the sentence that uses the case", () => {
+    const inessive = generateCards(bed, ["CASE_FORM"]).find((c) => c.targetCase === "INESSIVE");
+    expect(inessive?.back).toBe("voodis");
+    // The front is the sentence with the form taken out, not a bare lemma and
+    // a case name: the learner produces the form because the sentence needs it.
+    expect(inessive?.front).toContain(BLANK);
+    expect(inessive?.front).toContain("asjagi");
+    expect(inessive?.front?.toLowerCase()).not.toContain("voodis");
   });
 
   /*
-    ANY ANSWER, NOT EVERY ONE, and the first version of this test asserted the
-    opposite. `voodi` has the short illative `voodi` and the long `voodisse`,
-    and the marker has to take both, because refusing the short one is the
-    `tuppa` fault pointed the other way. So the card asked
-    `voodi → millesse? kuhu?` and a learner who copied the word out of the
-    question was right. `npm run audit:questions` found all seven of these
-    after the rule had been written and shipped the other way round.
-
-    The pair is still the right thing to show, and the dictionary and grammar
-    pages still show it: `shownForms` is that reader and is untouched.
+    THE CUE MAY NOT NAME THE CASE. It is shown before the answer, so
+    `seesütlev` beside `voodi` is `voodis` written out in two pieces, exactly
+    as `astmevaheldus mm : mb` hands `hamba` over on a gradation card. The case
+    travels on `targetCase`, which is where the reveal and the weakest-case
+    panel read it, and that is the order `explainGap` takes too: the sentence
+    first, its label after.
   */
-  it("builds no card where the word is one of two answers either", () => {
-    const bed = {
-      ...dear, id: "voodi", lemma: "voodi", translation: "bed", pos: "NOUN", semanticTypes: "ese",
-      forms: [
-        { formType: "NOM_SG", value: "voodi", morphCode: "SgN" },
-        { formType: "GEN_SG", value: "voodi", morphCode: "SgG" },
-        { formType: "PART_SG", value: "voodit", morphCode: "SgP" },
-        { formType: "ILL_SG_SHORT", value: "voodi", morphCode: "SgAdt" },
-      ],
-    };
-    const cards = generateCards(bed, ["CASE_FORM"]);
-    expect(cards.some((c) => c.targetCase === "ILLATIVE")).toBe(false);
-    expect(cards.some((c) => c.targetCase === "COMITATIVE")).toBe(true);
+  it("cues with the word and its meaning, never with the case", () => {
+    const inessive = generateCards(bed, ["CASE_FORM"]).find((c) => c.targetCase === "INESSIVE");
+    expect(inessive?.hint).toBe("voodi, bed");
+    expect(inessive?.hint).not.toMatch(/seesütlev|inessive/i);
   });
 
-  it("keeps the illative where neither answer is the word", () => {
-    const room = {
-      ...dear, id: "tuba", lemma: "tuba", translation: "room", pos: "NOUN", semanticTypes: "koht_hoone",
+  /*
+    ANY ANSWER, NOT EVERY ONE. `voodi` has the short illative `voodi` and the
+    long `voodisse`, and the marker has to take both, because refusing the
+    short one is the `tuppa` fault pointed the other way. So a learner who
+    copies the word out of the cue is right, and the card cannot be asked.
+    The pair is still the right thing to show, and `shownForms` still shows it.
+  */
+  it("builds no card where the word itself is one of the answers", () => {
+    expect(generateCards(bed, ["CASE_FORM"]).some((c) => c.targetCase === "ILLATIVE")).toBe(false);
+  });
+
+  /*
+    AND THE SENTENCE HAS TO NAME THE CASE ON ITS OWN. `kohvi` is the omastav,
+    the osastav and the short sisseütlev all at once, so gapping it out of
+    `Ostsin paki kohvi.`, where it is a genitive, and labelling the card
+    `sisseütlev` would teach the wrong case and write the wrong one into
+    `Review.slot`, which every case figure in the app is derived from.
+    `readCase` is the strict rule that already existed for this.
+  */
+  it("refuses a form that more than one case spells that way", () => {
+    const coffee = {
+      ...bed, id: "kohv", lemma: "kohv", translation: "coffee",
+      semanticTypes: "materjal/aine",
+      examples: JSON.stringify([{ et: "Ostsin paki kohvi.", source: "EKILEX" }]),
       forms: [
-        { formType: "NOM_SG", value: "tuba", morphCode: "SgN" },
-        { formType: "GEN_SG", value: "toa", morphCode: "SgG" },
-        { formType: "PART_SG", value: "tuba", morphCode: "SgP" },
-        { formType: "ILL_SG_SHORT", value: "tuppa", morphCode: "SgAdt" },
+        { formType: "NOM_SG", value: "kohv", morphCode: "SgN" },
+        { formType: "GEN_SG", value: "kohvi", morphCode: "SgG" },
+        { formType: "PART_SG", value: "kohvi", morphCode: "SgP" },
+        { formType: "ILL_SG_SHORT", value: "kohvi", morphCode: "SgAdt" },
       ],
     };
-    const illative = generateCards(room, ["CASE_FORM"]).find((c) => c.targetCase === "ILLATIVE");
-    expect(illative?.back).toBe("tuppa / toasse");
+    expect(generateCards(coffee, ["CASE_FORM"])).toEqual([]);
+  });
+
+  it("produces nothing for a word with no sentences at all", () => {
+    expect(generateCards({ ...bed, examples: null }, ["CASE_FORM"])).toEqual([]);
+  });
+
+  /*
+    AND THE CHECKLIST ASKS THE BUILDER RATHER THAN THE MORPHOLOGY. Left as
+    "does it have a genitive stem" this advertised a case card on 4,664 words
+    and built one on 914: the unit page lists the type, no card appears, and
+    nothing says why. That is the `objekt` fault, which `syllabus.test.ts`
+    catches for a unit and this catches for a word.
+  */
+  it("is only offered when it can produce something", () => {
+    expect(availableCardTypes(bed)).toContain("CASE_FORM");
+    expect(availableCardTypes({ ...bed, examples: null })).not.toContain("CASE_FORM");
   });
 });
 

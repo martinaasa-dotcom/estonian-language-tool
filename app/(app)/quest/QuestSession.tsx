@@ -10,6 +10,7 @@ import { Speak } from "@/components/Speak";
 import { useFeedbackSound } from "@/components/AudioPrefs";
 import type { Badge } from "@/lib/achievements/badges";
 import type { QuestCard } from "@/lib/progress/quest";
+import { acceptedAnswers } from "@/lib/estonian/answer";
 
 /** Two minutes, which is what was asked for and is about right for 24 cards. */
 const DURATION_S = 120;
@@ -29,11 +30,30 @@ export interface AimedCase {
  * about: "your seesütlev is at 54%" is the reason to press it, and a round that
  * hid that would be another timer.
  *
- * A FLIP RATHER THAN A TYPED ANSWER, deliberately. Two minutes at a typed
+ * A PICK RATHER THAN A TYPED ANSWER, deliberately. Two minutes at a typed
  * answer is about eight cards, and the point of this round is volume across a
  * weakness rather than depth on one card; the same argument the Case Sprint
- * makes. `SELF_GRADES` is why that is honest: the learner says whether they had
- * it, which is the only judge a flip has (`lib/srs/scheduler.ts`).
+ * makes.
+ *
+ * WHAT IS NOT DELIBERATE IS THE LEARNER MARKING THEIR OWN PAPER, and this
+ * round used to. It showed the answer and asked "Had it?" or "Missed it?", and
+ * that verdict went into `Review`, which is append-only and is what
+ * `caseAccuracy` reads back to decide which cases are weak. This round chooses
+ * its cards *by* that reading, so the panel picking the cards was being fed by
+ * the round claiming to fix them, on the learner's own say-so, and every
+ * figure downstream of it — the weakest-case panel, the mastery counter, the
+ * readiness rungs, the exam confidence percentage — was presented as measured.
+ *
+ * The volume argument never required that. Picking one of four forms of the
+ * same word is a tap, exactly as "Had it" was a tap, and it is a measurement:
+ * the wrong answers are `toast`, `toasse` and `toale` against `toas`, which is
+ * the confusion this round exists for. A wrong pick also says which case the
+ * learner reached for, which goes into `Review.reachedSlot` and which no flip
+ * could ever have known (`lib/questions/caseChoices.ts`).
+ *
+ * A card that cannot be given options is still a flip, because there is then
+ * genuinely nothing to compare, and `SELF_GRADES` is what makes that honest
+ * (`lib/srs/scheduler.ts`).
  *
  * Every answer grades through `gradeCard`, so a round played for the timer
  * still moves the schedule and the log records what happened (ADR-016). An
@@ -47,6 +67,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
   const [cards] = useState(initialCards);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);
   const [attempted, setAttempted] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -76,7 +97,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
     if (phase === "running" && (secondsLeft === 0 || exhausted)) finish();
   }, [phase, secondsLeft, exhausted, finish]);
 
-  const answer = useCallback(async (got: boolean) => {
+  const answer = useCallback(async (got: boolean, reached?: string | null) => {
     if (!card || busy) return;
     setBusy(true);
     sound(got ? "right" : "wrong");
@@ -87,12 +108,39 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
     } else {
       setStreak(0);
     }
-    await gradeCard(card.id, got ? 3 : 1, Date.now() - shownAt.current);
+    /*
+      The case asked and the case reached for, where the round can name both.
+      `writeGrade` checks each against its own closed list rather than trusting
+      them, and keeps the second only where both sides are forms, so a round
+      cannot file "asked what it meant, got a case" as a confusion between two
+      cases.
+    */
+    await gradeCard(
+      card.id, got ? 3 : 1, Date.now() - shownAt.current, undefined,
+      card.targetCase ?? undefined, reached ?? undefined,
+    );
+    setPicked(null);
     setRevealed(false);
     setIndex((i) => i + 1);
     shownAt.current = Date.now();
     setBusy(false);
   }, [card, busy, sound]);
+
+  /*
+    A pick marks itself. The option carries what it would mean, so a wrong one
+    is written down as the case the learner reached for; the right one is
+    whichever spelling the card accepts, which is `acceptedAnswers` and not a
+    string comparison against the whole back, since a card's back can be
+    `tuppa / toasse` and both are right.
+  */
+  const choose = useCallback((option: { text: string; slot: string | null }) => {
+    if (!card || busy || picked) return;
+    const right = acceptedAnswers(card.back, "et")
+      .some((f) => f.toLocaleLowerCase("et") === option.text.toLocaleLowerCase("et"));
+    setPicked(option.text);
+    setRevealed(true);
+    void answer(right, right ? null : option.slot);
+  }, [card, busy, picked, answer]);
 
   /* Keys, because a two-minute round is one a keyboard should be able to play:
      space turns the card, then 1 and 2 answer it. Same two answers as a flip
@@ -101,6 +149,20 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
     if (phase !== "running") return;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      /*
+        1 to 4 pick an option where there are options, which is the same key
+        row the multiple-choice cards in review use. A card with none keeps the
+        flip it always had: space, then 1 and 2.
+      */
+      const options = card?.choices;
+      if (options) {
+        const at = Number(e.key) - 1;
+        if (Number.isInteger(at) && at >= 0 && at < options.length) {
+          e.preventDefault();
+          choose(options[at]!);
+        }
+        return;
+      }
       if (e.key === " " && !revealed) { e.preventDefault(); setRevealed(true); return; }
       if (!revealed) return;
       if (e.key === "1") { e.preventDefault(); void answer(false); }
@@ -108,7 +170,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [phase, revealed, answer]);
+  }, [phase, revealed, answer, card, choose]);
 
   if (cards.length === 0) {
     return (
@@ -246,7 +308,51 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
             <p className="text-sm" style={{ color: "var(--ink-3)" }}>{card.hint}</p>
           )}
 
-          {revealed ? (
+          {card.choices ? (
+            /*
+              FOUR FORMS OF THE WORD, and the answer is marked rather than
+              claimed. Each option keeps its place once picked, with the right
+              one shown in mint and a wrong pick in peach beside it, because
+              the correction is the one moment in a round worth stopping for
+              and a board that cleared itself would take it away. The hues
+              carry a border and the answer carries a word, since a hue is half
+              a signal (docs/14-design-system.md).
+            */
+            <div className="mt-2 grid w-full max-w-sm gap-2">
+              {card.choices.map((option, at) => {
+                const chosen = picked === option.text;
+                const isAnswer = revealed && acceptedAnswers(card.back, "et")
+                  .some((f) => f.toLocaleLowerCase("et") === option.text.toLocaleLowerCase("et"));
+                const tone = !revealed
+                  ? null
+                  : isAnswer ? "good" : chosen ? "again" : null;
+                return (
+                  <button
+                    key={option.text}
+                    type="button"
+                    lang="et"
+                    onClick={() => choose(option)}
+                    disabled={busy || picked !== null}
+                    className="choice-btn flex items-center justify-between gap-2 rounded-[var(--r)] border px-4 py-3 text-left text-lg font-semibold"
+                    style={{
+                      borderColor: tone ? `var(--${tone}-ink)` : "var(--rule)",
+                      background: tone ? `var(--${tone}-soft)` : "var(--surface)",
+                      color: tone ? `var(--${tone}-ink)` : "var(--ink)",
+                    }}
+                  >
+                    <span>{option.text}</span>
+                    {revealed && isAnswer
+                      ? <span className="text-xs font-semibold uppercase tracking-wide">Right</span>
+                      : (
+                        <kbd className="rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
+                          {at + 1}
+                        </kbd>
+                      )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : revealed ? (
             <>
               <div className="flex items-center gap-2">
                 <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>

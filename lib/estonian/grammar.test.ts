@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CASES } from "./cases";
 import {
-  allCaseReferences, caseReference, grammarPoint, grammarTopic, CASE_GROUPS, CASE_NOTES,
-  TOPIC_GROUPS, TOPIC_NOTES,
+  allCaseReferences, caseReference, grammarPoint, grammarTopic, groupEndings, CASE_GROUPS,
+  CASE_NOTES, TOPIC_GROUPS, TOPIC_NOTES,
 } from "./grammar";
 
 describe("case notes", () => {
@@ -34,11 +34,51 @@ describe("case notes", () => {
 
   it("says something useful in every field", () => {
     for (const note of CASE_NOTES) {
+      expect(note.plain.length, note.key).toBeGreaterThan(1);
       expect(note.summary.length).toBeGreaterThan(20);
       expect(note.watchOut.length).toBeGreaterThan(40);
       expect(note.uses.length).toBeGreaterThanOrEqual(2);
       for (const use of note.uses) expect(use.length).toBeGreaterThan(8);
     }
+  });
+
+  /*
+    AND STAYS SHORT, WHICH IS THE HALF NOTHING WAS HOLDING.
+
+    Every floor above was met by the version of this reference that a learner
+    reported as unreadable: four paragraphs a case, three of them true and
+    none of them the sentence somebody opens this page for. A floor stops a
+    field being empty and says nothing about the paragraph growing back into
+    it, so the ceilings are the other half of the same rule and they are
+    deliberately generous. The measured worst when they were written was 70,
+    156 and 54, so nothing here has to be written around: these catch the
+    return of the essay, not the next honest sentence.
+  */
+  it("keeps every field to something a reader will finish", () => {
+    for (const note of CASE_NOTES) {
+      expect(note.plain.length, note.key).toBeLessThanOrEqual(26);
+      expect(note.summary.length, note.key).toBeLessThanOrEqual(80);
+      expect(note.watchOut.length, note.key).toBeLessThanOrEqual(170);
+      expect((note.englishHook ?? "").length, note.key).toBeLessThanOrEqual(70);
+      for (const use of note.uses) expect(use.length, note.key).toBeLessThanOrEqual(60);
+    }
+  });
+
+  /*
+    THE ENDING IS WHAT THE SCREEN LEADS WITH, so it has to be an English word
+    a learner already has. `plain` holding "inessive" would be the Latin name
+    wearing the plain field's clothes, and the page would be back where it
+    started with an extra column.
+  */
+  it("says what the ending means in words a learner already has", () => {
+    const LATIN = CASES.map((c) => c.en.toLowerCase());
+    for (const note of CASE_NOTES) {
+      for (const latin of LATIN) {
+        expect(note.plain.toLowerCase(), note.key).not.toContain(latin);
+      }
+    }
+    expect(caseReference("INESSIVE")?.plain).toBe("in");
+    expect(caseReference("COMITATIVE")?.plain).toBe("with");
   });
 });
 
@@ -58,7 +98,7 @@ describe("nothing here is written in Estonian", () => {
   const ESTONIAN_LETTERS = /[õäöüšž]/i;
 
   const strings = [
-    ...CASE_NOTES.flatMap((n) => [n.summary, n.watchOut, ...n.uses, n.englishHook ?? ""]),
+    ...CASE_NOTES.flatMap((n) => [n.plain, n.summary, n.watchOut, ...n.uses, n.englishHook ?? ""]),
     ...CASE_GROUPS.flatMap((g) => [g.title, g.blurb]),
   ];
 
@@ -79,6 +119,22 @@ describe("case groups", () => {
     expect(grouped).toHaveLength(CASES.length);
     expect(new Set(grouped).size).toBe(CASES.length);
     for (const spec of CASES) expect(grouped).toContain(spec.key);
+  });
+
+  /*
+    The heading over a group names its endings, and it reads them off the
+    group's own keys. Typed into the title they were uppercased by the heading
+    style, which turns -sse into something no Estonian word ends in, and they
+    were a second copy of the keys underneath waiting to disagree with them.
+  */
+  it("names a group's endings off its own keys", () => {
+    expect(groupEndings(CASE_GROUPS[1]!)).toEqual(["-sse", "-s", "-st"]);
+    expect(groupEndings(CASE_GROUPS[2]!)).toEqual(["-le", "-l", "-lt"]);
+    // The memorised three have no ending to name, and say so by saying nothing.
+    expect(groupEndings(CASE_GROUPS[0]!)).toEqual([]);
+    for (const group of CASE_GROUPS) {
+      expect(groupEndings(group).join(" "), group.title).not.toMatch(/[A-Z]/);
+    }
   });
 
   it("keeps the principal parts together and first", () => {
@@ -102,6 +158,15 @@ describe("topic notes", () => {
       expect(topic.watchOut.length, topic.id).toBeGreaterThan(60);
       expect(topic.points.length, topic.id).toBeGreaterThanOrEqual(3);
       for (const point of topic.points) expect(point.length, topic.id).toBeGreaterThan(10);
+    }
+  });
+
+  /** The ceiling, for the reason the case notes carry one. */
+  it("keeps every field to something a reader will finish", () => {
+    for (const topic of TOPIC_NOTES) {
+      expect(topic.summary.length, topic.id).toBeLessThanOrEqual(95);
+      expect(topic.watchOut.length, topic.id).toBeLessThanOrEqual(210);
+      for (const point of topic.points) expect(point.length, topic.id).toBeLessThanOrEqual(70);
     }
   });
 

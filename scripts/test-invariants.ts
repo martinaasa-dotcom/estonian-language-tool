@@ -2584,6 +2584,74 @@ check("nothing tries to embed Sonaveeb or Ekilex", () => {
 
 // ── Conventions that hold the design together ────────────────────────────────
 
+check("Today draws at most TODAY_CARDS under the hero, and every card goes through the cap", () => {
+  /*
+    THE CAP IS THE PAGE'S RULE AND THE DISCLOSURE TABLE IS THE LEARNER'S.
+
+    `shows` answers "is this panel worth drawing at all", which is a question
+    about how far in somebody is. It cannot answer "is this the fifth most
+    useful thing on the page this morning", and Today was drawing everything
+    the table allowed: fourteen cards on a settled morning, two of them saying
+    "press something short", two of them redrawing panels Progress already has
+    under their own headings, an XP bar, six practice tiles, an exam forecast
+    the hub prints in full, and a standing pitch for a tutor whose button is in
+    the corner of every screen.
+
+    So the cards are named in priority order and the first `TODAY_CARDS` are
+    drawn. What rots is not the constant, it is somebody adding `{newCard}`
+    beside the sliced array, which reads as a card being added and is a card
+    that cannot be cut. That is what this fails on: every child of `Columns` on
+    this page comes out of the one expression the cap is applied to.
+  */
+  const today = code("app/(app)/page.tsx");
+  assert.match(today, /TODAY_CARDS/, "Today no longer reads the cap");
+  assert.match(
+    today, /\.slice\(0, TODAY_CARDS\)/,
+    "Today names its cards and draws all of them again; the cap is what keeps the page glanceable",
+  );
+
+  const open = today.indexOf("<Columns>");
+  const close = today.indexOf("</Columns>", open);
+  assert.ok(open >= 0 && close > open, "Today no longer lays its cards out in Columns");
+  const columns = today.slice(open, close);
+  /*
+    A card interpolated on its own, rather than named inside the array. Written
+    as the brace and the identifier together because the array itself names the
+    same variables with no braces round them, which is the shape that is fine.
+  */
+  const loose = [...columns.matchAll(/\{\s*([A-Za-z]+Card)\s*\}/g)].map((m) => m[1]);
+  assert.deepEqual(
+    loose, [],
+    `Today draws ${loose.join(", ")} outside the capped list, so the page can grow past ${"TODAY_CARDS"} again`,
+  );
+});
+
+/*
+  AND WHAT CAME OFF TODAY MOVED RATHER THAN WENT.
+
+  The cut took the XP bar and the three daily quests off the home page on the
+  argument that they are a report on how much has been done, which is the
+  question `/progress` exists for. That argument is only honest while Progress
+  actually draws them: a panel nobody renders is a feature nobody has, and this
+  repository has shipped that exact fault twice, on `DangerZone` and
+  `UsagePanel`, both complete and imported by nothing.
+
+  Anchored on the render rather than on the import for the reason those two
+  taught: a file being right is a different claim from a reader being able to
+  reach it.
+*/
+check("the XP bar and the daily quests are on Progress, where the cut sent them", () => {
+  const progress = code("app/(app)/progress/page.tsx");
+  assert.match(progress, /summary\.quests\.map\(/, "the daily quests are on no screen at all");
+  assert.match(progress, /summary\.level\.pct/, "the level bar is on no screen at all");
+  const today = code("app/(app)/page.tsx");
+  assert.doesNotMatch(today, /summary\.quests/, "the quest meters are back on Today");
+  assert.doesNotMatch(
+    today, /summary\.level/,
+    "the XP bar is back on Today, beside the run of days it was folded out of",
+  );
+});
+
 check("how much of the app a screen leads with is decided in one place", () => {
   /*
     The feedback that produced `lib/ux/disclosure.ts` was that this app
@@ -7255,25 +7323,39 @@ check("cards become minutes through one rate, measured where the log has one", (
 });
 
 /*
-  The distance on Today and on the exam hub is the plan's, off the same
-  projection, in the plan's own sentence.
+  The distance on the exam hub is the plan's, off the same projection, in the
+  plan's own sentence.
 
-  Today's countdown said how likely a pass was that morning and the hub said
-  how many weeks were left, and neither said whether the pace this learner
-  keeps arrives by then. Both print `distanceLine` over `project` now, built
-  from `standingFor`, the reasons and the measured pace, so a learner cannot
-  read one timeline on the level check screen and another on Today.
+  The hub said how many weeks were left and never whether the pace this learner
+  keeps arrives by then, which is a countdown rather than a decision. It prints
+  `distanceLine` over `project` now, built from `standingFor`, the reasons and
+  the measured pace, so a learner cannot read one timeline on the level check
+  screen and another here.
+
+  BOTH HALVES USED TO BE HERE TWICE. The card was on Today and the hub built the
+  same four figures by hand beside it, so this named two screens. The card moved
+  to the hub in the pass that cut Today to six boxes and the hand-built block
+  went with it, which is why what is asserted is one module and one card rather
+  than two pages.
 */
-check("Today and the exam hub print the plan's distance off the plan's own projection", () => {
+check("the exam hub prints the plan's distance off the plan's own projection", () => {
   const countdown = code("lib/progress/countdown.ts");
   for (const name of ["project(", "distanceLine(", "standingFor(", "foundHours("]) {
     assert.ok(countdown.includes(name), `lib/progress/countdown.ts no longer calls ${name}`);
   }
   assert.match(code("components/ExamCountdown.tsx"), /countdown\.distance/, "the countdown card no longer prints the distance");
+  /*
+    And the card is on a screen. A component nobody renders is a feature nobody
+    has, which is what this whole module keeps finding: it was drawn on Today
+    and the cut had to put it somewhere rather than orphan it.
+  */
   const hub = code("app/(app)/exam/page.tsx");
-  for (const name of ["project(", "distanceLine(", "standingFor(", "measuredPaceFor("]) {
-    assert.ok(hub.includes(name), `the exam hub no longer calls ${name}`);
-  }
+  assert.match(hub, /<ExamCountdownCard/, "the exam hub no longer draws the countdown card");
+  assert.match(hub, /examCountdown\(/, "the exam hub no longer reads the countdown");
+  assert.doesNotMatch(
+    code("app/(app)/page.tsx"), /ExamCountdownCard/,
+    "the exam forecast is back on Today, which is a screen for what to do in the next ten minutes",
+  );
   // Nobody phrases the distance for a screen by hand: the sentence is the plan's.
   const rephrased = ALL.filter((f) =>
     f !== "lib/assessment/plan.ts" && !/\.(i)?test\.ts$/.test(f)
@@ -7908,7 +7990,7 @@ check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
   assert.match(page, /dateLine\(/, "Today no longer reads the Estonian date");
   assert.match(
     page,
-    /lang="et">\{today\.et\}/,
+    /lang="et">\{today\}/,
     'Today prints the Estonian date without lang="et", so a screen reader says it in English',
   );
   assert.match(page, /<LocalDate/, "Today lost its fallback for a build whose locale data has no Estonian");
@@ -9911,6 +9993,134 @@ check("a recorded answer time is one answer, and the pace reading knows it", () 
   );
 });
 
+check("a case is drilled in a sentence that uses it, or it is not drilled", () => {
+  /*
+    A learner reported `ravim → millesse? kuhu?` as pointless and they were
+    right. The card was generated from the fact that the morphology permitted
+    the form: `caseFits` asked whether the word was a person, `caseAnswer`
+    asked whether a form could be built, and where both said yes a card
+    existed. Nothing ever asked whether anybody says it. That was 23,106 cards
+    over 4,664 words with a sentence behind 1,494 of them, and `ravim` had
+    none, because no lexicographer has ever recorded a medicine being gone
+    into. What the card asked for was `sse` attached to a stem.
+
+    Two things hold the fix, and both are in the builder rather than in the
+    prose that used to describe it. The card is built out of a sentence, and
+    the sentence has to name the case on its own: `aadressi` is the short
+    illative, the omastav and the osastav at once, so gapping it where it is a
+    genitive and labelling the card `sisseütlev` would teach the wrong case and
+    write the wrong one into `Review.slot`, which every case figure in the app
+    is derived from.
+  */
+  const builder = code("lib/srs/cards.ts");
+  const caseBlock = builder.slice(
+    builder.indexOf('case "CASE_FORM"'),
+    builder.indexOf('case "GRADATION"'),
+  );
+  assert.ok(caseBlock.length > 0, "lib/srs/cards.ts no longer has a CASE_FORM branch to check");
+
+  assert.match(
+    caseBlock,
+    /naturalSentencesFor\(lex\)/,
+    "lib/srs/cards.ts builds a case card without asking for a sentence to build it out " +
+    "of. That is the `ravim → millesse? kuhu?` fault: a form nobody can be shown " +
+    "using is a form this app cannot teach.",
+  );
+  assert.match(
+    caseBlock,
+    /buildCloze\(/,
+    "lib/srs/cards.ts stopped putting the case card's question in a sentence, so it is " +
+    "back to asking for an ending attached to a stem.",
+  );
+  assert.match(
+    caseBlock,
+    /readCase\(/,
+    "lib/srs/cards.ts labels a case card without checking that exactly one case spells " +
+    "the gapped form that way. `kohvi` is the omastav, the osastav and the short " +
+    "sisseütlev, and a card that guesses between them writes the wrong case into " +
+    "Review.slot.",
+  );
+
+  /*
+    AND THE CHECKLIST ASKS THE BUILDER RATHER THAN THE MORPHOLOGY. Left as
+    "does it have a genitive stem" this advertised a case card on 4,664 words
+    and built one on 914, which is the `objekt` fault: the unit page lists the
+    type, no card appears, and nothing says why.
+  */
+  const available = builder.slice(builder.indexOf("export function availableCardTypes"));
+  assert.doesNotMatch(
+    available,
+    /if \(genSg\) types\.push\("CASE_FORM"\)/,
+    "availableCardTypes offers a case card for any word with a genitive stem again. " +
+    "A stem is what builds the answer; a sentence is what decides whether to ask.",
+  );
+  assert.match(
+    available,
+    /generateCards\(lex, \["CASE_FORM"\]\)\.length > 0/,
+    "availableCardTypes stopped asking the builder whether a case card can be made.",
+  );
+});
+
+check("a card this app can mark is never marked by the learner", () => {
+  /*
+    `TYPEABLE` is the set whose answer is a single Estonian form the dictionary
+    vouches for, and `checkAnswer` compares against it, tells a dropped õ from a
+    wrong word, and names the case the learner reached for instead. All of that
+    was reachable, and one preference in Settings turned every one of those
+    cards into a flip with "Not yet" and "Got it" under it. The verdict then
+    went into `Review`, which is append-only, and the weakest-case panel, the
+    mastery counter, the readiness rungs and the exam confidence figure are all
+    derived from it, so a number this app presents as measured was partly
+    self-reported.
+
+    The daily quest was the sharp end, because it chooses its cards *by* that
+    reading: the panel picking the cards was fed by the round claiming to fix
+    them, on the learner's own say-so.
+  */
+  const session = code("app/(app)/review/ReviewSession.tsx");
+  const askFor = session.slice(session.indexOf("function askFor("));
+  const body = askFor.slice(0, askFor.indexOf("\n}"));
+  assert.match(
+    body,
+    /TYPEABLE\.has\(card\.cardType\)[\s\S]{0,400}return "type"/,
+    "askFor no longer routes a markable card away from the flip. A card whose answer " +
+    "the dictionary vouches for may not end in the learner grading themselves.",
+  );
+  assert.doesNotMatch(
+    body,
+    /mode === "type" && TYPEABLE\.has\(card\.cardType\)/,
+    "askFor is deciding whether to mark a card by a preference again. The preference " +
+    "chooses how the card is asked, never whether the app or the learner marks it.",
+  );
+
+  /*
+    And the quest offers something to answer rather than something to mark.
+    Picking one of four forms of the same word is a tap, exactly as "Had it"
+    was a tap, and it is a measurement; a wrong pick also says which case the
+    learner reached for, which no flip could ever have known.
+  */
+  const quest = code("app/(app)/quest/QuestSession.tsx");
+  assert.match(
+    quest,
+    /card\.choices \?/,
+    "the daily quest stopped offering forms to pick between, so it is back to asking " +
+    "the learner whether they had it on the very cases it selected them for.",
+  );
+  assert.match(
+    quest,
+    /acceptedAnswers\(card\.back, "et"\)/,
+    "the daily quest marks a pick against something other than the spellings the card " +
+    "accepts. A back can be `tuppa / toasse` and both are right.",
+  );
+  const questPool = code("lib/progress/quest.ts");
+  assert.match(
+    questPool,
+    /caseFormChoices\(/,
+    "lib/progress/quest.ts stopped building the options, so every case card in the " +
+    "round falls back to the flip it was supposed to replace.",
+  );
+});
+
 check("a case is named only when one case claims the spelling", () => {
   const src = code("lib/estonian/whichCase.ts");
   assert.match(
@@ -10750,6 +10960,61 @@ check("no text field switches its focus ring off", () => {
     if (/outline(?:Style)?:\s*["']none["']/.test(source)) offenders.push(`${file}: outline: none in a style`);
   }
   assert.deepEqual(offenders, [], "a text field takes the focus ring away, and a keyboard user cannot see where they are typing");
+});
+
+/*
+  A DAY THAT WAS ANSWERED IS NOT A DAY THAT HELD A CONVERSATION.
+
+  Today asks whether any Estonian was spoken to anybody yesterday and takes
+  "not yesterday" for an answer, which is the whole point of the card: it
+  counts the learner's own life rather than this app's homework, and a day
+  with nothing in it is an honest answer to be met with a small errand rather
+  than a figure to be hidden. Both readings of that table print a number of
+  conversations, and both used to count every row, so a fortnight of honest
+  noes would have been reported back on Progress as a fortnight of real
+  conversations and a run of fourteen days, under a heading saying this is the
+  number that matters more than any chart on the page.
+
+  `isConversation` is where that is decided and the two readers may not answer
+  it for themselves. Anchored on the call rather than on today's arithmetic,
+  because the shape of the count is allowed to change and the question it has
+  to ask first is not.
+*/
+check("a conversation is counted by the one rule, never by counting rows", () => {
+  const source = code("lib/progress/outThere.ts");
+  const asks = [...source.matchAll(/\bisConversation\(/g)].length;
+  assert.ok(
+    asks >= 2,
+    `lib/progress/outThere.ts asks isConversation ${asks} times; the panel and the card both have to`,
+  );
+  assert.equal(
+    /total:\s*rows\.length/.test(source), false,
+    "lib/progress/outThere.ts counts every report as a conversation, including the days somebody said there was none",
+  );
+});
+
+/*
+  AND A CONVERSATION THE LEARNER HAD ON THEIR OWN IS NOT OURS TO FILE UNDER AN
+  ERRAND. The card asks about yesterday in general, so the report it writes
+  names no errand: `Encounter.errandId` is nullable for that, and the research
+  export groups that column by the unit an errand drew its words from. Writing
+  today's errand id against a conversation with a neighbour would put a unit's
+  name on a table row that no unit earned, in a file published to people
+  outside this project.
+*/
+check("Today's report names no errand, and the research table says what it covers", () => {
+  assert.match(
+    code("components/SayItToday.tsx"), /recordEncounter\(\s*null\s*,/,
+    "components/SayItToday.tsx credits an errand with a conversation the learner had on their own",
+  );
+  assert.match(
+    code("app/api/research/route.ts"), /"errandId"\s+IS\s+NOT\s+NULL/,
+    "app/api/research/route.ts groups reports by unit without excluding the ones that name no errand",
+  );
+  assert.match(
+    read("lib/research/sections.ts"), /REPORTS TIED TO AN ERRAND/,
+    "the encounters section no longer tells a reader that it counts errands rather than conversations",
+  );
 });
 
 console.log(

@@ -89,12 +89,38 @@ is: it would be this app writing Estonian and the scheduler drilling it.
 
 **A conversation outside the app is the number the app is measured by, and it is a fact the learner
 reports.** `lib/collections/errands.ts` names one errand a day by unit id, never by word, the way
-the seasonal row does, and `recordEncounter` stores one of three words about it: understood,
-switched to English, did not manage it. `Encounter` is append-only and the fourth exception to
-"progress is derived" (ADR-027). Progress leads with it, beside the readiness reading of the
-course's own "you can do this" claims (ADR-026). The research export publishes it under the same
-gate as everything else and labelled as self-reported. Nothing about it is a streak that punishes
-a day without one.
+the seasonal row does, and `recordEncounter` stores one of three words. `Encounter` is append-only
+and the fourth exception to "progress is derived" (ADR-027). Progress leads with it, beside the
+readiness reading of the course's own "you can do this" claims (ADR-026). The research export
+publishes the errands under the same gate as everything else and labelled as self-reported.
+Nothing about it is a streak that punishes a day without one.
+
+**The question is about the learner's day rather than about our errand, and it is asked about a day
+that is over.** The card used to set the errand in the morning and put the three answers under it,
+which asked for a report on something that had not happened yet: at eight in the morning those are
+not three answers, they are three ways to make a card go away. And it could only see the
+conversations this app had set, so somebody who spent an hour with their Estonian mother-in-law and
+ignored the errand was recorded as having done nothing, in the one number this app says it is
+measured by. So Today asks whether any Estonian was spoken to anybody yesterday, and offers the
+errand where the answer is no, which is also the only kind moment to offer one (ADR-027 amendment 1).
+
+Two things follow and both are asserted. **`Encounter.errandId` is nullable and Today writes none**,
+because a conversation with a neighbour is not this app's to file under a unit and the research
+export groups that column by the unit an errand drew its words from; that table now says out loud
+that it covers the reports tied to an errand rather than speaking for all of them. And **a day that
+was answered is not a day that held a conversation**: `isConversation` is the one place that is
+decided, both readings in `lib/progress/outThere.ts` ask it, and counting rows instead would report
+a fortnight of honest noes back as a fortnight of real conversations and a run of fourteen days, on
+the panel whose own heading says it matters more than any chart on the page.
+
+**And eighteen errands is thin for the days the answer is no.** Thirteen are A1 and five A2, none
+above, and the pool is filtered to the units a deck has started: four on a starter deck, thirteen
+with A1 finished, eighteen for ever after. The walk is `dayIndex`, so the repeat interval is the
+pool size exactly. That is survivable while the errand appears on a minority of days and it is not
+a table to build a screen out of that shows several days at once. What it needs before it grows is
+somebody who knows how an Estonian counter actually works, in the shape `docs/20-contributed-sentences.md`
+already describes, and a B1 tier that does not exist: holding the line when they switch, asking a
+follow-up, explaining why you were late.
 
 **Never write Estonian.** Not morphology, not example sentences. Forms come from Ekilex or the
 seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
@@ -131,6 +157,23 @@ Three things are **not** covered by this and should not be "fixed": an English c
 table of Estonian ("Case", "Singular"), the English prose that explains a point, and the topic ids
 in URLs. The ids are keys that 83 syllabus entries and any bookmarked link point at, and renaming
 them buys a slug and risks the course.
+
+**And on the reference itself, the ending leads both names.** The rule above is about which of two
+*names* comes first, and the grammar pages had answered it and then put the name at the top of every
+card anyway, over four paragraphs a case. A learner mid-sentence is not looking for the inessive and
+is not looking for the seesütlev either; they are looking for -s, and for the one English word it
+means. So `CaseNote.plain` is that word ("in", "out of", "with"), a card is the ending, the meaning,
+one line, and both names under it in small type, and the page opens with one real word out of the
+dictionary wearing all eleven endings, built by `buildCaseTable` and never typed. The groups are
+headed by what the endings do, "Inside", "On top", with the endings read off the group's own keys
+by `groupEndings` rather than typed into the title, because a heading is set in `label-xs` and that
+uppercases: "-sse" reached the screen as "-SSE", which no Estonian word ends in. The same rule
+holds the case page's eyebrow and the table header, and it is `Chip`'s `caseSensitive` rule one
+level up. Every field in `grammar.ts` has a ceiling now beside its floor, since the floors were all
+met by the version somebody reported as unreadable: a floor stops a field being empty and says
+nothing about the paragraph growing back into it. Nothing about the invariants moved: the Estonian
+name and the question are still on every card and every page, and the Latin name is still there,
+labelled, on the page for the ending.
 
 **Knowing a word exists is a different job from teaching it, and thirty-two requests buys the
 first.** The dictionary ships 5,363 entries and every other Estonian word came back as "nothing
@@ -750,6 +793,75 @@ gradates too, `andma` is `nd : nn`, and it shows in the present stem rather than
 units of verbs would have advertised a card the generator cannot build. And it is why the landing
 page's FAQ no longer says all three hard parts "get a card of their own": gradation and government
 do, and the whole-or-partial object has a unit and a grammar page.
+
+**A case is drilled in a sentence that uses it, or it is not drilled.** The card asked
+`ravim → millesse? kuhu?` and took `ravimisse`, and a learner reported it as pointless. They were
+right, and the fault was not the wording. The card was generated from the fact that the morphology
+*permits* the form: `caseFits` asks whether the word is a person, `caseAnswer` asks whether a form
+can be built, and where both said yes a card existed. Nothing ever asked whether anybody says it.
+That was **23,106 case cards over 4,664 words**, about five each, and the dictionary could show a
+sentence for 1,494 of them; 3,357 of those words had none at all, and 2,799 of the cards were on
+adjectives, where the question barely means anything in English either. `ravim` had none, because
+no lexicographer has ever recorded a medicine being gone into, and what the card actually asked for
+was `sse` attached to a stem.
+
+A form nobody can be shown using is a form this app cannot teach, so the sentence is the card now
+and a case with no sentence behind it builds nothing. The learner produces the form because a
+sentence needs it, which is the only reason anybody ever produces a case.
+
+**The sentence has to name the case on its own, too.** `aadressi` is the short sisseütlev, the
+omastav and the osastav all at once, so gapping it out of a sentence where it is a genitive and
+labelling the card `sisseütlev` would teach the wrong case and write the wrong one into
+`Review.slot`, which `caseAccuracy`, the weakest-case panel and every case figure in the app are
+derived from. `readCase` is the strict rule that already existed for exactly this and it is the one
+read here: exactly one case, or no card. That is what takes 1,494 to **996 cards over 914 words**,
+and the 498 it refuses are the ones nothing could have told apart.
+
+**It is not a second `CLOZE`.** A cloze gaps whatever form the sentence happens to hold; this picks
+the sentence *for* a case and carries `targetCase`. Both read one `naturalSentencesFor`, because a
+second copy of what counts as a sentence is where the two stop agreeing. The cue is the word and
+its meaning and never the case, on the CLOZE ladder, since `sisseütlev` printed beside `ravim`
+before the answer is `ravimisse` written out in two pieces: the case travels on `targetCase`, where
+the reveal reads it, which is the order `explainGap` already takes.
+
+`availableCardTypes` asks the builder rather than the morphology for the same reason, or the type
+is advertised on 4,664 words and built on 914, which is the `objekt` fault. One unit lost the card,
+`omadussonad`, and that is the right one to lose: not one of its twenty adjectives has a usage in
+any case (`kallis` has `Tere, kallis!`, `Kallid sõbrad!` and `Kallis taevas!`, the nominative three
+times), and that unit's own `canDo` is that an adjective agrees with *its noun*, which a bare
+`suur → millesse?` is precisely that noun taken away.
+
+**And a card this app can mark is never marked by the learner.** The same card ended in "Not yet"
+and "Got it". `TYPEABLE` is the set whose answer is a single Estonian form the dictionary vouches
+for, `CASE_FORM` has always been in it, and `checkAnswer` compares against it, tells a dropped õ
+from a wrong word and names the case the learner reached for instead. All of that was reachable,
+and one preference in Settings turned every one of those cards into a flip. So the app held the
+answer, could have marked it, and asked the learner to mark it.
+
+That is not only a weaker question. The verdict goes into `Review`, which is append-only, and the
+weakest-case panel, the mastery counter, the readiness rungs and the exam confidence figure are all
+derived from it, so a number this app presents as measured was partly self-reported. The daily
+quest is the sharp end, because it picks the cases a learner is worst at and then let them mark
+their own paper on exactly those: the panel choosing the cards was being fed by the round claiming
+to fix them, on the learner's own say-so.
+
+**The preference is honoured; the marking is not handed back.** "I would rather not type" is a real
+thing to want and typing on a phone is most of why, and the quest's own argument is sound too, that
+two minutes of typing is about eight cards and the round is about volume across a weakness. What
+was never true is that self-grading is the only thing that is as fast. Picking one of four is a
+tap, exactly as "Got it" was a tap, and it is a measurement. `lib/questions/caseChoices.ts` is
+that, and it needs no pool and no query beyond the word's own forms: the wrong answers are `toast`,
+`toasse` and `toale` against `toas`, which is the confusion the round exists for, ranked by
+`formNearness`, which the mock exam and the level check already use for a form and whose own
+comment describes this pool. An accepted spelling is never offered as a wrong one, or a card whose
+back is `tuppa / toasse` would mark a learner wrong for the other true answer. A wrong pick also
+says which case they reached for, so it lands in `Review.reachedSlot` as the confusion it is, which
+a flip could never populate because a flip never learns what they were thinking.
+
+Where a card cannot be given options the honest answer is to ask for it typed rather than to hand
+the marking back. The flip survives where there is genuinely nothing to compare: a government card,
+whose answer is a gloss rather than a form, and speaking, where ADR-018 says the learner is the only
+judge there is.
 
 **Which forms a gap-fill may hide is one answer, and it was five.** `buildCloze` hides a word it is
 told to look for, so what it can hide is whatever list the caller hands it. Two callers, the lesson
@@ -2996,16 +3108,56 @@ of their own, since a second answer to "has this learner started yet" is how the
 **And then the rule over-reached, and day one paid for it.** "A figure computed from an empty log"
 is a streak of nought, a goal ring at nought percent and a level bar at 40 XP, and those are still
 held back. It is not the word of the day, which is a dictionary lookup keyed on the date and reads
-the same on the first morning as in the second year, and it is not the practice tiles, which are
-doors rather than measurements. Both were withheld anyway on the strength of not being the review
-button, so `arriving` was two cards on an otherwise empty page, which a learner reads as an app with
-nothing in it. Restraint that leaves a screen looking broken is not restraint. The test a panel has
-to pass is "does this say something true and useful on a log with nothing in it".
+the same on the first morning as in the second year. It was withheld anyway on the strength of not
+being the review button, so `arriving` was two cards on an otherwise empty page, which a learner
+reads as an app with nothing in it. Restraint that leaves a screen looking broken is not restraint.
+The test a panel has to pass is "does this say something true and useful on a log with nothing in
+it".
+
+**And the table answers a question about the learner, which is not the question the page asks.**
+`shows` says whether a panel is worth drawing at all. It cannot say whether a panel is worth one of
+the six boxes on the one screen everybody opens, and Today was drawing everything a stage allowed:
+fourteen cards on a settled morning. The daily quest and the game of the day both said "press
+something short". The sticking points and the weakest cases were a second drawing of two sections
+Progress already has under their own headings, and one of them, `StruggleAreas`, described itself
+in its own header as "a heading and a link". Three quest meters and an XP bar reported how much had
+been done, which is what Progress is for. Six practice tiles were a menu on a screen whose job is a
+thing to press. The exam countdown was a forecast the hub prints in full. And a standing pitch for
+Anu sat under a button that is in the corner of every signed-in screen, which is the argument
+`lib/ux/nav.ts` already makes about refusing her a rail row. None of those is wrong on its own. All
+of them together is a page somebody scrolls rather than reads, reported as "way too busy" by
+somebody using it.
+
+So `TODAY_CARDS` is five, the page names its cards in priority order and draws the first five under
+the hero, and six is the whole screen. The order is the argument and it is what to do today: what
+to say to a real person, what is actually on today, the one short round, the run of days, a word,
+and then the course. What came off moved rather than went: the XP bar and the three quests are on
+Progress beside the ring that already carried the level, the countdown card is on the examination
+hub in place of the block that was hand-building the same four figures beside it, and the sticking
+points and the weakest cases were already there, which is why `StruggleAreas` was deleted rather
+than moved. Everything else is in the rail, in the palette and on its own page, exactly as with the
+table above.
+
+**One round a day, and the week table already decided which.** The quest card and the game card were
+two cards for one decision, and `lib/ux/weekGames.ts` had answered it in the only place it can be
+answered: Sunday is `/quest`. So they are one slot. Six days the table names a game and that is the
+round; on the seventh the quest is, and only then is the weakest case worth the query behind it,
+which takes three queries and a dictionary read off every other render of this page. The invariant
+is on the *slot* rather than on either card, because two rounds on this page is what the cap was
+added to stop.
+
+**The cap fails on the shape that rots, which is not the constant.** Nobody lowers `TODAY_CARDS` by
+accident. What happens is somebody adds `{newCard}` beside the sliced array, which reads as a card
+being added and is a card that cannot be cut, so what is asserted is that every child of `Columns`
+on that page comes out of the one expression the cap is applied to. Made to fail three ways before
+it was trusted: a card drawn loose beside the list, the `slice` deleted, and the quests orphaned on
+their way to Progress.
 
 **Today is a dashboard, and its modules are declared before they are placed.** What a card is and
 where it sits are two questions, and they were one six-hundred-line return statement with a
 `shows()` wrapped round each branch. The page names each module, then lays them out, and the layout
-is one card across the top and the rest dealt into two columns that end level. The card across the
+is one card across the top and at most `TODAY_CARDS` of the rest dealt into two columns that end
+level. The card across the
 top is the thing to do now, because it is the only card that is not one of several; on a wide
 screen it is a row, the figures on the left and the button on the right, so a wide card is not a
 wide empty card with a button in it, and on the first morning, where there are no figures worth
@@ -3021,9 +3173,9 @@ first column and then the second and balances the two by height, which is the on
 cannot do, since it knows which cards there are this morning and not how tall the word of the day
 turned out; a card never splits across the seam, and the wrapper carries the rhythm as padding
 rather than margin because a margin at a column break is truncated and a padding is not. Reading
-order is still the argument and is unchanged: down the first column and into the second it reads
-the two you can act on, what today holds, what keeps going wrong, the run of days, and then the
-material, and where the seam falls between those is the one thing the browser decides.
+order is still the argument: down the first column and into the second it reads the errand, what
+today holds, the one short round, the run of days, a word, and then the course, and where the seam
+falls between those is the one thing the browser decides.
 
 **One word a day, chosen by the date, that nothing else on the page was going to show you.** Every
 other panel on Today reports on the learner's own deck, so every one of them is silent on the first
@@ -3970,10 +4122,12 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   names and the twelve month names are in every course's first fortnight, and a date is the one
   piece of Estonian that needs no gloss to be useful, because the reader already knows what today
   is: they are matching a word they have against a word they are learning, which is how a weekday
-  name is learned anywhere. So it leads `kolmapäev, 2. september` and keeps the English weekday
-  beside it as the cross-reference, the same shape every grammar screen takes with the Latin case
-  names, and that English is **pinned** rather than the reader's, because it is a gloss and every
-  other gloss in this app is English. `lib/time/estonianDate.ts` reads both out of CLDR, which is an
+  name is learned anywhere. So it reads `kolmapäev, 2. september` and **nothing else**. It carried
+  the English weekday beside it as a cross-reference for a while, the shape every grammar screen
+  takes with the Latin case names, and a date is the one place that shape buys nothing: the reason
+  this line can teach at all is that the reader already knows what day it is, so the gloss answers
+  a question nobody had and takes with it the guess that does the teaching.
+  `lib/time/estonianDate.ts` reads it out of CLDR, which is an
   attested source in the sense Ekilex is and not a string anybody typed, so ADR-005 is kept the way
   the almanac keeps it: delete the two Estonian words from that file's comments and its output is
   identical. A build whose locale data has no Estonian **says nothing rather than English**, since
@@ -4699,7 +4853,9 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `distanceLine`, `minutesForCards`, `describeSituation`, `conditionFor`, `describeHearing`,
 `playThrough`, `errandForDay`, `recordEncounter`, `outThere`, `reachedSlot`, `reachedFor`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
-`lacksFiniteVerb`, `answerForms`, `plainAsk`, `plainAskFor`, `conjugationSlotFromFront`. Most of them now
+`TODAY_CARDS`, `weakestCase`, `roundCard`,
+`lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
+`conjugationSlotFromFront`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
