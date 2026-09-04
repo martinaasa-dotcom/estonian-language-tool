@@ -1,5 +1,8 @@
-import { PRE_A1, type Band, type Level } from "./types";
+import { BANDS, PRE_A1, type Band, type HourRange, type Level } from "./types";
 import { rank } from "./score";
+import type { Reason } from "./goals";
+
+export type { HourRange } from "./types";
 
 /**
  * How long this is actually going to take.
@@ -10,49 +13,105 @@ import { rank } from "./score";
  * answer is measured in hundreds of hours. Saying so on day one costs a few
  * sign-ups and saves the ones who stay from finding out in March.
  *
- * Every number below is somebody else's published estimate, named where it is
- * used, and given as a range because that is how they are published. None of it
- * is measured on this app's own learners, and the copy says that too. Once
- * there is a review log to read, the app can stop quoting averages and start
- * quoting the learner: `lib/stats/` already computes the real pace.
+ * Unflattering is not the same as one number for everybody, and for a while it
+ * was. The plan quoted one table, assumed the same five found hours a week of
+ * somebody in Tartu with an Estonian partner and somebody in Leeds with a
+ * textbook, built on a level a learner had guessed in ninety seconds as though
+ * a paper had measured it, and never once read the review log its own header
+ * promised it would. So a B1 speaker was told B2 was as far off as a stranger
+ * would find it, and a beginner living inside the language was told to go and
+ * find a class. Every figure now says which of four things it rests on:
+ *
+ *   - the **published hours** between two levels, with the Estonian surcharge
+ *     put where the difficulty actually is rather than spread evenly;
+ *   - where the learner **stands**, measured skill by skill where a check was
+ *     sat and widened where the level is their own guess;
+ *   - what their **week already holds**, read off the reasons they gave;
+ *   - and their **own pace**, off the review log, once there is one to read.
+ *
+ * Nothing here is measured on this app's learners as a population, and the
+ * copy says that too. What is measured is the one learner in front of it.
  *
  * Pure arithmetic and constants. No React, no database.
  */
 
-export interface HourRange {
-  low: number;
-  high: number;
+/**
+ * Cumulative guided learning hours to each level, as published for the CEFR.
+ *
+ * The figures usually quoted, and quoted for a European language close to
+ * English: roughly 90 to 100 hours to A1, 180 to 200 to A2, 350 to 400 to B1,
+ * 500 to 600 to B2 and 700 to 800 to C1.
+ */
+export const GUIDED_LEARNING_HOURS: Record<Band, HourRange> = {
+  A1: { low: 90, high: 100 },
+  A2: { low: 180, high: 200 },
+  B1: { low: 350, high: 400 },
+  B2: { low: 500, high: 600 },
+  C1: { low: 700, high: 800 },
+};
+
+/**
+ * How much harder each step is in Estonian than in the language those hours
+ * were published for.
+ *
+ * The scale comes from the US Foreign Service Institute, which groups Estonian
+ * with Finnish and Hungarian and budgets about 1 100 classroom hours to
+ * professional working proficiency against about 600 for French or Spanish.
+ * The first version of this table applied that ratio evenly, near double at
+ * every band, and that is not where the difficulty lives. What makes Estonian
+ * slow is the morphology: fourteen cases, consonant gradation, the partial
+ * object, and all of it has to be in place before anybody holds a
+ * conversation. That is the A2 and B1 stretch. A1 is greetings, numbers and
+ * the shop in any language, and it is only a little dearer here; and the step
+ * from B1 to B2 is mostly vocabulary, register and reading stamina, which
+ * cost about what they cost in French once the grammar underneath them works.
+ * C1 is long everywhere, and Estonian's long tail of derivation and idiom is
+ * genuinely longer, so the surcharge climbs again at the top.
+ *
+ * So the factor peaks at B1 and dips at B2, and the shape is asserted rather
+ * than remembered. It is a judgement over published figures, stated as one;
+ * nothing published gives the ratio band by band. The whole climb still lands
+ * within the FSI ratio, which is what keeps it a reading of that source and
+ * not a replacement for it.
+ */
+export const ESTONIAN_FACTOR: Record<Band, HourRange> = {
+  A1: { low: 1.1, high: 1.4 },
+  A2: { low: 1.5, high: 1.8 },
+  B1: { low: 1.6, high: 1.9 },
+  B2: { low: 1.3, high: 1.5 },
+  C1: { low: 1.7, high: 2.0 },
+};
+
+/** Rounded to the nearest ten hours. A table in units of one is false precision. */
+const ROUND_HOURS = 10;
+
+function buildCumulative(): Record<Band, HourRange> {
+  const out = {} as Record<Band, HourRange>;
+  let low = 0;
+  let high = 0;
+  let previous: HourRange = { low: 0, high: 0 };
+  for (const band of BANDS) {
+    const published = GUIDED_LEARNING_HOURS[band];
+    const factor = ESTONIAN_FACTOR[band];
+    low += (published.low - previous.low) * factor.low;
+    high += (published.high - previous.high) * factor.high;
+    previous = published;
+    out[band] = {
+      low: Math.round(low / ROUND_HOURS) * ROUND_HOURS,
+      high: Math.round(high / ROUND_HOURS) * ROUND_HOURS,
+    };
+  }
+  return out;
 }
 
 /**
  * Cumulative study hours to reach each level, for an English speaker learning
- * Estonian.
- *
- * Two published sources, neither of which is about Estonian and CEFR at once,
- * so they are combined and the range is left wide.
- *
- * The shape comes from the guided-learning-hours estimates published for the
- * CEFR levels, commonly quoted as roughly 90 to 100 hours to A1, 180 to 200 to
- * A2, 350 to 400 to B1, 500 to 600 to B2 and 700 to 800 to C1. Those are for a
- * European language close to English.
- *
- * The scale comes from the US Foreign Service Institute, which groups Estonian
- * with Finnish and Hungarian in its harder category and budgets about 1 100
- * classroom hours to reach professional working proficiency, against about 600
- * for French or Spanish. Estonian therefore sits near the top of every band
- * rather than the middle, which is why the numbers here are close to double the
- * quoted CEFR figures at the upper levels.
+ * Estonian: the published hours with the factor above applied step by step.
  *
  * These are hours of *study*, not hours in this app. That distinction is the
  * whole reason the projection below separates the two.
  */
-export const CUMULATIVE_HOURS: Record<Band, HourRange> = {
-  A1: { low: 100, high: 160 },
-  A2: { low: 220, high: 330 },
-  B1: { low: 450, high: 650 },
-  B2: { low: 750, high: 1000 },
-  C1: { low: 1100, high: 1500 },
-};
+export const CUMULATIVE_HOURS: Record<Band, HourRange> = buildCumulative();
 
 /** Hours already behind a learner at a level. Nothing, below A1. */
 function hoursAt(level: Level): HourRange {
@@ -60,12 +119,106 @@ function hoursAt(level: Level): HourRange {
   return CUMULATIVE_HOURS[level];
 }
 
-/** The study still to do between two levels. Zero when the target is passed. */
+/**
+ * The study still to do between two levels. Zero when the target is passed.
+ *
+ * Low against low and high against high, deliberately. A learner who reached
+ * B1 in the fewer hours is the learner who will reach B2 in the fewer hours,
+ * so the honest range for the step is the difference of the ends and not the
+ * difference of the extremes, which would say a B1 speaker might be anywhere
+ * from 100 to 550 hours off B2 and mean nothing.
+ */
 export function hoursBetween(from: Level, to: Band): HourRange {
   if (rank(from) >= rank(to)) return { low: 0, high: 0 };
   const start = hoursAt(from);
   const end = CUMULATIVE_HOURS[to];
   return { low: Math.max(0, end.low - start.low), high: Math.max(0, end.high - start.high) };
+}
+
+/** The level one band down, and below A1 there is nowhere further to go. */
+function bandBelow(level: Level): Level {
+  if (level === PRE_A1) return PRE_A1;
+  const i = BANDS.indexOf(level);
+  return i <= 0 ? PRE_A1 : BANDS[i - 1]!;
+}
+
+/**
+ * Where a learner stands, and how the app knows.
+ *
+ * A level is the same letter whether a paper measured it or a stranger ticked
+ * it on their first evening, and the plan used to treat the two identically.
+ * They are not worth the same. A measured check also carries what the overall
+ * hides: the per skill levels, and a learner who reads at B2 and listens at A1
+ * is not a B1 with B1's distance to cover.
+ */
+export interface Standing {
+  level: Level;
+  /**
+   * `measured` is a placement check this app sat; `estimated` is the learner's
+   * own reading of themselves, or nothing at all, in which case the level is
+   * below A1 and the guess is the app's.
+   */
+  source: "measured" | "estimated";
+  /**
+   * The scored skills' own levels, on a measured standing. Speaking is never
+   * among them (ADR-018). Absent or empty, the overall stands for all of them.
+   */
+  skills?: readonly Level[];
+}
+
+/**
+ * The study between where somebody stands and a target, read the way the
+ * standing deserves.
+ *
+ * **Measured, skill by skill.** A level is the average of three measured
+ * skills taken down to a band, and the hours to a target are the mean of the
+ * hours each skill still has to cover, a skill already past the target
+ * contributing none. For an even profile that is exactly `hoursBetween`. For
+ * an uneven one it is three real distances averaged rather than one distance
+ * from a level nobody is actually at, and it lands on either side of the
+ * plain figure depending on the profile: a skill already at the target pulls
+ * it down because that part is done, a skill far behind pulls it up because
+ * the exam asks for all of it.
+ *
+ * **Estimated, widened downward only.** People place themselves within about
+ * a band of where a paper puts them, more often above it at the lower levels.
+ * So the near end of the range is taken at face value and the far end allows
+ * for a start half a band lower. Only the far end, because a plan that quietly
+ * shortened the distance for an optimistic guess would be flattering exactly
+ * the learner most likely to be wrong, and a plan that lengthened both ends
+ * would be calling every self-assessment a lie.
+ *
+ * Zero in both directions once the overall is at or past the target, whatever
+ * the skills say: "arrived" is a claim about the level, and the level is the
+ * overall.
+ */
+export function hoursFor(standing: Standing, to: Band): HourRange {
+  if (rank(standing.level) >= rank(to)) return { low: 0, high: 0 };
+
+  if (standing.source === "measured") {
+    const skills = standing.skills ?? [];
+    if (skills.length === 0) return hoursBetween(standing.level, to);
+    let low = 0;
+    let high = 0;
+    for (const skill of skills) {
+      const h = hoursBetween(skill, to);
+      low += h.low;
+      high += h.high;
+    }
+    return { low: low / skills.length, high: high / skills.length };
+  }
+
+  const stated = hoursBetween(standing.level, to);
+  const lower = hoursBetween(bandBelow(standing.level), to);
+  return { low: stated.low, high: (stated.high + lower.high) / 2 };
+}
+
+/** True when the skills moved the distance off the plain table, so the screen can say why. */
+export function countedBySkill(standing: Standing, to: Band): boolean {
+  if (standing.source !== "measured" || !standing.skills?.length) return false;
+  const plain = hoursBetween(standing.level, to);
+  const bySkill = hoursFor(standing, to);
+  return plain.low !== bySkill.low || plain.high !== bySkill.high;
 }
 
 export type Verdict =
@@ -75,6 +228,13 @@ export type Verdict =
   | "comfortable"
   /** It fits, but only if nothing slips. */
   | "tight"
+  /**
+   * It fits only if the Estonian already around the learner is actually used.
+   *
+   * Reachable only where a week holds more than the baseline, since a week
+   * holding exactly the baseline has one figure and nothing between the two.
+   */
+  | "possible"
   /** It does not fit, and pretending otherwise helps nobody. */
   | "short"
   /** No deadline was given, so there is nothing to fit into. */
@@ -83,19 +243,82 @@ export type Verdict =
   | "passed";
 
 /**
- * The study a normal week absorbs outside this app.
+ * The study a normal week absorbs outside this app when nothing in the
+ * learner's life supplies any: a class and some reading.
  *
- * A class and some reading, which is what a life with a language in it looks
- * like for most people. It is the figure the plan offers as the realistic
- * addition, and it is also where the line between "it fits" and "not by that
- * date" is drawn, so it lives here rather than being typed into the copy: a
- * headline saying the plan fits and a sentence under it quoting a different
- * number were two answers to one question, and the sentence was right.
+ * It is the figure the plan offers as the realistic addition to somebody
+ * abroad with a textbook, and the floor under everybody else. Where the line
+ * between "it fits" and "not by that date" is drawn used to be this number for
+ * every learner, so it lived here rather than in the copy. It still lives
+ * here, and the line is now drawn at `foundHours`, which starts from it.
  */
 export const FOUND_HOURS_PER_WEEK = 5;
 
+/**
+ * Hours a week of Estonian the learner's own situation puts within reach,
+ * from the reasons they gave.
+ *
+ * The largest counts whole and each further one counts half, because the same
+ * evening is not spent twice: somebody who lives here and has an Estonian
+ * partner is talking to the same neighbours their partner introduced them to.
+ * Nothing chosen is nothing offered.
+ */
+export function weeklyExposure(reasons: readonly Reason[]): HourRange {
+  const ranked = [...reasons].map((r) => r.exposure).sort((a, b) => b.high - a.high || b.low - a.low);
+  let low = 0;
+  let high = 0;
+  ranked.forEach((e, i) => {
+    const weight = i === 0 ? 1 : 0.5;
+    low += e.low * weight;
+    high += e.high * weight;
+  });
+  return { low, high };
+}
+
+/**
+ * Hours a week of Estonian beyond this app that this learner's week can hold:
+ * the class and reading anybody can go and find, plus whatever their life
+ * already supplies. A range, because the exposure is one.
+ */
+export function foundHours(reasons: readonly Reason[]): HourRange {
+  const exposure = weeklyExposure(reasons);
+  return { low: FOUND_HOURS_PER_WEEK + exposure.low, high: FOUND_HOURS_PER_WEEK + exposure.high };
+}
+
+/**
+ * What the review log says about how much of this app a learner actually does.
+ *
+ * Measured by `lib/stats/pace.ts` off the timestamps and durations of real
+ * reviews, never asked for. A stated pace is a hope and this is a record.
+ */
+export interface MeasuredPace {
+  /** Hours a week spent answering in this app, over the window. */
+  hoursPerWeek: number;
+  /** Days a week with at least one review in them, over the window. */
+  daysPerWeek: number;
+  /** How many weeks the reading covers. */
+  weeks: number;
+}
+
+/**
+ * Weeks of log before the app trusts it over what the learner said.
+ *
+ * Two, because one week is a holiday or a bad one, and the pace shown back to
+ * somebody is a claim about them. Below it the stated pace stands and the
+ * screen says so.
+ */
+export const MIN_PACE_WEEKS = 2;
+
+export type PaceSource =
+  /** What the learner said they would do, because there is no log yet to read. */
+  | "stated"
+  /** What the log says they did. */
+  | "measured"
+  /** The log covers the window and holds nothing, so the stated pace stands, flagged. */
+  | "lapsed";
+
 export interface PlanInput {
-  from: Level;
+  standing: Standing;
   to: Band;
   /** The daily goal, in review minutes. */
   minutesPerDay: number;
@@ -103,15 +326,20 @@ export interface PlanInput {
   daysPerWeek: number;
   /** Weeks until the deadline. Null when there is no deadline. */
   weeksAvailable: number | null;
+  /** Hours a week of Estonian beyond this app the learner's week holds. `foundHours` builds it. */
+  found: HourRange;
+  /** The learner's own pace off the log, or null before there is one. */
+  pace?: MeasuredPace | null;
 }
 
 export interface Projection {
-  from: Level;
+  standing: Standing;
   to: Band;
-  /** Study hours between the two levels, from the table above. */
+  /** Study hours between where they stand and the target, read the way the standing deserves. */
   hours: HourRange;
   /**
-   * Hours a week the learner's stated pace puts into this app.
+   * Hours a week this app gets: the learner's measured pace where the log
+   * covers enough weeks, their stated pace otherwise.
    *
    * Exact, not rounded. Everything below divides by it, and a figure rounded
    * for a tile is a figure that lies when it is used as a divisor: at three
@@ -121,12 +349,22 @@ export interface Projection {
    * question about a screen, so `PlanPanel` answers it.
    */
   appHoursPerWeek: number;
+  paceSource: PaceSource;
+  /** Weeks the measured pace was read over. Null when the pace is the stated one. */
+  paceWeeks: number | null;
   /** Weeks to the target if the app were the only study. It will not be. */
   weeksOnAppAlone: HourRange;
   /** Hours the app will contribute inside the deadline. Exact, as above. */
   appHoursAvailable: number | null;
   /** Study hours a week still to find elsewhere, to make the deadline. */
   otherHoursPerWeek: HourRange | null;
+  /** The found hours the verdict was drawn against, so the copy quotes the same figure. */
+  found: HourRange;
+  /**
+   * Weeks to the target at the app's pace plus the found hours: the near end
+   * with everything the week can hold, the far end with the least of it.
+   */
+  weeksWithFound: HourRange;
   verdict: Verdict;
 }
 
@@ -143,18 +381,40 @@ export interface Projection {
  * screen, and nothing here rounds on the way to a division.
  */
 export function project(input: PlanInput): Projection {
-  const hours = hoursBetween(input.from, input.to);
+  const { standing, to, found } = input;
+  const hours = hoursFor(standing, to);
   const daysPerWeek = Math.min(7, Math.max(1, input.daysPerWeek));
-  const appHoursPerWeek = (Math.max(0, input.minutesPerDay) * daysPerWeek) / 60;
+  const stated = (Math.max(0, input.minutesPerDay) * daysPerWeek) / 60;
+
+  /*
+    The log outranks the promise once it covers enough weeks to be a record
+    rather than a mood. A window with nothing in it is a fact too, and a
+    different one from "no log yet": the stated pace stands, and the screen
+    says it is standing in for a fortnight that held nothing.
+  */
+  const pace = input.pace ?? null;
+  const measured = pace !== null && pace.weeks >= MIN_PACE_WEEKS;
+  const paceSource: PaceSource = !measured ? "stated" : pace.hoursPerWeek > 0 ? "measured" : "lapsed";
+  const appHoursPerWeek = paceSource === "measured" ? pace!.hoursPerWeek : stated;
+  const paceWeeks = measured ? pace!.weeks : null;
 
   const weeksOnAppAlone: HourRange = appHoursPerWeek > 0
     ? { low: Math.ceil(hours.low / appHoursPerWeek), high: Math.ceil(hours.high / appHoursPerWeek) }
     : { low: 0, high: 0 };
 
-  if (rank(input.from) >= rank(input.to)) {
+  // The fastest and the slowest the week could go: every found hour used, and the fewest.
+  const weeksWithFound: HourRange = {
+    low: weeksNeeded(hours, appHoursPerWeek, found.high).low,
+    high: weeksNeeded(hours, appHoursPerWeek, found.low).high,
+  };
+
+  const common = { standing, to, hours, appHoursPerWeek, paceSource, paceWeeks, found, weeksWithFound };
+
+  if (rank(standing.level) >= rank(to)) {
     return {
-      from: input.from, to: input.to, hours, appHoursPerWeek,
+      ...common,
       weeksOnAppAlone: { low: 0, high: 0 },
+      weeksWithFound: { low: 0, high: 0 },
       appHoursAvailable: input.weeksAvailable === null ? null : 0,
       otherHoursPerWeek: null,
       verdict: "arrived",
@@ -162,10 +422,7 @@ export function project(input: PlanInput): Projection {
   }
 
   if (input.weeksAvailable === null) {
-    return {
-      from: input.from, to: input.to, hours, appHoursPerWeek, weeksOnAppAlone,
-      appHoursAvailable: null, otherHoursPerWeek: null, verdict: "open",
-    };
+    return { ...common, weeksOnAppAlone, appHoursAvailable: null, otherHoursPerWeek: null, verdict: "open" };
   }
 
   /*
@@ -176,10 +433,7 @@ export function project(input: PlanInput): Projection {
     can act on. The honest answer is that the date is behind them.
   */
   if (input.weeksAvailable <= 0) {
-    return {
-      from: input.from, to: input.to, hours, appHoursPerWeek, weeksOnAppAlone,
-      appHoursAvailable: 0, otherHoursPerWeek: null, verdict: "passed",
-    };
+    return { ...common, weeksOnAppAlone, appHoursAvailable: 0, otherHoursPerWeek: null, verdict: "passed" };
   }
 
   const weeks = input.weeksAvailable;
@@ -191,30 +445,29 @@ export function project(input: PlanInput): Projection {
 
   /*
     The bands are drawn where a person's week actually breaks, and they are
-    drawn at the pessimistic end of the range, because "it fits" is a claim and
-    a claim is only worth making about the whole range. Nothing more to find is
-    "comfortable". Everything still inside FOUND_HOURS_PER_WEEK is a class and
-    some reading, which is a normal life with a language in it. Past that, on
-    top of a job, is not a plan, it is a wish, and saying so now is the useful
-    thing.
+    drawn at the pessimistic end of every range, because "it fits" is a claim
+    and a claim is only worth making about the whole range. Nothing more to
+    find is "comfortable". Everything still inside the least the week holds is
+    "tight": a class and some reading, plus whatever the learner's life already
+    supplies on a quiet week. Inside the most it holds is "possible", which is
+    the honest verdict for somebody living in the language who has not said
+    how much of it they use. Past that, on top of a job, is not a plan, it is a
+    wish, and saying so now is the useful thing.
 
     The threshold used to be ten hours a week measured against the *optimistic*
-    end, which called a plan needing ten to fourteen hours a week of found
-    study "It fits", directly over a sentence saying that at five found hours
-    the date was three years out. 335 of the 704 combinations a learner could
-    click contradicted themselves that way. Drawing the band here makes the
-    headline and that sentence the same claim: `other.high` at or under the
-    found figure is exactly the condition for `weeksNeeded` to land inside the
-    deadline.
+    end of the distance, which called a plan needing ten to fourteen hours a
+    week of found study "It fits", directly over a sentence saying that at five
+    found hours the date was three years out. Drawing every band against
+    `found` makes the headline and that sentence the same claim: `other.high`
+    at or under `found.low` is exactly the condition for `weeksWithFound.high`
+    to land inside the deadline, and under `found.high` for its near end to.
   */
   const verdict: Verdict = other.high === 0
     ? "comfortable"
-    : other.high <= FOUND_HOURS_PER_WEEK ? "tight" : "short";
+    : other.high <= found.low ? "tight"
+      : other.high <= found.high ? "possible" : "short";
 
-  return {
-    from: input.from, to: input.to, hours, appHoursPerWeek, weeksOnAppAlone,
-    appHoursAvailable, otherHoursPerWeek: other, verdict,
-  };
+  return { ...common, weeksOnAppAlone, appHoursAvailable, otherHoursPerWeek: other, verdict };
 }
 
 /**
@@ -307,6 +560,15 @@ export const FACTS: readonly Fact[] = [
       "budgets around 1 100 classroom hours to reach professional working proficiency in it, against " +
       "about 600 for French or Spanish. Fifteen minutes a day is about 90 hours a year.",
     source: "Foreign Service Institute language difficulty categories",
+  },
+  {
+    id: "shape",
+    icon: "Mountain",
+    claim:
+      "The hard part is in the middle. Getting from A2 to B1 costs more than any other step, because that " +
+      "is where the cases, the gradation and the object have to start working on their own. From B1 to B2 " +
+      "the grammar is mostly in place and the step is nearer what it costs in any language.",
+    source: "Published CEFR guided learning hours, with the Estonian surcharge placed where the morphology is",
   },
   {
     id: "spacing",

@@ -6758,26 +6758,115 @@ check("the plan is arithmetic on exact figures, rounded only on its way to a scr
   measured against the optimistic end of the range, while the note under it
   quoted the distance at five found hours a week. 335 of the 704 combinations a
   learner could click said the plan fitted over a sentence saying the date was
-  years out. Both now read FOUND_HOURS_PER_WEEK, so the band and the copy
-  cannot drift apart again. Asserted on the constant reaching both, not on the
-  number, which is the thing that is allowed to change.
+  years out. Both read one figure now, and the figure is no longer a constant:
+  it is what the learner's own week holds, built by `foundHours` from the
+  baseline plus the reasons they gave, drawn against by the verdict inside
+  `project`, and quoted by the panel off the projection it gets back. The
+  panel doing the arithmetic itself, with a number of its own, is the exact
+  shape the fault took; so is the panel quoting the baseline constant, which
+  would be right for somebody abroad and wrong for everybody the change was
+  made for.
 */
-check("the verdict band and the found-hours sentence read one constant", () => {
+check("the verdict band and the found-hours sentence read one figure", () => {
   const plan = read("lib/assessment/plan.ts");
   assert.match(
     plan, /export const FOUND_HOURS_PER_WEEK/,
-    "the found-hours figure has stopped being a named constant, so the copy can quote a different one",
+    "the baseline found-hours figure has stopped being a named constant",
   );
-  const verdictLine = plan.slice(plan.indexOf("const verdict: Verdict"), plan.indexOf("const verdict: Verdict") + 240);
   assert.match(
-    verdictLine, /FOUND_HOURS_PER_WEEK/,
-    "the verdict band no longer reads the constant the plan's own copy quotes",
+    between(code("lib/assessment/plan.ts"), "export function foundHours"), /FOUND_HOURS_PER_WEEK/,
+    "foundHours no longer starts from the baseline, so a learner with no exposure is told their week holds nothing",
   );
-  const panel = read("components/assessment/PlanPanel.tsx");
+  const verdictLine = plan.slice(plan.indexOf("const verdict: Verdict"), plan.indexOf("const verdict: Verdict") + 300);
+  assert.match(verdictLine, /found\.low/, "the verdict band no longer reads the least the learner's week holds");
+  assert.match(verdictLine, /found\.high/, "the verdict band no longer reads the most the learner's week holds");
+  const panel = code("components/assessment/PlanPanel.tsx");
+  assert.doesNotMatch(
+    panel, /weeksNeeded\(/,
+    "PlanPanel is doing the found-hours arithmetic itself again rather than reading it off the projection",
+  );
+  assert.doesNotMatch(
+    panel, /FOUND_HOURS_PER_WEEK/,
+    "PlanPanel quotes the baseline constant rather than the learner's own found hours",
+  );
+  assert.match(panel, /plan\.weeksWithFound/, "PlanPanel no longer quotes the weeks the projection computed");
+  assert.match(panel, /plan\.found\b/, "PlanPanel no longer quotes the found hours the verdict was drawn against");
+});
+
+/*
+  A plan is built on a standing, never on a bare level.
+
+  A level a paper measured and a level a stranger ticked ninety seconds into
+  the app are the same letter and are not worth the same distance, and for a
+  year every caller handed the panel the letter alone. `Standing` carries how
+  the level was arrived at, and the measured kind carries the per skill
+  levels, so a learner who reads at B2 and listens at A1 is costed skill by
+  skill rather than as a B1. The rule is asserted at the door: every
+  `<PlanPanel>` in the tree passes a standing, `/assess` gets its standing
+  from the same timestamp rule the course opens on (`currentLevelAnswer`), so
+  the plan and the course cannot disagree about whether a learner was measured,
+  and nobody outside `lib/progress/level.ts` compares those two timestamps.
+*/
+check("a plan is built on a standing that says how the level was arrived at", () => {
+  const callers = ALL.filter((f) => /<PlanPanel\b/.test(code(f)));
+  assert.ok(callers.length >= 2, "PlanPanel is rendered from fewer screens than it was");
+  for (const file of callers) {
+    const src = code(file);
+    for (const use of src.match(/<PlanPanel\b[^>]*>/g) ?? []) {
+      assert.match(use, /\bstanding=\{/, `${file} renders PlanPanel without a standing: ${use}`);
+      assert.doesNotMatch(use, /\blevel=\{/, `${file} hands PlanPanel a bare level again: ${use}`);
+    }
+  }
   assert.match(
-    panel, /weeksNeeded\([^)]*FOUND_HOURS_PER_WEEK\s*\)/,
-    "PlanPanel passes its own number to weeksNeeded rather than the constant the band is drawn at",
+    code("app/(app)/assess/page.tsx"), /standingFor\(/,
+    "/assess stopped asking standingFor, so its plan can disagree with the level the course opens on",
   );
+  const level = code("lib/progress/level.ts");
+  assert.match(level, /export async function currentLevelAnswer/, "the one level rule has lost its name");
+  assert.match(between(level, "export async function courseLevelFor"), /currentLevelAnswer\(/,
+    "courseLevelFor no longer reads the shared rule, so the course and the plan hold two answers");
+  const elsewhere = ALL.filter((f) =>
+    f !== "lib/progress/level.ts"
+    && /cefrPlacementAt[\s\S]{0,400}takenAt|takenAt[\s\S]{0,400}cefrPlacementAt/.test(code(f)));
+  assert.deepEqual(elsewhere, [], "a second file compares the declared level's timestamp with the check's, which is the two-answers fault again");
+});
+
+/*
+  The pace the plan quotes is the pace the log records, read once.
+
+  `Review.durationMs` and `reviewedAt` are written on every grade, so a
+  fortnight in, the app knows what a learner actually does and quoting what
+  they said instead is the app choosing not to look. `measuredPace` in
+  `lib/stats/pace.ts` is the one reading of that, `lib/progress/plan.ts` is
+  the one caller that fetches rows for it, and the sitting it counts in is the
+  same ten minutes `perfect_session` uses, defined once: a sitting cannot be
+  one length for a badge and another for a plan.
+*/
+check("the plan's pace is read off the review log through one module, in one sitting length", () => {
+  const progress = code("lib/progress/plan.ts");
+  assert.match(progress, /durationMs:\s*true/, "measuredPaceFor stopped selecting the durations it measures with");
+  assert.match(progress, /measuredPace\(/, "measuredPaceFor no longer hands its rows to lib/stats/pace.ts");
+  assert.match(code("app/(app)/assess/page.tsx"), /measuredPaceFor\(/, "/assess no longer reads the learner's real pace");
+  const gaps = ALL.filter((f) => /export const SESSION_GAP_MS\s*=/.test(code(f)));
+  assert.deepEqual(gaps, ["lib/stats/pace.ts"], `the sitting length is defined in ${gaps.join(", ")}; it is one figure`);
+  assert.match(code("lib/progress/session.ts"), /from "@\/lib\/stats\/pace"/, "the badge's session stopped reading the shared sitting length");
+});
+
+/*
+  The hours table is derived, not typed, and its surcharge is a shape.
+
+  `CUMULATIVE_HOURS` used to be five literals with a paragraph explaining that
+  they were "close to double" the published figures. A literal table can drift
+  from its own explanation without anything noticing; a table built from the
+  published hours and a factor per step cannot, and the factor's shape, the
+  surcharge peaking where the morphology is, is asserted in plan.test.ts. This
+  only checks the table has not gone back to being typed.
+*/
+check("the hours table is built from published hours and a per-step factor", () => {
+  const plan = code("lib/assessment/plan.ts");
+  assert.match(plan, /export const CUMULATIVE_HOURS[^=]*=\s*buildCumulative\(\)/, "CUMULATIVE_HOURS is a typed table again");
+  assert.match(plan, /export const GUIDED_LEARNING_HOURS/, "the published hours are no longer named");
+  assert.match(plan, /export const ESTONIAN_FACTOR/, "the surcharge is no longer a table of its own");
 });
 
 // ── Checks about the checks ──────────────────────────────────────────────────
@@ -8212,9 +8301,9 @@ check("a stored level carries the time it was stated", () => {
     without a line of it looking wrong.
   */
   assert.match(
-    between(level, "export async function courseLevelFor"),
+    between(level, "export async function currentLevelAnswer"),
     /readSettings\([^)]*SETTING_KEYS\.cefrPlacementAt/,
-    "courseLevelFor stopped asking the store when the declared level was stated, so the picker "
+    "currentLevelAnswer stopped asking the store when the declared level was stated, so the picker "
     + "in Settings is outranked by any level check however old",
   );
 });

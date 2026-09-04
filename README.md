@@ -107,7 +107,10 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   many of them your daily goal actually covers, and how many are left to find in a class or a
   conversation. Estonian is around 1 100 classroom hours for an English speaker by the Foreign
   Service Institute's own budgeting; fifteen minutes a day here is about 90 hours a year. Both
-  numbers are on the same screen, with their sources named.
+  numbers are on the same screen, with their sources named. And it is about you rather than the
+  average: a measured level is costed skill by skill and a guessed one is widened for the guess,
+  living in Estonia or having Estonian at home counts as hours your week already holds, and once
+  there is a fortnight of reviews the pace it plans on is the one you actually keep.
 - **Setup that teaches the app.** First run asks what you are here for before it asks which level,
   offers to measure you rather than making you guess, shows the timeline before you have picked a
   single word, and says in one line what this app will not do for you before it asks for anything.

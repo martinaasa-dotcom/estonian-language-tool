@@ -8,6 +8,7 @@ import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { PlanPanel, levelLabel } from "@/components/assessment/PlanPanel";
 import { ResultPanel } from "@/components/assessment/ResultPanel";
 import { learnerDayClock } from "@/lib/progress/dayClock";
+import { measuredPaceFor, standingFor } from "@/lib/progress/plan";
 import { DATE_AND_TIME, DateText } from "@/components/DateText";
 
 export const metadata = { title: "Level check" };
@@ -50,11 +51,20 @@ export default async function AssessPage({
     return <AssessmentRunner items={paper.items} missing={paper.missing} />;
   }
 
-  const [latest, history, goals, clock] = await Promise.all([
+  /*
+    The plan is built on the answer the course goes on, not on the last
+    sitting: a level the learner corrected in Settings this morning outranks a
+    check sat in March (`currentLevelAnswer`), and the panel says which it was
+    handed. The pace is what the log says they do, read once here rather than
+    inside the panel, which stays free of the database.
+  */
+  const [latest, history, goals, clock, standing, pace] = await Promise.all([
     latestFor(ownerId),
     historyFor(ownerId, 10),
     goalsFor(ownerId),
     learnerDayClock(ownerId),
+    standingFor(ownerId),
+    measuredPaceFor(ownerId),
   ]);
 
   const result: Placement | null = latest
@@ -111,7 +121,7 @@ export default async function AssessPage({
 
         <div>
           <SectionTitle hint="hours, not badges">What it means for your goal</SectionTitle>
-          <PlanPanel level={result?.overall ?? null} goals={goals} dailyGoal={goals.dailyGoal} />
+          <PlanPanel standing={standing} goals={goals} dailyGoal={goals.dailyGoal} pace={pace} />
         </div>
 
         {history.length > 1 && (
