@@ -39,6 +39,44 @@ export const SESSION_GAP_MS = 10 * 60 * 1000;
 export const PACE_WINDOW_DAYS = 28;
 
 /**
+ * Cards a minute, before the log says otherwise.
+ *
+ * Three is the pace the typed review mode runs at here, counting the thinking,
+ * and it is deliberately not generous: a plan built on an optimistic figure is
+ * a plan that quietly doubles its own timeline. It was two figures for a
+ * while. The plan assumed three and Today's "about N minutes" divided by six,
+ * so the screen somebody opens every morning promised half the time the plan
+ * was budgeting for the same cards. One figure, and the log replaces it.
+ */
+export const DEFAULT_CARDS_PER_MINUTE = 3;
+
+/**
+ * The slowest and fastest a measured rate is believed at.
+ *
+ * `Review` carries no note of which mode wrote it, deliberately, so a sitting
+ * of Match or Case Sprint grades a card every couple of seconds and is
+ * indistinguishable in the log from a typed review. Read raw, one evening of
+ * games made the morning promise 26 cards in a minute. A rate faster than a
+ * brisk flip-through is a game's rate and not a review's, and a rate slower
+ * than a card a minute is a tab left open, so a measured figure outside this
+ * band is read at the edge of it rather than believed.
+ */
+export const MIN_CARDS_PER_MINUTE = 1;
+export const MAX_CARDS_PER_MINUTE = 6;
+
+/**
+ * Minutes a number of cards takes, at the learner's own rate where the log
+ * has one and at the default otherwise. Never under a minute, because a
+ * screen saying "about 0 minutes" is a screen saying nothing.
+ */
+export function minutesForCards(cards: number, cardsPerMinute: number | null = null): number {
+  const rate = cardsPerMinute && cardsPerMinute > 0
+    ? Math.min(MAX_CARDS_PER_MINUTE, Math.max(MIN_CARDS_PER_MINUTE, cardsPerMinute))
+    : DEFAULT_CARDS_PER_MINUTE;
+  return Math.max(1, Math.round(Math.max(0, cards) / rate));
+}
+
+/**
  * The most a single card may count for, matching the cap `lib/srs/grade.ts`
  * writes. A tab left open overnight is not ten hours of study.
  */
@@ -98,10 +136,14 @@ export function measuredPace(
     return at >= from && at <= opts.now.getTime();
   });
   const days = new Set(inWindow.map((r) => opts.clock.dayKey(r.reviewedAt)));
+  const hours = studyHours(inWindow);
 
   return {
-    hoursPerWeek: studyHours(inWindow) / weeks,
+    hoursPerWeek: hours / weeks,
     daysPerWeek: days.size / weeks,
     weeks,
+    // Cards over sitting time, so a correction read between two cards counts
+    // as time spent on them, which it is. Null until a sitting has any length.
+    cardsPerMinute: hours > 0 ? inWindow.length / (hours * 60) : null,
   };
 }

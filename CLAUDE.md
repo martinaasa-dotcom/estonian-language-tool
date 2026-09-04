@@ -1915,6 +1915,24 @@ that held nothing keeps the stated pace and says so rather than dividing by zero
 this is measured on the app's learners as a population, and the copy still says that. What is
 measured is the one learner in front of it.
 
+**And the same person is quoted on every screen that quotes a pace or a date.** The plan was
+calibrated first and three other screens went on quoting the average beside it. Today's countdown
+card said how likely a pass was that morning and never whether the pace this learner keeps reaches
+the date; the exam hub printed the weeks left with no distance to set against them; and Today's
+"about N minutes" divided the cards due by six while the plan budgeted three, so the morning promised
+half the time the plan was allowing for the same cards. `distanceLine` in `lib/assessment/plan.ts`
+is the plan's own sentence over its own projection, Today and the hub both build that projection
+from `standingFor`, the reasons and the measured pace, and an invariant fails on a screen writing
+its own sentence over `weeksWithFound`. `DEFAULT_CARDS_PER_MINUTE` is defined once in
+`lib/stats/pace.ts`, `minutesForCards` is how cards become minutes anywhere, and the learner's own
+rate off the log replaces it after a fortnight, read at the edge of a believable band rather than
+raw: the log cannot tell Match from a typed review, and one evening of games read raw made the
+morning promise 26 cards in a minute. Anu is briefed the same way: `learnerNote` says
+whether a paper measured the level and which skills it found, so she does not pitch listening at a
+level a check has already said the learner has not reached, and it names what Estonian the learner
+lives in, off the `situation` phrase each reason in `goals.ts` carries beside its hours. One table,
+so the plan's note and her briefing cannot describe one learner two ways.
+
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
 Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
@@ -4219,7 +4237,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `caseQuestionFor`, `semanticGroup`, `ANIMATE_CODES`, `nominalOpener`, `asksPerson`,
 `slotOfCard`, `isKnownSlot`, `practisedSlot`, `askableSlots`, `shapeFor`, `markFlash`,
 `formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `hoursFor`, `foundHours`, `weeklyExposure`,
-`weeksWithFound`, `measuredPace`, `currentLevelAnswer`. Most of them now
+`weeksWithFound`, `measuredPace`, `currentLevelAnswer`, `distanceLine`, `minutesForCards`, `describeSituation`.
+Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

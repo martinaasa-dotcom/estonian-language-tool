@@ -433,6 +433,11 @@ screen says which.
 - **After a fortnight, the pace is what they did.** `lib/stats/pace.ts` reads sittings off
   `Review.durationMs` and the timestamps over the last four weeks, and the plan is built on that
   rather than on the days they said.
+- **And the rest of the app quotes the same person.** Today's countdown card and the exam hub
+  print the plan's distance in the plan's own sentence (`distanceLine`), off the same projection.
+  Today's "about N minutes" divided by six where the plan budgeted three; one figure now, and the
+  learner's own cards a minute once the log has one. Anu is told whether the level was measured,
+  which skills the check found, and what Estonian the learner already lives in.
 
 ### Known limitations, still
 

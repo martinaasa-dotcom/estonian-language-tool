@@ -48,8 +48,17 @@ import { BANDS, PRE_A1, type Level as AssessedLevel } from "@/lib/assessment/typ
  * a learner was measured while the course held their later correction would
  * be the two-answers fault this module exists to prevent, one layer up.
  */
+export type SkillLevels = Record<"reading" | "listening" | "writing", AssessedLevel | null>;
+
 export type LevelAnswer =
-  | { kind: "measured"; level: AssessedLevel; skills: AssessedLevel[] }
+  | {
+      kind: "measured";
+      level: AssessedLevel;
+      /** The scored skills that were measured, for the plan's skill by skill distance. */
+      skills: AssessedLevel[];
+      /** The same, by name, for a screen or a briefing that says which is which. */
+      bySkill: SkillLevels;
+    }
   | { kind: "declared"; level: Level };
 
 export async function currentLevelAnswer(ownerId: string): Promise<LevelAnswer | null> {
@@ -68,8 +77,13 @@ export async function currentLevelAnswer(ownerId: string): Promise<LevelAnswer |
   if (!stale && declared) return { kind: "declared", level: declared };
 
   if (measured && assessed) {
-    const skills = [assessed.reading, assessed.listening, assessed.writing].filter(isAssessed);
-    return { kind: "measured", level: measured, skills };
+    const bySkill: SkillLevels = {
+      reading: isAssessed(assessed.reading) ? assessed.reading : null,
+      listening: isAssessed(assessed.listening) ? assessed.listening : null,
+      writing: isAssessed(assessed.writing) ? assessed.writing : null,
+    };
+    const skills = Object.values(bySkill).filter((l): l is AssessedLevel => l !== null);
+    return { kind: "measured", level: measured, skills, bySkill };
   }
 
   return declared ? { kind: "declared", level: declared } : null;
