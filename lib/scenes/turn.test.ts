@@ -1,96 +1,160 @@
 import { describe, expect, it } from "vitest";
-import { buildLexicon, type DictEntry } from "./lexicon";
-import { readTurn, type TurnContext } from "./turn";
-import type { Requirement } from "./types";
+import { buildLexicon, caseKeyFor, type DictEntry } from "./lexicon";
+import { advances, readTurn, type TurnContext } from "./turn";
+import type { BeatSpec } from "./types";
 
-const entries: DictEntry[] = [
-  { lemma: "valu", pos: "NOUN", cefr: "A2", parts: { NOM_SG: "valu", GEN_SG: "valu", PART_SG: "valu" }, usages: [] },
-  { lemma: "pea", pos: "NOUN", cefr: "A1", parts: { NOM_SG: "pea", GEN_SG: "pea", PART_SG: "pead" }, usages: [] },
-  { lemma: "olema", pos: "VERB", cefr: "A1", parts: { INF_MA: "olema", INF_DA: "olla", PRES_1SG: "olen", PAST_1SG: "olin" }, usages: [],
-    extraForms: [{ code: "IndPrSg3", value: "on" }, { code: "Neg", value: "pole" }] },
-  { lemma: "mina", pos: "PRONOUN", cefr: "A1", parts: { NOM_SG: "mina", GEN_SG: "minu", PART_SG: "mind" }, usages: [],
-    extraForms: [{ code: "SgAd", value: "mul" }] },
-  { lemma: "teie", pos: "PRONOUN", cefr: "A1", parts: { NOM_SG: "teie", GEN_SG: "teie", PART_SG: "teid" }, usages: [] },
-  { lemma: "mis", pos: "PRONOUN", cefr: "A1", parts: { NOM_SG: "mis", GEN_SG: "mille", PART_SG: "mida" }, usages: [] },
-  { lemma: "ei", pos: "ADVERB", cefr: "A1", parts: {}, usages: [] },
-  { lemma: "Tere!", pos: "PHRASE", cefr: "A1", parts: {}, usages: ["Tere!"] },
-  { lemma: "teisipäev", pos: "NOUN", cefr: "A1", parts: { NOM_SG: "teisipäev", GEN_SG: "teisipäeva", PART_SG: "teisipäeva" }, usages: [] },
+/**
+ * The marker, against a fixture rather than the dictionary.
+ *
+ * Every word here is a real course word and every form is one the dictionary
+ * holds, because the point of the fixture is to be the dictionary in miniature
+ * rather than to invent Estonian: `tuba` and its cases are what
+ * `lib/estonian/derive.ts` derives from those principal parts, and `kus` is the
+ * question word the `kusisonad` unit teaches.
+ */
+const ENTRIES: DictEntry[] = [
+  {
+    lemma: "tuba", pos: "NOUN", cefr: "A1",
+    parts: {
+      NOM_SG: "tuba", GEN_SG: "toa", PART_SG: "tuba",
+      ILL_SG_SHORT: "tuppa", NOM_PL: "toad", PART_PL: "tube", GEN_PL: "tubade",
+    },
+    usages: [],
+  },
+  {
+    lemma: "valu", pos: "NOUN", cefr: "A2",
+    parts: {
+      NOM_SG: "valu", GEN_SG: "valu", PART_SG: "valu",
+      NOM_PL: "valud", PART_PL: "valusid", GEN_PL: "valude",
+    },
+    usages: [],
+  },
+  {
+    lemma: "olema", pos: "VERB", cefr: "A1",
+    parts: { INF_MA: "olema", INF_DA: "olla", PRES_1SG: "olen", PAST_1SG: "olin" },
+    extraForms: [{ code: "IndPrSg3", value: "on" }],
+    usages: [],
+  },
 ];
-const lexicon = buildLexicon(entries);
-const ctx: TurnContext = {
-  lexicon,
-  questionWords: new Set(lexicon.byLemma.get("mis") ?? []),
-  negation: new Set(["ei", "pole"]),
-  register: new Set(lexicon.byLemma.get("teie") ?? []),
-  props: [
-    { slot: "since", kind: "weekday", display: "Tuesday", lemma: "teisipäev", accepted: ["teisipäev", ...(lexicon.byLemma.get("teisipäev") ?? [])] },
-    { slot: "time", kind: "clock", display: "14:00", lemma: null, accepted: ["14:00", "14.00", "14", "kell 14"] },
-  ],
-  caseForms: new Map([["pea|INESSIVE", ["peas"]]]),
-};
-const lemma = (oneOf: string[]): Requirement => ({ kind: "lemma", oneOf });
+
+const LEX = buildLexicon(ENTRIES);
+
+function context(over: Partial<TurnContext> = {}): TurnContext {
+  return {
+    lexicon: LEX,
+    questionWords: new Set(["kus", "millal"]),
+    negators: new Set(["ei"]),
+    registerForms: new Set(["teie", "teil", "teile"]),
+    data: new Map([["since", new Set(["teisipäev", "teisipäevast"])]]),
+    previous: "",
+    ...over,
+  };
+}
+
+function beat(over: Partial<BeatSpec> = {}): BeatSpec {
+  return {
+    id: "reason", goal: "Say what is wrong.", move: "ask",
+    topic: ["valu"], needs: [{ kind: "lemma", oneOf: ["valu"] }],
+    required: true, patience: 2, shape: "word",
+    ...over,
+  };
+}
 
 describe("reading a turn", () => {
-  it("completes a beat on a vouched form of a named word", () => {
-    const e = readTurn({ text: "Mul on valu peas.", needs: [lemma(["valu"])], shape: "sentence", ctx, lastLine: null });
-    expect(e.outcome).toBe("complete");
-    expect(e.met[0]).toEqual({ met: true, with: "valu" });
-    expect(e.unknown).toEqual([]);
+  it("meets a lemma requirement through any form of the word", () => {
+    for (const said of ["valu", "Mul on valu", "valusid"]) {
+      const seen = readTurn(said, beat(), context());
+      expect(seen.reading, `${said} did not read as complete`).toBe("complete");
+    }
   });
 
-  it("marks an inflected form, since the learner says what a person says", () => {
-    const e = readTurn({ text: "Mul on pead valus", needs: [lemma(["pea"])], shape: "sentence", ctx, lastLine: null });
-    expect(e.met[0]?.met).toBe(true);
-    // `valus` is not a form the fixture holds, so it is an unknown and the turn still completes.
-    expect(e.outcome).toBe("complete");
+  it("meets a case requirement only in that case, and takes every spelling of it", () => {
+    const asks = beat({ needs: [{ kind: "case", lemma: "tuba", grammCase: "ILLATIVE" }] });
+    /*
+      The illative is the one case with two answers and only one of them is
+      derivable. Marking `toasse` wrong is the fault `caseAnswer` exists to
+      prevent, pointed at a conversation, so both count and the fixture asserts
+      both rather than trusting the sentence that says so.
+    */
+    expect(readTurn("Ma lähen tuppa", asks, context()).reading).toBe("complete");
+    expect(readTurn("Ma lähen toasse", asks, context()).reading).toBe("complete");
+    // The nominative is the same word and is not the answer.
+    expect(readTurn("Ma lähen tuba", asks, context()).reading).not.toBe("complete");
+    expect(LEX.byCase.get(caseKeyFor("tuba", "ILLATIVE"))?.has("tuppa")).toBe(true);
   });
 
-  it("answers a datum with the weekday in any form, or the time as digits", () => {
-    const since = readTurn({ text: "Teisipäeva.", needs: [{ kind: "datum", slot: "since" }], shape: "word", ctx, lastLine: null });
-    expect(since.outcome).toBe("complete");
-    const time = readTurn({ text: "Kell 14 sobib.", needs: [{ kind: "datum", slot: "time" }], shape: "word", ctx, lastLine: null });
-    expect(time.outcome).toBe("complete");
-    const wrong = readTurn({ text: "Kell 140.", needs: [{ kind: "datum", slot: "time" }], shape: "word", ctx, lastLine: null });
-    expect(wrong.met[0]?.met).toBe(false);
+  it("takes a question mark as a question, because Homme? is one", () => {
+    const asks = beat({ needs: [{ kind: "question" }] });
+    expect(readTurn("Kus?", asks, context()).reading).toBe("complete");
+    expect(readTurn("Kus see on", asks, context()).reading).toBe("complete");
+    expect(readTurn("valu", asks, context()).reading).not.toBe("complete");
   });
 
-  it("tells English from unreadable Estonian", () => {
-    const en = readTurn({ text: "Sorry, I do not understand you.", needs: [lemma(["valu"])], shape: "sentence", ctx, lastLine: null });
-    expect(en.outcome).toBe("english");
-    const noise = readTurn({ text: "xqzv brrt", needs: [lemma(["valu"])], shape: "sentence", ctx, lastLine: null });
-    expect(noise.outcome).toBe("unrecognised");
+  it("reads a turn written in English as English rather than as unreadable Estonian", () => {
+    const seen = readTurn("Sorry, what do you mean?", beat(), context());
+    expect(seen.reading).toBe("english");
   });
 
-  it("does not count their own line said back", () => {
-    const e = readTurn({ text: "Mis teil on?", needs: [lemma(["valu"])], shape: "sentence", ctx, lastLine: "Mis teil on?" });
-    expect(e.outcome).toBe("repeat");
+  it("does not read a loan word inside an Estonian turn as English", () => {
+    /*
+      One English function word is a slip; two with nothing vouched is a turn in
+      English. `valu` is vouched here, which settles it before the count is
+      reached, and that ordering is the check: the reading is about a turn with
+      no Estonian in it at all.
+    */
+    expect(readTurn("Mul on valu, sorry", beat(), context()).reading).toBe("complete");
   });
 
-  it("wants a sentence where a word is a dodge, and lets a datum be one word", () => {
-    const short = readTurn({ text: "Valu.", needs: [lemma(["valu"])], shape: "sentence", ctx, lastLine: null });
-    expect(short.outcome).toBe("tooShort");
-    const ok = readTurn({ text: "Valu.", needs: [lemma(["valu"])], shape: "word", ctx, lastLine: null });
-    expect(ok.outcome).toBe("complete");
+  it("does not let the other side's own line be handed back as a turn", () => {
+    const said = "Mul on valu";
+    const seen = readTurn(said, beat(), context({ previous: `Kus teil on valu? ${said}` }));
+    expect(seen.reading, "the line above was accepted as an answer").toBe("echo");
+    expect(advances(seen.reading)).toBe(false);
   });
 
-  it("separates real words that missed the point from nothing at all", () => {
-    const off = readTurn({ text: "Mina olen mina.", needs: [lemma(["valu"])], shape: "sentence", ctx, lastLine: null });
-    expect(off.outcome).toBe("offTarget");
-    expect(off.recognised.length).toBeGreaterThan(0);
+  it("still takes a one-word answer that repeats one of their words", () => {
+    // `Neljapäev?` after they said it is what a person says, so the echo rule
+    // needs two words before it fires.
+    const seen = readTurn("valu", beat(), context({ previous: "Kas teil on valu?" }));
+    expect(seen.reading).toBe("complete");
   });
 
-  it("reads a question mark or a question word, a negator, and a case form", () => {
-    expect(readTurn({ text: "Millal?", needs: [{ kind: "question" }], shape: "word", ctx, lastLine: null }).outcome).toBe("complete");
-    expect(readTurn({ text: "mida te tahate", needs: [{ kind: "question" }], shape: "sentence", ctx, lastLine: null }).outcome).toBe("complete");
-    expect(readTurn({ text: "Mul ei ole seda.", needs: [{ kind: "negation" }], shape: "sentence", ctx, lastLine: null }).outcome).toBe("complete");
-    expect(readTurn({ text: "Valu on peas.", needs: [{ kind: "case", lemma: "pea", grammCase: "INESSIVE" }], shape: "sentence", ctx, lastLine: null }).outcome).toBe("complete");
-    expect(readTurn({ text: "Valu on pea.", needs: [{ kind: "case", lemma: "pea", grammCase: "INESSIVE" }], shape: "sentence", ctx, lastLine: null }).met[0]?.met).toBe(false);
+  it("waits rather than advancing when a sentence was wanted and a word arrived", () => {
+    const asks = beat({ shape: "sentence" });
+    expect(readTurn("valu", asks, context()).reading).toBe("fragment");
+    expect(readTurn("Mul on valu", asks, context()).reading).toBe("complete");
   });
 
-  it("is incomplete when some of what was asked is there", () => {
-    const e = readTurn({
-      text: "Mul on valu.", needs: [lemma(["valu"]), { kind: "datum", slot: "since" }], shape: "sentence", ctx, lastLine: null,
+  it("tells real Estonian aimed elsewhere from a turn nobody could read", () => {
+    const asks = beat({ needs: [{ kind: "datum", slot: "since" }] });
+    // Every word vouched, none of them the point.
+    expect(readTurn("Mul on valu toas", asks, context()).reading).toBe("offtarget");
+    // Nothing vouched at all.
+    expect(readTurn("qqqq wwww eeee", asks, context()).reading).toBe("unrecognised");
+    expect(readTurn("Teisipäevast", asks, context()).reading).toBe("complete");
+  });
+
+  it("names which requirement was missing, not merely that one was", () => {
+    const asks = beat({
+      needs: [{ kind: "lemma", oneOf: ["valu"] }, { kind: "datum", slot: "since" }],
     });
-    expect(e.outcome).toBe("incomplete");
+    const seen = readTurn("Mul on valu", asks, context());
+    expect(seen.reading).toBe("incomplete");
+    expect(seen.met).toEqual([true, false]);
+    expect(seen.missing).toEqual([1]);
+  });
+
+  it("marks every word, because the debrief prints them", () => {
+    const seen = readTurn("Mul on valu", beat(), context());
+    expect(seen.words.map((w) => w.word)).toEqual(["mul", "on", "valu"]);
+    expect(seen.words.find((w) => w.word === "valu")?.vouched).toBe(true);
+    expect(seen.words.find((w) => w.word === "mul")?.vouched).toBe(false);
+  });
+
+  it("advances on nothing but a complete turn", () => {
+    for (const reading of ["incomplete", "offtarget", "unrecognised", "english", "echo", "fragment"] as const) {
+      expect(advances(reading), `${reading} advanced a scene`).toBe(false);
+    }
+    expect(advances("complete")).toBe(true);
   });
 });

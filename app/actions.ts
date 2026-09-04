@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { throttleAction } from "@/lib/security/actionLimits";
+import { sceneById } from "@/lib/scenes/catalogue";
+import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
+import { beatNow, beginRun, finishRun, MAX_TURNS, MAX_TURN_CHARS } from "@/lib/progress/scene";
+import { resolveProviders } from "@/lib/tutor/provider";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
 import { formName } from "@/lib/estonian/morph";
 import {
@@ -46,13 +50,6 @@ import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
 import { writeGrade } from "@/lib/srs/grade";
-import { sceneById } from "@/lib/scenes/catalogue";
-import { difficultyFrom } from "@/lib/scenes/curveballs";
-import { debriefOf, type Debrief } from "@/lib/scenes/debrief";
-import { drawPlan } from "@/lib/scenes/draw";
-import { advance, askedForHelp, currentBeat, otherSaid, startRun, walkOut, type Provenance } from "@/lib/scenes/run";
-import { readTurn } from "@/lib/scenes/turn";
-import { recentDraws, sceneMaterial, turnContext } from "@/lib/progress/scenes";
 import { errandById, outcomeFrom } from "@/lib/collections/errands";
 import { emptyScheduling, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
@@ -963,6 +960,241 @@ export async function recordSonad(day: string, guesses: unknown) {
  * Every entry is one card at most, so a seven-word grid is at most seven rows
  * in an append-only table, which is the size of one review session.
  */
+/**
+ * Starts a conversation: draws it and writes it down.
+ *
+ * It books nothing. §16 said a scene should book **one call rather than one per
+ * turn**, on the argument that running out of allowance halfway through a
+ * conversation is the worst failure available here, and that half of it is
+ * right and is not what a booking buys: the ledger writes a call down when it
+ * authorises one because two of its three limits count `CALL` rows, so a dozen
+ * turns behind one booking is eleven calls the allowance never saw. The route
+ * books each composed turn instead, and the mid-scene refusal is survivable for
+ * the reason it was always survivable: the rung below the model is a real
+ * conversational move rather than an error.
+ *
+ * **A refusal is never a refusal to run the scene.** A deployment with no key,
+ * and a learner who has spent the day's allowance, both get a real conversation
+ * built from the beats retrieval can fill, and the screen says so.
+ *
+ * The seed is the server's. A seed a learner picks is a learner picking their
+ * persona, their card and their curveballs, which is every axis of §5 at once.
+ */
+export async function beginScene(sceneId: unknown, difficulty: unknown) {
+  const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "finishScene");
+  if (busy) return busy;
+
+  const scene = sceneById(text(sceneId).slice(0, 64));
+  if (!scene) return { ok: false as const, error: "No scene by that name." };
+  const chosen = text(difficulty);
+  if (!(chosen in BUDGETS)) return { ok: false as const, error: "Not a difficulty." };
+
+  const opened = await beginRun({
+    ownerId,
+    sceneId: scene.id,
+    level: await courseLevelFor(ownerId),
+    difficulty: chosen as Difficulty,
+  });
+  if (!opened) return { ok: false as const, error: "That scene could not be built." };
+
+  /*
+    Only the briefing crosses, never the plan: the curveballs and the persona's
+    leans are what is supposed to happen to somebody rather than be read off a
+    card, and nothing here is bought by sending them, because the route marks
+    every turn on the server anyway. `Briefing` is where that is written down.
+
+    And nothing is booked here either. A run is many turns and the ledger books
+    a call when it authorises one, so one booking at the door would let a whole
+    conversation through on the burst allowance for a single call, which is the
+    limit's own arithmetic broken rather than bent. The route books each
+    composed turn and hands the booking back where nothing was composed. What
+    this reports is the only part that is a fact about the deployment rather
+    than about the next minute: whether a provider is configured at all.
+  */
+  return {
+    ok: true as const,
+    runId: opened.runId,
+    briefing: opened.briefing,
+    composed: resolveProviders().length > 0,
+  };
+}
+
+/**
+ * One word the current beat is about, for the "I need a word" button.
+ *
+ * A LEARNER WHO ASKS IS NOT PENALISED, and this is where that is paid for: the
+ * scene's own beats declare what they are about as lemmas, so the help is a
+ * word out of the closed list rather than anything a model wrote, and the whole
+ * cost is that `advance` sees the next turn as helped. Nothing is deducted, no
+ * objective is withheld, and the word goes on the debrief with a button to keep
+ * it. Somebody who asks for four words and finishes has learned more than
+ * somebody who gave up with none (`docs/19-situations.md` §12).
+ *
+ * The first version of this button recorded the *beat id* as the word needed,
+ * so a debrief listed `reason` and `greet` under "words this conversation
+ * needed" and offered no way to keep any of them, which is the one screen in
+ * the feature whose whole job is turning a gap into a card.
+ *
+ * It reaches no provider and books nothing: it is the beat's own topic and one
+ * indexed read. The English gloss is the dictionary's, which is the only
+ * language this project may write.
+ */
+export async function sceneHelp(runId: unknown, turns: unknown) {
+  const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "sceneHelp");
+  if (busy) return busy;
+
+  const id = text(runId).slice(0, 64);
+  if (!id) return { ok: false as const, error: "That run is not open." };
+
+  const said = Array.isArray(turns)
+    ? turns.slice(0, MAX_TURNS).map((one) => {
+        const row = (one ?? {}) as Record<string, unknown>;
+        return {
+          beatId: text(row.beatId).slice(0, 64),
+          said: text(row.said).slice(0, MAX_TURN_CHARS),
+          helped: row.helped === true,
+        };
+      })
+    : [];
+
+  const beat = await beatNow({ ownerId, runId: id, turns: said });
+  if (!beat) return { ok: false as const, error: "That run is not open." };
+
+  /*
+    A word they have not already used, so pressing it twice on one beat is not
+    the same word twice. Ordered, because two entries can share a lemma and the
+    debrief offers exactly one to keep.
+  */
+  const typed = said.map((one) => one.said.toLowerCase()).join(" ");
+  const fresh = beat.topic.filter((lemma: string) => !typed.includes(lemma.toLowerCase()));
+  const wanted = (fresh.length > 0 ? fresh : beat.topic).slice(0, 12);
+  if (wanted.length === 0) return { ok: false as const, error: "Nothing to offer here." };
+
+  /*
+    Through `oneEntryPerLemma`, because a lemma can hold two entries and this
+    hands one of them to a button that keeps it. `hall` is a noun meaning frost
+    and an adjective meaning grey; a word confirmed off a photograph makes a
+    pair for any lemma at all, with no forms behind it. `bySubstance` is the
+    rule the dictionary itself leads with, so the entry the help offers and the
+    entry a search would show are the same entry.
+  */
+  const rows = await prisma.lexeme.findMany({
+    where: { lemma: { in: wanted } },
+    select: {
+      id: true, lemma: true, translation: true, pos: true, provenance: true,
+      forms: { select: { id: true } },
+    },
+    orderBy: [{ lemma: "asc" }, { id: "asc" }],
+  });
+  const entry = oneEntryPerLemma(rows, wanted)[0];
+  if (!entry) return { ok: false as const, error: "Nothing to offer here." };
+
+  return {
+    ok: true as const,
+    lemma: entry.lemma,
+    gloss: entry.translation,
+    lexemeId: entry.id,
+  };
+}
+
+/**
+ * A finished conversation, marked by the server and written down.
+ *
+ * `recordSonad`'s shape over a whole scene, and the same rule behind it: the
+ * client sends what it typed and the server rebuilds the run from its seed and
+ * reads every turn again (ADR-022). A result anybody can type is not a
+ * measurement, and here it would be worse than that, because a conversation
+ * writes into the review log and a forged one would schedule words nobody said.
+ *
+ * Nothing in the transcript is true about the learner. The role card is fiction
+ * (`docs/19-situations.md` §3), which is what makes a table of somebody's
+ * practice sentences about a doctor's appointment safe to hold at all.
+ */
+export async function finishScene(input: {
+  runId: unknown;
+  turns: unknown;
+  walkedOut: unknown;
+  asked: unknown;
+}) {
+  const ownerId = await requireUserId();
+  const busy = throttleAction(ownerId, "finishScene");
+  if (busy) return busy;
+
+  /*
+    Off the wire, whatever the types say: every export of this file is a public
+    endpoint and its arguments are JSON. What has to be stopped here is the size
+    rather than the shape, since a turn that is not a string is read as an empty
+    one and marked as nothing.
+  */
+  const runId = text(input.runId).slice(0, 64);
+  if (!runId) return { ok: false as const, error: "That run has no name." };
+
+  const turns = Array.isArray(input.turns)
+    ? input.turns.slice(0, MAX_TURNS).map((turn) => {
+        const row = (turn ?? {}) as Record<string, unknown>;
+        return {
+          beatId: text(row.beatId).slice(0, 64),
+          said: text(row.said).slice(0, MAX_TURN_CHARS),
+          helped: row.helped === true,
+        };
+      })
+    : [];
+
+  const asked = Array.isArray(input.asked)
+    ? input.asked.slice(0, MAX_TURNS).map((one) => {
+        const row = (one ?? {}) as Record<string, unknown>;
+        return {
+          lemma: text(row.lemma).slice(0, 64),
+          lexemeId: typeof row.lexemeId === "string" ? row.lexemeId : null,
+        };
+      }).filter((one) => one.lemma)
+    : [];
+
+  const finished = await finishRun({
+    ownerId, runId, turns, walkedOut: input.walkedOut === true, asked,
+  });
+  if (!finished) return { ok: false as const, error: "That run is not open." };
+
+  /*
+    EVERY MODE GRADES THROUGH `gradeCard` (ADR-016), and a scene is no
+    exception. What is conservative is which turns earn a row rather than where
+    the row goes: `gradesFor` writes only where the retrieval was unambiguous,
+    and where the beat asked for a case the row carries it, so the case somebody
+    fails under pressure lands in the same weak-case charts as the case they
+    fail on a card.
+  */
+  let graded = 0;
+  for (const grade of finished.grades) {
+    const card = await prisma.card.findFirst({
+      where: {
+        ownerId,
+        lexeme: { lemma: grade.lemma },
+        ...(grade.grammCase
+          ? { cardType: "CASE_FORM", targetCase: grade.grammCase }
+          : { cardType: "PRODUCTION" }),
+      },
+      orderBy: { id: "asc" },
+      select: { id: true },
+    });
+    if (!card) continue;
+    const result = await gradeCard(card.id, grade.rating, 0);
+    if (result.ok) graded += 1;
+  }
+
+  revalidatePath("/situations");
+  return {
+    ok: true as const,
+    runId: finished.runId,
+    objectives: finished.objectives,
+    outcome: finished.outcome,
+    turns: finished.turns,
+    gaps: finished.gaps,
+    graded,
+  };
+}
+
 export async function recordCrossword(day: string, typed: unknown, helped: unknown) {
   const ownerId = await requireUserId();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { ok: false as const, error: "Not a day." };
@@ -2226,11 +2458,14 @@ export async function deleteMyAccount(confirmation: string) {
       */
       await tx.suggestion.deleteMany({ where: { ownerId } });
       /*
-        Every conversation they played and every word one needed. A transcript
-        is fiction about a role card and it is still an evening of theirs.
+        Every conversation they had and every word one of them needed.
+        `SceneRun` is append-only like `Review` and `Assessment`, and this is
+        the single exception all three share: the promise on /privacy outranks
+        the rule. The gaps go first because they point at a run.
       */
       await tx.sceneGap.deleteMany({ where: { ownerId } });
       await tx.sceneRun.deleteMany({ where: { ownerId } });
+      // And every real conversation they reported having outside the app.
       await tx.encounter.deleteMany({ where: { ownerId } });
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
       /*
@@ -2663,23 +2898,6 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
 // ───────────────────────────── Scanned pages ──────────────────────────────
 
 /**
- * A photographed page, once a person has looked at what came back.
- *
- * WHAT MAKES THIS SAFE IS THE TICK, not the transcription. A model read the
- * picture and the dictionary vouched for the words it recognised, but the
- * confirmation screen is where somebody holding the actual paper agrees that
- * this is what is on it. That is the same standard the paste importer has
- * always met (a human copied the list), and it is why a word the dictionary
- * has never heard of can still become a card: not because the model said so,
- * but because the learner did.
- *
- * A word that matched the dictionary brings its own principal parts and its
- * retrieved forms, so its cards are built from attested forms and nothing the model
- * wrote survives into them. A word that did not becomes a plain USER entry
- * with recognition and production cards only, exactly like a pasted line: no
- * case-form card, because there are no forms to derive one from.
- */
-/**
  * How a real conversation went, in one of three words.
  *
  * The learner's own report of something that happened outside the app, which
@@ -2699,129 +2917,23 @@ export async function recordEncounter(errandId: string, outcome: string) {
   return { ok: true as const };
 }
 
-/*
-  A CONVERSATION IS RE-READ HERE BEFORE ANYTHING IS WRITTEN (ADR-022).
-
-  The browser plays a scene and sends the turns: what the other side said and
-  where it came from, and what the learner typed. It never sends which beats
-  were met or what a word was worth. The plan is drawn again from the same
-  seed, every learner turn is read against the same dictionary sets, and the
-  grades and the gaps come out of that replay. A client that lies about a turn
-  gets a turn read by the server; a client that lies about a mark cannot,
-  because there is nowhere to put one.
-
-  What is written: one SceneRun, append-only, holding the plan and the turns;
-  a SceneGap per word the conversation needed; and a Review row per word the
-  replay can vouch for, through `writeGrade` like every other mode (ADR-016),
-  on the word's recognition card. Good on the first attempt, Hard after a
-  repair, Again where the help button supplied it, never Easy. A walk-out
-  writes the run and no grades.
-*/
-const MAX_SCENE_TURNS = 60;
-const PROVENANCES = new Set<Provenance>(["attested", "composed", "english", "narrated"]);
-
-export async function finishScene(input: {
-  sceneId: string;
-  seed: string;
-  difficulty: number;
-  turns: unknown;
-  helped: unknown;
-  walkedOut: boolean;
-}): Promise<{ ok: true; debrief: Debrief; runId: string } | { ok: false; error: string }> {
-  const ownerId = await requireUserId();
-  const busy = throttleAction(ownerId, "finishScene");
-  if (busy) return busy;
-
-  const scene = sceneById(text(input.sceneId));
-  if (!scene) return { ok: false as const, error: "That situation is no longer available." };
-  const seed = text(input.seed).slice(0, 40);
-  if (!seed) return { ok: false as const, error: "That conversation has no seed." };
-  const difficulty = difficultyFrom(input.difficulty);
-
-  const rawTurns = Array.isArray(input.turns) ? input.turns.slice(0, MAX_SCENE_TURNS) : [];
-  const helped = Array.isArray(input.helped) ? input.helped.filter((h): h is string => typeof h === "string").slice(0, 40) : [];
-
-  const material = await sceneMaterial(scene.id);
-  if (!material) return { ok: false as const, error: "That situation is no longer available." };
-  const drawn = await recentDraws(ownerId, scene.id);
-  const plan = drawPlan({
-    scene, seed, difficulty, glossOf: material.glossOf,
-    recentProps: drawn.props, recentCurveballs: drawn.curveballs,
-  });
-  const ctx = turnContext(material, plan);
-
-  let state = startRun(plan);
-  for (const lemma of helped) state = askedForHelp(state, lemma);
-  let lastLine: string | null = null;
-  for (const raw of rawTurns) {
-    if (typeof raw !== "object" || raw === null) continue;
-    const t = raw as { role?: unknown; text?: unknown; provenance?: unknown; lemma?: unknown; repair?: unknown; quick?: unknown; slow?: unknown };
-    if (typeof t.text !== "string") continue;
-    const beat = currentBeat(state);
-    if (!beat) break;
-    if (t.role === "other") {
-      const provenance = PROVENANCES.has(t.provenance as Provenance) ? (t.provenance as Provenance) : "narrated";
-      const line = t.text.slice(0, 300);
-      state = otherSaid(state, {
-        beatId: beat.id, text: line, provenance, lemma: typeof t.lemma === "string" ? t.lemma : null,
-        repair: t.repair === true, quick: t.quick === true, slow: t.slow === true,
-      });
-      if (provenance !== "narrated") lastLine = line;
-      continue;
-    }
-    const spoken = t.text.slice(0, 300);
-    const evidence = readTurn({ text: spoken, needs: beat.needs, shape: beat.shape, ctx, lastLine });
-    state = advance(state, spoken, evidence).state;
-  }
-  if (input.walkedOut === true && !state.finished) state = walkOut(state);
-  if (!state.finished) return { ok: false as const, error: "That conversation is not over yet." };
-
-  const debrief = debriefOf(scene, state);
-  const now = new Date();
-
-  // The word's recognition card, where the deck holds one: the row that
-  // stands for "do you know this word", which is what a conversation asked.
-  const lexemeIds = [...new Set(debrief.grades.map((g) => material.idOf.get(g.lemma)).filter((id): id is string => Boolean(id)))];
-  const cards = lexemeIds.length > 0
-    ? await prisma.card.findMany({
-      where: { ownerId, suspended: false, lexemeId: { in: lexemeIds }, cardType: { in: ["RECOGNITION", "PRODUCTION"] } },
-      orderBy: [{ cardType: "desc" }, { createdAt: "asc" }, { id: "asc" }],
-    })
-    : [];
-  const cardFor = new Map<string, (typeof cards)[number]>();
-  for (const card of cards) if (card.lexemeId && !cardFor.has(card.lexemeId)) cardFor.set(card.lexemeId, card);
-
-  const run = await prisma.sceneRun.create({
-    data: {
-      ownerId, sceneId: scene.id, seed, level: scene.level, difficulty,
-      transcript: JSON.stringify({ plan, turns: state.turns, helped: state.helped }),
-      outcome: JSON.stringify({
-        outcome: debrief.outcome, objectives: debrief.objectives, done: debrief.done, of: debrief.of,
-        english: debrief.english, curveballs: debrief.curveballs, walkedOut: debrief.walkedOut,
-      }),
-      endedAt: now,
-    },
-  });
-  if (debrief.gaps.length > 0) {
-    await prisma.sceneGap.createMany({
-      data: debrief.gaps.map((g) => ({
-        ownerId, runId: run.id, lemma: g.lemma, lexemeId: material.idOf.get(g.lemma) ?? null, kind: g.kind,
-      })),
-    });
-  }
-  for (const grade of debrief.grades) {
-    const id = material.idOf.get(grade.lemma);
-    const card = id ? cardFor.get(id) : undefined;
-    if (!card) continue;
-    await writeGrade(ownerId, { card, rating: grade.rating, durationMs: 0, reviewedAt: now, now });
-  }
-
-  revalidatePath("/situations");
-  revalidatePath("/");
-  revalidatePath("/progress");
-  return { ok: true as const, debrief, runId: run.id };
-}
-
+/**
+ * A photographed page, once a person has looked at what came back.
+ *
+ * WHAT MAKES THIS SAFE IS THE TICK, not the transcription. A model read the
+ * picture and the dictionary vouched for the words it recognised, but the
+ * confirmation screen is where somebody holding the actual paper agrees that
+ * this is what is on it. That is the same standard the paste importer has
+ * always met (a human copied the list), and it is why a word the dictionary
+ * has never heard of can still become a card: not because the model said so,
+ * but because the learner did.
+ *
+ * A word that matched the dictionary brings its own principal parts and its
+ * retrieved forms, so its cards are built from attested forms and nothing the model
+ * wrote survives into them. A word that did not becomes a plain USER entry
+ * with recognition and production cards only, exactly like a pasted line: no
+ * case-form card, because there are no forms to derive one from.
+ */
 const MAX_SCAN_TITLE = 80;
 
 export async function saveScan(input: {

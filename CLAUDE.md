@@ -49,23 +49,32 @@ redact.
 lines a model wrote.** `lib/scenes/` is Situations (ADR-025, `docs/21-situations.md`, and §30 of it
 for what building it found). A scene file names moves and unit ids and holds no Estonian: every
 lemma it names is one its own declared units teach, asserted word by word, so a scene cannot
-introduce vocabulary. What the other side says comes from `sceneLine`: a recorded usage where one
-fits the beat, otherwise a line a model composed inside the scene's closed word list and `runGate`
-checked four ways, shape, vouching, register, government, and withheld whole when it fails. The
-way out is narrated **in English**, "they did not catch that", never a repair line this app wrote.
-What the learner says is read by `readTurn` and by nothing else; `advance` takes `Evidence` and
-nothing else, so a caller holding a model's verdict cannot compile. The browser holds the machine
-and the server draws the same plan from the same seed to read the finished run before `finishScene`
-writes a grade through `writeGrade`, Good, Hard, Again and never Easy. `SceneRun` and `SceneGap`
-are append-only, in the export, in the erasure, and never in the class. The role card is fiction,
-so no transcript is a fact about the learner, and a scene never asks for a real document number.
+introduce vocabulary. What the other side says comes from `sceneLine`, with its provenance: a
+recorded usage where one fits the beat, otherwise a line a model composed inside the scene's closed
+word list and `runGate` checked four ways, shape, vouching, register, government, and withheld
+whole when it fails, and where both rungs fail the other side says they did not catch that, in a
+phrase the course teaches and in character, never a repair line this app wrote. What the learner
+says is read by `readTurn` and by nothing else; `advance` takes `Evidence` and nothing else, so a
+caller holding a model's verdict cannot compile. The server marks every turn as it is typed and
+reads the finished run again before `finishScene` grades through `gradeCard`, Good, Hard, Again and
+never Easy, and each composed turn books its own call in the ledger. `SceneRun` and `SceneGap` are
+append-only, in the export, in the erasure, and never in the class. The role card is fiction, so no
+transcript is a fact about the learner, and a scene never asks for a real document number.
+
+**Two sessions built this module on the same day and one of them was deleted.** The design was
+written first, so both builds were the same shape with different names, and a clean three-way
+merge would have shipped two of everything: two machines, two routes, two `SceneRun` models. The
+one on main is the one kept, because it had been played through and had found the rung that never
+answered (§30 of the design doc); what survived of the other is what it built beside the module
+rather than inside it, the hearing conditions, the errands and the claim on the landing page. Read
+what landed before you merge, not just the conflict status.
 
 **The gate rate is a vocabulary number before it is a model number.** `npm run eval:scene` has been
 run three times and the answer moved from 60 to 70 percent to 43.5 without touching the gate:
 first the course did not teach `sobima`, then the scenes did not declare the unit `sobima` lives in.
-Read the ranked list of withheld words before touching the check. What it names now is the past
-participle and the polite imperative of a verb that joined the course after the harvest last ran,
-which is a harvest change and not a model change.
+Read the ranked list of withheld words before touching the check. What it named after that was the
+past participle and the polite imperative, which no rule reaches, and both are stored per verb now
+rather than reached for by a model.
 
 **The words never sound like a studio, and the words never change.** `lib/audio/conditions.ts` is
 the one table of how people talk: at speed, over café noise, down a phone line, from halfway
@@ -671,6 +680,29 @@ that mistake one layer up. And a pair is printed only where a case has **exactly
 forms, the illative's own long form excepted: Ekilex records three elatives for `kodu` and the
 second of a list is not a form to put on a learner's screen. All of them stay in `accepted`,
 because somebody who writes one is not wrong.
+
+**And the same list grew twice more, both times because a model reached for a form nobody had
+noticed was missing.** `npm run eval:scene` watched a free model try to hold a conversation and
+ranked what the dictionary would not vouch for, which is how the polite imperative was found: not a
+suffix on anything the rule holds, since `annan` goes to `andke` and `lähen` to `minge`, so it is
+stored per verb and asks a card. The re-run found **both participles** the same way.
+`Kui kaua see on kestnud?` is how anybody asks how long something has been going on, the course
+teaches taisminevik on its own grammar page, and the dictionary could not vouch for a single `nud`
+in the language. Neither is derivable, since `minna` goes to `läinud`, `teha` to `teinud` and `näha`
+to `näinud`. Both are stored and **neither asks a card**, because a participle is met inside a
+construction rather than as a slot, and storing a form and asking about it are two decisions.
+
+**And a verb can be recorded twice over, on two stems.** `pickFormSet` takes the set of forms
+carrying the most, which is right for the six a learner memorises and was silently wrong for
+everything else: Ekilex records `ütlema` as two full sets, one built on `ütle-` and one on `öel-`,
+so `öelge`, `öelnud` and `öelda` were in the response and thrown away by the line above the one
+that keeps every parallel value. `ise` is the same shape, `enese` in one set and `enda`, which is
+the form anybody says, in the other, with every oblique case behind it. So `allForms` reads every
+matching set while `formMap` keeps taking one, and the two infinitives joined `VERB_SLOTS` for
+their parallels alone. Safe because both sets belong to one `wordId`: a homonym is a different word
+with its own id, which is what the pinning is for, while two matching sets under one id are two
+ways the same word inflects, `haigus` with `haigusi` and `haiguseid`. 167 of the 2,057 sets the
+course reads have a second, and the three together are 814 more forms on the same 6,110 words.
 
 **And the tie-break in the scanner is a separate question that was measured and left alone.**
 `matchEstonianForm` scores a diacritic-folded lemma at 90 and a stored form at 88, so `oli` resolves
@@ -1441,11 +1473,22 @@ the word falls back to being asked the plain way.
 found.** It was three cards down `/words`, which is a page about the deck, counted in cards; the
 learner asked for the list twice and reported that they could not see it anywhere. `/words/mastery`
 is the four tiers with a row per word, what each one still needs and which forms it has been right
-in, and it is reachable from the deck it counts, from Practice beside the round that moves it, and
-from the rail's own table so the palette goes there. `nav.test.ts` asserts that pairing now rather
-than only the claim, and the check found two destinations that had been claiming a home which did
-not link to them: `/words` and `/exam` both said they were reached from Progress and neither was,
-so both were findable through the command palette alone.
+in, and it is linked from the deck it counts and from Practice, beside the round that moves it.
+`nav.test.ts` asserts that pairing rather than only the claim, and the check found two destinations
+that had been claiming a home which did not link to them: `/words` and `/exam` both said they were
+reached from Progress and neither was, so both were findable through the command palette alone.
+
+**And then the learner said it a third time, because a place inside a place inside a place is
+nowhere.** The page was given `within: "/words"`, on the argument every other such entry makes: it
+is reached from the deck it counts and from the screen somebody is standing on when they want it,
+so it needs no row of its own. That argument holds one level in and `/words` is itself
+`within: "/progress"`, so the rail said Progress, Progress linked to the deck, and the deck carried
+a button in its header. Three steps to a list asked for by name, from a column that never mentioned
+it. Both nav checks passed the whole time, because each is about a single link and the fault was in
+the chain. So `within` names a place the rail actually lists, asserted, and it was the one entry in
+the table breaking it. The row sits under "How it is going", since it answers that section's
+question in the unit a learner thinks in, and the in-page links stay: a signpost on the screen you
+are already on is worth more than a row you have to go and find.
 
 **A word game may borrow a shape and may not borrow a look.** Sõnad is guess-a-word-and-be-told-
 which-letters-were-right, which is older than computers: Mastermind sold it in 1970 and Bulls and
@@ -1893,6 +1936,38 @@ because a duration is not a time of day and the 24-hour rule has nothing to say 
 spellings, `min` for a tile and `minutes` for a sentence, since the same figure is read in both.
 The invariant is that the pace never reaches a screen except through that module, and `weeksNeeded`
 is the one caller allowed the raw figure, because it divides by it rather than showing it.
+
+**And a plan quotes the person, not the average, wherever the app has the person.** The timeline
+was one table for everybody. It assumed the same five found hours a week of somebody in Tartu with
+an Estonian partner and somebody abroad with a textbook, built on a level a learner had ticked in
+ninety seconds as though a paper had measured it, spread the Estonian surcharge evenly across the
+bands, and never read the review log its own header promised it would. So a B1 speaker was told B2
+was 300 to 350 hours off, further than A2 had been from B1, and the learner in the screenshot that
+started this, living in Estonia with an Estonian partner, was told "not by that date" and sent to
+find a class by a plan that could not see the language was already in their kitchen. Four things
+each move a figure now, and the sentence beside the figure says which. **The surcharge sits where
+the morphology is**: `CUMULATIVE_HOURS` is built from the published guided learning hours and a
+factor per step (`ESTONIAN_FACTOR`), peaking at A2 to B1 where the cases and the gradation have to
+start working on their own and dipping at B1 to B2, which is mostly vocabulary and register and
+costs nearer what it costs in any language; the whole climb still lands inside the FSI ratio, and
+the shape is asserted rather than remembered. **Where the learner stands carries how the app
+knows** (`Standing`): a measured check is costed skill by skill, the mean of what each scored skill
+still has to cover, so B2 reading beside A1 listening is not a B1's distance; a guessed level is
+widened downward only, half a band on the far end, because a plan that quietly shortened the
+distance for an optimistic guess would flatter exactly the learner most likely to be wrong.
+`currentLevelAnswer` in `lib/progress/level.ts` is the one rule for which answer the app holds and
+both the course and the plan read it, so they cannot disagree about whether somebody was measured.
+**The week already holds something**: each reason in `goals.ts` carries the hours a week of
+Estonian that situation puts within reach, a goal carries none, `foundHours` is the baseline plus
+the largest whole and the rest half, and the verdict has a fourth band, `possible`, for the honest
+case where the date fits only if the Estonian around the learner is used. The band is drawn against
+the projection's own `found` and the note quotes the same figure off it, which is the rule the last
+fault taught, one number wider. **And once there is a fortnight of log, the pace is what they did**,
+not what they said: `lib/stats/pace.ts` counts sittings the way `perfect_session` does, first card
+to last plus the first card's own time, off `Review.durationMs` and the timestamps, and a window
+that held nothing keeps the stated pace and says so rather than dividing by zero. Nothing about
+this is measured on the app's learners as a population, and the copy still says that. What is
+measured is the one learner in front of it.
 
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
@@ -2762,12 +2837,27 @@ nothing in it. Restraint that leaves a screen looking broken is not restraint. T
 to pass is "does this say something true and useful on a log with nothing in it".
 
 **Today is a dashboard, and its modules are declared before they are placed.** What a card is and
-which column it sits in are two questions, and they were one six-hundred-line return statement with
-a `shows()` wrapped round each branch. The page now names each module, then lays them out: the wide
-column is the day (what is due, what is written down, what keeps going wrong, how the run of days is
-going) and the narrow one is the material (a word, the next unit, the practice modes, Anu). Inside
-the wide column the two you can act on come before the two that report on you, since a streak is
-worth more on the way out than on the way in.
+where it sits are two questions, and they were one six-hundred-line return statement with a
+`shows()` wrapped round each branch. The page names each module, then lays them out, and the layout
+is one card across the top and the rest dealt into two columns that end level. The card across the
+top is the thing to do now, because it is the only card that is not one of several; on a wide
+screen it is a row, the figures on the left and the button on the right, so a wide card is not a
+wide empty card with a button in it, and on the first morning, where there are no figures worth
+printing, the left half says what the button is going to do in the ladder's own terms.
+
+**The columns used to be assigned by what a module was for, and that made a poor picture.** The
+wide column was the day and the narrow one the material, which is a sound reading order and a
+layout whose balance depends on how far in the learner is: on the first morning the wide column
+held one button and the narrow one held three tall cards, so the page read as having slid
+sideways, and moving the practice tiles across for that one stage only moved the lean. `Columns`
+in `components/ui.tsx` hands the cards to the browser instead. A multi-column layout fills the
+first column and then the second and balances the two by height, which is the one thing a server
+cannot do, since it knows which cards there are this morning and not how tall the word of the day
+turned out; a card never splits across the seam, and the wrapper carries the rhythm as padding
+rather than margin because a margin at a column break is truncated and a padding is not. Reading
+order is still the argument and is unchanged: down the first column and into the second it reads
+the two you can act on, what today holds, what keeps going wrong, the run of days, and then the
+material, and where the seam falls between those is the one thing the browser decides.
 
 **One word a day, chosen by the date, that nothing else on the page was going to show you.** Every
 other panel on Today reports on the learner's own deck, so every one of them is silent on the first
@@ -2947,7 +3037,7 @@ third until the page it led was cut.
 The others are one question asked four ways. The deck, the level check, the mock exam and a class
 are four readings of "how am I doing", which is
 the question `/progress` exists to answer: standing them beside it as four more rows made the rail
-a list of every noun in the app rather than a set of places to go. Seven rows are left, under three
+a list of every noun in the app rather than a set of places to go. Eight rows are left, under three
 headings rather than four, because a heading over a single row is furniture: a heading earns itself
 by telling two or three rows apart, and "where you are in the course" and "how far along it you
 are" turned out to be one question rather than two sections.
@@ -3511,6 +3601,18 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   way and so does every country whose language this app teaches, and a reading that changes shape
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`
   rather than `hour12: false`, which renders midnight as "24:00" in en-US.
+- **Light is the default and dark is a choice.** The palette used to follow the system as well: a
+  `prefers-color-scheme: dark` block painted the dark tokens for anybody whose phone or laptop was
+  set that way and who had never touched the toggle, which is most phones after sunset. So the
+  landing page, the one screen a stranger decides on, opened dark for about half of them, in a
+  palette it was designed and measured against second, and first run followed in the same one.
+  Bare `:root` is light for everybody now and the dark palette lives under `[data-theme="dark"]`
+  alone, written by the toggle in the rail and read back before first paint by the inline script
+  in `app/layout.tsx`. Two states rather than three: the default, or the one you picked. The
+  suites that measure the dark theme store that choice the way the toggle does rather than
+  emulating a system preference the palette no longer reads, since that would sweep the light
+  theme twice and call the dark one clean. Asserted, with the comments stripped, because the note
+  explaining why the block went names the block.
 - Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
   meanings (`docs/14-design-system.md` §1). Mint is "recalled", peach is "missed", and neither is
   free for decoration. **A hue has a fill and an ink and they are not interchangeable**: `--accent`
@@ -3699,6 +3801,26 @@ app editing Estonian, which is the rule the whole project is built on. The first
 stream got that wrong in the way only a test finds, rewriting a corrected sentence one chunk
 boundary at a time once the first half of its line had already been shown, so the line's character
 is now decided when it opens and carried until it ends.
+
+**Her reply is typography, shown once it is finished, and the two tagged lines have one shape.** Every
+model writes markdown whether asked or not, and the bubble drew it as text: `**raamatut**` with the
+asterisks in, on the one word the sentence was about, and a numbered list as four lines beginning
+`1.`. Drawn a chunk at a time it was worse, since bold that has opened and not yet closed is a pair
+of asterisks for as long as the model takes to reach the closing pair. `lib/tutor/markdown.ts` reads a
+reply into paragraphs, lists, headings and the three inline shapes, deliberately understanding nothing
+else, and never changing a character between the markers; `components/anu/Prose.tsx` is the one place
+those become elements, on the page, in the panel and under an exam composition. And `useAnuChat`
+gathers the stream and shows the finished reply in one go, with three dots in her bubble until it
+lands: the route still streams, because a two-minute route that says nothing until the end is what a
+proxy times out and the cleaning pass is built on the stream, but typography set a character at a
+time is never clean while it is being set, and the first thing a learner reads should be the answer
+as she meant it to look. The prompt says what formatting is allowed in the terms the renderer draws,
+bold for the word or form she is pointing at and a list only where the items are a list. A model
+allowed bold bolds its markers too, so `**FIX:**` arrives as readily as `FIX:`, and three modules
+that recognised those lines with three regexes read `lib/tutor/markers.ts` now. Asserted on all of
+it. What the prompt also asks for, and no check can see, is that she teaches like a person: name what
+was right first, one thing per answer, a reason a learner can hold onto beside every rule, and a
+next step at the end. `docs/18-voice.md` is still the standard for whether she managed it.
 
 **A class shows effort, never contents.** `lib/classroom/roster.ts` is the whole boundary: reviews
 this week, streak, words known, last-seen, the group's weakest cases in aggregate, and, amending
@@ -4170,9 +4292,10 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`, `caseFits`,
 `caseQuestionFor`, `semanticGroup`, `ANIMATE_CODES`, `nominalOpener`, `asksPerson`,
 `slotOfCard`, `isKnownSlot`, `practisedSlot`, `askableSlots`, `shapeFor`, `markFlash`,
-`formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `conditionFor`, `describeHearing`,
-`playThrough`, `readTurn`, `advance`, `sceneLine`, `runGate`, `drawPlan`, `finishScene`,
-`errandForDay`, `recordEncounter`, `outThere`, `canDoClaims`. Most of them now
+`formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `hoursFor`, `foundHours`, `weeklyExposure`,
+`weeksWithFound`, `measuredPace`, `currentLevelAnswer`, `AnuProse`, `parseReply`, `fixFrom`,
+`TAGGED_LINE`, `conditionFor`, `describeHearing`, `playThrough`, `errandForDay`, `recordEncounter`,
+`outThere`, `canDoClaims`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

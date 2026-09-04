@@ -86,7 +86,10 @@ export interface Destination {
    *     press.
    *
    * The value is where it is reached from, so this file says so rather than
-   * leaving the next reader to find out.
+   * leaving the next reader to find out, and it names a place the rail lists.
+   * One level in is a signpost on the screen you are standing on; two is
+   * nowhere, which is what `/words/mastery` was for a while by pointing at
+   * `/words`, itself reached from `/progress`. Asserted in `nav.test.ts`.
    */
   within?: string;
 }
@@ -111,7 +114,7 @@ export const SECTIONS: NavSection[] = [
   {
     id: "daily",
     title: "Every day",
-    blurb: "The new words, and the ones you have already met.",
+    blurb: "The new words, the ones you have met, and somewhere to use them.",
     items: [
       {
         href: "/", label: "Today", blurb: "Due cards, your goal, the streak", icon: "Sun", tone: "butter",
@@ -156,17 +159,21 @@ export const SECTIONS: NavSection[] = [
         within: "/practice",
       },
       /*
-        The one row that is about using the language on somebody rather than
-        studying it. A scene is five to eight minutes with a receptionist who
-        has an agenda of their own, and it is where the course's own "you can
-        do this" claims get checked. In Every day rather than under Practice,
-        because the rail answers "what do I do now" and this is the answer the
-        whole app is for.
+        A row of its own rather than a tile inside Practice, because the rail
+        answers four questions and none of them is "what do I do with this". It
+        is in this section rather than a fourth one because the three above are
+        building a memory, keeping one alive and asking it again, and this is
+        the fourth thing you do with a word: use it on somebody who wants
+        something from you.
+
+        No cell in the phone bar either: the bar holds four, a fifth breaks the
+        44px floor, and its four are the daily loop. A conversation is a five to
+        eight minute sitting rather than a daily obligation.
       */
       {
-        href: "/situations", label: "Situations", blurb: "A desk, a person, and something to get done in Estonian",
-        icon: "MessagesSquare", tone: "blush",
-        keywords: "conversation roleplay situation real life doctor shop landlord counter speak talk",
+        href: "/situations", label: "Situations", blurb: "Book an appointment, hand in a form, ring a landlord",
+        icon: "MessagesSquare", tone: "mint",
+        keywords: "conversation scene role play speaking doctor counter landlord",
       },
     ],
   },
@@ -210,17 +217,33 @@ export const SECTIONS: NavSection[] = [
       },
       {
         /*
+          A ROW OF ITS OWN, AND IT TOOK THREE GOES TO GET THERE.
+
           Which words are known, which are nearly, and which keep going wrong.
-          Reached from the deck it counts and from Practice, which is where
-          somebody standing in front of the flash round wants it, and it is in
-          the table so the palette goes there: the first version of this list
-          was a panel three cards down `/words` and the learner reported that
-          they could not find it anywhere.
+          The first version was a panel three cards down `/words` and the
+          learner reported that they could not find it anywhere. The second
+          gave it a page and a `within: "/words"`, on the argument every other
+          entry here makes: it is reached from the deck it counts and from
+          Practice, which is the screen somebody is standing on when they want
+          it. The learner reported the same thing again.
+
+          The argument was sound and the placement was not, because `/words` is
+          itself `within: "/progress"`. A place inside a place inside a place
+          has no row anywhere and no signpost either: the rail says Progress,
+          Progress links to the deck, and the deck carries a button. Three
+          steps to a list somebody asked for by name twice. `nav.test.ts` holds
+          the general rule now, that a `within` points at somewhere the rail
+          actually lists, and this was the only entry breaking it.
+
+          It sits here rather than under the deck because it answers this
+          section's own question, "how is it going", in the one unit a learner
+          thinks in: words they have, words they nearly have, words that keep
+          going wrong. The in-page links stay, since a signpost on the screen
+          you are already on is worth more than a row you have to go and find.
         */
         href: "/words/mastery", label: "Word mastery",
         blurb: "Mastered, almost there, and what needs work", icon: "Trophy", tone: "mint",
         keywords: "mastered known struggling almost progress words list stuck weak",
-        within: "/words",
       },
       {
         href: "/assess", label: "Level check", blurb: "Reading, listening, writing and speaking, measured",

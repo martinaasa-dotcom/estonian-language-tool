@@ -558,16 +558,6 @@ const OPENAI_COMPATIBLE: Record<
 };
 
 /** The wire details for a provider that is not Anthropic. */
-/**
- * The endpoint and the key a non-Anthropic provider is reached at, for a
- * caller that makes one unstreamed request of its own (`lib/scenes/compose.ts`).
- * Exported rather than copied, so a fifth provider is added in one table.
- */
-export function wireFor(config: ProviderConfig): { url: string; key: string } {
-  const { url, keyEnv } = openAiCompatible(config);
-  return { url, key: process.env[keyEnv] ?? "" };
-}
-
 function openAiCompatible(config: ProviderConfig) {
   const entry = OPENAI_COMPATIBLE[config.name as keyof typeof OPENAI_COMPATIBLE];
   if (!entry) throw new TutorError(`${config.label} has no endpoint configured.`, 500);

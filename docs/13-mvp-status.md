@@ -411,6 +411,29 @@ saying it costs a few sign-ups and saves the ones who stay from finding out in M
 screen therefore reports what the app's own pace covers, what is left over, and what a moved
 deadline would look like, rather than a streak.
 
+### And why it is about the learner rather than the average
+
+Discouraging is not the same as one number for everybody, and for a while it was. The plan quoted
+one table, assumed the same five found hours a week of somebody in Tartu with an Estonian partner
+and somebody abroad with a textbook, built on a guessed level as though a paper had measured it,
+and never read the review log its own header promised it would. A B1 speaker was told B2 was 300
+to 350 hours off, further than A2 had been from B1. Four things each move a figure now, and the
+screen says which.
+
+- **The surcharge sits where the morphology is.** `CUMULATIVE_HOURS` is the published guided
+  learning hours times a factor per step, peaking at A2 to B1 and dipping at B1 to B2, and the
+  climb to C1 stays inside the FSI ratio. B1 to B2 is now 190 to 300 hours against A2 to B1 at
+  280 to 380; a beginner to C1 is still 940 to 1 260.
+- **A measured level is costed skill by skill, a guessed one is widened for the guess.** The mean
+  of what each scored skill still has to cover, so B2 reading beside A1 listening is not a B1's
+  distance; and half a band on the far end for a self-estimate, downward only.
+- **The week already holds something.** Each reason carries the hours a week of Estonian it puts
+  within reach; a goal carries none. The verdict gained `possible`, for the date that fits only if
+  the Estonian around the learner is used.
+- **After a fortnight, the pace is what they did.** `lib/stats/pace.ts` reads sittings off
+  `Review.durationMs` and the timestamps over the last four weeks, and the plan is built on that
+  rather than on the days they said.
+
 ### Known limitations, still
 
 1. **The paper is marked in the browser.** It has to be: the answers are in it, feedback is
@@ -418,9 +441,10 @@ deadline would look like, rather than a streak.
    forged result, it reaches no roster and no leaderboard, and the server still recomputes the level
    from the credits with `placement()` so a stale client cannot invent its own scale.
 2. **The hours table is not measured on this app's learners.** It combines published CEFR guided
-   hours with the FSI difficulty scale, both of which are about other people on other courses. It is
-   shown as a range with its sources named, and the copy says the app will use the learner's own
-   pace once there is a log worth reading.
+   hours with the FSI difficulty scale, both of which are about other people on other courses, and
+   the per-step shape of the surcharge is a stated judgement over them. It is shown as a range with
+   its sources named. What is the learner's own is their measured level, the Estonian their week
+   already holds, and their pace off the log; the hours a level costs are still the published ones.
 3. **No sentences without an Ekilex key.** The built-in dictionary carries principal parts and no
    `usages`, so on a seeded-only deployment there is no dictation and no sentence comprehension. The
    sections that survive say they are short rather than pretending to be full.
@@ -2063,15 +2087,12 @@ funder as much as for a contributor. This section is what was built and measured
 
 ### What was built
 
-- **Situations**, played. `docs/21-situations.md` had the design and Phase 0; this is Phase 1 and
-  the spoken-unmarked half of Phase 2. `lib/scenes/` is the machine as pure code: the seeded draw,
-  personas, props, seven curveballs with their outs, `readTurn` as the one producer of evidence and
-  `advance` as its one consumer, the gate moved out of the evaluation script so the script and the
-  route read one answer, the line ladder that narrates in English when both rungs fail, and a
-  debrief that leads with the outcome and never scores. A fourth scene at A1, the shop, so a
-  beginner has a door. The browser holds the machine, the server draws the same plan from the same
-  seed to read a finished run, and one route composes a line under a `SCENE` usage kind. Two
-  append-only tables, in the export, the erasure, a restore and on the privacy page. ADR-025.
+- **Situations**, played. `docs/21-situations.md` had the design and Phase 0; Phase 1 landed on
+  main from a second session the same day, and the copy this pass had built was deleted rather than
+  merged beside it (CLAUDE.md, "two sessions built this module"). What this pass adds around it: a
+  unit's page links to the scene that tests its claim, Progress lists the claims beside the last
+  run, Anu is told which situation the learner last stalled in and on what, the situations screen
+  says where the people are, and the rows are in the export, the erasure and a restore. ADR-025.
 - **Hearing conditions.** One table of how people talk, applied in the browser: at speed, over café
   noise, down a phone line, from halfway through, and a different voice each time, widening as the
   word settles. Listening and dictation ask per card; minimal pairs rotates its reader and keeps the
@@ -2089,15 +2110,14 @@ funder as much as for a contributor. This section is what was built and measured
 - The gate, three times. 60 to 70 percent withheld before this pass; 54 percent with the encounter
   verbs in the course; 43.5 percent over 260 lines, 30 to 51 by scene, with the scenes declaring
   the units those verbs live in. The ranked list of withheld words is what found the second fix,
-  and what it names next is the past participle, a form no rule reaches and the harvest does not
-  store, and a government check that now withholds more than vouching does.
-- `scripts/test-scene.mjs` plays the shop through keyless and reports the errand: 41 checks. The
-  route smoke, the accessibility sweep and the containment suite pass over the new screens.
-- 230 invariants, three of them new and each made to fail once: the room a clip is heard in has one
-  module and the exam may not use it; a scene module reaches nothing that is not data, evidence is
-  produced in one place, the finish action grades through `writeGrade` with the debrief's own
-  rating and nothing off the wire, and the class never reads a transcript; the review-log rule
-  names `finishScene` as its fifth door.
+  and what it named next was the past participle and the polite imperative, forms no rule reaches,
+  which the harvest stores per verb now, and a government check that withholds more than vouching
+  does.
+- `scripts/test-scene.mjs` plays the doctor's through keyless. The route smoke, the accessibility
+  sweep and the containment suite pass over the new screens.
+- One invariant new in this pass and made to fail once: the room a clip is heard in has one
+  module and the exam may not use it. The errand table is held by its unit suite, which fails on
+  an errand naming a word rather than a unit.
 
 ### What is honest
 

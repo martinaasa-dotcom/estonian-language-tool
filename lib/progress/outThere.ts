@@ -76,8 +76,12 @@ export async function canDoClaims(ownerId: string, deck: {
   for (const r of runs) {
     if (latest.has(r.sceneId)) continue;
     try {
-      const o = JSON.parse(r.outcome) as { done?: number; of?: number };
-      latest.set(r.sceneId, { done: o.done ?? null, of: o.of ?? null });
+      // `finishRun` writes the objectives whole: which required beats were
+      // met and which were missed, and never a percentage (ADR-022).
+      const o = JSON.parse(r.outcome) as { met?: string[]; missed?: string[] };
+      const met = Array.isArray(o.met) ? o.met.length : null;
+      const missed = Array.isArray(o.missed) ? o.missed.length : 0;
+      latest.set(r.sceneId, { done: met, of: met === null ? null : met + missed });
     } catch {
       latest.set(r.sceneId, { done: null, of: null });
     }

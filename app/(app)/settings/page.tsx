@@ -187,7 +187,7 @@ export default async function SettingsPage() {
                 <HearingPanel current={hearing} />
                 <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                   The words never change. What changes is the pace, the reader, and the room,
-                  because the receptionist will not slow down for you and the shop is never quiet.
+                  because the receptionist will not slow down for you and the counter is never quiet.
                 </p>
               </div>
             </Card>

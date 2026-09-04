@@ -24,7 +24,7 @@ import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
 import { FIRST_DOORS, modeAt, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, CardLink, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
+import { Card, CardLink, Columns, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
 import { LocalDate } from "@/components/LocalDate";
 import { dateLine } from "@/lib/time/estonianDate";
 import type { TaskView } from "@/components/TaskRow";
@@ -249,123 +249,164 @@ export default async function TodayPage() {
     as a nest of conditions.
   */
 
-  /* The one thing the app exists to get you to do, and nothing else. */
-  const doNowCard = (
-    <Card className="flex flex-col gap-5">
-      {shows(stage, "streak") && (
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:min-w-[200px] sm:flex-1">
-            <StatTile value={snapshot.dueCount} label="Due now" tone="accent" />
-            <StatTile value={toLearn} label="To learn" tone="mint" />
-          </div>
-          {/* On a phone the ring wraps onto its own line, where a bare
-              circle says nothing — so it is captioned there and only there. */}
-          <div className="flex items-center gap-3">
-            <Ring
-              pct={summary.goalPct}
-              size={74}
-              thickness={8}
-              label={`${summary.reviewsToday} of ${summary.dailyGoal} reviews toward today's goal`}
-            >
-              <span
-                className="tnum text-base font-bold"
-                style={{ color: summary.goalPct >= 100 ? "var(--good-ink)" : "var(--ink)" }}
-              >
-                {summary.goalPct}%
-              </span>
-            </Ring>
-            {/*
-              Shown at every width. It was `sm:hidden`, so from 640 up the card
-              carried two labelled tiles and one unlabelled circle reading
-              100%, with the meaning in an aria-label and nowhere else. Past
-              the goal it said "24 of 15 reviews", which reads as a counting
-              fault rather than as a day gone well.
-            */}
-            <div aria-hidden>
-              <p className="label-xs" style={{ color: "var(--ink-3)" }}>Daily goal</p>
-              <p className="tnum mt-1 text-xs" style={{ color: "var(--ink-2)" }}>
-                {summary.reviewsToday >= summary.dailyGoal
-                  ? `Met, ${summary.reviewsToday} reviews`
-                  : `${summary.reviewsToday} of ${summary.dailyGoal} reviews`}
-              </p>
-            </div>
-          </div>
+  /*
+    THE ONE THING THE APP EXISTS TO GET YOU TO DO, ACROSS THE WHOLE WIDTH.
+
+    It spans both columns and is the only card that does, because it is the
+    only card that is not one of several. On a wide screen it is a row rather
+    than a stack: the figures on the left and the button on the right, so a
+    wide card is not a wide empty card with a button in it. On the first
+    morning there are no figures worth printing (`shows` holds a due count of
+    nought and a goal ring at nought back, and it is right to), so the left
+    half says what the button is going to do instead, in the ladder's own
+    terms: meet, pick the meaning, put it back in its sentence.
+  */
+  const figures = shows(stage, "streak") ? (
+    <div className="flex flex-wrap items-center gap-4">
+      <div className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:min-w-[200px] sm:flex-1">
+        <StatTile value={snapshot.dueCount} label="Due now" tone="accent" />
+        <StatTile value={toLearn} label="To learn" tone="mint" />
+      </div>
+      {/* On a phone the ring wraps onto its own line, where a bare
+          circle says nothing — so it is captioned there and only there. */}
+      <div className="flex items-center gap-3">
+        <Ring
+          pct={summary.goalPct}
+          size={74}
+          thickness={8}
+          label={`${summary.reviewsToday} of ${summary.dailyGoal} reviews toward today's goal`}
+        >
+          <span
+            className="tnum text-base font-bold"
+            style={{ color: summary.goalPct >= 100 ? "var(--good-ink)" : "var(--ink)" }}
+          >
+            {summary.goalPct}%
+          </span>
+        </Ring>
+        {/*
+          Shown at every width. It was `sm:hidden`, so from 640 up the card
+          carried two labelled tiles and one unlabelled circle reading
+          100%, with the meaning in an aria-label and nowhere else. Past
+          the goal it said "24 of 15 reviews", which reads as a counting
+          fault rather than as a day gone well.
+        */}
+        <div aria-hidden>
+          <p className="label-xs" style={{ color: "var(--ink-3)" }}>Daily goal</p>
+          <p className="tnum mt-1 text-xs" style={{ color: "var(--ink-2)" }}>
+            {summary.reviewsToday >= summary.dailyGoal
+              ? `Met, ${summary.reviewsToday} reviews`
+              : `${summary.reviewsToday} of ${summary.dailyGoal} reviews`}
+          </p>
         </div>
+      </div>
+    </div>
+  ) : null;
+
+  /*
+    Which of the three days this is: words waiting to be learned, cards
+    waiting to be reviewed, or neither. `learnFirst` is the first of those.
+
+    THE FIRST BUTTON ON A DECK NOBODY HAS READ YET IS NOT "REVIEW". A deck
+    arrives whole and every card in it is unseen, so on day one there is
+    nothing due and there never was: the old page counted the new cards a
+    review session would trickle in and called them due, which put "Start
+    your first review" over a screen whose whole first minute is teaching.
+    Learning is what there is to do, so that is what the button says, and it
+    goes on saying it on any day the schedule is clear and there are still
+    words waiting.
+  */
+  const learnFirst = toLearn > 0 && (toReview === 0 || stage === "arriving");
+  const caughtUp = !learnFirst && toReview === 0;
+  /*
+    THE ONE CARD ON THE PAGE THAT EXISTS TO SAY WHAT TO DO NOW, SAYING IT.
+
+    With nothing due this was a sentence and no control, and it pointed
+    "below" at practice tiles that sat in the other column. The lead above
+    already says there is nothing due. So the note is one line and the next
+    unit is a button, which is the honest next thing on a day the learner has
+    earned.
+  */
+  const caughtUpNote = (
+    <Note tone="good">
+      Caught up. Reviewing early does not help memory, so this is a good moment for
+      something new.
+    </Note>
+  );
+  const actions = learnFirst ? (
+    <>
+      <ButtonLink href="/learn/new" variant="primary" size="lg" className="w-full">
+        {stage === "arriving" ? "Learn your first words" : `Learn ${Math.min(toLearn, LEARN_BATCH)} new words`}{" "}
+        <ArrowRight size={17} aria-hidden />
+      </ButtonLink>
+      {toReview > 0 && (
+        <ButtonLink href="/review" variant="secondary" className="w-full justify-center">
+          Or review {toReview} due <ArrowRight size={16} aria-hidden />
+        </ButtonLink>
       )}
-
-      {snapshot.totalCards === 0 ? (
-        <Empty
-          title="Your deck is empty"
-          body="A unit becomes real cards, with every form and its audio."
-          action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
-        />
-      ) : toLearn > 0 && (toReview === 0 || stage === "arriving") ? (
-        /*
-          THE FIRST BUTTON ON A DECK NOBODY HAS READ YET IS NOT "REVIEW".
-
-          A deck arrives whole and every card in it is unseen, so on day one
-          there is nothing due and there never was: the old page counted the
-          new cards a review session would trickle in and called them due,
-          which put "Start your first review" over a screen whose whole first
-          minute is teaching. Learning is what there is to do, so that is what
-          the button says, and it goes on saying it on any day the schedule is
-          clear and there are still words waiting.
-        */
-        <div className="flex flex-col gap-3">
-          <ButtonLink href="/learn/new" variant="primary" size="lg" className="w-full">
-            {stage === "arriving" ? "Learn your first words" : `Learn ${Math.min(toLearn, LEARN_BATCH)} new words`}{" "}
-            <ArrowRight size={17} aria-hidden />
-          </ButtonLink>
-          {toReview > 0 && (
-            <ButtonLink href="/review" variant="secondary" className="w-full justify-center">
-              Or review {toReview} due <ArrowRight size={16} aria-hidden />
-            </ButtonLink>
-          )}
-        </div>
-      ) : toReview > 0 ? (
-        <div className="flex flex-col gap-3">
-          <ButtonLink href="/review" variant="primary" size="lg" className="w-full">
-            Start reviewing <ArrowRight size={17} aria-hidden />
-          </ButtonLink>
-          {toLearn > 0 && (
-            <ButtonLink href="/learn/new" variant="secondary" className="w-full justify-center">
-              Or learn {Math.min(toLearn, LEARN_BATCH)} new words <ArrowRight size={16} aria-hidden />
-            </ButtonLink>
-          )}
-        </div>
+    </>
+  ) : !caughtUp ? (
+    <>
+      <ButtonLink href="/review" variant="primary" size="lg" className="w-full">
+        Start reviewing <ArrowRight size={17} aria-hidden />
+      </ButtonLink>
+      {toLearn > 0 && (
+        <ButtonLink href="/learn/new" variant="secondary" className="w-full justify-center">
+          Or learn {Math.min(toLearn, LEARN_BATCH)} new words <ArrowRight size={16} aria-hidden />
+        </ButtonLink>
+      )}
+    </>
+  ) : (
+    <>
+      {/* The note sits beside the button where there are figures to fill the
+          other half, and takes that half itself where there are none. */}
+      {figures && caughtUpNote}
+      {nextUnit ? (
+        <ButtonLink href={`/learn/${nextUnit.unit.id}/lesson`} variant="secondary" className="w-full justify-center">
+          Meet {nextUnit.unit.title} <ArrowRight size={16} aria-hidden />
+        </ButtonLink>
       ) : (
-        /*
-          THE ONE CARD ON THE PAGE THAT EXISTS TO SAY WHAT TO DO NOW, SAYING IT.
-
-          With nothing due this was a sentence and no control, and it pointed
-          "below" at practice tiles that sit in the other column from `lg` up.
-          The lead above already says there is nothing due. So the note is one
-          line and the next unit is a button, which is the honest next thing on
-          a day the learner has earned.
-        */
-        <div className="flex flex-col gap-3">
-          <Note tone="good">
-            Caught up. Reviewing early does not help memory, so this is a good moment for
-            something new.
-          </Note>
-          {nextUnit ? (
-            <ButtonLink href={`/learn/${nextUnit.unit.id}/lesson`} variant="secondary" className="w-full justify-center">
-              Meet {nextUnit.unit.title} <ArrowRight size={16} aria-hidden />
-            </ButtonLink>
-          ) : (
-            <ButtonLink href="/practice" variant="secondary" className="w-full justify-center">
-              Open practice <ArrowRight size={16} aria-hidden />
-            </ButtonLink>
-          )}
-        </div>
+        <ButtonLink href="/practice" variant="secondary" className="w-full justify-center">
+          Open practice <ArrowRight size={16} aria-hidden />
+        </ButtonLink>
       )}
+    </>
+  );
 
-      {stage === "arriving" && snapshot.totalCards > 0 && toReview > 0 && (
-        <p className="text-sm leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          Type or pick where you can, and where a card just asks, say honestly whether you
-          knew it. The scheduler works out when to ask again from that.
-        </p>
-      )}
+  /*
+    What the left half says on a morning with no figures. Which is to say, on
+    the first one: what the ladder will do with the words, or, where the deck
+    already has cards to answer, how to answer them.
+  */
+  const opening = figures ? null : caughtUp ? caughtUpNote : learnFirst ? (
+    <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+      {toLearn} word{toLearn === 1 ? "" : "s"} waiting, {LEARN_BATCH} at a time. You meet each one,
+      pick out its meaning, then put it back into its sentence.
+    </p>
+  ) : (
+    <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+      Type or pick where you can, and where a card just asks, say honestly whether you
+      knew it. The scheduler works out when to ask again from that.
+    </p>
+  );
+
+  const doNowCard = snapshot.totalCards === 0 ? (
+    <Card>
+      <Empty
+        title="Your deck is empty"
+        body="A unit becomes real cards, with every form and its audio."
+        action={<ButtonLink href="/learn" variant="primary">Open the learning path</ButtonLink>}
+      />
+    </Card>
+  ) : (
+    <Card className="flex flex-col gap-5 lg:flex-row lg:items-center lg:gap-8">
+      <div className="min-w-0 flex-1">{figures ?? opening}</div>
+      {/*
+        Nineteen rem, which is the width the primary button was always drawn
+        at on a phone and is wide enough for "Or learn 5 new words" on one
+        line. Fixed rather than a fraction, so the button is the same object
+        on every morning whatever the other half holds.
+      */}
+      <div className="flex flex-col gap-3 lg:w-[19rem] lg:shrink-0">{actions}</div>
     </Card>
   );
 
@@ -833,61 +874,48 @@ export default async function TodayPage() {
       lead={lead(stage, toReview, toLearn)}
     >
       {/*
-        TWO COLUMNS, AND WHICH COLUMN A MODULE SITS IN IS ABOUT WHAT IT IS FOR.
+        ONE CARD ACROSS THE TOP, AND THE REST DEALT INTO TWO COLUMNS THAT END
+        LEVEL.
 
-        The wide column is today: what is due, what is written down, what is
-        going wrong, how the run of days is going. The narrow one is what is
-        ahead: the exam somebody said they were aiming at, a word they have not
-        met, the next unit, the practice modes, and Anu. So reading down the
-        left answers "what do I have to do" and reading down the right answers
-        "where is this going".
+        The page used to be two columns from the top, the wide one for today
+        (what is due, what is written down, what is going wrong, how the run
+        of days is going) and the narrow one for what is ahead (the exam, a
+        word, the next unit, the practice modes, Anu). That is a sound reading
+        order and it made a poor picture, because how much each column holds
+        depends on how far in the learner is. On the first morning the wide
+        column held one button and the narrow one held three tall cards, so
+        the page read as having slid sideways; moving the practice tiles
+        across for that stage only moved the lean.
 
-        The two cards at the top of the columns are deliberately level with each
-        other, because they are the pair somebody actually decides on: "43 cards
-        waiting" on the left and "B1 in 47 days, 62 percent" on the right.
-
-        Inside the left column the two you can act on come before the two that
-        report on you. The words that keep lapsing are a thing to go and fix;
-        the streak and the quests are a reason to have come back, and they are
-        worth less on the way in than on the way out.
-
-        On the first morning the left column holds one card and the right holds
-        three, which reads as a page that has slid sideways. So the practice
-        tiles move across for exactly that stage: at `arriving` they are the
-        second thing to do rather than a shelf of tools, and by `starting` the
-        left column has the plan and the streak in it and no longer needs the
-        help. Below `lg` all of this is one column in reading order anyway.
+        So the one card that is not one of several, the thing to do now, goes
+        across the whole width, and everything under it is handed to
+        `Columns`, which balances the two by height in the browser and never
+        splits a card. The order is still the argument. Down the first column
+        and into the second it reads: the two you can act on, what today
+        holds, what keeps going wrong, the run of days, and then the material,
+        the course, today's game, the doors to practice, a word, Anu. Where the
+        seam falls between those is the one thing the browser decides, and it
+        decides it so the two columns are the same height. Below `lg` it is
+        one column in that order.
       */}
-      {/*
-        `gap-8` down, `lg:gap-6` across. Below `lg` this grid is one column, so
-        its gap is the seam between the last card of the left stack and the
-        first of the right, and at 24px it was the one tighter join on a page
-        whose every other section sits 32px from its neighbour. Across, at the
-        width where the two columns are actually side by side, 24px is the
-        gutter between them and is right.
-      */}
-      <div className="grid gap-8 lg:gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <Stack className="min-w-0">
-          {doNowCard}
-          {errandCard}
-          {stage === "arriving" && practiceCard}
+      <Stack className="min-w-0">
+        {doNowCard}
+        {errandCard}
+        <Columns>
           {questCard}
+          {examCard}
           {scheduleCard}
           {planCard}
           {struggleCard}
           {streakCard}
           {questsCard}
-        </Stack>
-
-        <Stack className="min-w-0">
-          {examCard}
-          {gameCard}
-          {wordCard}
           {nextCard}
-          {stage !== "arriving" && practiceCard}
+          {gameCard}
+          {practiceCard}
+          {wordCard}
           {tutorCard}
-        </Stack>
-      </div>
+        </Columns>
+      </Stack>
       {/* Behind a Suspense boundary so three round trips of badge checking do
           not sit in front of the first byte of this page. See ./BadgeCheck. */}
       <Suspense fallback={null}>

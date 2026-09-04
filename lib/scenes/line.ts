@@ -1,109 +1,150 @@
 /**
- * What the other side says, and where it came from.
+ * The one function that answers "what does the other side say here".
  *
- * The ladder of design §2: an attested line where one fits, a composed one
- * inside a closed word list and behind the gate where none does, and a way
- * out that is always honest when both fail. Every line carries its
- * provenance, and the screen prints it, because a learner is never invited
- * to memorise a sentence without being told where it came from.
+ * `docs/19-situations.md` §2. It works the way `caseAnswer` works: an attested
+ * sentence ahead of a composed one ahead of the way out, **with the screen
+ * saying which it got**. That last clause is the whole of ADR-025's second
+ * half, and it is why the return type carries a provenance rather than a
+ * string: a caller holding only the text cannot print the chip, and a chip
+ * nobody printed is a composed line a learner reads as a lexicographer's.
  *
- * THE WAY OUT IS NARRATED IN ENGLISH, NEVER INVENTED IN ESTONIAN. When no
- * recorded sentence fits the move and composition failed twice, there is
- * still a person standing at the desk. What the learner sees is a stage
- * direction: they did not catch that and are waiting for you to say it
- * again. It is the truest thing that can happen in a conversation and it
- * costs no Estonian this app did not write. `patience` bounds how often it
- * happens at one beat, so a beat nothing can be built for is skipped rather
- * than looped, and the debrief says so.
+ * FOUR RUNGS, AND THE MEASURED ORDER IS NOT THE OBVIOUS ONE. `npm run
+ * measure:scenes` found that retrieval fills the moves every conversation
+ * shares and almost none of the moves that make it *this* conversation,
+ * because a lexicographer records a sentence to illustrate a word rather than
+ * to ask a question about it. So the composer is load-bearing rather than a
+ * fallback, and the gate is the thing the module rests on.
  *
- * The composer is injected. This module never opens a provider, never reads
- * a key, and the gate the composed line has to pass lives in `gate.ts`. On a
- * deployment with no key the composer is absent and every beat retrieval
- * cannot fill is narrated, which is the shorter scene design §16 describes.
+ * COMPOSITION IS INJECTED. This module may not open a socket, so the caller
+ * hands in a function that asks a model and this decides what to do with the
+ * answer. That keeps the ladder, the retry and the fallback in one pure place
+ * with unit tests around them, and puts the provider in a route where the
+ * ledger can see it. It is also what lets the browser suite stub a model the
+ * way `test-scan.mjs` does.
  *
- * Pure apart from the injected function.
+ * Pure: no React, no Next, no Prisma, no network, no clock.
  */
-import type { PlannedBeat } from "./draw";
-import type { Line } from "./retrieval";
-import type { Provenance } from "./run";
-import type { TurnOutcome } from "./turn";
+import { passes, runGate, type Check, type GateContext } from "./gate";
+import { fits, type Line } from "./retrieval";
+import { words, type Lexicon } from "./lexicon";
+import type { BeatSpec } from "./types";
+
+/** Where a line came from. Printed beside it, every time (ADR-025). */
+export type Provenance =
+  /** A sentence a lexicographer recorded, used whole. Nothing was generated. */
+  | "attested"
+  /** A model wrote it inside the closed word list and it passed all four checks. */
+  | "composed"
+  /** Nobody could build one, so they ask again. Always in character. */
+  | "fallback";
 
 export interface SpokenLine {
   readonly text: string;
   readonly provenance: Provenance;
-  /** The entry an attested line was recorded under. */
-  readonly lemma: string | null;
+  /**
+   * The lemma whose entry holds an attested line, so the screen can say whose
+   * sentence it is. Absent on the other two rungs.
+   */
+  readonly from?: string;
+  /** Which checks withheld a composed line, for the debrief and the report button. */
+  readonly withheld?: readonly Check[];
 }
 
-export interface ComposeRequest {
-  readonly beat: PlannedBeat;
-  /** The last two turns, as conversation, learner's last. */
-  readonly recent: readonly { role: "other" | "learner"; text: string }[];
-  /** Whether this is a repair, and of what kind. */
-  readonly repair: TurnOutcome | null;
-}
-
-export interface LineSources {
-  /** Recorded sentences that fit the beat, in pool order. Already filtered. */
-  readonly attested: (beat: PlannedBeat) => readonly Line[];
-  /** A gated composed line, or null when withheld or unavailable. */
-  readonly compose?: (request: ComposeRequest) => Promise<string | null>;
-}
-
-/**
- * How the narration reads for each way a turn can fail. English on purpose.
- *
- * `english` is the persona's: the helpful one says their line again slowly,
- * the brisk one at speed, which the caller decides from the agenda. What is
- * said here is the stage direction beside the replay.
- */
-export const NARRATION: Readonly<Record<TurnOutcome | "silent" | "moveOn", string>> = {
-  complete: "",
-  incomplete: "They nod at the part they got, and wait for the rest.",
-  unrecognised: "They did not catch that. They say it again.",
-  offTarget: "They understood the words, and it was not what they asked. They ask again, more slowly.",
-  english: "They heard the English, and answer in Estonian anyway.",
-  repeat: "They look at you, having just said that themselves, and wait.",
-  tooShort: "They wait for the rest of the sentence.",
-  silent: "They wait.",
-  moveOn: "They give up on that one and move on.",
-};
-
-/** Says which one of a set of attested lines to use, given what the run has already said. */
-export function pickAttested(lines: readonly Line[], used: ReadonlySet<string>, random: () => number): Line | null {
-  const fresh = lines.filter((l) => !used.has(l.text));
-  const pool = fresh.length > 0 ? fresh : lines;
-  if (pool.length === 0) return null;
-  return pool[Math.floor(random() * pool.length)] ?? null;
+/** What the caller has to supply for one turn. */
+export interface LineRequest {
+  readonly beat: BeatSpec;
+  readonly lexicon: Lexicon;
+  readonly gate: GateContext;
+  /** Recorded sentences that could fill this beat, already fetched. */
+  readonly pool: readonly Line[];
+  /** Every form of the beat's own topic words. */
+  readonly topic: ReadonlySet<string>;
+  readonly hasFiniteVerb: (word: string) => boolean;
+  /**
+   * What they say when nothing could be built. Estonian, and the caller's.
+   *
+   * **Required rather than optional**, which is `NounStems.illSgShort`'s rule:
+   * a caller that has not resolved a phrase for "I did not catch that" does not
+   * compile, so the way out cannot be reached and found empty. The text is
+   * resolved from the course's own phrases, because this file may write no
+   * Estonian and a hardcoded one here would be exactly that.
+   */
+  readonly fallback: string;
+  /** Attested lines this run has already used, so none repeats until the pool runs dry. */
+  readonly used: ReadonlySet<string>;
+  /**
+   * Asks a model for one line. `avoid` names the words the last attempt reached
+   * for that the list could not vouch for, which is what §6 gives the one retry.
+   *
+   * Returns null where there is no key, no allowance, or no answer, and that is
+   * an ordinary case rather than an error: a keyless deployment runs this module
+   * with the attested rungs alone.
+   */
+  readonly compose?: (avoid: readonly string[]) => Promise<string | null>;
 }
 
 /**
- * The other side's line for a beat.
+ * The fallback, which is a move rather than an error.
  *
- * `repair` is a re-ask of the same beat: an attested line already said is
- * avoided where the pool allows, and where the pool is one line, saying it
- * again is what a person does.
+ * Composition can fail twice and there is still a person standing there
+ * waiting. What the learner sees is somebody who missed what they said, which
+ * is the truest thing that can happen in a conversation. The text is the
+ * caller's, because it is Estonian and this file may not write any: the route
+ * resolves it from the course's own phrases the way every other line here is
+ * resolved.
  */
-export async function sceneLine(input: {
-  beat: PlannedBeat;
-  sources: LineSources;
-  used: ReadonlySet<string>;
-  random: () => number;
-  recent: readonly { role: "other" | "learner"; text: string }[];
-  repair: TurnOutcome | null;
-}): Promise<SpokenLine> {
-  const { beat, sources, used, random, recent, repair } = input;
+export function fallbackLine(text: string, withheld: readonly Check[] = []): SpokenLine {
+  return { text, provenance: "fallback", ...(withheld.length > 0 ? { withheld } : {}) };
+}
 
-  // A curveball that speaks English holds its own line.
-  if (beat.english) return { text: beat.english, provenance: "english", lemma: null };
+/**
+ * Walks the ladder.
+ *
+ * The attested rung is tried against the whole pool before the model is asked,
+ * because it costs a comparison and the model costs a call. Within the pool the
+ * order is the caller's and lines already used in this run are passed over, so
+ * **no attested line repeats until the pool for that move is exhausted**, which
+ * is §5's third promise. When it is exhausted the run says so by falling
+ * through rather than quietly cycling.
+ *
+ * One retry, and only one. §6 allows it with the failing words named, and the
+ * second failure is the fallback: a third attempt is a slower way to reach the
+ * same place, and the learner is waiting through every one of them.
+ */
+export async function sceneLine(request: LineRequest): Promise<SpokenLine> {
+  const attested = pickAttested(request);
+  if (attested) return attested;
 
-  const attested = pickAttested(sources.attested(beat), used, random);
-  if (attested) return { text: attested.text, provenance: "attested", lemma: attested.lemma };
+  if (!request.compose) return fallbackLine(request.fallback);
 
-  if (sources.compose) {
-    const composed = await sources.compose({ beat, recent, repair });
-    if (composed) return { text: composed, provenance: "composed", lemma: null };
+  const first = await request.compose([]);
+  const firstVerdict = first ? runGate(first, request.beat, request.gate) : null;
+  if (first && firstVerdict && passes(firstVerdict)) {
+    return { text: first, provenance: "composed" };
   }
 
-  return { text: "", provenance: "narrated", lemma: null };
+  const second = await request.compose(firstVerdict?.unknown ?? []);
+  const secondVerdict = second ? runGate(second, request.beat, request.gate) : null;
+  if (second && secondVerdict && passes(secondVerdict)) {
+    return { text: second, provenance: "composed" };
+  }
+
+  return fallbackLine(request.fallback, secondVerdict?.failed ?? firstVerdict?.failed ?? []);
+}
+
+/** The first recorded sentence that fits this beat and has not been used yet. */
+export function pickAttested(request: LineRequest): SpokenLine | null {
+  for (const line of request.pool) {
+    if (request.used.has(line.text)) continue;
+    const verdict = fits({
+      line,
+      tokens: words(line.text),
+      beat: request.beat,
+      topic: request.topic,
+      lexicon: request.lexicon,
+      hasFiniteVerb: request.hasFiniteVerb,
+    });
+    if (verdict.ok) return { text: line.text, provenance: "attested", from: line.lemma };
+  }
+  return null;
 }

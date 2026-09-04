@@ -9,13 +9,15 @@ import { LEVELS, PATH } from "@/lib/collections/syllabus";
 import { DEMO_LEMMAS, DEMO_STEMS, type DemoStems } from "@/lib/collections/demoWords";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { buildCaseTable, shownForms, stemsFrom, type DerivedForm } from "@/lib/estonian/derive";
+import type { CaseSubject } from "@/lib/estonian/caseQuestion";
 import { caseByKey } from "@/lib/estonian/cases";
 import { caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { ButtonLink } from "@/components/Button";
 import { Wordmark } from "@/components/brand";
 import { MascotWatch } from "@/components/MascotWatch";
-import { CaseExplorer, TutorPeek, type DemoWord } from "./LandingDemo";
+import { CaseExplorer, TutorPeek, type DemoCase, type DemoWord } from "./LandingDemo";
 import { LetterTile } from "@/components/LetterTile";
+import { LandingAnu, type AnuLine } from "@/components/LandingAnu";
 import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
@@ -33,11 +35,15 @@ export default async function WelcomePage() {
 
   return (
     <div className="relative overflow-x-hidden" style={{ background: "var(--ground)" }}>
-      {/* Pastel light, fixed behind the whole page. */}
+      {/*
+        Pastel light behind the whole page, drifting. Each blob has its own
+        period so the three never move together, and a blob is a blurred
+        circle moved on the compositor, so the drift costs no layout.
+      */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <span className="wash" style={{ background: "var(--wash-1)", width: 620, height: 620, top: -260, left: -160 }} />
-        <span className="wash" style={{ background: "var(--wash-2)", width: 520, height: 520, top: 60, right: -220, opacity: 0.65 }} />
-        <span className="wash" style={{ background: "var(--wash-3)", width: 560, height: 560, top: 1180, left: -200, opacity: 0.5 }} />
+        <span className="wash wash-roam" style={{ background: "var(--wash-1)", width: 620, height: 620, top: -260, left: -160, "--wash-time": "26s" } as React.CSSProperties} />
+        <span className="wash wash-roam" style={{ background: "var(--wash-2)", width: 520, height: 520, top: 60, right: -220, opacity: 0.65, "--wash-time": "31s", "--wash-delay": "-9s" } as React.CSSProperties} />
+        <span className="wash wash-roam" style={{ background: "var(--wash-3)", width: 560, height: 560, top: 1180, left: -200, opacity: 0.5, "--wash-time": "37s", "--wash-delay": "-17s" } as React.CSSProperties} />
       </div>
 
       <Nav />
@@ -75,9 +81,26 @@ export default async function WelcomePage() {
       </main>
 
       <Footer />
+      <LandingAnu lines={ANU_LINES} />
     </div>
   );
 }
+
+/**
+ * What Anu says at each stop down the page, in the order the page goes.
+ *
+ * One line a section and none of them a pitch: she says what to do here, or
+ * what she is for, in the voice she has inside. English only, for the reason
+ * every other authored line on this page is English (ADR-005); the Estonian
+ * on this page all came out of the dictionary.
+ */
+const ANU_LINES: readonly AnuLine[] = [
+  { at: "top", mood: "happy", text: "I’m Anu, the tutor. I’ll come down the page with you." },
+  { at: "cases", mood: "thinking", text: "Press a word. The endings light up, and the odd one out says so." },
+  { at: "features", mood: "happy", text: "Ask me the thing you would not ask in class. I never sigh." },
+  { at: "faq", mood: "thinking", text: "Straight answers, and the comparison is in there too." },
+  { at: "start", mood: "cheer", text: "Fifteen minutes a day. See you inside." },
+];
 
 /**
  * Fades a block in as it scrolls into view. CSS scroll timelines, so it costs
@@ -123,8 +146,8 @@ function Nav() {
           >
             Sign in
           </Link>
-          <ButtonLink href="/sign-in" variant="primary">
-            Start free <ArrowRight size={15} aria-hidden />
+          <ButtonLink href="/sign-in" variant="primary" className="group">
+            Start free <ArrowRight size={15} aria-hidden className="transition-transform group-hover:translate-x-0.5" />
           </ButtonLink>
         </div>
       </nav>
@@ -201,7 +224,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
     a column that reads as dropped rather than placed.
   */
   return (
-    <section className="hero-screen mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
+    <section id="top" className="hero-screen mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
       {/*
         No badge over the headline. It read "for everyone who bounced off
         Estonian once already", which is the same sentiment as the heading one
@@ -210,18 +233,32 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         page this length they are within one screen of each other, and the echo
         is a page saying its best line twice, second-best first.
       */}
+      {/*
+        A WORD AT A TIME, AND NO FULL STOP.
+
+        The headline used to fade up as one block. It arrives a word at a
+        time now, each a beat behind the last, so the first thing on the page
+        is something happening rather than something that has happened. The
+        full stop after "sticks" went with it: a headline is not a sentence,
+        and a mark that size after a gradient word read as a smudge under it.
+        The spans are inline blocks so each can move on its own without the
+        line breaking anywhere new, and the break between the two lines is
+        the one the hero already placed.
+      */}
       <h1
-        className="fade-up hero-display font-bold leading-[1.02] tracking-[-0.02em]"
-        style={{ color: "var(--ink)", animationDelay: "90ms" }}
+        className="hero-display font-bold leading-[1.02] tracking-[-0.02em]"
+        style={{ color: "var(--ink)" }}
       >
-        Ready for the
+        <span className="word-in" style={{ "--w": "60ms" } as React.CSSProperties}>Ready</span>{" "}
+        <span className="word-in" style={{ "--w": "160ms" } as React.CSSProperties}>for</span>{" "}
+        <span className="word-in" style={{ "--w": "220ms" } as React.CSSProperties}>the</span>
         <br />
-        <span className="grad-text grad-sweep">real thing</span>.
+        <span className="word-in grad-text grad-sweep" style={{ "--w": "380ms" } as React.CSSProperties}>real thing</span>.
       </h1>
 
       <p
         className="fade-up hero-lead hero-sub max-w-[52ch] leading-relaxed"
-        style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
+        style={{ color: "var(--ink-2)", animationDelay: "420ms" }}
       >
         Kodukeel means home language. You live here now, and this is where the words start to
         hold up: fifteen quiet minutes a day of practice that sticks, a conversation to rehearse
@@ -241,15 +278,16 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         down and the next thing a reader meets anyway, and the nav carries the
         same jump under "The cases" for anybody who wants to aim.
       */}
-      <div className="fade-up hero-action w-full sm:w-auto" style={{ animationDelay: "210ms" }}>
-        <ButtonLink href="/sign-in" variant="primary" size="lg" className="hero-cta w-full sm:w-auto">
-          Start learning for free <ArrowRight size={17} aria-hidden />
+      <div className="fade-up hero-action w-full sm:w-auto" style={{ animationDelay: "520ms" }}>
+        <ButtonLink href="/sign-in" variant="primary" size="lg" className="hero-cta group w-full sm:w-auto">
+          Start learning for free{" "}
+          <ArrowRight size={17} aria-hidden className="transition-transform group-hover:translate-x-1" />
         </ButtonLink>
       </div>
 
       <ul
         className="fade-up hero-claims flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs"
-        style={{ color: "var(--ink-3)", animationDelay: "270ms" }}
+        style={{ color: "var(--ink-3)", animationDelay: "640ms" }}
       >
         {claims.map((t) => (
           <li key={t} className="flex items-center gap-1.5">
@@ -471,11 +509,25 @@ function Features() {
   return (
     <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
       <Reveal>
-        <div className="mx-auto max-w-[44ch] text-center">
-          <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What&rsquo;s inside</p>
+        {/*
+          THE HEADING NAMES THE THREE THINGS UNDER IT.
+
+          It read "What's inside" over "How you get there", which is an eyebrow
+          about contents over a heading about a journey, and the cards under
+          them are neither: they are the three parts of the app somebody uses
+          every day. A heading that has to be decoded is a heading that gets
+          skipped, on the way to the button. So it says what the cards say,
+          one clause each, and the line under it says how the three fit.
+        */}
+        <div className="mx-auto max-w-[52ch] text-center">
+          <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you get</p>
           <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            How you get there
+            Someone to ask, something to practise, and a date to aim at
           </h2>
+          <p className="mx-auto mt-5 max-w-[48ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            Three parts, and they work together. A word you ask Anu about becomes a card, and the
+            plan decides which evening it comes back.
+          </p>
         </div>
       </Reveal>
 
@@ -503,7 +555,7 @@ function Features() {
             tone="mint"
             icon={<Target size={18} aria-hidden />}
             title="Then the real thing"
-            body="A receptionist with no slot on Thursday, a landlord on a bad line, a shop with a queue. Rehearse the conversation, then take the smallest step outside: one thing to say to a real person today, and a count of how it went. That count is the only score that matters here."
+            body="A receptionist with no slot on Thursday, a landlord on a bad line, a counter with a queue. Rehearse the conversation, then take the smallest step outside: one thing to say to a real person today, and a count of how it went. That count is the only score that matters here."
           />
         </Reveal>
       </div>
@@ -535,7 +587,7 @@ function Feature({ tone, icon, title, body, children }: {
     >
       <div className="flex items-start gap-3">
         <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+          className="feature-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
           style={{ background: `var(--${tone}-soft)`, color: toneInk(tone) }}
         >
           {icon}
@@ -847,7 +899,7 @@ const FAQS = [
   ],
   [
     "Will it actually get me talking to people?",
-    "That is what it is for. Situations puts you in front of somebody with an agenda of their own, a receptionist, a landlord, a shopkeeper, and marks you against the dictionary rather than a model, so you cannot be told you were wrong when you were right. Today sets one small errand to do out loud, and Progress counts how those went, including the times somebody switched to English. Nothing here scores your pronunciation, because the only recogniser available gets native speakers wrong, and we would rather say so than pretend.",
+    "That is what it is for. Situations puts you in front of somebody with an agenda of their own, a receptionist, a landlord, a clerk, and marks you against the dictionary rather than a model, so you cannot be told you were wrong when you were right. Today sets one small errand to do out loud, and Progress counts how those went, including the times somebody switched to English. Nothing here scores your pronunciation, because the only recogniser available gets native speakers wrong, and we would rather say so than pretend.",
   ],
   [
     "What happens to my data?",
@@ -964,7 +1016,7 @@ function Questions() {
  */
 function FinalCta() {
   return (
-    <section className="px-5 pb-16 pt-14 md:px-8 md:pb-24 md:pt-20">
+    <section id="start" className="px-5 pb-16 pt-14 md:px-8 md:pb-24 md:pt-20">
       <Reveal>
         <div
           className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-9 text-center md:px-16 md:py-12"
@@ -1026,46 +1078,97 @@ function FinalCta() {
   );
 }
 
+/**
+ * The footer, with room in it.
+ *
+ * It was one row: the wordmark, a four-source credit run together as a single
+ * sentence with the licences inside it, and three links, all at 12px, all on
+ * one line at 1280 and wrapping into a lump under it. Crowded, and the credit
+ * was the worst of it, because four institutions and three licences in one
+ * sentence is a sentence nobody can find their way back into. Each source has
+ * a line now, with what it gives and the terms it gives it under, the links
+ * have a column, and the whole thing is set a size up with the air a last
+ * screen can afford. The rule still sits well clear of the closing panel, so
+ * the credits read as the end of the page and not as part of the card above.
+ */
+const SOURCES = [
+  {
+    name: "Ekilex",
+    href: "https://ekilex.ee",
+    by: "Institute of the Estonian Language",
+    gives: "every form and example sentence",
+    licence: "CC BY 4.0",
+  },
+  {
+    name: "Wiktionary",
+    href: "https://en.wiktionary.org",
+    by: null,
+    gives: "the English glosses",
+    licence: "CC BY-SA 4.0",
+  },
+  {
+    name: "FrequencyWords",
+    href: "https://github.com/hermitdave/FrequencyWords",
+    by: "over OpenSubtitles",
+    gives: "the word counts",
+    licence: "CC BY-SA 4.0",
+  },
+  {
+    name: "TartuNLP",
+    href: "https://tartunlp.ai",
+    by: "University of Tartu",
+    gives: "the speech",
+    licence: null,
+  },
+] as const;
+
 function Footer() {
   return (
-    <footer className="relative px-5 pb-12 md:px-8">
-      {/* The rule sits well clear of the closing panel: a credit line tucked
-          under the last card reads as part of it rather than as the end of the
-          page. */}
-      <div
-        className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 border-t pt-10 text-xs md:flex-row"
-        style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}
-      >
-        <Wordmark size={26} />
-        {/*
-          Balanced rather than ragged. The credit is one sentence long enough to
-          wrap on any width, and left to itself it filled the row and dropped
-          "University of Tartu." onto a line of its own, which reads as a line
-          that fell off rather than as the end of a sentence.
-        */}
-        <p className="text-balance text-center md:text-right">
-          Forms and example sentences from{" "}
-          <a href="https://ekilex.ee" target="_blank" rel="noreferrer" className="underline underline-offset-2">Ekilex</a>
-          , Institute of the Estonian Language · CC BY 4.0. English glosses from{" "}
-          <a href="https://en.wiktionary.org" target="_blank" rel="noreferrer" className="underline underline-offset-2">Wiktionary</a>
-          {" "}· CC BY-SA 4.0. Word counts from{" "}
-          <a href="https://github.com/hermitdave/FrequencyWords" target="_blank" rel="noreferrer" className="underline underline-offset-2">FrequencyWords</a>
-          {" "}over OpenSubtitles · CC BY-SA 4.0. Speech from{" "}
-          <a href="https://tartunlp.ai" target="_blank" rel="noreferrer" className="underline underline-offset-2">TartuNLP</a>,
-          University of Tartu.
-        </p>
-        {/*
-          The three pages a stranger is entitled to read before signing up, and
-          until now the landing page linked none of them: they were reachable
-          only from each other and from two screens inside the app, which is
-          behind the sign-in they exist to inform. Funding is the newest and the
-          reason the row was noticed.
-        */}
-        <p className="flex shrink-0 gap-3">
-          <Link href="/privacy" className="underline underline-offset-2">Privacy</Link>
-          <Link href="/terms" className="underline underline-offset-2">Terms</Link>
-          <Link href="/funding" className="underline underline-offset-2">Funding</Link>
-        </p>
+    <footer className="relative px-5 pb-14 md:px-8 md:pb-20">
+      <div className="mx-auto max-w-6xl border-t pt-12 md:pt-16" style={{ borderColor: "var(--rule)" }}>
+        <div className="grid gap-10 md:grid-cols-[1.1fr_1.5fr_auto] md:gap-14">
+          <div>
+            <Wordmark size={32} />
+            <p className="mt-5 max-w-[34ch] text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              Kodukeel means home language. Free to use, and every Estonian form in it comes from a
+              dictionary rather than a model.
+            </p>
+          </div>
+
+          <div>
+            <p className="label-xs" style={{ color: "var(--ink-3)" }}>Built on</p>
+            <ul className="mt-4 flex flex-col gap-3 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+              {SOURCES.map((src) => (
+                <li key={src.name} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="font-semibold" style={{ color: "var(--ink)" }}>
+                    <a href={src.href} target="_blank" rel="noreferrer" className="underline underline-offset-4 transition-opacity hover:opacity-70">
+                      {src.name}
+                    </a>
+                    {src.by ? <span className="font-normal" style={{ color: "var(--ink-2)" }}>, {src.by}</span> : null}
+                  </span>
+                  <span>{src.gives}</span>
+                  {src.licence ? <span style={{ color: "var(--ink-3)" }}>&middot; {src.licence}</span> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/*
+            The three pages a stranger is entitled to read before signing up,
+            and until recently the landing page linked none of them: they were
+            reachable only from each other and from two screens inside the
+            app, which is behind the sign-in they exist to inform.
+          */}
+          <div>
+            <p className="label-xs" style={{ color: "var(--ink-3)" }}>Read</p>
+            <ul className="mt-4 flex flex-col gap-3 text-sm font-medium" style={{ color: "var(--ink-2)" }}>
+              <li><Link href="/privacy" className="underline underline-offset-4 transition-opacity hover:opacity-70">Privacy</Link></li>
+              <li><Link href="/terms" className="underline underline-offset-4 transition-opacity hover:opacity-70">Terms</Link></li>
+              <li><Link href="/funding" className="underline underline-offset-4 transition-opacity hover:opacity-70">What it costs to run</Link></li>
+              <li><Link href="/sign-in" className="underline underline-offset-4 transition-opacity hover:opacity-70">Sign in</Link></li>
+            </ul>
+          </div>
+        </div>
       </div>
     </footer>
   );
@@ -1128,64 +1231,11 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         : buildCaseTable(stemsFrom(lex.forms));
 
 
-      /*
-        A FOURTH FORM, WHERE THE WORD HAS ONE.
-
-        `tuppa` and `kätte` are not `toa` and `käe` with an ending on them, and
-        no rule reaches either, which is why the dictionary stores them. So
-        they sit with the forms you memorise rather than with the ones that
-        follow, and the two headings count what is under them: press `tuba` and
-        the card says four and ten rather than three and eleven. That is the
-        card doing its job. The alternative is printing `toasse`, which is
-        defensible Estonian and is not a sentence anybody says.
-
-        The stems come from `stemsFrom`, which is the one reader of the short
-        illative: it takes the seeded `ILL_SG_SHORT` and Ekilex's `SgAdt`, so
-        an entry enriched from Ekilex carries its aditiiv here too.
-
-        IT ONLY EARNS THE FOURTH SLOT IF IT IS A DIFFERENT WORD. Most short
-        illatives are spelled like one of the three above them, because that
-        is what the case does: `aeg` goes to `aega`, which is also its
-        partitive. Printing it again under a second name teaches nobody
-        anything, so the card leaves it out of the column you memorise. This
-        is a question about the card and not about the language, which is why
-        it is answered here: `caseAnswer` still says `aega`, the case table
-        still shows it, and a learner who types it is still right.
-      */
-      const shown = new Set(principal.map((p) => p.value));
-      // One predicate, read twice: which column a row goes in and which
-      // heading counts it are the same question, and answering it twice is
-      // how a form ends up in neither.
-      const isLearnt = (row: DerivedForm) => (
-        row.origin === "STORED" && !row.spec.principal && !!row.singular && !shown.has(row.singular)
-      );
-      const learnt = table.filter(isLearnt);
-
       return [{
         lemma: lex.lemma,
         genitive: form("GEN_SG") ?? null,
-        principal: [
-          ...principal,
-          ...learnt.flatMap((row) => (row.singular
-            ? [{ label: `${row.spec.et} · ${caseQuestionFor(row.spec, subject)}`, value: shownForms(row).join(" / ") }]
-            : [])),
-        ],
-        cases: table.map((row) => ({
-          en: row.spec.en,
-          et: row.spec.et,
-          /*
-            The question *this* word answers. Two of the five words on this
-            card are people, so the `mille-` series printed `milles?` over
-            `mehes` and `sõbras`, which is the interrogative for a thing asked
-            about a `kes` on the app's own front page. Every row is still
-            shown, because a table of forms is a reference rather than a
-            question. See lib/estonian/caseQuestion.ts.
-          */
-          question: caseQuestionFor(row.spec, subject),
-          singular: row.singular ? shownForms(row).join(" / ") : null,
-          plural: row.plural ?? null,
-          principal: row.spec.principal || isLearnt(row),
-        })),
+        principal,
+        cases: table.map((row) => demoCase(row, subject, form("GEN_SG") ?? null)),
       }];
     });
 
@@ -1220,13 +1270,6 @@ const demoSubject = (w: DemoStems) => ({
 
 const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
   const table = buildCaseTable(w);
-  // The same rule as the live path above, for the same reason: `sõber` records
-  // `sõpra` as its short illative and `sõpra` is already its partitive.
-  const shown = new Set([w.nomSg, w.genSg, w.partSg]);
-  const isLearnt = (row: DerivedForm) => (
-    row.origin === "STORED" && !row.spec.principal && !!row.singular && !shown.has(row.singular)
-  );
-  const learnt = table.filter(isLearnt);
   return {
     lemma: w.lemma,
     genitive: w.genSg,
@@ -1234,17 +1277,57 @@ const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
       { label: `nimetav · ${caseQuestionFor(caseByKey("NOMINATIVE")!, demoSubject(w))}`, value: w.nomSg },
       { label: `omastav · ${caseQuestionFor(caseByKey("GENITIVE")!, demoSubject(w))}`, value: w.genSg },
       { label: `osastav · ${caseQuestionFor(caseByKey("PARTITIVE")!, demoSubject(w))}`, value: w.partSg },
-      ...learnt.flatMap((row) => (row.singular
-        ? [{ label: `${row.spec.et} · ${caseQuestionFor(row.spec, demoSubject(w))}`, value: shownForms(row).join(" / ") }]
-        : [])),
     ],
-    cases: table.map((row) => ({
-      en: row.spec.en,
-      et: row.spec.et,
-      question: caseQuestionFor(row.spec, demoSubject(w)),
-      singular: row.singular ? shownForms(row).join(" / ") : null,
-      plural: row.plural ?? null,
-      principal: row.spec.principal || isLearnt(row),
-    })),
+    cases: table.map((row) => demoCase(row, demoSubject(w), w.genSg)),
   };
 });
+
+/**
+ * One row of the card, from one row of the case table.
+ *
+ * THE SHORT ILLATIVE STAYS IN ITS OWN ROW. It used to be promoted into the
+ * left column, with the forms you memorise, on the argument that `tuppa` is
+ * not `toa` with an ending on it and so has to be learnt. True, and it made
+ * the card a different shape for `tuba` than for `raamat`: four rows against
+ * three on the left, ten against eleven on the right, and a card that changed
+ * height under the pointer on every press. The claim is kept and the shape is
+ * not: every word draws three rows and eleven, and the illative's row is where
+ * the exception is said, in words, beside both spellings.
+ *
+ * `stored` is decided by comparing the printed form with the stem plus the
+ * ending rather than by reading `origin`, because an entry enriched from
+ * Ekilex carries a lexicographer's form for every case and every one of them
+ * would read as stored, which is true and is not what the chip means. The
+ * chip means no rule reaches this one.
+ */
+function demoCase(row: DerivedForm, subject: CaseSubject, genitive: string | null): DemoCase {
+  const shown = shownForms(row);
+  /*
+    Regular means the printed form is the genitive with this case's ending on
+    it. Read off the form rather than built up from the stem, because joining
+    a suffix to a stem is derive.ts's job alone and an invariant says so: the
+    question here is only whether what derive.ts printed is the rule's own
+    answer or a form the dictionary had to supply.
+  */
+  const first = shown[0] ?? "";
+  const { suffix } = row.spec;
+  const regular = genitive !== null && suffix.length > 0
+    && first.endsWith(suffix) && first.slice(0, -suffix.length) === genitive;
+  return {
+    en: row.spec.en,
+    et: row.spec.et,
+    /*
+      The question *this* word answers. Two of the five words on this card are
+      people, so the `mille-` series printed `milles?` over `mehes` and
+      `sõbras`, which is the interrogative for a thing asked about a `kes` on
+      the app's own front page. Every row is still shown, because a table of
+      forms is a reference rather than a question. See
+      lib/estonian/caseQuestion.ts.
+    */
+    question: caseQuestionFor(row.spec, subject),
+    singular: shown.length > 0 ? shown.join(" / ") : null,
+    plural: row.plural ?? null,
+    principal: row.spec.principal,
+    stored: !row.spec.principal && shown.length > 0 && !regular,
+  };
+}

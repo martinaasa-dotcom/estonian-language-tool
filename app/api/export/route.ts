@@ -146,9 +146,12 @@ export async function GET() {
     // words on one side and a reply about them on the other, so it is theirs
     // twice over.
     prisma.suggestion.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
-    // Every conversation played through, with its transcript, and every word
-    // one needed. Fiction about a role card, and still theirs.
+    // A conversation they had, with every turn they typed in it. Append-only
+    // and derivable from nothing, which is the test a backup row has to pass.
+    // Nothing in it is true about them: the role card is fiction, which is what
+    // makes the table safe to hold and safe to hand back.
     prisma.sceneRun.findMany({ where: { ownerId }, orderBy: { startedAt: "asc" } }),
+    // The words those conversations needed and they did not have.
     prisma.sceneGap.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),
     // Every real conversation they reported having, in one of three words.
     prisma.encounter.findMany({ where: { ownerId }, orderBy: { createdAt: "asc" } }),

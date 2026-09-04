@@ -3,7 +3,7 @@ import {
   ChartNoAxesColumn, CheckCheck, CircleHelp, ClipboardCheck,
   CircleDot, Clock, Compass, Ear, Eye, Flame, Footprints, GraduationCap, Grid2x2, Grid3x3, Hand, Headphones, Heart, HeartPulse,
   Hourglass, House, Landmark, Languages, Layers, Library, Link, Map, MessageCircleQuestion,
-  MessageSquareWarning, MessagesSquare, Mic, Moon, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
+  MessageSquareWarning, MessagesSquare, Mic, Moon, Mountain, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
   ScrollText, Settings, ShoppingBag, SlidersHorizontal, Sparkles, Stamp, Stethoscope, Sun,
   Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap, type LucideIcon,
 } from "lucide-react";
@@ -22,7 +22,7 @@ export const ICONS: Record<string, LucideIcon> = {
   ChartNoAxesColumn, CheckCheck, CircleHelp, ClipboardCheck,
   CircleDot, Clock, Compass, Ear, Eye, Flame, Footprints, GraduationCap, Grid2x2, Grid3x3, Hand, Headphones, Heart, HeartPulse,
   Hourglass, House, Landmark, Languages, Layers, Library, Link, Map, MessageCircleQuestion,
-  MessageSquareWarning, MessagesSquare, Mic, Moon, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
+  MessageSquareWarning, MessagesSquare, Mic, Moon, Mountain, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
   ScrollText, Settings, ShoppingBag, SlidersHorizontal, Sparkles, Stamp, Stethoscope, Sun,
   Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap,
 };

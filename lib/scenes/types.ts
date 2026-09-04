@@ -28,6 +28,8 @@
  * Pure: no React, no Next, no Prisma, no clock.
  */
 import type { CaseKey } from "@/lib/estonian/types";
+import type { CurveballId } from "./curveballs";
+import type { PropSpec } from "./props";
 import type { Level } from "@/lib/collections/syllabus";
 
 /**
@@ -122,64 +124,26 @@ export interface BeatSpec {
 }
 
 /**
- * Who is behind the desk today, and what they want.
+ * How a run can end, including badly.
  *
- * The agenda is the strongest lever in the draw and it is nearly free: the
- * same beats and the same props with a receptionist who wants the queue gone
- * and one who is new and unsure are two conversations that feel nothing
- * alike. What an agenda changes is written down in `personas.ts`, and it is a
- * patience shift, a pace, and how the other side answers an English turn;
- * never a word of Estonian, which the dictionary supplies as for everybody.
+ * At least one outcome is a failure that is **not the learner's fault**,
+ * because a real encounter has those and a module where trying hard enough
+ * always works has stopped simulating anything. Walking out is an outcome too,
+ * and it is written kindly. `catalogue.test.ts` asserts both.
  *
- * The voice is the persona's name. The twelve voices in `lib/audio/voice.ts`
- * are the only proper names this app says, and a second persona in a scene
- * takes a second voice, which is how an interruption reads as another person.
+ * `says` is one line of English, and it is what a person remembers, so it goes
+ * first in the debrief, before any teaching.
  */
-export type Agenda = "brisk" | "thorough" | "new" | "script";
-
-export interface PersonaSpec {
-  readonly voice: string;
-  readonly agenda: Agenda;
-}
-
-/**
- * A value on the role card the learner is handed, and asked for.
- *
- * `weekday` is a lemma from the `aeg` unit, so it is a word the dictionary
- * has forms for and the learner can be marked on. `clock`, `number` and
- * `code` are digits, which are not Estonian and are the one thing this
- * module may generate. A code is always fictional (§3 of the design): a
- * practice app is the last place anybody should type their own.
- */
-export type PropKind = "weekday" | "clock" | "number" | "code";
-
-export interface PropSlot {
-  readonly id: string;
-  readonly kind: PropKind;
-  /** English. What the card calls it: "It started on". */
-  readonly label: string;
-}
-
-/**
- * Who the learner is today. English, and never themselves (§3).
- *
- * `{slot}` in a fact is filled from the props, so the card can say "It started
- * on Tuesday" without this file knowing which day was drawn.
- */
-export interface RoleCardSpec {
-  readonly who: string;
-  readonly wants: string;
-  readonly facts: readonly string[];
-}
-
-/** How a scene can end, including badly and not through the learner's fault. */
 export interface OutcomeSpec {
   readonly id: string;
-  /** Which required beats have to have been met. Empty means the fallback. */
+  /** Which required beats have to have been met. Listed fullest first. */
   readonly when: readonly string[];
-  /** One line, English, in the debrief. The thing a person remembers. */
+  /** One line, English, in the debrief. */
   readonly says: string;
 }
+
+/** The id every scene reserves for the learner leaving. */
+export const LEFT_OUTCOME = "left";
 
 export interface SceneSpec {
   readonly id: string;
@@ -201,11 +165,13 @@ export interface SceneSpec {
   readonly units: readonly string[];
   /** What the other side calls you, and expects back. */
   readonly register: "teie" | "sina";
+  /** English, one line. Who the learner is today, and never themselves (§3). */
+  readonly role: string;
+  /** The facts the card hands them, which is what a `datum` requirement reads. */
+  readonly props: readonly PropSpec[];
+  /** Which curveballs this scene admits. The draw may take no others. */
+  readonly curveballs: readonly CurveballId[];
   readonly beats: readonly BeatSpec[];
-  readonly personas: readonly PersonaSpec[];
-  readonly props: readonly PropSlot[];
-  /** Which curveballs this scene admits, by id. See `curveballs.ts`. */
-  readonly curveballs: readonly string[];
-  readonly role: RoleCardSpec;
+  /** Fullest first, because `outcomeOf` takes the first one that fits. */
   readonly outcomes: readonly OutcomeSpec[];
 }

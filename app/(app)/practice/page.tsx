@@ -184,7 +184,7 @@ export default async function PracticePage() {
             tone="blush"
             title="Situations"
             subtitle="Somebody behind a desk"
-            body="A receptionist, a landlord, a shop. Get done what you came for, in Estonian, with things going wrong on purpose."
+            body="A receptionist, a landlord, a counter. Get done what you came for, in Estonian, with things going wrong on purpose."
             meta="five to eight minutes"
           />
 

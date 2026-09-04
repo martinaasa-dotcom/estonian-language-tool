@@ -14,7 +14,7 @@ import { icon } from "@/components/icons";
 import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
 import { DEADLINES, REASONS, TARGETS, deadlineFrom, impliedTarget, reasonsToStored, type Goals } from "@/lib/assessment/goals";
-import { weeksToLearn } from "@/lib/assessment/plan";
+import { weeksToLearn, type Standing } from "@/lib/assessment/plan";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
 import { DEFAULT_LETTER_BAR, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
 import {
@@ -150,6 +150,24 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
   const level: Level | null = measured ? measured.overall : (estimated as Band | null);
   /** The band the starting deck is chosen from. Below A1 starts at A1. */
   const startBand = level === null || level === PRE_A1 ? "A1" : level;
+  /*
+    Where they stand, for the plan, with how the app knows kept beside it. A
+    measured check carries its scored skills, so a learner who reads at B2 and
+    listens at A1 is costed skill by skill; a ticked level is a guess and the
+    plan widens for it. Nothing yet is a guess of the app's: below A1.
+  */
+  const standing: Standing = useMemo(() => {
+    if (measured && measured.overall !== null) {
+      return {
+        level: measured.overall,
+        source: "measured",
+        skills: measured.skills
+          .filter((s) => s.measured && s.skill !== "speaking" && s.level !== null)
+          .map((s) => s.level as Level),
+      };
+    }
+    return { level: (estimated as Band | null) ?? PRE_A1, source: "estimated" };
+  }, [measured, estimated]);
 
   const goals: Goals = useMemo(() => ({
     reason: reasonsToStored(reasons),
@@ -312,7 +330,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               onChange={(e) => setName(e.target.value)}
               maxLength={32}
               placeholder="Your name or a nickname"
-              className="mt-2 w-full rounded-[var(--r-lg)] border px-5 py-3.5 text-md outline-none"
+              className="mt-2 w-full rounded-[var(--r-lg)] border px-5 py-3.5 text-md"
               style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
             />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
@@ -598,7 +616,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
                   </Note>
                 </div>
               )}
-              <PlanPanel level={level} goals={goals} dailyGoal={goal} compact />
+              <PlanPanel standing={standing} goals={goals} dailyGoal={goal} compact />
             </div>
           </section>
         )}

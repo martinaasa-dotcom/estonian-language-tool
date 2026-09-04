@@ -23,14 +23,14 @@ outside it, which is the one number no learning app reports and the one that mat
 
 ## 2. What is built
 
-**Situations** (`lib/scenes/`, `/situations`). Four scenes: a shop at A1, a health centre and an
-office counter at A2, a landlord on the phone at B1. Each is a machine authored in English that
+**Situations** (`lib/scenes/`, `/situations`). Three scenes: a health centre and an office counter
+at A2, a landlord on the phone at B1. Each is a machine authored in English that
 knows the shape of an encounter and holds not one word of Estonian. The other side speaks in a
 sentence a lexicographer recorded where one fits the beat, and otherwise in a line composed inside
 the scene's own closed word list and checked four ways before anybody sees it: the shape, every
 word against the list, the register, and a government check that was measured before it shipped.
-A line that fails is withheld whole and the screen narrates in English that they did not catch
-that. The learner's turn is read against the dictionary only, so no model ever decides whether
+A line that fails is withheld whole and the other side says they did not catch that, in a phrase
+the course teaches. The learner's turn is read against the dictionary only, so no model ever decides whether
 somebody was understood. Personas carry a voice and an agenda; difficulty is a budget of things
 that go wrong; you can walk out. The debrief leads with what happened, counts what got done, and
 never scores.
@@ -73,8 +73,8 @@ measured it against real models three times.
 The residual is still not the model. Reading the ranked list of words it reached for, the
 commonest were words the course teaches in a unit no scene had declared, then forms no rule reaches:
 the past participle, `kestnud`, `olnud`, `tulnud`, which is how anybody says "it has lasted since
-Tuesday". The next step is stored forms rather than gate tuning, and it is a harvest change against
-Ekilex rather than a decision about a model. The government check is now the largest single
+Tuesday". That was a harvest change rather than gate tuning, and it has been made: the participle
+and the polite imperative are stored per verb now, so the next run measures a different residual. The government check is now the largest single
 withholder and fires on the ordinary subject construction, which is a known cost of a check with no
 parser behind it; it stays because it still catches the error it was built for, and a subject rule
 is the next refinement.
@@ -83,7 +83,7 @@ Two other measurements decide the shape of the module. Retrieval fills the greet
 the confirmation and the closing of every scene, and almost none of the beats that carry the
 encounter, because a lexicographer records a sentence to illustrate a word and only four percent
 of what Ekilex holds is a question. So a deployment with no model key gets a real but shorter
-scene, narrated in English wherever nothing recorded fits, and the reviewed phrase bank of the
+scene, with the other side asking again wherever nothing recorded fits, and the reviewed phrase bank of the
 design's Phase 3 is what turns that into a whole conversation. And speech recognition was
 measured and turned down: the one recogniser reachable from here gets native speakers wrong on
 exactly the sounds a learner is weakest at, so speaking is rehearsed and never scored.

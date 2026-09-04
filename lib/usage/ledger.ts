@@ -85,6 +85,12 @@ const LEDGER_LOCK = 4_820_311_907n;
  *           here at all. A listening round legitimately meets a dozen new
  *           words in a minute, so a tight cap would break a real session to
  *           solve a problem that does not exist.
+ *   SCENE    one conversation, booked whole rather than per turn, because
+ *           running out of allowance halfway through one is the worst failure
+ *           available to that module. The base gives ten a day, which is a real
+ *           amount of somebody's evening, and what actually rations it is the
+ *           deployment's daily budget rather than this count: the reservation
+ *           is the whole scene, so the global cap sees a scene as a scene.
  *   SCAN     one photograph read once. It is the dearest single call in the
  *           app, because a picture is a few thousand input tokens where a
  *           question is a few hundred, but it is also the least repeated: a
@@ -99,13 +105,7 @@ const ALLOWANCE: Record<UsageKind, { burst: number; daily: number }> = {
   GRADER: { burst: 1, daily: 3 },
   TTS: { burst: 6, daily: 30 },
   SCAN: { burst: 1, daily: 2 },
-  /*
-    A conversation is several lines and a line is one call, so the allowance
-    is counted in lines: sixty a day is about eight scenes when retrieval
-    fills none of the beats and more when it does. The burst is a whole scene
-    in a minute, which a brisk run of turns can reach.
-  */
-  SCENE: { burst: 2, daily: 6 },
+  SCENE: { burst: 1, daily: 1 },
 };
 
 /**

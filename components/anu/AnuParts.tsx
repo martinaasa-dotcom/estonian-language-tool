@@ -10,6 +10,8 @@ import { Mascot } from "@/components/brand";
 import { SuggestFix } from "@/components/SuggestFix";
 import type { Msg } from "./useAnuChat";
 import { AI_TAG } from "@/lib/copy/values";
+import { fixFrom, vocabFrom } from "@/lib/tutor/markers";
+import { AnuProse } from "./Prose";
 
 /**
  * The pieces of an Anu conversation shared by the full `/tutor` page and the
@@ -190,6 +192,16 @@ export function Bubble({ message, streaming }: { message: Msg; streaming: boolea
   const { body: withoutVocab, vocab } = splitVocab(message.content);
   const { body, unverified } = splitUnverified(withoutVocab);
   const { rest, fix } = splitFix(isUser ? displayUserContent(body) : body);
+  /*
+    Nothing has arrived yet, and the reply is being held until it has.
+
+    `useAnuChat` shows a reply once, finished, rather than a word at a time,
+    so while it is on its way the bubble is the fact that Anu is writing and
+    nothing else. Drawn as her bubble rather than as a spinner in the input
+    row, because the place a learner is looking for the answer is where the
+    answer is going to appear.
+  */
+  const writing = !isUser && streaming && rest === "" && !fix;
 
   return (
     <div className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
@@ -210,10 +222,13 @@ export function Bubble({ message, streaming }: { message: Msg; streaming: boolea
             ? message.content.startsWith("Check this sentence for me.") ? "You · sentence to check" : "You"
             : "Anu"}
         </p>
-        <div className="whitespace-pre-wrap text-base leading-relaxed" style={{ color: "var(--ink)" }}>
-          {rest}
-          {streaming && <span className="ml-0.5 inline-block animate-pulse">▍</span>}
-        </div>
+        {writing ? (
+          <Writing />
+        ) : isUser ? (
+          <div className="whitespace-pre-wrap text-base leading-relaxed" style={{ color: "var(--ink)" }}>{rest}</div>
+        ) : (
+          <AnuProse text={rest} />
+        )}
         {fix && (
           <div className="mt-3 rounded-[var(--r)] px-4 py-3" style={{ background: "var(--accent-soft)" }}>
             <div className="mb-1 flex items-center gap-2">
@@ -232,15 +247,43 @@ export function Bubble({ message, streaming }: { message: Msg; streaming: boolea
   );
 }
 
-/** Pulls the trailing VOCAB: lines out of the reply so they can become cards. */
+/**
+ * Three dots, in turn, and a sentence for anybody who cannot see them.
+ *
+ * The bubble is in a live region, so the sentence is announced once when the
+ * reply is asked for and the finished reply is announced when it lands, which
+ * is two announcements rather than one per word.
+ */
+function Writing() {
+  return (
+    <div className="flex h-6 items-center gap-1" aria-label="Anu is writing" role="status">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          aria-hidden
+          className="inline-block h-1.5 w-1.5 animate-pulse rounded-full"
+          style={{ background: "var(--ink-3)", animationDelay: `${i * 180}ms` }}
+        />
+      ))}
+      <span className="sr-only">Anu is writing</span>
+    </div>
+  );
+}
+
+/**
+ * Pulls the trailing VOCAB: lines out of the reply so they can become cards.
+ *
+ * The line's shape is `lib/tutor/markers.ts`'s, which is what lets a model
+ * write `**VOCAB:**` and still have the pair parse: the bold is typography
+ * round the marker, and the payload is read with it lifted off.
+ */
 function splitVocab(content: string): { body: string; vocab: { et: string; en: string }[] } {
-  const lines = content.split("\n");
   const vocab: { et: string; en: string }[] = [];
   const body: string[] = [];
 
-  for (const line of lines) {
-    const match = /^VOCAB:\s*(.+?)\s*\|\s*(.+?)\s*$/.exec(line.trim());
-    if (match?.[1] && match[2]) vocab.push({ et: match[1], en: match[2] });
+  for (const line of content.split("\n")) {
+    const pair = vocabFrom(line);
+    if (pair) vocab.push(pair);
     else body.push(line);
   }
   return { body: body.join("\n").trim(), vocab };
@@ -302,14 +345,15 @@ function UnverifiedNotice({ words }: { words: string[] }) {
  * tagged.
  */
 function splitFix(content: string): { rest: string; fix: string | null } {
-  // Models number their answers, so the marker arrives as "3. FIX:" as often as
-  // "FIX:". Matching only the bare form left the corrected sentence buried in
-  // the paragraph, unlabelled — which is the one thing this box exists to fix.
-  const marker = /^(?:\d+[.)]\s*)?FIX:\s*/i;
+  // Models number their answers and, once allowed bold, bold their markers,
+  // so the line arrives as "3. FIX:" or "**FIX:**" as often as "FIX:".
+  // `fixFrom` knows every shape; matching only the bare form left the
+  // corrected sentence buried in the paragraph, unlabelled, which is the one
+  // thing this box exists to fix.
   const lines = content.split("\n");
-  const index = lines.findIndex((l) => marker.test(l.trim()));
+  const index = lines.findIndex((l) => fixFrom(l) !== null);
   if (index === -1) return { rest: content, fix: null };
-  const fix = lines[index]!.trim().replace(marker, "").trim();
+  const fix = fixFrom(lines[index]!);
   return {
     rest: [...lines.slice(0, index), ...lines.slice(index + 1)].join("\n").trim(),
     fix: fix || null,

@@ -1,119 +1,212 @@
 /**
- * The facts on the role card, drawn per run.
+ * The role card, which is not a decoration.
  *
- * A prop is either a word the dictionary holds or a value made of digits. The
- * weekdays are the seven lemmas the `aeg` unit teaches, named here so the
- * catalogue test can check they really are taught by a unit every scene
- * declares; their English is the gloss the syllabus already carries, read
- * back rather than typed twice. Everything else is digits, which are not
- * Estonian and are the one thing this module may make up: a time, a floor, a
- * fictional document code.
+ * **The learner never plays themselves** (`docs/19-situations.md` §3). They are
+ * handed a card: you are a patient, your throat has hurt since Tuesday, you can
+ * come any afternoon except Wednesday. Two reasons, and the second is the one
+ * that matters legally.
  *
- * `accepted` is what counts as the learner having said the value, and it is
- * deliberately generous about the shape of a number. "14", "14:00", "14.00"
- * and "kell 14" are all somebody telling a receptionist two o'clock, and the
- * scene is about whether they said it, not about how a clock is punctuated.
- * The weekday accepts any of its forms, so `teisipäeval` (on Tuesday, in the
- * adessive) counts, which is what a person actually says.
+ * The first is that marking has to know what the learner is trying to say. A
+ * scene that invites somebody to describe their own symptoms cannot tell a
+ * complete turn from an incomplete one, because it does not know what the
+ * complete one was. `{ kind: "datum" }` is decidable only because the card
+ * decided the answer before the conversation started.
  *
- * Pure.
+ * The second is that a doctor scene where somebody types about their own health
+ * is a database holding health data about an identified person, which is
+ * Article 9 special category data, in a product whose privacy notice is one of
+ * the reasons people choose it. The role card removes the question: nothing in
+ * a transcript is true about the person who wrote it. **No scene asks for a
+ * real document number**, and a scene that needs one supplies a fictional one,
+ * because an identity code typed into a practice app is the one thing this
+ * module could collect that nobody could ever take back.
+ *
+ * WHAT THIS FILE MAY WRITE. English, and a lemma. That is the standing the
+ * scene catalogue already has: a lemma is a *request* against the dictionary,
+ * so a misspelled one fails to arrive rather than becoming a wrong Estonian
+ * word, and `catalogue.test.ts` checks every one against the units its scene
+ * declares. What it may never write is a form or a sentence, which is why a
+ * drawn prop carries lemmas for the caller to resolve rather than the Estonian
+ * a learner would type.
+ *
+ * Pure: no React, no Next, no Prisma, no clock. The date arithmetic is over
+ * plain numbers and never over `new Date()`, because a card drawn from a seed
+ * has to be the same card on a reload.
  */
-import type { PropKind, PropSlot, SceneSpec } from "./types";
+import type { CaseKey } from "@/lib/estonian/types";
 
-export interface PropValue {
+/**
+ * One fact the card carries, before it is drawn.
+ *
+ * `word` is the kind that ties a card to the dictionary: the value is one of
+ * the scene's own lemmas, so the Estonian the learner needs exists and the beat
+ * that asks for it can be marked. The other four generate a value nobody has to
+ * look up, and their accepted spellings are digits, which is how people write a
+ * time or a number down anyway.
+ */
+export type PropSpec =
+  /** A word off the scene's own units. The card prints its English gloss. */
+  | {
+      readonly kind: "word";
+      readonly slot: string;
+      readonly oneOf: readonly string[];
+      /** How the card says it, with the gloss standing in for the word. */
+      readonly says: string;
+      /** The case a beat will ask this word in, if one does. */
+      readonly grammCase?: CaseKey;
+    }
+  /** A time of day, on the hour or the half hour, inside a window. */
+  | { readonly kind: "time"; readonly slot: string; readonly from: number; readonly to: number }
+  /** A weekday, as one of the course's own weekday lemmas. */
+  | { readonly kind: "weekday"; readonly slot: string; readonly oneOf: readonly string[]; readonly says: string }
+  /** A plain number: a floor, a room, an amount. */
+  | { readonly kind: "number"; readonly slot: string; readonly min: number; readonly max: number; readonly says: string }
+  /** A fictional reference, which is the only kind of code this module ever holds. */
+  | { readonly kind: "code"; readonly slot: string; readonly says: string };
+
+/** One fact, drawn. */
+export interface DrawnProp {
   readonly slot: string;
-  readonly kind: PropKind;
-  /** What the role card shows. English for a weekday, digits otherwise. */
-  readonly display: string;
-  /** The dictionary word behind it, for a weekday. */
-  readonly lemma: string | null;
-  /** Spellings that count as saying it. Lowercased. Forms are added by the caller. */
-  readonly accepted: readonly string[];
+  /** The line the role card prints. English. */
+  readonly card: string;
+  /**
+   * Spellings that count and need no dictionary: digits, and a code.
+   *
+   * A time is accepted as digits because that is how anybody writes one down,
+   * in Estonian as in English, and because the alternative is this module
+   * deciding that `kell kaks` is how you say 14:00, which is Estonian it may
+   * not write.
+   */
+  readonly literal: readonly string[];
+  /**
+   * Lemmas whose forms also count. Resolved against the dictionary by the
+   * caller, which is what keeps this file free of Estonian forms.
+   */
+  readonly lemmas: readonly string[];
+  /** What was drawn, for the recency rule in §5. */
+  readonly value: string;
+  /**
+   * Set when every candidate was in `avoid` and one was drawn regardless.
+   *
+   * §5 promises no prop value repeats within three runs, and a pool of three
+   * cannot keep it. A pool too thin for the promise is a fact about the scene
+   * and is **reported rather than papered over**, the way `paper.ts` reports a
+   * shortfall: the alternative is a card that comes out empty.
+   */
+  readonly repeated?: true;
 }
 
-/** Monday to Sunday, as the `aeg` unit names them. Requests, never facts. */
-export const WEEKDAY_LEMMAS = [
-  "esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede", "laupäev", "pühapäev",
-] as const;
-
-/** One to nine, as the `arvud` unit names them, for a floor or a room. */
-export const NUMBER_LEMMAS = [
-  "üks", "kaks", "kolm", "neli", "viis", "kuus", "seitse", "kaheksa", "üheksa",
-] as const;
-
-export interface PropDrawInput {
-  readonly scene: SceneSpec;
-  readonly random: () => number;
-  /** English for a weekday lemma, from the syllabus. */
-  readonly glossOf: (lemma: string) => string;
-  /** Values a recent run used, per slot, which this draw avoids. */
-  readonly recent?: ReadonlyMap<string, readonly string[]>;
+/** The card as a whole: what you are doing here, and the facts you were given. */
+export interface RoleCard {
+  /** English, one line. Who you are today. */
+  readonly you: string;
+  readonly props: readonly DrawnProp[];
 }
 
-function choose<T>(items: readonly T[], random: () => number, avoid: (t: T) => boolean): T {
-  const fresh = items.filter((t) => !avoid(t));
-  const pool = fresh.length > 0 ? fresh : items;
-  return pool[Math.floor(random() * pool.length)]!;
+/**
+ * Draws one prop.
+ *
+ * `avoid` carries the values this scene used in its last three runs, which §5
+ * promises will not repeat, and the promise is kept by derivation rather than
+ * by a counter: `SceneRun` is append-only and the last runs are one indexed
+ * read (ADR-014). Where every candidate is in `avoid` the draw takes one
+ * anyway rather than failing, because a thin pool is a fact about the scene
+ * and a card that cannot be drawn is worse than one that repeats.
+ */
+export function drawProp(
+  spec: PropSpec,
+  random: () => number,
+  avoid: ReadonlySet<string> = new Set(),
+): DrawnProp {
+  switch (spec.kind) {
+    case "word":
+    case "weekday": {
+      const lemma = pick(spec.oneOf, random, avoid);
+      return {
+        slot: spec.slot, card: spec.says, literal: [], lemmas: [lemma], value: lemma,
+        ...worn(lemma, avoid),
+      };
+    }
+    case "time": {
+      const slots = halfHours(spec.from, spec.to);
+      const value = pick(slots, random, avoid);
+      return {
+        ...worn(value, avoid),
+        slot: spec.slot,
+        card: `The time you were given: ${value}`,
+        // `14:00`, `14.00` and `14` are all how somebody writes it down.
+        literal: [value, value.replace(":", "."), value.slice(0, 2), stripLeadingZero(value)],
+        lemmas: [],
+        value,
+      };
+    }
+    case "number": {
+      const span = Array.from({ length: spec.max - spec.min + 1 }, (_, i) => String(spec.min + i));
+      const value = pick(span, random, avoid);
+      return {
+        slot: spec.slot, card: `${spec.says} ${value}`, literal: [value], lemmas: [], value,
+        ...worn(value, avoid),
+      };
+    }
+    case "code": {
+      /*
+        Fictional, and visibly so. Letters and digits in a shape no Estonian
+        register uses, because the failure to avoid is a learner reading it as
+        a real reference and typing their own instead.
+      */
+      const value = `KK-${digits(random, 4)}`;
+      return { slot: spec.slot, card: `${spec.says} ${value}`, literal: [value, value.slice(3)], lemmas: [], value };
+    }
+  }
 }
 
-function clockValue(random: () => number, avoid: readonly string[]): PropValue {
-  // Working hours, on the hour or the half hour, which is when a desk offers.
-  const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
-  const options: string[] = [];
-  for (const h of hours) for (const m of ["00", "30"]) options.push(`${h}:${m}`);
-  const display = choose(options, random, (v) => avoid.includes(v));
-  const [h, m] = display.split(":") as [string, string];
-  const accepted = [display, `${h}.${m}`];
-  if (m === "00") accepted.push(h, `kell ${h}`);
-  return { slot: "", kind: "clock", display, lemma: null, accepted };
+/** The whole card for one run. */
+export function drawCard(
+  you: string,
+  specs: readonly PropSpec[],
+  random: () => number,
+  avoid: ReadonlySet<string> = new Set(),
+): RoleCard {
+  return { you, props: specs.map((spec) => drawProp(spec, random, avoid)) };
 }
 
-function numberValue(random: () => number, avoid: readonly string[]): PropValue {
-  const n = choose([1, 2, 3, 4, 5, 6, 7, 8, 9], random, (v) => avoid.includes(String(v)));
-  return { slot: "", kind: "number", display: String(n), lemma: NUMBER_LEMMAS[n - 1]!, accepted: [String(n)] };
+/** The slot a beat's `datum` requirement names, as the marker wants it. */
+export function propBySlot(card: RoleCard, slot: string): DrawnProp | undefined {
+  return card.props.find((prop) => prop.slot === slot);
 }
 
-function codeValue(random: () => number, avoid: readonly string[]): PropValue {
-  // Six digits, never a real shape: an Estonian personal code is eleven.
-  let digits = "";
-  do {
-    digits = "";
-    for (let i = 0; i < 6; i++) digits += String(Math.floor(random() * 10));
-  } while (avoid.includes(digits));
-  const spaced = digits.replace(/(\d{3})(\d{3})/, "$1 $2");
-  return { slot: "", kind: "code", display: spaced, lemma: null, accepted: [digits, spaced] };
+/**
+ * Prefers a candidate nobody has seen lately, and takes one regardless.
+ *
+ * Never throws and never returns nothing: a scene whose pool is thinner than
+ * its recency window is a fact worth reporting (§5 says a run says so rather
+ * than quietly cycling) and is not a reason for a card to come out empty.
+ */
+function worn(value: string, avoid: ReadonlySet<string>): { repeated?: true } {
+  return avoid.has(value) ? { repeated: true } : {};
 }
 
-function weekdayValue(random: () => number, avoid: readonly string[], glossOf: (l: string) => string): PropValue {
-  const lemma = choose(WEEKDAY_LEMMAS, random, (l) => avoid.includes(l));
-  return { slot: "", kind: "weekday", display: glossOf(lemma), lemma, accepted: [lemma] };
+function pick(from: readonly string[], random: () => number, avoid: ReadonlySet<string>): string {
+  const fresh = from.filter((value) => !avoid.has(value));
+  const pool = fresh.length > 0 ? fresh : from;
+  return pool[Math.floor(random() * pool.length)] ?? pool[0] ?? "";
 }
 
-/** Every prop of the scene, drawn. Two clocks in one scene are always different. */
-export function drawProps(input: PropDrawInput): PropValue[] {
-  const { scene, random, glossOf, recent } = input;
-  const out: PropValue[] = [];
-  const used = new Map<PropKind, string[]>();
-  for (const slot of scene.props) {
-    const avoid = [...(recent?.get(slot.id) ?? []), ...(used.get(slot.kind) ?? [])];
-    const value = drawOne(slot, random, avoid, glossOf);
-    out.push({ ...value, slot: slot.id });
-    used.set(slot.kind, [...(used.get(slot.kind) ?? []), value.kind === "weekday" ? value.lemma! : value.display]);
+/** Every half hour in a window, as `HH:MM`. */
+function halfHours(from: number, to: number): string[] {
+  const out: string[] = [];
+  for (let hour = from; hour <= to; hour += 1) {
+    out.push(`${pad(hour)}:00`);
+    if (hour < to) out.push(`${pad(hour)}:30`);
   }
   return out;
 }
 
-function drawOne(slot: PropSlot, random: () => number, avoid: readonly string[], glossOf: (l: string) => string): PropValue {
-  switch (slot.kind) {
-    case "weekday": return weekdayValue(random, avoid, glossOf);
-    case "clock": return clockValue(random, avoid);
-    case "number": return numberValue(random, avoid);
-    case "code": return codeValue(random, avoid);
-  }
-}
+const pad = (n: number) => String(n).padStart(2, "0");
+const stripLeadingZero = (time: string) => time.replace(/^0/, "");
 
-/** `{since}` in a card fact becomes the drawn value. */
-export function fillFacts(facts: readonly string[], props: readonly PropValue[]): string[] {
-  const bySlot = new Map(props.map((p) => [p.slot, p.display]));
-  return facts.map((fact) => fact.replace(/\{(\w+)\}/g, (m, id: string) => bySlot.get(id) ?? m));
+function digits(random: () => number, count: number): string {
+  let out = "";
+  for (let i = 0; i < count; i += 1) out += Math.floor(random() * 10);
+  return out;
 }

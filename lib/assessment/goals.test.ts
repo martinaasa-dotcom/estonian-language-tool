@@ -11,6 +11,22 @@ describe("the goal options", () => {
     }
   });
 
+  /*
+    A reason is either a situation, which puts Estonian in a learner's week,
+    or a goal, which does not, and the plan reads the difference off the
+    exposure. A goal that grew a range would have a plan crediting somebody
+    with hours of Estonian for wanting a passport.
+  */
+  it("gives a situation hours a week and a goal none", () => {
+    const situations = ["living", "family", "work", "study", "roots"];
+    for (const reason of REASONS) {
+      expect(reason.exposure.low).toBeGreaterThanOrEqual(0);
+      expect(reason.exposure.high).toBeGreaterThanOrEqual(reason.exposure.low);
+      if (situations.includes(reason.id)) expect(reason.exposure.high).toBeGreaterThan(0);
+      else expect(reason.exposure).toEqual({ low: 0, high: 0 });
+    }
+  });
+
   it("describes every level by what it does not get you as well as what it does", () => {
     expect(TARGETS.map((t) => t.band)).toEqual(["A1", "A2", "B1", "B2", "C1"]);
     for (const target of TARGETS) {

@@ -40,9 +40,9 @@ comment on every model that needs one; what belongs here is the map and the reas
 | `Suggestion` | One thing a learner said was wrong, and what they proposed instead. |
 | `Classroom`, `ClassroomMember` | A class, its join code, and who is in it. A view over what the learners already own. |
 | `UsageEvent` | One metered call to a paid service. Append-only, and the evidence behind the spend cap. |
-| `SceneRun` | One conversation played through in Situations: the persona, the props, the curveballs, every turn and where each line came from. Append-only. Fiction about a role card, never a fact about the learner. |
+| `SceneRun` | One conversation, with the seed it was drawn from and every turn typed in it. Append-only. Nothing in it is true about the learner: the role card is fiction (`docs/19-situations.md` §3). |
+| `SceneGap` | A word a conversation needed and the learner did not have. A child table so "the words my conversations keep needing" is one indexed query rather than a scan over every transcript. |
 | `Encounter` | One real conversation reported from outside the app: the errand Today set and how it went, in one of three words. Append-only. |
-| `SceneGap` | One word a conversation needed and the learner did not have, asked for or stalled on. A child table so "the words my conversations keep needing" is one indexed query. |
 
 ## The values a string column may take
 
@@ -52,7 +52,8 @@ invariant checks they agree.
 
 ```
 CardType    RECOGNITION PRODUCTION CASE_FORM GRADATION GOVERNMENT CLOZE CONJUGATION
-CardSource  MANUAL DICTIONARY TUTOR IMPORT SCAN ALMANAC
+CardSource  MANUAL DICTIONARY TUTOR IMPORT SCAN ALMANAC SCENE
+SceneGap    ASKED STALLED  (the help button, and a beat that could not be met)
 TaskTag     HOMEWORK VOCABULARY  (declared in TASK_TAGS, lib/ux/agenda.ts)
 FormType    NOM_SG GEN_SG PART_SG ILL_SG_SHORT NOM_PL PART_PL GEN_PL
             INF_MA INF_DA PRES_1SG PAST_1SG PART_TUD

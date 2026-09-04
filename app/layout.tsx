@@ -54,10 +54,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbf9ff" },
-    { media: "(prefers-color-scheme: dark)", color: "#12101d" },
-  ],
+  /*
+    One colour, the light ground. The palette no longer follows the system
+    (see the note over `[data-theme="dark"]` in globals.css), so a media query
+    here would paint the browser chrome for a theme the page is not wearing.
+    The toggle in the rail rewrites this tag when somebody chooses dark.
+  */
+  themeColor: "#fbf9ff",
   // The review screen is thumb-driven; zoom stays enabled because disabling it
   // is an accessibility failure, not a polish detail.
   width: "device-width",
@@ -79,8 +82,9 @@ export const viewport: Viewport = {
   it runs once, and `suppressHydrationWarning` on <html> is what lets it write
   an attribute React did not render without React objecting on arrival.
 
-  Nothing stored means nothing written, and the `prefers-color-scheme` block
-  in globals.css keeps deciding. A `try` around it because Safari throws on
+  Nothing stored means nothing written, and bare `:root` in globals.css is the
+  light palette, which is the default for everybody: the system's own dark
+  setting is deliberately not read. A `try` around it because Safari throws on
   `localStorage` outright in private browsing rather than returning null, and
   a theme is not worth a blank page.
 */

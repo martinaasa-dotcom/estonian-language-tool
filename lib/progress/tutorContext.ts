@@ -26,7 +26,7 @@ export async function learnerContextFor(ownerId: string, now = new Date()): Prom
     caseReviewsFor(ownerId, now),
     pathWithProgress(ownerId),
     // The last conversation they rehearsed, and what it stalled on, so Anu
-    // can answer a question about the doctor's about the doctor's.
+    // can answer a question about the doctor's with the doctor's in mind.
     prisma.sceneRun.findFirst({
       where: { ownerId },
       orderBy: [{ startedAt: "desc" }, { id: "desc" }],
@@ -36,7 +36,7 @@ export async function learnerContextFor(ownerId: string, now = new Date()): Prom
       const gaps = await prisma.sceneGap.findMany({
         where: { ownerId, runId: run.id }, select: { lemma: true }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], take: 8,
       });
-      return { run, gaps: gaps.map((g) => g.lemma) };
+      return { run, gaps: gaps.map((g) => g.lemma).filter((l): l is string => l !== null) };
     }),
   ]);
   let scene: LearnerNote["scene"] = null;
@@ -44,8 +44,11 @@ export async function learnerContextFor(ownerId: string, now = new Date()): Prom
     const spec = sceneById(lastRun.run.sceneId);
     let missed: string[] = [];
     try {
-      const o = JSON.parse(lastRun.run.outcome) as { objectives?: { goal: string; met: boolean }[] };
-      missed = (o.objectives ?? []).filter((x) => !x.met).map((x) => x.goal);
+      // The stored outcome names the required beats that were missed by id;
+      // the goal is the English line the learner saw for each.
+      const o = JSON.parse(lastRun.run.outcome) as { missed?: string[] };
+      const ids = new Set(Array.isArray(o.missed) ? o.missed : []);
+      missed = (spec?.beats ?? []).filter((b) => ids.has(b.id)).map((b) => b.goal);
     } catch {
       missed = [];
     }

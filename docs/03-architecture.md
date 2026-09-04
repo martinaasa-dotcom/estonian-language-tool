@@ -744,11 +744,12 @@ is the one thing ADR-005 forbids a model to do unchecked. *Decision:* the scene 
 and unit ids and holds no Estonian. What the other side says comes from a recorded usage where one
 fits, and otherwise from a model working inside the scene's closed word list, checked for shape
 and register, vouched word by word against that list, run through a government check measured at
-withholding 47 percent of real errors and 8 percent of good lines, withheld whole when it fails and
-narrated in English instead, and marked on screen as composed. What the learner says is read by
-`readTurn` against the dictionary and by nothing else; `advance` takes `Evidence` and nothing
-else, so no model output can move a scene. The finished run goes up as turns and the server reads
-every one again before writing a grade, which is ADR-022's discipline. Nothing generated is stored
+withholding 47 percent of real errors and 8 percent of good lines, withheld whole when it fails,
+in which case the other side says they did not catch that, in a phrase the course teaches and in
+character, and marked on screen as composed wherever a model wrote it. What the learner says is
+read by `readTurn` against the dictionary and by nothing else; `advance` takes `Evidence` and
+nothing else, so no model output can move a scene. The server marks every turn as it is typed and
+reads the finished run again before writing a grade, which is ADR-022's discipline. Nothing generated is stored
 as a form, a card answer or a sentence. Speaking is unmarked (ADR-018) and the module contributes
 nothing to any level (ADR-020). The role card is fiction, so no transcript holds a fact about the
 learner. *Rejected:* hand-written dialogue, which is ADR-005 broken in the most direct way

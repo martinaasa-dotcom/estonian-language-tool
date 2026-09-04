@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { SESSION_GAP_MS } from "@/lib/stats/pace";
 
 /**
  * THE SESSION THAT JUST ENDED, READ OFF THE LOG RATHER THAN TAKEN ON TRUST.
@@ -28,8 +29,12 @@ import { prisma } from "@/lib/db";
  * through the same log (ADR-016).
  */
 
-/** The longest pause that still counts as the same sitting. */
-export const SESSION_GAP_MS = 10 * 60 * 1000;
+/**
+ * The longest pause that still counts as the same sitting. One figure, shared
+ * with the pace the plan reads off the same log, because a sitting cannot be
+ * one length for a badge and another for a plan.
+ */
+export { SESSION_GAP_MS };
 
 /**
  * How far back to look at all.
