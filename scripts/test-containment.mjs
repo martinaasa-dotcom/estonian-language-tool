@@ -159,6 +159,13 @@ const ROUTES = [
 
   // Measurement, and the things built on it.
   "/progress",
+  /*
+    Readiness for the course's situations: a list of 82 rows carrying a chip,
+    a claim and a line each, and a detail with three bars, a list of
+    struggles and a row of word chips, which is the shape that wraps.
+  */
+  "/progress/readiness",
+  "/progress/readiness/sook-ja-jook",
   "/exam",
   "/assess",
 

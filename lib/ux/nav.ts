@@ -210,6 +210,17 @@ export const SECTIONS: NavSection[] = [
         within: "/words",
       },
       {
+        /*
+          Which of the course's situations you could follow, take part in or
+          lead. A reading of "how am I doing" in the terms somebody outside
+          the app asks it, so it lives under Progress with the other three.
+        */
+        href: "/progress/readiness", label: "In real life",
+        blurb: "Which situations you could follow, take part in or lead", icon: "MessagesSquare", tone: "mint",
+        keywords: "readiness situations conversation real life ready lead follow take part speak counter shop doctor",
+        within: "/progress",
+      },
+      {
         href: "/assess", label: "Level check", blurb: "Reading, listening, writing and speaking, measured",
         icon: "Compass", tone: "blush",
         keywords: "assessment placement cefr level a1 a2 b1 b2 c1 goal plan timeline",

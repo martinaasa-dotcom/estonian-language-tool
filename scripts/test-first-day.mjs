@@ -67,7 +67,7 @@ function routes(dir, prefix = "") {
    exists on a fresh install, and the screen that says so is the one a learner
    would reach by mistyping, which is worth rendering too. */
 const FILL = {
-  "[unitId]": "tervitused", "[level]": "A1", "[id]": "partitive",
+  "[unitId]": "tervitused", "[situationId]": "tervitused", "[level]": "A1", "[id]": "partitive",
   "[caseKey]": "partitive", "[case]": "partitive",
   "[code]": "AAAAAA", "[groupId]": "none",
 };

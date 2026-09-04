@@ -39,6 +39,8 @@ const ROUTES = [
   ["/learn", "learn"],
   ["/grammar", "grammar"],
   ["/progress", "progress"],
+  ["/progress/readiness", "readiness"],
+  ["/progress/readiness/riigid", "situation"],
   ["/review/write", "write"],
   ["/review/government", "government"],
   ["/review/conjugation", "conjugation"],

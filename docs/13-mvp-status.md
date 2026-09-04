@@ -2053,3 +2053,38 @@ statement now.
 - The scene game's floor in `audit-questions` came down from 1,972 to 1,409, which is the narrowing
   arriving where it should: the words with a picture are the ones a third of which are animals and
   people.
+
+## 30. The twenty-fourth pass: how ready you actually are
+
+Asked for directly. Not a vocabulary percentage sold as readiness, which is what most apps print
+and what a learner discovers is worthless at the first counter, but an honest reading of which
+real situations somebody could follow, take part in or lead, where each would go wrong, and what
+they could already go and try.
+
+### What was there
+
+Every course unit carries a `canDo` claim and none had ever been checked. `Review.durationMs` had
+been recorded on every answer since the scheduler was written and read by nothing. The exam hub had
+an evidence tier and a ceiling on what a thin log may claim. The Situations design had mapped
+encounters to units and named the machinery every conversation runs on.
+
+### What was built
+
+`lib/readiness/` is the arithmetic, pure and unit tested: a situation per unit, three rungs read
+word by word, pace off correct typed answers, the cases and machinery an encounter leans on, the
+ear off the level check, and a cap on the rung itself under thin evidence.
+`lib/progress/readiness.ts` reads the log for it in five parallel reads and one lookup, and it may
+only read. `/progress/readiness` is the list and `/progress/readiness/<unit>` the detail; Progress
+carries the distribution and every unit page prints its own rung under its claim. Four invariants,
+each made to fail once, and `docs/22-readiness.md` is the write-up.
+
+### What building it turned up
+
+Rows written before `Review.slot` existed, which on this deployment is most of them, read as
+recognition under the safe rule, and the safe rule held a learner who had produced every word of a
+unit at "follow it". The card the row points at still knows its type, so those rows take the
+card's slot, exactly as mastery reads them. And the demo fixture, run on this, reports what a real
+learner two months in would be told: eight situations they would be lost in, none they could lead
+yet, and most of their words a month stale. That is a harder sentence than "74 percent recall",
+and it is the one that is true.
+
