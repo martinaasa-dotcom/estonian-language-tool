@@ -53,6 +53,18 @@ const HISTORIES: number[][] = [
  * which ones are.
  */
 const SLOW_SLOT = "TRANSLATIVE";
+/** How many words the demo deck holds, and how many of them get every card type. */
+const DECK_WORDS = 30;
+const RICH_WORDS = 4;
+/**
+ * The case slots this fixture has to be able to demonstrate.
+ *
+ * A browser suite cannot conjure a card, so a slot a suite drills has to be in
+ * the deck the fixture lays down. `INESSIVE` is what `test-teaching.mjs` opens
+ * at `/review?case=INESSIVE`; `SLOW_SLOT` is the one the answer-time panel
+ * needs to be slow before it draws at all.
+ */
+const DEMO_SLOTS = ["INESSIVE", SLOW_SLOT] as const;
 const SLOW_HISTORY = [3, 3, 4, 3, 3, 3];
 const SLOT_MS: Record<string, number> = {
   TRANSLATIVE: 9_400,
@@ -139,15 +151,15 @@ async function main() {
     syllabus put it there and marked it A1, rather than because of where it
     happens to sort.
   */
-  const lexemes = await prisma.lexeme.findMany({
+  const pool = await prisma.lexeme.findMany({
     where: { pos: { in: ["NOUN", "VERB"] }, cefr: "A1", provenance: "SEED" },
     include: { forms: true },
-    take: 30,
     orderBy: { lemma: "asc" },
   });
-  if (lexemes.length < 30) {
+  const first30 = pool.slice(0, DECK_WORDS);
+  if (first30.length < DECK_WORDS) {
     console.error(
-      `Only ${lexemes.length} A1 course words are seeded, so this deck would be thin.\n` +
+      `Only ${first30.length} A1 course words are seeded, so this deck would be thin.\n` +
       `Run \`npm run db:seed\` first: the demo is built from the course vocabulary.`,
     );
     await prisma.$disconnect();
@@ -155,42 +167,76 @@ async function main() {
   }
 
   /*
-    THE FOUR RICH WORDS ARE FOUR THAT CAN BE RICH.
+    THE RICH WORDS ARE FOUR THAT CAN DEMONSTRATE WHAT THE SUITES READ.
 
     This gave the whole card range to `i < 4`, the first four alphabetically,
-    which was right when the comment above was written and names `aeg` and
-    `aken` among them. It is not now: `aeg` and `aken` came back from Ekilex
-    at some point and are marked `EKILEX` rather than `SEED`, so the first
-    five this query returns are `aitama`, `algama`, `alustama`, `andma` and
-    `armastama` — verbs, every one. A verb has no genitive singular, so
-    `generateCards` correctly built no case-form card for any of them, and
-    this fixture has been laying down a deck with **no case-form cards at
-    all**.
+    and then to the first four carrying a genitive singular, because a genitive
+    stem was what a case card needed. Both were a stand-in for the question
+    `availableCardTypes` asks, and both went stale the moment the answer moved:
+    the first version laid down a deck with **no case-form cards at all**, since
+    the first five words this query returns are verbs and a verb has no genitive
+    singular.
 
-    That is the deck every browser suite reviews. `/review?case=INESSIVE`
-    correctly answered "No inessive cards yet", and the two suites that drill
-    a case were passing on cards other suites had added as a side effect,
-    which is how it stayed invisible: they failed the moment the order changed.
+    A genitive stem is no longer the answer either. A case is drilled in a
+    sentence that uses it, so `detsember` builds a seesütlev card and `aadress`
+    builds nothing, and reading a stem would put this fixture back exactly where
+    it was. The builder is asked instead, which is the only version of this that
+    cannot go stale again: whatever decides a case card tomorrow decides this.
 
-    Chosen by what the word can carry rather than by where it sorts, which is
-    the same question `availableCardTypes` asks. Still deterministic: the pool
-    is ordered by lemma, so it is the same four words on every run.
+    AND IT NAMES THE SLOTS THE SUITES NEED RATHER THAN HOPING FOR THEM. Two
+    checks read a specific case off this deck and neither can say so for itself:
+    `test-teaching.mjs` drills `/review?case=INESSIVE`, and the answer-time
+    panel on Progress only draws where one slot is slow, which is `SLOW_SLOT`.
+    Picking the first four case-capable words gives arvuti, auto, buss and
+    detsember, which covers the first by luck and misses the second, and a
+    fixture that covers a suite by luck is a suite that fails the day the
+    dictionary shifts under it. Each named slot gets a word chosen for it, the
+    rest fill up to four, and a slot nothing can demonstrate stops the run and
+    says which.
   */
-  const rich = new Set(
-    lexemes
-      .filter((lex) => lex.forms.some((f) => f.formType === "GEN_SG"))
-      .slice(0, 4)
-      .map((lex) => lex.id),
+  const caseCards = new Map(
+    pool.map((lex) => [lex.id, generateCards(lex as LexemeForCards, ["CASE_FORM"])] as const),
   );
-  if (rich.size < 4) {
+  const caseCapable = pool.filter((lex) => (caseCards.get(lex.id)?.length ?? 0) > 0);
+
+  const rich = new Map<string, (typeof pool)[number]>();
+  for (const slot of DEMO_SLOTS) {
+    const found = caseCapable.find((lex) => caseCards.get(lex.id)!.some((c) => c.targetCase === slot));
+    if (!found) {
+      console.error(
+        `No A1 course word builds a ${slot} card, so the suites that read one would have ` +
+        "nothing to look at and would report it as an app fault.\n" +
+        "Run `npm run db:seed` first: the demo is built from the course vocabulary.",
+      );
+      await prisma.$disconnect();
+      process.exit(1);
+    }
+    rich.set(found.id, found);
+  }
+  for (const lex of caseCapable) {
+    if (rich.size >= RICH_WORDS) break;
+    rich.set(lex.id, lex);
+  }
+  if (rich.size < RICH_WORDS) {
     console.error(
-      `Only ${rich.size} of these thirty words carry a genitive singular, so this deck would ` +
-      "have no case-form cards in it and the drills built on them would have nothing to ask.\n" +
+      `Only ${rich.size} A1 course words can build a case-form card, so this deck would ` +
+      "have too few and the drills built on them would have nothing to ask.\n" +
       "Run `npm run db:seed` first: the demo is built from the course vocabulary.",
     );
     await prisma.$disconnect();
     process.exit(1);
   }
+
+  /*
+    The thirty alphabetically first, in their own order so each keeps the review
+    history its index picks, plus any rich word that did not fall inside them.
+    Appending rather than substituting is what keeps the deck the same deck on
+    every run and the same deck it was before this.
+  */
+  const lexemes = [
+    ...first30,
+    ...[...rich.values()].filter((lex) => !first30.some((other) => other.id === lex.id)),
+  ];
 
   for (const [i, lex] of lexemes.entries()) {
     const types = rich.has(lex.id)
