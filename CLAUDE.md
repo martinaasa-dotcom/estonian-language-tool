@@ -89,12 +89,38 @@ is: it would be this app writing Estonian and the scheduler drilling it.
 
 **A conversation outside the app is the number the app is measured by, and it is a fact the learner
 reports.** `lib/collections/errands.ts` names one errand a day by unit id, never by word, the way
-the seasonal row does, and `recordEncounter` stores one of three words about it: understood,
-switched to English, did not manage it. `Encounter` is append-only and the fourth exception to
-"progress is derived" (ADR-027). Progress leads with it, beside the readiness reading of the
-course's own "you can do this" claims (ADR-026). The research export publishes it under the same
-gate as everything else and labelled as self-reported. Nothing about it is a streak that punishes
-a day without one.
+the seasonal row does, and `recordEncounter` stores one of three words. `Encounter` is append-only
+and the fourth exception to "progress is derived" (ADR-027). Progress leads with it, beside the
+readiness reading of the course's own "you can do this" claims (ADR-026). The research export
+publishes the errands under the same gate as everything else and labelled as self-reported.
+Nothing about it is a streak that punishes a day without one.
+
+**The question is about the learner's day rather than about our errand, and it is asked about a day
+that is over.** The card used to set the errand in the morning and put the three answers under it,
+which asked for a report on something that had not happened yet: at eight in the morning those are
+not three answers, they are three ways to make a card go away. And it could only see the
+conversations this app had set, so somebody who spent an hour with their Estonian mother-in-law and
+ignored the errand was recorded as having done nothing, in the one number this app says it is
+measured by. So Today asks whether any Estonian was spoken to anybody yesterday, and offers the
+errand where the answer is no, which is also the only kind moment to offer one (ADR-027 amendment 1).
+
+Two things follow and both are asserted. **`Encounter.errandId` is nullable and Today writes none**,
+because a conversation with a neighbour is not this app's to file under a unit and the research
+export groups that column by the unit an errand drew its words from; that table now says out loud
+that it covers the reports tied to an errand rather than speaking for all of them. And **a day that
+was answered is not a day that held a conversation**: `isConversation` is the one place that is
+decided, both readings in `lib/progress/outThere.ts` ask it, and counting rows instead would report
+a fortnight of honest noes back as a fortnight of real conversations and a run of fourteen days, on
+the panel whose own heading says it matters more than any chart on the page.
+
+**And eighteen errands is thin for the days the answer is no.** Thirteen are A1 and five A2, none
+above, and the pool is filtered to the units a deck has started: four on a starter deck, thirteen
+with A1 finished, eighteen for ever after. The walk is `dayIndex`, so the repeat interval is the
+pool size exactly. That is survivable while the errand appears on a minority of days and it is not
+a table to build a screen out of that shows several days at once. What it needs before it grows is
+somebody who knows how an Estonian counter actually works, in the shape `docs/20-contributed-sentences.md`
+already describes, and a B1 tier that does not exist: holding the line when they switch, asking a
+follow-up, explaining why you were late.
 
 **Never write Estonian.** Not morphology, not example sentences. Forms come from Ekilex or the
 seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
@@ -131,6 +157,23 @@ Three things are **not** covered by this and should not be "fixed": an English c
 table of Estonian ("Case", "Singular"), the English prose that explains a point, and the topic ids
 in URLs. The ids are keys that 83 syllabus entries and any bookmarked link point at, and renaming
 them buys a slug and risks the course.
+
+**And on the reference itself, the ending leads both names.** The rule above is about which of two
+*names* comes first, and the grammar pages had answered it and then put the name at the top of every
+card anyway, over four paragraphs a case. A learner mid-sentence is not looking for the inessive and
+is not looking for the seesütlev either; they are looking for -s, and for the one English word it
+means. So `CaseNote.plain` is that word ("in", "out of", "with"), a card is the ending, the meaning,
+one line, and both names under it in small type, and the page opens with one real word out of the
+dictionary wearing all eleven endings, built by `buildCaseTable` and never typed. The groups are
+headed by what the endings do, "Inside", "On top", with the endings read off the group's own keys
+by `groupEndings` rather than typed into the title, because a heading is set in `label-xs` and that
+uppercases: "-sse" reached the screen as "-SSE", which no Estonian word ends in. The same rule
+holds the case page's eyebrow and the table header, and it is `Chip`'s `caseSensitive` rule one
+level up. Every field in `grammar.ts` has a ceiling now beside its floor, since the floors were all
+met by the version somebody reported as unreadable: a floor stops a field being empty and says
+nothing about the paragraph growing back into it. Nothing about the invariants moved: the Estonian
+name and the question are still on every card and every page, and the Latin name is still there,
+labelled, on the page for the ending.
 
 **Knowing a word exists is a different job from teaching it, and thirty-two requests buys the
 first.** The dictionary ships 5,363 entries and every other Estonian word came back as "nothing
@@ -3945,10 +3988,12 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   names and the twelve month names are in every course's first fortnight, and a date is the one
   piece of Estonian that needs no gloss to be useful, because the reader already knows what today
   is: they are matching a word they have against a word they are learning, which is how a weekday
-  name is learned anywhere. So it leads `kolmapäev, 2. september` and keeps the English weekday
-  beside it as the cross-reference, the same shape every grammar screen takes with the Latin case
-  names, and that English is **pinned** rather than the reader's, because it is a gloss and every
-  other gloss in this app is English. `lib/time/estonianDate.ts` reads both out of CLDR, which is an
+  name is learned anywhere. So it reads `kolmapäev, 2. september` and **nothing else**. It carried
+  the English weekday beside it as a cross-reference for a while, the shape every grammar screen
+  takes with the Latin case names, and a date is the one place that shape buys nothing: the reason
+  this line can teach at all is that the reader already knows what day it is, so the gloss answers
+  a question nobody had and takes with it the guess that does the teaching.
+  `lib/time/estonianDate.ts` reads it out of CLDR, which is an
   attested source in the sense Ekilex is and not a string anybody typed, so ADR-005 is kept the way
   the almanac keeps it: delete the two Estonian words from that file's comments and its output is
   identical. A build whose locale data has no Estonian **says nothing rather than English**, since
@@ -4675,7 +4720,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `playThrough`, `errandForDay`, `recordEncounter`, `outThere`, `reachedSlot`, `reachedFor`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`,
-`lacksFiniteVerb`, `answerForms`. Most of them now
+`lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

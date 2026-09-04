@@ -7886,7 +7886,7 @@ check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
   assert.match(page, /dateLine\(/, "Today no longer reads the Estonian date");
   assert.match(
     page,
-    /lang="et">\{today\.et\}/,
+    /lang="et">\{today\}/,
     'Today prints the Estonian date without lang="et", so a screen reader says it in English',
   );
   assert.match(page, /<LocalDate/, "Today lost its fallback for a build whose locale data has no Estonian");
@@ -10728,6 +10728,61 @@ check("no text field switches its focus ring off", () => {
     if (/outline(?:Style)?:\s*["']none["']/.test(source)) offenders.push(`${file}: outline: none in a style`);
   }
   assert.deepEqual(offenders, [], "a text field takes the focus ring away, and a keyboard user cannot see where they are typing");
+});
+
+/*
+  A DAY THAT WAS ANSWERED IS NOT A DAY THAT HELD A CONVERSATION.
+
+  Today asks whether any Estonian was spoken to anybody yesterday and takes
+  "not yesterday" for an answer, which is the whole point of the card: it
+  counts the learner's own life rather than this app's homework, and a day
+  with nothing in it is an honest answer to be met with a small errand rather
+  than a figure to be hidden. Both readings of that table print a number of
+  conversations, and both used to count every row, so a fortnight of honest
+  noes would have been reported back on Progress as a fortnight of real
+  conversations and a run of fourteen days, under a heading saying this is the
+  number that matters more than any chart on the page.
+
+  `isConversation` is where that is decided and the two readers may not answer
+  it for themselves. Anchored on the call rather than on today's arithmetic,
+  because the shape of the count is allowed to change and the question it has
+  to ask first is not.
+*/
+check("a conversation is counted by the one rule, never by counting rows", () => {
+  const source = code("lib/progress/outThere.ts");
+  const asks = [...source.matchAll(/\bisConversation\(/g)].length;
+  assert.ok(
+    asks >= 2,
+    `lib/progress/outThere.ts asks isConversation ${asks} times; the panel and the card both have to`,
+  );
+  assert.equal(
+    /total:\s*rows\.length/.test(source), false,
+    "lib/progress/outThere.ts counts every report as a conversation, including the days somebody said there was none",
+  );
+});
+
+/*
+  AND A CONVERSATION THE LEARNER HAD ON THEIR OWN IS NOT OURS TO FILE UNDER AN
+  ERRAND. The card asks about yesterday in general, so the report it writes
+  names no errand: `Encounter.errandId` is nullable for that, and the research
+  export groups that column by the unit an errand drew its words from. Writing
+  today's errand id against a conversation with a neighbour would put a unit's
+  name on a table row that no unit earned, in a file published to people
+  outside this project.
+*/
+check("Today's report names no errand, and the research table says what it covers", () => {
+  assert.match(
+    code("components/SayItToday.tsx"), /recordEncounter\(\s*null\s*,/,
+    "components/SayItToday.tsx credits an errand with a conversation the learner had on their own",
+  );
+  assert.match(
+    code("app/api/research/route.ts"), /"errandId"\s+IS\s+NOT\s+NULL/,
+    "app/api/research/route.ts groups reports by unit without excluding the ones that name no errand",
+  );
+  assert.match(
+    read("lib/research/sections.ts"), /REPORTS TIED TO AN ERRAND/,
+    "the encounters section no longer tells a reader that it counts errands rather than conversations",
+  );
 });
 
 console.log(

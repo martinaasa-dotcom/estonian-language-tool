@@ -1,14 +1,25 @@
 /**
- * ONE THING TO SAY TO A REAL PERSON TODAY.
+ * ONE THING TO SAY TO A REAL PERSON, AND WHETHER ANYTHING WAS SAID AT ALL.
  *
  * Every other panel on Today is about the app: what is due, what is next,
  * what keeps going wrong. This one is about leaving it. An errand is a small
- * real-world task in English, tied to a unit of the course, and the learner
- * reports how it went in one of three words: they understood me, they
- * switched to English, I did not manage it. That report is the one number
- * this app keeps that no learning app reports, because their business is
- * keeping you inside: conversations held outside, and how often the other
- * person gave up on your Estonian.
+ * real-world task in English, tied to a unit of the course.
+ *
+ * THE CARD ASKS ABOUT YESTERDAY, AND THE ERRAND IS WHAT IT OFFERS WHEN THE
+ * ANSWER IS NO. It used to set the errand in the morning and put the three
+ * answers under it, which asked for a report on something that had not
+ * happened yet: three buttons at eight in the morning are three ways to make
+ * a card go away rather than an account of anything. And it could only ever
+ * see conversations this app had set, so a learner who spent an hour with
+ * their Estonian mother-in-law and ignored the errand was recorded as having
+ * done nothing, in the one number this app claims to be measured by.
+ *
+ * So the question is always about a day that is over, the answer is always
+ * about the learner's own life rather than about our homework, and the errand
+ * is a small one for today offered to somebody who says there was nothing
+ * yesterday. That report is the number no learning app keeps, because their
+ * business is keeping you inside: conversations held outside, and how often
+ * the other person gave up on your Estonian.
  *
  * NO ESTONIAN HERE. An errand names a unit id, the way `topical.ts` does, and
  * never a word: the words the errand needs are the unit's, already in the
@@ -57,7 +68,15 @@ export const ERRANDS: readonly Errand[] = [
   { id: "post", says: "Post a letter or collect a parcel, and do the whole thing in Estonian.", where: "The post office", unit: "linn-ja-teenused" },
 ];
 
-/** What the learner said happened. The three words on the card. */
+/**
+ * What the learner said happened. The three words on the card.
+ *
+ * The stored values are unchanged, and that is deliberate rather than lazy:
+ * the question moved from "how did the errand go" to "did you speak any
+ * Estonian yesterday", and every row written under the first question reads
+ * correctly under the second. `BAILED` was "I went and did not manage it" and
+ * is now "there was none yesterday", which is the same fact about the day.
+ */
 export const OUTCOMES = ["UNDERSTOOD", "SWITCHED", "BAILED"] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 
@@ -66,10 +85,27 @@ export function outcomeFrom(value: unknown): Outcome | null {
 }
 
 export const OUTCOME_LABEL: Readonly<Record<Outcome, string>> = {
-  UNDERSTOOD: "They understood me",
+  UNDERSTOOD: "Yes, and they understood",
   SWITCHED: "They switched to English",
-  BAILED: "I did not manage it",
+  BAILED: "Not yesterday",
 };
+
+/**
+ * WHICH OF THE THREE IS A CONVERSATION, DECIDED ONCE.
+ *
+ * Progress prints a count of conversations and a run of days with one in
+ * them, and both counted every row, including the days somebody said there
+ * had been nothing. That was already loose when the third answer meant "I
+ * tried and could not"; with the question asked the way it is asked now it
+ * would be a plain untruth, since answering "not yesterday" every day for a
+ * fortnight would build a fortnight's run of real conversations. Two readers
+ * ask this and they may not disagree about it.
+ */
+export type Conversation = Extract<Outcome, "UNDERSTOOD" | "SWITCHED">;
+
+export function isConversation(outcome: Outcome): outcome is Conversation {
+  return outcome === "UNDERSTOOD" || outcome === "SWITCHED";
+}
 
 /** The errand for a day, over the units the learner has started. */
 export function errandForDay(dayKey: string, startedUnits: ReadonlySet<string>): Errand {

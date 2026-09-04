@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ERRANDS, errandForDay, outcomeFrom } from "./errands";
+import { ERRANDS, errandForDay, isConversation, outcomeFrom, OUTCOMES, OUTCOME_LABEL } from "./errands";
 import { unitById } from "./syllabus";
 
 describe("errands", () => {
@@ -33,6 +33,26 @@ describe("errands", () => {
       expect(id).not.toBe(last);
       last = id;
     }
+  });
+
+  it("counts a conversation as one that happened, and a day with none as neither", () => {
+    /*
+      The card takes "not yesterday" for an answer, so this is the difference
+      between a run of days out there and a run of days somebody was honest
+      about. Progress prints both off it.
+    */
+    expect(isConversation("UNDERSTOOD")).toBe(true);
+    expect(isConversation("SWITCHED")).toBe(true);
+    expect(isConversation("BAILED")).toBe(false);
+    expect(OUTCOMES.filter(isConversation)).toHaveLength(2);
+  });
+
+  it("labels the three as answers to a question about yesterday", () => {
+    // Not as reports on the errand: the errand is what the card offers when
+    // the answer is no, and a label reading "I did not manage it" would be
+    // about a task nobody was set.
+    for (const o of OUTCOMES) expect(OUTCOME_LABEL[o]).not.toMatch(/errand/i);
+    expect(OUTCOME_LABEL.BAILED).toBe("Not yesterday");
   });
 
   it("reads an outcome off the wire as one of three, or nothing", () => {

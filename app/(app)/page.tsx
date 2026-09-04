@@ -10,6 +10,7 @@ import { learnerDayClock } from "@/lib/progress/dayClock";
 import { measuredPaceFor } from "@/lib/progress/plan";
 import { minutesForCards } from "@/lib/stats/pace";
 import { wordOfDay, wordOfDayCollection } from "@/lib/progress/wordOfDay";
+import { outThereToday } from "@/lib/progress/outThere";
 import { readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { nextUnit as pickNextUnit } from "@/lib/collections/syllabus";
 import { courseLevelFor } from "@/lib/progress/level";
@@ -30,7 +31,7 @@ import { eventsOn, kindFrom, span, weekdayOf, KIND_LABEL, KIND_TONE, WEEKDAY_LON
 import { gameAfter, gameOn } from "@/lib/ux/weekGames";
 import { WordOfDayCard } from "@/components/WordOfDay";
 import { SayItToday } from "@/components/SayItToday";
-import { errandForDay, outcomeFrom, startedUnits } from "@/lib/collections/errands";
+import { errandForDay, startedUnits } from "@/lib/collections/errands";
 import { unitById } from "@/lib/collections/syllabus";
 import { BadgeCheck } from "./BadgeCheck";
 
@@ -176,19 +177,13 @@ export default async function TodayPage() {
   */
   const featured = gameOn(weekdayOf(summary.dayKey));
   const questDay = featured.href === "/quest" && shows(stage, "quest");
-  const [word, collection, weakest, todaysEncounter] = await Promise.all([
+  const [word, collection, weakest, outside] = await Promise.all([
     shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now), placement) : null,
     shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
     questDay ? weakestCase(ownerId, now) : null,
-    // Whether today's errand was already answered, so the card says so
-    // rather than asking twice.
-    errand
-      ? prisma.encounter.findFirst({
-        where: { ownerId, errandId: errand.id, createdAt: { gte: clock.startOfDay(now) } },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        select: { outcome: true },
-      })
-      : null,
+    // Whether the day's question has been answered, and the month behind it,
+    // off one read rather than one for each.
+    errand ? outThereToday(ownerId, clock, now) : null,
   ]);
 
   const today = dateLine(now, clock.zone);
@@ -617,14 +612,16 @@ export default async function TodayPage() {
   ) : null;
 
   /*
-    The one panel that is about leaving the app. An errand a day, drawn from
-    the units this deck has started, and one press to say how it went. See
-    lib/collections/errands.ts.
+    The one panel that is about leaving the app. It asks whether any Estonian
+    was spoken to anybody yesterday, and offers an errand drawn from the units
+    this deck has started where the answer is no. See lib/collections/errands.ts.
   */
-  const errandCard = errand ? (
+  const errandCard = errand && outside ? (
     <SayItToday
       errand={errand}
-      reported={outcomeFrom(todaysEncounter?.outcome)}
+      answered={outside.answered}
+      conversations={outside.conversations}
+      days={outside.days}
       unitTitle={unitById(errand.unit)?.title ?? errand.unit}
     />
   ) : null;
@@ -724,19 +721,21 @@ export default async function TodayPage() {
         the weekday name and the month name are two of the nineteen words every
         course teaches in its first fortnight, and a date is the one piece of
         Estonian that needs no gloss to be useful, because the reader already
-        knows what today is. See lib/time/estonianDate.ts, which reads both
-        out of CLDR and writes neither.
+        knows what today is. See lib/time/estonianDate.ts, which reads it
+        out of CLDR and writes none of it.
 
-        The English weekday stays beside it as the cross-reference, the same
-        shape the grammar screens take with the Latin case names, and it is
-        pinned rather than the reader's because it is a gloss and not a date.
-        A build whose locale data has no Estonian gets the line it always had.
+        AND IT IS THE ESTONIAN ALONE. The line carried the English weekday
+        beside it as a cross-reference, which is the shape the grammar screens
+        take with the Latin case names, and a date is the one place that shape
+        buys nothing: the reader already knows what day it is, so the Estonian
+        needs no gloss to be read, and printing "Saturday" beside `laupäev`
+        answers a question nobody had while taking the guess that teaches the
+        word. A build whose locale data has no Estonian gets the line it
+        always had.
       */
       eyebrow={
         today ? (
-          <>
-            <span lang="et">{today.et}</span> · {today.en}
-          </>
+          <span lang="et">{today}</span>
         ) : (
           <LocalDate
             iso={now.toISOString()}
@@ -865,10 +864,18 @@ function weekdayLetter(day: string): string {
   Which greeting, on the learner's clock rather than the server's. Rendered on
   the server, so "Tere hommikust" was the deployment's morning: at two in the
   morning in Tallinn this said good evening.
+
+  ALL FOUR ARE GREETINGS A COURSE TEACHES, INCLUDING THE ONE FOR THE SMALL
+  HOURS. This used to say "Still up" before five, which is an English remark
+  about the reader rather than a greeting: it reads as the app noticing the
+  hour and having an opinion about it, on the one line that is supposed to be
+  the first Estonian somebody meets. `Tere` is what anybody says at an hour
+  with no greeting of its own, it is the first phrase in the A1 unit, and it
+  is right at every hour, which is what makes it the honest default here.
 */
 function greeting(clock: DayClock, now: Date): string {
   const h = clock.hourOf(now);
-  if (h < 5) return "Still up";
+  if (h < 5) return "Tere";
   if (h < 11) return "Tere hommikust";
   if (h < 18) return "Tere päevast";
   return "Tere õhtust";

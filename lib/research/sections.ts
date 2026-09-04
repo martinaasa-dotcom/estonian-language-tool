@@ -53,13 +53,17 @@ export const SECTIONS: readonly SectionSpec[] = [
     dimensions: ["unit"],
     groupBy: 0,
     note:
-      "Today sets one small errand a day, order a coffee, ask the time, and the learner says " +
-      "how it went in one of three words: they understood me, they switched to English, I did " +
-      "not manage it. This table counts those reports rather than answers to cards, and " +
-      "\"correct\" here means understood. It is self-reported and it is the only figure in " +
-      "this file about anything that happened away from a screen. The unit is the one the " +
-      "errand drew its words from, which is how the errand was chosen, not a measurement of " +
-      "what was said. Mature figures do not apply and are zero.",
+      "Today asks each morning whether the learner spoke any Estonian to anybody yesterday, " +
+      "and the answer is one of three words: yes and they understood, they switched to " +
+      "English, not yesterday. This table counts those reports rather than answers to cards, " +
+      "and \"correct\" here means understood. It is self-reported and it is the only figure " +
+      "in this file about anything that happened away from a screen. IT COVERS ONLY THE " +
+      "REPORTS TIED TO AN ERRAND THIS APP SET, which is a shrinking share of them: a " +
+      "conversation the learner had on their own carries no unit to be grouped by and is not " +
+      "in this table at all, so read it as a count of errands done rather than of " +
+      "conversations held. The unit is the one the errand drew its words from, which is how " +
+      "the errand was chosen, not a measurement of what was said. Mature figures do not " +
+      "apply and are zero.",
   },
   {
     id: "case",
