@@ -3948,10 +3948,12 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   names and the twelve month names are in every course's first fortnight, and a date is the one
   piece of Estonian that needs no gloss to be useful, because the reader already knows what today
   is: they are matching a word they have against a word they are learning, which is how a weekday
-  name is learned anywhere. So it leads `kolmapäev, 2. september` and keeps the English weekday
-  beside it as the cross-reference, the same shape every grammar screen takes with the Latin case
-  names, and that English is **pinned** rather than the reader's, because it is a gloss and every
-  other gloss in this app is English. `lib/time/estonianDate.ts` reads both out of CLDR, which is an
+  name is learned anywhere. So it reads `kolmapäev, 2. september` and **nothing else**. It carried
+  the English weekday beside it as a cross-reference for a while, the shape every grammar screen
+  takes with the Latin case names, and a date is the one place that shape buys nothing: the reason
+  this line can teach at all is that the reader already knows what day it is, so the gloss answers
+  a question nobody had and takes with it the guess that does the teaching.
+  `lib/time/estonianDate.ts` reads it out of CLDR, which is an
   attested source in the sense Ekilex is and not a string anybody typed, so ADR-005 is kept the way
   the almanac keeps it: delete the two Estonian words from that file's comments and its output is
   identical. A build whose locale data has no Estonian **says nothing rather than English**, since
