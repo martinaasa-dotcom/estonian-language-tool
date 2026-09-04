@@ -2007,6 +2007,21 @@ because it was chosen by whoever wrote the link. Nobody signed in is the ordinar
 untouched, which is what makes it safe: the link works exactly as it did for the person it was
 mailed to.
 
+**A sign-in finishes on the origin it started on, and a deployment answers on one origin.** The
+form asks Supabase to send Google's code back to `<origin>/auth/callback`, and Supabase honours
+that only where the address is on the project's Redirect URLs; anywhere else it falls back to the
+Site URL, silently. So a sign-in begun on the domain came back on `kodukeel.vercel.app`, where no
+PKCE verifier cookie had ever been written, and the learner read "that sign-in did not go
+through" on a host they had not typed, and pressed the button again from there, which worked.
+`lib/auth/canonical.ts` is the app's half: with `NEXT_PUBLIC_SITE_URL` set, the middleware sends a
+request on any other host to the same path on that one, permanently, before anything else reads
+it; a Vercel preview and a loopback address are exempt by rule, because each is a deployment that
+would otherwise bounce to production. The callback is the other half and reads the verifier cookie
+before it tries the exchange, so a code that arrived in a browser that never asked for one is told
+apart from a spent link and the screen names the setting rather than the link. The dashboard half
+is in the README and is not optional: the Site URL and the Redirect URLs have to name the address
+people use.
+
 **A name a class is going to see is cleaned, not trimmed.** `trim()` does not remove U+200B, so
 two zero-width spaces were a two-character name that passed the empty check and rendered as
 nothing on the roster; U+202E reverses what follows it and can make one pupil's row read as

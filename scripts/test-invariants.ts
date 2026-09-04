@@ -1800,6 +1800,42 @@ check("the forged-request gate runs before anything else looks at the request", 
   );
 });
 
+check("a request on the wrong host is sent home before anything reads it", () => {
+  /*
+    Google sign-in starts on the origin the learner is on and comes back to
+    the project's Site URL wherever that origin is not on Supabase's list, so
+    a deployment answering on two names had sign-ins finishing on the one
+    that never started them, with no verifier to finish them with. With
+    `NEXT_PUBLIC_SITE_URL` set there is one origin, and the redirect has to
+    be the first thing the middleware does: after the forged-request gate it
+    would refuse a legitimate mutation for arriving on the wrong name, and
+    after the auth branch a signed-out visitor would be sent to sign in on
+    the host the sign-in cannot complete on. The callback is the other half:
+    a code arriving with no verifier cookie is told apart from a spent link
+    before the exchange is attempted, because the two need different
+    sentences and the same failure reads as either.
+  */
+  const middleware = code("middleware.ts");
+  const redirect = middleware.indexOf("canonicalRedirect(");
+  const gate = middleware.indexOf("isSameOriginMutation(request)");
+  assert.ok(redirect > 0, "the middleware no longer sends a request on the wrong host home");
+  assert.ok(redirect < gate, "the canonical redirect runs after the forged-request gate");
+  assert.match(middleware, /NextResponse\.redirect\(home, 308\)/, "the canonical redirect is not permanent");
+
+  const canonical = code("lib/auth/canonical.ts");
+  assert.match(canonical, /VERCEL_ENV !== "production"/, "a Vercel preview is being sent to production");
+  assert.match(canonical, /isLoopback\(/, "a developer's own machine is being sent to production");
+
+  const callback = code("app/auth/callback/route.ts");
+  const verifier = callback.indexOf("-code-verifier");
+  const exchange = callback.indexOf("exchangeCodeForSession(");
+  assert.ok(verifier > 0, "the callback no longer looks for the verifier cookie");
+  assert.ok(verifier < exchange, "the verifier check runs after the exchange it exists to explain");
+  assert.match(callback, /sign-in\?bounced=1/, "a bounced sign-in is no longer told apart from a spent link");
+  const signIn = code("app/(chromeless)/sign-in/page.tsx");
+  assert.match(signIn, /params\.bounced/, "the sign-in page no longer reads the bounced refusal");
+});
+
 check("every response carries a policy", () => {
   /*
     A Content Security Policy that only covers the happy path is a policy with
