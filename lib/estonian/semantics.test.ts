@@ -94,3 +94,37 @@ describe("no classification at all", () => {
     expect(semanticGroup(["esitus_tiitel", "in_elukutse"])).toBe(semanticGroup("esitus_tiitel in_elukutse"));
   });
 });
+
+/**
+ * A FAMILY, WHICH THE INSTITUTE CALLS A PERSON AND WHICH IS A BODY OF THEM.
+ *
+ * Found by running the deck audit against a real deployment: it named nine
+ * `pere` cards for removal beside 162 that really were `õpetajas` and `koeras`.
+ * `meie peres räägitakse eesti keelt` and `ta sündis suurde perre` are ordinary
+ * Estonian, so both sets are right and neither is a card to ask.
+ */
+describe("a body of people", () => {
+  it("reads a family as both, so neither trio is drilled", () => {
+    expect(semanticGroup("inimene esitus")).toBe("MIXED");
+    expect(bothLocalSetsOrdinary("inimene esitus")).toBe(true);
+    expect(isAnimate("inimene esitus")).toBe(false);
+  });
+
+  /*
+    THE BARE CODE AND NOT THE PREFIX. `esitus_tiitel` is a title rather than a
+    person and sits beside `in_elukutse` on `arst`, `doktor` and `proua`. A
+    prefix rule would make all of them mixed and hand back the fault the file
+    exists for, which is the one thing this entry must not do.
+  */
+  it("leaves a titled person a person", () => {
+    expect(semanticGroup("esitus_tiitel in_elukutse")).toBe("ANIMATE");
+    expect(isAnimate("esitus_tiitel in_elukutse")).toBe(true);
+  });
+
+  /* And the code says nothing on its own: a picture is a thing you can be in. */
+  it("says nothing about a word that is not also a person", () => {
+    expect(semanticGroup("esitus")).toBe("THING");
+    expect(semanticGroup("esitus_kujutis")).toBe("THING");
+  });
+});
+

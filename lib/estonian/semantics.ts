@@ -113,6 +113,30 @@ const ANIMATE_CODES: readonly string[] = [
 const MIXED_CODES: readonly string[] = [
   "grupp",          // grupp, rühm (nt kari, kamp)
   "ese",            // ese, objekt
+  /*
+    A FAMILY IS A BODY OF PEOPLE AND THE INSTITUTE DOES NOT SAY SO WITH
+    `grupp`.
+
+    `pere` and `perekond` are `inimene esitus`, and the Institute's own
+    definition of the first is "ühe majandusliku üksusena elavad vanemad ja
+    lapsed": parents and children living as one economic unit. Read as a person
+    they take the outside trio alone, which refuses `peres`, `perre` and
+    `perest` — and `meie peres räägitakse eesti keelt` and `ta sündis suurde
+    perre` are ordinary Estonian anybody would say. Both sets are right here,
+    which is what this list is for.
+
+    Found by a deck audit against a real deployment, which named nine `pere`
+    cards for removal beside 162 that really were `õpetajas` and `koeras`.
+
+    THE BARE CODE AND NOT THE PREFIX, which is the difference between this
+    entry and a bug. `esitus_tiitel` is a title rather than a person and sits
+    beside `in_elukutse` on `arst`, `doktor` and `proua`; a prefix rule would
+    make every one of them mixed and hand back the fault this file exists for.
+    `MIXED_CODES` is matched exactly, and bare `esitus` reaches only a word
+    that also carries a person code: measured over the shipped dictionary, that
+    is `pere` and `perekond` and nothing else.
+  */
+  "esitus",         // esitus, kujutis (on a word the Institute also calls a person)
 ];
 
 /** Prefixes of the same kind, where the Institute subdivides a category. */
