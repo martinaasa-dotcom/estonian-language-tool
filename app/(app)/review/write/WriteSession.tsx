@@ -203,9 +203,13 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
               <p className="mt-2 text-[22px] font-semibold leading-snug" style={{ color: "var(--ink)" }}>
                 {plainAskLine(prompt.caseKey)}
               </p>
-              <p className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
-                <span lang="et">{prompt.caseEt} · {prompt.caseQuestion}</span> · the{" "}
-                {prompt.caseEn.toLowerCase()}
+              {/* The Estonian name carries the line's `lang`, since it is the
+                  part a screen reader has to pronounce as Estonian and the part
+                  `smoke-interact.mjs` reads the task off; the English name is
+                  marked back as English inside it. */}
+              <p lang="et" className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+                {prompt.caseEt} · {prompt.caseQuestion}
+                <span lang="en"> · the {prompt.caseEn.toLowerCase()}</span>
               </p>
             </>
           ) : (

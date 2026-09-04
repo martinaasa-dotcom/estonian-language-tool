@@ -380,7 +380,6 @@ function Question({
 function SlotLine({ task }: { task: FlashPrompt }) {
   const english = englishName(task.slot);
   const plain = plainAskFor(task);
-  const names = [task.label, english ? `the ${english}` : null].filter(Boolean).join(" · ");
   return (
     <div className="mt-5">
       {plain ? (
@@ -389,7 +388,8 @@ function SlotLine({ task }: { task: FlashPrompt }) {
             {plain}
           </p>
           <p lang="et" className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
-            {names}
+            {task.label}
+            {english && <span lang="en"> · the {english}</span>}
           </p>
         </>
       ) : (
