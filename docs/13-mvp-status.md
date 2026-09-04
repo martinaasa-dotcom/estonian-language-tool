@@ -2053,3 +2053,53 @@ statement now.
 - The scene game's floor in `audit-questions` came down from 1,972 to 1,409, which is the narrowing
   arriving where it should: the words with a picture are the ones a third of which are animals and
   people.
+
+## 30. The twenty-fourth pass: ready for the real thing
+
+The brief was the purpose. Every learning app is built to keep a learner on the app, and the moment
+integration turns on is a receptionist who talks too fast and switches to English; nothing in the
+product rehearsed it and nothing counted it. `docs/22-real-life.md` is the argument, written for a
+funder as much as for a contributor. This section is what was built and measured.
+
+### What was built
+
+- **Situations**, played. `docs/21-situations.md` had the design and Phase 0; this is Phase 1 and
+  the spoken-unmarked half of Phase 2. `lib/scenes/` is the machine as pure code: the seeded draw,
+  personas, props, seven curveballs with their outs, `readTurn` as the one producer of evidence and
+  `advance` as its one consumer, the gate moved out of the evaluation script so the script and the
+  route read one answer, the line ladder that narrates in English when both rungs fail, and a
+  debrief that leads with the outcome and never scores. A fourth scene at A1, the shop, so a
+  beginner has a door. The browser holds the machine, the server draws the same plan from the same
+  seed to read a finished run, and one route composes a line under a `SCENE` usage kind. Two
+  append-only tables, in the export, the erasure, a restore and on the privacy page. ADR-025.
+- **Hearing conditions.** One table of how people talk, applied in the browser: at speed, over café
+  noise, down a phone line, from halfway through, and a different voice each time, widening as the
+  word settles. Listening and dictation ask per card; minimal pairs rotates its reader and keeps the
+  room quiet; the mock exam is untouched because the real paper is read in a studio.
+- **Say it today.** An errand a day and one press to report it; Progress leads with what happened
+  out there and with the course's own claims, each beside the situation that tests it; the research
+  export carries the figure. ADR-026.
+- **The brand.** "Ready for the real thing" replaces "Estonian that finally sticks" on the landing
+  page, the manifest, sign-in and the README; the first-run limits line says the app rehearses the
+  conversation and the people are out there; Practice carries Situations; Anu is told which
+  situation the learner last stalled in and on what.
+
+### Measured
+
+- The gate, three times. 60 to 70 percent withheld before this pass; 54 percent with the encounter
+  verbs in the course; 30 to 51 percent with the scenes declaring the units those verbs live in.
+  The ranked list of withheld words is what found the second fix, and what it names next is the
+  past participle, a form no rule reaches and the harvest does not store.
+- `scripts/test-scene.mjs` plays the shop through keyless and reports the errand: 41 checks. The
+  route smoke, the accessibility sweep and the containment suite pass over the new screens.
+- 230 invariants, three of them new and each made to fail once: the room a clip is heard in has one
+  module and the exam may not use it; a scene module reaches nothing that is not data, evidence is
+  produced in one place, the finish action grades through `writeGrade` with the debrief's own
+  rating and nothing off the wire, and the class never reads a transcript; the review-log rule
+  names `finishScene` as its fifth door.
+
+### What is honest
+
+Nothing here scores pronunciation, marks a conversation with a model, or writes Estonian. The
+switch-to-English figure is self-reported. The classroom has still not been piloted. And a keyless
+deployment gets a shorter scene than a keyed one, said on the screen.

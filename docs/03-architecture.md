@@ -733,3 +733,42 @@ keeps `aberratsioon`; asking a model for topical words, which is ADR-005 with ex
 thin source up from the random draw, which buys four chips and spends the caption; and putting the
 feed on the recipients list, which would make a page about personal data harder to read by naming a
 service that receives none of it.
+
+**ADR-025: A scene is assembled from the dictionary, advanced by the dictionary, and says which
+of its lines a model wrote.**
+*Context:* the course had claimed for eighty-one units that a learner would be able to do
+something, and not one claim was ever tested; the closest thing to a conversation in the product
+was a monologue the learner marked themselves. A conversation cannot be assembled out of dictionary
+entries the way a case table can, so something has to produce a sentence nobody wrote down, which
+is the one thing ADR-005 forbids a model to do unchecked. *Decision:* the scene file names moves
+and unit ids and holds no Estonian. What the other side says comes from a recorded usage where one
+fits, and otherwise from a model working inside the scene's closed word list, checked for shape
+and register, vouched word by word against that list, run through a government check measured at
+withholding 47 percent of real errors and 8 percent of good lines, withheld whole when it fails and
+narrated in English instead, and marked on screen as composed. What the learner says is read by
+`readTurn` against the dictionary and by nothing else; `advance` takes `Evidence` and nothing
+else, so no model output can move a scene. The finished run goes up as turns and the server reads
+every one again before writing a grade, which is ADR-022's discipline. Nothing generated is stored
+as a form, a card answer or a sentence. Speaking is unmarked (ADR-018) and the module contributes
+nothing to any level (ADR-020). The role card is fiction, so no transcript holds a fact about the
+learner. *Rejected:* hand-written dialogue, which is ADR-005 broken in the most direct way
+available; a branching tree, which multiplies the authoring by the thing it is trying to fix;
+building it into Anu, who streams and so cannot be gated; a recogniser advancing a turn, measured
+and turned down; a model deciding whether the learner was understood, which is the judgement it is
+least qualified to make with the worst failure available; and a score.
+
+**ADR-026: A conversation outside the app is a fact the learner reports, stored once and never
+derived, and it is the number the app is measured by.**
+*Context:* progress is derived from the review log (ADR-014), and the review log can only ever say
+what happened inside the app. The purpose of the app is what happens outside it, and no log can
+reconstruct whether somebody ordered a coffee in Estonian on Tuesday. *Decision:* Today sets one
+errand a day, drawn from the units the deck has started and naming a unit id rather than a word,
+and the learner reports how it went in one of three words: understood, switched to English, did
+not manage it. That is an `Encounter` row, append-only, the fourth exception to ADR-014 after a
+personal best, a shield date and a placement sitting, and for the same reason: a measurement of
+something that was never a card. Progress leads with it, the research export publishes it under
+the same disclosure gate as everything else and labelled as self-reported, and nothing about it is
+asked for at sign-up. *Rejected:* a note, a place or a name with the report, which would make it a
+diary rather than a count; a stored counter, which ADR-014 forbids and which could be awarded for
+something that never happened; and a streak on it that punishes a day without a conversation,
+because a person who did not speak Estonian today did not fail at anything.

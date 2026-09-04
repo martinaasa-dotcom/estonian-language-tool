@@ -3,6 +3,8 @@ import { caseReviewsFor } from "@/lib/progress/cases";
 import { courseLevelFor } from "@/lib/progress/level";
 import { caseAccuracy } from "@/lib/stats/history";
 import type { LearnerNote } from "@/lib/tutor/prompt";
+import { prisma } from "@/lib/db";
+import { sceneById } from "@/lib/scenes/catalogue";
 
 /**
  * What Anu is told about the person asking, worked out from their own log.
@@ -19,11 +21,36 @@ import type { LearnerNote } from "@/lib/tutor/prompt";
  * for everybody and the route believed it.
  */
 export async function learnerContextFor(ownerId: string, now = new Date()): Promise<LearnerNote> {
-  const [level, reviews, units] = await Promise.all([
+  const [level, reviews, units, lastRun] = await Promise.all([
     courseLevelFor(ownerId),
     caseReviewsFor(ownerId, now),
     pathWithProgress(ownerId),
+    // The last conversation they rehearsed, and what it stalled on, so Anu
+    // can answer a question about the doctor's about the doctor's.
+    prisma.sceneRun.findFirst({
+      where: { ownerId },
+      orderBy: [{ startedAt: "desc" }, { id: "desc" }],
+      select: { id: true, sceneId: true, outcome: true },
+    }).then(async (run) => {
+      if (!run) return null;
+      const gaps = await prisma.sceneGap.findMany({
+        where: { ownerId, runId: run.id }, select: { lemma: true }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], take: 8,
+      });
+      return { run, gaps: gaps.map((g) => g.lemma) };
+    }),
   ]);
+  let scene: LearnerNote["scene"] = null;
+  if (lastRun) {
+    const spec = sceneById(lastRun.run.sceneId);
+    let missed: string[] = [];
+    try {
+      const o = JSON.parse(lastRun.run.outcome) as { objectives?: { goal: string; met: boolean }[] };
+      missed = (o.objectives ?? []).filter((x) => !x.met).map((x) => x.goal);
+    } catch {
+      missed = [];
+    }
+    if (spec) scene = { title: spec.title, missed, gaps: lastRun.gaps };
+  }
   const weakest = caseAccuracy(reviews, MIN_CASE_REVIEWS)[0] ?? null;
   const current = units.find((u) => u.state === "learning") ?? units.find((u) => u.state === "available");
   return {
@@ -34,6 +61,7 @@ export async function learnerContextFor(ownerId: string, now = new Date()): Prom
     unit: current
       ? { title: current.unit.title, subtitle: current.unit.subtitle, level: current.unit.cefr }
       : null,
+    scene,
   };
 }
 

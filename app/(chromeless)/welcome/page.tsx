@@ -20,9 +20,9 @@ import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export const metadata: Metadata = {
-  title: { absolute: "Kodukeel. Estonian that finally sticks" },
+  title: { absolute: "Kodukeel. Ready for the real thing" },
   description:
-    "Kodukeel means home language. Fifteen quiet minutes a day, real forms from Ekilex, native audio and a tutor who explains the rule, for anybody making a home in Estonia.",
+    "Kodukeel means home language. Practice that sticks, a conversation to rehearse with somebody who has an agenda of their own, and one small thing to say out loud today, for anybody making a home in Estonia.",
 };
 
 /** The landing page is public and read-only, so it can be cached hard. */
@@ -183,6 +183,7 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
     `${stats.words.toLocaleString("en-GB")} words, ${stats.forms.toLocaleString("en-GB")} forms, none from a model`,
     `${PATH.length} units, ${LEVELS[0]} to ${LEVELS[LEVELS.length - 1]}`,
     "Free, and it works offline",
+    "Counts the conversations you have, not the days you open it",
   ];
   /*
     Centred in the window rather than stacked from the top of it. The height
@@ -213,18 +214,18 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         className="fade-up hero-display font-bold leading-[1.02] tracking-[-0.02em]"
         style={{ color: "var(--ink)", animationDelay: "90ms" }}
       >
-        Estonian that
+        Ready for the
         <br />
-        finally <span className="grad-text grad-sweep">sticks</span>.
+        <span className="grad-text grad-sweep">real thing</span>.
       </h1>
 
       <p
         className="fade-up hero-lead hero-sub max-w-[52ch] leading-relaxed"
         style={{ color: "var(--ink-2)", animationDelay: "150ms" }}
       >
-        Kodukeel means home language. You live here now, and this is where Estonian starts to feel
-        like home: fifteen quiet minutes a day, real forms from a real dictionary, and a tutor who
-        explains the rule instead of marking you wrong.
+        Kodukeel means home language. You live here now, and this is where the words start to
+        hold up: fifteen quiet minutes a day of practice that sticks, a conversation to rehearse
+        with somebody who has an agenda of their own, and one small thing to say out loud today.
       </p>
 
       {/*
@@ -493,16 +494,16 @@ function Features() {
           <Feature
             tone="accent"
             icon={<BookOpen size={18} aria-hidden />}
-            title="Practice that feels like a game"
-            body={`Look a word up and it becomes a card in one press, whole word, gradation marked, audio on every form. Then ${PATH.length} units of them, in sprints, dictation, listening and matching rounds that all count.`}
+            title="Practice that sticks"
+            body={`Look a word up and it becomes a card in one press, every form, audio in twelve voices. Then ${PATH.length} units of them, brought back the day before you would forget, and heard the way people say them: at speed, over café noise, down a phone line.`}
           />
         </Reveal>
         <Reveal>
           <Feature
             tone="mint"
             icon={<Target size={18} aria-hidden />}
-            title="A plan you can actually keep"
-            body="Say what you are aiming for and by when. It works out the daily goal, brings each word back the day before you would forget it, and tells you how far off the date you are."
+            title="Then the real thing"
+            body="A receptionist with no slot on Thursday, a landlord on a bad line, a shop with a queue. Rehearse the conversation, then take the smallest step outside: one thing to say to a real person today, and a count of how it went. That count is the only score that matters here."
           />
         </Reveal>
       </div>
@@ -600,6 +601,8 @@ const ROWS: readonly { label: string; cells: readonly [Verdict, Verdict, Verdict
   { label: "Any word you look up becomes a card", cells: ["yes", "no", "no", "yes"] },
   { label: "Explains why the answer was wrong", cells: ["yes", "yes", "yes", "no"] },
   { label: "Keeps working with no connection", cells: ["yes", "unsure", "no", "yes"] },
+  { label: "Rehearses a conversation with somebody who has an agenda of their own", cells: ["yes", "unsure", "no", "no"] },
+  { label: "Counts the conversations you have outside it", cells: ["yes", "no", "no", "no"] },
 ];
 
 /**
@@ -610,7 +613,7 @@ const ROWS: readonly { label: string; cells: readonly [Verdict, Verdict, Verdict
  * prose and the rest of this page counts in words. The table is eight rows
  * long, so the list only has to reach as far as the table can.
  */
-const COUNTED = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight"] as const;
+const COUNTED = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"] as const;
 const shared = ROWS.filter((row) => row.cells.slice(1).includes("yes")).length;
 /**
  * Capitalised at the source and lowered at the one call site that needs it
@@ -843,6 +846,10 @@ const FAQS = [
     "It runs A1 to C1, and the parts that stay hard are taught on their own: a card for consonant gradation, a card for the case each verb demands, and a unit and a grammar page for whether an object is whole or partial. There is a level check if you would rather not guess where you are, and a mock state examination paper at A2, B1, B2 and C1.",
   ],
   [
+    "Will it actually get me talking to people?",
+    "That is what it is for. Situations puts you in front of somebody with an agenda of their own, a receptionist, a landlord, a shopkeeper, and marks you against the dictionary rather than a model, so you cannot be told you were wrong when you were right. Today sets one small errand to do out loud, and Progress counts how those went, including the times somebody switched to English. Nothing here scores your pronunciation, because the only recogniser available gets native speakers wrong, and we would rather say so than pretend.",
+  ],
+  [
     "What happens to my data?",
     "It stays in your account, and you can download all of it from Settings whenever you like. Your review history is the one thing we could never rebuild, so nothing in it is ever changed or deleted.",
   ],
@@ -981,7 +988,7 @@ function FinalCta() {
               break at all, and only one of those is available at every width.
             */}
             <h2 className="mx-auto mt-6 text-3xl font-bold leading-[1.08] tracking-tight md:text-5xl" style={{ color: "var(--ink)" }}>
-              Fifteen minutes.<br />Starting today.
+              Fifteen minutes here.<br />Then say it to somebody.
             </h2>
             {/*
               The close pays off the section that opens the page's argument.
@@ -1002,7 +1009,7 @@ function FinalCta() {
             */}
             <p className="mx-auto mt-4 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
               The next time somebody speaks to you in Estonian, you will have something to say
-              back.
+              back, and you will have said it before.
             </p>
             <div className="mt-8 flex justify-center">
               <ButtonLink href="/sign-in" variant="primary" size="lg" className="w-full sm:w-auto">

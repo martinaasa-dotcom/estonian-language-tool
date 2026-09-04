@@ -4,8 +4,11 @@ A module where the learner uses Estonian on somebody rather than studying it. Wh
 one is drawn so that no two runs are alike, how the difficulty setting works, and the rule that
 keeps every Estonian word in it out of a model's hands.
 
-Nothing here is built. This is the design, the arithmetic behind it, the things it must never
-become, and the measurements that decide whether it can be built at all.
+This was the design before anything was built, the arithmetic behind it, the things it must never
+become, and the measurements that decided whether it could be built at all. **Phase 1 is built**, in
+September 2026, and §30 says what building it found; `docs/22-real-life.md` is why it was worth
+building and `docs/13-mvp-status.md` §30 what shipped with it. Everything above §30 is kept as the
+argument it was.
 
 ## 1. The promise the course already made
 
@@ -1437,3 +1440,60 @@ daily allowance is not spent, because three is the sampling floor rather than a 
 nothing rather than a rate, and names which model refused with what status, because the first
 version of this reported `0/0 withheld (0%)` at a rate limit and that reads as a perfect score.
 
+
+## 30. Phase 1, built, and what building it found
+
+`lib/scenes/` is the machine of §2 to §12 as pure code, `lib/progress/scenes.ts` is the one module
+that reads a scene's material out of the dictionary, `/situations` is the screen, `finishScene` is
+the door onto the review log, and `scripts/test-scene.mjs` plays the shop through keyless in a
+browser. Four things differ from the design as written, and each is a decision.
+
+**The browser holds the machine.** §15 said an unfinished run lives on the device and the server
+sees the finished one; §6 said a composed turn is a model call. Both hold, and they settle where
+the state machine runs: in the browser, over sets the page shipped, so a turn costs no round trip,
+an attested-only scene works on a train, and the one thing that goes to the server mid-scene is a
+request to compose a line for a beat nothing recorded fits. The server draws the same plan from the
+same seed to compose, and again to read the finished run before a grade is written.
+
+**Metering is per line, not per scene.** §16 argued for one booking per scene and said the number
+needed a measured cost. A scene at Ordinary day composes between two and six lines and retrieval
+fills the rest, so a booking per scene would reserve for the worst case on every run. `SCENE` is a
+kind of its own at sixty lines a day, a line is booked when it is composed and released when it is
+not, and "two conversations left today" is a sentence for Phase 2, once real runs say what a scene
+costs.
+
+**The way out is narrated in English.** §2 said the fallback is an attested repair move, "they did
+not catch that, they ask again". No unit teaches that sentence, and writing it would be this app
+writing Estonian. So the screen says in English what happened, they did not catch that and are
+waiting, and the learner is asked for the turn again. That is truer than a recorded line that
+happens to mention the topic, and it costs no Estonian this app did not write.
+
+**Four scenes, not three, and a curveball catalogue of seven.** The empty state of §13 wanted a
+scene that needs only the first A1 units, so the shop is the fourth. Of the fourteen curveballs in
+§9, seven are built: the gone slot, the switch to English, the impossible request, the missing
+paper, small talk, the speed-up and the queue. The mishearing needs a minimal pair drawn from the
+prop word, the contradiction is B2, and the form in their order needs a form; each is a scene of
+its own to argue for.
+
+### The measurement, twice more
+
+§29's 60 to 70 percent was measured against a course that did not teach `sobima`. With the eight
+verbs in, the same run came back at **54 percent**, and the ranked list said why it was not lower:
+`sobib` fourteen times, `valmis` ten, `katki` six, `asub` five, none of them starred. Every one was
+taught, in a unit no scene had declared. The scenes declare six more units now, `iga-paev`,
+`kus-ja-kuhu`, `kohasonad`, `omadussonad`, `plaanid` and `minevik`, and the run came back at **30
+to 51 percent**: the shop 48, the doctor 30, the landlord 51. What is left at the top of the list is
+the past participle, `kestnud`, `olnud`, `tulnud`, which no rule reaches and the harvest does not
+store, and `öelge`, the polite imperative of a verb that joined the course after the harvest last
+ran. Both are a harvest change, and it is the next thing to do before the phrase bank.
+
+The rate is still far above the line of five, and the design's own reading of that stands: not
+loosen the gate. What changed is what the residual is made of, from words the course did not teach
+to forms the harvest does not store, and that is a smaller and cheaper gap.
+
+### What the suite found that the design could not
+
+A control in the bottom right corner of a phone is under Anu's button, which sits in that corner on
+every signed-in screen. "Walk out" was there and could not be pressed at 390px. It is a rule the
+containment suite states about the page and could not see, because the button was inside its own
+card and the thing over it was fixed.

@@ -170,6 +170,24 @@ export default async function PracticePage() {
             primary={ready > 0}
           />
 
+          {/*
+            THE ROUND THAT IS NOT A ROUND. A situation is five to eight minutes
+            with somebody who has an agenda of their own, and it is where the
+            words above get used on a person rather than recalled. It has a
+            row of its own in the rail; it is here too because this is the
+            screen somebody is on when they have ten minutes and want to use
+            them.
+          */}
+          <ModeCard
+            href="/situations"
+            iconName="MessagesSquare"
+            tone="blush"
+            title="Situations"
+            subtitle="Somebody behind a desk"
+            body="A receptionist, a landlord, a shop. Get done what you came for, in Estonian, with things going wrong on purpose."
+            meta="five to eight minutes"
+          />
+
           <ModeCard
             href="/review/flashcards"
             iconName="Layers"

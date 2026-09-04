@@ -15,7 +15,7 @@ describe("learnerNote", () => {
     const note = learnerNote({
       level: "A2",
       weakestCase: { grammCase: "PARTITIVE", accuracy: 58, total: 120 },
-      unit: { title: "Kodu", subtitle: "Home", level: "A1" },
+      unit: { title: "Kodu", subtitle: "Home", level: "A1" }, scene: null,
     });
     expect(note).toContain("Their level is A2.");
     expect(note).toContain("osastav (Partitive)");
@@ -26,14 +26,14 @@ describe("learnerNote", () => {
   });
 
   it("says nothing when there is nothing to say", () => {
-    expect(learnerNote({ level: "B1", weakestCase: null, unit: null })).toBe("");
+    expect(learnerNote({ level: "B1", weakestCase: null, unit: null, scene: null })).toBe("");
   });
 
   it("drops a case key it cannot name rather than inventing a name", () => {
     const note = learnerNote({
       level: "B1",
       weakestCase: { grammCase: "NOT_A_CASE", accuracy: 10, total: 30 },
-      unit: null,
+      unit: null, scene: null,
     });
     expect(note).toBe("");
   });
