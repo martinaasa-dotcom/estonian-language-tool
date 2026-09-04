@@ -135,6 +135,37 @@ describe("the navigation table", () => {
     }
   });
 
+  it("reaches each of those from somewhere the rail actually lists", () => {
+    /*
+      THE HALF THAT MADE A PAGE UNFINDABLE TWICE.
+
+      `within` buys a destination out of the rail on the promise that the screen
+      it lives inside will offer it, and the test above checks that a link is
+      really drawn. Neither says anything about whether *that* screen has a row.
+      `/words/mastery` said it was reached from `/words`, which is true, and
+      `/words` says it is reached from `/progress`, so the list a learner had
+      asked for by name was three steps down a column that never mentioned it:
+      rail to Progress, Progress to the deck, deck to a button in the header.
+      Both checks passed the whole time, because each one is about a single
+      link and the fault is in the chain.
+
+      So a `within` names a place with a row. One level in is a signpost on the
+      screen you are standing on; two is a place nobody can get to. Made to fail
+      by putting `within: "/words"` back on the mastery board.
+
+      Anu's `within` is a sentence rather than a path, deliberately, because the
+      honest answer is a button in the corner of every screen. A value that is
+      not a route is not a chain and has nothing to check here.
+    */
+    const railed = PLACES.flatMap((s) => s.items.map((i) => i.href));
+    for (const item of DESTINATIONS.filter((d) => d.within?.startsWith("/"))) {
+      expect(
+        railed,
+        `${item.href} is reached from ${item.within}, which has no row of its own`,
+      ).toContain(item.within);
+    }
+  });
+
   it("says where each of those is reached from", () => {
     // A blank here is the next reader having to go and find out, which is how
     // one quietly becomes unreachable.
