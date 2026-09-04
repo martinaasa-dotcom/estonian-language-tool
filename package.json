@@ -42,6 +42,7 @@
     "fixture:load": "tsx scripts/load-fixture.ts",
     "measure:asr": "node scripts/measure-asr.mjs",
     "measure:scenes": "tsx scripts/measure-scenes.ts",
+    "measure:placement": "tsx scripts/measure-placement.ts",
     "eval:scene": "tsx scripts/eval-scene.ts",
     "audit:questions": "tsx scripts/audit-questions.ts",
     "audit:sense": "tsx scripts/audit-sense.ts",

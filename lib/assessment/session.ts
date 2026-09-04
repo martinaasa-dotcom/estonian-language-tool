@@ -57,6 +57,13 @@ function bandComplete(items: readonly ItemRef[], responses: readonly Response[],
  * miss, it is a level the learner has visibly not met, and being walked up a
  * ladder you have fallen off is a miserable way to start with an app. Nothing
  * above it is asked at all.
+ *
+ * And a near miss the band above has confirmed is no longer a failure, so it
+ * no longer stops anything: `levelFrom` reads it as passed, and a learner who
+ * just missed A2 and then passed B1 is a B1 who may be a B2, which is the
+ * question the next band answers. The climb stops at the first band that is
+ * not passed *and* not confirmed, the same as it always did for a band that
+ * simply failed.
  */
 export function ladderStopped(
   items: readonly ItemRef[],
@@ -71,9 +78,17 @@ export function ladderStopped(
     const ratio = ratioAt(responses, skill, lower);
     if (ratio === null) continue;
     if (ratio < FLOOR) return true;
-    if (ratio < PASS && rungs > 1) return true;
+    if (ratio < PASS && rungs > 1 && !confirmedAbove(items, responses, skill, lower)) return true;
   }
   return false;
+}
+
+/** True when the band directly above `band` has been answered in full and passed. */
+function confirmedAbove(items: readonly ItemRef[], responses: readonly Response[], skill: Skill, band: Band): boolean {
+  const above = BANDS[BANDS.indexOf(band) + 1];
+  if (!above || !bandComplete(items, responses, skill, above)) return false;
+  const ratio = ratioAt(responses, skill, above);
+  return ratio !== null && ratio >= PASS;
 }
 
 /** The next item to ask, given everything answered so far. */

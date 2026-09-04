@@ -170,15 +170,44 @@ function bandScores(items: readonly ItemRef[], responses: readonly Response[]): 
  * dictionary, writing comes out A1:0 at every seed, so it was not an edge
  * case, it was most sittings. The most a failed A2 supports is A1, and saying
  * so is the honest end of a section that never set an A1 question.
+ *
+ * **And a near miss confirmed by the band above it is a pass.** The session
+ * asks one band past a failure for exactly one reason, written on
+ * `ladderStopped`: a learner who came in just under two thirds and then does
+ * the next band comfortably was having a bad six questions, and that is worth
+ * finding out. This function never learned that rule. It asked the question
+ * and threw the answer away: a real sitting came back writing A2 at 53% and B1
+ * at 73%, was scored A1 for writing, and read A2 overall with B1 in the other
+ * two skills, on a screen that printed the B1 pass beside it. Six typed
+ * questions with partial credit is a band where one answer is the difference
+ * between 53 and 67, and the band above is the second opinion the paper went
+ * to the trouble of collecting.
+ *
+ * So a band between `FLOOR` and `PASS` counts as passed when the next band
+ * asked clears `PASS`, and the climb goes on from there. A band under `FLOOR`
+ * still ends it, whatever sits above, because under half is not a near miss
+ * and the session asks nothing above it anyway; and a near miss with a near
+ * miss above it is two bands not passed, not one confirmed. Measured with
+ * `npm run measure:placement`, 2,000 simulated learners a level over the
+ * real ladder: B1 placed at its own level went from 73% to 78%, B2 from 66%
+ * to 79% and C1 from 52% to 69%, which is the direction the old rule was
+ * wrong in; pre-A1 gave up two points and "placed above" rose by one to
+ * three, which is the price of reading a confirmed near miss as the pass it
+ * probably was.
  */
 export function levelFrom(bands: readonly BandScore[]): Level | null {
   if (bands.length === 0) return null;
-  const lowestAsked = BANDS.findIndex((band) => bands.some((s) => s.band === band));
+  const asked = BANDS.map((band) => bands.find((b) => b.band === band) ?? null);
+  const lowestAsked = asked.findIndex((score) => score !== null);
   let level: Level = BANDS[lowestAsked - 1] ?? PRE_A1;
-  for (const band of BANDS) {
-    const score = bands.find((b) => b.band === band);
+  for (let i = 0; i < asked.length; i++) {
+    const score = asked[i];
     if (!score) continue;
-    if (score.ratio < PASS) break;
+    if (score.ratio >= PASS) { level = score.band; continue; }
+    if (score.ratio < FLOOR) break;
+    // A near miss: the band above decides it, and only a pass there does.
+    const above = asked.slice(i + 1).find((s) => s !== null) ?? null;
+    if (!above || above.ratio < PASS) break;
     level = score.band;
   }
   return level;

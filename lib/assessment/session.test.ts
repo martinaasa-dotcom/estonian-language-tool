@@ -67,6 +67,25 @@ describe("the ladder", () => {
     expect(ladderStopped(TALL, near, "reading", "B2")).toBe(true);
   });
 
+  it("keeps climbing once the band above a near miss has confirmed it", () => {
+    // The near miss is read as passed by `levelFrom`, so the learner is at
+    // least B1 and the next band is the open question again.
+    const confirmed = [
+      toldTall("r-a1-1", 1), toldTall("r-a1-2", 1),
+      toldTall("r-a2-1", 1), toldTall("r-a2-2", 0),
+      toldTall("r-b1-1", 1), toldTall("r-b1-2", 1),
+    ];
+    expect(ladderStopped(TALL, confirmed, "reading", "B2")).toBe(false);
+    expect(TALL[nextCursor(TALL, confirmed).index!]?.id).toBe("r-b2-1");
+    // And not once the band above only half confirmed it.
+    const unconfirmed = [
+      toldTall("r-a1-1", 1), toldTall("r-a1-2", 1),
+      toldTall("r-a2-1", 1), toldTall("r-a2-2", 0),
+      toldTall("r-b1-1", 1), toldTall("r-b1-2", 0),
+    ];
+    expect(ladderStopped(TALL, unconfirmed, "reading", "B2")).toBe(true);
+  });
+
   it("stops outright above a band that collapsed, confirming nothing", () => {
     // Under half is not a near miss, and being walked further up a ladder you
     // have fallen off is the thing this rule was written for.

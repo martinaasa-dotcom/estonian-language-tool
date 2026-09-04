@@ -4034,6 +4034,23 @@ was being read as "below A1" on the strength of a band nobody had been asked abo
 sittings. `session.ts` stops a skill one band past the first it was not passed at, which is what
 keeps an eighty question paper at about fifteen questions for a beginner.
 
+**And a near miss the band above has confirmed is a pass, because that is what the extra band was
+asked for.** The session's own comment says why it asks one band past a failure: a learner who
+came in just under two thirds and then does the next band comfortably was having a bad six
+questions, and that is worth several minutes to find out. The scorer never learned that rule. It
+asked the question and threw the answer away: a real sitting came back writing A2 at 53% and B1 at
+73%, scored writing A1, and read **A2 overall beside B1 in reading and B1 in listening**, on a
+screen printing the B1 pass in green. Six typed questions with partial credit is a band where one
+answer is the difference between 53 and 67, and the band above is the second opinion the paper went
+to the trouble of collecting. So `levelFrom` reads a band between `FLOOR` and `PASS` as passed when
+the next band asked clears `PASS`, and `ladderStopped` keeps climbing past it, since a learner who
+just missed A2 and passed B1 may be a B2. Three things do not change: under half still ends the
+climb whatever sits above, a near miss with a near miss above it is two bands not passed, and a
+near miss with nothing asked above it is a miss. `npm run measure:placement` is a simulation of
+the shape the paper's size was set by, kept in the repository this time so a rule change is
+measured rather than argued: it drives the real ladder and the real scorer over a stated learner
+model, and it is what the figures on `levelFrom` came from.
+
 **Two numbers for one paper is how a finished sitting stops being stored.** `recordAssessment`
 capped its posted arrays at a literal 60, written when the paper was nineteen, and the blueprint
 grew past it: every sitting then failed `safeParse` while the runner, which computes the level in

@@ -93,18 +93,26 @@ describe("levelFrom", () => {
     expect(levelFrom([{ band: "A1", items: 2, credit: 0, ratio: 0 }])).toBe("pre-A1");
   });
 
-  it("stops at a band that was asked and not passed, not one that collapsed", () => {
+  it("stops at a band that was asked and not passed, unless the band above confirms it", () => {
     /*
-      The whole reason a result did not feel like the learner's own Estonian.
       A band between half and two thirds is a band somebody visibly did not
       pass, and it is also exactly what four-option questions and a little
-      knowledge produce. The old rule only stopped climbing under half, so this
-      reported B1 with A2 printed as failed on the same screen.
+      knowledge produce. So on its own it ends the climb, and it used to end
+      it whatever came after. But the session asks one band past a near miss
+      for one reason, to find out whether it was a bad six questions, and a
+      pass there is that answer: this shape read A1 with B1 passed beside it,
+      and a real sitting read A2 overall with two B1s. Under half is still the
+      end, whatever sits above.
     */
     expect(levelFrom([
       { band: "A1", items: 7, credit: 7, ratio: 1 },
       { band: "A2", items: 7, credit: 3.9, ratio: 0.557 },
       { band: "B1", items: 7, credit: 4.9, ratio: 0.7 },
+    ])).toBe("B1");
+    expect(levelFrom([
+      { band: "A1", items: 7, credit: 7, ratio: 1 },
+      { band: "A2", items: 7, credit: 3.9, ratio: 0.557 },
+      { band: "B1", items: 7, credit: 4.2, ratio: 0.6 },
     ])).toBe("A1");
   });
 
@@ -118,6 +126,48 @@ describe("levelFrom", () => {
     */
     expect(levelFrom([{ band: "A2", items: 8, credit: 2, ratio: 0.25 }])).toBe("A1");
     expect(levelFrom([{ band: "A1", items: 7, credit: 2, ratio: 0.29 }])).toBe("pre-A1");
+  });
+
+  it("reads a near miss as passed when the band above it passes", () => {
+    /*
+      The session asks one band past a near miss so that a bad six questions
+      can be told from a ceiling, and this is the sitting that found the scorer
+      ignoring the answer: writing A2 at 53% and B1 at 73%, scored A1, and A2
+      overall beside two B1s.
+    */
+    expect(levelFrom([
+      { band: "A2", items: 6, credit: 3.2, ratio: 0.533 },
+      { band: "B1", items: 6, credit: 4.4, ratio: 0.733 },
+    ])).toBe("B1");
+    // And the climb carries on above the confirmation.
+    expect(levelFrom([
+      { band: "A1", items: 6, credit: 6, ratio: 1 },
+      { band: "A2", items: 6, credit: 3.2, ratio: 0.533 },
+      { band: "B1", items: 6, credit: 4.4, ratio: 0.733 },
+      { band: "B2", items: 6, credit: 5, ratio: 0.833 },
+      { band: "C1", items: 6, credit: 2, ratio: 0.333 },
+    ])).toBe("B2");
+  });
+
+  it("does not read a near miss as passed on anything less than a pass above it", () => {
+    // A near miss over a near miss is two bands not passed.
+    expect(levelFrom([
+      { band: "A1", items: 6, credit: 6, ratio: 1 },
+      { band: "A2", items: 6, credit: 3.2, ratio: 0.533 },
+      { band: "B1", items: 6, credit: 3.5, ratio: 0.583 },
+      { band: "B2", items: 6, credit: 6, ratio: 1 },
+    ])).toBe("A1");
+    // Nothing above it asked: a near miss stays a miss.
+    expect(levelFrom([
+      { band: "A1", items: 6, credit: 6, ratio: 1 },
+      { band: "A2", items: 6, credit: 3.2, ratio: 0.533 },
+    ])).toBe("A1");
+    // Under half is not a near miss, whatever the band above did.
+    expect(levelFrom([
+      { band: "A1", items: 6, credit: 6, ratio: 1 },
+      { band: "A2", items: 6, credit: 2.9, ratio: 0.483 },
+      { band: "B1", items: 6, credit: 6, ratio: 1 },
+    ])).toBe("A1");
   });
 
   it("steps over a band nothing could be asked at rather than failing it", () => {
