@@ -28,6 +28,18 @@ import type { DayClock } from "@/lib/time/day";
  * `readinessSignals` gathers the evidence and `assessReadiness` does the
  * arithmetic, all three of them the same ones the hub uses. This picks the
  * target's row out and shapes it for a card.
+ *
+ * AND WHERE NOBODY NAMED A LEVEL, THE BAND IS THE APP'S OWN AND SAYS SO. The
+ * first version returned null there, on the argument that declining to set a
+ * target is an answer and a panel arguing with it is the app talking over the
+ * person using it. That argument is about a *deadline*, and it was quietly
+ * doing something else: a learner who skipped one screen in first run had no
+ * confidence figure anywhere on the page they open every morning, which is the
+ * one number that answers "how am I doing" in a unit anybody outside this app
+ * recognises. `readiness.next` is the level the climb stopped at, which is
+ * derived from the review log rather than chosen for them, so `chosen` travels
+ * with it and the card says which it is. Nothing is invented: a band nobody
+ * picked is still a band this learner's own answers put them under.
  */
 
 export interface ExamCountdown {
@@ -45,6 +57,17 @@ export interface ExamCountdown {
   evidence: Evidence;
   /** True when this rests on a paper the learner actually sat. */
   measured: boolean;
+  /**
+   * True when the learner named this band themselves.
+   *
+   * Beside `evidence` rather than folded into it, because they answer
+   * different questions: the tier says how much the number rests on, and this
+   * says whose level it is about. A card that printed a band the app picked
+   * under a heading saying "your exam" would be putting a goal in somebody's
+   * mouth, which is the same shape of small dishonesty as a confidence figure
+   * with no account of what it rests on.
+   */
+  chosen: boolean;
   /**
    * The one thing most in the way, in the readiness module's own words.
    *
@@ -64,12 +87,12 @@ export interface ExamCountdown {
 }
 
 /**
- * The countdown, or null when there is nothing to count down to.
+ * The countdown, or null when the log cannot carry one.
  *
- * Null rather than a card saying "you have set no target", because first run
- * asks for one and Settings can change it: somebody who has genuinely declined
- * to name a level is telling us they do not want this panel, and a screen that
- * argues with that is the app talking over the person using it.
+ * Null only where `assessReadiness` has no band to speak about at all, which
+ * is a learner with nothing behind them rather than one who declined a
+ * question. The panel is held to `settled` by `lib/ux/disclosure.ts` for the
+ * reason the figure itself gives, so by the time this runs there is a log.
  */
 export async function examCountdown(
   ownerId: string,
@@ -78,14 +101,25 @@ export async function examCountdown(
   snapshot?: DeckSnapshot,
 ): Promise<ExamCountdown | null> {
   const goals = await goalsFor(ownerId);
-  const target = targetByBand(goals.target);
-  if (!target) return null;
 
-  // Only now, once there is a target to spend it on. This is eight queries and
-  // a scan of the dictionary, and running it for a learner who never named a
-  // level would be the cost of the panel without the panel.
+  // Eight queries and a scan of the dictionary, which is why the panel is held
+  // to `settled` rather than why it is held to a target: a learner who skipped
+  // the goal screen still opens this page every morning.
   const signals = await readinessSignals(ownerId, snapshot);
   const readiness = assessReadiness(signals);
+
+  /*
+    Their band if they named one, and otherwise the one the climb stopped at.
+    `next` is the first level `assessReadiness` would not bet on, so it is the
+    honest thing to aim at; `assessed` is the fallback for somebody the app
+    would bet on all the way to C1, where there is nothing left to aim at and
+    the number worth printing is the one they have.
+  */
+  const chosen = targetByBand(goals.target);
+  const band = chosen?.band ?? readiness.next ?? readiness.assessed;
+  const target = chosen ?? targetByBand(band);
+  if (!target) return null;
+
   const level = readiness.levels.find((l) => l.level === target.band);
   if (!level) return null;
 
@@ -100,6 +134,7 @@ export async function examCountdown(
     confidence: level.confidence,
     evidence: level.evidence,
     measured: level.measured,
+    chosen: chosen !== undefined,
     gap: readiness.gaps[0] ?? null,
   };
 }

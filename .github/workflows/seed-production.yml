@@ -3,10 +3,11 @@ name: Seed the production dictionary
 # Run by hand, and only by hand.
 #
 # ci.yml says of itself that nothing in it maps a repository secret into a job,
-# so a workflow file cannot become a way to read one. This file is the
-# deliberate exception to that, and it is written to keep as much of the
-# property as it can. It is `workflow_dispatch` only, so it never runs from a
-# pull request and never for anybody without write access. The connection
+# so a workflow file cannot become a way to read one. This file is one of the
+# two deliberate exceptions to that, `audit-decks.yml` being the other, and
+# both are written to keep as much of the property as they can. It is
+# `workflow_dispatch` only, so it never runs from a pull request and never for
+# anybody without write access. The connection
 # string is mapped into the three steps that need a database and into no other,
 # so nothing an install script does can see it. And it asks for a word to be
 # typed, because a workflow list is a list of buttons and this is the one that

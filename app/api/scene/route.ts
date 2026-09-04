@@ -7,7 +7,7 @@ import { reportError } from "@/lib/observability/report";
 import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
 import { MAX_TURNS, MAX_TURN_CHARS, readDraw, replay, sceneContext } from "@/lib/progress/scene";
 import { sceneById } from "@/lib/scenes/catalogue";
-import { sceneLine } from "@/lib/scenes/line";
+import { sceneLine, wayOut, type SpokenLine } from "@/lib/scenes/line";
 import { currentBeat, isOver } from "@/lib/scenes/state";
 import { personaById } from "@/lib/scenes/personas";
 import { DEFAULT_VOICE } from "@/lib/audio/voice";
@@ -178,6 +178,26 @@ export async function POST(request: Request) {
     over a request nobody made, which is what `releaseReservation` exists to
     undo one layer down. Here it is cheaper not to make it.
   */
+  /*
+    THE REPAIR MOVE IS FOR A TURN THAT WAS NOT UNDERSTOOD AND FOR NOTHING ELSE.
+
+    `sceneLine` knows which rung answered and nothing about the turn before it,
+    so its way out was `Ma ei saa aru` whatever had just happened. A learner
+    reported what that looks like from the outside: greeted with `Tere!`, told
+    to greet back, wrote `Tere`, watched the objective tick, and was answered
+    with "I do not understand". The scene had advanced perfectly and the ladder
+    simply had nothing to build the *next* line with, which is a fact about
+    this deployment rather than about them.
+
+    `wayOut` is the one place that decides between the two, and it takes the
+    reading this route has already marked, so the decision cannot be made
+    without having marked the turn. See `lib/scenes/line.ts`.
+  */
+  const spoken = (line: SpokenLine): SpokenLine =>
+    line.provenance !== "fallback"
+      ? line
+      : wayOut({ beat, reading: progress.reading, fallback: context.fallback, withheld: line.withheld });
+
   const attested = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
   if (attested.provenance === "attested") {
     return Response.json({ ...progress, ...attested }, { headers: NO_STORE });
@@ -204,7 +224,7 @@ export async function POST(request: Request) {
       only the ledger knows which of the three limits was reached.
     */
     return Response.json(
-      { ...progress, ...attested, composed: false, note: decision?.message ?? null },
+      { ...progress, ...spoken(attested), composed: false, note: decision?.message ?? null },
       { headers: NO_STORE },
     );
   }
@@ -235,7 +255,7 @@ export async function POST(request: Request) {
     after(() => releaseReservation(decision.reservation!));
   }
 
-  return Response.json({ ...progress, ...line }, { headers: NO_STORE });
+  return Response.json({ ...progress, ...spoken(line) }, { headers: NO_STORE });
 }
 
 /** Who is behind the desk, off the run's own row rather than out of a request. */

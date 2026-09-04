@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CornerDownLeft, DoorOpen, LifeBuoy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/Button";
+import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Card, Chip } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
@@ -35,7 +36,7 @@ import { SceneDebrief, type Debrief } from "./SceneDebrief";
 interface Turn {
   readonly who: "them" | "you";
   readonly text: string;
-  readonly provenance?: "attested" | "composed" | "fallback";
+  readonly provenance?: "attested" | "composed" | "fallback" | "unspoken";
   readonly reading?: string | null;
 }
 
@@ -48,11 +49,19 @@ interface Opened {
   composed: boolean;
 }
 
+/**
+ * How hard a day the person behind the desk is having.
+ *
+ * Written as what happens to *you* rather than as a setting. "Two or three,
+ * and one of them is real" is a note to whoever wrote the curveball table;
+ * "they will throw two or three things at you" is what somebody choosing
+ * between four buttons wants to know.
+ */
 const DIFFICULTIES: { id: Difficulty; label: string; blurb: string }[] = [
-  { id: "textbook", label: "Textbook", blurb: "Everything goes the way the unit taught it." },
-  { id: "good", label: "Good day", blurb: "One thing is not quite as expected." },
-  { id: "ordinary", label: "Ordinary day", blurb: "Two or three, and one of them is real." },
-  { id: "bad", label: "Bad day", blurb: "About as bad as a Tuesday at a counter." },
+  { id: "textbook", label: "Easy", blurb: "It all goes the way the lesson said it would." },
+  { id: "good", label: "Fairly easy", blurb: "One thing catches you out." },
+  { id: "ordinary", label: "Normal", blurb: "Two or three, the way a real counter goes." },
+  { id: "bad", label: "Hard", blurb: "As bad as a Tuesday at a busy desk." },
 ];
 
 export function SceneSession({ scene }: { scene: SceneSpec }) {
@@ -241,32 +250,40 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
           <p className="text-sm" style={{ color: "var(--ink-2)" }}>{scene.role}</p>
         </Card>
 
-        <div>
-          <h2 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>How hard a day</h2>
-          {/*
-            The dial sits on the scene rather than in Settings, because it is a
-            decision about this conversation rather than a preference about the
-            app: somebody who found the last one hard should be able to turn it
-            down where they feel it.
-          */}
-          <div className="grid gap-2 sm:grid-cols-2">
-            {DIFFICULTIES.map((one) => (
-              <button
-                key={one.id}
-                type="button"
-                onClick={() => setDifficulty(one.id)}
-                aria-pressed={difficulty === one.id}
-                className="choice-btn text-left"
-              >
-                <span className="font-medium">{one.label}</span>
-                <span className="block text-xs" style={{ color: "var(--ink-3)" }}>{one.blurb}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/*
+          The dial sits on the scene rather than in Settings, because it is a
+          decision about this conversation rather than a preference about the
+          app: somebody who found the last one hard should be able to turn it
+          down where they feel it.
+
+          `ChoiceGroup` rather than four bare buttons, and that is a fix rather
+          than a tidy-up. These were `aria-pressed` toggles, so four mutually
+          exclusive options announced as four unrelated switches and cost four
+          tab stops, where a radio group is one stop and says "2 of 4"; and the
+          chosen one was told apart by a background alone, which is the rule
+          about a colour never carrying a distinction on its own broken on the
+          one control where the colour *is* the answer. `ChoiceCard` was
+          written for exactly this shape and every other pick-one in the app
+          already uses it.
+        */}
+        <ChoiceGroup
+          label="How hard do you want it"
+          className="grid gap-2 sm:grid-cols-2"
+        >
+          {DIFFICULTIES.map((one) => (
+            <ChoiceCard
+              key={one.id}
+              selected={difficulty === one.id}
+              onSelect={() => setDifficulty(one.id)}
+              title={one.label}
+              detail={one.blurb}
+              layout="stacked"
+            />
+          ))}
+        </ChoiceGroup>
 
         {error && <p className="text-sm" style={{ color: "var(--peach-ink)" }}>{error}</p>}
-        <Button onClick={start} disabled={busy}>
+        <Button onClick={start} disabled={busy} variant="primary" size="lg">
           {busy ? "Getting ready" : "Start the conversation"}
         </Button>
       </div>
@@ -332,7 +349,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       {opened && (!opened.composed || note) && (
         <p className="text-xs" style={{ color: "var(--ink-3)" }}>
           {note
-            ?? "A shorter conversation today: this one is built only from sentences the dictionary recorded."}
+            ?? "Built from recorded sentences today, so some of their turns are described rather than said."}
         </p>
       )}
 
@@ -349,24 +366,40 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         aria-relevant="additions"
         aria-label="The conversation"
       >
-        {turns.map((turn, index) => (
-          <div key={index} className={turn.who === "you" ? "self-end text-right" : ""}>
-            <Card className="inline-block max-w-full">
-              <p lang={turn.who === "them" ? "et" : undefined}>{turn.text}</p>
-            </Card>
-            {turn.who === "them" && turn.provenance && (
-              <div className="mt-1 flex items-center gap-2">
-                {/* The provenance chip is text, never a colour (ADR-025). */}
-                <Chip tone="neutral">{PROVENANCE[turn.provenance]}</Chip>
-                <SuggestFix
-                  category="WRONG_CONTENT"
-                  trigger={`Situations · ${scene.id} · ${turn.text}`}
-                  label="Report this line"
-                />
-              </div>
-            )}
-          </div>
-        ))}
+        {turns.map((turn, index) => {
+          /*
+            An `unspoken` turn is a line of English about what the other side
+            did, so it is not marked as Estonian and it is not offered to the
+            report queue: there is nothing a lexicographer got wrong, and a
+            reader who reports it would be reporting our own sentence.
+          */
+          const said = turn.who === "them" && turn.provenance !== "unspoken";
+          return (
+            <div key={index} className={turn.who === "you" ? "self-end text-right" : ""}>
+              <Card className="inline-block max-w-full">
+                <p
+                  lang={said ? "et" : undefined}
+                  style={turn.provenance === "unspoken" ? { color: "var(--ink-3)" } : undefined}
+                >
+                  {turn.text}
+                </p>
+              </Card>
+              {turn.who === "them" && turn.provenance && (
+                <div className="mt-1 flex items-center gap-2">
+                  {/* The provenance chip is text, never a colour (ADR-025). */}
+                  <Chip tone="neutral">{PROVENANCE[turn.provenance]}</Chip>
+                  {said && (
+                    <SuggestFix
+                      category="WRONG_CONTENT"
+                      trigger={`Situations · ${scene.id} · ${turn.text}`}
+                      label="Report this line"
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {goal && (
@@ -402,7 +435,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
             onClick={() => { setDraft(""); void speak(sent); }}
             disabled={busy}
           >
-            <RotateCcw size={16} aria-hidden /> Say that again
+            <RotateCcw size={16} aria-hidden /> Ask them to repeat
           </Button>
           {/*
             Asking costs the turn its `helped` flag and nothing else: no
@@ -430,6 +463,14 @@ const PROVENANCE: Record<NonNullable<Turn["provenance"]>, string> = {
   attested: "Recorded sentence",
   composed: "Written for this turn",
   fallback: "They did not catch that",
+  /*
+    The fourth is not a line they said, it is what they did, and the chip has
+    to say so or the sentence reads as Estonian rendered in English. See
+    `wayOut` in lib/scenes/line.ts for why this exists at all: "They did not
+    catch that" used to be printed over a turn that had been understood
+    perfectly, which is the app blaming a learner for its own empty pool.
+  */
+  unspoken: "No Estonian line for this one",
 };
 
 export { BUDGETS };

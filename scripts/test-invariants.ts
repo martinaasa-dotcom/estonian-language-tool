@@ -7011,7 +7011,17 @@ check("every script a workflow runs is a script that exists", () => {
   const yaml = workflows.map(read).join("\n");
 
   const scripts = (JSON.parse(read("package.json")) as { scripts: Record<string, string> }).scripts;
-  const named = [...new Set([...yaml.matchAll(/npm run ([\w:-]+)/g)].map((m) => m[1]!))];
+  /*
+    npm's own flags come between `run` and the script name, so they are
+    consumed rather than captured: `npm run --silent audit:decks` names
+    `audit:decks`, and the first version of this read `--silent` as a script
+    and failed on a workflow that was perfectly correct. A check that fires on
+    honest code is a check people learn to waive, so the rule widened rather
+    than the workflow contorting to suit it.
+  */
+  const named = [...new Set(
+    [...yaml.matchAll(/npm run (?:-{1,2}[a-z][\w-]*\s+)*([a-z][\w:-]*)/g)].map((m) => m[1]!),
+  )];
   const missing = named.filter((name) => !(name in scripts));
   assert.deepEqual(missing, [], `a workflow runs an npm script that no longer exists: ${missing.join(", ")}`);
 
@@ -9464,6 +9474,63 @@ check("the scene gate has one implementation, and a line says where it came from
     line,
     /if \(first && firstVerdict && passes\(firstVerdict\)\)/,
     "lib/scenes/line.ts no longer requires a composed line to pass the gate before showing it.",
+  );
+});
+
+/**
+ * "I DID NOT UNDERSTAND YOU" IS A CLAIM ABOUT THE LEARNER, SO IT NEEDS ONE.
+ *
+ * The ladder's way out is `Ma ei saa aru`, and `sceneLine` reaches it in two
+ * situations that have nothing to do with each other: the turn was not
+ * understood, and the turn was understood perfectly but nothing could be built
+ * for the *next* move. A learner reported the second from the first two turns
+ * of a scene, where they were greeted, told to greet back, wrote `Tere`,
+ * watched the objective tick, and were answered with "I do not understand".
+ *
+ * Measured over the catalogue at the time: six of the eight `ask` beats have
+ * no recorded question anywhere in their topic words, because a lexicographer
+ * writes a usage to illustrate a word rather than to ask about one. So on a
+ * keyless deployment, or one whose allowance has gone, more than half of every
+ * conversation was that sentence, and none of those turns had been misread.
+ *
+ * `wayOut` is the one function that decides between the repair move and a line
+ * of English about what the other side did, and it takes the reading rather
+ * than a boolean so the decision cannot be made without having marked the
+ * turn. Anchored on the route *passing the reading in*, not on the call alone:
+ * a route that called `wayOut` with a constant would satisfy the weaker
+ * version and be exactly the bug again.
+ */
+check("the repair move is only used on a turn nobody understood", () => {
+  const line = code("lib/scenes/line.ts");
+  assert.match(
+    line, /export function wayOut\(/,
+    "lib/scenes/line.ts lost wayOut, so the repair phrase is the only way out again",
+  );
+  assert.match(
+    line, /reading === "unrecognised"/,
+    "wayOut no longer decides on how the turn was read",
+  );
+
+  const route = code("app/api/scene/route.ts");
+  assert.match(
+    route, /wayOut\(\{[^}]*reading: progress\.reading/,
+    "the scene route no longer hands wayOut the reading it marked, so the repair " +
+    "move can be printed at somebody who was understood",
+  );
+
+  /*
+    And the screen may not describe the fourth rung as the third. An English
+    line about what the other side did, chipped "They did not catch that", is
+    the same lie one layer up.
+  */
+  const session = code("components/scene/SceneSession.tsx");
+  assert.match(
+    session, /unspoken:/,
+    "components/scene/SceneSession.tsx has no chip for a turn nothing could be said for",
+  );
+  assert.doesNotMatch(
+    session, /unspoken: "They did not catch/,
+    "an unspoken turn is chipped as a turn nobody understood, which is the bug this fixed",
   );
 });
 

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarPlus, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { BellPlus, CalendarPlus, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Button } from "@/components/Button";
 import { Card, SectionTitle } from "@/components/ui";
@@ -46,7 +46,22 @@ export function CalendarWeek({
   events: StudyEvent[];
   reminders: Reminder[];
 }) {
-  const [adding, setAdding] = useState(false);
+  /*
+    WHICH BUTTON OPENED IT, NOT WHETHER ONE DID.
+
+    The panel is one form for both shapes and that is still the right call: a
+    learner adding "class, Mondays, six o'clock" and one adding "hand in the
+    essay on Friday" are doing the same thing. What was wrong was the door.
+    There was one button and it said "Add to this week", so somebody looking
+    for a task or a reminder saw neither word anywhere on the screen and
+    reported the calendar as having no way to add one. Both words are on the
+    second button, because they are the same row (`Task`) under two names and
+    which one somebody reaches for is not ours to decide.
+
+    So two buttons onto one form, each landing it on the right kind. `null`
+    means the form is closed.
+  */
+  const [adding, setAdding] = useState<EventKind | "REMINDER" | null>(null);
 
   return (
     <>
@@ -94,11 +109,23 @@ export function CalendarWeek({
       </Card>
 
       {adding ? (
-        <AddPanel days={days} onDone={() => setAdding(false)} />
+        <AddPanel days={days} opensAs={adding} onDone={() => setAdding(null)} />
       ) : (
-        <Button variant="primary" size="lg" onClick={() => setAdding(true)}>
-          <CalendarPlus size={16} aria-hidden /> Add to this week
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="primary" size="lg" onClick={() => setAdding("CLASS")}>
+            <CalendarPlus size={16} aria-hidden /> Add a class or study slot
+          </Button>
+          {/*
+            A reminder is a `Task`, which is the row Today already draws and
+            `lib/ux/agenda.ts` already buckets, so a note written here lands
+            where a teacher's assignment does rather than in a second list
+            beside it. Which is exactly why it needs its own button: the two
+            are one form and two different things to want.
+          */}
+          <Button size="lg" onClick={() => setAdding("REMINDER")}>
+            <BellPlus size={16} aria-hidden /> Add a task or reminder
+          </Button>
+        </div>
       )}
     </>
   );
@@ -259,8 +286,13 @@ function ReminderRow({ reminder }: { reminder: Reminder }) {
  * was given, in which case it is a one-off event. That is stated on the screen
  * rather than inferred silently.
  */
-function AddPanel({ days, onDone }: { days: string[]; onDone: () => void }) {
-  const [kind, setKind] = useState<EventKind | "REMINDER">("CLASS");
+function AddPanel({ days, opensAs, onDone }: {
+  days: string[];
+  /** Which button opened it, so the form lands on what was asked for. */
+  opensAs: EventKind | "REMINDER";
+  onDone: () => void;
+}) {
+  const [kind, setKind] = useState<EventKind | "REMINDER">(opensAs);
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("18:00");
   const [minutes, setMinutes] = useState(90);
@@ -298,7 +330,9 @@ function AddPanel({ days, onDone }: { days: string[]; onDone: () => void }) {
 
   return (
     <Card>
-      <SectionTitle hint="classes, study slots, things due">Add to your week</SectionTitle>
+      <SectionTitle hint="classes, study slots, things due">
+        {isReminder ? "Add a task or reminder" : "Add to your week"}
+      </SectionTitle>
 
       <ChoiceGroup ariaLabel="What kind of thing" className="mt-3 flex flex-wrap gap-2">
         {EVENT_KINDS.map((k) => (
@@ -306,7 +340,7 @@ function AddPanel({ days, onDone }: { days: string[]; onDone: () => void }) {
             {KIND_LABEL[k]}
           </ChoiceChip>
         ))}
-        <ChoiceChip selected={isReminder} onSelect={() => setKind("REMINDER")}>Reminder</ChoiceChip>
+        <ChoiceChip selected={isReminder} onSelect={() => setKind("REMINDER")}>Task or reminder</ChoiceChip>
       </ChoiceGroup>
 
       <label className="mt-4 block">

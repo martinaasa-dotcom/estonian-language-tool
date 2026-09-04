@@ -160,7 +160,7 @@ check("and says which week it is showing", await page.getByText(/this week/).cou
 
 // 1 — A class every Monday and Wednesday.
 {
-  await page.getByRole("button", { name: /Add to this week/ }).click();
+  await page.getByRole("button", { name: /Add a class or study slot/ }).click();
   await page.getByPlaceholder("Eesti keel B1").fill("Eesti keel B1");
   await page.getByRole("button", { name: "Mon", exact: true }).click();
   await page.getByRole("button", { name: "Wed", exact: true }).click();
@@ -186,8 +186,15 @@ check("and says which week it is showing", await page.getByText(/this week/).cou
 
 // 2 — A reminder, which is a Task and lands where Today already draws them.
 {
-  await page.getByRole("button", { name: /Add to this week/ }).click();
-  await page.getByRole("radio", { name: /Reminder/ }).click();
+  /*
+    THROUGH ITS OWN BUTTON, WHICH IS THE HALF THAT WAS MISSING. There was one
+    door and it said "Add to this week", so somebody looking for a task or a
+    reminder found neither word on the screen. The second button lands the
+    same form on the reminder kind, so this presses it and does not touch the
+    chips at all: if the button ever stops choosing, the placeholder below is
+    the wrong one and this fails here.
+  */
+  await page.getByRole("button", { name: /Add a task or reminder/ }).click();
   await page.getByPlaceholder("Hand in the essay").fill("A test reminder");
 
   /*
