@@ -38,6 +38,7 @@ import {
 } from "@/lib/settings/store";
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
+import { hearingFrom } from "@/lib/audio/conditions";
 import { kindFrom } from "@/lib/ux/schedule";
 import { participationValue } from "@/lib/research/participation";
 import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
@@ -1098,6 +1099,18 @@ export async function setFeedbackSounds(value: string) {
   const ownerId = await requireUserId();
   const normalised = feedbackSoundsFrom(value);
   await writeSetting(ownerId, SETTING_KEYS.feedbackSounds, normalised);
+  revalidatePath("/", "layout");
+  return { ok: true as const, value: normalised };
+}
+
+/**
+ * Whether the listening rounds vary the delivery, or keep the studio.
+ * Normalised on the way in like the other three; the shell publishes it.
+ */
+export async function setHearing(value: string) {
+  const ownerId = await requireUserId();
+  const normalised = hearingFrom(value);
+  await writeSetting(ownerId, SETTING_KEYS.hearing, normalised);
   revalidatePath("/", "layout");
   return { ok: true as const, value: normalised };
 }

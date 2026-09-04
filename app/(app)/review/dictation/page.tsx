@@ -39,12 +39,13 @@ export default async function DictationPage() {
     select: {
       id: true,
       cardType: true,
+      reps: true,
       lexeme: { select: { id: true, lemma: true, pos: true, examples: true } },
     },
   });
 
   // One task per word, and one card per word to grade against.
-  const byLexeme = new Map<string, { cardId: string; lemma: string; pos: string; examples: string }>();
+  const byLexeme = new Map<string, { cardId: string; reps: number; lemma: string; pos: string; examples: string }>();
   for (const card of cards) {
     const lex = card.lexeme;
     if (!lex) continue;
@@ -52,7 +53,7 @@ export default async function DictationPage() {
     // The gap-fill card is the closest thing in the deck to "this word, in a
     // sentence, spelled out", so it is the one this round grades.
     if (!held || card.cardType === "CLOZE") {
-      byLexeme.set(lex.id, { cardId: card.id, lemma: lex.lemma, pos: lex.pos, examples: lex.examples });
+      byLexeme.set(lex.id, { cardId: card.id, reps: card.reps, lemma: lex.lemma, pos: lex.pos, examples: lex.examples });
     }
   }
 
@@ -79,6 +80,7 @@ export default async function DictationPage() {
       if (example.et.length > MAX_CHARS) continue;
       tasks.push({
         cardId: entry.cardId,
+        reps: entry.reps,
         lemma: entry.lemma,
         et: example.et,
         en: example.en ?? null,

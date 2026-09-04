@@ -1,4 +1,6 @@
 import { cachedClip, rememberClip } from "./clipCache";
+import { CLEAN, type Condition } from "./conditions";
+import { needsMixer, playThrough } from "./mixer";
 
 /**
  * One clip, fetched once.
@@ -11,7 +13,10 @@ import { cachedClip, rememberClip } from "./clipCache";
  * from cache and look like the setting not saving.
  *
  * So the key is built here, once, from everything that changes the sound:
- * the text, the speed, and the voice. The server hashes the same three.
+ * the text, the speed, and the voice. The server hashes the same three. A
+ * hearing condition (`lib/audio/conditions.ts`) changes the speed the service
+ * is asked for and nothing else the server sees; the room it is heard in is
+ * made in the browser after the fetch, so it is not part of the key.
  *
  * Browser only, since it mints object URLs. Never throws on a play that the
  * browser refuses; a clip that could not be fetched rejects, which is the one
@@ -21,12 +26,25 @@ export interface ClipRequest {
   readonly text: string;
   readonly slow?: boolean;
   readonly voice?: string;
+  /**
+   * How it is delivered: the rate, the room, the line. Clean when absent,
+   * which is what every screen that has not asked gets. `slow` wins over a
+   * condition's own speed, because "play it slowly" is the learner's request
+   * and the condition is the round's.
+   */
+  readonly condition?: Condition;
 }
 
 export const SLOW_SPEED = 0.6;
 
-export function clipKey({ text, slow, voice }: ClipRequest): string {
-  return `${text}|${slow ? SLOW_SPEED : 1}|${voice ?? ""}`;
+/** The rate the service is asked for. */
+export function speedOf({ slow, condition }: ClipRequest): number {
+  if (slow) return SLOW_SPEED;
+  return (condition ?? CLEAN).speed;
+}
+
+export function clipKey(request: ClipRequest): string {
+  return `${request.text}|${speedOf(request)}|${request.voice ?? ""}`;
 }
 
 /** The object URL for a clip, from the page cache or the network. */
@@ -39,7 +57,7 @@ export async function fetchClip(request: ClipRequest): Promise<string> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       text: request.text,
-      speed: request.slow ? SLOW_SPEED : 1,
+      speed: speedOf(request),
       ...(request.voice ? { voice: request.voice } : {}),
     }),
   });
@@ -87,6 +105,9 @@ export async function playClip(
   { unasked = false }: { unasked?: boolean } = {},
 ): Promise<PlayOutcome> {
   const url = await fetchClip(request);
+  // The room is the mixer's job; a quiet room is the element's, as it always was.
+  const condition = request.slow ? CLEAN : (request.condition ?? CLEAN);
+  if (needsMixer(condition)) return playThrough(url, condition, { unasked });
   try {
     await new Audio(url).play();
   } catch (error) {

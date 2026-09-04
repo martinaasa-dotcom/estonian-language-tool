@@ -20,7 +20,8 @@ import { GoalsPanel } from "./GoalsPanel";
 import { ImportPanel } from "./ImportPanel";
 import { InstallPanel } from "./InstallPanel";
 import { ClassNamePanel, LetterBarPanel, ResearchPanel, ReviewModePanel } from "./PreferencesPanel";
-import { AutoplayPanel, CurrentVoiceSample, FeedbackSoundsPanel, VoicePanel } from "./AudioPanel";
+import { AutoplayPanel, CurrentVoiceSample, FeedbackSoundsPanel, HearingPanel, VoicePanel } from "./AudioPanel";
+import { hearingFrom } from "@/lib/audio/conditions";
 import { GlossLanguagePanel } from "./GlossLanguagePanel";
 import { GLOSS_LANGUAGES, glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom, VOICES } from "@/lib/audio/voice";
@@ -96,7 +97,7 @@ export default async function SettingsPage() {
       SETTING_KEYS.letterBar, SETTING_KEYS.researchOptOut,
       SETTING_KEYS.displayName,
       SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
-      SETTING_KEYS.glossLanguage,
+      SETTING_KEYS.hearing, SETTING_KEYS.glossLanguage,
     ]),
     currentLearner(),
     goalsFor(ownerId),
@@ -119,6 +120,7 @@ export default async function SettingsPage() {
   const voiceName = VOICES.find((v) => v.id === voice)?.name ?? voice;
   const autoplay = autoplayFrom(settings[SETTING_KEYS.autoplayAudio]);
   const sounds = feedbackSoundsFrom(settings[SETTING_KEYS.feedbackSounds]);
+  const hearing = hearingFrom(settings[SETTING_KEYS.hearing]);
   const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
   const glossLanguageName =
     GLOSS_LANGUAGES.find((l) => l.id === glossLanguage)?.label ?? "English";
@@ -179,6 +181,14 @@ export default async function SettingsPage() {
               <div>
                 <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Right and wrong</h3>
                 <FeedbackSoundsPanel current={sounds} />
+              </div>
+              <div>
+                <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Listening and dictation</h3>
+                <HearingPanel current={hearing} />
+                <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                  The words never change. What changes is the pace, the reader, and the room,
+                  because the receptionist will not slow down for you and the shop is never quiet.
+                </p>
               </div>
             </Card>
           </section>
