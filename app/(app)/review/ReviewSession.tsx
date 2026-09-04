@@ -245,7 +245,38 @@ function askFor(card: ReviewCard, mode: ReviewMode, met: ReadonlySet<string>): A
     as the question it would ordinarily be. That retrieval is the grade.
   */
   if (card.isNew && !met.has(wordKey(card))) return "intro";
-  if (mode === "type" && TYPEABLE.has(card.cardType)) return "type";
+
+  /*
+    A CARD THIS APP CAN MARK IS NEVER MARKED BY THE LEARNER.
+
+    `TYPEABLE` is the set whose answer is a single Estonian form the dictionary
+    vouches for, and `checkAnswer` compares against it, tells a dropped õ from
+    a wrong word, and names the case the learner reached for instead. All of
+    that was reachable, and one preference in Settings turned every one of
+    those cards into a flip with "Not yet" and "Got it" under it. So the app
+    held the answer, could have marked it, and asked the learner to mark it.
+
+    That is not only a weaker question. The judgement goes into `Review`, which
+    is append-only and is what the weakest-case panel, the mastery counter, the
+    readiness rungs and the exam confidence figure are all derived from, so a
+    number this app presents as measured was partly self-reported. The
+    preference's own copy has always said so: "easier to fool yourself with".
+
+    The preference is still honoured, because "I would rather not type" is a
+    real thing to want and typing on a phone is most of why. It is honoured
+    with four forms of the same word instead (`lib/questions/caseChoices.ts`),
+    which is one tap exactly as "Got it" was one tap, and which measures. Where
+    a card cannot be given options the honest answer is to ask for it typed
+    rather than to hand the marking back.
+
+    The flip survives where there is genuinely nothing to compare: a government
+    card, whose answer is a gloss rather than a form, and speaking, where
+    ADR-018 says the learner is the only judge there is.
+  */
+  if (TYPEABLE.has(card.cardType)) {
+    if (mode === "type") return "type";
+    return card.choices && card.choices.length > 1 ? "choice" : "type";
+  }
   if (card.cardType === "RECOGNITION" && card.choices && card.choices.length > 1) return "choice";
   return "flip";
 }

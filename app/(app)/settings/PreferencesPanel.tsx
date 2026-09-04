@@ -23,8 +23,18 @@ const MODES: { value: ReviewMode; label: string; detail: string; icon: typeof Pe
   },
   {
     value: "flip",
-    label: "Flip the card",
-    detail: "Classic flashcards: see the front, judge yourself, grade it. Faster, easier to fool yourself with.",
+    label: "Pick the answer",
+    /*
+      IT NO LONGER SAYS "JUDGE YOURSELF", BECAUSE IT NO LONGER DOES.
+
+      This read "Classic flashcards: see the front, judge yourself, grade it.
+      Faster, easier to fool yourself with", and the last four words were the
+      problem rather than the honesty. A card whose answer the dictionary
+      vouches for is marked by the app now, whichever option is chosen here,
+      and this one asks for a tap instead of typing rather than asking for a
+      verdict. See `askFor`.
+    */
+    detail: "Four forms of the same word, one tap. Lighter than typing on a phone, and still marked for you.",
     icon: Keyboard,
   },
 ];

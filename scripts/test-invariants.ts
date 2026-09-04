@@ -9807,6 +9807,134 @@ check("a recorded answer time is one answer, and the pace reading knows it", () 
   );
 });
 
+check("a case is drilled in a sentence that uses it, or it is not drilled", () => {
+  /*
+    A learner reported `ravim → millesse? kuhu?` as pointless and they were
+    right. The card was generated from the fact that the morphology permitted
+    the form: `caseFits` asked whether the word was a person, `caseAnswer`
+    asked whether a form could be built, and where both said yes a card
+    existed. Nothing ever asked whether anybody says it. That was 23,106 cards
+    over 4,664 words with a sentence behind 1,494 of them, and `ravim` had
+    none, because no lexicographer has ever recorded a medicine being gone
+    into. What the card asked for was `sse` attached to a stem.
+
+    Two things hold the fix, and both are in the builder rather than in the
+    prose that used to describe it. The card is built out of a sentence, and
+    the sentence has to name the case on its own: `aadressi` is the short
+    illative, the omastav and the osastav at once, so gapping it where it is a
+    genitive and labelling the card `sisseütlev` would teach the wrong case and
+    write the wrong one into `Review.slot`, which every case figure in the app
+    is derived from.
+  */
+  const builder = code("lib/srs/cards.ts");
+  const caseBlock = builder.slice(
+    builder.indexOf('case "CASE_FORM"'),
+    builder.indexOf('case "GRADATION"'),
+  );
+  assert.ok(caseBlock.length > 0, "lib/srs/cards.ts no longer has a CASE_FORM branch to check");
+
+  assert.match(
+    caseBlock,
+    /naturalSentencesFor\(lex\)/,
+    "lib/srs/cards.ts builds a case card without asking for a sentence to build it out " +
+    "of. That is the `ravim → millesse? kuhu?` fault: a form nobody can be shown " +
+    "using is a form this app cannot teach.",
+  );
+  assert.match(
+    caseBlock,
+    /buildCloze\(/,
+    "lib/srs/cards.ts stopped putting the case card's question in a sentence, so it is " +
+    "back to asking for an ending attached to a stem.",
+  );
+  assert.match(
+    caseBlock,
+    /readCase\(/,
+    "lib/srs/cards.ts labels a case card without checking that exactly one case spells " +
+    "the gapped form that way. `kohvi` is the omastav, the osastav and the short " +
+    "sisseütlev, and a card that guesses between them writes the wrong case into " +
+    "Review.slot.",
+  );
+
+  /*
+    AND THE CHECKLIST ASKS THE BUILDER RATHER THAN THE MORPHOLOGY. Left as
+    "does it have a genitive stem" this advertised a case card on 4,664 words
+    and built one on 914, which is the `objekt` fault: the unit page lists the
+    type, no card appears, and nothing says why.
+  */
+  const available = builder.slice(builder.indexOf("export function availableCardTypes"));
+  assert.doesNotMatch(
+    available,
+    /if \(genSg\) types\.push\("CASE_FORM"\)/,
+    "availableCardTypes offers a case card for any word with a genitive stem again. " +
+    "A stem is what builds the answer; a sentence is what decides whether to ask.",
+  );
+  assert.match(
+    available,
+    /generateCards\(lex, \["CASE_FORM"\]\)\.length > 0/,
+    "availableCardTypes stopped asking the builder whether a case card can be made.",
+  );
+});
+
+check("a card this app can mark is never marked by the learner", () => {
+  /*
+    `TYPEABLE` is the set whose answer is a single Estonian form the dictionary
+    vouches for, and `checkAnswer` compares against it, tells a dropped õ from a
+    wrong word, and names the case the learner reached for instead. All of that
+    was reachable, and one preference in Settings turned every one of those
+    cards into a flip with "Not yet" and "Got it" under it. The verdict then
+    went into `Review`, which is append-only, and the weakest-case panel, the
+    mastery counter, the readiness rungs and the exam confidence figure are all
+    derived from it, so a number this app presents as measured was partly
+    self-reported.
+
+    The daily quest was the sharp end, because it chooses its cards *by* that
+    reading: the panel picking the cards was fed by the round claiming to fix
+    them, on the learner's own say-so.
+  */
+  const session = code("app/(app)/review/ReviewSession.tsx");
+  const askFor = session.slice(session.indexOf("function askFor("));
+  const body = askFor.slice(0, askFor.indexOf("\n}"));
+  assert.match(
+    body,
+    /TYPEABLE\.has\(card\.cardType\)[\s\S]{0,400}return "type"/,
+    "askFor no longer routes a markable card away from the flip. A card whose answer " +
+    "the dictionary vouches for may not end in the learner grading themselves.",
+  );
+  assert.doesNotMatch(
+    body,
+    /mode === "type" && TYPEABLE\.has\(card\.cardType\)/,
+    "askFor is deciding whether to mark a card by a preference again. The preference " +
+    "chooses how the card is asked, never whether the app or the learner marks it.",
+  );
+
+  /*
+    And the quest offers something to answer rather than something to mark.
+    Picking one of four forms of the same word is a tap, exactly as "Had it"
+    was a tap, and it is a measurement; a wrong pick also says which case the
+    learner reached for, which no flip could ever have known.
+  */
+  const quest = code("app/(app)/quest/QuestSession.tsx");
+  assert.match(
+    quest,
+    /card\.choices \?/,
+    "the daily quest stopped offering forms to pick between, so it is back to asking " +
+    "the learner whether they had it on the very cases it selected them for.",
+  );
+  assert.match(
+    quest,
+    /acceptedAnswers\(card\.back, "et"\)/,
+    "the daily quest marks a pick against something other than the spellings the card " +
+    "accepts. A back can be `tuppa / toasse` and both are right.",
+  );
+  const questPool = code("lib/progress/quest.ts");
+  assert.match(
+    questPool,
+    /caseFormChoices\(/,
+    "lib/progress/quest.ts stopped building the options, so every case card in the " +
+    "round falls back to the flip it was supposed to replace.",
+  );
+});
+
 check("a case is named only when one case claims the spelling", () => {
   const src = code("lib/estonian/whichCase.ts");
   assert.match(

@@ -8,6 +8,9 @@ import { decoyOptions } from "@/lib/dict/facts";
 import {
   bandOf, differentMeaning, glossNearness, glossOption, pickOptions,
 } from "@/lib/questions/distractors";
+import { caseFormChoices } from "@/lib/questions/caseChoices";
+import { acceptedAnswers } from "@/lib/estonian/answer";
+import { stemsFrom } from "@/lib/estonian/derive";
 import type { ReviewCard } from "./ReviewSession";
 
 /**
@@ -154,6 +157,64 @@ function wantsChoices(card: ReviewCard): boolean {
 }
 
 /**
+ * Which case cards carry four forms to pick between.
+ *
+ * All of them, and that is the difference from the rule above. A recognition
+ * card is offered options only while the memory is minutes old, because
+ * recognising a gloss among four is a much weaker memory than producing one
+ * and a schedule built on the easier question says a word is known when it is
+ * not. A case card is not in that position: the options are four forms of the
+ * *same word*, so there is no vocabulary to be recognised and nothing is
+ * given away. What is being asked is which ending the sentence wants, and
+ * `toast`, `toasse` and `toale` beside `toas` ask exactly that.
+ *
+ * `askFor` still prefers typing wherever the learner asked for it. These exist
+ * so that the learner who asked not to type is given something to answer
+ * rather than something to mark: a flip on a card whose answer this app holds
+ * character for character is the app asking a question it has already
+ * answered, and "Got it" then goes into `Review` as though it were evidence.
+ */
+function wantsFormChoices(card: ReviewCard): boolean {
+  return card.cardType === "CASE_FORM";
+}
+
+/**
+ * The forms of every word a case card in this session is about.
+ *
+ * A second query rather than a join on `include`, for the reason
+ * `decoyOptions` is read the way it is: the review queue is the hottest read
+ * in the app and most sessions hold no case card at all, so the round trip is
+ * paid by the sessions that need it and by nobody else. There are 996 case
+ * cards in the whole shipped dictionary now, so that is most sessions.
+ *
+ * Ordered rather than left to the planner. Estonian has genuine parallel forms
+ * and `Form`'s unique key includes the value for that reason, so a word can
+ * hold two rows for one `formType`; `stemsFrom` takes the first it is handed,
+ * and which one that is may not be a fact about the query plan. `orderIndex`
+ * is the dictionary's own primary-first order and `id` makes it total.
+ */
+async function formsForCases(rows: CardRow[]): Promise<Map<string, ReturnType<typeof stemsFrom>>> {
+  const ids = [...new Set(
+    rows.filter((r) => r.cardType === "CASE_FORM" && r.lexemeId).map((r) => r.lexemeId!),
+  )];
+  if (ids.length === 0) return new Map();
+
+  const forms = await prisma.form.findMany({
+    where: { lexemeId: { in: ids } },
+    select: { lexemeId: true, formType: true, value: true, morphCode: true },
+    orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
+  });
+
+  const byLexeme = new Map<string, typeof forms>();
+  for (const form of forms) {
+    const held = byLexeme.get(form.lexemeId) ?? [];
+    held.push(form);
+    byLexeme.set(form.lexemeId, held);
+  }
+  return new Map([...byLexeme].map(([id, held]) => [id, stemsFrom(held)]));
+}
+
+/**
  * Maps the rows to cards, attaching multiple-choice options to the recognition
  * cards that get them.
  *
@@ -191,7 +252,26 @@ export async function withChoices(
   rows: CardRow[], glossLanguage: GlossLanguage,
 ): Promise<ReviewCard[]> {
   const cards = rows.map((c) => toReviewCard(c, glossLanguage));
-  if (!cards.some(wantsChoices)) return cards;
+
+  /*
+    The case cards first, because they need no pool: the wrong answers are
+    other forms of the word the card is already about. See
+    `lib/questions/caseChoices.ts`.
+  */
+  const stems = await formsForCases(rows);
+  const withForms = cards.map((card, i) => {
+    const lexemeId = rows[i]?.lexemeId;
+    if (!wantsFormChoices(card) || !lexemeId) return card;
+    const held = stems.get(lexemeId);
+    if (!held) return card;
+    const accepted = acceptedAnswers(card.back, "et");
+    const options = caseFormChoices({
+      stems: held, accepted, answer: accepted[0] ?? card.back, rng: Math.random,
+    });
+    return options ? { ...card, choices: options } : card;
+  });
+
+  if (!cards.some(wantsChoices)) return withForms;
 
   /*
     Which words the dictionary holds is not a fact about the person being
@@ -200,9 +280,9 @@ export async function withChoices(
     See lib/dict/facts.ts.
   */
   const pool = await decoyOptions();
-  if (pool.length < CHOICES) return cards;
+  if (pool.length < CHOICES) return withForms;
 
-  return cards.map((card, i) => {
+  return withForms.map((card, i) => {
     if (!wantsChoices(card)) return card;
     const lexeme = rows[i]?.lexeme;
     const answer = glossOption({

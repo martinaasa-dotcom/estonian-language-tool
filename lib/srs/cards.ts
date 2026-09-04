@@ -1,9 +1,10 @@
-import { CASES, caseByKey } from "@/lib/estonian/cases";
+import { caseByKey } from "@/lib/estonian/cases";
 import { caseFits, caseQuestionFor, localCasesFor } from "@/lib/estonian/caseQuestion";
 import { buildCloze, mentions, naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { gapForms } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
+import { caseIndex, readCase } from "@/lib/estonian/whichCase";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { CONJUGATION_SLOTS, type ConjugationSlot } from "@/lib/srs/slots";
@@ -221,6 +222,28 @@ const form = (l: LexemeForCards, type: string) => l.forms.find((f) => f.formType
 const DRILL_CASES: readonly CaseKey[] = ["COMITATIVE", "TRANSLATIVE"];
 
 /**
+ * The sentences a card may be built out of, for one word.
+ *
+ * `usableExamples` keeps what is worth printing on a dictionary entry, which
+ * is the right rule for a page and too loose for a question: Ekilex records a
+ * usage against a *sense*, so what comes back under a headword is sometimes
+ * lexicography rather than something somebody said. `naturalSentence` is the
+ * stronger test the mock exam and the level check have always applied, and the
+ * deck did not, which is how it built gap-fills out of `Nii ____ on öelda, et
+ * ..` and `Vanemametnikud on: ... 9) ____;`.
+ *
+ * One reader rather than two, because the gap-fill card and the case card now
+ * draw from the same pool and a second copy of this is where the two stop
+ * agreeing about what a sentence is. The opener is this word's own: the label
+ * pattern is a usage that names its own headword and then illustrates a sense
+ * the gloss beside it does not name.
+ */
+function naturalSentencesFor(lex: LexemeForCards) {
+  const opener = nominalOpener(lex.pos, [lex.lemma, ...lex.forms.map((f) => f.value)]);
+  return usableExamples(parseExamples(lex.examples)).filter((e) => naturalSentence(e.et, opener));
+}
+
+/**
  * Builds the cards for one word. Only types the word can actually support are
  * produced — a word with no gradation gets no gradation card, a noun gets no
  * government card. Never invents content it does not have.
@@ -269,7 +292,48 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
       }
 
       case "CASE_FORM": {
-        if (!genSg) break;
+        /*
+          A CASE IS DRILLED IN A SENTENCE THAT USES IT, OR IT IS NOT DRILLED.
+
+          This asked `ravim → millesse? kuhu?` and took `ravimisse`, and a
+          learner reported it as pointless. They were right, and the fault was
+          not the wording. The card was generated from the fact that the
+          morphology *permits* the form: `caseFits` asks whether the word is a
+          person, `caseAnswer` asks whether a form can be built, and where both
+          said yes a card existed. Nothing ever asked whether anybody says it.
+          That built 23,106 case cards over 4,664 words, about five each, and
+          the dictionary could show a sentence for 1,494 of them. `ravim` had
+          none: no lexicographer has ever recorded a medicine being gone into,
+          and the card was asking a learner to attach `sse` to a stem and
+          calling it Estonian.
+
+          A form nobody can be shown using is a form this app cannot teach. So
+          the sentence is the card now, and a case with no sentence behind it
+          builds nothing, which takes the deck to 996 cards over 914 words. The
+          learner produces `ravimisse` because a sentence needs it, rather than
+          because a label demanded it, which is the only reason anybody ever
+          produces a case.
+
+          THE SENTENCE HAS TO NAME THE CASE ON ITS OWN, TOO. `aadressi` is the
+          short illative, the omastav and the osastav all at once, so gapping
+          it out of a sentence where it is a genitive and labelling the card
+          `sisseütlev` would teach the wrong case and write the wrong one into
+          `Review.slot`, which is what `caseAccuracy` and the weakest-case
+          panel are built from. `readCase` is the strict rule that already
+          exists for this and it is the one read here: exactly one case, or no
+          card. That is what takes 1,494 to 996, and the 498 it refuses are the
+          ones nothing could have told apart.
+
+          What this is not is a second `CLOZE`. A cloze gaps whatever form the
+          sentence happens to hold; this picks the sentence *for* a case and
+          carries `targetCase`, which is the column every case figure in the
+          app is derived from.
+        */
+        const sentences = naturalSentencesFor(lex);
+        if (sentences.length === 0) break;
+        const stems = stemsFrom(lex.forms);
+        const index = caseIndex(stems);
+
         for (const key of [...localCasesFor(subject), ...DRILL_CASES]) {
           /*
             AND NOTHING AT ALL FOR A WORD WITH NO SINGULAR. Nineteen entries
@@ -288,57 +352,55 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
             the back, and a learner typing `tuppa`, which is the form they will
             hear every day, was marked wrong and shown the card again until
             they stopped. `aeg` was drilled as `ajasse` rather than `aega`.
-
-            Every accepted spelling goes on the back, joined the way
-            `acceptedAnswers` already splits stored alternatives, so a word
-            with two real illatives marks both right and teaches both.
           */
-          const answer = caseAnswer(stemsFrom(lex.forms), key);
+          const answer = caseAnswer(stems, key);
           if (!answer) continue;
           /*
             AND NOTHING TO ASK WHERE THE ANSWER IS THE WORD IN THE QUESTION.
 
             Estonian genuinely spells some cases like the nominative: `kallis`
             has the genitive `kalli`, so its inessive is `kalli` + `s`, which
-            is `kallis` again, and the same goes for `kapsas`, `lusikas`,
-            `maasikas`, `rahvas`, `taevas` and 109 others. The card read
-            `kallis → milles? kus?` with `kallis` on the back, so the question
-            printed its own answer: nobody can get it wrong, the scheduler
-            reads every pass as a recall and pushes the interval out, and the
-            slot is spent for ever on a card that asks nothing.
-
-            ANY ACCEPTED SPELLING, NOT EVERY ONE, and that correction came from
-            `npm run audit:questions` disagreeing with the first version of this
-            rule. Seven words have the lemma as one of two: `voodi` has the
-            short illative `voodi` and the long `voodisse`, and the marker has
-            to take both, because refusing the short one is the `tuppa` fault
-            pointed the other way. So the card asks `voodi → millesse? kuhu?`
-            and a learner who copies the word out of the question is right. The
-            pair is still the right thing to *show*, and the dictionary and the
-            grammar pages still show it; what cannot happen is asking a question
-            whose answer is printed in it.
+            is `kallis` again. Here the gap would stand in a sentence that says
+            the word plainly, so the learner copies it out of the cue.
           */
           const lemma = lex.lemma.trim().toLocaleLowerCase("et");
           if (answer.accepted.some((form) => form.trim().toLocaleLowerCase("et") === lemma)) continue;
-          const spec = CASES.find((c) => c.key === key)!;
-          out.push({
-            cardType: type,
-            /*
-              THE QUESTION IS THE ONE THIS WORD ANSWERS.
 
-              `spec.question` is the case's own name and names both
-              interrogatives and the place adverb, which is right on a grammar
-              page and wrong on a card about one word. A horse is a `kes`, so
-              the card asks `kellega?`; and `kus?` is answered by the
-              seesütlev and the alalütlev alike, so printing it makes the
-              question ambiguous between two cases and marks a learner wrong
-              for answering what was asked.
+          for (const example of sentences) {
+            const cloze = buildCloze(example.et, answer.accepted);
+            if (!cloze) continue;
+            // The sentence has to be about this case and no other.
+            const verdict = readCase(index, cloze.answer);
+            if (verdict.kind !== "one" || verdict.key !== key) continue;
+            /*
+              THE FORM THE SENTENCE USED LEADS, and the word's other spelling
+              of the same case follows it, joined the way `acceptedAnswers`
+              splits. Estonian has two illatives and both are right, so a
+              learner who writes `toasse` where the lexicographer wrote
+              `tuppa` has answered the question that was asked.
             */
-            front: `${lex.lemma} → ${caseQuestionFor(spec, subject)}`,
-            back: answer.accepted.join(" / "),
-            hint: `${spec.et} · the ${spec.en.toLowerCase()}`,
-            targetCase: key,
-          });
+            const also = answer.accepted.filter(
+              (form) => form.toLocaleLowerCase("et") !== cloze.answer.toLocaleLowerCase("et"),
+            );
+            /*
+              The cue is the word and its meaning, never the case, and never
+              anything that spells the answer. Naming the case in front of a
+              gap hands the ending over: `sisseütlev` beside `ravim` is
+              `ravimisse` written out in two pieces. The case is on
+              `targetCase`, where the reveal and the weakest-case panel read
+              it, which is the same order `explainGap` takes.
+            */
+            const asked = [`${lex.lemma}, ${lex.translation}`, lex.translation];
+            const hint = asked.find((line) => !mentions(line, cloze.answer)) ?? null;
+            out.push({
+              cardType: type,
+              front: cloze.text,
+              back: [cloze.answer, ...also].join(" / "),
+              hint,
+              targetCase: key,
+            });
+            break;
+          }
         }
         break;
       }
@@ -410,9 +472,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           then illustrates a sense the gloss beside it does not, and the
           headword here is the word the card is for.
         */
-        const opener = nominalOpener(lex.pos, [lex.lemma, ...lex.forms.map((f) => f.value)]);
-        const examples = usableExamples(parseExamples(lex.examples))
-          .filter((e) => naturalSentence(e.et, opener));
+        const examples = naturalSentencesFor(lex);
         if (examples.length === 0) break;
 
         // Every spelling of the word, stored or derived, so a sentence about
@@ -499,7 +559,15 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
 export function availableCardTypes(lex: LexemeForCards): CardType[] {
   const genSg = form(lex, "GEN_SG");
   const types: CardType[] = ["RECOGNITION", "PRODUCTION"];
-  if (genSg) types.push("CASE_FORM");
+  /*
+    ASKED OF THE BUILDER, NOT OF THE MORPHOLOGY. A genitive stem is what a case
+    card needs to *derive* a form and it is no longer what the card is made of:
+    a case is drilled in a sentence that uses it, and most words have no such
+    sentence for most cases. Left as `if (genSg)` this would advertise a case
+    card on 4,664 words and build one on 914, which is the `objekt` fault — the
+    unit page lists the type, no card appears, and nothing says why.
+  */
+  if (generateCards(lex, ["CASE_FORM"]).length > 0) types.push("CASE_FORM");
   if (lex.gradation !== "NONE" && genSg) types.push("GRADATION");
   if (lex.pos === "VERB" && lex.government) types.push("GOVERNMENT");
   // Offered only when they can genuinely be built: an option that silently

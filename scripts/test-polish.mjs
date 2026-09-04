@@ -62,16 +62,21 @@ check("the drill opens and says what it is",
 // on the review history, so pinning one name here makes the test fail on data
 // rather than on behaviour.
 const drilledCase = new URL(href, B).searchParams.get("case")?.toLowerCase() ?? "";
-// The card's hint names the case in both languages, so the English name read
-// off the link is still the way to check the drill was filtered. What the
-// *front* says changed with ADR-023: a case is asked by the question it
-// answers, the way a class is asked for one, and never by the Latin name.
+// The drill's own heading names the case in both languages, so the English
+// name read off the link is still the way to check the drill was filtered.
+// What the *front* says has changed twice. ADR-023 made it the question a
+// class asks (`tuba → milles?`) rather than the Latin name. Then a learner
+// reported `ravim → millesse? kuhu?` as pointless, and they were right: a case
+// is drilled in a sentence that uses it now, so the front is a lexicographer's
+// sentence with the form taken out, and the case is named nowhere on it,
+// because `sisseütlev` printed beside the word is the answer in two pieces.
 const drillBody = (await page.textContent("body")) ?? "";
 check("the drill only contains that case's cards",
   new RegExp(`\\b${drilledCase}\\b`, "i").test(drillBody), drilledCase);
-check("and asks for it by its question, not by its Latin name",
-  /→[^\n]*\?/.test(drillBody) && !new RegExp(`→ ${drilledCase}`, "i").test(drillBody),
-  drillBody.match(/→[^\n]{0,24}/)?.[0] ?? "no prompt found");
+const cardFront = (await page.locator("main").textContent()) ?? "";
+check("and asks for it in a sentence with a gap, never by its Latin name",
+  cardFront.includes("____") && !new RegExp(`→ ${drilledCase}`, "i").test(cardFront),
+  cardFront.match(/[^\n]{0,30}____[^\n]{0,30}/)?.[0]?.trim() ?? "no gap found");
 
 // A card you are struggling with should reach its full entry in one click.
 check("a review card links to the full dictionary entry",

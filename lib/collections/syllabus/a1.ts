@@ -310,7 +310,22 @@ export const A1 = [
     canDo: "Describe a thing or a person with an adjective that agrees with it.",
     blurb: "Adjectives agree with their noun in Estonian, so every one you learn pays for itself.",
     grammar: ["adjective-agreement", "nominative"],
-    cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
+    /*
+      NO CASE CARD, AND THE ADJECTIVES ARE WHERE THAT RULE BITES FIRST.
+
+      A case card is now built out of a sentence a lexicographer recorded using
+      that very case, and not one of this unit's twenty adjectives has one: the
+      usages under `kallis` are `Tere, kallis!`, `Kallid sõbrad!` and
+      `Kallis taevas!`, which are the word in the nominative three times. It is
+      the only unit in the course that loses the type, which is the right place
+      for it to be lost, because an adjective in isolation is the emptiest
+      version of the question — the whole point of this unit's own `canDo` is
+      that an adjective agrees with *its noun*, and a bare `suur → millesse?`
+      is that noun taken away. Agreement is taught on the grammar pages this
+      unit links to and met in its gap-fill cards, which is the answer `objekt`
+      already got when it asked for a card its verbs could not make.
+    */
+    cardTypes: ["RECOGNITION", "PRODUCTION", "CLOZE"],
     requires: ["kodu"],
     words: [
       ["suur", "big, large", "ADJECTIVE"],
