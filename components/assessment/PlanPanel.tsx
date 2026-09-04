@@ -3,8 +3,9 @@ import {
   CUMULATIVE_HOURS, FACTS, countedBySkill, foundHours, project, sustainableNewCardsPerDay,
   type MeasuredPace, type Projection, type Standing,
 } from "@/lib/assessment/plan";
-import { reasonsFor, targetByBand, weeksUntil, type Goals, type Reason } from "@/lib/assessment/goals";
+import { describeSituation, reasonsFor, targetByBand, weeksUntil, type Goals, type Reason } from "@/lib/assessment/goals";
 import { formatDuration, formatDurationRange } from "@/lib/time/duration";
+import { minutesForCards } from "@/lib/stats/pace";
 import { PRE_A1, type Band, type Level } from "@/lib/assessment/types";
 import { ChevronRight } from "lucide-react";
 import { Card, Note, SectionTitle, StatTile } from "@/components/ui";
@@ -310,14 +311,14 @@ export function PlanPanel({ standing, goals, dailyGoal, pace = null, now = new D
 }
 
 /**
- * Review minutes implied by a daily card goal.
+ * Review minutes implied by a daily card goal, at the one rate the app holds.
  *
- * Three cards a minute is the pace the typed review mode actually runs at here,
- * counting the thinking. It is deliberately not generous: a plan built on an
- * optimistic minutes figure is a plan that quietly doubles its own timeline.
+ * `lib/stats/pace.ts` owns the figure and Today reads the same one, so the
+ * minutes promised on first run and the minutes promised every morning are
+ * one estimate rather than two. The log replaces it once there is one.
  */
 export function minutesFor(dailyGoal: number): number {
-  return Math.max(1, Math.round(dailyGoal / 3));
+  return minutesForCards(dailyGoal);
 }
 
 function lowerFirst(text: string): string {
@@ -340,22 +341,12 @@ function paceHint(plan: Projection, goals: Goals, dailyGoal: number): string {
 /**
  * What a learner's reasons say their week already holds, as a clause.
  *
- * Only the reasons that put Estonian in a week are named: citizenship is a
- * goal and travel is a trip, and neither is an hour of anything on a Tuesday.
+ * The phrases live on the reasons table beside the hours they stand for, and
+ * Anu's briefing reads the same ones, so the note here and what she is told
+ * cannot describe one learner two ways.
  */
-const SITUATION: Record<string, string> = {
-  living: "live in Estonia",
-  family: "have Estonian at home",
-  work: "work in Estonian",
-  study: "are on a course",
-  roots: "have family who speak it",
-};
-
 function situation(reasons: readonly Reason[]): string | null {
-  const parts = reasons.filter((r) => r.exposure.high > 0).map((r) => SITUATION[r.id]).filter((p): p is string => !!p);
-  if (parts.length === 0) return null;
-  if (parts.length === 1) return parts[0]!;
-  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+  return describeSituation(reasons);
 }
 
 /**

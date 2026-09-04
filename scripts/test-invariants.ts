@@ -6926,6 +6926,78 @@ check("the hours table is built from published hours and a per-step factor", () 
   assert.match(plan, /export const ESTONIAN_FACTOR/, "the surcharge is no longer a table of its own");
 });
 
+/*
+  One pace per card, and the log replaces it.
+
+  The plan budgeted three cards a minute and Today's "about N minutes" divided
+  by six, so the screen somebody opens every morning promised half the time the
+  plan was allowing for the same cards. `DEFAULT_CARDS_PER_MINUTE` is defined
+  once, every screen that turns cards into minutes goes through
+  `minutesForCards`, and a learner with a fortnight of log gets their own rate
+  rather than either constant.
+*/
+check("cards become minutes through one rate, measured where the log has one", () => {
+  const defs = ALL.filter((f) => /export const DEFAULT_CARDS_PER_MINUTE\s*=/.test(code(f)));
+  assert.deepEqual(defs, ["lib/stats/pace.ts"], `the default cards-a-minute figure lives in ${defs.join(", ")}`);
+  const today = code("app/(app)/page.tsx");
+  assert.match(today, /minutesForCards\(/, "Today no longer turns cards into minutes through the shared rate");
+  assert.match(today, /measuredPaceFor\(/, "Today no longer reads the learner's measured pace");
+  assert.doesNotMatch(
+    between(today, "function lead("), /\/\s*\d+\s*\)/,
+    "Today's lead divides the cards due by a literal again; the rate is the learner's own or the shared default",
+  );
+  assert.match(
+    between(code("components/assessment/PlanPanel.tsx"), "export function minutesFor"), /minutesForCards\(/,
+    "PlanPanel's minutesFor keeps a rate of its own again",
+  );
+});
+
+/*
+  The distance on Today and on the exam hub is the plan's, off the same
+  projection, in the plan's own sentence.
+
+  Today's countdown said how likely a pass was that morning and the hub said
+  how many weeks were left, and neither said whether the pace this learner
+  keeps arrives by then. Both print `distanceLine` over `project` now, built
+  from `standingFor`, the reasons and the measured pace, so a learner cannot
+  read one timeline on the level check screen and another on Today.
+*/
+check("Today and the exam hub print the plan's distance off the plan's own projection", () => {
+  const countdown = code("lib/progress/countdown.ts");
+  for (const name of ["project(", "distanceLine(", "standingFor(", "foundHours("]) {
+    assert.ok(countdown.includes(name), `lib/progress/countdown.ts no longer calls ${name}`);
+  }
+  assert.match(code("components/ExamCountdown.tsx"), /countdown\.distance/, "the countdown card no longer prints the distance");
+  const hub = code("app/(app)/exam/page.tsx");
+  for (const name of ["project(", "distanceLine(", "standingFor(", "measuredPaceFor("]) {
+    assert.ok(hub.includes(name), `the exam hub no longer calls ${name}`);
+  }
+  // Nobody phrases the distance for a screen by hand: the sentence is the plan's.
+  const rephrased = ALL.filter((f) =>
+    f !== "lib/assessment/plan.ts" && !/\.(i)?test\.ts$/.test(f)
+    && /weeksWithFound[^\n]*weeks (away|off)/.test(code(f)));
+  assert.deepEqual(rephrased, [], "a screen writes its own sentence over weeksWithFound rather than reading distanceLine");
+});
+
+/*
+  Anu is told how the level is known and what Estonian the learner lives in.
+
+  A tutor told "B1" and nothing else treats a guess and a measurement alike,
+  and a briefing that names the learner's situation reads it off the same
+  reasons table the plan prints, so she and the plan cannot describe one
+  learner two ways.
+*/
+check("Anu's briefing reads the shared level rule and the reasons table", () => {
+  const context = code("lib/progress/tutorContext.ts");
+  assert.match(context, /currentLevelAnswer\(/, "learnerContextFor no longer asks how the level is known");
+  assert.match(context, /describeSituation\(/, "learnerContextFor no longer reads the situation off the reasons table");
+  const note = between(code("lib/tutor/prompt.ts"), "export function learnerNote");
+  assert.match(note, /standing/, "learnerNote no longer says how the level is known");
+  assert.match(note, /situation/, "learnerNote no longer says what Estonian the learner lives in");
+  const phrases = ALL.filter((f) => f !== "lib/assessment/goals.ts" && /"live in Estonia"/.test(code(f)));
+  assert.deepEqual(phrases, [], "a situation phrase is typed outside the reasons table");
+});
+
 // ── Checks about the checks ──────────────────────────────────────────────────
 
 check("anything a model wrote carries the mark the terms page promises", () => {

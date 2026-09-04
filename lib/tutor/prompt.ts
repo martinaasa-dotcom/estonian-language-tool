@@ -164,10 +164,43 @@ export interface LearnerNote {
   weakestCase: { grammCase: string; accuracy: number; total: number } | null;
   /** The course unit currently open: its Estonian title, the English under it, and its band. */
   unit: { title: string; subtitle: string; level: string } | null;
+  /**
+   * How the level is known. A paper measured it, with the skills it found, or
+   * the learner ticked it themselves. A tutor told "B1" and nothing else
+   * treats a guess and a measurement alike, and pitches listening at a level
+   * a check has already said the learner has not reached.
+   */
+  standing?: {
+    source: "measured" | "estimated";
+    skills?: Partial<Record<"reading" | "listening" | "writing", string>>;
+  };
+  /**
+   * What Estonian the learner already lives in, as a clause after "they":
+   * "live in Estonia and have Estonian at home". From the reasons table, the
+   * same phrase the plan prints. Null when their week holds none.
+   */
+  situation?: string | null;
 }
 
 export function learnerNote(note: LearnerNote): string {
   const lines: string[] = [];
+  if (note.standing) {
+    const skills = Object.entries(note.standing.skills ?? {}).filter(([, l]) => l);
+    if (note.standing.source === "measured") {
+      const detail = skills.length > 0 ? ` (${skills.map(([k, l]) => `${k} ${l}`).join(", ")})` : "";
+      const uneven = new Set(skills.map(([, l]) => l)).size > 1;
+      lines.push(
+        `- That level was measured by the level check${detail}.${uneven ? " The skills are uneven, so pitch what they read and what they hear to the skill it lands on rather than to the average." : ""}`,
+      );
+    } else {
+      lines.push("- That level is their own estimate rather than a measurement, so check it against what they write rather than assuming it.");
+    }
+  }
+  if (note.situation) {
+    lines.push(
+      `- They ${note.situation}, so real Estonian is within their reach every day. Where it fits, point them at using it rather than at more cards.`,
+    );
+  }
   const weak = note.weakestCase && CASES.find((c) => c.key === note.weakestCase?.grammCase);
   if (weak && note.weakestCase) {
     lines.push(

@@ -2,7 +2,10 @@ import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, BadgeCheck, CalendarClock, CircleAlert, ClipboardCheck, Clock, Compass, Info, Lightbulb, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { goalsFor } from "@/lib/progress/assessment";
-import { weeksUntil, targetByBand } from "@/lib/assessment/goals";
+import { reasonsFor, weeksUntil, targetByBand } from "@/lib/assessment/goals";
+import { distanceLine, foundHours, project } from "@/lib/assessment/plan";
+import { measuredPaceFor, standingFor } from "@/lib/progress/plan";
+import { minutesForCards } from "@/lib/stats/pace";
 import { readinessSignals, recentAttempts } from "@/lib/progress/exam";
 import { EVIDENCE_NOTE, assessReadiness } from "@/lib/exam/readiness";
 import {
@@ -30,11 +33,13 @@ export const dynamic = "force-dynamic";
  */
 export default async function ExamPage() {
   const ownerId = await requireUserId();
-  const [signals, attempts, goals, clock] = await Promise.all([
+  const [signals, attempts, goals, clock, standing, pace] = await Promise.all([
     readinessSignals(ownerId),
     recentAttempts(ownerId),
     goalsFor(ownerId),
     learnerDayClock(ownerId),
+    standingFor(ownerId),
+    measuredPaceFor(ownerId),
   ]);
   const readiness = assessReadiness(signals);
 
@@ -52,6 +57,22 @@ export default async function ExamPage() {
     ? readiness.levels.find((l) => l.level === target.band)
     : undefined;
   const weeks = weeksUntil(goals.deadline, new Date());
+  /*
+    Whether the pace this learner keeps reaches the target by then, in the
+    plan's own sentence. The weeks left on their own are a countdown; beside
+    the distance they are a decision. Same projection as `/assess` and Today.
+  */
+  const distance = target
+    ? distanceLine(project({
+        standing,
+        to: target.band,
+        minutesPerDay: minutesForCards(goals.dailyGoal),
+        daysPerWeek: goals.daysPerWeek,
+        weeksAvailable: weeks,
+        found: foundHours(reasonsFor(goals.reason)),
+        pace,
+      }))
+    : null;
 
   // The words live beside the tier in `readiness.ts`, because Today prints the
   // same percentage and two copies of "what this number is worth" is how one
@@ -115,6 +136,14 @@ export default async function ExamPage() {
                       ? `${readiness.gaps[0].title}. ${readiness.gaps[0].detail}`
                       : "There isn't enough here yet to say."}
                 </p>
+                {distance && (
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
+                    {distance}{" "}
+                    <Link href="/assess" className="underline underline-offset-4" style={{ color: "var(--accent-deep)" }}>
+                      The plan
+                    </Link>
+                  </p>
+                )}
                 <p className="mt-3 flex flex-wrap items-center gap-3">
                   <ButtonLink href={`/exam/${target.band}`} variant="secondary" size="sm">
                     Sit the {target.band} paper <ArrowRight size={14} aria-hidden />

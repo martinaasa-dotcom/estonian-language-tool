@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEADLINES, REASONS, TARGETS, countdownPhrase, daysUntil, deadlineFrom, impliedTarget, normaliseGoals, reasonById, reasonsFor, reasonsToStored, targetByBand, weeksUntil } from "./goals";
+import { DEADLINES, REASONS, TARGETS, countdownPhrase, daysUntil, deadlineFrom, describeSituation, impliedTarget, normaliseGoals, reasonById, reasonsFor, reasonsToStored, targetByBand, weeksUntil } from "./goals";
 import { BANDS } from "./types";
 import { dayClock } from "@/lib/time/day";
 
@@ -25,6 +25,16 @@ describe("the goal options", () => {
       if (situations.includes(reason.id)) expect(reason.exposure.high).toBeGreaterThan(0);
       else expect(reason.exposure).toEqual({ low: 0, high: 0 });
     }
+  });
+
+  // The phrase and the hours describe one thing, so a reason has both or neither.
+  it("names a situation exactly where it puts hours in a week", () => {
+    for (const reason of REASONS) {
+      expect(Boolean(reason.situation)).toBe(reason.exposure.high > 0);
+    }
+    expect(describeSituation(reasonsFor("living family citizenship"))).toBe("live in Estonia and have Estonian at home");
+    expect(describeSituation(reasonsFor("living family work"))).toBe("live in Estonia, work in Estonian and have Estonian at home");
+    expect(describeSituation(reasonsFor("curiosity"))).toBeNull();
   });
 
   it("describes every level by what it does not get you as well as what it does", () => {
