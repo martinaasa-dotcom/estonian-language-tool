@@ -1,9 +1,9 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import {
-  CUMULATIVE_HOURS, FACTS, FOUND_HOURS_PER_WEEK, project, sustainableNewCardsPerDay,
-  weeksNeeded, type Projection,
+  CUMULATIVE_HOURS, FACTS, countedBySkill, foundHours, project, sustainableNewCardsPerDay,
+  type MeasuredPace, type Projection, type Standing,
 } from "@/lib/assessment/plan";
-import { targetByBand, weeksUntil, type Goals } from "@/lib/assessment/goals";
+import { reasonsFor, targetByBand, weeksUntil, type Goals, type Reason } from "@/lib/assessment/goals";
 import { formatDuration, formatDurationRange } from "@/lib/time/duration";
 import { PRE_A1, type Band, type Level } from "@/lib/assessment/types";
 import { ChevronRight } from "lucide-react";
@@ -20,8 +20,15 @@ import { icon } from "@/components/icons";
  * gave. Every number carries where it came from, and the ranges stay ranges.
  *
  * It never tells a learner they cannot do something. It tells them what the
- * published hours say, what their own stated pace covers, and what would have
- * to change. Those are facts they can act on. "Not possible" is not.
+ * published hours say, what their own pace covers, what their week already
+ * holds, and what would have to change. Those are facts they can act on.
+ * "Not possible" is not.
+ *
+ * And it is about the person in front of it. The same four tiles used to come
+ * out identical for a measured B1 and a guessed one, for somebody living
+ * inside the language and somebody abroad, and for a learner who said five
+ * days and did two. Each of those now moves a figure, and the sentence beside
+ * the figure says which.
  */
 
 export function levelLabel(level: Level | null): string {
@@ -36,9 +43,23 @@ export function levelLabel(level: Level | null): string {
  * an empty one rendered "880 to 1170 " with a space hanging off the end of the
  * number.
  */
-function range(low: number, high: number, unit: string): string {
-  const body = low === high ? `${low}` : `${low} to ${high}`;
+function range(low: number, high: number, unit: string, step = 1): string {
+  const a = Math.round(low / step) * step;
+  const b = Math.round(high / step) * step;
+  const body = a === b ? `${a}` : `${a} to ${b}`;
   return unit ? `${body} ${unit}` : body;
+}
+
+/**
+ * Hours, to the nearest ten.
+ *
+ * The table is in tens because a finer figure would be false precision over
+ * published averages, and the skill by skill mean divides by three, so a
+ * measured learner was shown "667 to 953 hours": the same claim, dressed as
+ * a measurement. The tens are put back on the way to the screen.
+ */
+function hoursRange(low: number, high: number, unit: string): string {
+  return range(low, high, unit, 10);
 }
 
 /**
@@ -60,16 +81,19 @@ const VERDICT: Record<Projection["verdict"], { tone: "neutral" | "good" | "warn"
   arrived: { tone: "good", headline: "You are already there, on this measurement." },
   comfortable: { tone: "good", headline: "Your own pace covers it, with room to spare." },
   tight: { tone: "warn", headline: "It fits, but only with study outside this app." },
+  possible: { tone: "warn", headline: "It could fit, if you use the Estonian already around you." },
   short: { tone: "warn", headline: "Not by that date, at that pace. Here is what would change it." },
   open: { tone: "neutral", headline: "No deadline set, so here is what the distance looks like." },
   passed: { tone: "neutral", headline: "That date has gone by. Set a new one and this is a plan again." },
 };
 
-export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact = false }: {
-  /** Where the learner is. Null when they have not been measured yet. */
-  level: Level | null;
+export function PlanPanel({ standing, goals, dailyGoal, pace = null, now = new Date(), compact = false }: {
+  /** Where the learner is, and whether a paper measured it or they guessed. */
+  standing: Standing;
   goals: Goals;
   dailyGoal: number;
+  /** What the review log says they actually do. Null before there is one. */
+  pace?: MeasuredPace | null;
   now?: Date;
   /**
    * The verdict and the four figures, without the working behind them.
@@ -85,7 +109,7 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
   compact?: boolean;
 }) {
   const target = goals.target ?? null;
-  const from: Level = level ?? PRE_A1;
+  const from = standing.level;
   const weeks = weeksUntil(goals.deadline, now);
 
   if (!target) {
@@ -107,22 +131,27 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
     );
   }
 
+  const reasons = reasonsFor(goals.reason);
   const plan = project({
-    from,
+    standing,
     to: target,
     minutesPerDay: minutesFor(dailyGoal),
     daysPerWeek: goals.daysPerWeek,
     weeksAvailable: weeks,
+    /*
+      What the learner's own week holds beyond this app, from the reasons they
+      gave. The verdict is drawn against it and the note below quotes it, off
+      the same projection, so the headline and the sentence under it are one
+      claim about one figure.
+    */
+    found: foundHours(reasons),
+    pace,
   });
   const verdict = VERDICT[plan.verdict];
   const spec = targetByBand(target);
   const newCards = sustainableNewCardsPerDay(dailyGoal);
-  /*
-    The date this pace would actually land on with a normal amount of study
-    found elsewhere. It is the same constant the verdict band is drawn at, so
-    the headline above and this sentence can never disagree again.
-  */
-  const found = weeksNeeded(plan.hours, plan.appHoursPerWeek, FOUND_HOURS_PER_WEEK);
+  const bySkill = countedBySkill(standing, target);
+  const guessed = standing.source === "estimated" && from !== PRE_A1;
 
   return (
     <div className="flex flex-col gap-4">
@@ -131,22 +160,24 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
           {verdict.headline}
         </p>
         <p className="mt-2 max-w-[62ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-          {sentence(plan, weeks, levelLabel(from), target)}
+          {sentence(plan, weeks, levelLabel(from), target, { guessed, bySkill })}
         </p>
       </Card>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
-          value={plan.hours.low === 0 ? "0" : range(plan.hours.low, plan.hours.high, "")}
+          value={plan.hours.low === 0 ? "0" : hoursRange(plan.hours.low, plan.hours.high, "")}
           label="Study hours to go"
           tone="accent"
-          hint="published estimates, not this app"
+          hint={guessed ? "published estimates, widened for a guessed level"
+            : bySkill ? "published estimates, counted skill by skill"
+              : "published estimates, not this app"}
         />
         <StatTile
           value={formatDuration(plan.appHoursPerWeek)}
           label="From this app a week"
           tone="sky"
-          hint={`${minutesFor(dailyGoal)} minutes, ${goals.daysPerWeek} days`}
+          hint={paceHint(plan, goals, dailyGoal)}
         />
         <StatTile
           value={plan.weeksOnAppAlone.low === 0 ? "0" : range(plan.weeksOnAppAlone.low, plan.weeksOnAppAlone.high, "")}
@@ -163,21 +194,14 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
       </div>
 
       {plan.otherHoursPerWeek && plan.otherHoursPerWeek.high > 0 && (
-        <Note tone="sky">
-          To make that date, you would need roughly{" "}
-          <strong>
-            {formatDurationRange(plan.otherHoursPerWeek.low, plan.otherHoursPerWeek.high, "long")} a week
-          </strong>{" "}
-          of Estonian beyond this app: a class, a conversation partner, reading, a film without
-          subtitles. Find {FOUND_HOURS_PER_WEEK} hours a week on top of your daily goal, and that
-          distance drops to about {range(found.low, found.high, "weeks")}.
-        </Note>
+        <Note tone="sky">{foundNote(plan, reasons)}</Note>
       )}
 
       {compact && (
         <p className="text-xs leading-relaxed" style={{ color: "var(--ink-3)" }}>
-          These are published estimates for an English speaker, averages from other people on
-          other courses rather than a measurement of you.{" "}
+          The hours are published estimates for an English speaker, averages from other people on
+          other courses. Your own level, your week and, once there is one, your review log shape
+          them from there.{" "}
           <Link href="/assess" className="underline underline-offset-2" style={{ color: "var(--accent-deep)" }}>
             Where the numbers come from
           </Link>
@@ -202,17 +226,29 @@ export function PlanPanel({ level, goals, dailyGoal, now = new Date(), compact =
           style={{ color: "var(--accent-deep)" }}
         >
           <ChevronRight size={15} aria-hidden className="transition-ui group-open:rotate-90" />
-          Where these numbers come from, and six facts behind the pace
+          Where these numbers come from, and the facts behind the pace
         </summary>
         <div className="mt-4 flex flex-col gap-6">
         <Card>
           <SectionTitle hint="what the numbers assume">Where these come from</SectionTitle>
         <p className="text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
           {target} sits at roughly {range(CUMULATIVE_HOURS[target].low, CUMULATIVE_HOURS[target].high, "hours")} of
-          study from nothing, for an English speaker. Estonian is at the harder end of the scale, so
-          these are above the figures usually quoted for French or Spanish. They are averages across
-          other people, on other courses. They are not a measurement of you, and once you have a few
-          weeks of reviews here the app can show you your own pace instead.
+          study from nothing, for an English speaker. Estonian costs more than French or Spanish
+          and the difference sits in the middle: the cases and the gradation make A2 to B1 the
+          longest step, and B1 to B2 costs nearer what it costs in any language once the grammar
+          underneath it works. Those are averages across other people, on other courses.
+        </p>
+        <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
+          {standing.source === "measured"
+            ? bySkill
+              ? "Your level was measured, and your skills came out at different levels, so the distance is the average of what each skill still has to cover rather than the distance from the overall."
+              : "Your level was measured, so nothing was added to the distance for a guess."
+            : "Your level is your own estimate, so the far end of the distance allows for it being half a band lower than you think. Take the level check and that allowance goes."}{" "}
+          {plan.paceSource === "measured"
+            ? `Your pace is read off your own last ${weeksWord(plan.paceWeeks)} here rather than off what you said you would do.`
+            : plan.paceSource === "lapsed"
+              ? `Nothing has been reviewed here in the last ${weeksWord(plan.paceWeeks)}, so the pace is the one you said. Review for a fortnight and it becomes the one you keep.`
+              : "Once you have a fortnight of reviews here, the pace is read off your own log rather than off what you said you would do."}
         </p>
         {spec && (
           <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -288,25 +324,102 @@ function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
-function sentence(plan: Projection, weeks: number | null, from: string, to: Band): string {
-  if (plan.verdict === "arrived") {
-    return `Your measured level is already ${to} or above. Pick a higher target, or keep the deck warm and sit the check again in a couple of months.`;
+/** "3 weeks", for a pace read over a stretch of log. Never under one. */
+function weeksWord(weeks: number | null): string {
+  const n = Math.max(1, Math.round(weeks ?? 0));
+  return n === 1 ? "week" : `${n} weeks`;
+}
+
+/** The small print under the pace tile: what the figure is a figure of. */
+function paceHint(plan: Projection, goals: Goals, dailyGoal: number): string {
+  if (plan.paceSource === "measured") return `measured over your last ${weeksWord(plan.paceWeeks)}`;
+  if (plan.paceSource === "lapsed") return `what you said. Nothing here in ${weeksWord(plan.paceWeeks)}`;
+  return `${minutesFor(dailyGoal)} minutes, ${goals.daysPerWeek} days`;
+}
+
+/**
+ * What a learner's reasons say their week already holds, as a clause.
+ *
+ * Only the reasons that put Estonian in a week are named: citizenship is a
+ * goal and travel is a trip, and neither is an hour of anything on a Tuesday.
+ */
+const SITUATION: Record<string, string> = {
+  living: "live in Estonia",
+  family: "have Estonian at home",
+  work: "work in Estonian",
+  study: "are on a course",
+  roots: "have family who speak it",
+};
+
+function situation(reasons: readonly Reason[]): string | null {
+  const parts = reasons.filter((r) => r.exposure.high > 0).map((r) => SITUATION[r.id]).filter((p): p is string => !!p);
+  if (parts.length === 0) return null;
+  if (parts.length === 1) return parts[0]!;
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
+/**
+ * The way out, sized to the person.
+ *
+ * Both halves read the projection's own `found` and `weeksWithFound`, which
+ * are the figures the verdict above was drawn against. The panel used to pass
+ * a constant of its own into the arithmetic here, and the day the band and
+ * the sentence read different numbers the headline said a plan fitted over a
+ * note saying it was years out.
+ */
+function foundNote(plan: Projection, reasons: readonly Reason[]): string {
+  const other = plan.otherHoursPerWeek!;
+  const need = formatDurationRange(other.low, other.high, "long");
+  const lands = range(plan.weeksWithFound.low, plan.weeksWithFound.high, "weeks");
+  const where = situation(reasons);
+  if (where) {
+    const held = formatDurationRange(plan.found.low, plan.found.high, "long");
+    return `To make that date, you would need roughly ${need} a week of Estonian beyond this app. You ${where}, which usually puts ${held} a week within reach without booking anything. Use it, and the distance is about ${lands}.`;
   }
-  const distance = `Going from ${from} to ${to} is usually ${range(plan.hours.low, plan.hours.high, "hours")} of study.`;
+  return `To make that date, you would need roughly ${need} a week of Estonian beyond this app: a class, a conversation partner, reading, a film without subtitles. Find ${formatDuration(plan.found.low, "long")} a week on top of your daily goal, and that distance drops to about ${lands}.`;
+}
+
+function sentence(
+  plan: Projection,
+  weeks: number | null,
+  from: string,
+  to: Band,
+  why: { guessed: boolean; bySkill: boolean },
+): string {
+  if (plan.verdict === "arrived") {
+    return `Your level is already ${to} or above. Pick a higher target, or keep the deck warm and sit the check again in a couple of months.`;
+  }
+  const qualifier = why.guessed
+    ? " That level is your own estimate, so the far end allows for a start half a band lower."
+    : why.bySkill
+      ? " Your skills measured at different levels, so the distance is counted skill by skill."
+      : "";
+  const distance = `Going from ${from} to ${to} is usually ${hoursRange(plan.hours.low, plan.hours.high, "hours")} of study.${qualifier}`;
   const pace = formatDuration(plan.appHoursPerWeek, "long");
+  const covers = plan.paceSource === "measured"
+    ? `Over your last ${weeksWord(plan.paceWeeks)} this app has had ${pace} a week of you, which is what this is built on`
+    : plan.paceSource === "lapsed"
+      ? `Nothing has been reviewed here in the last ${weeksWord(plan.paceWeeks)}, so this counts the ${pace} a week you said`
+      : `At your stated pace this app covers ${pace} a week of that`;
   if (weeks === null) {
-    return `${distance} At your stated pace this app covers ${pace} a week of that, so set a date and the rest of this becomes a real timeline.`;
+    return `${distance} ${covers}, so set a date and the rest of this becomes a real timeline.`;
   }
   /*
     A date behind them divides by nothing, so it gets the distance and the pace
     and no arithmetic over the deadline at all.
   */
   if (plan.verdict === "passed") {
-    return `${distance} At your stated pace this app covers ${pace} a week of that. Pick a date you can still get to and this becomes a timeline again.`;
+    return `${distance} ${covers}. Pick a date you can still get to and this becomes a timeline again.`;
   }
   const covered = hours1(plan.appHoursAvailable ?? 0);
+  const whose = plan.paceSource === "measured" ? "your real pace" : plan.paceSource === "lapsed" ? "the pace you said" : "your daily goal";
   if (plan.verdict === "comfortable") {
-    return `${distance} In ${weeks} weeks your daily goal alone puts in about ${covered} hours, which covers it.`;
+    return `${distance} In ${weeks} weeks ${whose} alone puts in about ${covered} hours, which covers it.`;
   }
-  return `${distance} In ${weeks} weeks your daily goal puts in about ${covered} of those hours. The rest has to come from somewhere else, or the date has to move.`;
+  const rest = plan.verdict === "tight"
+    ? "The rest is a class and some reading, which a normal week holds."
+    : plan.verdict === "possible"
+      ? "The rest is about what your week already holds, if you use it."
+      : "The rest has to come from somewhere else, or the date has to move.";
+  return `${distance} In ${weeks} weeks ${whose} puts in about ${covered} of those hours. ${rest}`;
 }

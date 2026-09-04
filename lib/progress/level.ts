@@ -1,7 +1,7 @@
 import { latestFor } from "@/lib/progress/assessment";
 import { readSettings, SETTING_KEYS, writeSetting } from "@/lib/settings/store";
 import { LEVELS, type Level } from "@/lib/collections/syllabus";
-import { PRE_A1 } from "@/lib/assessment/types";
+import { BANDS, PRE_A1, type Level as AssessedLevel } from "@/lib/assessment/types";
 
 /**
  * The level the course opens at.
@@ -35,28 +35,58 @@ import { PRE_A1 } from "@/lib/assessment/types";
  * `pre-A1` is a real result and not a level the course has units for, so it
  * opens at A1 — which is where somebody below A1 should start anyway.
  */
-export async function courseLevelFor(ownerId: string): Promise<Level> {
+
+/**
+ * Which answer the app currently holds, and what kind of answer it is.
+ *
+ * Two readers, one rule. The course wants a band to open at and does not care
+ * how it was arrived at; the plan cares very much, because a level a paper
+ * measured and a level a stranger ticked in ninety seconds are the same letter
+ * and are not worth the same distance (`hoursFor` in lib/assessment/plan.ts).
+ * A measured answer carries its per skill levels for the same reason. Both
+ * read this so that the timestamp rule above is written once: a plan deciding
+ * a learner was measured while the course held their later correction would
+ * be the two-answers fault this module exists to prevent, one layer up.
+ */
+export type LevelAnswer =
+  | { kind: "measured"; level: AssessedLevel; skills: AssessedLevel[] }
+  | { kind: "declared"; level: Level };
+
+export async function currentLevelAnswer(ownerId: string): Promise<LevelAnswer | null> {
   const [assessed, settings] = await Promise.all([
     latestFor(ownerId).catch(() => null),
     readSettings(ownerId, [SETTING_KEYS.cefrPlacement, SETTING_KEYS.cefrPlacementAt]),
   ]);
 
-  const measured = assessed?.overall ?? null;
-  const declared = settings[SETTING_KEYS.cefrPlacement];
+  const measured = isAssessed(assessed?.overall) ? assessed!.overall : null;
+  const declaredRaw = settings[SETTING_KEYS.cefrPlacement];
+  const declared = isLevel(declaredRaw) ? declaredRaw : null;
   const declaredAt = Date.parse(settings[SETTING_KEYS.cefrPlacementAt] ?? "");
   const measuredAt = assessed?.takenAt?.getTime() ?? Number.NEGATIVE_INFINITY;
 
   const stale = Number.isNaN(declaredAt) || declaredAt <= measuredAt;
-  if (!stale && isLevel(declared)) return declared;
+  if (!stale && declared) return { kind: "declared", level: declared };
 
-  if (measured === PRE_A1) return "A1";
-  if (measured && isLevel(measured)) return measured;
+  if (measured && assessed) {
+    const skills = [assessed.reading, assessed.listening, assessed.writing].filter(isAssessed);
+    return { kind: "measured", level: measured, skills };
+  }
 
-  return isLevel(declared) ? declared : "A1";
+  return declared ? { kind: "declared", level: declared } : null;
+}
+
+export async function courseLevelFor(ownerId: string): Promise<Level> {
+  const answer = await currentLevelAnswer(ownerId);
+  if (!answer) return "A1";
+  if (answer.kind === "declared") return answer.level;
+  return answer.level === PRE_A1 ? "A1" : answer.level;
 }
 
 const isLevel = (value: string | null | undefined): value is Level =>
   typeof value === "string" && (LEVELS as readonly string[]).includes(value);
+
+const isAssessed = (value: string | null | undefined): value is AssessedLevel =>
+  value === PRE_A1 || (typeof value === "string" && (BANDS as readonly string[]).includes(value));
 
 /**
  * Stores a level that did not come from `/assess`, with the time it was stated.

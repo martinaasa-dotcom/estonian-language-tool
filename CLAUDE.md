@@ -1849,6 +1849,38 @@ spellings, `min` for a tile and `minutes` for a sentence, since the same figure 
 The invariant is that the pace never reaches a screen except through that module, and `weeksNeeded`
 is the one caller allowed the raw figure, because it divides by it rather than showing it.
 
+**And a plan quotes the person, not the average, wherever the app has the person.** The timeline
+was one table for everybody. It assumed the same five found hours a week of somebody in Tartu with
+an Estonian partner and somebody abroad with a textbook, built on a level a learner had ticked in
+ninety seconds as though a paper had measured it, spread the Estonian surcharge evenly across the
+bands, and never read the review log its own header promised it would. So a B1 speaker was told B2
+was 300 to 350 hours off, further than A2 had been from B1, and the learner in the screenshot that
+started this, living in Estonia with an Estonian partner, was told "not by that date" and sent to
+find a class by a plan that could not see the language was already in their kitchen. Four things
+each move a figure now, and the sentence beside the figure says which. **The surcharge sits where
+the morphology is**: `CUMULATIVE_HOURS` is built from the published guided learning hours and a
+factor per step (`ESTONIAN_FACTOR`), peaking at A2 to B1 where the cases and the gradation have to
+start working on their own and dipping at B1 to B2, which is mostly vocabulary and register and
+costs nearer what it costs in any language; the whole climb still lands inside the FSI ratio, and
+the shape is asserted rather than remembered. **Where the learner stands carries how the app
+knows** (`Standing`): a measured check is costed skill by skill, the mean of what each scored skill
+still has to cover, so B2 reading beside A1 listening is not a B1's distance; a guessed level is
+widened downward only, half a band on the far end, because a plan that quietly shortened the
+distance for an optimistic guess would flatter exactly the learner most likely to be wrong.
+`currentLevelAnswer` in `lib/progress/level.ts` is the one rule for which answer the app holds and
+both the course and the plan read it, so they cannot disagree about whether somebody was measured.
+**The week already holds something**: each reason in `goals.ts` carries the hours a week of
+Estonian that situation puts within reach, a goal carries none, `foundHours` is the baseline plus
+the largest whole and the rest half, and the verdict has a fourth band, `possible`, for the honest
+case where the date fits only if the Estonian around the learner is used. The band is drawn against
+the projection's own `found` and the note quotes the same figure off it, which is the rule the last
+fault taught, one number wider. **And once there is a fortnight of log, the pace is what they did**,
+not what they said: `lib/stats/pace.ts` counts sittings the way `perfect_session` does, first card
+to last plus the first card's own time, off `Review.durationMs` and the timestamps, and a window
+that held nothing keeps the stated pace and says so rather than dividing by zero. Nothing about
+this is measured on the app's learners as a population, and the copy still says that. What is
+measured is the one learner in front of it.
+
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
 Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
@@ -4125,7 +4157,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`, `caseFits`,
 `caseQuestionFor`, `semanticGroup`, `ANIMATE_CODES`, `nominalOpener`, `asksPerson`,
 `slotOfCard`, `isKnownSlot`, `practisedSlot`, `askableSlots`, `shapeFor`, `markFlash`,
-`formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`. Most of them now
+`formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `hoursFor`, `foundHours`, `weeklyExposure`,
+`weeksWithFound`, `measuredPace`, `currentLevelAnswer`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
