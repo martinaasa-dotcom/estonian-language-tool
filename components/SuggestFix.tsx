@@ -347,7 +347,7 @@ export function SuggestFix({
           onChange={(e) => setNote(e.target.value)}
           rows={3}
           placeholder="What you expected, where you saw it, what your teacher or dictionary says."
-          className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm outline-none"
+          className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
       </div>
