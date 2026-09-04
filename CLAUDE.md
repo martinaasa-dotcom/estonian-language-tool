@@ -751,6 +751,75 @@ units of verbs would have advertised a card the generator cannot build. And it i
 page's FAQ no longer says all three hard parts "get a card of their own": gradation and government
 do, and the whole-or-partial object has a unit and a grammar page.
 
+**A case is drilled in a sentence that uses it, or it is not drilled.** The card asked
+`ravim → millesse? kuhu?` and took `ravimisse`, and a learner reported it as pointless. They were
+right, and the fault was not the wording. The card was generated from the fact that the morphology
+*permits* the form: `caseFits` asks whether the word is a person, `caseAnswer` asks whether a form
+can be built, and where both said yes a card existed. Nothing ever asked whether anybody says it.
+That was **23,106 case cards over 4,664 words**, about five each, and the dictionary could show a
+sentence for 1,494 of them; 3,357 of those words had none at all, and 2,799 of the cards were on
+adjectives, where the question barely means anything in English either. `ravim` had none, because
+no lexicographer has ever recorded a medicine being gone into, and what the card actually asked for
+was `sse` attached to a stem.
+
+A form nobody can be shown using is a form this app cannot teach, so the sentence is the card now
+and a case with no sentence behind it builds nothing. The learner produces the form because a
+sentence needs it, which is the only reason anybody ever produces a case.
+
+**The sentence has to name the case on its own, too.** `aadressi` is the short sisseütlev, the
+omastav and the osastav all at once, so gapping it out of a sentence where it is a genitive and
+labelling the card `sisseütlev` would teach the wrong case and write the wrong one into
+`Review.slot`, which `caseAccuracy`, the weakest-case panel and every case figure in the app are
+derived from. `readCase` is the strict rule that already existed for exactly this and it is the one
+read here: exactly one case, or no card. That is what takes 1,494 to **996 cards over 914 words**,
+and the 498 it refuses are the ones nothing could have told apart.
+
+**It is not a second `CLOZE`.** A cloze gaps whatever form the sentence happens to hold; this picks
+the sentence *for* a case and carries `targetCase`. Both read one `naturalSentencesFor`, because a
+second copy of what counts as a sentence is where the two stop agreeing. The cue is the word and
+its meaning and never the case, on the CLOZE ladder, since `sisseütlev` printed beside `ravim`
+before the answer is `ravimisse` written out in two pieces: the case travels on `targetCase`, where
+the reveal reads it, which is the order `explainGap` already takes.
+
+`availableCardTypes` asks the builder rather than the morphology for the same reason, or the type
+is advertised on 4,664 words and built on 914, which is the `objekt` fault. One unit lost the card,
+`omadussonad`, and that is the right one to lose: not one of its twenty adjectives has a usage in
+any case (`kallis` has `Tere, kallis!`, `Kallid sõbrad!` and `Kallis taevas!`, the nominative three
+times), and that unit's own `canDo` is that an adjective agrees with *its noun*, which a bare
+`suur → millesse?` is precisely that noun taken away.
+
+**And a card this app can mark is never marked by the learner.** The same card ended in "Not yet"
+and "Got it". `TYPEABLE` is the set whose answer is a single Estonian form the dictionary vouches
+for, `CASE_FORM` has always been in it, and `checkAnswer` compares against it, tells a dropped õ
+from a wrong word and names the case the learner reached for instead. All of that was reachable,
+and one preference in Settings turned every one of those cards into a flip. So the app held the
+answer, could have marked it, and asked the learner to mark it.
+
+That is not only a weaker question. The verdict goes into `Review`, which is append-only, and the
+weakest-case panel, the mastery counter, the readiness rungs and the exam confidence figure are all
+derived from it, so a number this app presents as measured was partly self-reported. The daily
+quest is the sharp end, because it picks the cases a learner is worst at and then let them mark
+their own paper on exactly those: the panel choosing the cards was being fed by the round claiming
+to fix them, on the learner's own say-so.
+
+**The preference is honoured; the marking is not handed back.** "I would rather not type" is a real
+thing to want and typing on a phone is most of why, and the quest's own argument is sound too, that
+two minutes of typing is about eight cards and the round is about volume across a weakness. What
+was never true is that self-grading is the only thing that is as fast. Picking one of four is a
+tap, exactly as "Got it" was a tap, and it is a measurement. `lib/questions/caseChoices.ts` is
+that, and it needs no pool and no query beyond the word's own forms: the wrong answers are `toast`,
+`toasse` and `toale` against `toas`, which is the confusion the round exists for, ranked by
+`formNearness`, which the mock exam and the level check already use for a form and whose own
+comment describes this pool. An accepted spelling is never offered as a wrong one, or a card whose
+back is `tuppa / toasse` would mark a learner wrong for the other true answer. A wrong pick also
+says which case they reached for, so it lands in `Review.reachedSlot` as the confusion it is, which
+a flip could never populate because a flip never learns what they were thinking.
+
+Where a card cannot be given options the honest answer is to ask for it typed rather than to hand
+the marking back. The flip survives where there is genuinely nothing to compare: a government card,
+whose answer is a gloss rather than a form, and speaking, where ADR-018 says the learner is the only
+judge there is.
+
 **Which forms a gap-fill may hide is one answer, and it was five.** `buildCloze` hides a word it is
 told to look for, so what it can hide is whatever list the caller hands it. Two callers, the lesson
 planner and the level checkpoint, added the ten regular cases and were the same twenty lines twice.
