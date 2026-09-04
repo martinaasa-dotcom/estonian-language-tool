@@ -791,3 +791,20 @@ asked for at sign-up. *Rejected:* a note, a place or a name with the report, whi
 diary rather than a count; a stored counter, which ADR-014 forbids and which could be awarded for
 something that never happened; and a streak on it that punishes a day without a conversation,
 because a person who did not speak Estonian today did not fail at anything.
+
+**ADR-027 amendment 1: the question is about the learner's day, not about our errand, and it is
+asked about a day that is over.** The decision above put the errand first and the three answers
+under it, and that was wrong twice. It asked for a report in the morning, on something that had
+not happened yet, and three buttons at that hour are three ways to make a card go away rather than
+an account of anything. And it could only ever count the conversations this app had set: a learner
+who spent an hour with their Estonian mother-in-law and ignored the errand was recorded as having
+done nothing, in the one number this ADR says the app is measured by. So Today asks whether any
+Estonian was spoken to anybody yesterday, and offers the errand where the answer is no. Two things
+follow. `Encounter.errandId` is nullable, because a conversation with a neighbour is not this
+app's to file under a unit, and the research export's table of errands says out loud that it
+covers a shrinking share of the reports rather than quietly speaking for all of them. And a day
+that was answered is not a day that held a conversation: `isConversation` is the one place that is
+decided, and both readings of the table count only the two answers that are one, or a fortnight of
+honest noes would come back on Progress as a fortnight of real conversations. What is unchanged is
+everything the rejections above hold: no note, no place, no name, no counter, and no streak that
+punishes a day without one.

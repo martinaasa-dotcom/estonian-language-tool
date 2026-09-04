@@ -170,13 +170,23 @@ interface GroupedRow {
  * `buildSection` the same shape, so the thresholds and the rounding apply.
  */
 async function tallyEncounters(excluded: readonly string[]): Promise<Contribution[]> {
-  const not = excluded.length > 0 ? Prisma.sql`WHERE e."ownerId" NOT IN (${Prisma.join([...excluded])})` : Prisma.empty;
+  const not = excluded.length > 0 ? Prisma.sql`AND e."ownerId" NOT IN (${Prisma.join([...excluded])})` : Prisma.empty;
+  /*
+    A report that names no errand is left out here, in the query rather than
+    by a lookup that happens to miss. Today asks whether any Estonian was
+    spoken yesterday, so most reports are the learner's own conversations and
+    carry no errand: this table is grouped by the unit an errand drew its
+    words from, and there is no honest unit to file a conversation with a
+    neighbour under. The section's own note says so, and the coverage line at
+    the top of the file is where a reader sees how much that is.
+  */
   const rows = await prisma.$queryRaw<{ errandId: string; learner: string; reviews: number; correct: number }[]>`
     SELECT e."errandId" AS "errandId",
            e."ownerId" AS "learner",
            COUNT(*)::int AS "reviews",
            COUNT(*) FILTER (WHERE e."outcome" = 'UNDERSTOOD')::int AS "correct"
     FROM "Encounter" e
+    WHERE e."errandId" IS NOT NULL
     ${not}
     GROUP BY e."errandId", e."ownerId"
   `;

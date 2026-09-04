@@ -2907,20 +2907,28 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
 // ───────────────────────────── Scanned pages ──────────────────────────────
 
 /**
- * How a real conversation went, in one of three words.
+ * Whether any Estonian was spoken to anybody yesterday, in one of three words.
  *
  * The learner's own report of something that happened outside the app, which
  * no log can reconstruct and is therefore stored rather than derived
  * (ADR-014's exception, the same one a placement sitting has). Append-only.
- * The outcome is checked against the closed list and the errand against the
- * table, because both arrive off the wire.
+ *
+ * THE ERRAND IS OPTIONAL AND TODAY SENDS NONE. The question is about the
+ * learner's own day rather than about our homework, so a conversation with a
+ * neighbour carries no errand id: writing one in would credit this app with a
+ * conversation it did not set, and the research export groups that column by
+ * unit. The parameter stays because a report genuinely about an errand is
+ * still a thing this table can hold, and it is checked against the table
+ * exactly as before, because it arrives off the wire.
  */
-export async function recordEncounter(errandId: string, outcome: string) {
+export async function recordEncounter(errandId: string | null, outcome: string) {
   const ownerId = await requireUserId();
-  const errand = errandById(text(errandId));
+  const named = errandId === null || errandId === undefined ? null : errandById(text(errandId));
   const result = outcomeFrom(outcome);
-  if (!errand || !result) return { ok: false as const, error: "That is not one of the three answers." };
-  await prisma.encounter.create({ data: { ownerId, errandId: errand.id, outcome: result } });
+  if (named === undefined || !result) {
+    return { ok: false as const, error: "That is not one of the three answers." };
+  }
+  await prisma.encounter.create({ data: { ownerId, errandId: named?.id ?? null, outcome: result } });
   revalidatePath("/");
   revalidatePath("/progress");
   return { ok: true as const };
