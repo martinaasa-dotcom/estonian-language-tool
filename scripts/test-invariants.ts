@@ -2341,6 +2341,54 @@ check("Anu's prose is cleaned on its way to the learner", () => {
   assert.match(read("app/api/tutor/route.ts"), /ProseStream/, "the humanize pass is gone");
 });
 
+check("Anu's reply is drawn as typography, shown once finished, and the marker lines have one shape", () => {
+  /*
+    Every model writes markdown whether asked or not, and her bubble drew it
+    as text: `**raamatut**` with the asterisks in, on the one word the
+    sentence was about, and a list as four lines beginning `1.`. Drawn a
+    chunk at a time it was worse, because bold that has opened and not yet
+    closed is asterisks for as long as the model takes to reach the closing
+    pair. So `lib/tutor/markdown.ts` reads a reply into blocks, `AnuProse` is
+    the one place they become elements, and `useAnuChat` gathers the stream
+    and shows the finished reply once. The route still streams; the screen
+    waits.
+
+    And a model allowed bold bolds its markers, so `**FIX:**` arrives as
+    readily as `FIX:`. Three modules recognise those lines for three reasons
+    and each carried its own regex; `lib/tutor/markers.ts` is the one shape
+    now, and a reader that grows a copy back is a reader that stops agreeing
+    with the other two the day the model changes its typography.
+  */
+  const parts = code("components/anu/AnuParts.tsx");
+  assert.match(parts, /<AnuProse text=\{rest\}/, "Anu's reply is no longer drawn through AnuProse");
+  assert.match(parts, /from "\.\/Prose"/, "AnuParts stopped importing the one renderer");
+  assert.match(parts, /from "@\/lib\/tutor\/markers"/, "AnuParts stopped reading the marker table");
+  assert.doesNotMatch(parts, /\/\^[^\n]*(?:FIX|VOCAB)/, "AnuParts has grown its own FIX or VOCAB regex again");
+  assert.match(code("components/anu/Prose.tsx"), /parseReply\(/, "AnuProse no longer parses the reply");
+  assert.match(
+    code("app/(app)/exam/result/[id]/AnuReading.tsx"),
+    /<AnuProse/,
+    "Anu's reading of a composition is drawn as raw text again",
+  );
+
+  const hook = code("components/anu/useAnuChat.ts");
+  const loopStart = hook.indexOf("while (true)");
+  const loopEnd = hook.indexOf("acc += decoder.decode();");
+  assert.ok(loopStart !== -1 && loopEnd > loopStart, "the read loop in useAnuChat has changed shape; re-anchor this check");
+  assert.doesNotMatch(hook.slice(loopStart, loopEnd), /setMessages/, "the chat draws the reply a chunk at a time again");
+
+  for (const file of ["lib/tutor/humanize.ts", "lib/tutor/verify.ts"]) {
+    const source = code(file);
+    assert.match(source, /from "@\/lib\/tutor\/markers"/, `${file} stopped reading the marker table`);
+    assert.doesNotMatch(source, /\(\?:VOCAB\|FIX\)/, `${file} has grown its own copy of the marker regex`);
+  }
+
+  // The prompt says what formatting is allowed, in the terms the renderer understands.
+  const prompt = buildSystemPrompt("A2");
+  assert.match(prompt, /\*\*bold\*\*/, "the prompt no longer says what bold is for");
+  assert.match(prompt, /No headings, no tables/, "the prompt no longer rules out the shapes the renderer will not draw");
+});
+
 check("Anu's free chat prose is checked against the dictionary, not just her graded comments", () => {
   /*
     `verifyComment` withholds a graded comment before it is ever shown
