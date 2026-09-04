@@ -1,4 +1,4 @@
-# Kodukeel. Ready for the real thing
+# Kodukeel. Estonian that finally sticks
 
 *Kodukeel*, "home language". An Estonian learning app whose purpose is to be left: it teaches the
 words properly, then puts you in front of somebody with an agenda of their own, and then counts

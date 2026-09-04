@@ -2139,10 +2139,12 @@ funder as much as for a contributor. This section is what was built and measured
 - **Say it today.** One press a morning to say whether any Estonian was spoken to anybody
   yesterday, and an errand offered where the answer is no; Progress leads with what happened out
   there, beside §30's forecast of it; the research export carries the errands. ADR-027.
-- **The brand.** "Ready for the real thing" replaces "Estonian that finally sticks" on the landing
-  page, the manifest, sign-in and the README; the first-run limits line says the app rehearses the
-  conversation and the people are out there; Practice carries Situations; Anu is told which
-  situation the learner last stalled in and on what.
+- **The brand.** "Ready for the real thing" replaced "Estonian that finally sticks" on the landing
+  page, the manifest, sign-in and the README, and the headline went back the same day at the
+  owner's request: the title, the manifest and the README carry "Estonian that finally sticks"
+  again, and the real-thing line lives on in the descriptions, the feature card and the close. The
+  first-run limits line says the app rehearses the conversation and the people are out there;
+  Practice carries Situations; Anu is told which situation the learner last stalled in and on what.
 
 ### Measured
 
