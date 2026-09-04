@@ -6713,8 +6713,14 @@ check("the accessibility sweep runs axe, over both themes", () => {
     suite, /"best-practice"/,
     "axe runs without best-practice, which is the tag the broken list came in under",
   );
+  /*
+    The dark palette is chosen, never inherited, so the suite stores the choice
+    the way the toggle does rather than emulating a system preference the
+    stylesheet no longer reads; the theme invariant near the end of this file
+    is the other half of that.
+  */
   assert.match(
-    suite, /colorScheme:\s*"dark"/,
+    suite, /localStorage\.setItem\("theme", "dark"\)/,
     "the a11y suite stopped sweeping the dark palette, which is half of what ships",
   );
   // Both themes get the same sweep, so neither can be the one nobody looks at.
@@ -9816,6 +9822,53 @@ check("a destination reached from another one really is linked from there", () =
       linked,
       `${item.href} is kept out of the rail because it is reached from ${item.within}, `
       + `and nothing under ${dir} links to it. That leaves it reachable only from the palette.`,
+    );
+  }
+});
+
+/**
+ * LIGHT IS THE DEFAULT AND DARK IS A CHOICE.
+ *
+ * The palette used to follow the system: a `prefers-color-scheme: dark` block
+ * painted the dark tokens for anybody whose phone or laptop was set that way
+ * and who had never touched the toggle, which is most phones after dark. So
+ * the landing page, the one screen a stranger decides on, opened in a palette
+ * nobody here had chosen for it and that it had been designed against only
+ * second. Now bare `:root` is light for everybody and the dark palette lives
+ * under `[data-theme="dark"]` alone, written by the toggle and read back
+ * before first paint by the inline script in app/layout.tsx.
+ *
+ * Three things have to agree for that to be true, and each is read with its
+ * comments stripped, because the note explaining why the block went names the
+ * block: the stylesheet holds no system-preference palette, nothing in the
+ * app asks `matchMedia` which way the system leans, and the suites that
+ * measure the dark theme choose it the way a reader does rather than emulate
+ * a preference the palette no longer reads, since that would sweep the light
+ * theme twice and report the dark one clean.
+ */
+check("the dark palette is a choice, never the system's", () => {
+  const stripped = (file: string) => read(file).replace(/\/\*[\s\S]*?\*\//g, "");
+  const css = stripped("app/globals.css");
+  assert.equal(
+    /prefers-color-scheme/.test(css), false,
+    "app/globals.css reads the system's colour scheme again, so the default theme depends on the device",
+  );
+  assert.match(css, /:root\[data-theme="dark"\]\s*\{/, "app/globals.css has lost the chosen dark palette");
+  for (const file of [...APP, ...COMPONENTS]) {
+    assert.equal(
+      /prefers-color-scheme/.test(code(file)), false,
+      `${file} asks which way the system leans, and the theme is light until somebody chooses`,
+    );
+  }
+  for (const file of ["scripts/a11y-check.mjs", "scripts/test-containment.mjs"]) {
+    const src = stripped(file);
+    assert.equal(
+      /colorScheme:\s*["']dark["']/.test(src), false,
+      `${file} emulates a system preference the palette no longer reads, so its dark pass measures the light theme`,
+    );
+    assert.match(
+      src, /localStorage\.setItem\("theme", "dark"\)/,
+      `${file} no longer chooses the dark theme the way the toggle does, so nothing sweeps it`,
     );
   }
 });
