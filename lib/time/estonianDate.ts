@@ -17,11 +17,12 @@
   word they are learning, which is the whole of how a weekday name is learned
   anywhere.
 
-  So this line leads in Estonian and keeps the English weekday beside it as the
-  cross-reference, which is the same shape every grammar screen in this app
-  takes with the Latin case names. The English is pinned rather than the
-  reader's, because it is a gloss and not a date, and every other gloss in this
-  app is English.
+  So this line is in Estonian and nothing else. It carried the English weekday
+  beside it for a while, on the argument the grammar screens make about the
+  Latin case names, and a date is the one place that argument does not hold: a
+  reader already knows what day it is, which is exactly why this line teaches
+  at all, so the gloss answers a question nobody had and takes away the guess
+  that does the teaching.
 
   NOTHING HERE IS WRITTEN DOWN, WHICH IS WHAT MAKES IT LEGAL UNDER ADR-005. The
   seven weekday names and the twelve month names are read out of CLDR, the
@@ -46,30 +47,20 @@
 /** Estonia's own locale, and the only one this module asks for. */
 export const ESTONIAN_LOCALE = "et-EE";
 
-export interface DateLine {
-  /** The date as Estonia writes it, weekday first. */
-  et: string;
-  /** The weekday in English, which is the half a beginner reads. */
-  en: string;
-}
-
 /**
- * Today, in Estonian, with its English cross-reference. Null on a build whose
- * locale data does not carry Estonian.
+ * Today, as Estonia writes it, weekday first. Null on a build whose locale
+ * data does not carry Estonian.
  *
  * The zone is the learner's own (`lib/progress/dayClock.ts`), for the reason
  * every day-shaped figure on that page takes one: a server's midnight is the
  * deployment's, and a date is the most visible thing that gets wrong.
  */
-export function dateLine(at: Date, zone?: string): DateLine | null {
+export function dateLine(at: Date, zone?: string): string | null {
   if (!hasEstonian()) return null;
   try {
-    return {
-      et: new Intl.DateTimeFormat(ESTONIAN_LOCALE, {
-        timeZone: zone, weekday: "long", day: "numeric", month: "long",
-      }).format(at),
-      en: new Intl.DateTimeFormat("en-GB", { timeZone: zone, weekday: "long" }).format(at),
-    };
+    return new Intl.DateTimeFormat(ESTONIAN_LOCALE, {
+      timeZone: zone, weekday: "long", day: "numeric", month: "long",
+    }).format(at);
   } catch {
     // A zone the platform will not take. The caller's fallback is a date
     // rather than nothing, so this is a missing line and never a broken page.

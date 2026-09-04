@@ -7804,7 +7804,7 @@ check("Today's date is Estonian, tagged as Estonian, and has a way out", () => {
   assert.match(page, /dateLine\(/, "Today no longer reads the Estonian date");
   assert.match(
     page,
-    /lang="et">\{today\.et\}/,
+    /lang="et">\{today\}/,
     'Today prints the Estonian date without lang="et", so a screen reader says it in English',
   );
   assert.match(page, /<LocalDate/, "Today lost its fallback for a build whose locale data has no Estonian");
