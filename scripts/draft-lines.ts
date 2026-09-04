@@ -27,8 +27,19 @@
  *     every card, and a learner who copies it out has retrieved nothing;
  *   - the way out itself, because "I did not catch that" as a scripted line
  *     is the fallback wearing a better chip;
+ *   - a line of four words or more with no finite verb in it, outside the
+ *     greeting and the farewell, which is the fault the gate cannot see and
+ *     the first full run produced: "Kus pood praegu olema?", a
+ *     `ma`-infinitive standing where "on" belongs. The retrieval rung already
+ *     holds a recorded usage to that floor (`lacksFiniteVerb`);
  *   - a duplicate of a line already in the bank for that beat, spelled the
  *     same or the same once lowercased.
+ *
+ * AND THE RULES ARE APPLIED TO WHAT IS ALREADY THERE, on every run. An
+ * unreviewed row that today's gate or today's refusals would not let in is
+ * dropped and reported before anything is drafted, so a rule added after a
+ * bank was written reaches the bank rather than only the next line. A row a
+ * native speaker has reviewed is never touched by a script.
  *
  * A run that drafts nothing says which wall it hit rather than reporting a
  * full bank, which is the rule `eval:scene` learned the expensive way.
@@ -39,7 +50,10 @@ import { SCENES, FALLBACK_PHRASE } from "../lib/scenes/catalogue";
 import { BANK } from "../lib/scenes/bank";
 import { scriptable, type ScriptedLine } from "../lib/scenes/scripted";
 import { words } from "../lib/scenes/lexicon";
-import { ANSWERED, REFUSALS, answerForms, chain, compose, keylessContext } from "./lib/sceneDraft";
+import {
+  ANSWERED, REFUSALS, answerForms, chain, compose, keylessContext, lacksFiniteVerb,
+} from "./lib/sceneDraft";
+import type { BeatSpec } from "../lib/scenes/types";
 
 /** How many lines a beat is drafted up to. Three is enough variety for one run, and few enough to read. */
 const WANT = 3;
@@ -53,12 +67,13 @@ const refresh = process.argv.includes("--refresh");
 const OUT = "lib/scenes/bank.ts";
 
 /** A line the gate should not even be asked about. */
-function refused(text: string, fallback: string, answers: ReadonlySet<string>): string | null {
+function refused(text: string, fallback: string, answers: ReadonlySet<string>, beat: BeatSpec): string | null {
   if (/\d/.test(text)) return "digit";
   if (/[\u2013\u2014:;]/.test(text)) return "dash or colon";
   if (words(text).join(" ") === words(fallback).join(" ")) return "the way out";
   if (!/[.?!]$/.test(text.trim())) return "no end";
   if (words(text).some((word) => answers.has(word))) return "gives the answer away";
+  if (lacksFiniteVerb(text, beat)) return "no finite verb";
   return null;
 }
 
@@ -70,16 +85,30 @@ async function main() {
   }
   const today = new Date().toISOString().slice(0, 10);
 
-  const kept: ScriptedLine[] = refresh ? BANK.filter((row) => row.reviewed) : [...BANK];
-  const seen = new Set(kept.map((row) => `${row.scene}|${row.beat}|${row.text.toLowerCase()}`));
-
-  let drafted = 0, asked = 0, withheld = 0, skipped = 0;
+  let drafted = 0, asked = 0, withheld = 0, skipped = 0, dropped = 0;
   const reasons = new Map<string, number>();
   const note = (why: string) => reasons.set(why, (reasons.get(why) ?? 0) + 1);
 
+  // What is already there, re-judged by today's rules. Reviewed rows are a person's and stay.
+  const contexts = new Map(SCENES.map((scene) => [scene.id, keylessContext(scene)]));
+  const kept: ScriptedLine[] = BANK.filter((row) => {
+    if (row.reviewed) return true;
+    if (refresh) return false;
+    const scene = SCENES.find((s) => s.id === row.scene);
+    const beat = scene?.beats.find((b) => b.id === row.beat);
+    const context = scene && contexts.get(scene.id);
+    if (!scene || !beat || !context || !scriptable(scene, beat)) { dropped++; note("dropped: no such beat"); return false; }
+    const verdict = runGate(row.text, beat, context.gate);
+    if (!passes(verdict)) { dropped++; note(`dropped: gate ${verdict.failed.join("/")}`); return false; }
+    const why = refused(row.text, FALLBACK_PHRASE, answerForms(beat, context.lexicon), beat);
+    if (why) { dropped++; note(`dropped: ${why}`); return false; }
+    return true;
+  });
+  const seen = new Set(kept.map((row) => `${row.scene}|${row.beat}|${row.text.toLowerCase()}`));
+
   for (const scene of SCENES) {
     if (onlyScene && scene.id !== onlyScene) continue;
-    const { lemmas, gate, lexicon } = keylessContext(scene);
+    const { lemmas, gate, lexicon } = contexts.get(scene.id)!;
     for (const beat of scene.beats) {
       if (!scriptable(scene, beat)) { skipped++; continue; }
       const have = () => kept.filter((row) => row.scene === scene.id && row.beat === beat.id).length;
@@ -99,7 +128,7 @@ async function main() {
           if (second) { asked++; candidate = second; verdict = runGate(candidate.text, beat, gate); }
         }
         if (!passes(verdict)) { withheld++; for (const c of verdict.failed) note(`gate: ${c}`); continue; }
-        const why = refused(candidate.text, FALLBACK_PHRASE, answerForms(beat, lexicon));
+        const why = refused(candidate.text, FALLBACK_PHRASE, answerForms(beat, lexicon), beat);
         if (why) { withheld++; note(why); continue; }
         const key = `${scene.id}|${beat.id}|${candidate.text.toLowerCase()}`;
         if (seen.has(key)) { note("duplicate"); continue; }
@@ -117,7 +146,7 @@ async function main() {
   kept.sort((a, b) => a.scene.localeCompare(b.scene) || a.beat.localeCompare(b.beat) || a.text.localeCompare(b.text));
   writeFileSync(OUT, render(kept));
 
-  console.log(`\n${drafted} new line${drafted === 1 ? "" : "s"} kept, ${withheld} withheld, ${asked} asked; ${skipped} beat${skipped === 1 ? "" : "s"} not scriptable. ${kept.length} rows in ${OUT}.`);
+  console.log(`\n${drafted} new line${drafted === 1 ? "" : "s"} kept, ${withheld} withheld, ${asked} asked, ${dropped} already-banked row${dropped === 1 ? "" : "s"} dropped by today's rules; ${skipped} beat${skipped === 1 ? "" : "s"} not scriptable. ${kept.length} rows in ${OUT}.`);
   if (reasons.size) console.log("  Why lines were refused: " + [...reasons].map(([w, n]) => `${w} x${n}`).join(", "));
   if (ANSWERED.size) console.log("  Who answered: " + [...ANSWERED].map(([m, n]) => `${m} ${n}`).join(", "));
   if (REFUSALS.size) console.log("  Who would not, and with what status: " + [...REFUSALS].map(([m, n]) => `${m} x${n}`).join(", "));

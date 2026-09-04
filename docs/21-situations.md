@@ -1677,7 +1677,15 @@ the gate is even asked, and it refuses a line that hands over the form the beat 
 for, which was the first thing it produced: three lines for the milk beat and every one of them
 said `piima`, so a learner who copied the word out would have retrieved nothing. That is the
 answer printed in the question, the fault `audit:questions` hunts on every card, and the bank's
-test asks it of every row; and `bank.test.ts` re-runs every row through the gate against its scene's
+test asks it of every row. It refuses a line with no finite verb in it, too, which is the fault the
+four checks cannot see and the first full run produced four times: `Kus pood praegu olema?` has
+every word on the list, breaks no government and is one sentence long, and it is not a sentence
+anybody says, because the `ma`-infinitive is standing where `on` belongs. The retrieval rung
+already holds a recorded usage to that floor. And every unreviewed row is re-judged by today's
+rules on every run of the drafter, so a rule added after a bank was written reaches the bank rather
+than only the next line. The finite-verb rule exempts the greeting and the farewell, which are
+phrases, and asks nothing of a line under four words, because `Millisest päevast alates?` is a
+question anybody asks and the plain rule struck `Head aega ja aitäh teile!` first; and `bank.test.ts` re-runs every row through the gate against its scene's
 own word list on every run of the suite, so a scene edited after a row was drafted, or a unit that
 lost a word, shows up as a row that no longer passes rather than as a line a learner meets.
 

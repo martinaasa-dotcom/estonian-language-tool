@@ -4,7 +4,7 @@ import { SCENES, FALLBACK_PHRASE, sceneById } from "./catalogue";
 import { passes, runGate } from "./gate";
 import { words } from "./lexicon";
 import { scriptable, scriptedFor } from "./scripted";
-import { answerForms, keylessContext } from "../../scripts/lib/sceneDraft";
+import { answerForms, keylessContext, lacksFiniteVerb } from "../../scripts/lib/sceneDraft";
 
 /**
  * The bank is Estonian a model wrote, so it is held to the gate every time
@@ -57,6 +57,15 @@ describe("the scripted bank", () => {
       const answers = answerForms(beat, contexts.get(scene.id)!.lexicon);
       const given = words(row.text).filter((w) => answers.has(w));
       expect(given, `${row.scene}/${row.beat}: "${row.text}" hands over ${given.join(" ")}`).toEqual([]);
+    }
+  });
+
+  it("has a finite verb in every line long enough to need one, which is the fault the gate cannot see", () => {
+    // "Kus pood praegu olema?" passes all four checks and is not a sentence anybody says.
+    for (const row of BANK) {
+      const scene = sceneById(row.scene)!;
+      const beat = scene.beats.find((b) => b.id === row.beat)!;
+      expect(lacksFiniteVerb(row.text, beat), `${row.scene}/${row.beat}: "${row.text}" has no finite verb`).toBe(false);
     }
   });
 

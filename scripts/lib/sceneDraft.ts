@@ -25,10 +25,11 @@
  * asked, so a test may import the context builders without a key in sight.
  */
 import { buildCaseTable, stemsFrom } from "../../lib/estonian/derive";
+import { derivedVerbForms } from "../../lib/estonian/conjugate";
 import { parseGovernment } from "../../lib/estonian/government";
 import type { CaseKey } from "../../lib/estonian/types";
 import { FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS } from "../../lib/tutor/provider";
-import { buildLexicon, caseKeyFor, formsOf, type DictEntry, type Lexicon } from "../../lib/scenes/lexicon";
+import { buildLexicon, caseKeyFor, formsOf, words, type DictEntry, type Lexicon } from "../../lib/scenes/lexicon";
 import type { GateContext, GovernedWord } from "../../lib/scenes/gate";
 import { MAX_WORDS } from "../../lib/scenes/retrieval";
 import { QUESTION_SHAPE, type BeatSpec, type SceneSpec } from "../../lib/scenes/types";
@@ -161,6 +162,59 @@ for (const entry of shipped) {
       note(form, row.spec.key);
     }
   }
+}
+
+/**
+ * Every finite form of every verb in the shipped dictionary.
+ *
+ * What the drafter needs it for is the fault the gate cannot see and the
+ * first full run produced four times: a `ma`-infinitive standing where a
+ * finite verb belongs, "Kus pood praegu olema?" for "kus pood praegu on".
+ * Every word is on the list, no government is broken and it is one sentence
+ * long, so all four checks pass, and it is not a sentence anybody says. The
+ * retrieval rung already refuses a recorded usage with no finite verb in it
+ * (`fits`, "not-spoken"); a drafted line is held to the same floor.
+ *
+ * A form is finite when it is a stored person (`PRES_1SG`, `PAST_1SG`) or an
+ * Ekilex form in a mood: indicative, conditional, imperative or quotative.
+ * The two infinitives, the participles and the supine are not.
+ */
+export const FINITE_VERB_FORMS: ReadonlySet<string> = new Set<string>();
+for (const entry of shipped) {
+  if (entry.pos !== "VERB") continue;
+  const finite = FINITE_VERB_FORMS as Set<string>;
+  for (const [type, value] of Object.entries(entry.parts)) {
+    if (type === "PRES_1SG" || type === "PAST_1SG") finite.add(value.toLowerCase());
+  }
+  for (const form of entry.extraForms) {
+    if (/^(Ind|Knd|Imp|Kvt)/.test(form.code)) finite.add(form.value.toLowerCase());
+  }
+  // The persons the dictionary derives rather than stores, off the same rule
+  // the scene context and the search use: `kestab` is nowhere in `kestma`'s
+  // stored forms and is the third person of it.
+  for (const derived of derivedVerbForms({ lemma: entry.lemma, pres1sg: entry.parts.PRES_1SG })) {
+    finite.add(derived.value.toLowerCase());
+  }
+}
+
+/**
+ * Whether a drafted line is missing the finite verb it should have.
+ *
+ * Two exemptions, and each is a kind of line people say. A greeting or a
+ * farewell is a phrase and has no verb: "Head aega ja aitäh teile!" was the
+ * first row the plain rule struck, and it is a good line. And a short
+ * elliptical question is a question anybody asks, "Millisest päevast
+ * alates?", "Neljapäev?"; the turn marker makes the same allowance for the
+ * learner. So the greet and close moves are exempt, and below four words
+ * nothing is asked. Four is where "Kus pood praegu olema?" sits, which is the
+ * line this exists for.
+ */
+export const FINITE_VERB_FLOOR = 4;
+export function lacksFiniteVerb(text: string, beat: BeatSpec): boolean {
+  if (beat.move === "greet" || beat.move === "close") return false;
+  const tokens = words(text);
+  if (tokens.length < FINITE_VERB_FLOOR) return false;
+  return !tokens.some((word) => FINITE_VERB_FORMS.has(word));
 }
 
 /** The gate's context for one scene, built from the shipped dictionary rather than a database. */

@@ -9677,9 +9677,16 @@ check("a scripted line is drafted by a script, said after a recorded one, and ma
   for (const [shape, why] of [
     [/\/\\d\//, "a digit"], [/u2013\\u2014/, "a dash"], [/the way out/, "the fallback phrase"],
     [/answers\.has\(word\)/, "a line that hands over the form the beat asks for"],
+    [/lacksFiniteVerb\(/, "a line with no finite verb in it"],
   ] as const) {
     assert.match(draft, shape, `scripts/draft-lines.ts no longer refuses ${why} before asking the gate`);
   }
+  // And what is already banked is re-judged on every run, so a rule reaches the bank and not only the next line.
+  assert.match(
+    draft,
+    /BANK\.filter\(\(row\) => \{[\s\S]{0,120}if \(row\.reviewed\) return true;/,
+    "scripts/draft-lines.ts no longer re-judges the rows already in the bank, so a rule added today never reaches a line drafted yesterday",
+  );
 });
 
 check("a scene is marked by the server, and its grades go to the shared log", () => {
