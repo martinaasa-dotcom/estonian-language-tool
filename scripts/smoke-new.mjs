@@ -31,7 +31,7 @@ const browser = await launchChromium();
   deck holding enough to build a government drill and a minimal pair, which a
   thin database does not.
 */
-const { check, done } = suite("The new routes, rendered", { floor: 65 });
+const { check, done } = suite("The new routes, rendered", { floor: 69 });
 
 const ROUTES = [
   ["/", "today"],
@@ -39,6 +39,8 @@ const ROUTES = [
   ["/learn", "learn"],
   ["/grammar", "grammar"],
   ["/progress", "progress"],
+  ["/progress/readiness", "readiness"],
+  ["/progress/readiness/riigid", "situation"],
   ["/review/write", "write"],
   ["/review/government", "government"],
   ["/review/conjugation", "conjugation"],
