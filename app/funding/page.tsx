@@ -229,8 +229,9 @@ export default function FundingPage() {
           Two of those are worth stopping on. A review row is 300 bytes, so a learner
           costs about 1.3 MB a year and the whole review log of a thousand people for a
           year fits in less space than a phone photograph album. And a spoken clip is
-          uncompressed 32-bit audio, 88 KB for every second of it, which makes speech the
-          largest thing this app moves by a wide margin. Turning the audio off in the
+          uncompressed audio, 43 KB for every second of it once trimmed and stored as
+          16-bit, which still makes speech the largest thing this app moves by a wide
+          margin. Turning the audio off in the
           panel above is the single biggest saving available, and it is also the feature
           hardest to argue for losing.
         </P>

@@ -567,6 +567,36 @@ check("the mock paper's minutes and marks are the ones the exam doc cites", () =
   assert.equal(RETAKE_WAIT_PCT, 45, "RETAKE_WAIT_PCT drifted from the forty five percent the doc cites");
 });
 
+/*
+  SLOW IS PLAYBACK, NOT A SECOND CLIP.
+
+  TartuNLP's `speed` is a duration regulator inside the acoustic model, and a
+  clip asked for at 0.6 is every phoneme held on repeated frames: flat, buzzing,
+  and reported as robotic. The route forwards no speed, the one clip is played
+  slower with the pitch held in lib/audio/clip.ts, and every clip is trimmed,
+  levelled and written as 16-bit by lib/audio/wav.ts before it is cached. A
+  second file setting `playbackRate` would be a second answer to how slow is
+  done, and a `speed` reappearing in the route would be the model doing it.
+*/
+check("slow is the same clip played slower, and every clip is prepared before it is kept", () => {
+  const route = code("app/api/tts/route.ts");
+  assert.doesNotMatch(route, /\bspeed\b/, "the speech route is asking the model to slow down again");
+  assert.match(route, /prepareClip\(raw\)/, "the route stopped calling prepareClip on what the service sent");
+  assert.match(
+    route,
+    /const audio = Buffer\.from\(prepare\(raw\)\);[\s\S]{0,200}writeAudio\(hash, audio\)/,
+    "a clip reaches the cache without going through prepareClip",
+  );
+  const player = code("lib/audio/clip.ts");
+  assert.match(player, /preservesPitch\s*=\s*true/, "the slow play stopped holding the pitch");
+  assert.match(player, /playbackRate\s*=\s*SLOW_RATE/, "the slow play stopped reading SLOW_RATE");
+  const others = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== join("lib", "audio", "clip.ts"))
+    .filter((file) => /playbackRate|preservesPitch/.test(code(file)));
+  assert.deepEqual(others, [], "a second file decides how slow a clip plays");
+});
+
 check("nothing plays a clip outside lib/audio/clip.ts", () => {
   const offenders = ["app", "lib", "components"]
     .flatMap((dir) => sourceFiles(dir))
@@ -611,7 +641,10 @@ check("the room a clip is heard in is made in one module, and only the rounds th
     "an AudioContext is opened somewhere other than the mixer and the feedback tones",
   );
   assert.match(code("lib/audio/clip.ts"), /playThrough\(/, "playClip stopped routing a condition through the mixer");
-  assert.match(code("lib/audio/clip.ts"), /speedOf\(/, "the clip key stopped reading the condition's speed");
+  // The rate is a playback rate on the element with the pitch held, never a
+  // number sent to the service, which is the rule the slow play states.
+  assert.match(code("lib/audio/clip.ts"), /playbackRate\s*=\s*condition\.speed/, "the player stopped reading the condition's speed");
+  assert.doesNotMatch(code("lib/audio/clip.ts"), /speed:/, "a speed is being sent to the speech service again");
 
   for (const file of [
     "app/(app)/review/listening/ListeningSession.tsx",
@@ -6978,6 +7011,78 @@ check("the hours table is built from published hours and a per-step factor", () 
   assert.match(plan, /export const CUMULATIVE_HOURS[^=]*=\s*buildCumulative\(\)/, "CUMULATIVE_HOURS is a typed table again");
   assert.match(plan, /export const GUIDED_LEARNING_HOURS/, "the published hours are no longer named");
   assert.match(plan, /export const ESTONIAN_FACTOR/, "the surcharge is no longer a table of its own");
+});
+
+/*
+  One pace per card, and the log replaces it.
+
+  The plan budgeted three cards a minute and Today's "about N minutes" divided
+  by six, so the screen somebody opens every morning promised half the time the
+  plan was allowing for the same cards. `DEFAULT_CARDS_PER_MINUTE` is defined
+  once, every screen that turns cards into minutes goes through
+  `minutesForCards`, and a learner with a fortnight of log gets their own rate
+  rather than either constant.
+*/
+check("cards become minutes through one rate, measured where the log has one", () => {
+  const defs = ALL.filter((f) => /export const DEFAULT_CARDS_PER_MINUTE\s*=/.test(code(f)));
+  assert.deepEqual(defs, ["lib/stats/pace.ts"], `the default cards-a-minute figure lives in ${defs.join(", ")}`);
+  const today = code("app/(app)/page.tsx");
+  assert.match(today, /minutesForCards\(/, "Today no longer turns cards into minutes through the shared rate");
+  assert.match(today, /measuredPaceFor\(/, "Today no longer reads the learner's measured pace");
+  assert.doesNotMatch(
+    between(today, "function lead("), /\/\s*\d+\s*\)/,
+    "Today's lead divides the cards due by a literal again; the rate is the learner's own or the shared default",
+  );
+  assert.match(
+    between(code("components/assessment/PlanPanel.tsx"), "export function minutesFor"), /minutesForCards\(/,
+    "PlanPanel's minutesFor keeps a rate of its own again",
+  );
+});
+
+/*
+  The distance on Today and on the exam hub is the plan's, off the same
+  projection, in the plan's own sentence.
+
+  Today's countdown said how likely a pass was that morning and the hub said
+  how many weeks were left, and neither said whether the pace this learner
+  keeps arrives by then. Both print `distanceLine` over `project` now, built
+  from `standingFor`, the reasons and the measured pace, so a learner cannot
+  read one timeline on the level check screen and another on Today.
+*/
+check("Today and the exam hub print the plan's distance off the plan's own projection", () => {
+  const countdown = code("lib/progress/countdown.ts");
+  for (const name of ["project(", "distanceLine(", "standingFor(", "foundHours("]) {
+    assert.ok(countdown.includes(name), `lib/progress/countdown.ts no longer calls ${name}`);
+  }
+  assert.match(code("components/ExamCountdown.tsx"), /countdown\.distance/, "the countdown card no longer prints the distance");
+  const hub = code("app/(app)/exam/page.tsx");
+  for (const name of ["project(", "distanceLine(", "standingFor(", "measuredPaceFor("]) {
+    assert.ok(hub.includes(name), `the exam hub no longer calls ${name}`);
+  }
+  // Nobody phrases the distance for a screen by hand: the sentence is the plan's.
+  const rephrased = ALL.filter((f) =>
+    f !== "lib/assessment/plan.ts" && !/\.(i)?test\.ts$/.test(f)
+    && /weeksWithFound[^\n]*weeks (away|off)/.test(code(f)));
+  assert.deepEqual(rephrased, [], "a screen writes its own sentence over weeksWithFound rather than reading distanceLine");
+});
+
+/*
+  Anu is told how the level is known and what Estonian the learner lives in.
+
+  A tutor told "B1" and nothing else treats a guess and a measurement alike,
+  and a briefing that names the learner's situation reads it off the same
+  reasons table the plan prints, so she and the plan cannot describe one
+  learner two ways.
+*/
+check("Anu's briefing reads the shared level rule and the reasons table", () => {
+  const context = code("lib/progress/tutorContext.ts");
+  assert.match(context, /currentLevelAnswer\(/, "learnerContextFor no longer asks how the level is known");
+  assert.match(context, /describeSituation\(/, "learnerContextFor no longer reads the situation off the reasons table");
+  const note = between(code("lib/tutor/prompt.ts"), "export function learnerNote");
+  assert.match(note, /standing/, "learnerNote no longer says how the level is known");
+  assert.match(note, /situation/, "learnerNote no longer says what Estonian the learner lives in");
+  const phrases = ALL.filter((f) => f !== "lib/assessment/goals.ts" && /"live in Estonia"/.test(code(f)));
+  assert.deepEqual(phrases, [], "a situation phrase is typed outside the reasons table");
 });
 
 // ── Checks about the checks ──────────────────────────────────────────────────

@@ -6,6 +6,8 @@ import { type AudioSource, readAudio, writeAudio } from "@/lib/audio/store";
 import { singleFlightTagged } from "@/lib/cache/singleFlight";
 import { recordUsage, authoriseCall, releaseReservation } from "@/lib/usage/ledger";
 import { DEFAULT_VOICE, voiceFrom, VOICES } from "@/lib/audio/voice";
+import { prepareClip, WavError } from "@/lib/audio/wav";
+import { reportError } from "@/lib/observability/report";
 
 const TARTU_NLP = "https://api.tartunlp.ai/text-to-speech/v2";
 const MAX_CHARS = 400;
@@ -64,15 +66,23 @@ export async function POST(request: Request) {
   }
 
   let text: string;
-  let speed = 1;
   let voice: string | null = null;
   try {
-    const body = (await request.json()) as { text?: unknown; speed?: unknown; voice?: unknown };
+    /*
+      No speed. There used to be one, forwarded to the model, and it is gone
+      on purpose: TartuNLP applies it inside the acoustic model as a duration
+      regulator, so a "slow" clip was every phoneme held 1.6 times longer on
+      repeated frames, at the same pitch, which is the flat, buzzing stretch
+      a learner reported. Slow is a fact about playback now, not about the
+      clip: lib/audio/clip.ts plays the one clip slower with the pitch held.
+      One clip per word rather than two also halves what is asked of a free
+      service and what the caches hold.
+    */
+    const body = (await request.json()) as { text?: unknown; voice?: unknown };
     if (typeof body.text !== "string" || !body.text.trim()) {
       return NextResponse.json({ error: "Nothing to say." }, { status: 400 });
     }
     text = body.text.trim().slice(0, MAX_CHARS);
-    if (typeof body.speed === "number" && body.speed >= 0.5 && body.speed <= 2) speed = body.speed;
     /*
       The learner's chosen voice, checked against the allowlist rather than
       passed to a third party as typed. A value that is not one of ours is
@@ -85,7 +95,9 @@ export async function POST(request: Request) {
   }
 
   const speaker = voice ?? voiceFrom(process.env.TTS_SPEAKER ?? DEFAULT_VOICE);
-  const hash = createHash("sha256").update(`${text}|${speaker}|${speed}`).digest("hex");
+  // `v2` because a clip under the old key is float32 with half a second of
+  // silence on each end, and the key has to say which shape is behind it.
+  const hash = createHash("sha256").update(`v2|${text}|${speaker}`).digest("hex");
   // Content-addressed and shared across instances and users: a clip fetched
   // once is available to everybody, forever. Writing to /tmp instead, as this
   // did, is per-instance and wiped on every cold start — not a cache, just a
@@ -125,7 +137,7 @@ export async function POST(request: Request) {
       still matters below, so it is asked for rather than thrown away.
     */
     const { value: audio, joined } = await singleFlightTagged(
-      `tts:${hash}`, () => speak(text, speaker, speed, hash),
+      `tts:${hash}`, () => speak(text, speaker, hash),
     );
     // TartuNLP is free, so this costs nothing — it is recorded to show how
     // heavily the app leans on somebody else's goodwill. Passing an explicit
@@ -173,7 +185,6 @@ class SpeechError extends Error {
 async function speak(
   text: string,
   speaker: string,
-  speed: number,
   hash: string,
 ): Promise<Buffer> {
   let upstream: Response;
@@ -181,7 +192,7 @@ async function speak(
     upstream = await fetch(TARTU_NLP, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text, speaker, speed }),
+      body: JSON.stringify({ text, speaker }),
       signal: AbortSignal.timeout(15_000),
     });
   } catch {
@@ -190,9 +201,28 @@ async function speak(
 
   if (!upstream.ok) throw new SpeechError(502);
 
-  const audio = Buffer.from(await upstream.arrayBuffer());
+  const raw = new Uint8Array(await upstream.arrayBuffer());
+  const audio = Buffer.from(prepare(raw));
   await writeAudio(hash, audio); // Never throws: a failed cache write is a slower next play.
   return audio;
+}
+
+/**
+ * Trimmed, levelled and written as 16-bit before it is kept; see lib/audio/wav.ts.
+ * A response this cannot read is kept as it came, reported, and still spoken,
+ * because an untrimmed clip is better than none and the report is how anybody
+ * learns the service changed its format.
+ */
+function prepare(raw: Uint8Array): Uint8Array {
+  try {
+    return prepareClip(raw);
+  } catch (error) {
+    if (error instanceof WavError) {
+      reportError(error, { at: "tts/prepare", extra: { bytes: raw.byteLength } });
+      return raw;
+    }
+    throw error;
+  }
 }
 
 /**

@@ -61,6 +61,9 @@ describe("hearing conditions", () => {
     for (const c of CONDITIONS) {
       expect(c.speed).toBeGreaterThanOrEqual(0.5);
       expect(c.speed).toBeLessThanOrEqual(2);
+      // A room is mixed from a decoded buffer, which cannot hold the pitch at
+      // another rate, so a condition with a room keeps a normal one.
+      if (c.noise !== null || c.band !== null || c.skip > 0) expect(c.speed).toBe(1);
       expect(c.skip).toBeGreaterThanOrEqual(0);
       expect(c.skip).toBeLessThan(0.6);
       if (c.noise) expect(c.noise.level).toBeLessThan(0.5);

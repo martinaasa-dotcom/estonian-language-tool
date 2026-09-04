@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { measuredPace, SESSION_GAP_MS, studyHours } from "./pace";
+import { DEFAULT_CARDS_PER_MINUTE, MAX_CARDS_PER_MINUTE, MIN_CARDS_PER_MINUTE, measuredPace, minutesForCards, SESSION_GAP_MS, studyHours } from "./pace";
 import { dayClock } from "@/lib/time/day";
 
 const MIN = 60_000;
@@ -75,7 +75,16 @@ describe("the pace over the window", () => {
   it("reports a window that held nothing as a pace of nothing over real weeks", () => {
     const first = new Date(now.getTime() - 60 * DAY);
     const pace = measuredPace([], { now, firstReviewAt: first, clock });
-    expect(pace).toEqual({ hoursPerWeek: 0, daysPerWeek: 0, weeks: 4 });
+    expect(pace).toEqual({ hoursPerWeek: 0, daysPerWeek: 0, weeks: 4, cardsPerMinute: null });
+  });
+
+  it("measures cards a minute over sitting time, not over card durations alone", () => {
+    const first = new Date(now.getTime() - 60 * DAY);
+    const t = now.getTime() - 2 * DAY;
+    // Four cards across three minutes of sitting, the first card twenty seconds long.
+    const rows = [0, 1, 2, 3].map((m) => ({ reviewedAt: new Date(t + m * MIN), durationMs: m === 0 ? 20_000 : 5_000 }));
+    const pace = measuredPace(rows, { now, firstReviewAt: first, clock });
+    expect(pace?.cardsPerMinute).toBeCloseTo(4 / (3 + 20 / 60), 10);
   });
 
   it("counts days on the learner's own calendar", () => {
@@ -89,5 +98,31 @@ describe("the pace over the window", () => {
     const utc = measuredPace(rows, { now, firstReviewAt: first, clock });
     expect(tallinn!.daysPerWeek * 4).toBeCloseTo(1, 10);
     expect(utc!.daysPerWeek * 4).toBeCloseTo(2, 10);
+  });
+});
+
+describe("minutes for a number of cards", () => {
+  it("uses the learner's own rate where there is one and the default otherwise", () => {
+    expect(minutesForCards(30)).toBe(Math.round(30 / DEFAULT_CARDS_PER_MINUTE));
+    expect(minutesForCards(30, 6)).toBe(5);
+    expect(minutesForCards(30, null)).toBe(minutesForCards(30));
+    expect(minutesForCards(30, 0)).toBe(minutesForCards(30));
+  });
+
+  /*
+    The log cannot tell a sprint from a typed review, so an evening of games
+    read raw promised 26 cards in a minute. A measured rate is believed only
+    inside the band a review can actually run at.
+  */
+  it("reads a measured rate at the edge of the believable band, never past it", () => {
+    expect(minutesForCards(26, 40)).toBe(Math.round(26 / MAX_CARDS_PER_MINUTE));
+    expect(minutesForCards(26, 0.1)).toBe(Math.round(26 / MIN_CARDS_PER_MINUTE));
+    expect(MAX_CARDS_PER_MINUTE).toBeGreaterThan(DEFAULT_CARDS_PER_MINUTE);
+    expect(MIN_CARDS_PER_MINUTE).toBeLessThan(DEFAULT_CARDS_PER_MINUTE);
+  });
+
+  it("never promises less than a minute", () => {
+    expect(minutesForCards(1, 10)).toBe(1);
+    expect(minutesForCards(0)).toBe(1);
   });
 });

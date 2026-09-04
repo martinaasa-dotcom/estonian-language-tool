@@ -71,9 +71,11 @@ export interface Condition {
 /**
  * The conditions, in the order they open.
  *
- * `quick` is a real speech rate rather than a resampled one: the service is
- * asked for it, so the pitch stays where the voice puts it and only the
- * tempo changes. 1.3 is brisk, not a caricature; the state examination's
+ * `quick` is the one clip played faster with the pitch held, which is the
+ * same stretch a slow play uses the other way (`lib/audio/clip.ts`), so the
+ * voice stays where it is and only the tempo changes. It is not asked of the
+ * service: a speech model asked for a tempo holds every phoneme on repeated
+ * frames and buzzes. 1.3 is brisk, not a caricature; the state examination's
  * listening texts are read at about that pace and a receptionist is faster.
  *
  * `cafe` is filtered noise at a level where the voice still leads. `phone`
@@ -81,13 +83,15 @@ export interface Condition {
  * difference between `s` and `f` and is exactly what happens on a call. `half`
  * starts two fifths of the way in, which is a sentence caught from the middle
  * of a conversation, and it is last because it is the only one that removes
- * words rather than colouring them.
+ * words rather than colouring them. A condition with a room in it keeps a
+ * normal rate, asserted: the mixer plays a decoded buffer, and a buffer
+ * source cannot hold the pitch the way an element can.
  */
 export const CONDITIONS: readonly Condition[] = [
   { id: "clean", name: "A quiet room", said: "in a quiet room", speed: 1, noise: null, band: null, skip: 0 },
   { id: "quick", name: "At speed", said: "at speed", speed: 1.3, noise: null, band: null, skip: 0 },
   { id: "cafe", name: "In a café", said: "over café noise", speed: 1, noise: { level: 0.16, lowpassHz: 1400 }, band: null, skip: 0 },
-  { id: "phone", name: "On the phone", said: "down a phone line", speed: 1.1, noise: null, band: { lowHz: 300, highHz: 3400 }, skip: 0 },
+  { id: "phone", name: "On the phone", said: "down a phone line", speed: 1, noise: null, band: { lowHz: 300, highHz: 3400 }, skip: 0 },
   { id: "half", name: "From halfway through", said: "from halfway through", speed: 1, noise: null, band: null, skip: 0.4 },
 ];
 

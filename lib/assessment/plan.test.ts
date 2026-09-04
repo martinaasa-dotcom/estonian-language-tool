@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CUMULATIVE_HOURS, ESTONIAN_FACTOR, FACTS, FOUND_HOURS_PER_WEEK, GUIDED_LEARNING_HOURS, MIN_PACE_WEEKS,
   countedBySkill, foundHours, hoursBetween, hoursFor, project, sustainableNewCardsPerDay, weeklyExposure,
-  weeksNeeded, weeksToLearn, type PlanInput, type Standing, type Verdict,
+  distanceLine, weeksNeeded, weeksToLearn, type PlanInput, type Standing, type Verdict,
 } from "./plan";
 import { REASONS, reasonsFor } from "./goals";
 import { BANDS, PRE_A1, type Band, type Level } from "./types";
@@ -415,7 +415,7 @@ describe("the learner's own pace", () => {
   const base: PlanInput = { standing: at("A2"), to: "B1", minutesPerDay: 15, daysPerWeek: 5, weeksAvailable: 52, found: NONE };
 
   it("replaces what they said with what they did, once the log covers enough weeks", () => {
-    const plan = project({ ...base, pace: { hoursPerWeek: 0.5, daysPerWeek: 2, weeks: 4 } });
+    const plan = project({ ...base, pace: { hoursPerWeek: 0.5, daysPerWeek: 2, weeks: 4, cardsPerMinute: 2 } });
     expect(plan.paceSource).toBe("measured");
     expect(plan.appHoursPerWeek).toBe(0.5);
     expect(plan.paceWeeks).toBe(4);
@@ -423,7 +423,7 @@ describe("the learner's own pace", () => {
   });
 
   it("goes on trusting the promise while the log is younger than a fortnight", () => {
-    const plan = project({ ...base, pace: { hoursPerWeek: 3, daysPerWeek: 7, weeks: MIN_PACE_WEEKS - 0.5 } });
+    const plan = project({ ...base, pace: { hoursPerWeek: 3, daysPerWeek: 7, weeks: MIN_PACE_WEEKS - 0.5, cardsPerMinute: 3 } });
     expect(plan.paceSource).toBe("stated");
     expect(plan.appHoursPerWeek).toBeCloseTo(1.25, 10);
     expect(plan.paceWeeks).toBeNull();
@@ -435,17 +435,60 @@ describe("the learner's own pace", () => {
     make every figure on the screen zero or infinite, and the source says why.
   */
   it("keeps the stated pace when the log is there and empty, and says so", () => {
-    const plan = project({ ...base, pace: { hoursPerWeek: 0, daysPerWeek: 0, weeks: 4 } });
+    const plan = project({ ...base, pace: { hoursPerWeek: 0, daysPerWeek: 0, weeks: 4, cardsPerMinute: null } });
     expect(plan.paceSource).toBe("lapsed");
     expect(plan.appHoursPerWeek).toBeCloseTo(1.25, 10);
     expect(plan.paceWeeks).toBe(4);
   });
 
   it("lets a real pace move the verdict either way", () => {
-    const keen = project({ ...base, to: "A2", standing: at("A1"), pace: { hoursPerWeek: 6, daysPerWeek: 6, weeks: 4 } });
-    const lazy = project({ ...base, to: "A2", standing: at("A1"), minutesPerDay: 120, daysPerWeek: 7, pace: { hoursPerWeek: 0.2, daysPerWeek: 1, weeks: 4 } });
+    const keen = project({ ...base, to: "A2", standing: at("A1"), pace: { hoursPerWeek: 6, daysPerWeek: 6, weeks: 4, cardsPerMinute: 3 } });
+    const lazy = project({ ...base, to: "A2", standing: at("A1"), minutesPerDay: 120, daysPerWeek: 7, pace: { hoursPerWeek: 0.2, daysPerWeek: 1, weeks: 4, cardsPerMinute: 3 } });
     expect(keen.verdict).toBe("comfortable");
     expect(lazy.verdict).not.toBe("comfortable");
+  });
+});
+
+describe("the distance in one sentence", () => {
+  const base: PlanInput = { standing: at("A2"), to: "B1", minutesPerDay: 15, daysPerWeek: 5, weeksAvailable: 52, found: NONE };
+
+  it("quotes the projection's own weeks and the date, and names the pace for what it is", () => {
+    const p = project(base);
+    const line = distanceLine(p);
+    expect(line).toContain(`${p.weeksWithFound.low} to ${p.weeksWithFound.high} weeks away`);
+    expect(line).toContain("52 weeks off");
+    expect(line).toContain("the pace you said");
+    expect(distanceLine(project({ ...base, pace: { hoursPerWeek: 1, daysPerWeek: 3, weeks: 4, cardsPerMinute: 3 } })))
+      .toContain("the pace you have kept");
+    expect(distanceLine(project({ ...base, pace: { hoursPerWeek: 0, daysPerWeek: 0, weeks: 4, cardsPerMinute: null } })))
+      .toContain("nothing has been reviewed here lately");
+  });
+
+  it("says a different last sentence for every verdict, and each one is the verdict", () => {
+    const lines = new Map<Verdict, string>();
+    lines.set("open", distanceLine(project({ ...base, weeksAvailable: null })));
+    lines.set("passed", distanceLine(project({ ...base, weeksAvailable: 0 })));
+    lines.set("short", distanceLine(project({ ...base, weeksAvailable: 10 })));
+    lines.set("tight", distanceLine(project({ ...base, minutesPerDay: 60, daysPerWeek: 7, weeksAvailable: 40 })));
+    lines.set("possible", distanceLine(project({ ...base, standing: guessed("A1"), to: "B2", minutesPerDay: 5, weeksAvailable: 104, found: foundHours(reasonsFor("living family")) })));
+    lines.set("comfortable", distanceLine(project({ ...base, minutesPerDay: 240, daysPerWeek: 7 })));
+    lines.set("arrived", distanceLine(project({ ...base, standing: at("B2") })));
+    const seen = new Set(lines.values());
+    expect(seen.size).toBe(lines.size);
+    expect(lines.get("open")).toContain("No date is set");
+    expect(lines.get("passed")).toContain("has gone");
+    expect(lines.get("short")).toContain("something has to move");
+    expect(lines.get("tight")).toContain("It fits");
+    expect(lines.get("possible")).toContain("It could fit");
+    expect(lines.get("comfortable")).toContain("this app alone covers it");
+    // The target, not the standing: "already B1" is the level the plan is about.
+    expect(lines.get("arrived")).toContain("already B1");
+  });
+
+  it("checks each verdict really is the one it printed", () => {
+    expect(project({ ...base, weeksAvailable: 10 }).verdict).toBe("short");
+    expect(project({ ...base, minutesPerDay: 60, daysPerWeek: 7, weeksAvailable: 40 }).verdict).toBe("tight");
+    expect(project({ ...base, minutesPerDay: 240, daysPerWeek: 7 }).verdict).toBe("comfortable");
   });
 });
 

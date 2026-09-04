@@ -556,8 +556,9 @@ sizes anybody starts at, so leaving it out implied the software maintains itself
 dollars a month before a single learner arrives, and most of it does not move when they do, so the
 first thousand people are close to free to serve. **Speech** is the fastest-growing thing on the
 page: TartuNLP returns uncompressed 32-bit audio at 88 KB a second, 188 KB for a three-word
-sentence, so the whole spoken dictionary is 2.8 GB, and at a hundred thousand learners buying that
-speech would come to more than every billed line put together. **What is given outgrows what is
+sentence, and what is stored is the same clip trimmed and written as 16-bit, 51 KB, so the whole
+spoken dictionary is about 0.8 GB, and at a hundred thousand learners buying that speech would
+still come to more than every billed line put together. **What is given outgrows what is
 paid for** at that size, which is worth knowing about a project this small. Each is asserted, and
 the per-learner curve was asserted three times before it was right: the first version claimed a
 smooth fall, failed twice, and both failures were the model telling the truth.
@@ -1969,6 +1970,24 @@ that held nothing keeps the stated pace and says so rather than dividing by zero
 this is measured on the app's learners as a population, and the copy still says that. What is
 measured is the one learner in front of it.
 
+**And the same person is quoted on every screen that quotes a pace or a date.** The plan was
+calibrated first and three other screens went on quoting the average beside it. Today's countdown
+card said how likely a pass was that morning and never whether the pace this learner keeps reaches
+the date; the exam hub printed the weeks left with no distance to set against them; and Today's
+"about N minutes" divided the cards due by six while the plan budgeted three, so the morning promised
+half the time the plan was allowing for the same cards. `distanceLine` in `lib/assessment/plan.ts`
+is the plan's own sentence over its own projection, Today and the hub both build that projection
+from `standingFor`, the reasons and the measured pace, and an invariant fails on a screen writing
+its own sentence over `weeksWithFound`. `DEFAULT_CARDS_PER_MINUTE` is defined once in
+`lib/stats/pace.ts`, `minutesForCards` is how cards become minutes anywhere, and the learner's own
+rate off the log replaces it after a fortnight, read at the edge of a believable band rather than
+raw: the log cannot tell Match from a typed review, and one evening of games read raw made the
+morning promise 26 cards in a minute. Anu is briefed the same way: `learnerNote` says
+whether a paper measured the level and which skills it found, so she does not pitch listening at a
+level a check has already said the learner has not reached, and it names what Estonian the learner
+lives in, off the `situation` phrase each reason in `goals.ts` carries beside its hours. One table,
+so the plan's note and her briefing cannot describe one learner two ways.
+
 **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
 the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
 Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
@@ -2552,7 +2571,7 @@ used to arrive on a button press only, in one voice chosen by whoever deployed t
 the daily path meant a learner clicking a speaker icon on every card or hearing nothing. A card
 now reads itself aloud when a word is first met and when its answer appears, the next card's clip
 is fetched while this one is being answered so the play is instant, and `lib/audio/voice.ts` is
-the allowlist of TartuNLP's twelve Estonian voices a learner may pick from in Settings. The state
+the allowlist of TartuNLP's ten Estonian voices a learner may pick from in Settings. The state
 examination's listening part is read by more than one speaker and so is the country, so a learner
 who has only ever heard one voice say a word has learned that voice rather than the word. A
 requested voice is checked against that list on the way into the speech route and never passed to
@@ -2561,8 +2580,42 @@ wrong answer makes a short sound made with the browser's own oscillator, so it c
 and works offline. All three are settings, on by default because a missing row has to read as
 the behaviour everybody had, and `components/AudioPrefs.tsx` publishes them once from the shell so
 every speaker button and every round reads one answer. `lib/audio/clip.ts` is the one place a
-clip's cache key is built, since three copies of "text, speed, voice" is where two of them stop
+clip's cache key is built, since three copies of "text, voice" is where two of them stop
 agreeing about what is in the cache.
+
+**Slow is the same clip played slower with the pitch held, never a second clip asked of the
+model.** The slow half of every speaker pill used to ask TartuNLP for the sentence again at speed
+0.6, and the service applies that number inside its acoustic model as a duration regulator: each
+phoneme's predicted length is multiplied and the extra frames are copies of the one before, then
+the vocoder renders the lot. Measured on the live service, the pitch does not move (240 Hz against
+237) and the speech is 1.6 times longer, and what a learner hears is every vowel held flat with a
+buzz under it, which was reported as robotic and is. No speaker ever said anything that slowly, so
+a model asked to has nothing to imitate. A pitch-preserving time stretch over real speech keeps
+the recording's own pitch contour and its formants, which is how a video player's 0.75x sounds like
+the same person speaking slowly, and every browser ships one behind `playbackRate` with
+`preservesPitch`. So there is one clip per word and voice, `SLOW_RATE` in `lib/audio/clip.ts` is
+the rate it plays at, and the route no longer accepts a speed at all: one clip rather than two
+halves what is asked of a free service and what three caches hold, and a slow play works offline
+wherever the normal one does. 0.7 rather than 0.6 because that is where the stretch stays clean on
+consonants, which is the part of Estonian a slow play exists to make audible.
+
+**And what the service sends is not what is kept.** The worker pads every sentence with half a
+second of digital silence on each side, so a word on a card arrived as 0.85 seconds of nothing,
+0.39 of speech and 0.5 of nothing again: most of a second between the press and the sound, which is
+the delay that makes a voice feel like a machine warming up, and it was being stored, shipped and
+slowed with the rest. `lib/audio/wav.ts` is what happens to a clip between the service and the
+cache, pure and unit tested: the dead air is cut to 40 ms in front and a natural release behind,
+the cuts are faded so nothing clicks, every voice is levelled to one peak so switching from Mari to
+Kalev in Settings does not mean reaching for the volume key, and the 32-bit float is written as
+16-bit PCM, which halves the store, the egress and the phone's cache for a signal that never
+carried more than sixteen bits out of a vocoder. Nothing in it touches what is said or how fast,
+and a response it cannot read is kept as it came and reported rather than lost. The cache key
+carries a version for it, since a clip under the old key is the untrimmed float. Two voices left
+the allowlist on the same day, `lee` and `luukas`, because the live service answers a request for
+either with a 408 after thirty seconds and the listening round cycles every voice, so two words in
+twelve waited out the route's timeout: a voice is on the list because it answers. Asserted: the
+route forwards no speed and prepares every clip before writing it, and `playbackRate` is set in one
+file.
 
 **A response built out of one learner's own rows says it is theirs and is never kept.** The
 framework's silence is not a cache policy: `ImageResponse` stamps `public, immutable,
@@ -4314,7 +4367,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
 `conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
-`nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`,
+`nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`, `prepareClip`, `SLOW_RATE`,
 `billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`,
 `MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`, `rungOf`,
 `LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`, `caseFits`,
@@ -4323,8 +4376,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `hoursFor`, `foundHours`, `weeklyExposure`,
 `weeksWithFound`, `measuredPace`, `currentLevelAnswer`, `AnuProse`, `parseReply`, `fixFrom`,
 `TAGGED_LINE`, `readSituation`, `wordStanding`, `SITUATION_FACTS`, `readinessPicture`, `RungChip`,
-`conditionFor`, `describeHearing`, `playThrough`, `errandForDay`, `recordEncounter`, `outThere`.
-Most of them now
+`distanceLine`, `minutesForCards`, `describeSituation`, `conditionFor`, `describeHearing`,
+`playThrough`, `errandForDay`, `recordEncounter`, `outThere`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

@@ -30,21 +30,48 @@ export interface ClipRequest {
    * How it is delivered: the rate, the room, the line. Clean when absent,
    * which is what every screen that has not asked gets. `slow` wins over a
    * condition's own speed, because "play it slowly" is the learner's request
-   * and the condition is the round's.
+   * and the condition is the round's. The rate is a playback rate on the
+   * element with the pitch held, never a number sent to the service, for the
+   * reason SLOW_RATE gives below.
    */
   readonly condition?: Condition;
 }
 
-export const SLOW_SPEED = 0.6;
+/**
+ * SLOW IS THE SAME CLIP PLAYED SLOWER, WITH THE PITCH HELD.
+ *
+ * It used to be a second clip, asked of the speech service at speed 0.6.
+ * TartuNLP applies that number inside its acoustic model, as a duration
+ * regulator: every phoneme's predicted length is multiplied and the extra
+ * frames are copies, then the vocoder renders them. Measured on the live
+ * service, the pitch does not move (240 Hz against 237) and the speech gets
+ * 1.6 times longer, and what a learner hears is every vowel held flat and a
+ * buzz under it, which is exactly the "robotic" a person reports. That is
+ * what a neural model does when asked to say something no speaker ever said
+ * that slowly.
+ *
+ * A pitch-preserving time stretch over real speech is a different thing: it
+ * keeps the recording's own pitch contour and its formants and only repeats
+ * or drops short overlapping grains of waveform, which is how a video player's
+ * 0.75x sounds like the same person talking more slowly. Every browser ships
+ * one behind `playbackRate`, and `preservesPitch` is what asks for it rather
+ * than for the tape-slowed drop in pitch.
+ *
+ * So there is one clip per word and voice, and this is the rate it plays at
+ * when asked for slowly. 0.7 is where the stretch is still clean: at 0.6 the
+ * grains start to smear on consonants, which is the part of Estonian a slow
+ * play exists to make audible. The clip's own leading silence is already
+ * trimmed off on the server, so slowing it does not slow the wait for it.
+ */
+export const SLOW_RATE = 0.7;
 
-/** The rate the service is asked for. */
-export function speedOf({ slow, condition }: ClipRequest): number {
-  if (slow) return SLOW_SPEED;
-  return (condition ?? CLEAN).speed;
-}
-
-export function clipKey(request: ClipRequest): string {
-  return `${request.text}|${speedOf(request)}|${request.voice ?? ""}`;
+/**
+ * One clip per word and voice. The rate is not in the key, because a
+ * condition changes how the clip is played and never which clip it is:
+ * "at speed" is the same stretch as slow, the other way.
+ */
+export function clipKey({ text, voice }: ClipRequest): string {
+  return `${text}|${voice ?? ""}`;
 }
 
 /** The object URL for a clip, from the page cache or the network. */
@@ -57,7 +84,6 @@ export async function fetchClip(request: ClipRequest): Promise<string> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       text: request.text,
-      speed: speedOf(request),
       ...(request.voice ? { voice: request.voice } : {}),
     }),
   });
@@ -105,11 +131,21 @@ export async function playClip(
   { unasked = false }: { unasked?: boolean } = {},
 ): Promise<PlayOutcome> {
   const url = await fetchClip(request);
-  // The room is the mixer's job; a quiet room is the element's, as it always was.
+  // The room is the mixer's job; the rate and a quiet room are the element's.
   const condition = request.slow ? CLEAN : (request.condition ?? CLEAN);
   if (needsMixer(condition)) return playThrough(url, condition, { unasked });
+  const audio = new Audio(url);
+  if (request.slow) {
+    audio.preservesPitch = true;
+    audio.playbackRate = SLOW_RATE;
+  } else if (condition.speed !== 1) {
+    // "At speed" is the same time stretch as slow, the other way, and holds
+    // the pitch for the same reason: a faster tape is a higher voice.
+    audio.preservesPitch = true;
+    audio.playbackRate = condition.speed;
+  }
   try {
-    await new Audio(url).play();
+    await audio.play();
   } catch (error) {
     if (unasked && error instanceof DOMException && error.name === "NotAllowedError") {
       return "blocked";
