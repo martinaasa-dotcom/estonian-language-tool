@@ -133,8 +133,12 @@ export function isFormSlot(slot: string): boolean {
  * The card's case where it has one, which keeps every review written before
  * this reading the same way it always did, and the card's type otherwise.
  */
-export function slotOfCard(card: { cardType: string; targetCase: string | null }): string {
-  return card.targetCase ?? card.cardType;
+export function slotOfCard(
+  card: { cardType: string; targetCase: string | null; slot?: string | null },
+): string {
+  // The case where it has one, then the conjugation slot where it has one, then
+  // the type. A card built before `Card.slot` existed reads exactly as it did.
+  return card.targetCase ?? card.slot ?? card.cardType;
 }
 
 /** What a slot is called on a screen. The Estonian name leads, as everywhere. */

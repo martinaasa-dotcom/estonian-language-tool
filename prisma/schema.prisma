@@ -176,6 +176,17 @@ model Card {
   back       String
   hint       String?
   targetCase String? // for CASE_FORM cards — powers the weak-case breakdown
+  /// The conjugation slot a CONJUGATION card is about, as `CONJUGATION_SLOTS` spells it.
+  ///
+  /// A second column rather than a wider `targetCase`, for the reason `Review.slot`
+  /// is not a wider `Review.targetCase`: `caseAccuracy` tallies whatever string it
+  /// finds in that column and prints the key where it recognises nothing, so a morph
+  /// code written there would put `indprsg3` on the Progress page beside `osastav`.
+  /// The front used to carry the label (`lugema → olevik · ta`) and the reveal read
+  /// it off; a card built out of a sentence carries no label, because the label is
+  /// the answer in two pieces. `slotOfCard` reads it, so the mastery counter and the
+  /// readiness reading see eight facets of a verb where they saw one.
+  slot       String?
   source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT | SCAN | ALMANAC | SCENE
   suspended  Boolean @default(false)
 

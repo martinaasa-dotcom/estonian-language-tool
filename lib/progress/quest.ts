@@ -4,7 +4,7 @@ import { caseReviewsFor } from "@/lib/progress/cases";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { stemsFrom } from "@/lib/estonian/derive";
 import { caseIndex, readCase } from "@/lib/estonian/whichCase";
-import { caseFormChoices } from "@/lib/questions/caseChoices";
+import { caseFormChoices, verbFormChoices, verbFormSlots } from "@/lib/questions/caseChoices";
 
 /**
  * THE DAILY QUEST'S POOL: WHAT IS GOING WRONG, ASKED AGAIN TODAY.
@@ -145,10 +145,15 @@ export async function questFor(ownerId: string): Promise<Quest> {
  * dictionary's own primary-first order and `id` makes it total.
  */
 async function optionsFor(
-  cards: { id: string; back: string; cardType: string; lexemeId: string | null }[],
+  cards: {
+    id: string; back: string; cardType: string; lexemeId: string | null;
+    lexeme: { lemma: string } | null;
+  }[],
 ): Promise<Map<string, { text: string; slot: string | null }[]>> {
   const out = new Map<string, { text: string; slot: string | null }[]>();
-  const wanted = cards.filter((c) => c.cardType === "CASE_FORM" && c.lexemeId);
+  const wanted = cards.filter(
+    (c) => (c.cardType === "CASE_FORM" || c.cardType === "CONJUGATION") && c.lexemeId,
+  );
   if (wanted.length === 0) return out;
 
   const forms = await prisma.form.findMany({
@@ -167,18 +172,28 @@ async function optionsFor(
   for (const card of wanted) {
     const held = byLexeme.get(card.lexemeId!);
     if (!held) continue;
-    const stems = stemsFrom(held);
     const accepted = acceptedAnswers(card.back, "et");
-    const picked = caseFormChoices({
-      stems, accepted, answer: accepted[0] ?? card.back, rng: Math.random,
-    });
-    if (!picked) continue;
+    const answer = accepted[0] ?? card.back;
     /*
-      A form more than one case spells is named as none of them, which is
+      A form more than one slot spells is named as none of them, which is
       `readCase`'s own rule: `kohvi` is the omastav, the osastav and the short
       sisseütlev at once, and filing a learner's pick under a guess would put a
-      confusion in the log that they never had.
+      confusion in the log that they never had. `verbFormSlots` draws the same
+      line for a verb.
     */
+    if (card.cardType === "CONJUGATION") {
+      const lemma = card.lexeme?.lemma;
+      if (!lemma) continue;
+      const lex = { lemma, forms: held };
+      const picked = verbFormChoices({ lex, accepted, answer, rng: Math.random });
+      if (!picked) continue;
+      const slots = verbFormSlots(lex);
+      out.set(card.id, picked.map((text) => ({ text, slot: slots.get(text) ?? null })));
+      continue;
+    }
+    const stems = stemsFrom(held);
+    const picked = caseFormChoices({ stems, accepted, answer, rng: Math.random });
+    if (!picked) continue;
     const index = caseIndex(stems);
     out.set(card.id, picked.map((text) => {
       const verdict = readCase(index, text);

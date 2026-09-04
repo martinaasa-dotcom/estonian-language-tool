@@ -8,7 +8,7 @@ import { decoyOptions } from "@/lib/dict/facts";
 import {
   bandOf, differentMeaning, glossNearness, glossOption, pickOptions,
 } from "@/lib/questions/distractors";
-import { caseFormChoices } from "@/lib/questions/caseChoices";
+import { caseFormChoices, verbFormChoices } from "@/lib/questions/caseChoices";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { stemsFrom } from "@/lib/estonian/derive";
 import type { ReviewCard } from "./ReviewSession";
@@ -104,6 +104,7 @@ function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
     back: c.back,
     hint: c.hint,
     targetCase: c.targetCase,
+    slot: c.slot,
     lemma: c.lexeme?.lemma ?? null,
     isNew: c.state === 0,
     // Only on a card that has never been seen. Every other card in the session
@@ -175,7 +176,7 @@ function wantsChoices(card: ReviewCard): boolean {
  * answered, and "Got it" then goes into `Review` as though it were evidence.
  */
 function wantsFormChoices(card: ReviewCard): boolean {
-  return card.cardType === "CASE_FORM";
+  return card.cardType === "CASE_FORM" || card.cardType === "CONJUGATION";
 }
 
 /**
@@ -193,9 +194,11 @@ function wantsFormChoices(card: ReviewCard): boolean {
  * and which one that is may not be a fact about the query plan. `orderIndex`
  * is the dictionary's own primary-first order and `id` makes it total.
  */
-async function formsForCases(rows: CardRow[]): Promise<Map<string, ReturnType<typeof stemsFrom>>> {
+type HeldForms = { formType: string; value: string; morphCode: string | null }[];
+
+async function formsForCases(rows: CardRow[]): Promise<Map<string, HeldForms>> {
   const ids = [...new Set(
-    rows.filter((r) => r.cardType === "CASE_FORM" && r.lexemeId).map((r) => r.lexemeId!),
+    rows.filter((r) => wantsFormChoices(toReviewCard(r, "en")) && r.lexemeId).map((r) => r.lexemeId!),
   )];
   if (ids.length === 0) return new Map();
 
@@ -205,13 +208,13 @@ async function formsForCases(rows: CardRow[]): Promise<Map<string, ReturnType<ty
     orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
   });
 
-  const byLexeme = new Map<string, typeof forms>();
+  const byLexeme = new Map<string, HeldForms>();
   for (const form of forms) {
     const held = byLexeme.get(form.lexemeId) ?? [];
     held.push(form);
     byLexeme.set(form.lexemeId, held);
   }
-  return new Map([...byLexeme].map(([id, held]) => [id, stemsFrom(held)]));
+  return byLexeme;
 }
 
 /**
@@ -258,16 +261,18 @@ export async function withChoices(
     other forms of the word the card is already about. See
     `lib/questions/caseChoices.ts`.
   */
-  const stems = await formsForCases(rows);
+  const held = await formsForCases(rows);
   const withForms = cards.map((card, i) => {
     const lexemeId = rows[i]?.lexemeId;
     if (!wantsFormChoices(card) || !lexemeId) return card;
-    const held = stems.get(lexemeId);
-    if (!held) return card;
+    const forms = held.get(lexemeId);
+    const lemma = rows[i]?.lexeme?.lemma;
+    if (!forms || !lemma) return card;
     const accepted = acceptedAnswers(card.back, "et");
-    const options = caseFormChoices({
-      stems: held, accepted, answer: accepted[0] ?? card.back, rng: Math.random,
-    });
+    const answer = accepted[0] ?? card.back;
+    const options = card.cardType === "CONJUGATION"
+      ? verbFormChoices({ lex: { lemma, forms }, accepted, answer, rng: Math.random })
+      : caseFormChoices({ stems: stemsFrom(forms), accepted, answer, rng: Math.random });
     return options ? { ...card, choices: options } : card;
   });
 

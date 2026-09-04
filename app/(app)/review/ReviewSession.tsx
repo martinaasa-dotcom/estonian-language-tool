@@ -16,6 +16,7 @@ import { SuggestFix } from "@/components/SuggestFix";
 import { WordIntro } from "@/components/WordIntro";
 import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
+import { slotLabel } from "@/lib/srs/slots";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { BLANK } from "@/lib/estonian/cloze";
 import { xpForRating } from "@/lib/gamification/xp";
@@ -33,6 +34,8 @@ export interface ReviewCard {
   back: string;
   hint: string | null;
   targetCase: string | null;
+  /** The conjugation slot a CONJUGATION card is about, as `CONJUGATION_SLOTS` spells it. */
+  slot: string | null;
   lemma: string | null;
   isNew: boolean;
   /**
@@ -94,15 +97,26 @@ function WhyRow({ card }: { card: ReviewCard }) {
   // who is told to answer in the same words (lib/tutor/prompt.ts).
   const named = card.targetCase ? caseByKey(card.targetCase) : undefined;
   const caseName = named?.et ?? card.targetCase?.toLowerCase() ?? "";
+  // A conjugation card names its slot the same way, off `Card.slot`: the front
+  // is a sentence now and carries no label, and the label is what the learner
+  // wants the moment the answer appears and is not what they thought.
+  const verbSlot = card.slot ? slotLabel(card.slot) : null;
   const question = card.targetCase
     ? `Why is the ${caseName} of "${card.lemma ?? card.front}" what it is? I keep getting this form wrong.`
-    : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
+    : verbSlot
+      ? `Why is "${card.lemma ?? card.front}" in the ${verbSlot} what it is? I keep getting this form wrong.`
+      : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
 
   const pill =
     "press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px";
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+      {verbSlot && !card.targetCase && (
+        <span className={pill} style={{ background: "var(--raised)", color: "var(--ink-2)" }} lang="et">
+          {verbSlot}
+        </span>
+      )}
       {card.targetCase && (
         <Link
           href={`/grammar/${card.targetCase.toLowerCase()}`}
@@ -190,7 +204,8 @@ const spoken = (side: string) => side.split(" / ")[0]!.trim();
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front"
     ? type !== "PRODUCTION"
-    : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION" || type === "CLOZE";
+    : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION" || type === "CLOZE"
+      || type === "CONJUGATION";
 
 /**
  * Card types whose answer is a single Estonian form, and so can be typed and
@@ -198,7 +213,12 @@ const estonianSide = (type: string, side: "front" | "back") =>
  * sentence-ish gloss ("partitive — aitan sind"), and marking that wrong on a
  * word order difference would be punishing the learner for the card's format.
  */
-const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE"]);
+/*
+  `CONJUGATION` joined the set when the card became a sentence with a form
+  taken out: its answer was always a single vouched form and `checkAnswer`
+  could always have marked it, and for a year it was a flip anyway.
+*/
+const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE", "CONJUGATION"]);
 
 type Ask = "intro" | "type" | "choice" | "flip";
 

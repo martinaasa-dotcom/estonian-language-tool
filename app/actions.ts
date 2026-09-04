@@ -193,6 +193,7 @@ async function addCardsFor(
         back: c.back,
         hint: c.hint,
         targetCase: c.targetCase,
+        slot: c.slot,
         source,
         due: scheduling.due,
         stability: scheduling.stability,

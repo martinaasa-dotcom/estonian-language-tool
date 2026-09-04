@@ -1,6 +1,8 @@
 import { CASES } from "@/lib/estonian/cases";
 import { caseAnswer, type NounStems } from "@/lib/estonian/derive";
 import { differentText, formNearness, pickOptions } from "./distractors";
+import { CONJUGATION_SLOTS } from "@/lib/srs/slots";
+import { attestedForms, conjugationAnswer, type VerbForms } from "@/lib/srs/cards";
 
 /**
  * FOUR FORMS OF ONE WORD, ONE OF THEM THE ONE THE SENTENCE WANTS.
@@ -81,4 +83,61 @@ export function caseFormChoices(input: {
     nearness: formNearness,
   });
   return picked ? picked.options : null;
+}
+
+/**
+ * The same four-option question for a verb: four persons of the one verb, one
+ * of them the one the sentence wants.
+ *
+ * A conjugation card ended in "Not yet" and "Got it" for the reason a case
+ * card did, and its answer is a single form the dictionary vouches for, either
+ * attested or derived by the one rule `lib/estonian/conjugate.ts` was checked
+ * against every verb in the dictionary for. The wrong answers are this verb's
+ * other slots, which is the confusion a conjugation card exists for: `loed`,
+ * `loeb` and `loeme` against `loen`, `lugesin` against `loen`, `ei loe`
+ * against `loe`. Nothing is written and no other word is reached for.
+ */
+export function verbFormChoices(input: {
+  lex: VerbForms;
+  accepted: readonly string[];
+  answer: string;
+  rng: () => number;
+}): string[] | null {
+  const { lex, accepted, answer, rng } = input;
+  const barred = new Set([...accepted, answer].map((f) => f.trim().toLocaleLowerCase("et")));
+  const pool = [...verbFormSlots(lex).keys()]
+    .filter((f) => !barred.has(f.toLocaleLowerCase("et")))
+    .map((text) => ({ text }));
+  const picked = pickOptions({
+    answer: { text: answer },
+    candidates: pool,
+    rng,
+    distinct: differentText,
+    nearness: formNearness,
+  });
+  return picked ? picked.options : null;
+}
+
+/**
+ * Every form of the verb the eight slots reach, and the slot each one is.
+ *
+ * `null` where two slots spell it the same way and nothing in a bare option
+ * can tell them apart, which is `readCase`'s rule for a case: a wrong pick is
+ * written into `Review.reachedSlot` as the confusion it is, and filing it
+ * under a guess would put a confusion in the log the learner never had. The
+ * negative carries its `ei` here, so `ei loe` and `loe` are two options and
+ * two slots rather than one spelling claimed by both.
+ */
+export function verbFormSlots(lex: VerbForms): Map<string, string | null> {
+  const out = new Map<string, string | null>();
+  for (const slot of CONJUGATION_SLOTS) {
+    const values = conjugationAnswer(lex, slot).map((v) => (slot.negative ? `ei ${v}` : v));
+    const also = slot.alsoCode ? attestedForms(lex, slot.alsoCode) : [];
+    for (const form of [...values, ...also]) {
+      const key = form.trim();
+      if (!key) continue;
+      out.set(key, out.has(key) && out.get(key) !== slot.code ? null : slot.code);
+    }
+  }
+  return out;
 }

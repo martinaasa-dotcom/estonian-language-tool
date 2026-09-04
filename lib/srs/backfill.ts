@@ -39,6 +39,7 @@ export async function backfillClozeCards(ownerId: string, lexemeId: string): Pro
       back: c.back,
       hint: c.hint,
       targetCase: c.targetCase,
+      slot: c.slot,
       source: "DICTIONARY",
       due: scheduling.due,
       stability: scheduling.stability,

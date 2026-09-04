@@ -3,7 +3,21 @@ import {
   CHECKPOINTS, LEVELS, SYLLABUS, checkpointFor, courseWords, isUnitOpen, levelIndex,
   nextUnit, unitById, unitProgress, unitsAtLevel, wordsAtLevel, type Level, type SyllabusUnit,
 } from "./index";
-import { HARVESTED } from "@/prisma/data/harvested";
+import { HARVESTED, type HarvestedWord } from "@/prisma/data/harvested";
+import { generateCards, type LexemeForCards } from "@/lib/srs/cards";
+
+/** A harvested word in the shape the card builder reads, exactly as the seed lays it down. */
+function asLexeme(w: HarvestedWord): LexemeForCards {
+  return {
+    lemma: w.lemma, translation: w.gloss, pos: w.pos, gradation: "NONE", gradationNote: null,
+    government: w.government, semanticTypes: w.semanticTypes.join(" ") || null,
+    examples: JSON.stringify(w.usages.map((et) => ({ et }))),
+    forms: [
+      ...Object.entries(w.parts).map(([formType, value]) => ({ formType, value })),
+      ...w.extraForms.map((e) => ({ formType: `EKILEX:${e.code}`, value: e.value })),
+    ],
+  };
+}
 import { RETIRED_WORDS } from "./retired";
 import { inferPos } from "./types";
 import { PHRASES } from "@/prisma/data/other";
@@ -160,9 +174,19 @@ describe("the course", () => {
 
       for (const type of unit.cardTypes) {
         if (type === "GRADATION") continue;
+        /*
+          THE BUILDER, NOT A STAND-IN FOR IT. This read "has a genitive stem"
+          for a case card and "has a first person" for a conjugation card,
+          which were what those cards needed once and are not what they need
+          now: both are built out of a sentence a lexicographer recorded using
+          the form, so a stem is what builds the answer and a sentence is what
+          decides whether to ask. A stand-in is a copy of the builder's rule
+          that rots the day the rule moves, and both of these had.
+        */
         const buildable = words.some((w) => {
-          if (type === "CASE_FORM") return !!w.parts.GEN_SG;
-          if (type === "CONJUGATION") return w.pos === "VERB" && !!w.parts.PRES_1SG;
+          if (type === "CASE_FORM" || type === "CONJUGATION") {
+            return generateCards(asLexeme(w), [type]).length > 0;
+          }
           if (type === "GOVERNMENT") return !!w.government;
           if (type === "CLOZE") return w.usages.length > 0;
           return true;

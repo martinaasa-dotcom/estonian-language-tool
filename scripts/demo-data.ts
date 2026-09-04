@@ -55,16 +55,17 @@ const HISTORIES: number[][] = [
 const SLOW_SLOT = "TRANSLATIVE";
 /** How many words the demo deck holds, and how many of them get every card type. */
 const DECK_WORDS = 30;
-const RICH_WORDS = 4;
+const RICH_WORDS = 5;
 /**
  * The case slots this fixture has to be able to demonstrate.
  *
  * A browser suite cannot conjure a card, so a slot a suite drills has to be in
  * the deck the fixture lays down. `INESSIVE` is what `test-teaching.mjs` opens
  * at `/review?case=INESSIVE`; `SLOW_SLOT` is the one the answer-time panel
- * needs to be slow before it draws at all.
+ * needs to be slow before it draws at all; `IndPrSg3` is a conjugation card, so
+ * every suite that walks the deck meets a verb asked in a sentence.
  */
-const DEMO_SLOTS = ["INESSIVE", SLOW_SLOT] as const;
+const DEMO_SLOTS = ["INESSIVE", SLOW_SLOT, "IndPrSg3"] as const;
 const SLOW_HISTORY = [3, 3, 4, 3, 3, 3];
 const SLOT_MS: Record<string, number> = {
   TRANSLATIVE: 9_400,
@@ -195,13 +196,14 @@ async function main() {
     says which.
   */
   const caseCards = new Map(
-    pool.map((lex) => [lex.id, generateCards(lex as LexemeForCards, ["CASE_FORM"])] as const),
+    pool.map((lex) => [lex.id, generateCards(lex as LexemeForCards, ["CASE_FORM", "CONJUGATION"])] as const),
   );
   const caseCapable = pool.filter((lex) => (caseCards.get(lex.id)?.length ?? 0) > 0);
 
   const rich = new Map<string, (typeof pool)[number]>();
   for (const slot of DEMO_SLOTS) {
-    const found = caseCapable.find((lex) => caseCards.get(lex.id)!.some((c) => c.targetCase === slot));
+    const found = caseCapable.find((lex) =>
+      caseCards.get(lex.id)!.some((c) => c.targetCase === slot || c.slot === slot));
     if (!found) {
       console.error(
         `No A1 course word builds a ${slot} card, so the suites that read one would have ` +
@@ -240,7 +242,7 @@ async function main() {
 
   for (const [i, lex] of lexemes.entries()) {
     const types = rich.has(lex.id)
-      ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "GRADATION", "GOVERNMENT"] as const)
+      ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "CONJUGATION", "GRADATION", "GOVERNMENT"] as const)
       : (["RECOGNITION", "PRODUCTION"] as const);
     const cards = generateCards(lex as LexemeForCards, [...types]);
     for (const c of cards) {
@@ -261,7 +263,7 @@ async function main() {
       const card = await prisma.card.create({
         data: {
           ownerId, lexemeId: lex.id, cardType: c.cardType, front: c.front, back: c.back,
-          hint: c.hint, targetCase: c.targetCase, source: "DICTIONARY",
+          hint: c.hint, targetCase: c.targetCase, slot: c.slot, source: "DICTIONARY",
           due: history.length ? s.due : new Date(Date.now() - 3600000),
           stability: s.stability, difficulty: s.difficulty, reps: s.reps,
           lapses: s.lapses, state: s.state, learningSteps: s.learningSteps,

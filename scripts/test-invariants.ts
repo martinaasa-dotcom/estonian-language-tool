@@ -9943,6 +9943,35 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
     and built one on 914, which is the `objekt` fault: the unit page lists the
     type, no card appears, and nothing says why.
   */
+  /*
+    AND THE VERB IS HELD TO THE SAME RULE. `lugema → olevik · ta` over a stem
+    was 4,747 cards with a sentence behind 421, and the negative and the
+    singular imperative are one spelling, `loe`, which the sentence settles
+    because the `ei` is in it: a lexicographer wrote `Ma ei loe` and `Loe!`.
+  */
+  const verbBlock = builder.slice(
+    builder.indexOf('case "CONJUGATION"'),
+    builder.indexOf('case "CLOZE"'),
+  );
+  assert.match(
+    verbBlock,
+    /naturalSentencesFor\(lex\)/,
+    "lib/srs/cards.ts builds a conjugation card without a sentence to build it out of, " +
+    "which is `lugema → olevik · ta` again: a suffix on a stem with nothing saying why.",
+  );
+  assert.match(
+    verbBlock,
+    /slot\.negative && !ei/,
+    "lib/srs/cards.ts stopped reading the `ei` in front of a gapped verb form, so `loe` " +
+    "can be filed as the negative where the sentence says it is the imperative.",
+  );
+  assert.match(
+    verbBlock,
+    /slot: slot\.code/,
+    "a conjugation card no longer carries its slot, so a review of `loeb` is written down " +
+    "as CONJUGATION rather than as IndPrSg3 and eight facets of a verb count as one.",
+  );
+
   const available = builder.slice(builder.indexOf("export function availableCardTypes"));
   assert.doesNotMatch(
     available,
@@ -9954,6 +9983,11 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
     available,
     /generateCards\(lex, \["CASE_FORM"\]\)\.length > 0/,
     "availableCardTypes stopped asking the builder whether a case card can be made.",
+  );
+  assert.match(
+    available,
+    /generateCards\(lex, \["CONJUGATION"\]\)\.length > 0/,
+    "availableCardTypes stopped asking the builder whether a conjugation card can be made.",
   );
 });
 
@@ -9974,6 +10008,12 @@ check("a card this app can mark is never marked by the learner", () => {
     them, on the learner's own say-so.
   */
   const session = code("app/(app)/review/ReviewSession.tsx");
+  assert.match(
+    session,
+    /const TYPEABLE = new Set\(\[[^\]]*"CONJUGATION"[^\]]*\]\)/,
+    "CONJUGATION left TYPEABLE, so a card whose answer is a single vouched verb form is " +
+    "back to being marked by the learner.",
+  );
   const askFor = session.slice(session.indexOf("function askFor("));
   const body = askFor.slice(0, askFor.indexOf("\n}"));
   assert.match(
@@ -10009,6 +10049,12 @@ check("a card this app can mark is never marked by the learner", () => {
     "accepts. A back can be `tuppa / toasse` and both are right.",
   );
   const questPool = code("lib/progress/quest.ts");
+  assert.match(
+    questPool,
+    /verbFormChoices\(/,
+    "lib/progress/quest.ts stopped building options for a conjugation card, so the round " +
+    "asks the learner whether they had it on the verbs it selected them for.",
+  );
   assert.match(
     questPool,
     /caseFormChoices\(/,
@@ -10818,7 +10864,16 @@ check("readiness is derived on every request and never written down", () => {
     /prisma\.\w+\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\b/,
     "lib/progress/readiness.ts writes to the database, and a stored readiness is a second source of truth that drifts",
   );
-  assert.doesNotMatch(SCHEMA, /readiness|\brung\b/i, "the schema grew a readiness column; it is derived, never stored");
+  /*
+    The schema's code and not its prose, which is the oldest recurring mistake
+    in this file: `Card.slot`'s doc comment explains what the mastery counter
+    and the readiness reading do with it, and this fired on the word.
+  */
+  assert.doesNotMatch(
+    code(join("prisma", "schema.prisma")),
+    /readiness|\brung\b/i,
+    "the schema grew a readiness column; it is derived, never stored",
+  );
 });
 
 /**
