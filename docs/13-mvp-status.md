@@ -2087,9 +2087,10 @@ funder as much as for a contributor. This section is what was built and measured
 ### Measured
 
 - The gate, three times. 60 to 70 percent withheld before this pass; 54 percent with the encounter
-  verbs in the course; 30 to 51 percent with the scenes declaring the units those verbs live in.
-  The ranked list of withheld words is what found the second fix, and what it names next is the
-  past participle, a form no rule reaches and the harvest does not store.
+  verbs in the course; 43.5 percent over 260 lines, 30 to 51 by scene, with the scenes declaring
+  the units those verbs live in. The ranked list of withheld words is what found the second fix,
+  and what it names next is the past participle, a form no rule reaches and the harvest does not
+  store, and a government check that now withholds more than vouching does.
 - `scripts/test-scene.mjs` plays the shop through keyless and reports the errand: 41 checks. The
   route smoke, the accessibility sweep and the containment suite pass over the new screens.
 - 230 invariants, three of them new and each made to fail once: the room a clip is heard in has one

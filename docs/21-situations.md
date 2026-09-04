@@ -1481,11 +1481,23 @@ its own to argue for.
 verbs in, the same run came back at **54 percent**, and the ranked list said why it was not lower:
 `sobib` fourteen times, `valmis` ten, `katki` six, `asub` five, none of them starred. Every one was
 taught, in a unit no scene had declared. The scenes declare six more units now, `iga-paev`,
-`kus-ja-kuhu`, `kohasonad`, `omadussonad`, `plaanid` and `minevik`, and the run came back at **30
-to 51 percent**: the shop 48, the doctor 30, the landlord 51. What is left at the top of the list is
-the past participle, `kestnud`, `olnud`, `tulnud`, which no rule reaches and the harvest does not
-store, and `öelge`, the polite imperative of a verb that joined the course after the harvest last
-ran. Both are a harvest change, and it is the next thing to do before the phrase bank.
+`kus-ja-kuhu`, `kohasonad`, `omadussonad`, `plaanid` and `minevik`, and the run came back at **43.5
+percent over 260 lines**: the shop 48, the doctor 30, the counter 46, the landlord 51. Two things
+in that run are worth more than the rate. The government check is now the largest withholder, 76
+lines against vouching's 46, and reading them shows the weak reading firing on the ordinary subject
+construction, `kas teie pea valutab?`, where the nominal before the verb is its subject and the
+verb's government is about a complement that is not there. The check was measured at 8 percent on
+attested lines and composed lines carry that shape more often. It stays, because it still catches
+`kas teie soovite leib või sai?`, which is the error it was built for, and the honest next step is
+a subject rule rather than loosening. And the commonest vouching failure is `soovite`, the polite
+"would you like", which the A2 unit `korraldused` teaches and the A1 shop may not declare, so the
+shop's other side cannot ask the one question a shop asks. That is an argument for a form the A1
+course could teach, not for a wider list.
+
+What is left at the top of the starred list is the past participle, `kestnud`, `olnud`, `tulnud`,
+which no rule reaches and the harvest does not store, and `öelge`, the polite imperative of a verb
+that joined the course after the harvest last ran. Both are a harvest change, and it is the next
+thing to do before the phrase bank.
 
 The rate is still far above the line of five, and the design's own reading of that stands: not
 loosen the gate. What changed is what the residual is made of, from words the course did not teach

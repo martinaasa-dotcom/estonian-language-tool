@@ -68,13 +68,16 @@ measured it against real models three times.
 |---|---|---|
 | August, before this pass | the scenes as first written | 60 to 70 percent |
 | September, first | the encounter verbs added to the course | 54 percent |
-| September, second | the scenes declaring the units those verbs live in | 30 to 51 percent |
+| September, second | the scenes declaring the units those verbs live in | 43.5 percent, 30 to 51 by scene |
 
-The residual is still not the gate and not the model. Reading the ranked list of words the model
-reached for, every one of the commonest was a word the course teaches in a unit no scene had
-declared, or a form no rule reaches: the past participle, `kestnud`, `olnud`, `tulnud`, which is
-how anybody says "it has lasted since Tuesday". The next step is stored forms rather than gate
-tuning, and it is a harvest change against Ekilex rather than a decision about a model.
+The residual is still not the model. Reading the ranked list of words it reached for, the
+commonest were words the course teaches in a unit no scene had declared, then forms no rule reaches:
+the past participle, `kestnud`, `olnud`, `tulnud`, which is how anybody says "it has lasted since
+Tuesday". The next step is stored forms rather than gate tuning, and it is a harvest change against
+Ekilex rather than a decision about a model. The government check is now the largest single
+withholder and fires on the ordinary subject construction, which is a known cost of a check with no
+parser behind it; it stays because it still catches the error it was built for, and a subject rule
+is the next refinement.
 
 Two other measurements decide the shape of the module. Retrieval fills the greeting, the offer,
 the confirmation and the closing of every scene, and almost none of the beats that carry the

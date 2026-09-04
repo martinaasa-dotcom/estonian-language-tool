@@ -61,7 +61,7 @@ are append-only, in the export, in the erasure, and never in the class. The role
 so no transcript is a fact about the learner, and a scene never asks for a real document number.
 
 **The gate rate is a vocabulary number before it is a model number.** `npm run eval:scene` has been
-run three times and the answer moved from 60 to 70 percent to 30 to 51 without touching the gate:
+run three times and the answer moved from 60 to 70 percent to 43.5 without touching the gate:
 first the course did not teach `sobima`, then the scenes did not declare the unit `sobima` lives in.
 Read the ranked list of withheld words before touching the check. What it names now is the past
 participle and the polite imperative of a verb that joined the course after the harvest last ran,
