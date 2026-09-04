@@ -100,7 +100,7 @@ export function ImportPanel() {
         rows={6}
         placeholder={EXAMPLE}
         aria-label="Paste word list"
-        className="mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-base outline-none"
+        className="mt-3 w-full rounded-[var(--r-lg)] border px-5 py-4 text-base"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       {/* This box is usually pasted into, but its own copy says "typed off a

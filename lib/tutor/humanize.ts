@@ -38,9 +38,18 @@
 */
 
 import { EM_DASH as EM, EN_DASH as EN, OPENER_REWRITES } from "@/lib/copy/voice";
+import { TAGGED_LINE } from "@/lib/tutor/markers";
 
-/** Lines that are Estonian by construction, and are never rewritten. */
-const ESTONIAN_LINE = /^(?:\d+[.)]\s*)?(?:VOCAB|FIX):/i;
+/**
+ * Lines that are Estonian by construction, and are never rewritten.
+ *
+ * Read from `lib/tutor/markers.ts` rather than spelled here, because three
+ * modules recognise these lines and a model that is allowed bold writes
+ * `**FIX:**` as readily as `FIX:`. A copy here that had not learned that
+ * would rewrite a corrected sentence's punctuation while the UI still boxed
+ * it, which is the exact fault this module's header is about.
+ */
+const ESTONIAN_LINE = TAGGED_LINE;
 
 /**
  * The rewritable half of the voice table.

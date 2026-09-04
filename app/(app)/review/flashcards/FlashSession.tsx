@@ -212,7 +212,7 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
                 autoFocus
                 onChange={(e) => setTyped(e.target.value)}
                 placeholder="Kirjuta oma lause siia…"
-                className="mt-2 w-full resize-none rounded-md border px-3.5 py-3 text-[17px] outline-none disabled:opacity-70"
+                className="mt-2 w-full resize-none rounded-md border px-3.5 py-3 text-[17px] disabled:opacity-70"
                 style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
               />
             ) : (
@@ -226,7 +226,7 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
                 spellCheck={false}
                 disabled={!!mark}
                 onChange={(e) => setTyped(e.target.value)}
-                className="mt-2 w-full rounded-md border px-3.5 py-3 text-[19px] outline-none disabled:opacity-70"
+                className="mt-2 w-full rounded-md border px-3.5 py-3 text-[19px] disabled:opacity-70"
                 style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
               />
             )}

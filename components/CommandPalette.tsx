@@ -229,7 +229,7 @@ export function CommandPalette() {
             }}
             placeholder="Jump to a screen, or type a word to look up…"
             aria-label="Search commands and words"
-            className="w-full bg-transparent text-base outline-none"
+            className="w-full bg-transparent text-base"
             style={{ color: "var(--ink)" }}
           />
           <kbd className="rounded-md border px-1.5 py-0.5 text-2xs" style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}>

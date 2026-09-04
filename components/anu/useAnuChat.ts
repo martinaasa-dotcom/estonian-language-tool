@@ -5,9 +5,10 @@ import { useState } from "react";
 export interface Msg { role: "user" | "assistant"; content: string }
 
 /**
- * The streaming exchange with `/api/tutor`, shared by the full `/tutor` page
- * and the floating Anu button so the two never drift into two ways of
- * talking to the same route.
+ * The exchange with `/api/tutor`, shared by the full `/tutor` page and the
+ * floating Anu button so the two never drift into two ways of talking to the
+ * same route. The route streams; the screen waits for the whole reply and
+ * shows it once, for the reason given beside the read loop.
  *
  * Owns the conversation and who answered it; does not own the input box,
  * because two different surfaces want to clear it differently (a page can
@@ -45,6 +46,9 @@ export function useAnuChat(initialMessages: Msg[]) {
     setMessages(next);
     setStreaming(true);
     setMessages((m) => [...m, { role: "assistant", content: "" }]);
+    // Whatever has arrived so far, kept outside the try so a connection lost
+    // halfway through an answer still hands over the half that landed.
+    let acc = "";
 
     try {
       const res = await fetch("/api/tutor", {
@@ -65,20 +69,41 @@ export function useAnuChat(initialMessages: Msg[]) {
         return;
       }
 
+      /*
+        THE REPLY IS SHOWN ONCE, FINISHED, AND NOT A WORD AT A TIME.
+
+        The route still streams, and should: a two-minute route that says
+        nothing until the end is what a proxy times out and what a learner
+        reads as broken, and the server's own cleaning pass is built on the
+        stream. What changed is what the screen does with it. A reply drawn
+        as it arrived was a paragraph whose bold opened three words before
+        it closed, a list that was one line beginning "1." for a second and a
+        list the next, and a FIX: box that appeared, moved and reflowed under
+        the reader's eyes. A typed reply is typography, and typography set a
+        character at a time is never clean while it is being set.
+
+        So the chunks are gathered here and the bubble shows that Anu is
+        writing until they have all landed, then the finished reply in one
+        go, parsed and drawn as a whole. What it costs is the sight of words
+        arriving; what it buys is that the first thing a learner reads is
+        the answer as she meant it to look, which is the trade the reader
+        asked for by name.
+      */
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let acc = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         acc += decoder.decode(value, { stream: true });
-        setMessages((m) => [...m.slice(0, -1), { role: "assistant", content: acc }]);
       }
+      acc += decoder.decode();
+      setMessages((m) => [...m.slice(0, -1), { role: "assistant", content: acc }]);
     } catch {
       setFailure("Lost the connection to Anu mid-answer.");
+      const half = acc.trim() ? `${acc.trim()}\n\n` : "";
       setMessages((m) => [...m.slice(0, -1), {
         role: "assistant",
-        content: "⚠ Lost the connection to Anu. Your question is still in the box above. Try again.",
+        content: `${half}⚠ Lost the connection to Anu. Your question is still in the box above. Try again.`,
       }]);
     } finally {
       setStreaming(false);
