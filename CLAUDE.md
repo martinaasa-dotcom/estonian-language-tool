@@ -914,6 +914,23 @@ Wiktionary and are not what was wrong. Fifteen are pinned, each checked against 
 definition; ten of them are the entry a learner actually meets and five are shadowed by the course
 harvest, which had already pinned the same words.
 
+**And a wrong answer may be tricky, never true.** The listening check plays a whole sentence and asks
+for the meaning of "a word you heard in it", without saying which, so the meaning of *any* word in
+the recording is a right answer. `Moraali ja eetika kategooriad.` was asked about `eetika` with
+"morality" among the wrong ones, and somebody who heard `moraali` and chose it was marked wrong for
+listening correctly. Measured over ten pools drawn the way the placement draws them, 22 of 4,320
+such questions carried one: "Isa ja ema ei olnud kodus" offered "mother" against "father", "Märg ja
+külm sügis" offered "cold" against "wet". `lib/assessment/heard.ts` reads the sentence the way a
+gap-fill does, every spelling `gapForms` reaches indexed to the glosses of the words spelled that
+way, and the builder treats everything the recording holds as a sense no distractor may share.
+Nothing is guessed about which word a token *is*: `tule` is the imperative of `tulema` and the
+genitive of `tuli`, and both meanings go, which costs a distractor and never a mark. **The pool
+alone reaches half of it**, because the placement draws two hundred words a band and the word that
+makes a distractor true is usually outside that window, so `paperFor` hands the builder the whole
+dictionary's index from `lib/dict/facts.ts`, where it is a fact about the shared dictionary like the
+rest. `npm run audit:questions` asks the same question of every `heard` item it builds, which it
+had excluded from the "is the answer shown" question and was therefore checking with nothing.
+
 **A question nobody can get wrong is worse in a measurement than on a card.** Thirty entries in the
 shipped dictionary are spelled the same in both languages, and the level check's meaning question
 put the Estonian word up with its English gloss among the options: `moment` against "moment". On a

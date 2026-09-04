@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CASES } from "@/lib/estonian/cases";
 import { assemble, BLUEPRINT, buildPaper, listeningItems, mulberry32, readingItems, speakingItems, writingItems, type WordRow } from "./items";
+import { heardIndex, meaningsHeard } from "./heard";
 import { BLANK } from "@/lib/estonian/cloze";
 import { BANDS, type ChoiceItem, type Item } from "./types";
 
@@ -475,6 +476,83 @@ describe("a word's other recorded sense is never a wrong answer", () => {
         const other = item.options[item.answer] === "frost" ? "grey" : "frost";
         expect(item.options, `${item.id} at seed ${seed}`).not.toContain(other);
       }
+    }
+  });
+});
+
+/**
+ * Real rows again. `isa`'s first recorded usage is `Isa ja ema ei olnud
+ * kodus.`, and it turned up in the measurement that found this fault: the
+ * sentence was played, "father" was the answer, and "mother" stood among the
+ * wrong ones. `emakeel` is here because its gloss shares a word with `ema`'s,
+ * which is how the rule reaches a word the pool does not hold.
+ */
+const FAMILY: WordRow[] = [
+  { id: "isa", lemma: "isa", translation: "father", pos: "NOUN", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "isa" }, { formType: "GEN_SG", value: "isa" }, { formType: "PART_SG", value: "isa" }, { formType: "GEN_PL", value: "isade" }, { formType: "NOM_PL", value: "isad" }, { formType: "PART_PL", value: "isasid" }],
+    examples: [{ et: "Isa ja ema ei olnud kodus." }] },
+  { id: "ema", lemma: "ema", translation: "mother", pos: "NOUN", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "ema" }, { formType: "GEN_SG", value: "ema" }, { formType: "PART_SG", value: "ema" }, { formType: "GEN_PL", value: "emade" }, { formType: "NOM_PL", value: "emad" }, { formType: "PART_PL", value: "emasid" }],
+    examples: [{ et: "Kolme lapse ema." }] },
+  { id: "emakeel", lemma: "emakeel", translation: "mother tongue", pos: "NOUN", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "emakeel" }, { formType: "GEN_SG", value: "emakeele" }, { formType: "PART_SG", value: "emakeelt" }, { formType: "ILL_SG_SHORT", value: "emakeelde" }, { formType: "GEN_PL", value: "emakeelte" }, { formType: "NOM_PL", value: "emakeeled" }, { formType: "PART_PL", value: "emakeeli" }],
+    examples: [{ et: "Ta räägib ainult oma emakeelt." }] },
+  { id: "kodu", lemma: "kodu", translation: "home", pos: "NOUN", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "kodu" }, { formType: "GEN_SG", value: "kodu" }, { formType: "PART_SG", value: "kodu" }, { formType: "ILL_SG_SHORT", value: "koju" }, { formType: "GEN_PL", value: "kodude" }, { formType: "NOM_PL", value: "kodud" }, { formType: "PART_PL", value: "kodusid" }],
+    examples: [{ et: "Tule ruttu koju!" }] },
+  { id: "vanaema", lemma: "vanaema", translation: "grandmother", pos: "NOUN", cefr: "A1", government: null,
+    forms: [{ formType: "NOM_SG", value: "vanaema" }, { formType: "GEN_SG", value: "vanaema" }, { formType: "PART_SG", value: "vanaema" }, { formType: "GEN_PL", value: "vanaemade" }, { formType: "NOM_PL", value: "vanaemad" }, { formType: "PART_PL", value: "vanaemasid" }],
+    examples: [{ et: "Minu vanaema ja vanaisa elavad maal." }] },
+];
+
+describe("a wrong answer may be tricky and may not be true", () => {
+  const sentence = "Isa ja ema ei olnud kodus.";
+
+  it("reads every meaning the recording holds, in whatever form the word took", () => {
+    const heard = meaningsHeard(sentence, heardIndex(FAMILY));
+    expect(heard).toContain("father");
+    expect(heard).toContain("mother");
+    // `kodus` is the seesütlev, worked out from the stem, not a stored form.
+    expect(heard).toContain("home");
+    expect(heard).not.toContain("grandmother");
+  });
+
+  it("never offers the meaning of another word that was in the sentence", () => {
+    const pool = [...FAMILY, ...NEIGHBOURS];
+    for (let seed = 1; seed < 40; seed++) {
+      const item = listeningItems(pool, mulberry32(seed)).find((i): i is ChoiceItem => i.id === "l-use-isa");
+      expect(item, `seed ${seed} asked nothing about isa`).toBeDefined();
+      expect(item!.et).toBe(sentence);
+      expect(item!.options).toContain("father");
+      expect(item!.options).not.toContain("mother");
+      expect(item!.options).not.toContain("home");
+      expect(item!.options).not.toContain("mother tongue");
+    }
+  });
+
+  it("consults the index it is handed for the words the pool does not hold", () => {
+    // `ema` is in the recording and not in the pool, so nothing the pool
+    // knows says "mother" was heard. The dictionary's own index does.
+    const pool = FAMILY.filter((w) => w.id !== "ema").concat(NEIGHBOURS);
+    const dictionary = heardIndex(FAMILY);
+    let offeredWithout = 0;
+    for (let seed = 1; seed < 40; seed++) {
+      const bare = listeningItems(pool, mulberry32(seed)).find((i): i is ChoiceItem => i.id === "l-use-isa");
+      if (bare?.options.includes("mother tongue")) offeredWithout++;
+      const item = listeningItems(pool, mulberry32(seed), dictionary).find((i): i is ChoiceItem => i.id === "l-use-isa");
+      expect(item, `seed ${seed} asked nothing about isa`).toBeDefined();
+      expect(item!.options).not.toContain("mother tongue");
+    }
+    // The check has to be able to fail: without the index the option is offered.
+    expect(offeredWithout).toBeGreaterThan(0);
+  });
+
+  it("reaches the paper the same way", () => {
+    for (let seed = 1; seed < 20; seed++) {
+      const paper = buildPaper([...FAMILY, ...NEIGHBOURS], seed);
+      const item = paper.items.find((i): i is ChoiceItem => i.id === "l-use-isa");
+      if (!item) continue;
+      expect(item.options).not.toContain("mother");
     }
   });
 });
