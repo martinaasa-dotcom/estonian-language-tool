@@ -121,6 +121,66 @@ export interface BeatSpec {
   readonly shape: "word" | "sentence";
 }
 
+/**
+ * Who is behind the desk today, and what they want.
+ *
+ * The agenda is the strongest lever in the draw and it is nearly free: the
+ * same beats and the same props with a receptionist who wants the queue gone
+ * and one who is new and unsure are two conversations that feel nothing
+ * alike. What an agenda changes is written down in `personas.ts`, and it is a
+ * patience shift, a pace, and how the other side answers an English turn;
+ * never a word of Estonian, which the dictionary supplies as for everybody.
+ *
+ * The voice is the persona's name. The twelve voices in `lib/audio/voice.ts`
+ * are the only proper names this app says, and a second persona in a scene
+ * takes a second voice, which is how an interruption reads as another person.
+ */
+export type Agenda = "brisk" | "thorough" | "new" | "script";
+
+export interface PersonaSpec {
+  readonly voice: string;
+  readonly agenda: Agenda;
+}
+
+/**
+ * A value on the role card the learner is handed, and asked for.
+ *
+ * `weekday` is a lemma from the `aeg` unit, so it is a word the dictionary
+ * has forms for and the learner can be marked on. `clock`, `number` and
+ * `code` are digits, which are not Estonian and are the one thing this
+ * module may generate. A code is always fictional (§3 of the design): a
+ * practice app is the last place anybody should type their own.
+ */
+export type PropKind = "weekday" | "clock" | "number" | "code";
+
+export interface PropSlot {
+  readonly id: string;
+  readonly kind: PropKind;
+  /** English. What the card calls it: "It started on". */
+  readonly label: string;
+}
+
+/**
+ * Who the learner is today. English, and never themselves (§3).
+ *
+ * `{slot}` in a fact is filled from the props, so the card can say "It started
+ * on Tuesday" without this file knowing which day was drawn.
+ */
+export interface RoleCardSpec {
+  readonly who: string;
+  readonly wants: string;
+  readonly facts: readonly string[];
+}
+
+/** How a scene can end, including badly and not through the learner's fault. */
+export interface OutcomeSpec {
+  readonly id: string;
+  /** Which required beats have to have been met. Empty means the fallback. */
+  readonly when: readonly string[];
+  /** One line, English, in the debrief. The thing a person remembers. */
+  readonly says: string;
+}
+
 export interface SceneSpec {
   readonly id: string;
   /** English. What the scene is called on a screen. */
@@ -142,4 +202,10 @@ export interface SceneSpec {
   /** What the other side calls you, and expects back. */
   readonly register: "teie" | "sina";
   readonly beats: readonly BeatSpec[];
+  readonly personas: readonly PersonaSpec[];
+  readonly props: readonly PropSlot[];
+  /** Which curveballs this scene admits, by id. See `curveballs.ts`. */
+  readonly curveballs: readonly string[];
+  readonly role: RoleCardSpec;
+  readonly outcomes: readonly OutcomeSpec[];
 }
