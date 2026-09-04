@@ -3466,6 +3466,18 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   way and so does every country whose language this app teaches, and a reading that changes shape
   with the browser's locale is one a teacher and a student cannot compare. `hourCycle: "h23"`
   rather than `hour12: false`, which renders midnight as "24:00" in en-US.
+- **Light is the default and dark is a choice.** The palette used to follow the system as well: a
+  `prefers-color-scheme: dark` block painted the dark tokens for anybody whose phone or laptop was
+  set that way and who had never touched the toggle, which is most phones after sunset. So the
+  landing page, the one screen a stranger decides on, opened dark for about half of them, in a
+  palette it was designed and measured against second, and first run followed in the same one.
+  Bare `:root` is light for everybody now and the dark palette lives under `[data-theme="dark"]`
+  alone, written by the toggle in the rail and read back before first paint by the inline script
+  in `app/layout.tsx`. Two states rather than three: the default, or the one you picked. The
+  suites that measure the dark theme store that choice the way the toggle does rather than
+  emulating a system preference the palette no longer reads, since that would sweep the light
+  theme twice and call the dark one clean. Asserted, with the comments stripped, because the note
+  explaining why the block went names the block.
 - Style through the tokens in `app/globals.css`, never with a raw hex. The five hues carry fixed
   meanings (`docs/14-design-system.md` §1). Mint is "recalled", peach is "missed", and neither is
   free for decoration. **A hue has a fill and an ink and they are not interchangeable**: `--accent`

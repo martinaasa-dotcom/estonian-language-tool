@@ -1053,8 +1053,10 @@ for (const width of WIDTHS) {
 
 /*
   AND THE WHOLE APP IN THE DARK, once, at the width where containment fails
-  first. `colorScheme` sets `prefers-color-scheme`, which is what the palette
-  in app/globals.css reads when nobody has picked a theme by hand.
+  first. The palette in app/globals.css reads `data-theme` and nothing else,
+  so the theme is chosen the way a reader chooses it: stored, and read back
+  by the inline script in app/layout.tsx before the first paint. Emulating
+  `prefers-color-scheme` would measure the light theme a second time.
 */
 {
   const ctx = await browser.newContext({
@@ -1062,8 +1064,8 @@ for (const width of WIDTHS) {
     hasTouch: true,
     isMobile: true,
     reducedMotion: "reduce",
-    colorScheme: "dark",
   });
+  await ctx.addInitScript(() => { try { localStorage.setItem("theme", "dark"); } catch { /* private mode */ } });
   await sweep(ctx, `at ${DARK_WIDTH} in the dark`);
   await ctx.close();
 }
