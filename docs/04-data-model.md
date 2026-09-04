@@ -42,6 +42,7 @@ comment on every model that needs one; what belongs here is the map and the reas
 | `UsageEvent` | One metered call to a paid service. Append-only, and the evidence behind the spend cap. |
 | `SceneRun` | One conversation, with the seed it was drawn from and every turn typed in it. Append-only. Nothing in it is true about the learner: the role card is fiction (`docs/19-situations.md` §3). |
 | `SceneGap` | A word a conversation needed and the learner did not have. A child table so "the words my conversations keep needing" is one indexed query rather than a scan over every transcript. |
+| `Encounter` | One real conversation reported from outside the app: the errand Today set and how it went, in one of three words. Append-only. |
 
 ## The values a string column may take
 

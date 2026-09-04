@@ -18,6 +18,7 @@ import {
 } from "@/lib/research/corpus";
 import { toCsv } from "@/lib/research/csv";
 import { CAVEATS, CORRECT_FROM_RATING, MATURE_STATE, SECTIONS } from "@/lib/research/sections";
+import { errandById } from "@/lib/collections/errands";
 import { SETTING_KEYS } from "@/lib/settings/store";
 
 /**
@@ -162,6 +163,36 @@ interface GroupedRow {
  * be left out was still read into this process, and the point of the setting is
  * that they were not.
  */
+/**
+ * The one section not drawn from Review: a learner's own report of a
+ * conversation outside the app, under the same gate as everything else.
+ * Reads Encounter rather than Review, honours the same opt-out, and hands
+ * `buildSection` the same shape, so the thresholds and the rounding apply.
+ */
+async function tallyEncounters(excluded: readonly string[]): Promise<Contribution[]> {
+  const not = excluded.length > 0 ? Prisma.sql`WHERE e."ownerId" NOT IN (${Prisma.join([...excluded])})` : Prisma.empty;
+  const rows = await prisma.$queryRaw<{ errandId: string; learner: string; reviews: number; correct: number }[]>`
+    SELECT e."errandId" AS "errandId",
+           e."ownerId" AS "learner",
+           COUNT(*)::int AS "reviews",
+           COUNT(*) FILTER (WHERE e."outcome" = 'UNDERSTOOD')::int AS "correct"
+    FROM "Encounter" e
+    ${not}
+    GROUP BY e."errandId", e."ownerId"
+  `;
+  const byUnit = new Map<string, Contribution>();
+  for (const row of rows) {
+    const unit = errandById(row.errandId)?.unit;
+    if (!unit) continue;
+    const key = `${unit}|${row.learner}`;
+    const held = byUnit.get(key) ?? { keys: [unit], learner: row.learner, reviews: 0, correct: 0, matureReviews: 0, matureCorrect: 0 };
+    held.reviews += row.reviews;
+    held.correct += row.correct;
+    byUnit.set(key, held);
+  }
+  return [...byUnit.values()];
+}
+
 async function tally(
   section: string,
   excluded: readonly string[],
@@ -400,7 +431,7 @@ export async function GET(request: NextRequest) {
     // In series rather than at once. Each is a grouped scan of the largest
     // table in the schema, and nine of those in parallel is nine times the
     // working memory for no wall-clock gain on a database this shape.
-    sections.push(buildSection(spec, await tally(spec.id, excluded)));
+    sections.push(buildSection(spec, spec.id === "encounters" ? await tallyEncounters(excluded) : await tally(spec.id, excluded)));
   }
 
   if (request.nextUrl.searchParams.get("format") === "csv") {

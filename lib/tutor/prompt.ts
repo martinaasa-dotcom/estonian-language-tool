@@ -180,6 +180,12 @@ export interface LearnerNote {
    * same phrase the plan prints. Null when their week holds none.
    */
   situation?: string | null;
+  /**
+   * The last situation they played and what it stalled on, so a question
+   * about the doctor's can be answered about the doctor's. English title and
+   * lemmas only, the way the unit is: nothing here is a sentence.
+   */
+  scene?: { title: string; missed: string[]; gaps: string[] } | null;
 }
 
 export function learnerNote(note: LearnerNote): string {
@@ -210,6 +216,13 @@ export function learnerNote(note: LearnerNote): string {
   if (note.unit) {
     lines.push(
       `- They are working through the unit "${note.unit.title}" (${note.unit.subtitle}) at ${note.unit.level}. Prefer everyday words from around that level in examples.`,
+    );
+  }
+  if (note.scene) {
+    const missed = note.scene.missed.length > 0 ? ` They did not manage to: ${note.scene.missed.join("; ")}.` : "";
+    const gaps = note.scene.gaps.length > 0 ? ` The words they reached for and did not have: ${note.scene.gaps.join(", ")}.` : "";
+    lines.push(
+      `- The last situation they rehearsed was "${note.scene.title}".${missed}${gaps} If they ask about it, answer about that encounter and the words it needs; do not raise it otherwise.`,
     );
   }
   if (lines.length === 0) return "";

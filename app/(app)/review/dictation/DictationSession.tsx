@@ -10,6 +10,9 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
+import { useAudioPrefs } from "@/components/AudioPrefs";
+import { conditionFor, describeHearing } from "@/lib/audio/conditions";
+import { VOICES } from "@/lib/audio/voice";
 import type { Badge } from "@/lib/achievements/badges";
 import { checkDictation, wordNote, type DictationResult, type WordStatus } from "@/lib/estonian/dictation";
 import { xpForRating } from "@/lib/gamification/xp";
@@ -19,6 +22,8 @@ import { AI_TAG } from "@/lib/copy/values";
 export interface DictationTask {
   /** The card this counts against — every mode grades through the same log. */
   cardId: string;
+  /** Reviews behind the card, which decides how it may be heard. */
+  reps: number;
   lemma: string;
   /** The attested Estonian sentence, exactly as Ekilex recorded it. */
   et: string;
@@ -94,6 +99,15 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
 
   const task = round[index];
   const finished = !task;
+  /*
+    A different reader each sentence, as the listening round already does,
+    and a room and a rate from the card's own history. Said after the answer,
+    with a clean replay beside it. See lib/audio/conditions.ts.
+  */
+  const { hearing, voice: ownVoice } = useAudioPrefs();
+  const [voiceStart] = useState(() => Math.floor(Math.random() * VOICES.length));
+  const reader = VOICES[(voiceStart + index) % VOICES.length] ?? { id: ownVoice, name: ownVoice };
+  const condition = task ? conditionFor(task.reps, index, hearing) : undefined;
 
   useEffect(() => {
     setTyped("");
@@ -259,6 +273,8 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
                   text={task.et}
                   size={30}
                   label="Play the sentence"
+                  voice={reader.id}
+                  condition={condition}
                   onUnavailable={() => setNoAudio(true)}
                   className="press flex h-24 w-24 items-center justify-center rounded-full transition-ui hover:-translate-y-0.5"
                   style={{ background: "var(--accent-soft)", color: "var(--accent-deep)", boxShadow: "var(--shadow)" }}
@@ -267,6 +283,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
                   <Speak
                     text={task.et}
                     slow
+                    voice={reader.id}
                     label="Play it slowly"
                     size={14}
                     className="press tap-tint inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
@@ -283,7 +300,17 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
           </div>
 
           {result ? (
-            <Marked result={result} />
+            <>
+              <Marked result={result} />
+              {condition && (
+                <p className="flex items-center justify-center gap-1 text-center text-2xs" style={{ color: "var(--ink-3)" }}>
+                  {describeHearing(reader.name, condition)}
+                  {condition.id !== "clean" && (
+                    <Speak text={task.et} voice={reader.id} label="Hear it clearly" size={12} />
+                  )}
+                </p>
+              )}
+            </>
           ) : (
             <EstonianInput
               value={typed}

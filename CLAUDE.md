@@ -17,6 +17,9 @@ is the current state.
    colour is allowed to mean. Read it before adding a colour, a radius or a shadow.
 6. `docs/18-voice.md`: how the app speaks. Warm, kind, concise, and never in a way that reads
    as generated. Read it before writing a sentence anybody will see, which is most changes.
+7. `docs/22-real-life.md`: what the app is for. The purpose is to be left: it rehearses the
+   conversation and counts the ones a learner has outside it. A feature that keeps somebody inside
+   when the person is outside has failed, however polished.
 
 ## Rules that are not negotiable
 
@@ -41,6 +44,57 @@ rendered in somebody's browser is at least as public as that log and was the one
 through it. `safeMessage` is that function plus a length, and an invariant fails on any
 `"use server"` export reaching for `.message` itself, and on `safeMessage` quietly ceasing to
 redact.
+
+**A scene is assembled from the dictionary, advanced by the dictionary, and says which of its
+lines a model wrote.** `lib/scenes/` is Situations (ADR-025, `docs/21-situations.md`, and §30 of it
+for what building it found). A scene file names moves and unit ids and holds no Estonian: every
+lemma it names is one its own declared units teach, asserted word by word, so a scene cannot
+introduce vocabulary. What the other side says comes from `sceneLine`, with its provenance: a
+recorded usage where one fits the beat, otherwise a line a model composed inside the scene's closed
+word list and `runGate` checked four ways, shape, vouching, register, government, and withheld
+whole when it fails, and where both rungs fail the other side says they did not catch that, in a
+phrase the course teaches and in character, never a repair line this app wrote. What the learner
+says is read by `readTurn` and by nothing else; `advance` takes `Evidence` and nothing else, so a
+caller holding a model's verdict cannot compile. The server marks every turn as it is typed and
+reads the finished run again before `finishScene` grades through `gradeCard`, Good, Hard, Again and
+never Easy, and each composed turn books its own call in the ledger. `SceneRun` and `SceneGap` are
+append-only, in the export, in the erasure, and never in the class. The role card is fiction, so no
+transcript is a fact about the learner, and a scene never asks for a real document number.
+
+**Two sessions built this module on the same day and one of them was deleted.** The design was
+written first, so both builds were the same shape with different names, and a clean three-way
+merge would have shipped two of everything: two machines, two routes, two `SceneRun` models. The
+one on main is the one kept, because it had been played through and had found the rung that never
+answered (§30 of the design doc); what survived of the other is what it built beside the module
+rather than inside it, the hearing conditions, the errands and the claim on the landing page. Read
+what landed before you merge, not just the conflict status.
+
+**The gate rate is a vocabulary number before it is a model number.** `npm run eval:scene` has been
+run three times and the answer moved from 60 to 70 percent to 43.5 without touching the gate:
+first the course did not teach `sobima`, then the scenes did not declare the unit `sobima` lives in.
+Read the ranked list of withheld words before touching the check. What it named after that was the
+past participle and the polite imperative, which no rule reaches, and both are stored per verb now
+rather than reached for by a model.
+
+**The words never sound like a studio, and the words never change.** `lib/audio/conditions.ts` is
+the one table of how people talk: at speed, over café noise, down a phone line, from halfway
+through, in a different voice each time. `lib/audio/mixer.ts` is the one place a condition becomes
+sound, in the browser, out of filtered noise and a band-pass, so nothing ships and nothing needs a
+licence. The pool opens as the word settles, so a new word is always heard in a quiet room.
+Listening and dictation ask `conditionFor` per card and say after the answer which room it was;
+minimal pairs rotates its reader and keeps the room quiet, because a difference one consonant long
+is the thing noise would remove; the mock exam may not vary the delivery, because the real paper is
+read in a studio. A mumbled or slurred *spelling* is off the table for the reason a made-up form
+is: it would be this app writing Estonian and the scheduler drilling it.
+
+**A conversation outside the app is the number the app is measured by, and it is a fact the learner
+reports.** `lib/collections/errands.ts` names one errand a day by unit id, never by word, the way
+the seasonal row does, and `recordEncounter` stores one of three words about it: understood,
+switched to English, did not manage it. `Encounter` is append-only and the fourth exception to
+"progress is derived" (ADR-027). Progress leads with it, beside the readiness reading of the
+course's own "you can do this" claims (ADR-026). The research export publishes it under the same
+gate as everything else and labelled as self-reported. Nothing about it is a streak that punishes
+a day without one.
 
 **Never write Estonian.** Not morphology, not example sentences. Forms come from Ekilex or the
 seeded principal parts; example sentences come from Ekilex `usages` and are only ever *hidden* or
@@ -4322,7 +4376,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `formIndex`, `slotsNeeded`, `askableFor`, `MasteryBoard`, `hoursFor`, `foundHours`, `weeklyExposure`,
 `weeksWithFound`, `measuredPace`, `currentLevelAnswer`, `AnuProse`, `parseReply`, `fixFrom`,
 `TAGGED_LINE`, `readSituation`, `wordStanding`, `SITUATION_FACTS`, `readinessPicture`, `RungChip`,
-`distanceLine`, `minutesForCards`, `describeSituation`. Most of them now
+`distanceLine`, `minutesForCards`, `describeSituation`, `conditionFor`, `describeHearing`,
+`playThrough`, `errandForDay`, `recordEncounter`, `outThere`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -4352,7 +4407,7 @@ npm run scenes:template  # write the spreadsheet a native speaker fills in, one 
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
 npm run measure:scenes   # how much of a conversation the dictionary can already carry
-npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds
+npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds (three runs so far; read the ranked list)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running
 npm run test:browser     # the newer browser suites: routes, modes, offline, scanning, suggestions, a11y

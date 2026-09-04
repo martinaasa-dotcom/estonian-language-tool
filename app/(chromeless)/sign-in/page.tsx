@@ -15,6 +15,7 @@ const PROMISES = [
   "A dictionary that answers with every form of the word",
   "Cards timed to when you are about to forget, plus sprints, listening and match",
   "Anu explains the grammar, and never invents a form",
+  "A conversation to rehearse, and one small thing to say to a real person today",
 ];
 
 /**

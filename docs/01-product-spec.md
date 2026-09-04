@@ -4,6 +4,14 @@ Supersedes v4.0. Every change from v4.0 is justified in `00-audit-v4.md`.
 
 ## 1. The user and the job
 
+> **Amended, September 2026.** The user below is who this was built for and is still the person
+> who uses it most. The job changed. Almost everybody learning Estonian in Estonia freezes at a
+> counter long after they can pass a vocabulary test, and every learning app on the market is
+> built to keep them on the app. So the job is now: *"Get me ready for the receptionist who talks
+> too fast and switches to English when I hesitate, and then get me out of the app and in front of
+> her."* `docs/22-real-life.md` is the argument in full. What follows is unchanged where it still
+> holds.
+
 One user: a native English speaker taking a structured Estonian class, studying most days, on a
 laptop, at a desk. Not a consumer product, not multi-tenant, not a startup. Every decision below
 optimises for *one committed learner using this daily for a year*, which permits choices a SaaS
@@ -29,6 +37,9 @@ and no answer to "what now". Hence the Today view (§3.0) as the default route.
    and failure behaviour. (Fixes C6.)
 5. **The data is the user's.** Local-first, exportable to JSON and Anki from Phase 3. (Fixes C10.)
 6. **Teach the pattern, not the form.** Show *why* `toa` is what it is, not just that it is.
+7. **The point is to leave.** Every feature is measured by whether it gets somebody through a real
+   conversation, and the app counts those conversations rather than the days it was opened. A
+   screen that keeps a learner inside when the person is outside has failed, however polished.
 
 ## 3. Features
 

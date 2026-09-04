@@ -42,6 +42,7 @@ import {
 } from "@/lib/settings/store";
 import { letterBarFrom, type LetterBar } from "@/lib/ux/letterBar";
 import { autoplayFrom, feedbackSoundsFrom, voiceFrom } from "@/lib/audio/voice";
+import { hearingFrom } from "@/lib/audio/conditions";
 import { kindFrom } from "@/lib/ux/schedule";
 import { participationValue } from "@/lib/research/participation";
 import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
@@ -49,6 +50,7 @@ import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
 import { writeGrade } from "@/lib/srs/grade";
+import { errandById, outcomeFrom } from "@/lib/collections/errands";
 import { emptyScheduling, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
 import { ratingFor, SONAD_GUESSES } from "@/lib/games/sonad";
@@ -95,7 +97,7 @@ import { safeMessage } from "@/lib/observability/report";
  * facts. A closed list costs nothing: every caller in the tree already names
  * one of these.
  */
-const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC"]);
+const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC", "SCENE"]);
 
 /**
  * Add a word to the deck.
@@ -1342,6 +1344,18 @@ export async function setFeedbackSounds(value: string) {
 }
 
 /**
+ * Whether the listening rounds vary the delivery, or keep the studio.
+ * Normalised on the way in like the other three; the shell publishes it.
+ */
+export async function setHearing(value: string) {
+  const ownerId = await requireUserId();
+  const normalised = hearingFrom(value);
+  await writeSetting(ownerId, SETTING_KEYS.hearing, normalised);
+  revalidatePath("/", "layout");
+  return { ok: true as const, value: normalised };
+}
+
+/**
  * Whether this learner's answers are counted in the anonymous statistics.
  *
  * Revalidated at the settings path rather than at the layout, because nothing
@@ -2451,6 +2465,8 @@ export async function deleteMyAccount(confirmation: string) {
       */
       await tx.sceneGap.deleteMany({ where: { ownerId } });
       await tx.sceneRun.deleteMany({ where: { ownerId } });
+      // And every real conversation they reported having outside the app.
+      await tx.encounter.deleteMany({ where: { ownerId } });
       await tx.lexeme.updateMany({ where: { editedBy: ownerId }, data: { editedBy: null } });
       /*
         And the attribution on anything they reviewed, for the same reason the
@@ -2530,6 +2546,9 @@ const BackupSchema = z.object({
     read; rejoining is one code away.
   */
   examAttempts: z.array(z.record(z.unknown())).optional(),
+  sceneRuns: z.array(z.record(z.unknown())).optional(),
+  sceneGaps: z.array(z.record(z.unknown())).optional(),
+  encounters: z.array(z.record(z.unknown())).optional(),
 });
 
 export interface RestoreSummary {
@@ -2797,6 +2816,38 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         await tx.examAttempt.create({ data: data as never });
       }
 
+      /*
+        A conversation played through, with its transcript, and the words it
+        needed. Both append-only, so a row already here is left exactly as it
+        is; a gap whose run did not come back is still a fact about a word.
+      */
+      for (const raw of backup.sceneRuns ?? []) {
+        const data = revive(raw, ["startedAt", "endedAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.sceneRun.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        await tx.sceneRun.create({ data: data as never });
+      }
+      for (const raw of backup.sceneGaps ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.sceneGap.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        if (data.lexemeId) {
+          const lexeme = await tx.lexeme.findUnique({ where: { id: String(data.lexemeId) }, select: { id: true } });
+          if (!lexeme) data.lexemeId = null;
+        }
+        await tx.sceneGap.create({ data: data as never });
+      }
+
+      for (const raw of backup.encounters ?? []) {
+        const data = revive(raw, ["createdAt"]);
+        data.ownerId = ownerId;
+        const exists = await tx.encounter.findUnique({ where: { id: String(data.id) }, select: { id: true } });
+        if (exists) continue;
+        await tx.encounter.create({ data: data as never });
+      }
+
       for (const raw of backup.stars ?? []) {
         const data = revive(raw, ["createdAt"]);
         const lexemeId = String(data.lexemeId ?? "");
@@ -2845,6 +2896,26 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
 }
 
 // ───────────────────────────── Scanned pages ──────────────────────────────
+
+/**
+ * How a real conversation went, in one of three words.
+ *
+ * The learner's own report of something that happened outside the app, which
+ * no log can reconstruct and is therefore stored rather than derived
+ * (ADR-014's exception, the same one a placement sitting has). Append-only.
+ * The outcome is checked against the closed list and the errand against the
+ * table, because both arrive off the wire.
+ */
+export async function recordEncounter(errandId: string, outcome: string) {
+  const ownerId = await requireUserId();
+  const errand = errandById(text(errandId));
+  const result = outcomeFrom(outcome);
+  if (!errand || !result) return { ok: false as const, error: "That is not one of the three answers." };
+  await prisma.encounter.create({ data: { ownerId, errandId: errand.id, outcome: result } });
+  revalidatePath("/");
+  revalidatePath("/progress");
+  return { ok: true as const };
+}
 
 /**
  * A photographed page, once a person has looked at what came back.

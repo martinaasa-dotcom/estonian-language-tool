@@ -1,10 +1,13 @@
-# Kodukeel. Estonian learning dashboard
+# Kodukeel. Ready for the real thing
 
-*Kodukeel*, "home language". An Estonian study workspace built around the thing that actually makes
-the language hard: the cases. A dictionary that answers with every form of a word, a course you can
-work through, flashcards scheduled by FSRS, seven practice modes, a grammar reference written in
-English, printable worksheets for a real class, a mock of the state language examination at every
-level, and a tutor that is never allowed to invent an Estonian form.
+*Kodukeel*, "home language". An Estonian learning app whose purpose is to be left: it teaches the
+words properly, then puts you in front of somebody with an agenda of their own, and then counts
+the conversations you have outside it. A dictionary that answers with every form of a word, a
+course you can work through, flashcards scheduled by FSRS, listening that sounds like the street
+rather than the studio, a grammar reference written in English, printable worksheets for a real
+class, a mock of the state language examination at every level, a tutor that is never allowed to
+invent an Estonian form, and Situations: a receptionist, a landlord, a clerk at a counter, each with a
+reason of their own to make it hard, marked against the dictionary and never by a model.
 
 > **Status: usable by someone who is not you.** First run walks a new learner through a setup wizard
 > and builds them a real deck; the daily loop, path, review, practice, progress, is complete, works
@@ -40,6 +43,20 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
+- **Situations.** Somebody behind a desk, a card saying who you are today and what you came for,
+  and the thing to get done in Estonian. The other side speaks in sentences a lexicographer
+  recorded, or in a line composed inside the unit's own words and checked word by word before
+  you see it, and the screen says which. Whether you were understood is decided by the
+  dictionary, never by a model, so you cannot be marked wrong for being right. Difficulty is a
+  budget of things that go wrong: the slot you asked for has gone, a queue forms, they switch to
+  English. You can walk out. The debrief leads with what happened and never with a score.
+- **Say it today.** One small errand a day, order a coffee, ask the time, drawn from the units you
+  have started, and one press to say how it went: they understood me, they switched to English,
+  I did not manage it. Progress counts those ahead of every chart, because a conversation you had
+  is the only measure that matters here.
+- **Hearing the way people talk.** A word you know well comes back at speed, over café noise, down
+  a phone line, from halfway through, in a different voice each time. The words never change; the
+  delivery does, because nobody at a counter talks like a clean synthetic voice in a quiet room.
 - **A course.** 82 units across five CEFR levels, from *Tervitused* to *Nüansid*, each a
   sitting's worth of words, and the words between the words too: question words, pronouns, the
   postpositions, the months and the adverbs of time have units of their own. Adding a unit builds real flashcards, every form, audio, both

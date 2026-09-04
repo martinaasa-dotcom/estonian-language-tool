@@ -616,6 +616,58 @@ check("nothing plays a clip outside lib/audio/clip.ts", () => {
   );
 });
 
+check("the room a clip is heard in is made in one module, and only the rounds that vary it ask", () => {
+  /*
+    `lib/audio/conditions.ts` is the one table of how people talk (at speed,
+    over café noise, down a phone line, from halfway through) and
+    `lib/audio/mixer.ts` is the one place a condition becomes sound. A second
+    `AudioContext` is a second play path, which is the fault the `new Audio(`
+    check above exists for; the feedback tones are the one other legitimate
+    holder, because they are not a clip.
+
+    The pairing is the other half. A round that plays a card unseen is the
+    round this exists for, so the two deck-based listening rounds have to ask
+    `conditionFor` rather than each deciding on its own that a word is clean.
+    And the mock exam may not: the real paper is read in a studio, and a
+    condition there would be a paper harder than the one it imitates.
+  */
+  const holders = ALL
+    .filter((file) => !/\.(test|itest)\.tsx?$/.test(file))
+    .filter((file) => /\bAudioContext\b/.test(code(file)))
+    .sort();
+  assert.deepEqual(
+    holders,
+    ["lib/audio/feedback.ts", "lib/audio/mixer.ts"],
+    "an AudioContext is opened somewhere other than the mixer and the feedback tones",
+  );
+  assert.match(code("lib/audio/clip.ts"), /playThrough\(/, "playClip stopped routing a condition through the mixer");
+  // The rate is a playback rate on the element with the pitch held, never a
+  // number sent to the service, which is the rule the slow play states.
+  assert.match(code("lib/audio/clip.ts"), /playbackRate\s*=\s*condition\.speed/, "the player stopped reading the condition's speed");
+  assert.doesNotMatch(code("lib/audio/clip.ts"), /speed:/, "a speed is being sent to the speech service again");
+
+  for (const file of [
+    "app/(app)/review/listening/ListeningSession.tsx",
+    "app/(app)/review/dictation/DictationSession.tsx",
+  ]) {
+    assert.match(code(file), /conditionFor\(/, `${file} plays a card unseen and no longer asks which room it is heard in`);
+    assert.match(code(file), /describeHearing\(/, `${file} stopped saying which room it was, after the answer`);
+  }
+  for (const file of sourceFiles("app/(app)/exam")) {
+    assert.ok(!/condition=/.test(code(file)), `${file} varies the delivery, and the real paper is read in a studio`);
+  }
+
+  // The table's own promises: every condition says how it is heard, and a new
+  // word is always heard clearly.
+  const table = code("lib/audio/conditions.ts");
+  assert.match(table, /clean: 0,/, "a new word is no longer guaranteed a quiet room");
+  const ids = [...table.matchAll(/\{ id: "([a-z]+)"/g)].map((m) => m[1]);
+  assert.ok(ids.length >= 4, "the conditions table shrank below the four ways people talk");
+  for (const id of ids) {
+    assert.match(table, new RegExp(`\\b${id}: \\d+,`), `${id} has no opening point in OPENS_AT`);
+  }
+});
+
 check("a task's kind is the same set wherever it is written down", () => {
   const table = code("lib/ux/agenda.ts");
   const declared = [...table.matchAll(/^  ([A-Z_]+): "/gm)].map((m) => m[1] as string);
@@ -1315,6 +1367,11 @@ check("every practice mode writes to the same review log", () => {
     marks go to applyGradeBatch, so the exam is under this rule rather than
     exempt from it; the invariant below on submitExam is what holds that door
     to applyGradeBatch rather than to Review rows of its own.
+
+    finishScene is the fifth, and it is the exam's shape again: the browser
+    plays the conversation and sends the turns, the server draws the same plan
+    from the same seed, reads every turn against the dictionary and grades
+    through writeGrade. The check below on that action holds it to writeGrade.
 
     recordSonad is the fourth, and it is the exam's shape exactly. The board
     knows the answer, because marking a guess without a round trip is most of

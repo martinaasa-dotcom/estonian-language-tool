@@ -94,6 +94,13 @@ export const SETTING_KEYS = {
   autoplayAudio: "autoplayAudio",
   feedbackSounds: "feedbackSounds",
   /**
+   * Whether the listening rounds vary how a sentence is delivered: at speed,
+   * over café noise, down a phone line, from halfway through. On by default,
+   * deliberately, because the counter is what this app is for; the values
+   * live in lib/audio/conditions.ts.
+   */
+  hearing: "hearing",
+  /**
    * Which language a meaning is given in beside the English.
    *
    * English is the default and stays the default, because a missing row has to

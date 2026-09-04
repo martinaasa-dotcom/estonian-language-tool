@@ -33,7 +33,7 @@ const MAX_HISTORY = 20;
 const QUESTIONS_PER_MINUTE = 12;
 
 /** What Anu is told when the learner's own log could not be read: the middle of the scale, and nothing else. */
-const UNKNOWN_LEARNER: LearnerNote = { level: "B1", weakestCase: null, unit: null };
+const UNKNOWN_LEARNER: LearnerNote = { level: "B1", weakestCase: null, unit: null, scene: null };
 
 export async function POST(request: Request) {
   const ownerId = await requireUserId();

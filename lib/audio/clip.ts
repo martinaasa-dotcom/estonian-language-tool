@@ -1,4 +1,6 @@
 import { cachedClip, rememberClip } from "./clipCache";
+import { CLEAN, type Condition } from "./conditions";
+import { needsMixer, playThrough } from "./mixer";
 
 /**
  * One clip, fetched once.
@@ -11,7 +13,10 @@ import { cachedClip, rememberClip } from "./clipCache";
  * from cache and look like the setting not saving.
  *
  * So the key is built here, once, from everything that changes the sound:
- * the text, the speed, and the voice. The server hashes the same three.
+ * the text, the speed, and the voice. The server hashes the same three. A
+ * hearing condition (`lib/audio/conditions.ts`) changes the speed the service
+ * is asked for and nothing else the server sees; the room it is heard in is
+ * made in the browser after the fetch, so it is not part of the key.
  *
  * Browser only, since it mints object URLs. Never throws on a play that the
  * browser refuses; a clip that could not be fetched rejects, which is the one
@@ -21,6 +26,15 @@ export interface ClipRequest {
   readonly text: string;
   readonly slow?: boolean;
   readonly voice?: string;
+  /**
+   * How it is delivered: the rate, the room, the line. Clean when absent,
+   * which is what every screen that has not asked gets. `slow` wins over a
+   * condition's own speed, because "play it slowly" is the learner's request
+   * and the condition is the round's. The rate is a playback rate on the
+   * element with the pitch held, never a number sent to the service, for the
+   * reason SLOW_RATE gives below.
+   */
+  readonly condition?: Condition;
 }
 
 /**
@@ -51,6 +65,11 @@ export interface ClipRequest {
  */
 export const SLOW_RATE = 0.7;
 
+/**
+ * One clip per word and voice. The rate is not in the key, because a
+ * condition changes how the clip is played and never which clip it is:
+ * "at speed" is the same stretch as slow, the other way.
+ */
 export function clipKey({ text, voice }: ClipRequest): string {
   return `${text}|${voice ?? ""}`;
 }
@@ -112,10 +131,18 @@ export async function playClip(
   { unasked = false }: { unasked?: boolean } = {},
 ): Promise<PlayOutcome> {
   const url = await fetchClip(request);
+  // The room is the mixer's job; the rate and a quiet room are the element's.
+  const condition = request.slow ? CLEAN : (request.condition ?? CLEAN);
+  if (needsMixer(condition)) return playThrough(url, condition, { unasked });
   const audio = new Audio(url);
   if (request.slow) {
     audio.preservesPitch = true;
     audio.playbackRate = SLOW_RATE;
+  } else if (condition.speed !== 1) {
+    // "At speed" is the same time stretch as slow, the other way, and holds
+    // the pitch for the same reason: a faster tape is a higher voice.
+    audio.preservesPitch = true;
+    audio.playbackRate = condition.speed;
   }
   try {
     await audio.play();
