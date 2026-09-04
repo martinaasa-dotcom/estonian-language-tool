@@ -403,8 +403,20 @@ which is the one address either way in lands on, so the allowlist is checked in 
 
 **Set up your own SMTP before you tell anybody about it.** Supabase's built-in email service sends
 a couple of messages an hour for the whole project and says itself it is for testing, so on a
-public copy the second person to ask for a link does not get one. **Project Settings → Auth → SMTP
-Settings** takes any provider (Resend, Postmark, SES).
+public copy the second person to ask for a link does not get one. It lives under
+**Authentication → Emails → SMTP Settings** (Supabase has moved this out of Project Settings a
+few times across versions; if it is not there, check Authentication → URL Configuration or
+Advanced). It takes any provider; this app is run on **Resend**, added as a verified sending
+domain (`kodukeel.ee`) with these settings:
+
+- **Host**: `smtp.resend.com`
+- **Port**: `465`
+- **Username**: `resend` (the literal word, not an account name)
+- **Password**: a Resend API key with sending access, created under **API Keys**
+- **Sender email**: an address on the verified domain, e.g. `noreply@kodukeel.ee`
+
+Resend's own **Logs** tab shows every send attempt and its delivery status, which is the fastest
+way to debug a bounce or a missing email.
 
 The mailed link is **on by default**, and `EMAIL_SIGN_IN="off"` hides it. It was the other way
 round for a while, off until somebody set it on, on the argument that a form which takes an
