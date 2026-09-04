@@ -3667,9 +3667,12 @@ leads on a card: `lib/estonian/plainAsk.ts` is the one table of what a slot mean
 clause finishing "How do you say this ...?" that means something to somebody who has never opened a
 grammar book. `kohtuma`, then *How do you say this about yourself, already happened?*, then
 `lihtminevik · ma · the simple past` in one quiet line under it, where it is the cross-reference it
-was always meant to be. Three screens read it: the review card, which is the daily path and where it
-is worth most, the flash round, and the writing exercise, which used to lead with `seesütlev` at 24px
-in the accent and say nothing about what sentence to write.
+was always meant to be. Five screens read it: the review card, which is the daily path and where it
+is worth most, the flash round, the writing exercise, which used to lead with `seesütlev` at 24px
+in the accent and say nothing about what sentence to write, and the two rounds that ask by the
+question word alone. Target prints the clause under `kus?`, one line because the round is timed;
+the picture board keeps `kus?` on the tile, where there is room for two words, and puts one line per
+distinct question under the board, since six tiles saying the same sentence is furniture.
 
 **Nothing in that table inflects anything, in either language.** "I met" reads better than "about
 yourself, already happened" and there is no rule that turns "to meet" into "met" for every English

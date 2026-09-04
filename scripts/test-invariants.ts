@@ -5084,6 +5084,8 @@ check("a screen that asks for a form reads the plain table rather than only nami
     "app/(app)/review/ReviewSession.tsx",
     "app/(app)/review/flashcards/FlashSession.tsx",
     "app/(app)/review/write/WriteSession.tsx",
+    "app/(app)/review/target/TargetSession.tsx",
+    "app/(app)/review/emoji/EmojiSession.tsx",
   ];
   for (const file of ASKS) {
     const source = code(file);

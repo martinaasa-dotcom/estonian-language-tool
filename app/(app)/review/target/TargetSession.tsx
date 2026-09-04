@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Crosshair, Timer, Trophy } from "lucide-react";
+import { plainAskLine } from "@/lib/estonian/plainAsk";
 import { gradeCard, checkAchievements } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
@@ -193,9 +194,19 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
           {question.lemma}
         </p>
         {question.question ? (
-          <p lang="et" className="text-xl font-semibold" style={{ color: "var(--peach-ink)" }}>
-            {question.question}
-          </p>
+          <>
+            <p lang="et" className="text-xl font-semibold" style={{ color: "var(--peach-ink)" }}>
+              {question.question}
+            </p>
+            {/* The question word is what an Estonian says; the line under it is
+                what it means, for somebody who has not learned that yet. Kept
+                to one line, since this round is timed. */}
+            {question.caseKey && plainAskLine(question.caseKey) && (
+              <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+                {plainAskLine(question.caseKey)}
+              </p>
+            )}
+          </>
         ) : (
           <p className="text-sm" style={{ color: "var(--ink-3)" }}>What does it mean?</p>
         )}
