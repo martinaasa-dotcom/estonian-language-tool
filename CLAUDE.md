@@ -4651,7 +4651,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `distanceLine`, `minutesForCards`, `describeSituation`, `conditionFor`, `describeHearing`,
 `playThrough`, `errandForDay`, `recordEncounter`, `outThere`, `reachedSlot`, `reachedFor`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
-`lacksFiniteVerb`, `answerForms`, `groupEndings`, `CaseNote.plain`. Most of them now
+`lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
