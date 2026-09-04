@@ -1,11 +1,8 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
-import { ArrowRight, BadgeCheck, CalendarClock, CircleAlert, ClipboardCheck, Clock, Compass, Info, Lightbulb, TriangleAlert } from "lucide-react";
+import { ArrowRight, BadgeCheck, CircleAlert, ClipboardCheck, Clock, Compass, Info, Lightbulb, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
-import { goalsFor } from "@/lib/progress/assessment";
-import { reasonsFor, weeksUntil, targetByBand } from "@/lib/assessment/goals";
-import { distanceLine, foundHours, project } from "@/lib/assessment/plan";
-import { measuredPaceFor, standingFor } from "@/lib/progress/plan";
-import { minutesForCards } from "@/lib/stats/pace";
+import { measuredPaceFor } from "@/lib/progress/plan";
+import { examCountdown } from "@/lib/progress/countdown";
 import { readinessSignals, recentAttempts } from "@/lib/progress/exam";
 import { EVIDENCE_NOTE, assessReadiness } from "@/lib/exam/readiness";
 import {
@@ -16,6 +13,7 @@ import { learnerDayClock } from "@/lib/progress/dayClock";
 import { DATE_AND_TIME, DateText } from "@/components/DateText";
 import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
+import { ExamCountdownCard } from "@/components/ExamCountdown";
 
 export const metadata = { title: "Mock exam" };
 
@@ -33,12 +31,10 @@ export const dynamic = "force-dynamic";
  */
 export default async function ExamPage() {
   const ownerId = await requireUserId();
-  const [signals, attempts, goals, clock, standing, pace] = await Promise.all([
+  const [signals, attempts, clock, pace] = await Promise.all([
     readinessSignals(ownerId),
     recentAttempts(ownerId),
-    goalsFor(ownerId),
     learnerDayClock(ownerId),
-    standingFor(ownerId),
     measuredPaceFor(ownerId),
   ]);
   const readiness = assessReadiness(signals);
@@ -52,27 +48,21 @@ export default async function ExamPage() {
     anything: eleven weeks and 38 percent is a different life from eleven weeks
     and 71.
   */
-  const target = goals.target ? targetByBand(goals.target) : undefined;
-  const targetLevel = target
-    ? readiness.levels.find((l) => l.level === target.band)
-    : undefined;
-  const weeks = weeksUntil(goals.deadline, new Date());
   /*
-    Whether the pace this learner keeps reaches the target by then, in the
-    plan's own sentence. The weeks left on their own are a countdown; beside
-    the distance they are a decision. Same projection as `/assess` and Today.
+    THE TARGET CARD IS `ExamCountdownCard`, WHICH USED TO BE ON TODAY.
+
+    It was written for the home page and drawn there every settled morning,
+    which is a forecast on a screen whose job is what to do in the next ten
+    minutes; the hub is where somebody with a date is already going. What it
+    replaced here was the same card built by hand out of the same four figures,
+    so this is one drawing rather than two, which is the rule that took
+    `WeakestCases` down to one component.
+
+    `examCountdown` reads the goal, the signals and `assessReadiness`, the same
+    three this page already asked for, and where nobody named a band it falls
+    back to the one the climb stopped at and says whose it is.
   */
-  const distance = target
-    ? distanceLine(project({
-        standing,
-        to: target.band,
-        minutesPerDay: minutesForCards(goals.dailyGoal),
-        daysPerWeek: goals.daysPerWeek,
-        weeksAvailable: weeks,
-        found: foundHours(reasonsFor(goals.reason)),
-        pace,
-      }))
-    : null;
+  const countdown = await examCountdown(ownerId, new Date(), clock, undefined, pace, signals);
 
   // The words live beside the tier in `readiness.ts`, because Today prints the
   // same percentage and two copies of "what this number is worth" is how one
@@ -92,76 +82,10 @@ export default async function ExamPage() {
       */
       lead="Estonia examines at A2, B1, B2 and C1. These are practice papers, built from the dictionary."
     >
-      {target && targetLevel && (
-        <section className="mb-10">
-          <SectionTitle
-            hint={weeks === null ? "no deadline set" : weeks === 0 ? "the deadline is here" : `${weeks} weeks left`}
-          >
-            The paper you said you were aiming at
-          </SectionTitle>
-          <Card tone={targetLevel.confidence >= PASS_PCT ? "mint" : "accent"}>
-            <div className="flex flex-wrap items-center gap-5">
-              <Ring
-                pct={targetLevel.confidence}
-                size={72}
-                tone={targetLevel.confidence >= PASS_PCT ? "var(--mint)" : "var(--accent)"}
-                label={`${targetLevel.confidence} percent likely to pass ${target.band}`}
-              >
-                <span className="tnum text-md font-bold" style={{ color: "var(--ink)" }}>
-                  {targetLevel.confidence}%
-                </span>
-              </Ring>
-              <div className="min-w-[16rem] flex-1">
-                <p className="text-xl font-bold" style={{ color: "var(--ink)" }}>
-                  {target.band}, {target.label.toLowerCase()}
-                </p>
-                <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                  {weeks === null
-                    ? "You haven't set a deadline. "
-                    : weeks === 0
-                      ? "Your deadline is here. "
-                      : `${weeks} ${weeks === 1 ? "week" : "weeks"} left. `}
-                  {/*
-                    ONE OPINION PER QUESTION. This named the lowest of the four
-                    predictions and printed its percentage, which for a part
-                    nobody has ever attempted is a zero: "Speaking is holding
-                    you back, we predict 0 percent" to somebody who had never
-                    been asked to speak. `readiness.gaps` already ranks what to
-                    do about it and knows the difference between bad news and
-                    no news, so the card prints its first line.
-                  */}
-                  {targetLevel.confidence >= PASS_PCT
-                    ? "You'd pass it today, based on what we've seen so far."
-                    : readiness.gaps[0]
-                      ? `${readiness.gaps[0].title}. ${readiness.gaps[0].detail}`
-                      : "There isn't enough here yet to say."}
-                </p>
-                {distance && (
-                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                    {distance}{" "}
-                    <Link href="/assess" className="underline underline-offset-4" style={{ color: "var(--accent-deep)" }}>
-                      The plan
-                    </Link>
-                  </p>
-                )}
-                <p className="mt-3 flex flex-wrap items-center gap-3">
-                  <ButtonLink href={`/exam/${target.band}`} variant="secondary" size="sm">
-                    Sit the {target.band} paper <ArrowRight size={14} aria-hidden />
-                  </ButtonLink>
-                  <Link
-                    href="/settings#goals"
-                    className="text-sm underline underline-offset-4"
-                    style={{ color: "var(--ink-3)" }}
-                  >
-                    <CalendarClock size={13} className="mr-1 inline" aria-hidden />
-                    Change the goal
-                  </Link>
-                </p>
-              </div>
-            </div>
-          </Card>
-        </section>
-      )}
+      {/* The card carries its own heading and its own hint, which is why there
+          is no `SectionTitle` over it: two headings on one card is the shape
+          this pass took off Today. */}
+      {countdown && <ExamCountdownCard countdown={countdown} zone={clock.zone} className="mb-10" />}
 
       <section className="mb-10">
         <SectionTitle hint={evidenceNote}>Where you are</SectionTitle>

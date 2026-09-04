@@ -2582,6 +2582,74 @@ check("nothing tries to embed Sonaveeb or Ekilex", () => {
 
 // ── Conventions that hold the design together ────────────────────────────────
 
+check("Today draws at most TODAY_CARDS under the hero, and every card goes through the cap", () => {
+  /*
+    THE CAP IS THE PAGE'S RULE AND THE DISCLOSURE TABLE IS THE LEARNER'S.
+
+    `shows` answers "is this panel worth drawing at all", which is a question
+    about how far in somebody is. It cannot answer "is this the fifth most
+    useful thing on the page this morning", and Today was drawing everything
+    the table allowed: fourteen cards on a settled morning, two of them saying
+    "press something short", two of them redrawing panels Progress already has
+    under their own headings, an XP bar, six practice tiles, an exam forecast
+    the hub prints in full, and a standing pitch for a tutor whose button is in
+    the corner of every screen.
+
+    So the cards are named in priority order and the first `TODAY_CARDS` are
+    drawn. What rots is not the constant, it is somebody adding `{newCard}`
+    beside the sliced array, which reads as a card being added and is a card
+    that cannot be cut. That is what this fails on: every child of `Columns` on
+    this page comes out of the one expression the cap is applied to.
+  */
+  const today = code("app/(app)/page.tsx");
+  assert.match(today, /TODAY_CARDS/, "Today no longer reads the cap");
+  assert.match(
+    today, /\.slice\(0, TODAY_CARDS\)/,
+    "Today names its cards and draws all of them again; the cap is what keeps the page glanceable",
+  );
+
+  const open = today.indexOf("<Columns>");
+  const close = today.indexOf("</Columns>", open);
+  assert.ok(open >= 0 && close > open, "Today no longer lays its cards out in Columns");
+  const columns = today.slice(open, close);
+  /*
+    A card interpolated on its own, rather than named inside the array. Written
+    as the brace and the identifier together because the array itself names the
+    same variables with no braces round them, which is the shape that is fine.
+  */
+  const loose = [...columns.matchAll(/\{\s*([A-Za-z]+Card)\s*\}/g)].map((m) => m[1]);
+  assert.deepEqual(
+    loose, [],
+    `Today draws ${loose.join(", ")} outside the capped list, so the page can grow past ${"TODAY_CARDS"} again`,
+  );
+});
+
+/*
+  AND WHAT CAME OFF TODAY MOVED RATHER THAN WENT.
+
+  The cut took the XP bar and the three daily quests off the home page on the
+  argument that they are a report on how much has been done, which is the
+  question `/progress` exists for. That argument is only honest while Progress
+  actually draws them: a panel nobody renders is a feature nobody has, and this
+  repository has shipped that exact fault twice, on `DangerZone` and
+  `UsagePanel`, both complete and imported by nothing.
+
+  Anchored on the render rather than on the import for the reason those two
+  taught: a file being right is a different claim from a reader being able to
+  reach it.
+*/
+check("the XP bar and the daily quests are on Progress, where the cut sent them", () => {
+  const progress = code("app/(app)/progress/page.tsx");
+  assert.match(progress, /summary\.quests\.map\(/, "the daily quests are on no screen at all");
+  assert.match(progress, /summary\.level\.pct/, "the level bar is on no screen at all");
+  const today = code("app/(app)/page.tsx");
+  assert.doesNotMatch(today, /summary\.quests/, "the quest meters are back on Today");
+  assert.doesNotMatch(
+    today, /summary\.level/,
+    "the XP bar is back on Today, beside the run of days it was folded out of",
+  );
+});
+
 check("how much of the app a screen leads with is decided in one place", () => {
   /*
     The feedback that produced `lib/ux/disclosure.ts` was that this app
@@ -7151,25 +7219,39 @@ check("cards become minutes through one rate, measured where the log has one", (
 });
 
 /*
-  The distance on Today and on the exam hub is the plan's, off the same
-  projection, in the plan's own sentence.
+  The distance on the exam hub is the plan's, off the same projection, in the
+  plan's own sentence.
 
-  Today's countdown said how likely a pass was that morning and the hub said
-  how many weeks were left, and neither said whether the pace this learner
-  keeps arrives by then. Both print `distanceLine` over `project` now, built
-  from `standingFor`, the reasons and the measured pace, so a learner cannot
-  read one timeline on the level check screen and another on Today.
+  The hub said how many weeks were left and never whether the pace this learner
+  keeps arrives by then, which is a countdown rather than a decision. It prints
+  `distanceLine` over `project` now, built from `standingFor`, the reasons and
+  the measured pace, so a learner cannot read one timeline on the level check
+  screen and another here.
+
+  BOTH HALVES USED TO BE HERE TWICE. The card was on Today and the hub built the
+  same four figures by hand beside it, so this named two screens. The card moved
+  to the hub in the pass that cut Today to six boxes and the hand-built block
+  went with it, which is why what is asserted is one module and one card rather
+  than two pages.
 */
-check("Today and the exam hub print the plan's distance off the plan's own projection", () => {
+check("the exam hub prints the plan's distance off the plan's own projection", () => {
   const countdown = code("lib/progress/countdown.ts");
   for (const name of ["project(", "distanceLine(", "standingFor(", "foundHours("]) {
     assert.ok(countdown.includes(name), `lib/progress/countdown.ts no longer calls ${name}`);
   }
   assert.match(code("components/ExamCountdown.tsx"), /countdown\.distance/, "the countdown card no longer prints the distance");
+  /*
+    And the card is on a screen. A component nobody renders is a feature nobody
+    has, which is what this whole module keeps finding: it was drawn on Today
+    and the cut had to put it somewhere rather than orphan it.
+  */
   const hub = code("app/(app)/exam/page.tsx");
-  for (const name of ["project(", "distanceLine(", "standingFor(", "measuredPaceFor("]) {
-    assert.ok(hub.includes(name), `the exam hub no longer calls ${name}`);
-  }
+  assert.match(hub, /<ExamCountdownCard/, "the exam hub no longer draws the countdown card");
+  assert.match(hub, /examCountdown\(/, "the exam hub no longer reads the countdown");
+  assert.doesNotMatch(
+    code("app/(app)/page.tsx"), /ExamCountdownCard/,
+    "the exam forecast is back on Today, which is a screen for what to do in the next ten minutes",
+  );
   // Nobody phrases the distance for a screen by hand: the sentence is the plan's.
   const rephrased = ALL.filter((f) =>
     f !== "lib/assessment/plan.ts" && !/\.(i)?test\.ts$/.test(f)

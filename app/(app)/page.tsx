@@ -2,14 +2,11 @@ import { Suspense } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { redirect } from "next/navigation";
 import { LEARN_BATCH } from "@/lib/learn/ladder";
-import { ArrowRight, Flame, Shield, Sparkles, Target } from "lucide-react";
+import { ArrowRight, Flame, Shield, Target } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { currentLearner, requireUserId } from "@/lib/auth/session";
-import { supabaseConfigured } from "@/lib/auth/mode";
-import { resolveProvider } from "@/lib/tutor/provider";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
-import { examCountdown } from "@/lib/progress/countdown";
 import { measuredPaceFor } from "@/lib/progress/plan";
 import { minutesForCards } from "@/lib/stats/pace";
 import { wordOfDay, wordOfDayCollection } from "@/lib/progress/wordOfDay";
@@ -20,19 +17,15 @@ import { courseLevelFor } from "@/lib/progress/level";
 import { caseAccuracy } from "@/lib/stats/history";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { caseReviewsFor } from "@/lib/progress/cases";
-import { lemmasByCardLexeme } from "@/lib/dict/facts";
-import { LAPSE_THRESHOLD, MIN_REPS, stickingPoints } from "@/lib/stats/sticking";
 import type { DayClock } from "@/lib/time/day";
-import { practiceTiles, shows, stageOf } from "@/lib/ux/disclosure";
-import { FIRST_DOORS, modeAt, QUICK_MODES, type PracticeMode } from "@/lib/ux/modes";
+import { shows, stageOf, TODAY_CARDS } from "@/lib/ux/disclosure";
+import { modeAt } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
-import { Card, CardLink, Columns, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile, toneInk } from "@/components/ui";
+import { Card, Columns, Empty, Meter, Note, Page, Ring, SectionTitle, Stack, StatTile } from "@/components/ui";
 import { LocalDate } from "@/components/LocalDate";
 import { dateLine } from "@/lib/time/estonianDate";
 import type { TaskView } from "@/components/TaskRow";
-import { ExamCountdownCard } from "@/components/ExamCountdown";
-import { StruggleAreas } from "@/components/StruggleAreas";
 import { TodayPlan } from "@/components/TodayPlan";
 import { eventsOn, kindFrom, span, weekdayOf, KIND_LABEL, KIND_TONE, WEEKDAY_LONG } from "@/lib/ux/schedule";
 import { gameAfter, gameOn } from "@/lib/ux/weekGames";
@@ -172,29 +165,28 @@ export default async function TodayPage() {
     that still runs their queries has kept the cost and thrown away the reason.
   */
   const errand = shows(stage, "errand") ? errandForDay(summary.dayKey, startedUnits(snapshot.startedLemmas)) : null;
-  const [word, collection, struggle, countdown, outside] = await Promise.all([
+  /*
+    ONE ROUND A DAY, AND THE WEEK TABLE ALREADY DECIDED WHICH.
+
+    Today used to draw the daily quest every settled morning *and* the game of
+    the day beside it, which is two cards for one decision: press something
+    short. `lib/ux/weekGames.ts` gives Sunday to `/quest`, so the two are one
+    slot and the table is what fills it. On the six days the table names a
+    game, that is the round; on the seventh the quest is, and only then is the
+    weakest case worth the query behind it.
+  */
+  const featured = gameOn(weekdayOf(summary.dayKey));
+  const questDay = featured.href === "/quest" && shows(stage, "quest");
+  const [word, collection, weakest, outside] = await Promise.all([
     shows(stage, "word") ? wordOfDay(ownerId, summary.dayKey, clock.startOfDay(now), placement) : null,
     shows(stage, "word") ? wordOfDayCollection(ownerId, now, clock) : { kept: 0, streak: 0 },
-    shows(stage, "struggle") ? loadStruggle(ownerId, now) : null,
-    // The snapshot is handed over rather than fetched again: this page already
-    // has one for the due counts, and the readiness figures only need the deck.
-    shows(stage, "exam") ? examCountdown(ownerId, now, clock, snapshot, pace) : null,
+    questDay ? weakestCase(ownerId, now) : null,
     // Whether the day's question has been answered, and the month behind it,
     // off one read rather than one for each.
     errand ? outThereToday(ownerId, clock, now) : null,
   ]);
 
   const today = dateLine(now, clock.zone);
-  const tutorReady = resolveProvider() !== null;
-  /*
-    Whether the person reading this is the person who could fix it.
-    With no Supabase keys the app is a single local learner (ADR-013), so they
-    run it and the setup walkthrough is addressed to them. Hosted, they are a
-    visitor, and telling them to go and get an API key sends them to a Settings
-    page where the field does not exist, because the key is an environment
-    variable on the deployment.
-  */
-  const readerCanConfigure = !supabaseConfigured();
   /*
     What Practice will actually put in front of them.
 
@@ -232,16 +224,6 @@ export default async function TodayPage() {
     isToday: day === summary.dayKey,
   }));
 
-  /*
-    On the first morning the two doors are the two that work on a deck with no
-    history, and not simply the first two in the table: `QUICK_MODES` opens
-    with Case Sprint, which is sixty seconds of case forms "drawn from the
-    cards you are weakest on", offered to somebody who has answered nothing.
-    See `FIRST_DOORS`.
-  */
-  const modes = stage === "arriving"
-    ? FIRST_DOORS.slice(0, practiceTiles(stage))
-    : QUICK_MODES.slice(0, practiceTiles(stage));
 
   /*
     THE MODULES.
@@ -514,27 +496,15 @@ export default async function TodayPage() {
         </p>
       )}
 
-      {shows(stage, "level") && (
-        <div className="border-t pt-4" style={{ borderColor: "var(--rule-soft)" }}>
-          <div className="mb-2 flex items-baseline justify-between gap-3">
-            <span className="label-xs" style={{ color: "var(--ink-3)" }}>
-              Level {summary.level.level} · <span lang="et">{summary.level.title}</span>,{" "}
-              {summary.level.gloss}
-            </span>
-            <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
-              {summary.level.into}/{summary.level.span} XP
-            </span>
-          </div>
-          <Meter
-            pct={summary.level.pct}
-            label={`Level ${summary.level.level}, ${summary.level.remaining} XP to the next level`}
-          />
-          <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-            {summary.xpToday > 0 ? `+${summary.xpToday} XP today. ` : ""}
-            {summary.level.remaining} XP to level {summary.level.level + 1}.
-          </p>
-        </div>
-      )}
+      {/*
+        THE XP AND THE LEVEL BAR ARE NOT HERE, AND THAT IS THE POINT OF THE
+        CARD. A run of days is something to keep; a bar towards level 7 is a
+        report on how much has been done, which is the question `/progress`
+        exists for and already answers with the same figures, ring and all.
+        Two readings of one number on two screens is how they start to
+        disagree, and the one that goes is the one on the screen with two
+        minutes to spend.
+      */}
     </Card>
   ) : null;
 
@@ -615,8 +585,7 @@ export default async function TodayPage() {
      is the "does this say something true and useful on an empty log" test, and
      this one fails it where the word of the day passes.
   */
-  const weakest = struggle?.cases[0] ?? null;
-  const questCard = shows(stage, "quest") ? (
+  const questCard = questDay ? (
     <Card tone="accent">
       <SectionTitle hint="two minutes">Daily quest</SectionTitle>
       <p className="mt-1 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -641,72 +610,6 @@ export default async function TodayPage() {
       </div>
     </Card>
   ) : null;
-
-  const questsCard = shows(stage, "quests") ? (
-    <Card>
-      <SectionTitle hint={`${summary.questsDone} of ${summary.quests.length} done`}>
-        Today&rsquo;s quests
-      </SectionTitle>
-      <ul className="flex flex-col gap-2">
-        {summary.quests.map((q) => {
-          const Icon = icon(q.icon);
-          return (
-            <li
-              key={q.key}
-              className="flex items-center gap-3.5 rounded-[var(--r-lg)] border px-4 py-3.5"
-              style={{
-                borderColor: q.done ? "transparent" : "var(--rule)",
-                background: q.done ? "var(--mint-soft)" : "var(--surface)",
-                boxShadow: q.done ? "none" : "var(--shadow-sm)",
-              }}
-            >
-              <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                style={{
-                  background: q.done ? "var(--surface)" : "var(--accent-soft)",
-                  color: q.done ? "var(--good-ink)" : "var(--accent-deep)",
-                }}
-              >
-                <Icon size={17} aria-hidden />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-baseline justify-between gap-3">
-                  <span className="text-base font-semibold" style={{ color: "var(--ink)" }}>{q.title}</span>
-                  <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
-                    {q.progress}/{q.target}
-                  </span>
-                </span>
-                <span className="mt-1.5 block">
-                  <Meter
-                    pct={(q.progress / q.target) * 100}
-                    label={`${q.title}: ${q.progress} of ${q.target}`}
-                    tone={q.done ? "var(--good)" : "var(--accent)"}
-                    height={5}
-                  />
-                </span>
-                <span className="mt-1.5 block text-xs" style={{ color: "var(--ink-3)" }}>
-                  {q.detail} · +{q.reward} XP
-                </span>
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </Card>
-  ) : null;
-
-  /* The words and the cases that keep going wrong, from the one calculation each. */
-  const struggleCard = struggle ? (
-    <StruggleAreas sticking={struggle.sticking} cases={struggle.cases} />
-  ) : null;
-
-  /*
-    The date they gave us at first run, and whether they are going to make it.
-    Null rather than an empty card when nobody named a level: declining to set
-    one is an answer, and a panel that argues with it is the app talking over
-    the person using it.
-  */
-  const examCard = countdown ? <ExamCountdownCard countdown={countdown} zone={clock.zone} /> : null;
 
   /*
     The one panel that is about leaving the app. It asks whether any Estonian
@@ -767,12 +670,13 @@ export default async function TodayPage() {
     `lib/ux/weekGames.ts` is the table and nothing is hidden by it: every round
     is still on /practice, in the palette and at its own URL, every day.
 
-    Not drawn on the day the quest is featured, because the quest already has a
-    card on this page and it is the better one: it names the learner's own
-    weakest case and what it is at. Two cards for one round is furniture. The
-    cost is the "tomorrow" line one day in seven, which is the right way round.
+    Not drawn on the day the quest is featured, because that day's round *is*
+    the quest and the quest card is the better drawing of it: it names the
+    learner's own weakest case and what it is at. Two cards for one round is
+    furniture, which is what this page had every other day of the week as
+    well. The cost is the "tomorrow" line one day in seven, which is the right
+    way round.
   */
-  const featured = gameOn(weekdayOf(summary.dayKey));
   const featuredMode = modeAt(featured.href);
   const tomorrow = gameAfter(weekdayOf(summary.dayKey));
   const gameCard = featuredMode && featured.href !== "/quest" ? (
@@ -795,46 +699,16 @@ export default async function TodayPage() {
     </Card>
   ) : null;
 
-  const practiceCard = shows(stage, "practice") ? (
+  /*
+    THE ONE SHORT ROUND, WHICHEVER OF THE TWO IT IS TODAY.
 
-    <Card>
-      <SectionTitle hint="a minute each">Quick practice</SectionTitle>
-      <div className="grid grid-cols-2 gap-3">
-        {modes.map((m) => (
-          <PracticeTile key={m.href} mode={m} />
-        ))}
-      </div>
-      {/* The hub rather than a seventh tile: six hues, six modes, and the
-          grid stays a grid. */}
-      <CardLink href="/practice" className="mt-3">
-        Every mode, and a drill for your weakest case
-      </CardLink>
-    </Card>
-  ) : null;
-
-  const tutorCard = shows(stage, "tutor") ? (
-
-    <Card tone="blush">
-      <div className="flex items-center gap-2">
-        <Sparkles size={16} aria-hidden style={{ color: "var(--blush-ink)" }} />
-        <h2 className="label-xs" style={{ color: "var(--blush-ink)" }}>
-          {tutorReady ? "Stuck on something?" : readerCanConfigure ? "Anu needs a key" : "Anu is not available"}
-        </h2>
-      </div>
-      <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
-        {tutorReady
-          ? "Anu explains Estonian grammar, which case to use, why a stem changed, and whether your sentence is right."
-          : readerCanConfigure
-            ? "Anu can explain which case to use and why a stem changed. She needs a free key first, which takes about two minutes to set up."
-            : "Anu is not switched on for this site yet. Everything else here works without her."}
-      </p>
-      {(tutorReady || readerCanConfigure) && (
-        <ButtonLink href={tutorReady ? "/tutor" : "/settings"} className="mt-4 w-full">
-          {tutorReady ? "Ask Anu" : "Set Anu up"} <ArrowRight size={15} aria-hidden />
-        </ButtonLink>
-      )}
-    </Card>
-  ) : null;
+    Exactly one of these is ever non-null, because `questDay` and the game
+    card's own condition are the same test read from opposite sides. Written
+    as a slot rather than as two entries in the list below so that stays true
+    the day somebody changes one of them: two rounds on this page is the thing
+    the cap was added to stop.
+  */
+  const roundCard = gameCard ?? questCard;
 
   return (
     <Page
@@ -882,46 +756,46 @@ export default async function TodayPage() {
       lead={lead(stage, toReview, toLearn, pace?.cardsPerMinute ?? null)}
     >
       {/*
-        ONE CARD ACROSS THE TOP, AND THE REST DEALT INTO TWO COLUMNS THAT END
-        LEVEL.
+        ONE CARD ACROSS THE TOP, AND FIVE UNDER IT AT THE MOST.
 
         The page used to be two columns from the top, the wide one for today
-        (what is due, what is written down, what is going wrong, how the run
-        of days is going) and the narrow one for what is ahead (the exam, a
-        word, the next unit, the practice modes, Anu). That is a sound reading
-        order and it made a poor picture, because how much each column holds
-        depends on how far in the learner is. On the first morning the wide
-        column held one button and the narrow one held three tall cards, so
-        the page read as having slid sideways; moving the practice tiles
-        across for that stage only moved the lean.
+        and the narrow one for what is ahead. That is a sound reading order and
+        it made a poor picture, because how much each column holds depends on
+        how far in the learner is. So the one card that is not one of several,
+        the thing to do now, goes across the whole width, and everything under
+        it is handed to `Columns`, which balances the two by height in the
+        browser and never splits a card.
 
-        So the one card that is not one of several, the thing to do now, goes
-        across the whole width, and everything under it is handed to
-        `Columns`, which balances the two by height in the browser and never
-        splits a card. The order is still the argument. Down the first column
-        and into the second it reads: the two you can act on, what today
-        holds, what keeps going wrong, the run of days, and then the material,
-        the course, today's game, the doors to practice, a word, Anu. Where the
-        seam falls between those is the one thing the browser decides, and it
-        decides it so the two columns are the same height. Below `lg` it is
-        one column in that order.
+        WHAT IS NEW IS THE CAP, AND IT IS THE WHOLE OF THIS PASS. Everything a
+        stage allowed was drawn, which on a settled morning was fourteen cards:
+        the quest and the game of the day saying "press something short" twice
+        over, the sticking points and the weakest cases that Progress already
+        draws under their own headings, three quest meters, an XP bar, six
+        practice tiles, an exam forecast the hub prints in full, and a standing
+        pitch for a tutor whose button is in the corner of every screen. None
+        of that is wrong. All of it together is a page somebody scrolls rather
+        than reads, on the one screen that has to survive being glanced at from
+        a bus stop.
+
+        So the cards are named in priority order and the first `TODAY_CARDS` of
+        them are drawn. The order is the argument: what to say to a real person
+        today, what is actually on today, the one short round, the run of days,
+        a word, and then the course. Everything below the cut is on its own
+        page, in the rail and in the palette; nothing here is the only way to
+        reach anything.
       */}
       <Stack className="min-w-0">
         {doNowCard}
-        {errandCard}
         <Columns>
-          {questCard}
-          {examCard}
-          {scheduleCard}
-          {planCard}
-          {struggleCard}
-          {streakCard}
-          {questsCard}
-          {nextCard}
-          {gameCard}
-          {practiceCard}
-          {wordCard}
-          {tutorCard}
+          {[
+            errandCard,
+            scheduleCard,
+            planCard,
+            roundCard,
+            streakCard,
+            wordCard,
+            nextCard,
+          ].filter(Boolean).slice(0, TODAY_CARDS)}
         </Columns>
       </Stack>
       {/* Behind a Suspense boundary so three round trips of badge checking do
@@ -930,23 +804,6 @@ export default async function TodayPage() {
         <BadgeCheck ownerId={ownerId} snapshot={snapshot} summary={summary} units={units} />
       </Suspense>
     </Page>
-  );
-}
-
-function PracticeTile({ mode }: { mode: PracticeMode }) {
-  const Glyph = icon(mode.icon);
-  return (
-    <Link
-      href={mode.href}
-      className="lift flex flex-col gap-1 rounded-[var(--r)] p-4"
-      style={{ background: `var(--${mode.tone}-soft)` }}
-    >
-      <span style={{ color: toneInk(mode.tone) }}><Glyph size={17} aria-hidden /></span>
-      <span className="mt-1 text-base font-bold" style={{ color: "var(--ink)" }}>{mode.title}</span>
-      {/* Lowercase running text, so `text-xs`: the 11.5px step is the floor for
-          tracked uppercase labels and this is a sentence on a pastel tile. */}
-      <span className="text-xs" style={{ color: "var(--ink-3)" }}>{mode.subtitle}</span>
-    </Link>
   );
 }
 
@@ -1035,91 +892,22 @@ function taskView(task: {
 }
 
 /**
- * What is fighting this learner: the words that keep lapsing and the cases they
- * keep missing.
+ * THE ONE CASE MOST IN THE WAY, FOR THE DAY THE ROUND IS THE QUEST.
  *
- * BOTH ARE THE ONE CALCULATION EACH, AND THE CASES ARE THE ONE QUERY.
- * `stickingPoints` and `caseAccuracy` are what Progress and Practice already
- * read, and a home page tallying its own would let one learner read two
- * different numbers for the comitative with nothing in the app to say which was
- * right. That has happened here before.
+ * `caseReviewsFor` is the query Progress and Practice ask, rather than a
+ * fourth of its own: this page used to draw `WeakestCases` off five thousand
+ * rows of all time with no `orderBy` between them, so a learner could be told
+ * one number here and another on Progress about the same case on the same
+ * day, and which five thousand rows decided it was the plan's answer rather
+ * than theirs.
  *
- * So the reviews behind the cases come from `caseReviewsFor` rather than from a
- * query written beside this one. A shared calculation over an unshared input is
- * not a shared answer: the query this replaced took an arbitrary five thousand
- * rows of all time with no order between them, which is the exact shape that
- * module exists to remove, and all-time accuracy answers a different question
- * from the one a drill button asks.
- *
- * The deck is narrowed in SQL, which is the one thing this does that Progress
- * does not. Progress loads every card the learner owns because it is going to
- * draw a chart of all of them; Today wants three rows, and pulling four
- * thousand cards onto the render path of the page somebody opens every morning
- * to find them would be a poor trade. The narrowing uses `sticking.ts`'s own
- * thresholds rather than numbers typed beside the query, so the two cannot come
- * apart: a card below both of them is one that module would have discarded
- * anyway.
- *
- * The cost of narrowing is that a card just outside the window can be missed on
- * this page and found on Progress, which is why the panel links there and calls
- * it the whole picture.
+ * The sticking points that used to come back with it are gone from this page
+ * rather than moved: `/progress` draws them under their own heading from the
+ * same `stickingPoints`, and a home page with two minutes to spend is not
+ * where a list of lapsed cards earns its place. That takes three queries and
+ * a dictionary read off every render of this page, and leaves this one, on
+ * one day in seven.
  */
-async function loadStruggle(ownerId: string, now: Date) {
-  const [deck, caseReviews] = await Promise.all([
-    prisma.card.findMany({
-      where: {
-        ownerId,
-        suspended: false,
-        OR: [{ lapses: { gte: LAPSE_THRESHOLD } }, { reps: { gte: MIN_REPS } }],
-      },
-      // And on the primary key, because neither lapses nor reps is unique and
-      // this is cut at sixty: a tie at the boundary would otherwise be settled
-      // by whatever the plan did that day, so the panel could name a different
-      // card on two loads of one morning.
-      orderBy: [{ lapses: "desc" }, { reps: "desc" }, { id: "asc" }],
-      take: 60,
-      select: {
-        id: true, front: true, back: true, cardType: true, targetCase: true,
-        lapses: true, reps: true, suspended: true, lexemeId: true,
-      },
-    }),
-    /*
-      THE SAME QUERY THE OTHER TWO SCREENS ASK, RATHER THAN A FOURTH OF ITS OWN.
-
-      This drew `WeakestCases`, the component Progress and Practice draw, off
-      five thousand rows of all time with no `orderBy` between them: the exact
-      shape `lib/progress/cases.ts` was written to remove, still here on the
-      one page everybody opens. So a learner could be told one number on Today
-      and another on Progress about the same case on the same day, and which
-      five thousand rows decided it was the plan's answer rather than theirs.
-    */
-    caseReviewsFor(ownerId, now),
-  ]);
-
-  const [reviews, entries] = await Promise.all([
-    deck.length
-      ? prisma.review.findMany({
-          where: { ownerId, cardId: { in: deck.map((c) => c.id) } },
-          select: { cardId: true, rating: true },
-        })
-      : [],
-    // Out of the shared dictionary rather than through the relation, which
-    // Prisma serves as a second statement. See lib/dict/facts.ts.
-    lemmasByCardLexeme(deck.map((c) => c.lexemeId)),
-  ]);
-
-  return {
-    sticking: stickingPoints(
-      deck.map((c) => ({
-        id: c.id,
-        lemma: (c.lexemeId === null ? undefined : entries.get(c.lexemeId)?.lemma) ?? null,
-        front: c.front, back: c.back,
-        cardType: c.cardType, targetCase: c.targetCase,
-        lapses: c.lapses, reps: c.reps, suspended: c.suspended,
-      })),
-      reviews,
-      3,
-    ),
-    cases: caseAccuracy(caseReviews).slice(0, 3),
-  };
+async function weakestCase(ownerId: string, now: Date) {
+  return caseAccuracy(await caseReviewsFor(ownerId, now))[0] ?? null;
 }

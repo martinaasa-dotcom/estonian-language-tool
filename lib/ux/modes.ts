@@ -275,28 +275,12 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
  *
  * The first three need nothing but a deck. The rest need audio, a microphone
  * or a recorded sentence, so they are the ones most likely to be a dead end on
- * a fresh account, and Today shows the first `practiceTiles(stage)` of them.
+ * a fresh account. `/practice` draws them in this order and the command
+ * palette searches them in it; Today draws none of them any more, because six
+ * doors on the screen somebody glances at is a menu to study rather than a
+ * thing to press, and Practice is one row of the rail away.
  */
 export const QUICK_MODES = PRACTICE_MODES.filter((m) => m.group === "quick" && !m.within);
-
-/**
- * The two doors offered on the first morning, before anything has been graded.
- *
- * Today shows two practice tiles at `arriving` and took them off the front of
- * `QUICK_MODES`, which is Case Sprint and Match. Case Sprint is sixty seconds
- * of case forms "drawn from the cards you are weakest on", offered to somebody
- * who has answered nothing and has no weakest anything: it can only draw at
- * random, and a timer is the wrong first impression of an app whose whole
- * argument is that answering honestly beats answering fast.
- *
- * Match and Listening are the two that work on a deck with no history. Match
- * is eight words and their meanings, which is a first sitting; Listening asks
- * for a word with nothing written down, which is the thing a beginner in
- * Tallinn actually cannot do yet and the reason they installed this.
- */
-export const FIRST_DOORS = ["/review/match", "/review/listening"]
-  .map((href) => QUICK_MODES.find((m) => m.href === href))
-  .filter((m): m is PracticeMode => m !== undefined);
 
 /**
  * The drills for a named weakness, and where each is reached from.

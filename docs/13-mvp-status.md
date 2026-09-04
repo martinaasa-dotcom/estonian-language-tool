@@ -2257,3 +2257,50 @@ context builders moved to `scripts/lib/sceneDraft.ts`, shared with the drafter, 
 rejection rate measured with one prompt and a bank drafted with another is a rate for nothing. And
 the design's own Phase 3 argument, that a banked line may never be a card answer, an exam answer or
 a marking target, is an invariant now rather than a note, made to fail on each of its clauses.
+
+## 34. The twenty-eighth pass: six boxes on the page everybody opens
+
+Reported in four words by somebody using it: Today is "way too busy". It was. A settled learner
+opened fourteen cards, and the count is not the interesting part, because every one of them had a
+good argument behind it and most of those arguments are still in this file.
+
+What the count hid is that the cards were answering four questions at once, and only one of them is
+the question a home page is for. **What to do now**: the due count and the button, the errand, the
+class at six, the homework, the round. **How much have I done**: the XP bar, the three quest meters,
+the streak. **What is going wrong**: the sticking points, the weakest cases, the exam forecast.
+**What else is in here**: six practice tiles, the next unit, a pitch for Anu. Three of those four
+have a page of their own, in the rail, with the same figures drawn larger and with room to explain
+them. Today had become a table of contents for the app rather than a screen anybody reads before a
+bus.
+
+**Two of them were drawn twice over on one page.** The daily quest and the game of the day both said
+"press something short", and `lib/ux/weekGames.ts` had already answered which one today's is: Sunday
+is `/quest`. And `StruggleAreas` said in its own header that it was "a heading and a link" over the
+sticking points and the weakest cases, both of which Progress draws from the same two functions
+under their own headings, four rows further down the same rail.
+
+**So the page has a cap, and the cap is the pass.** `TODAY_CARDS` in `lib/ux/disclosure.ts` is five,
+the page names its cards in priority order and draws the first five under the hero, and the order is
+the argument: what to say to a real person today, what is actually on today, the one short round,
+the run of days, a word, and then the course. Six boxes in all. The disclosure table is untouched
+and still answers the question it was written for, which is about the learner rather than about the
+page; what is new is the second question, and the reason it is a separate constant.
+
+**What came off moved rather than went.** The XP bar and the three quests are on Progress, beside the
+ring that already carried the level, the total and what is left to the next one. The exam countdown
+card is on the examination hub, where it replaced a block that was building the same four figures by
+hand beside it, so that is one drawing rather than two and a learner with no target now gets the
+card as well. The sticking points and the weakest cases were already on Progress, which is why
+`StruggleAreas` was deleted rather than moved. The practice tiles and the Anu pitch are on
+`/practice` and behind the button in the corner of every signed-in screen.
+
+**Three queries and a dictionary read came off every render with them.** The weakest case is now
+read on the one day the round is the quest, through `caseReviewsFor`, the query Progress and Practice
+already share; the sticking points, the review join behind them and `lemmasByCardLexeme` are gone
+from this page entirely.
+
+**The invariant is on the shape that rots.** Nobody lowers the constant by accident. What happens is
+a card drawn loose beside the sliced list, which reads as a card being added and is a card that
+cannot be cut, so what is asserted is that every child of `Columns` comes out of the one expression
+the cap is applied to, and that Progress actually renders what the cut sent it. Made to fail three
+ways before it was trusted.
