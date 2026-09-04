@@ -28,8 +28,9 @@ page.on("console", (m) => {
 // then two when the crossword was renamed Ristsõna and both names had to keep
 // reaching it from the palette, and four for the picture round. The last two
 // arrived on two branches at once, so the number is measured on the merged tree
-// rather than added from either side: 44.
-const { check, absent, done } = suite("Practice modes", { floor: 44 });
+// rather than added from either side: 44. Three more for the columns on
+// Today ending level: 47.
+const { check, absent, done } = suite("Practice modes", { floor: 47 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -351,6 +352,39 @@ if ((await featured.count()) === 0) {
     modes.some((m) => hrefs.includes(m)));
   check("and says what is on tomorrow",
     (await page.getByText(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) is /).count()) > 0);
+}
+
+// 6d, again: the two columns under the thing to do now end level
+/*
+  Today used to deal its modules into a wide column and a narrow one by what
+  they were for, and on the first morning that put one button on the left
+  beside three tall cards on the right. `Columns` in components/ui.tsx lets the
+  browser balance the two by height instead, so what is measured here is the
+  outcome rather than the class: at this viewport the column ends differ by
+  less than the tallest card, which is the best any order-preserving deal can
+  do, and no card is split across the seam, which is what `break-inside`
+  promises and nothing else would notice failing.
+*/
+{
+  const cols = await page.locator("[data-column-item]").evaluateAll((els) => {
+    const byX = new Map();
+    for (const el of els) {
+      const r = el.getBoundingClientRect();
+      const card = el.firstElementChild?.getBoundingClientRect();
+      const row = byX.get(Math.round(r.left)) ?? { bottom: 0, tallest: 0, whole: true };
+      row.bottom = Math.max(row.bottom, r.bottom + scrollY);
+      row.tallest = Math.max(row.tallest, r.height);
+      // A card cut at the seam shows as a wrapper shorter than the card in it.
+      if (card && card.height > r.height + 1) row.whole = false;
+      byX.set(Math.round(r.left), row);
+    }
+    return [...byX.values()];
+  });
+  check("Today deals its cards into two columns at 1280", cols.length === 2);
+  const [a, b] = cols;
+  check("and the two columns end level, within one card of each other",
+    cols.length === 2 && Math.abs(a.bottom - b.bottom) < Math.max(a.tallest, b.tallest));
+  check("and no card is split across the seam", cols.every((c) => c.whole));
 }
 
 // 6e — Say what you see: a picture, a case, and the ending you actually wrote
