@@ -30,7 +30,7 @@ page.on("console", (m) => {
 // arrived on two branches at once, so the number is measured on the merged tree
 // rather than added from either side: 44. Three more for the columns on
 // Today ending level: 47.
-const { check, absent, done } = suite("Practice modes", { floor: 47 });
+const { check, absent, done } = suite("Practice modes", { floor: 48 });
 
 /**
  * Brings the current card to the point where it is waiting on the learner,
@@ -259,8 +259,24 @@ await page.goto(`${B}/sonad`, { waitUntil: "networkidle" });
 await page.evaluate(() => { try { localStorage.clear(); } catch { /* blocked */ } });
 await page.reload({ waitUntil: "networkidle" });
 
-const board = page.locator('[lang="et"].rounded-full');
-check("Sõnad draws six rows of six", (await board.count()) === 36);
+/*
+  The circles and not the keys, which now share `lang="et"`: the keyboard is
+  three rows of a real Estonian layout rather than a grid of the alphabet, so
+  a selector that only knew "an Estonian letter in a rounded box" would count
+  both. `.grid` is what a board circle is and a key is not.
+*/
+const board = page.locator('[lang="et"].rounded-full.grid');
+/*
+  Seven, and read off the page's own constant rather than typed: six for six
+  is the English game's ratio at a length where Estonian's nine vowels make
+  the search wider, so the last row is the one that gets the vowel count.
+*/
+const rows = await page.evaluate(() => {
+  const text = document.querySelector("main")?.textContent ?? "";
+  return Number(/6 letters, (\d+) left/.exec(text)?.[1] ?? 0);
+});
+check("Sõnad draws a row of six for every try", (await board.count()) === rows * 6, `${rows} rows`);
+check("and gives seven tries", rows === 7, `${rows}`);
 
 async function tapWord(word) {
   for (const letter of [...word]) await page.getByLabel(letter, { exact: true }).first().click();

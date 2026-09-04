@@ -6,6 +6,7 @@ import { MAX_LETTERS, MIN_LETTERS } from "@/lib/games/crossword";
 import {
   alsoAcceptedByLemma as sharedAlsoAccepted, sharedPrompts,
 } from "@/lib/collections/senses";
+import { heardIndex, type HeardIndex } from "@/lib/assessment/heard";
 
 /**
  * FACTS ABOUT THE SHARED DICTIONARY, READ ONCE RATHER THAN ONCE PER LEARNER.
@@ -280,6 +281,30 @@ export function alsoAcceptedByLemma(): Promise<Map<string, string[]>> {
     return sharedAlsoAccepted(
       sharedPrompts(rows.map((r) => ({ lemma: r.lemma, pos: r.pos, gloss: r.translation }))),
     );
+  });
+}
+
+/**
+ * What every spelling in the dictionary means, for the listening question that
+ * plays a whole sentence and asks about "a word you heard in it".
+ *
+ * A fact about the shared dictionary rather than about the person sitting
+ * the check, so it is cached here like the others. The placement is handed a
+ * window of two hundred words a band and the sentence it plays holds words
+ * from anywhere in the language: `Isa ja ema ei olnud kodus` is filed under
+ * `isa`, and whether "mother" may stand as a wrong answer to it is a question
+ * about `ema`, which is in the pool only by luck. Measured at 201ms to build
+ * over the shipped dictionary, once a minute at most. See `lib/assessment/heard.ts`.
+ */
+export function heardMeanings(): Promise<HeardIndex> {
+  return remember("heard-meanings", FACTS_TTL_MS, async () => {
+    const rows = await prisma.lexeme.findMany({
+      select: {
+        lemma: true, pos: true, translation: true,
+        forms: { select: { formType: true, value: true, morphCode: true } },
+      },
+    });
+    return heardIndex(rows);
   });
 }
 

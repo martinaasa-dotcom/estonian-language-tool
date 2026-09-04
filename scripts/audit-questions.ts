@@ -46,6 +46,8 @@ import { readExpanded } from "./lib/expandedFile";
 import { generateCards, availableCardTypes, type LexemeForCards } from "../lib/srs/cards";
 import { buildPaper as buildExam, type PoolWord } from "../lib/exam/paper";
 import { buildPaper as buildPlacement, type WordRow } from "../lib/assessment/items";
+import { heardIndex, meaningsHeard } from "../lib/assessment/heard";
+import { differentMeaning } from "../lib/questions/distractors";
 import { EXAM_LEVELS } from "../lib/exam/spec";
 import { clueFrom } from "../lib/progress/crossword";
 import { mentions } from "../lib/estonian/cloze";
@@ -98,7 +100,10 @@ const spent = new Map<string, number>();
   the only way to know it is to print it, which the line below now does.
 */
 const REACHES: Record<string, number> = {
-  deck: 36_041, exam: 2_500, check: 627, crossword: 5_295, scene: 1_409, target: 4_658,
+  deck: 36_041, exam: 2_500, crossword: 5_295, scene: 1_409, target: 4_658,
+  // 627 while a `heard` item was skipped outright; the listening items are
+  // asked the "also right" question now and counted.
+  check: 740,
   // Measured on the merged tree once the flash round read `caseFits`: the
   // local cases it may ask narrowed with everything else's, from 46,851.
   flash: 46_615,
@@ -222,15 +227,34 @@ function poolFor(seed: number): WordRow[] {
   return out;
 }
 
+/*
+  A LISTENING QUESTION IS ASKED THE OTHER QUESTION: NOT "IS THE ANSWER SHOWN"
+  BUT "IS A WRONG ANSWER ALSO RIGHT". It plays a whole sentence and asks for the
+  meaning of "a word you heard in it", so the meaning of *any* word in the
+  recording is a right answer, and a distractor that is one marks a learner
+  wrong for listening correctly. `Moraali ja eetika kategooriad.` offered
+  "morality" against "ethics". The builder is handed the whole dictionary's
+  meanings here, as `paperFor` hands it the cache, because the word that makes
+  a distractor true is usually outside the pool the question was drawn from.
+*/
+const heard = heardIndex(words);
 for (let seed = 1; seed <= SEEDS; seed++) {
-  const paper = buildPlacement(poolFor(seed), seed) as unknown as Record<string, unknown>;
+  const paper = buildPlacement(poolFor(seed), seed, heard) as unknown as Record<string, unknown>;
   for (const [skill, list] of Object.entries(paper)) {
     if (!Array.isArray(list)) continue;
     for (const item of list as Record<string, unknown>[]) {
-      // A listening question hides its prompt from the eye on purpose.
-      if (item.heard) continue;
       const options = (item.options ?? []) as string[];
       const answer = typeof item.answer === "number" ? options[item.answer] ?? "" : String(item.answer ?? "");
+      if (item.heard) {
+        if (typeof item.answer !== "number") continue;
+        asked++;
+        const meanings = meaningsHeard(String(item.et ?? ""), heard);
+        const alsoRight = options.filter((o, i) => i !== item.answer && meanings.some((m) => !differentMeaning(o, m)));
+        for (const option of alsoRight) {
+          faults.push({ where: `check ${skill} heard ${String(item.lemma)}`, shown: String(item.et ?? ""), answer: option });
+        }
+        continue;
+      }
       ask(`check ${skill} ${String(item.kind)}`, String(item.et ?? ""), answer);
     }
   }

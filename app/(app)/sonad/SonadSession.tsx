@@ -6,8 +6,9 @@ import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Button } from "@/components/Button";
 import { Card, Chip } from "@/components/ui";
 import {
-  letterMarks, outcomeOf, scoreGuess, solvedAt,
-  SONAD_GUESSES, SONAD_LENGTH, wellFormed, type Mark,
+  cluesAt, letterMarks, nextClue, outcomeOf, scoreGuess, solvedAt,
+  SONAD_GUESSES, SONAD_KEY_ROWS, SONAD_KEYS, SONAD_LENGTH, vowelCount, wellFormed,
+  type Mark,
 } from "@/lib/games/sonad";
 import type { Puzzle } from "@/lib/progress/sonad";
 import { addToDeck, recordSonad } from "@/app/actions";
@@ -26,21 +27,15 @@ import { loadBoard, saveBoard } from "./resume";
  * forged board cannot post a Good for a word nobody answered. See
  * `lib/progress/sonad.ts`.
  *
- * THE KEYS ARE THE ESTONIAN ALPHABET IN ITS OWN ORDER, not a QWERTY. That is
- * the layout a school poster uses, it puts õ ä ö ü together where a learner
- * looks for them, and it is one more thing this is not. It doubles as the
- * record of what each letter turned out to be, which is why it is here at all
- * rather than leaving a phone to its own keyboard.
- */
-
-/**
- * The Estonian alphabet, in the order it is taught, with the letters that only
- * appear in borrowed words in their proper places.
+ * THE KEYS ARE AN ESTONIAN KEYBOARD, WHICH IS NOT THE ESTONIAN ALPHABET, and
+ * which of those it is lives in `lib/games/sonad.ts` beside the rule about
+ * which letters a guess may hold: a keyboard missing one of them looks exactly
+ * like a keyboard, so the pairing is tested rather than remembered. What is
+ * decided here is only how wide a key is drawn, which is a fact about a phone.
  *
- * `KnownWord` holds loanwords, so a guess may legitimately contain c, q, w, x
- * or y and the keyboard has to offer them.
+ * It doubles as the record of what each letter turned out to be, which is why
+ * it is on the page at all rather than leaving a phone to its own keyboard.
  */
-const ALPHABET = [..."abcdefghijklmnopqrsšzžtuvwõäöüxy"];
 
 /**
  * WHAT EACH OF THE THREE LOOKS LIKE, AND WHY COLOUR IS NOT ALL OF IT.
@@ -216,7 +211,7 @@ export function SonadSession({ puzzle, day, guessable }: {
         return;
       }
       const letter = event.key.toLocaleLowerCase("et");
-      if ([...letter].length === 1 && ALPHABET.includes(letter)) {
+      if ([...letter].length === 1 && SONAD_KEYS.includes(letter)) {
         event.preventDefault();
         setRefused(null);
         setTyped((t) => ([...t].length >= SONAD_LENGTH ? t : t + letter));
@@ -229,6 +224,12 @@ export function SonadSession({ puzzle, day, guessable }: {
   const marks = useMemo(() => letterMarks(guesses, puzzle.answer), [guesses, puzzle.answer]);
   const rows = Array.from({ length: SONAD_GUESSES }, (_, i) => i);
   const at = solvedAt(guesses, puzzle.answer);
+
+  /* What the board is allowed to say, and what it may promise. Both are pure
+     functions of how many guesses have been made: see `cluesAt`. */
+  const clue = cluesAt(guesses.length);
+  const coming = nextClue(guesses.length, puzzle.category !== null);
+  const vowels = vowelCount(puzzle.answer);
 
   /*
     A tally rather than a board. `aria-live` on the six rows read every circle
@@ -247,9 +248,9 @@ export function SonadSession({ puzzle, day, guessable }: {
       <Card>
         <div className="flex flex-wrap items-center gap-2">
           {/*
-            The one clue, and it is a small one: what kind of word and how hard
-            it is meant to be. Enough to make a first guess informed rather than
-            a probe, and nowhere near enough to give it away.
+            What is known from the first row: what kind of word and how hard it
+            is meant to be. Enough to make a first guess informed rather than a
+            probe, and nowhere near enough to give it away.
           */}
           <Chip tone="neutral">{puzzle.pos.toLowerCase()}</Chip>
           {puzzle.cefr && <Chip tone="neutral">{puzzle.cefr}</Chip>}
@@ -257,6 +258,39 @@ export function SonadSession({ puzzle, day, guessable }: {
             {SONAD_LENGTH} letters, {SONAD_GUESSES - guesses.length} left
           </span>
         </div>
+
+        {/*
+          THE LADDER, AND IT SAYS WHAT IS COMING BEFORE IT COMES.
+
+          A clue that appears out of nowhere reads as the rules moving under
+          you, so the line under the chips is either the clue or the promise
+          of it. `cluesAt` decides when, in one pure function with the rules
+          in it, because "on the last try" has to move with the number of
+          tries rather than be typed here.
+
+          Announced politely as well as printed: a clue arriving is news, and
+          it lands under a board a screen reader has already been read.
+        */}
+        {!over && (clue.category || clue.vowels || coming) && (
+          <p className="mt-2.5 text-sm" role="status" aria-live="polite" style={{ color: "var(--ink-2)" }}>
+            {clue.category && puzzle.category && (
+              <span className="font-semibold" style={{ color: "var(--accent-deep)" }}>
+                It is {puzzle.category}.
+              </span>
+            )}
+            {clue.vowels && (
+              <span className="font-semibold" style={{ color: "var(--accent-deep)" }}>
+                {clue.category && puzzle.category ? " " : ""}
+                {vowels} of the six letters {vowels === 1 ? "is a vowel" : "are vowels"}.
+              </span>
+            )}
+            {coming && (
+              <span style={{ color: "var(--ink-3)" }}>
+                {clue.category && puzzle.category ? " Next: " : ""}{coming}
+              </span>
+            )}
+          </p>
+        )}
 
         <div className="mt-4 flex flex-col items-center gap-2">
           {rows.map((row) => (
@@ -348,29 +382,46 @@ function Keys({ marks, onLetter, onDelete, onSubmit }: {
 }) {
   return (
     <Card>
-      <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-11">
-        {ALPHABET.map((letter) => {
-          const mark = marks.get(letter);
-          const hue = mark ? HUE[mark] : { bg: "var(--surface)", ink: "var(--ink)", ring: "var(--rule)" };
-          const ring = mark ? RING[mark] : "1px";
-          return (
-            <button
-              key={letter}
-              type="button"
-              onClick={() => onLetter(letter)}
-              lang="et"
-              aria-label={letter}
-              className="press tap-tint grid h-11 place-items-center rounded-[var(--r-sm)] text-base font-semibold uppercase transition-ui"
-              style={{
-                background: hue.bg,
-                color: hue.ink,
-                boxShadow: ring === "0" ? "none" : `inset 0 0 0 ${ring} ${hue.ring}`,
-              }}
-            >
-              {letter}
-            </button>
-          );
-        })}
+      {/*
+        Three rows rather than a grid, because the rows are the layout: a key
+        is found by where it sits relative to the ones round it, and a grid
+        eight wide puts `p` under `h` on a phone and somewhere else on a
+        laptop. Each row fills the width it is given, so the twelve keys of
+        the top row and the nine of the bottom are the same row of a keyboard
+        at every width, exactly as they are on a real one.
+
+        `flex-1 basis-0 min-w-0` rather than a fixed width: at 360px twelve
+        keys and their gaps come to about 25px each, which is what every phone
+        keyboard is, and the height stays 44 so a thumb has the target the
+        floor asks for on the axis a thumb actually misses.
+      */}
+      <div className="flex flex-col gap-1.5">
+        {SONAD_KEY_ROWS.map((row, i) => (
+          <div key={i} className="flex justify-center gap-1 sm:gap-1.5">
+            {row.map((letter) => {
+              const mark = marks.get(letter);
+              const hue = mark ? HUE[mark] : { bg: "var(--surface)", ink: "var(--ink)", ring: "var(--rule)" };
+              const ring = mark ? RING[mark] : "1px";
+              return (
+                <button
+                  key={letter}
+                  type="button"
+                  onClick={() => onLetter(letter)}
+                  lang="et"
+                  aria-label={letter}
+                  className="press tap-tint grid h-11 min-w-0 flex-1 basis-0 place-items-center rounded-[var(--r-sm)] text-sm font-semibold uppercase transition-ui sm:text-base"
+                  style={{
+                    background: hue.bg,
+                    color: hue.ink,
+                    boxShadow: ring === "0" ? "none" : `inset 0 0 0 ${ring} ${hue.ring}`,
+                  }}
+                >
+                  {letter}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
       <div className="mt-3 flex gap-2">
         <Button type="button" variant="secondary" onClick={onDelete} className="flex-1">

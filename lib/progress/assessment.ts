@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { prisma } from "@/lib/db";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
-import { lemmaCountsByLevel } from "@/lib/dict/facts";
+import { heardMeanings, lemmaCountsByLevel } from "@/lib/dict/facts";
 import { buildPaper, type Paper, type WordRow } from "@/lib/assessment/items";
 import { normaliseGoals, type Goals } from "@/lib/assessment/goals";
 import { BANDS, type Band, type Level, type Placement, type SkillResult } from "@/lib/assessment/types";
@@ -95,7 +95,7 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
   */
   // Six `count(*)`s over the shared dictionary, which is the same six answers
   // for everybody who sits this. One cached tally instead. lib/dict/facts.ts.
-  const byLevel = await lemmaCountsByLevel();
+  const [byLevel, heard] = await Promise.all([lemmaCountsByLevel(), heardMeanings()]);
   const totals = BANDS.map((band) => byLevel.get(band) ?? 0);
   const window = PER_BAND * 2;
 
@@ -123,7 +123,9 @@ export async function paperFor(ownerId: string, seed: number): Promise<Paper> {
     words.push(...(fresh.length >= MIN_UNOWNED ? fresh : rows).slice(0, PER_BAND));
   }
 
-  return buildPaper(words, seed);
+  // The whole dictionary's meanings, so a listening question's wrong answers
+  // are checked against every word in the recording and not only the pool's.
+  return buildPaper(words, seed, heard);
 }
 
 /** A stored result, in the shape the result screen and the history read. */

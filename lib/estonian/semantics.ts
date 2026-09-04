@@ -163,3 +163,79 @@ export function bothLocalSetsOrdinary(
 ): boolean {
   return semanticGroup(codes) === "MIXED";
 }
+
+/**
+ * WHAT KIND OF THING A WORD IS, IN WORDS, FOR A CLUE ON A PUZZLE.
+ *
+ * The same codes read for a different question. `localCasesFor` asks whether
+ * the word is a being, because Estonian's two sets of local cases turn on that
+ * and nothing else; Sõnad asks what a six-letter word is *about*, so that a
+ * guesser who has spent three tries has somewhere to stand.
+ *
+ * A CATEGORY IS ONLY WORTH PRINTING WHERE IT SAYS MORE THAN THE PART OF SPEECH
+ * ALREADY BESIDE IT. The board shows `verb` and `B1` from the first guess, so
+ * "something you do" is not a clue, it is the chip again in a longer form. The
+ * table below is deliberately partial for that reason, exactly as
+ * `lib/estonian/terms.ts` is: `VERB_tegevus`, `abstr` and a bare `omadus` say
+ * nothing a learner could narrow a guess with, so they map to nothing and the
+ * board simply has no category to offer. Measured over the shipped dictionary:
+ * 78% of the six-letter graded content words the puzzle can draw from carry
+ * one, and the fifth that do not get the vowel count on the last try like
+ * everybody else.
+ *
+ * COARSE ON PURPOSE. "an animal" narrows a search; "a bird that swims" hands
+ * the word over. Every entry here is a category a school poster would have,
+ * and where the Institute subdivides finely the subdivisions are rolled back
+ * up: `loom_lind`, `loom_kala` and `loom_putukas` are all "an animal".
+ */
+const CATEGORIES: readonly (readonly [readonly string[], string])[] = [
+  [["inimene", "in_omadus", "in_elukutse", "in_roll", "in_tegija", "in_sugulane",
+    "in_rahvas", "in_müt"], "somebody"],
+  [["loom", "loom_lind", "loom_kala", "loom_putukas", "loom_liik", "loom_omadus"], "an animal"],
+  [["taim", "taim_liik", "taim_osa"], "a plant"],
+  [["kehaosa", "kehaosa_loom"], "part of the body"],
+  [["toit", "toit_jook", "toit_liha", "toit_mag", "toit_vili"], "food or drink"],
+  [["VERB_toituma"], "eating or drinking"],
+  [["ese_riie"], "something you wear"],
+  [["ese_anum"], "something you keep things in"],
+  [["ese_instru"], "something you use"],
+  [["ese_kunst", "esitus_kujutis", "esitus_kunst"], "art or music"],
+  [["ese_semio"], "a sign or a symbol"],
+  [["ese_raha", "raha", "majandus"], "money"],
+  [["koht_asutus"], "somewhere you go for something"],
+  [["koht_hoone"], "a building"],
+  [["koht", "koht_ala", "koht_geogr", "koht_loodus", "koht_ruum"], "a place"],
+  [["liiklus", "sõiduk"], "getting about"],
+  [["aeg", "aeg_hulk", "aeg_punkt"], "time"],
+  [["seisund_haigus"], "being ill or well"],
+  [["nähtus_psühh", "tunne", "omadus_psühh"], "how somebody feels"],
+  [["nähtus_loodus", "ilm"], "weather or nature"],
+  [["esitus_keel", "keel"], "language"],
+  [["esitus_mõõt", "mõõt"], "a measurement"],
+  [["materjal/aine"], "what things are made of"],
+  [["sündmus"], "something that happens"],
+  [["VERB_liikuma", "VERB_liigutama", "VERB_liikuma/liigutama"], "moving"],
+  [["VERB_suhtlus", "tegevus_kõnetegu"], "talking"],
+  [["VERB_psühh", "VERB_psühh_mõistus"], "thinking or feeling"],
+  [["VERB_muutus", "VERB_muutust", "muutuma", "põhjustama"], "something changing"],
+  [["VERB_seisund", "seisund"], "being in a state"],
+  [["omadus_füüs"], "how something looks or feels"],
+  [["omadus_kval"], "how good something is"],
+];
+
+/**
+ * The one clue a puzzle may print, or nothing.
+ *
+ * Nothing is the honest answer for a word the Institute classified only as
+ * `abstr`, and it is the answer `grammarTerm` gives for a point with no term a
+ * class uses rather than a cue to invent one.
+ */
+export function semanticCategory(
+  codes: readonly string[] | string | null | undefined,
+): string | null {
+  const real = codesOf(codes);
+  for (const [group, label] of CATEGORIES) {
+    if (real.some((code) => group.includes(code))) return label;
+  }
+  return null;
+}

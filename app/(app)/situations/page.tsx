@@ -40,7 +40,7 @@ export default async function SituationsPage() {
   return (
     <Page
       title="Situations"
-      lead="A conversation with somebody who wants something from you."
+      lead="Somebody wants something from you, and you have to sort it out in Estonian."
     >
       <Stack>
         {near.length === 0 && rest.length === 0 ? (
@@ -51,7 +51,7 @@ export default async function SituationsPage() {
           */
           <Empty
             title="No conversations at your level yet"
-            body="More are on the way. The practice rounds are the shortest way in meanwhile."
+            body="More are coming. A practice round is the quickest thing to do in the meantime."
             action={<ButtonLink href="/practice">Practice</ButtonLink>}
           />
         ) : (
@@ -62,7 +62,7 @@ export default async function SituationsPage() {
             {rest.length > 0 && (
               <div>
                 <p className="mb-3 text-sm" style={{ color: "var(--ink-3)" }}>
-                  Above or below where you are. Still worth a try.
+                  A bit above or below you. Worth a go anyway.
                 </p>
                 <ul className="grid gap-3 sm:grid-cols-2">
                   {rest.map((scene) => <SceneTile key={scene.id} scene={scene} />)}
@@ -78,8 +78,8 @@ export default async function SituationsPage() {
           type here is about you (§3). It is one line rather than a panel.
         */}
         <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-          You are handed a card and play somebody else. Nothing you write is about you,
-          and no conversation here asks for a real document number.
+          You play somebody else, off a card we hand you. Nothing you write here is
+          about you, and nobody will ask you for a real document number.
         </p>
 
         {/*

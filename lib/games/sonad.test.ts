@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  letterMarks, outcomeOf, ratingFor, scoreGuess, solvedAt, SONAD_GUESSES, SONAD_LENGTH, wellFormed,
+  cluesAt, letterMarks, nextClue, outcomeOf, ratingFor, scoreGuess, solvedAt,
+  SONAD_GUESSES, SONAD_KEY_ROWS, SONAD_KEYS, SONAD_LENGTH, SONAD_LETTERS,
+  vowelCount, wellFormed,
 } from "./sonad";
 
 /**
@@ -132,5 +134,86 @@ describe("wellFormed", () => {
     expect(wellFormed("abc de")).toBe(false);
     expect(wellFormed("abcde1")).toBe(false);
     expect(wellFormed("abcde-")).toBe(false);
+  });
+});
+
+describe("the clue ladder", () => {
+  it("says nothing at all on the first three tries", () => {
+    for (const guessed of [0, 1, 2]) {
+      expect(cluesAt(guessed)).toEqual({ category: false, vowels: false });
+    }
+  });
+
+  it("gives the category on the fourth try and keeps it", () => {
+    expect(cluesAt(3).category).toBe(true);
+    expect(cluesAt(4).category).toBe(true);
+  });
+
+  /*
+    The one that has to move with SONAD_GUESSES rather than with a number typed
+    here: the point of it is the last row, whatever the last row turns out to
+    be.
+  */
+  it("gives the vowels on the last try and not before", () => {
+    expect(cluesAt(SONAD_GUESSES - 2).vowels).toBe(false);
+    expect(cluesAt(SONAD_GUESSES - 1).vowels).toBe(true);
+  });
+
+  it("names what is coming, so a clue never arrives unannounced", () => {
+    expect(nextClue(2, true)).toBe("What kind of word it is, on your next try.");
+    expect(nextClue(1, true)).toBe("What kind of word it is, in 2 tries.");
+    expect(nextClue(SONAD_GUESSES - 2, true)).toBe("How many vowels it has, on your last try.");
+    expect(nextClue(SONAD_GUESSES - 1, true)).toBeNull();
+  });
+
+  /* A word the Institute classified as nothing useful skips straight to the
+     vowels rather than promising a clue that will never come. */
+  it("does not promise a category the dictionary does not have", () => {
+    expect(nextClue(0, false)).toContain("vowels");
+  });
+});
+
+describe("vowelCount", () => {
+  it("counts Estonian's own nine, and y with them", () => {
+    expect(vowelCount("õpetaja")).toBe(4);
+    expect(vowelCount("küsimus")).toBe(3);
+    expect(vowelCount("sport")).toBe(1);
+    expect(vowelCount("rütmika")).toBe(3);
+  });
+
+  it("folds case and never a diacritic", () => {
+    expect(vowelCount("KOOLIS")).toBe(3);
+    // Both count, and they count as themselves: this is a tally, not a match.
+    expect(vowelCount("tõõöõ")).toBe(4);
+  });
+});
+
+describe("the keyboard", () => {
+  /*
+    BOTH DIRECTIONS, because each failure is invisible on its own. A letter
+    with no key is a word a player can never type, and the board would look
+    exactly like a board; a key for a letter no guess may contain is a key
+    that refuses every word it is pressed into, and it would look exactly like
+    a key.
+  */
+  it("offers every letter a guess may be spelled with", () => {
+    for (const letter of "abcdefghijklmnopqrstuvwxyzäöüõšž") {
+      expect(SONAD_LETTERS.test(letter), letter).toBe(true);
+      expect(SONAD_KEYS, letter).toContain(letter);
+    }
+  });
+
+  it("offers nothing a guess may not be spelled with", () => {
+    for (const key of SONAD_KEYS) expect(SONAD_LETTERS.test(key), key).toBe(true);
+  });
+
+  it("has each key once", () => {
+    expect(new Set(SONAD_KEYS).size).toBe(SONAD_KEYS.length);
+  });
+
+  /* Three rows is what makes it a keyboard rather than a grid of letters. */
+  it("is three rows, none of them wider than a phone can draw", () => {
+    expect(SONAD_KEY_ROWS).toHaveLength(3);
+    for (const row of SONAD_KEY_ROWS) expect(row.length).toBeLessThanOrEqual(12);
   });
 });
