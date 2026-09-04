@@ -627,6 +627,29 @@ forms, the illative's own long form excepted: Ekilex records three elatives for 
 second of a list is not a form to put on a learner's screen. All of them stay in `accepted`,
 because somebody who writes one is not wrong.
 
+**And the same list grew twice more, both times because a model reached for a form nobody had
+noticed was missing.** `npm run eval:scene` watched a free model try to hold a conversation and
+ranked what the dictionary would not vouch for, which is how the polite imperative was found: not a
+suffix on anything the rule holds, since `annan` goes to `andke` and `lähen` to `minge`, so it is
+stored per verb and asks a card. The re-run found **both participles** the same way.
+`Kui kaua see on kestnud?` is how anybody asks how long something has been going on, the course
+teaches taisminevik on its own grammar page, and the dictionary could not vouch for a single `nud`
+in the language. Neither is derivable, since `minna` goes to `läinud`, `teha` to `teinud` and `näha`
+to `näinud`. Both are stored and **neither asks a card**, because a participle is met inside a
+construction rather than as a slot, and storing a form and asking about it are two decisions.
+
+**And a verb can be recorded twice over, on two stems.** `pickFormSet` takes the set of forms
+carrying the most, which is right for the six a learner memorises and was silently wrong for
+everything else: Ekilex records `ütlema` as two full sets, one built on `ütle-` and one on `öel-`,
+so `öelge`, `öelnud` and `öelda` were in the response and thrown away by the line above the one
+that keeps every parallel value. `ise` is the same shape, `enese` in one set and `enda`, which is
+the form anybody says, in the other, with every oblique case behind it. So `allForms` reads every
+matching set while `formMap` keeps taking one, and the two infinitives joined `VERB_SLOTS` for
+their parallels alone. Safe because both sets belong to one `wordId`: a homonym is a different word
+with its own id, which is what the pinning is for, while two matching sets under one id are two
+ways the same word inflects, `haigus` with `haigusi` and `haiguseid`. 167 of the 2,057 sets the
+course reads have a second, and the three together are 814 more forms on the same 6,110 words.
+
 **And the tie-break in the scanner is a separate question that was measured and left alone.**
 `matchEstonianForm` scores a diacritic-folded lemma at 90 and a stored form at 88, so `oli` resolves
 to `õli`, oil, rather than to `olema`. Storing the simple past made 20 words reach that tier which

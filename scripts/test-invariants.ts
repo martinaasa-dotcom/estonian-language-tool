@@ -1241,6 +1241,18 @@ check("no counter column exists for anything the review log can reconstruct", ()
 // ── Every mode grades through gradeCard (ADR-016) ────────────────────────────
 
 /**
+ * Every door onto the shared review log, and there is one list of them.
+ *
+ * It was the same alternation typed out in three checks, which is two copies of
+ * one fact: the seventh door, `finishScene`, had to be added to all three or the
+ * newest and busiest mode would sit outside a rule that reported itself as held.
+ * That is the failure this file exists to catch, so it is not a shape this file
+ * may have itself.
+ */
+const GRADING_DOORS =
+  /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword|finishScene)\b/;
+
+/**
  * Sessions that measure rather than practise.
  *
  * The placement test asks about words the learner may never have had a card for,
@@ -1283,7 +1295,7 @@ check("every practice mode writes to the same review log", () => {
   for (const file of sessions) {
     assert.match(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
+      GRADING_DOORS,
       `${file} does not write to the shared review log`,
     );
   }
@@ -1300,7 +1312,7 @@ check("every practice mode writes to the same review log", () => {
     assert.ok(existsSync(file), `${file} is exempt from grading but no longer exists`);
     assert.doesNotMatch(
       code(file),
-      /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/,
+      GRADING_DOORS,
       `${file} now grades, so it is a practice mode and must come off the exemption list`,
     );
   }
@@ -1416,7 +1428,7 @@ check("a session never lets its questions change under the learner", () => {
     // The exam session hands its answers to a Server Action rather than grading
     // per card, and Next refreshes the route after that call just the same, so
     // the freeze matters here too.
-    if (!/\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword)\b/.test(source)) continue;
+    if (!GRADING_DOORS.test(source)) continue;
     // Only the ones actually handed a list by the page can be caught out. The
     // `initial` naming convention is the reliable signal: a prop called
     // initialSteps or initialCards exists precisely because it is meant to be
@@ -2240,12 +2252,32 @@ check("nothing is suggested that the dictionary has not graded", () => {
     Asserted against every read of the table rather than against one query,
     because a fourth source added without both filters is exactly how this
     comes back.
+
+    AND A THIRD FILTER, which is about a different question and so is drawn
+    differently. A chip links to `/dictionary?q=<lemma>` and the dictionary
+    answers a lemma with one entry, `bySubstance`'s, while `@@unique` is on
+    `(lemma, pos)`: filtering the rows asks whether *some* entry has a table to
+    open and the chip's promise is about the one a learner lands on. `oma` is
+    the shipped instance, an adjective in the Wiktionary expansion and the
+    pronoun the course teaches. `withATable` is that gate, it drops a lemma any
+    of whose entries has nothing to open, and its own read is the one query here
+    that must constrain neither: it is looking for the entries the filters would
+    have hidden.
   */
   const suggest = read("lib/dict/suggest.ts");
   assert.match(suggest, /const POS = \[/, "the suggestion row stopped naming which parts of speech it offers");
 
-  for (const read_ of suggest.matchAll(/prisma\.lexeme\.\w+\(|FROM "Lexeme"/g)) {
-    const window = suggest.slice(read_.index, read_.index + 400);
+  const gate = between(suggest, "export async function withATable");
+  assert.match(gate, /opensATable/, "the gate stopped asking which parts of speech open a table");
+  assert.match(
+    suggest,
+    /const words = await withATable\(/,
+    "a source's words reach the row without passing the gate",
+  );
+
+  const chooses = suggest.replace(gate, "");
+  for (const read_ of chooses.matchAll(/prisma\.lexeme\.\w+\(|FROM "Lexeme"/g)) {
+    const window = chooses.slice(read_.index, read_.index + 400);
     assert.match(window, /cefr/, "a suggestion query does not constrain the CEFR level");
     assert.match(window, /pos/i, "a suggestion query does not constrain the part of speech");
   }
@@ -2997,7 +3029,14 @@ check("every browser suite says how many checks it reached", () => {
     */
     const source = code(file);
     if (!/newPage|goto\(/.test(source)) continue;
-    const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*\}/.exec(source);
+    /*
+      A trailing comma is ordinary and this used to reject one, which fired on
+      a suite whose floor was declared correctly and carried a paragraph saying
+      how the number was arrived at. A floor is exactly the sort of number that
+      deserves its reasoning written beside it, so the rule widens rather than
+      the declaration being squeezed onto one line.
+    */
+    const floor = /suite\([^)]*\{\s*floor:\s*(\d+)\s*,?\s*\}/.exec(source);
     assert.ok(floor, `${file} does not declare a check floor`);
     assert.ok(Number(floor![1]) > 0, `${file} declares a floor of zero, which asserts nothing`);
     assert.equal(
@@ -4276,8 +4315,55 @@ check("nothing reaches a paid provider without going through the ledger", () => 
 
   for (const file of callers) {
     const source = read(file);
-    assert.match(source, /authoriseCall\(/, `${file} opens a provider without asking the ledger first`);
+    /*
+      AUTHORISED IN THE SAME FILE, WITHOUT EXCEPTION.
+
+      This was widened once, to admit a route that proved a booking made
+      somewhere else: the scene booked one call for a whole conversation, on
+      the argument that running out of allowance halfway through one is the
+      worst failure available to it. The widening was wrong, and it was wrong
+      in the direction this file exists to catch. A call is written down when
+      it is *authorised*, because two of the three limits count `CALL` rows, so
+      one booking in front of a dozen composed turns is eleven calls the
+      allowance never saw. The rule was fine; the code was not, and widening a
+      rule to fit code is the one move that turns a check into a formality.
+
+      "A check that fires on honest code is a check people learn to waive" is
+      still true and is not a licence: the test of honest code is whether the
+      rule is right, and here it was.
+    */
+    assert.match(
+      source,
+      /authoriseCall\(/,
+      `${file} opens a provider without asking the ledger first`,
+    );
     assert.match(source, /recordUsage\(/, `${file} opens a provider and never files what it spent`);
+  }
+
+  /*
+    A RELEASE GIVES BACK THE CALL, NOT ONLY THE MONEY, and a route that books
+    before it knows whether it will compose is exactly where that comes due.
+    The scene's ladder walks past the model to the fallback rung as an ordinary
+    outcome rather than an error, and a booking left standing there rations a
+    learner over a line nobody was shown.
+  */
+  const scene = read("app/api/scene/route.ts");
+  assert.match(
+    scene, /releaseReservation\(/,
+    "the scene books a turn it may not compose and never hands the booking back",
+  );
+  /*
+    And the settlement and the release both go through `after()`, because the
+    deployment target suspends a function once its response is sent and does not
+    guarantee a pending promise runs. Comment-blind, since this is the shape the
+    rest of the app is already held to.
+  */
+  for (const call of ["recordUsage", "releaseReservation"]) {
+    assert.match(
+      code("app/api/scene/route.ts"),
+      new RegExp(`after\\(\\(\\) => ${call}\\(`),
+      `the scene leaves ${call} to a promise nobody is holding`,
+    );
   }
 });
 
@@ -9179,6 +9265,226 @@ check("a case is named only when one case claims the spelling", () => {
  * off the learner's own log, and the marking is over a task rebuilt from the
  * dictionary rather than over anything the browser sent (ADR-022).
  */
+/**
+ * NO MODEL DECIDES WHETHER A LEARNER WAS UNDERSTOOD.
+ *
+ * `docs/19-situations.md` §18 names the first way this module could fail: a
+ * chatbot in a costume. The guard is a type rather than a rule anybody has to
+ * remember. `readTurn` is the only producer of `Evidence` and `advance` is its
+ * only consumer, so a caller holding a model's opinion about a turn cannot
+ * satisfy the signature and cannot move a scene on by mistake. That is
+ * `buildOptions` taking a parsed `Government` rather than a case key, and
+ * `NounStems.illSgShort` being required rather than optional: both were prose
+ * that the code disagreed with until the type carried it.
+ *
+ * The other half is that the pure-layer check one screen up already covers
+ * `lib/scenes/`, so nothing in there can reach a database or a provider at
+ * all. What is asserted here is the shape those two functions have, because a
+ * later `advance(state, verdict: string)` would pass every other check in this
+ * file.
+ */
+/**
+ * THE RATE §29 PUBLISHES IS MEASURED ON THE CODE THAT SHIPS.
+ *
+ * `npm run eval:scene` exists to answer whether composition is safe, and the
+ * first version of it implemented the four checks inside the script. That is a
+ * number measured on code nobody was going to run: the script could drift from
+ * the module by one condition and the published rejection rate would go on
+ * describing the script. It is the fault `PROVIDER_KEY_ENV` was moved for, and
+ * the fault the unit suite had when it kept its own list of provider keys.
+ *
+ * So `lib/scenes/gate.ts` is the one copy and the script builds its context.
+ * Checked by reading the import rather than by counting conditions, because a
+ * fifth check added to the module is a fifth check the script should inherit
+ * without anybody remembering.
+ *
+ * The second half is ADR-025's: a line reaching a screen carries where it came
+ * from. `sceneLine` returns a provenance rather than a string, so a caller
+ * holding only the text cannot print the chip, and a composed line cannot be
+ * read as a lexicographer's by a screen that forgot to ask.
+ */
+/**
+ * A CLASS SEES EFFORT, NEVER A TRANSCRIPT.
+ *
+ * ADR-019 stands unchanged and `docs/19-situations.md` §18 names the way this
+ * module would break it: a roster row may say how many conversations somebody
+ * finished, and the class panel may say which objective the group most often
+ * misses, and a transcript belongs to one person. A `SceneRun` holds every turn
+ * a learner typed, so a teacher reading one would be reading their practice
+ * attempts, which is the thing the classroom boundary exists to prevent.
+ *
+ * Asserted as an absence, which is the only way to check a rule about what a
+ * query must not select. `lib/classroom/` is where a group is rolled up, and
+ * nothing in it may name the table at all: a count is a `count`, and a count
+ * cannot leak a sentence.
+ */
+check("a class cannot read a conversation", () => {
+  for (const file of LIB.filter((f) => f.startsWith("lib/classroom/") && !f.includes(".test."))) {
+    const src = code(file);
+    assert.doesNotMatch(
+      src,
+      /prisma\.sceneRun\.(findMany|findFirst|findUnique)/,
+      `${file} reads a scene transcript. A class sees effort and aggregate, never ` +
+      "one learner's turns (ADR-019, docs/19-situations.md §18).",
+    );
+    assert.doesNotMatch(
+      src,
+      /transcript/,
+      `${file} mentions a transcript. Nothing in a class roll-up may.`,
+    );
+  }
+});
+
+check("the scene gate has one implementation, and a line says where it came from", () => {
+  const evalScript = code("scripts/eval-scene.ts");
+  assert.match(
+    evalScript,
+    /from "\.\.\/lib\/scenes\/gate"/,
+    "scripts/eval-scene.ts no longer reads lib/scenes/gate.ts. A rejection rate measured " +
+    "against a copy of the checks is a rate for the copy.",
+  );
+  assert.doesNotMatch(
+    evalScript,
+    /function runGate\(/,
+    "scripts/eval-scene.ts has its own gate again. There is one, in lib/scenes/gate.ts.",
+  );
+
+  const line = code("lib/scenes/line.ts");
+  assert.match(
+    line,
+    /provenance: "attested"/,
+    "lib/scenes/line.ts stopped saying an attested line was attested.",
+  );
+  assert.match(
+    line,
+    /provenance: "composed"/,
+    "lib/scenes/line.ts stopped marking a composed line as composed (ADR-025).",
+  );
+  /*
+    Withheld whole, never caveated. A caveat still puts a wrong form in front of
+    somebody trying to learn one, which is the rule `lib/tutor/verify.ts`
+    follows about a grader's note.
+  */
+  assert.match(
+    line,
+    /if \(first && firstVerdict && passes\(firstVerdict\)\)/,
+    "lib/scenes/line.ts no longer requires a composed line to pass the gate before showing it.",
+  );
+});
+
+check("a scene is marked by the server, and its grades go to the shared log", () => {
+  /*
+    `submitExam`'s shape and `recordSonad`'s, a third time, and for the reason
+    both give: a result anybody can type is not a measurement, and here it is
+    worse than that, because a conversation writes into the review log and a
+    forged one would schedule words nobody said.
+
+    The client sends which run it was and what it typed. `finishRun` reads the
+    row, replays every turn through the same `readTurn` the learner saw, and
+    hands what it found to `gradeCard`, which is the door ADR-016 names. Two
+    markers would be two answers to "were you understood", and the one nobody
+    watches is the one that drifts, so there is one `replay` and both ends call
+    it.
+  */
+  /*
+    `between` rather than a lazy match to the first line-starting brace, which
+    was the first version of this and was wrong twice in one check: both of
+    these take a destructured object type, so the parameter list itself closes
+    on a `}` in column nought, and the match read the signature and called it
+    the body. It found nothing and reported that the action no longer marks,
+    which is a check reporting its own regex. The helper was already here.
+  */
+  const actions = code("app/actions.ts");
+  const action = between(actions, "export async function finishScene(");
+  assert.ok(action, "finishScene has gone, or changed shape past recognition");
+  assert.match(action, /finishRun\(/, "finishScene no longer re-marks on the server");
+  assert.match(action, /gradeCard\(/, "a scene no longer grades through gradeCard (ADR-016)");
+
+  /*
+    The signature rather than the body, which is the lesson `recordSonad`'s own
+    check learned the hard way: a pattern for the word `rating` matches the
+    perfectly correct `gradeCard(card.id, grade.rating, 0)` inside, and a check
+    that fires on honest code is a check people waive.
+  */
+  const signature = /export async function finishScene\(([\s\S]*?)\)\s*\{/
+    .exec(actions)?.[1] ?? "";
+  assert.doesNotMatch(
+    signature, /rating|score|grade|objectives|outcome/i,
+    "finishScene takes a mark from its caller, which is a result anybody can type",
+  );
+
+  // And one replay, reached from both ends, rather than a marker per door.
+  const server = code("lib/progress/scene.ts");
+  assert.match(server, /export function replay\(/, "the shared replay has gone");
+  assert.match(
+    between(server, "export async function finishRun("),
+    /replay\(/,
+    "finishRun marks a run some other way than the replay the learner saw",
+  );
+  assert.match(
+    code("app/api/scene/route.ts"), /replay\(/,
+    "the route reads a turn some other way than the replay that writes the record",
+  );
+});
+
+check("a scene's debrief points at a drill that exists", () => {
+  /*
+    `lib/scenes/drills.ts` reads the drill off what the beat needed rather than
+    linking the same one whatever happened, which means it holds hrefs, and an
+    href in a pure module is a string nothing checks. `DrillLink` returns null
+    on one it cannot resolve rather than throwing, deliberately, so a retired
+    drill would leave the debrief silently missing its one piece of advice on a
+    screen somebody reached by failing.
+
+    `lib/ux/modes.ts` is what a mode is, and this is the same pairing every
+    other reader of that table is held to.
+  */
+  const table = code("lib/scenes/drills.ts");
+  const hrefs = [...table.matchAll(/"(\/review\/[a-z-]+)"/g)].map((m) => m[1]!);
+  assert.ok(hrefs.length >= 2, `drills.ts names ${hrefs.length} drills, which is not a table`);
+
+  const modes = code("lib/ux/modes.ts");
+  for (const href of hrefs) {
+    assert.match(
+      modes, new RegExp(`href:\\s*"${href}"`),
+      `the scene debrief links ${href}, which lib/ux/modes.ts does not have`,
+    );
+  }
+});
+
+check("nothing but the dictionary can advance a scene", () => {
+  const turn = code("lib/scenes/turn.ts");
+  const state = code("lib/scenes/state.ts");
+
+  assert.match(
+    turn,
+    /export function readTurn\(/,
+    "lib/scenes/turn.ts no longer exports readTurn, which is the only producer of Evidence.",
+  );
+  assert.match(
+    state,
+    /export function advance\(\s*scene: SceneSpec,\s*state: SceneState,\s*evidence: Evidence,/,
+    "advance no longer takes Evidence. A caller holding a model's opinion must not be able " +
+    "to satisfy it: that is the whole guard on this module (docs/19-situations.md §8).",
+  );
+
+  /*
+    One producer, asserted by counting. A second function returning Evidence is
+    the door a model's verdict walks through, and it would look entirely
+    reasonable in review.
+  */
+  const producers = [...turn.matchAll(/\): Evidence \{/g)].length;
+  assert.equal(
+    producers, 1,
+    `lib/scenes/turn.ts has ${producers} functions returning Evidence. There is exactly one.`,
+  );
+  assert.doesNotMatch(
+    state,
+    /\): Evidence\b/,
+    "lib/scenes/state.ts builds Evidence. Only readTurn may, or the consumer becomes its own producer.",
+  );
+});
+
 check("the scene route marks mechanically before it reaches a provider", () => {
   const src = code("app/api/describe/route.ts");
   const marked = src.indexOf("markDescription(");

@@ -99,12 +99,34 @@ export interface Lexicon {
   readonly forms: ReadonlySet<string>;
   /** Lemma to its own forms, so a beat can ask whether its word is present. */
   readonly byLemma: ReadonlyMap<string, ReadonlySet<string>>;
+  /**
+   * `lemma|CASE` to every spelling that counts as that case of that word.
+   *
+   * A beat can require a word *in a case*, which is the one requirement that
+   * cannot be answered by "is this word here at all": `Mul on kurguvalu` and
+   * `Mul on kurguvalus` are the same word and only one of them is the answer.
+   * `caseAnswer` is what decides that everywhere else in this app, and it
+   * returns every accepted spelling rather than one, so `tuppa` and `toasse`
+   * both count and a learner is not marked wrong for the other true answer.
+   *
+   * Built here rather than asked per turn, for the reason the forms are: this
+   * is a few hundred entries answered once against a turn of half a dozen
+   * words, and the alternative is resolving a lemma to its stems inside the
+   * marker, which would put the dictionary back in a module that has none.
+   */
+  readonly byCase: ReadonlyMap<string, ReadonlySet<string>>;
+}
+
+/** The key `byCase` is read with. One place, so a caller cannot spell it wrong. */
+export function caseKeyFor(lemma: string, grammCase: string): string {
+  return `${lemma.toLowerCase()}|${grammCase}`;
 }
 
 /** The closed list for one scene: the entries behind the lemmas it may use. */
 export function buildLexicon(entries: readonly DictEntry[]): Lexicon {
   const forms = new Set<string>();
   const byLemma = new Map<string, Set<string>>();
+  const byCase = new Map<string, Set<string>>();
   for (const entry of entries) {
     const own = byLemma.get(entry.lemma) ?? new Set<string>();
     for (const form of formsOf(entry)) {
@@ -112,8 +134,26 @@ export function buildLexicon(entries: readonly DictEntry[]): Lexicon {
       own.add(form);
     }
     byLemma.set(entry.lemma, own);
+
+    if (entry.pos === "VERB" || !entry.parts.GEN_SG) continue;
+    for (const row of caseTableOf(entry)) {
+      const key = caseKeyFor(entry.lemma, row.spec.key);
+      const seen = byCase.get(key) ?? new Set<string>();
+      for (const value of row.accepted) {
+        for (const word of words(value)) seen.add(word);
+      }
+      byCase.set(key, seen);
+    }
   }
-  return { forms, byLemma };
+  return { forms, byLemma, byCase };
+}
+
+/** The eleven derivable cases of one nominal, attested forms leading. */
+function caseTableOf(entry: DictEntry) {
+  return buildCaseTable(stemsFrom([
+    ...Object.entries(entry.parts).map(([formType, value]) => ({ formType, value })),
+    ...(entry.extraForms ?? []).map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
+  ]));
 }
 
 /**
@@ -139,5 +179,5 @@ export function buildLexicon(entries: readonly DictEntry[]): Lexicon {
 export function withExtras(lexicon: Lexicon, extras: Iterable<string>): Lexicon {
   const forms = new Set(lexicon.forms);
   for (const word of extras) forms.add(word.toLowerCase());
-  return { forms, byLemma: lexicon.byLemma };
+  return { forms, byLemma: lexicon.byLemma, byCase: lexicon.byCase };
 }

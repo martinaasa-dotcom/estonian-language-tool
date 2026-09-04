@@ -114,7 +114,7 @@ export const SECTIONS: NavSection[] = [
   {
     id: "daily",
     title: "Every day",
-    blurb: "The new words, and the ones you have already met.",
+    blurb: "The new words, the ones you have met, and somewhere to use them.",
     items: [
       {
         href: "/", label: "Today", blurb: "Due cards, your goal, the streak", icon: "Sun", tone: "butter",
@@ -157,6 +157,23 @@ export const SECTIONS: NavSection[] = [
         href: "/review", label: "Review", blurb: "Everything due, timed to when you are about to forget",
         icon: "GraduationCap", tone: "accent", keywords: "flashcards srs study due schedule",
         within: "/practice",
+      },
+      /*
+        A row of its own rather than a tile inside Practice, because the rail
+        answers four questions and none of them is "what do I do with this". It
+        is in this section rather than a fourth one because the three above are
+        building a memory, keeping one alive and asking it again, and this is
+        the fourth thing you do with a word: use it on somebody who wants
+        something from you.
+
+        No cell in the phone bar either: the bar holds four, a fifth breaks the
+        44px floor, and its four are the daily loop. A conversation is a five to
+        eight minute sitting rather than a daily obligation.
+      */
+      {
+        href: "/situations", label: "Situations", blurb: "Book an appointment, hand in a form, ring a landlord",
+        icon: "MessagesSquare", tone: "mint",
+        keywords: "conversation scene role play speaking doctor counter landlord",
       },
     ],
   },
