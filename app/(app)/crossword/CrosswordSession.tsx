@@ -199,7 +199,7 @@ export function CrosswordSession({ puzzle, day }: { puzzle: DailyCrossword; day:
                   onClick={() => pick(cell)}
                   lang="et"
                   aria-label={`Row ${Math.floor(cell / puzzle.cols) + 1}, column ${(cell % puzzle.cols) + 1}`}
-                  className="h-full w-full rounded-[var(--r-sm)] border-0 text-center text-base font-bold uppercase outline-none transition-ui"
+                  className="h-full w-full rounded-[var(--r-sm)] border-0 text-center text-base font-bold uppercase transition-ui"
                   style={{
                     background: isWrong
                       ? "var(--again-soft)"

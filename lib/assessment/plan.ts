@@ -298,6 +298,12 @@ export interface MeasuredPace {
   daysPerWeek: number;
   /** How many weeks the reading covers. */
   weeks: number;
+  /**
+   * Cards answered per minute of sitting, or null before a sitting has any
+   * length. Not a plan figure: Today reads it to say how long the cards
+   * waiting will take, at this learner's rate rather than at the default.
+   */
+  cardsPerMinute: number | null;
 }
 
 /**
@@ -354,6 +360,8 @@ export interface Projection {
   paceWeeks: number | null;
   /** Weeks to the target if the app were the only study. It will not be. */
   weeksOnAppAlone: HourRange;
+  /** Weeks until the deadline, as given. Null when there is none. */
+  weeksAvailable: number | null;
   /** Hours the app will contribute inside the deadline. Exact, as above. */
   appHoursAvailable: number | null;
   /** Study hours a week still to find elsewhere, to make the deadline. */
@@ -408,7 +416,10 @@ export function project(input: PlanInput): Projection {
     high: weeksNeeded(hours, appHoursPerWeek, found.low).high,
   };
 
-  const common = { standing, to, hours, appHoursPerWeek, paceSource, paceWeeks, found, weeksWithFound };
+  const common = {
+    standing, to, hours, appHoursPerWeek, paceSource, paceWeeks, found, weeksWithFound,
+    weeksAvailable: input.weeksAvailable,
+  };
 
   if (rank(standing.level) >= rank(to)) {
     return {
@@ -480,6 +491,41 @@ export function weeksNeeded(hours: HourRange, appHoursPerWeek: number, otherHour
   const perWeek = appHoursPerWeek + Math.max(0, otherHoursPerWeek);
   if (perWeek <= 0) return { low: 0, high: 0 };
   return { low: Math.ceil(hours.low / perWeek), high: Math.ceil(hours.high / perWeek) };
+}
+
+/**
+ * The distance, in one sentence, for a screen that has room for one.
+ *
+ * Today's countdown card says how likely a pass is this morning and the exam
+ * hub says how many weeks are left, and neither used to say whether the pace
+ * this learner keeps gets them there by then. That is the plan's question,
+ * and it is answered here off the projection rather than rephrased on each
+ * screen, so the headline on the level check page and the line on Today are
+ * one claim: same standing, same week, same pace, same figure.
+ *
+ * The pace is named for what it is. "The pace you have kept" is a record and
+ * "the pace you said" is a promise, and a learner reading the second knows
+ * what would change the number.
+ */
+export function distanceLine(plan: Projection): string {
+  const weeks = (r: HourRange) => (r.low === r.high ? `${r.low}` : `${r.low} to ${r.high}`);
+  if (plan.verdict === "arrived") {
+    return `The level the app holds is already ${plan.to}, so what is left is the paper itself.`;
+  }
+  const pace = plan.paceSource === "measured"
+    ? "the pace you have kept"
+    : plan.paceSource === "lapsed"
+      ? "the pace you said, since nothing has been reviewed here lately"
+      : "the pace you said";
+  const opening = `At ${pace}, plus what your week already holds, ${plan.to} is about ${weeks(plan.weeksWithFound)} weeks away.`;
+  switch (plan.verdict) {
+    case "open": return `${opening} No date is set, so that is the whole answer.`;
+    case "passed": return `${opening} The date you gave has gone.`;
+    case "comfortable": return `${opening} Your date is ${plan.weeksAvailable} weeks off, and this app alone covers it.`;
+    case "tight": return `${opening} Your date is ${plan.weeksAvailable} weeks off. It fits, with a class and some reading beside the app.`;
+    case "possible": return `${opening} Your date is ${plan.weeksAvailable} weeks off. It could fit, if the Estonian around you gets used.`;
+    default: return `${opening} Your date is ${plan.weeksAvailable} weeks off, so something has to move: the pace, the date, or the hours outside this app.`;
+  }
 }
 
 /**

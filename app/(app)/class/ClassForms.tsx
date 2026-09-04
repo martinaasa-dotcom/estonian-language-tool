@@ -55,7 +55,7 @@ export function CreateClass() {
         maxLength={60}
         onChange={(e) => setName(e.target.value)}
         placeholder={workplace ? "Estonian at work, autumn" : "Eesti keel A2, teisipäev"}
-        className="rounded-[var(--r)] border px-3.5 py-2.5 text-base outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-base transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
 
@@ -116,7 +116,7 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         autoCapitalize="characters"
         autoCorrect="off"
         spellCheck={false}
-        className="rounded-[var(--r)] border px-3.5 py-2.5 text-xl tracking-[0.3em] outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-xl tracking-[0.3em] transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       <label htmlFor="join-name" className="label-xs" style={{ color: "var(--ink-3)" }}>
@@ -128,7 +128,7 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         maxLength={32}
         onChange={(e) => setName(e.target.value)}
         placeholder="Kadri"
-        className="rounded-[var(--r)] border px-3.5 py-2.5 text-base outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-base transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       {error && <p role="alert" className="text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
@@ -328,7 +328,7 @@ export function AssignHomework({ classroomId }: { classroomId: string }) {
         maxLength={200}
         placeholder="Write 5 sentences using the partitive"
         onChange={(e) => setTitle(e.target.value)}
-        className="rounded-[var(--r)] border px-3.5 py-2.5 text-sm outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-sm transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       <label htmlFor="assign-notes" className="label-xs" style={{ color: "var(--ink-3)" }}>
@@ -341,7 +341,7 @@ export function AssignHomework({ classroomId }: { classroomId: string }) {
         rows={2}
         placeholder="Textbook page 34, exercise 3. Bring it printed on Thursday."
         onChange={(e) => setNotes(e.target.value)}
-        className="rounded-[var(--r)] border px-3.5 py-2.5 text-sm outline-none transition-shadow focus:shadow-[var(--shadow)]"
+        className="rounded-[var(--r)] border px-3.5 py-2.5 text-sm transition-shadow focus:shadow-[var(--shadow)]"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       <div className="flex flex-wrap items-end gap-2">

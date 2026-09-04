@@ -1,10 +1,13 @@
 import { goalsFor } from "@/lib/progress/assessment";
 import { readinessSignals } from "@/lib/progress/exam";
 import type { DeckSnapshot } from "@/lib/progress/summary";
-import { countdownPhrase, daysUntil, targetByBand } from "@/lib/assessment/goals";
+import { countdownPhrase, daysUntil, reasonsFor, targetByBand, weeksUntil } from "@/lib/assessment/goals";
+import { distanceLine, foundHours, project, type MeasuredPace } from "@/lib/assessment/plan";
 import { assessReadiness, type Evidence, type Feedback } from "@/lib/exam/readiness";
 import type { ExamLevel } from "@/lib/exam/spec";
 import type { DayClock } from "@/lib/time/day";
+import { minutesForCards } from "@/lib/stats/pace";
+import { standingFor } from "./plan";
 
 /**
  * THE DATE SOMEBODY GAVE US, AND WHETHER THEY ARE GOING TO MAKE IT.
@@ -84,6 +87,18 @@ export interface ExamCountdown {
    * inventing a second opinion beside it.
    */
   gap: Feedback | null;
+  /**
+   * Whether the pace this learner keeps reaches the target by the date, in
+   * the plan's own sentence.
+   *
+   * The confidence above is "would you pass this morning" and this is "does
+   * the road you are on arrive in time", which are different questions with
+   * different evidence behind them, and the card used to answer only the
+   * first. It is `distanceLine` over the same `project` the level check
+   * screen renders, on the same standing, the same week and the same
+   * measured pace, so Today and `/assess` cannot give two timelines.
+   */
+  distance: string;
 }
 
 /**
@@ -99,13 +114,22 @@ export async function examCountdown(
   now: Date,
   clock: DayClock,
   snapshot?: DeckSnapshot,
+  /** The learner's measured pace, when the caller already read it. Null before any review. */
+  pace: MeasuredPace | null = null,
 ): Promise<ExamCountdown | null> {
   const goals = await goalsFor(ownerId);
 
-  // Eight queries and a scan of the dictionary, which is why the panel is held
-  // to `settled` rather than why it is held to a target: a learner who skipped
-  // the goal screen still opens this page every morning.
-  const signals = await readinessSignals(ownerId, snapshot);
+  /*
+    Eight queries and a scan of the dictionary, which is why the panel is held
+    to `settled` rather than why it is held to a target: a learner who skipped
+    the goal screen still opens this page every morning. `standingFor` rides
+    alongside because the distance line needs it and neither read needs the
+    other.
+  */
+  const [signals, standing] = await Promise.all([
+    readinessSignals(ownerId, snapshot),
+    standingFor(ownerId),
+  ]);
   const readiness = assessReadiness(signals);
 
   /*
@@ -114,12 +138,25 @@ export async function examCountdown(
     honest thing to aim at; `assessed` is the fallback for somebody the app
     would bet on all the way to C1, where there is nothing left to aim at and
     the number worth printing is the one they have.
+
+    Resolved before the projection rather than after, because `project` is
+    asked how far it is to a particular band and a band nobody has chosen yet
+    is not one.
   */
   const chosen = targetByBand(goals.target);
   const band = chosen?.band ?? readiness.next ?? readiness.assessed;
   const target = chosen ?? targetByBand(band);
   if (!target) return null;
 
+  const plan = project({
+    standing,
+    to: target.band,
+    minutesPerDay: minutesForCards(goals.dailyGoal),
+    daysPerWeek: goals.daysPerWeek,
+    weeksAvailable: weeksUntil(goals.deadline, now),
+    found: foundHours(reasonsFor(goals.reason)),
+    pace,
+  });
   const level = readiness.levels.find((l) => l.level === target.band);
   if (!level) return null;
 
@@ -136,5 +173,6 @@ export async function examCountdown(
     measured: level.measured,
     chosen: chosen !== undefined,
     gap: readiness.gaps[0] ?? null,
+    distance: distanceLine(plan),
   };
 }

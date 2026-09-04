@@ -65,7 +65,7 @@ export function EstonianInput({
         onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
           if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); }
         }}
-        className={`w-full rounded-[var(--r-lg)] border outline-none transition-shadow focus:shadow-[var(--shadow)] ${
+        className={`w-full rounded-[var(--r-lg)] border transition-shadow focus:shadow-[var(--shadow)] ${
           large ? "px-5 py-3.5 text-xl" : compact ? "px-4 py-2.5 text-sm" : "px-5 py-3 text-md"
         }`}
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}

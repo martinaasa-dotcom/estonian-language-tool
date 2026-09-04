@@ -18,6 +18,8 @@
  * false positive is a withheld comment that was fine.
  */
 
+import { TAGGED_LINE } from "@/lib/tutor/markers";
+
 /** Letters that only appear in Estonian, never in the English around them. */
 const ESTONIAN_LETTERS = /[õäöüšž]/i;
 
@@ -210,9 +212,10 @@ function isCandidateForm(token: string): boolean {
 
 /** Lines the UI already boxes and tags "AI · verify" on their own: a
  *  corrected sentence (`FIX:`) and a suggested word pair (`VOCAB:`), both
- *  parsed out of the reply by `TutorChat.tsx`. Flagging a word inside one of
- *  these a second time would be noise, not information. */
-const TAGGED_LINE = /^(?:\d+[.)]\s*)?(?:VOCAB|FIX):/i;
+ *  parsed out of the reply by `AnuParts.tsx`. Flagging a word inside one of
+ *  these a second time would be noise, not information. The shape is
+ *  `lib/tutor/markers.ts`'s, so this and the UI cannot disagree about which
+ *  lines those are. */
 
 /**
  * Estonian-looking words in Anu's free chat prose, the parts of a reply that
