@@ -26,6 +26,8 @@ import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
+import { plainAsk } from "../lib/estonian/plainAsk";
+import { CONJUGATION_SLOTS } from "../lib/srs/slots";
 import { SYLLABUS } from "../lib/collections/syllabus";
 import { PRACTICE_MODES } from "../lib/ux/modes";
 import { CARD_TYPES } from "../lib/srs/cards";
@@ -5034,6 +5036,106 @@ check("every grammar point the course can name carries the name a class uses", (
   assert.ok(verb, "the grammar reference no longer groups the verb");
   for (const id of verb!.ids) {
     assert.ok(grammarTerm(id)?.et, `the verb point "${id}" has only an English name`);
+  }
+});
+
+/**
+ * A NAME IS NOT AN INSTRUCTION, AND THE CARD LEADS WITH THE INSTRUCTION.
+ *
+ * The rule above is about which *name* leads, and it is right and unchanged. It
+ * is also not the whole of what a card owes somebody. A learner drove the flash
+ * round and reported that the ask "was presented so poorly I didn't even know
+ * what it wanted me to do": the card read "Put it in the lihtminevik · ma" over
+ * `kohtuma`, and the answer was `kohtusin`, which is how you say it about
+ * yourself in the past. Both names were on the screen, in the right order, and
+ * neither is something a beginner can act on. A name is a thing you look up,
+ * and somebody who has to look one up mid card has lost the sentence they were
+ * building.
+ *
+ * `lib/estonian/plainAsk.ts` is the one table of what a slot means said out
+ * loud, and this is the pair of claims that keeps it useful. First, that it is
+ * total over the forms a card can ask for: a fourteenth case or an eleventh
+ * verb slot arriving without a plain reading would ship a card nobody can read,
+ * silently, since the screens fall back to the name they used to print. And
+ * second, that the screens that ask for a form actually read it, anchored on
+ * the call rather than on the import, which is the fault `code()` exists for.
+ */
+check("every form a card can ask for says in plain English what it is asking", () => {
+  for (const spec of CASES) {
+    assert.ok(
+      plainAsk(spec.key),
+      `the ${spec.et} has no plain reading, so a card asking for it prints only its name`,
+    );
+  }
+  for (const slot of CONJUGATION_SLOTS) {
+    assert.ok(
+      plainAsk(slot.code),
+      `the verb slot "${slot.label}" has no plain reading`,
+    );
+  }
+  // And it says nothing where there is nothing to add. "How do you say this"
+  // is already the whole of a production card, and a clause under it would be
+  // the question printed twice.
+  assert.equal(plainAsk("PRODUCTION"), null, "a question about meaning has been given a clause");
+});
+
+check("a screen that asks for a form reads the plain table rather than only naming it", () => {
+  const ASKS = [
+    "app/(app)/review/ReviewSession.tsx",
+    "app/(app)/review/flashcards/FlashSession.tsx",
+    "app/(app)/review/write/WriteSession.tsx",
+  ];
+  for (const file of ASKS) {
+    const source = code(file);
+    assert.match(
+      source,
+      /plainAsk\w*\(/,
+      `${file} asks a learner for a named form and never says in plain English what it wants`,
+    );
+  }
+});
+
+/**
+ * A HUE'S FILL IS NOT A PANEL, AND ITS INK IS NOT FOR ITS FILL.
+ *
+ * Every hue in this palette is a pair, and `docs/14-design-system.md` calls the
+ * pairing the trap: the fill is what a bar, a dot or a button is painted, the
+ * tint is what a panel is painted, and the ink is the same hue walked down
+ * until it clears 4.5:1 *on its own tint*. The flash round's feedback box set
+ * `background: var(--butter)` with `color: var(--butter-ink)`, which is a slab
+ * of gold in the light theme and, in the dark, where `--butter-ink` resolves to
+ * `var(--butter)` exactly, the same colour written on itself.
+ *
+ * That pairing cannot be right in any theme and it is cheap to spot, which is
+ * what makes it worth a check rather than a paragraph: the browser suite
+ * measures contrast, and it can only measure a state it can reach, and a
+ * feedback panel is a state a fixture arrives in only by answering a card
+ * wrongly. Made to fail on the real line before it was fixed.
+ */
+check("no screen writes a hue's ink on that hue's own fill", () => {
+  const HUES = ["mint", "peach", "butter", "sky", "blush", "accent", "good", "hard", "again", "easy"];
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    for (const hue of HUES) {
+      /*
+        WITHIN ONE PANEL, WHICH IS WHAT THE WINDOW STANDS IN FOR. The two
+        declarations are rarely in one object: the box paints the background
+        and the heading inside it takes the colour, which is what the original
+        of this fault looked like, so a window narrow enough to mean "one style
+        object" reads straight past it. 400 characters is a panel and its first
+        child, measured against the real line rather than guessed at, and it is
+        far short of a fill set on a bar and an ink set on the caption under it.
+      */
+      const fill = new RegExp(`background:[^;}\n]*var\\(--${hue}\\)`, "g");
+      for (const hit of source.matchAll(fill)) {
+        const window = source.slice(hit.index ?? 0, (hit.index ?? 0) + 400);
+        assert.equal(
+          new RegExp(`color:[^;}\n]*var\\(--${hue}-ink\\)`).test(window),
+          false,
+          `${file} writes --${hue}-ink on the solid --${hue} fill, which is one colour on itself in the dark theme`,
+        );
+      }
+    }
   }
 });
 
