@@ -69,7 +69,7 @@ export function WordsTable({ rows }: { rows: CardRow[] }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter…"
           aria-label="Filter cards"
-          className="ml-auto rounded-full border px-4 py-2 text-sm outline-none"
+          className="ml-auto rounded-full border px-4 py-2 text-sm"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
       </div>

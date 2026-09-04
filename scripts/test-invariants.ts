@@ -9873,6 +9873,43 @@ check("the dark palette is a choice, never the system's", () => {
   }
 });
 
+/**
+ * A TEXT FIELD KEEPS THE RING EVERY OTHER CONTROL GETS.
+ *
+ * `:focus-visible` in app/globals.css draws the accent ring on everything
+ * that can take focus, and `outline-none` on a field is a Tailwind utility
+ * that beats it. Twenty text fields carried it, from the wizard's name field
+ * (the first thing anybody types into here) to sign-in, every typed answer
+ * in review, the import box and the crossword's cells, and the design suite
+ * never met one because it tabs four routes and none of them has a text
+ * field on arrival. Some of the twenty swapped in a `focus:` shadow, which is
+ * a ring of a kind; most swapped in nothing, so a keyboard user typing their
+ * own name could not see where the caret was going.
+ *
+ * The rule is the one rule: no field switches the outline off. A field that
+ * wants a softer ring can add to it, never take it away.
+ */
+check("no text field switches its focus ring off", () => {
+  /*
+    A tag is read to its own close, `/>`, rather than to the first `>`: an
+    `onChange={(e) => ...}` sits inside every one of these tags and its arrow
+    is a `>`. The first version of this stopped there, never reached the
+    className, and passed with `outline-none` put back on the wizard's name
+    field, which is the fault it was written for.
+  */
+  const offenders: string[] = [];
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    for (const m of source.matchAll(/<(input|textarea)\b([\s\S]*?)\/>/g)) {
+      if (/\b(?:focus:|focus-visible:)?outline-none\b/.test(m[2] ?? "")) {
+        offenders.push(`${file}: <${m[1]}> with outline-none`);
+      }
+    }
+    if (/outline(?:Style)?:\s*["']none["']/.test(source)) offenders.push(`${file}: outline: none in a style`);
+  }
+  assert.deepEqual(offenders, [], "a text field takes the focus ring away, and a keyboard user cannot see where they are typing");
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`
