@@ -15,7 +15,7 @@ import { revealAnswer } from "./lib/review.mjs";
  */
 const B = baseUrl();
 // Floor: 45, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("Teaching layer", { floor: 45 });
+const { check, absent, done } = suite("Teaching layer", { floor: 46 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
@@ -42,36 +42,55 @@ await page.goto(`${B}/grammar`, { waitUntil: "networkidle" });
 check("the reference lists all fourteen cases",
   (await page.locator('a[href^="/grammar/"]').count()) >= 14,
   `${await page.locator('a[href^="/grammar/"]').count()} links`);
-check("it groups them the way they are taught",
-  (await page.getByText("The three principal parts").count()) > 0);
 
 /*
-  Estonian is not taught anywhere by its Latin case names or by the English
-  names of tenses it does not inflect for. Both names are on the page, because
-  an English reference grammar has to stay usable, and what is checked here is
-  which one leads: a card headed "Inessive" with the Estonian in small italics
-  teaches a learner a word their own teacher will not say.
+  WHAT LEADS IS THE ENDING AND WHAT IT MEANS.
+
+  Nobody working out how to say "in the room" is looking for the inessive, or
+  for the seesütlev either: they are looking for -s. The page used to head
+  every card with a name and the ending was a chip in the corner, which asks a
+  learner to decode a heading before they can read the line under it. Both
+  names are still on the page, because a class says one and an English
+  reference grammar says the other, and what is checked here is which one is
+  the headline and which is the cross-reference.
 */
 const indexBody = (await page.textContent("body")) ?? "";
-check("a case is named the way a class names it, and asked by its question",
+// The last one, because the same href is also the weakest-case row above,
+// which is a shortcut into this card rather than the card itself.
+const inessiveCard = (await page.locator('a[href="/grammar/inessive"]').last().innerText()) ?? "";
+check("a card leads with the ending and what it means",
+  /^-s\b/.test(inessiveCard.trim()) && /\bin\b/.test(inessiveCard),
+  inessiveCard.split("\n").slice(0, 2).join(" / ") || "no card");
+check("it groups the endings by the job they do",
+  /-sse/.test(indexBody) && /-le/.test(indexBody) && /On top/.test(indexBody),
+  "the groups do not name their endings");
+check("a case still carries the name a class uses and the question it answers",
   /seesütlev/.test(indexBody) && /milles\? kus\?/.test(indexBody), "no Estonian name or question");
-check("the Latin name is kept as a cross-reference, not as the heading",
-  /In English references: the inessive/i.test(indexBody), "the Latin name is not labelled as one");
 check("it says the verb is four axes rather than a row of English tenses",
   /kõneviis/.test(indexBody) && /tegumood/.test(indexBody), "the verb axes are not named");
 
 await page.goto(`${B}/grammar/topic/pluperfect`, { waitUntil: "networkidle" });
 const topicHeading = (await page.locator("h1").first().innerText().catch(() => "")).trim();
-check("a tense page is headed by the name a course gives it",
-  topicHeading === "enneminevik", topicHeading || "no heading");
-check("and still names the English one for anyone reading an English grammar",
-  (await page.getByText(/the pluperfect/i).count()) > 0);
+check("a tense page is headed by what the tense does, in plain English",
+  topicHeading === "Done before something else", topicHeading || "no heading");
+check("and names both the course's term and the one an English grammar uses",
+  (await page.getByText("enneminevik").count()) > 0
+  && (await page.getByText(/the pluperfect/i).count()) > 0);
 
 await page.goto(`${B}/grammar/inessive`, { waitUntil: "networkidle" });
+const caseHeading = (await page.locator("h1").first().innerText().catch(() => "")).trim();
+check("an ending's page is headed by what the ending means",
+  caseHeading === "In", caseHeading || "no heading");
+check("and the ending itself is printed as written, never uppercased into something else",
+  (await page.locator("main").getByText("-s", { exact: true }).count()) > 0, "no ending on the page");
 check("a case page explains what the case is for in English",
   (await page.getByText(/Being inside something/i).count()) > 0);
 check("it names the case in Estonian too", (await page.getByText("seesütlev").count()) > 0);
-check("it gives the question the case answers", (await page.getByText("milles? kus?").count()) > 0);
+check("it keeps the Latin name as a labelled cross-reference",
+  (await page.getByText(/the inessive, in an English grammar/i).count()) > 0,
+  "the Latin name is not labelled as one");
+check("it gives the question the case answers",
+  (await page.getByText("kelles? milles? kus?").count()) > 0);
 check("it warns about the mistake English speakers make",
   (await page.getByText(/Watch out/i).count()) > 0);
 
