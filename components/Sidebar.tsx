@@ -548,27 +548,40 @@ function SignOutButton({ labelled }: { labelled?: boolean }) {
   );
 }
 
+/*
+  Light unless somebody chose dark. The toggle used to read the system's own
+  preference when nothing was stored, and the palette followed it too, so half
+  the people who opened the app met a theme nobody had picked. Now nothing
+  stored means light, the same answer globals.css gives, and the only way to
+  dark is this button. The browser chrome's colour is rewritten with it, since
+  `themeColor` in app/layout.tsx is a single light value for the same reason,
+  and the value written here is read off the stylesheet once the attribute has
+  flipped, so the tag says whatever `--ground` says and no hex is typed twice.
+*/
+
 function ThemeToggle({ labelled }: { labelled?: boolean }) {
-  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     const stored = window.localStorage.getItem("theme");
     if (stored === "light" || stored === "dark") {
       setTheme(stored);
       document.documentElement.dataset.theme = stored;
-      return;
     }
-    // Nothing stored: follow the system, but still record which way it went so
-    // the button offers the opposite of what is actually on screen.
-    setTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   }, []);
 
   const toggle = () => {
-    const current = theme ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    const next = current === "dark" ? "light" : "dark";
+    const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
     document.documentElement.dataset.theme = next;
-    window.localStorage.setItem("theme", next);
+    const ground = getComputedStyle(document.documentElement).getPropertyValue("--ground").trim();
+    if (ground) document.querySelector('meta[name="theme-color"]')?.setAttribute("content", ground);
+    try {
+      window.localStorage.setItem("theme", next);
+    } catch {
+      // Private browsing in Safari throws here; the theme still applies for
+      // this page and simply is not remembered.
+    }
   };
 
   return (

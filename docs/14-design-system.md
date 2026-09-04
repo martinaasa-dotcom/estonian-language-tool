@@ -111,9 +111,14 @@ Defined twice in `app/globals.css`, deliberately:
 - in `@theme`, so Tailwind utilities (`bg-mint`, `text-ink-2`) exist;
 - in `:root`, so the inline `style` props the views use can read them.
 
-The `:root` copy is the one that flips for dark mode, in all three states the theme can be in:
-system-light (bare `:root`), system-dark (`prefers-color-scheme` guarded by
-`:root:not([data-theme="light"])`), and explicitly chosen (`:root[data-theme="…"]`).
+The `:root` copy is the one that flips for dark mode, and there are two states rather than
+three: the default (bare `:root`, which is light for everybody) and chosen dark
+(`:root[data-theme="dark"]`, written by the toggle in the rail and read back before first paint
+by the inline script in `app/layout.tsx`). The system's own preference is deliberately not
+read. It used to be, and it meant the landing page opened dark for about half its visitors
+while being designed and measured in the light; a theme is either the default or the one
+somebody picked, and `scripts/test-invariants.ts` fails on a `prefers-color-scheme` palette
+coming back.
 
 Shape: `--r-sm` 10px, `--r` 16px, `--r-lg` 22px, `--r-xl` 30px. Buttons, chips and pills are
 fully round. Tailwind's own radius names are remapped onto those four in `@theme`, so a stray

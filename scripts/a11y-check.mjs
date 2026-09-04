@@ -381,7 +381,19 @@ for (const route of ROUTES) {
   The structural checks above are not repeated: a landmark, a heading and a
   title are the same markup whichever palette is painted over them.
 */
-const dark = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: "dark" });
+/*
+  The dark theme is chosen rather than inherited: the palette reads
+  `data-theme` alone and never the system preference (app/globals.css), so
+  emulating `prefers-color-scheme` here would sweep the light theme twice.
+  Storing the choice is what the toggle does, and the inline script in
+  app/layout.tsx reads it back before first paint, which is the path a real
+  reader who chose dark takes.
+*/
+const chooseDark = (page) =>
+  page.addInitScript(() => { try { localStorage.setItem("theme", "dark"); } catch { /* private mode */ } });
+
+const dark = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
+await chooseDark(dark);
 for (const route of ROUTES) {
   await open(dark, route, 200);
   const violations = await axeViolations(dark);
@@ -414,7 +426,8 @@ await dark.close();
   runs the next suite.
 */
 for (const theme of ["light", "dark"]) {
-  const graded = await browser.newPage({ viewport: { width: 1280, height: 1000 }, colorScheme: theme });
+  const graded = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
+  if (theme === "dark") await chooseDark(graded);
   await graded.goto(`${BASE}/review`, { waitUntil: "networkidle" });
   await graded.waitForTimeout(300);
   const shape = await revealAnswer(graded);
