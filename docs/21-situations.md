@@ -1635,3 +1635,53 @@ eleven calls the allowance never saw, on the dearest path in the app. Each compo
 own now and hands it back where nothing was composed. What survives of the original argument is that
 a mid-scene refusal has to be survivable, and it is, for the reason it always was: the rung below the
 model is a real conversational move rather than an error.
+
+## 31. ADR-025 amendment 1: a line written before anybody played
+
+§30 ended with a ladder of three rungs, and two facts about it that pull in opposite directions.
+The composer is load-bearing, because a lexicographer records a sentence to illustrate a word and
+not to ask a question about it, so retrieval fills the greetings and almost nothing that makes a
+scene *this* scene. And the composer is the one rung a keyless deployment does not have, which is
+the default deployment, so on the default deployment the receptionist could greet you and then say
+nothing a learner could answer. Phase 3 had the fix filed under "later": a reviewed phrase bank, so
+scenes need the model less over time. The MVP brief asked for the same thing from the other end,
+a mission that is "a sequence of illustrated situations where the learner has to retrieve language
+to progress", with "no complicated AI", which is a scene whose other side is known in advance.
+
+**A scripted line is a composed line moved to a different moment.** `scripts/draft-lines.ts` asks
+the same chain the route asks, with the same prompt, inside the same closed word list, and runs the
+answer through the same four checks in `lib/scenes/gate.ts`. What passes is written into
+`lib/scenes/bank.ts`, which is generated and never typed, with the model that wrote it and the day.
+The pull request that adds a row is where a person reads it. A native speaker's pass, when there is
+one, edits the same file and flips `reviewed`, and the chip on screen changes with it. The ladder
+is four rungs now: attested, scripted, composed, the way out, in that order, because that is the
+provenance order. A recorded sentence is somebody's Estonian; a scripted line was gated yesterday
+and read since; a composed line was gated a second ago and read by nobody.
+
+**What it costs and what it buys.** A keyless deployment holds a conversation on every banked
+beat, with the chip saying exactly what it is reading. A keyed one pays for no turn the bank
+covers and meets a scene that replays, which is what makes a mission a mission. What is given up
+is variety on those beats, bounded at three lines each and passed over once used within a run, and
+the honest description of that is the one §5 already makes about attested lines.
+
+**Which beats may have one.** A line that has to name a time, a room number or a document code
+cannot be drafted before the run that draws it, so `scriptable` refuses any beat waiting on such a
+datum, and the bank is read through that rule rather than trusted. The doctor's `offer` beat stays
+the composer's for that reason, and so it should: "does Thursday at three suit you" is the one
+line in that scene that has to be about the card in the learner's hand.
+
+**What it must never become**, asserted rather than noted: never a card answer, never an exam
+answer, never a marking target. Nothing under `lib/srs`, `lib/exam`, `lib/assessment`, nor the
+turn marker, can reach the bank; the drafter refuses a digit, a dash and the fallback phrase before
+the gate is even asked, and it refuses a line that hands over the form the beat is about to ask
+for, which was the first thing it produced: three lines for the milk beat and every one of them
+said `piima`, so a learner who copied the word out would have retrieved nothing. That is the
+answer printed in the question, the fault `audit:questions` hunts on every card, and the bank's
+test asks it of every row; and `bank.test.ts` re-runs every row through the gate against its scene's
+own word list on every run of the suite, so a scene edited after a row was drafted, or a unit that
+lost a word, shows up as a row that no longer passes rather than as a line a learner meets.
+
+**The first mission is the brief's own example.** `poodi-piima` is going to the shop for milk with
+a friend on the phone: `pood` in the illative, the inessive and the elative, and `piim` in the
+partitive, met once each in the order an errand meets them. A1, in `sina`, because the other side
+is a friend and a first mission should not ask for the polite register on top of the cases.

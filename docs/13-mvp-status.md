@@ -2145,3 +2145,29 @@ serves, or what the scheduler does with a slow correct answer has changed; a slo
 a recall. Whether speed should move the rating, whether the confusion should generate the next
 question, and whether a mission format should sit on top of any of it are the three decisions
 still open from the brief, and each is a larger change than reading two columns.
+
+## 31. The twenty-fifth pass: the other side's line, written before anybody played
+
+Situations shipped in §30 of `docs/21-situations.md` with a ladder whose load-bearing rung was a
+live model, and a keyless deployment therefore had a receptionist who could greet you and then say
+nothing answerable. The MVP brief asked for the simplest possible mission, "a visual story where
+language is the interaction", with no model at runtime. Both are one change: a fourth rung,
+*scripted*, between the lexicographer and the live model.
+
+`scripts/draft-lines.ts` drafts lines with the same chain and prompt the route uses, gates each one
+with the same four checks, and writes the survivors into `lib/scenes/bank.ts` with the model and
+the day. The diff is the review; a native speaker's later pass edits the same file and flips
+`reviewed`, which the chip reads. `lib/scenes/scripted.ts` decides which beats may have one (none
+that names a value the card draws per run) and reads the bank through that rule. The route tries
+the two rungs that cost a comparison before it books a call, and the screen prints which answered.
+
+**The first mission is the brief's own worked example**: `poodi-piima`, going to the shop for milk
+with a friend on the phone. `pood` in three local cases and `piim` in the partitive, at A1, in
+`sina`. Fourteen catalogue rules and the gate re-check hold it, and the bank test re-runs every
+scripted row through the gate on every run of the suite.
+
+**Two things were extracted rather than copied.** The eval script's chain, prompt and keyless
+context builders moved to `scripts/lib/sceneDraft.ts`, shared with the drafter, because a
+rejection rate measured with one prompt and a bank drafted with another is a rate for nothing. And
+the design's own Phase 3 argument, that a banked line may never be a card answer, an exam answer or
+a marking target, is an invariant now rather than a note, made to fail on each of its clauses.

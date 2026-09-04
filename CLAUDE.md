@@ -1698,6 +1698,22 @@ machine here can judge any of those and the contributor is the authority on thei
 which is what stopped the two games waiting on 280 sentences before either could be opened once.
 `docs/20-contributed-sentences.md` is what to read before asking anybody.
 
+**And the other side's line may be written before anybody plays, by a model, on the same terms
+as a line composed live.** The ladder in `lib/scenes/line.ts` had three rungs, and on the default
+deployment, which has no key, only two: a recorded sentence, and the way out. A scripted line is a
+composed line moved to a different moment. `npm run draft:lines` asks the same chain with the same
+prompt inside the same closed word list, runs the answer through the same four checks, and writes
+the survivors into `lib/scenes/bank.ts`, which is generated and never typed; the pull request is
+where a person reads them, and a native speaker's pass edits the same file and flips `reviewed`.
+It sits between the lexicographer and the live model because that is the provenance order, the
+route tries it before booking a call, and the screen says which rung answered (ADR-025 amendment
+1). `scriptable` refuses any beat whose line has to name a time, a number or a code the card draws
+per run, and the bank is read through that rule rather than trusted. **A scripted line is never a
+card answer, an exam answer or a marking target**: nothing under `lib/srs`, `lib/exam`,
+`lib/assessment` or the turn marker can reach it, asserted, and `lib/scenes/bank.test.ts` runs
+every row through the gate again on every run of the suite. The first mission, `poodi-piima`, is
+the MVP brief's own example: `pood` in three local cases and `piim` in the partitive, at A1.
+
 **A daily puzzle needs a walk, not a hash, and it took two goes to get there.** `hash % pool` with
 the string hash everybody writes (`h * 31 + charCode`) moves by one row a day, so Sõnad's first ten
 days were `lammas, laulja, laulma, leidma, lemmik, lennuk, leping, lihtne, liiter`: a week of the

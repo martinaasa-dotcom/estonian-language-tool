@@ -35,19 +35,17 @@
  * a script measures the script.
  */
 import { CASES } from "../lib/estonian/cases";
-import { buildCaseTable, caseAnswer, stemsFrom } from "../lib/estonian/derive";
+import { caseAnswer, stemsFrom } from "../lib/estonian/derive";
 import { parseGovernment } from "../lib/estonian/government";
-import { FREE_GROQ_MODELS, FREE_OPENROUTER_MODELS } from "../lib/tutor/provider";
-import { SCENES } from "../lib/scenes/catalogue";
-import { buildLexicon, formsOf, words, type DictEntry, type Lexicon } from "../lib/scenes/lexicon";
-import {
-  governmentSuspect, runGate, type Check, type GateContext, type GovernedWord,
-} from "../lib/scenes/gate";
-import { MAX_WORDS } from "../lib/scenes/retrieval";
-import { QUESTION_SHAPE, type BeatSpec, type SceneSpec } from "../lib/scenes/types";
-import { LEVELS, SYLLABUS, unitById } from "../lib/collections/syllabus";
-import { shippedDictionary } from "./lib/dictionary";
 import type { CaseKey } from "../lib/estonian/types";
+import { SCENES } from "../lib/scenes/catalogue";
+import { formsOf, words, type Lexicon } from "../lib/scenes/lexicon";
+import { governmentSuspect, runGate, type Check } from "../lib/scenes/gate";
+import { SYLLABUS } from "../lib/collections/syllabus";
+import {
+  ANSWERED, CASE_OF, POOL, REFUSALS, SHIPPED, chain, compose, gateContext, sceneLemmas, sceneLexicon,
+  wrongRegisterForms, type Allowlist,
+} from "./lib/sceneDraft";
 
 const arg = (name: string, fallback: number) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -66,145 +64,19 @@ const onlyScene = sceneArg >= 0 ? process.argv[sceneArg + 1] : undefined;
   measuring the wide one is that a box can be too small, and §6 names that as
   the first thing to suspect when the rejection rate is high.
 */
-const ALLOWLIST = process.argv.includes("--allowlist")
-  ? process.argv[process.argv.indexOf("--allowlist") + 1] : "units";
+const ALLOWLIST: Allowlist = process.argv.includes("--allowlist")
+  ? (process.argv[process.argv.indexOf("--allowlist") + 1] as Allowlist) : "units";
 
-const shipped = shippedDictionary();
-const pool: DictEntry[] = shipped.map((e) => ({
-  lemma: e.lemma, pos: e.pos, cefr: e.cefr, parts: e.parts,
-  extraForms: e.extraForms, usages: e.usages,
-}));
-const byLemma = new Map(pool.map((e) => [`${e.lemma}|${e.pos}`, e]));
-
-/** The lemmas one scene may use: every word of every unit it declares. */
-function sceneLemmas(scene: SceneSpec): string[] {
-  const out = new Set<string>();
-  if (ALLOWLIST === "course") {
-    const upTo = LEVELS.indexOf(scene.level);
-    for (const unit of SYLLABUS) {
-      if (LEVELS.indexOf(unit.level) > upTo) continue;
-      for (const spec of unit.words) out.add(spec[0]);
-    }
-    return [...out];
-  }
-  for (const id of scene.units) {
-    for (const spec of unitById(id)?.words ?? []) out.add(spec[0]);
-  }
-  return [...out];
-}
-
-function sceneLexicon(scene: SceneSpec) {
-  const lemmas = new Set(sceneLemmas(scene));
-  return buildLexicon(pool.filter((e) => lemmas.has(e.lemma)));
-}
-
-/* ------------------------------------------------------------------ *
- * The gate. Four checks, and a line failing any of them is withheld
- * whole rather than shown with a caveat.
- * ------------------------------------------------------------------ */
-
-/** The pronoun forms a register forbids. One lookup, per §2 check 3. */
-function wrongRegisterForms(scene: SceneSpec): ReadonlySet<string> {
-  const forbidden = scene.register === "teie" ? ["sina"] : ["teie"];
-  const out = new Set<string>();
-  for (const lemma of forbidden) {
-    const entry = byLemma.get(`${lemma}|PRONOUN`);
-    for (const form of entry ? formsOf(entry) : []) out.add(form);
-  }
-  return out;
-}
-
-/**
- * Which cases a word demands of its complement, by form.
- *
- * `parseGovernment` reads the whole string rather than the primary alone,
- * because a word governs every case its entry names and marking a learner
- * wrong for one of the others is the fault `buildOptions` exists to prevent.
- *
- * The shape is `lib/scenes/gate.ts`'s, because the gate lives there now: this
- * script measured a rejection rate against an implementation of its own, which
- * is a number measured on code that was not going to ship. Everything below
- * builds the *context* the shipped checks need out of the shipped dictionary.
- */
-const GOVERNED: GovernedWord[] = [];
-for (const entry of shipped) {
-  const government = parseGovernment(entry.government ?? null);
-  if (!government || entry.pos !== "VERB") continue;
-  const dict = byLemma.get(`${entry.lemma}|${entry.pos}`);
-  if (!dict) continue;
-  GOVERNED.push({
-    lemma: entry.lemma,
-    forms: new Set(formsOf(dict)),
-    cases: new Set([government.caseKey, ...government.alsoGoverned]),
-  });
-}
-
-/**
- * Ekilex's own name for a case, in either number.
- *
- * `MORPH_TO_CASE` in `lib/estonian/derive.ts` is deliberately singular only,
- * because what it feeds is a singular table. This asks a different question,
- * whether a token in a line is in a case a verb governs, and a case is a case
- * whether the word is singular or plural: `Ma andestan teile` and
- * `Ma andestan talle` are one government.
- *
- * A pronoun is why this cannot be skipped. `teie` is stored with no principal
- * parts at all and seventeen plural forms, because it has no singular for a
- * lexicographer to record, so a table built off a genitive stem knows nothing
- * about it. `teile` and `teil` are the commonest case forms in a conversation
- * held in `teie`, which is every scene here.
- */
-const CASE_BY_CODE: Record<string, CaseKey | undefined> = {
-  N: "NOMINATIVE", G: "GENITIVE", P: "PARTITIVE", Ill: "ILLATIVE", In: "INESSIVE",
-  El: "ELATIVE", All: "ALLATIVE", Ad: "ADESSIVE", Abl: "ABLATIVE", Tr: "TRANSLATIVE",
-  Ter: "TERMINATIVE", Es: "ESSIVE", Ab: "ABESSIVE", Kom: "COMITATIVE",
-};
-
-/**
- * Every case form of every nominal, so a token can be asked which case it is.
- *
- * TWO SOURCES, AND THE FIRST RUN OF THIS HAD ONLY ONE. `stemsFromParts` returns
- * `retrieved: {}` by design, so a table built through it is the rule's answer
- * and nothing else: no `mulle`, no `teile`, no short illative, and nothing at
- * all for the pronouns held as an attested set of forms with no principal parts.
- * That made the government check report the polite register as ungoverned,
- * which is the register every scene is set in, and `Kas kell kolm sobib teile?`
- * was withheld over the one word in it that answers `kellele`. `formsOf` one
- * file over had already learned this and said so; this had not.
- */
-const CASE_OF = new Map<string, Set<CaseKey>>();
-for (const entry of shipped) {
-  if (entry.pos !== "NOUN" && entry.pos !== "ADJECTIVE" && entry.pos !== "PRONOUN") continue;
-  const note = (form: string | null | undefined, key: CaseKey) => {
-    if (!form) return;
-    const lower = form.toLowerCase();
-    const seen = CASE_OF.get(lower) ?? new Set<CaseKey>();
-    seen.add(key);
-    CASE_OF.set(lower, seen);
-  };
-
-  const extra = entry.extraForms ?? [];
-  for (const form of extra) {
-    const key = CASE_BY_CODE[form.code.replace(/^(Sg|Pl)/, "")];
-    if (key) note(form.value, key);
-  }
-  if (!entry.parts.GEN_SG) continue;
-
-  const rows = [
-    ...Object.entries(entry.parts).map(([formType, value]) => ({ formType, value })),
-    ...extra.map((f) => ({ formType: `EKILEX:${f.code}`, value: f.value })),
-  ];
-  for (const row of buildCaseTable(stemsFrom(rows))) {
-    for (const form of [row.singular, row.plural, row.alsoRight, ...row.accepted]) {
-      note(form, row.spec.key);
-    }
-  }
-}
-
-/** The gate's context, built from the shipped dictionary rather than a database. */
-function gateContext(lexicon: Lexicon, wrongRegister: ReadonlySet<string>): GateContext {
-  return { lexicon, wrongRegister, governed: GOVERNED, caseOf: CASE_OF };
-}
+/*
+  The chain, the prompt, the context builders and the composer live in
+  `scripts/lib/sceneDraft.ts` now, shared with `draft-lines.ts`: a rejection
+  rate measured with one prompt and a bank drafted with another would be a
+  rate for nothing. The checks themselves are still `lib/scenes/gate.ts`'s,
+  imported and never copied.
+*/
+const shipped = SHIPPED;
+const pool = POOL;
+const CHAIN = chain();
 
 /** The one government check, so Part B measures what a learner would meet. */
 function suspect(tokens: readonly string[]): boolean {
@@ -212,98 +84,6 @@ function suspect(tokens: readonly string[]): boolean {
 }
 
 const EMPTY_LEXICON: Lexicon = { forms: new Set(), byLemma: new Map(), byCase: new Map() };
-
-/* ------------------------------------------------------------------ *
- * Part A: the rejection rate, against the chain a deployment gets.
- * ------------------------------------------------------------------ */
-
-/**
- * The chain, the way `resolveProviders` builds it: every free model of every
- * provider whose key is set, in order.
- *
- * A single model is what this asked first and it measured a rate limit rather
- * than a gate. Free models are limited hard and per day, so on any afternoon
- * one of them is closed, and a run that could not compose a line reported
- * `0/0 withheld (0%)`, which reads as a perfect score. That is the shape this
- * repository has a rule about: a failure may not misname its cause.
- */
-interface Link { label: string; model: string; url: string; key: string }
-const CHAIN: Link[] = [];
-{
-  const or = process.env.OPENROUTER_API_KEY;
-  if (or) {
-    const pinned = (process.env.OPENROUTER_MODEL ?? "").split(",").map((m) => m.trim()).filter(Boolean);
-    for (const model of pinned.length ? pinned : FREE_OPENROUTER_MODELS) {
-      CHAIN.push({ label: "OpenRouter", model, url: "https://openrouter.ai/api/v1/chat/completions", key: or });
-    }
-  }
-  const groq = process.env.GROQ_API_KEY;
-  if (groq) {
-    const pinned = (process.env.GROQ_MODEL ?? "").split(",").map((m) => m.trim()).filter(Boolean);
-    for (const model of pinned.length ? pinned : FREE_GROQ_MODELS) {
-      CHAIN.push({ label: "Groq", model, url: "https://api.groq.com/openai/v1/chat/completions", key: groq });
-    }
-  }
-}
-/** Why a line could not be composed, by status, so a thin run says so. */
-const REFUSALS = new Map<string, number>();
-const ANSWERED = new Map<string, number>();
-
-const SYSTEM = [
-  "You are one side of a short conversation in Estonian, in a role-play for a language learner.",
-  "Write exactly ONE Estonian sentence: the line this character says next. Nothing else.",
-  "Use ONLY words from the list you are given. Any form of a listed word is allowed.",
-  "No English, no markdown, no quotation marks, no explanation.",
-].join(" ");
-
-async function compose(
-  scene: SceneSpec, beat: BeatSpec, lemmas: string[], retryOver?: readonly string[],
-): Promise<string | null> {
-  const user = [
-    `You are the ${scene.place}. The learner is a member of the public and you address them as "${scene.register}".`,
-    `Your move now: ${beat.move}. In English, what you are doing is: ${beat.goal}`,
-    `The line must be about: ${beat.topic.join(", ")}`,
-    QUESTION_SHAPE[beat.move] === "required" ? "It must be a question." : "",
-    QUESTION_SHAPE[beat.move] === "forbidden" ? "It must not be a question." : "",
-    `At most ${MAX_WORDS} words. Words you may use:`,
-    lemmas.join(", "),
-    /*
-      The one retry §6 allows, with the failing words named. It is part of the
-      design rather than a kindness to the model, and leaving it out of the
-      measurement measures the wrong thing: what the 5% line is about is what a
-      learner never sees, and a line the retry rescues is one they do see.
-    */
-    retryOver && retryOver.length > 0
-      ? `\nYour last line used words that are not on the list: ${retryOver.join(", ")}. `
-        + "Write it again using only listed words."
-      : "",
-  ].filter(Boolean).join("\n");
-
-  for (const link of CHAIN) {
-    let status = 0;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const res = await fetch(link.url, {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${link.key}` },
-        body: JSON.stringify({
-          model: link.model, temperature: 0.8, max_tokens: 60,
-          messages: [{ role: "system", content: SYSTEM }, { role: "user", content: user }],
-        }),
-      });
-      status = res.status;
-      if (res.status === 429 && attempt === 0) { await new Promise((r) => setTimeout(r, 1500)); continue; }
-      if (!res.ok) break;
-      const data = await res.json() as { choices?: { message?: { content?: string } }[] };
-      const text = data.choices?.[0]?.message?.content?.trim();
-      if (!text) break;
-      ANSWERED.set(link.model, (ANSWERED.get(link.model) ?? 0) + 1);
-      return text.replace(/^["'«]|["'»]$/g, "");
-    }
-    const why = `${link.model} ${status}`;
-    REFUSALS.set(why, (REFUSALS.get(why) ?? 0) + 1);
-  }
-  return null;
-}
 
 async function partA() {
   console.log("\n=== Part A: the gate, against a real model ===\n");
@@ -331,14 +111,14 @@ async function partA() {
 
   for (const scene of SCENES) {
     if (onlyScene && scene.id !== onlyScene) continue;
-    const lexicon = sceneLexicon(scene);
-    const lemmas = sceneLemmas(scene);
+    const lexicon = sceneLexicon(scene, ALLOWLIST);
+    const lemmas = sceneLemmas(scene, ALLOWLIST);
     const wrongRegister = wrongRegisterForms(scene);
     let sceneAsked = 0, sceneWithheld = 0;
 
     for (const beat of scene.beats) {
       for (let i = 0; i < LINES; i++) {
-        const line = await compose(scene, beat, lemmas);
+        const line = (await compose(scene, beat, lemmas))?.text;
         if (!line) { refused++; continue; }
         asked++; sceneAsked++;
         const gate = gateContext(lexicon, wrongRegister);
@@ -347,7 +127,7 @@ async function partA() {
         if (first.failed.length === 0) { firstPass++; continue; }
 
         // The one retry, with the words that failed named. §6.
-        const second = await compose(scene, beat, lemmas, first.unknown);
+        const second = (await compose(scene, beat, lemmas, first.unknown))?.text;
         const after = second ? runGate(second, beat, gate) : null;
         if (after && after.failed.length === 0) { rescued++; continue; }
 

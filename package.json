@@ -43,6 +43,7 @@
     "measure:asr": "node scripts/measure-asr.mjs",
     "measure:scenes": "tsx scripts/measure-scenes.ts",
     "eval:scene": "tsx scripts/eval-scene.ts",
+    "draft:lines": "tsx scripts/draft-lines.ts",
     "audit:questions": "tsx scripts/audit-questions.ts",
     "audit:sense": "tsx scripts/audit-sense.ts",
     "audit:homonyms": "tsx scripts/audit-homonyms.ts",

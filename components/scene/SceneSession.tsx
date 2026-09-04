@@ -35,7 +35,7 @@ import { SceneDebrief, type Debrief } from "./SceneDebrief";
 interface Turn {
   readonly who: "them" | "you";
   readonly text: string;
-  readonly provenance?: "attested" | "composed" | "fallback";
+  readonly provenance?: "attested" | "scripted" | "composed" | "fallback";
   readonly reading?: string | null;
 }
 
@@ -145,7 +145,11 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         setTurns((was) => [...was, {
           who: "them", text: data.text!, provenance: data.provenance, reading: data.reading,
         }]);
-        if (data.provenance === "attested") setUsed((was) => [...was, data.text!]);
+        // Both rungs the route passes over once used. A scripted line left out
+        // of this would be the one sentence a beat can repeat.
+        if (data.provenance === "attested" || data.provenance === "scripted") {
+          setUsed((was) => [...was, data.text!]);
+        }
       }
       if (data.over) await hangUpRef.current(next, false);
     } catch {
@@ -332,7 +336,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       {opened && (!opened.composed || note) && (
         <p className="text-xs" style={{ color: "var(--ink-3)" }}>
           {note
-            ?? "A shorter conversation today: this one is built only from sentences the dictionary recorded."}
+            ?? "No model today: this one is built from recorded sentences and lines written for the scene."}
         </p>
       )}
 
@@ -428,6 +432,13 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
 /** What the chip says. Text, because a colour cannot carry this on its own. */
 const PROVENANCE: Record<NonNullable<Turn["provenance"]>, string> = {
   attested: "Recorded sentence",
+  /*
+    Honest about both halves: a model wrote it, and every word was checked
+    against the dictionary before it was kept. "Checked by a native speaker"
+    is a different claim and the chip does not make it until the bank's row
+    says so (lib/scenes/scripted.ts).
+  */
+  scripted: "Written for this scene, checked word by word",
   composed: "Written for this turn",
   fallback: "They did not catch that",
 };

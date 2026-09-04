@@ -33,6 +33,12 @@ import type { BeatSpec } from "./types";
 export type Provenance =
   /** A sentence a lexicographer recorded, used whole. Nothing was generated. */
   | "attested"
+  /**
+   * A model drafted it before anybody played, inside the same closed word
+   * list, it passed the same four checks then, and a person read it in the
+   * diff before it shipped. ADR-025 amendment 1; `lib/scenes/scripted.ts`.
+   */
+  | "scripted"
   /** A model wrote it inside the closed word list and it passed all four checks. */
   | "composed"
   /** Nobody could build one, so they ask again. Always in character. */
@@ -70,7 +76,17 @@ export interface LineRequest {
    * Estonian and a hardcoded one here would be exactly that.
    */
   readonly fallback: string;
-  /** Attested lines this run has already used, so none repeats until the pool runs dry. */
+  /**
+   * Lines drafted for this beat in advance and kept in the repository.
+   *
+   * **Required rather than optional**, for the reason `fallback` is: a caller
+   * that has not asked the bank does not compile, so the rung cannot be
+   * skipped by a route that forgot it existed. Empty is the ordinary case for
+   * a beat nobody has drafted, and for one that cannot be drafted at all
+   * because its line has to name a time or a number the card drew this run.
+   */
+  readonly scripted: readonly string[];
+  /** Attested and scripted lines this run has already used, so none repeats until the pool runs dry. */
   readonly used: ReadonlySet<string>;
   /**
    * Asks a model for one line. `avoid` names the words the last attempt reached
@@ -114,6 +130,20 @@ export function fallbackLine(text: string, withheld: readonly Check[] = []): Spo
 export async function sceneLine(request: LineRequest): Promise<SpokenLine> {
   const attested = pickAttested(request);
   if (attested) return attested;
+
+  /*
+    THE SCRIPTED RUNG SITS BETWEEN THE LEXICOGRAPHER AND THE MODEL, and the
+    order is the provenance order. An attested line is somebody's recorded
+    Estonian and outranks anything a model wrote; a scripted line was written
+    by a model but was gated then and read by a person since, which is more
+    than a line composed a second ago can say. It costs a comparison, so like
+    the attested rung it is tried before the ledger is asked, and it is what
+    lets a keyless deployment hold a conversation on a beat retrieval cannot
+    fill. Passed over once used, like an attested line, so a run that comes
+    back to a beat does not hear the same sentence twice while another is left.
+  */
+  const scripted = request.scripted.find((text) => !request.used.has(text));
+  if (scripted) return { text: scripted, provenance: "scripted" };
 
   if (!request.compose) return fallbackLine(request.fallback);
 
