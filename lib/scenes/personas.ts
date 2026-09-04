@@ -11,7 +11,7 @@
  *
  *   patience  a delta on every beat's own, so a brisk one gives you one fewer
  *             try at everything and a thorough one gives you an extra.
- *   voice     one of the twelve TartuNLP voices, so a second person in a scene
+ *   voice     one of the ten TartuNLP voices, so a second person in a scene
  *             reads as a second person rather than as more of the first.
  *   leans     which curveballs attach to them, which is how an agenda becomes
  *             something that happens rather than a label on a card.
@@ -73,7 +73,7 @@ export const PERSONAS: readonly PersonaSpec[] = [
     id: "new",
     who: "They started here recently and are checking as they go.",
     patience: 1,
-    voice: "luukas",
+    voice: "indrek",
     speed: 1,
     leans: ["not-possible", "contradiction", "interrupted"],
   },

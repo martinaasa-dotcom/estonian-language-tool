@@ -567,6 +567,36 @@ check("the mock paper's minutes and marks are the ones the exam doc cites", () =
   assert.equal(RETAKE_WAIT_PCT, 45, "RETAKE_WAIT_PCT drifted from the forty five percent the doc cites");
 });
 
+/*
+  SLOW IS PLAYBACK, NOT A SECOND CLIP.
+
+  TartuNLP's `speed` is a duration regulator inside the acoustic model, and a
+  clip asked for at 0.6 is every phoneme held on repeated frames: flat, buzzing,
+  and reported as robotic. The route forwards no speed, the one clip is played
+  slower with the pitch held in lib/audio/clip.ts, and every clip is trimmed,
+  levelled and written as 16-bit by lib/audio/wav.ts before it is cached. A
+  second file setting `playbackRate` would be a second answer to how slow is
+  done, and a `speed` reappearing in the route would be the model doing it.
+*/
+check("slow is the same clip played slower, and every clip is prepared before it is kept", () => {
+  const route = code("app/api/tts/route.ts");
+  assert.doesNotMatch(route, /\bspeed\b/, "the speech route is asking the model to slow down again");
+  assert.match(route, /prepareClip\(raw\)/, "the route stopped calling prepareClip on what the service sent");
+  assert.match(
+    route,
+    /const audio = Buffer\.from\(prepare\(raw\)\);[\s\S]{0,200}writeAudio\(hash, audio\)/,
+    "a clip reaches the cache without going through prepareClip",
+  );
+  const player = code("lib/audio/clip.ts");
+  assert.match(player, /preservesPitch\s*=\s*true/, "the slow play stopped holding the pitch");
+  assert.match(player, /playbackRate\s*=\s*SLOW_RATE/, "the slow play stopped reading SLOW_RATE");
+  const others = ["app", "lib", "components"]
+    .flatMap((dir) => sourceFiles(dir))
+    .filter((file) => file !== join("lib", "audio", "clip.ts"))
+    .filter((file) => /playbackRate|preservesPitch/.test(code(file)));
+  assert.deepEqual(others, [], "a second file decides how slow a clip plays");
+});
+
 check("nothing plays a clip outside lib/audio/clip.ts", () => {
   const offenders = ["app", "lib", "components"]
     .flatMap((dir) => sourceFiles(dir))
