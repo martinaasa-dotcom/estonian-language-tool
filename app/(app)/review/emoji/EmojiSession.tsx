@@ -196,8 +196,8 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
           </ul>
 
           <div className="flex flex-wrap justify-center gap-3">
-            <ButtonLink href="/review/emoji" variant="primary" size="lg">Another board</ButtonLink>
             <ButtonLink href="/practice" size="lg">Back to practice</ButtonLink>
+            <ButtonLink href="/review/emoji" variant="primary" size="lg">Another board</ButtonLink>
           </div>
         </div>
       </Page>

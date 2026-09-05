@@ -166,10 +166,10 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
         )}
         <ResultPanel result={result} />
         <div className="mt-8 flex flex-wrap gap-3">
+          <ButtonLink href="/learn" size="lg">Pick words to work on</ButtonLink>
           <Button variant="primary" size="lg" onClick={() => { router.push("/assess"); router.refresh(); }}>
             What this means for my goal <ArrowRight size={15} aria-hidden />
           </Button>
-          <ButtonLink href="/learn" size="lg">Pick words to work on</ButtonLink>
         </div>
       </div>
     );

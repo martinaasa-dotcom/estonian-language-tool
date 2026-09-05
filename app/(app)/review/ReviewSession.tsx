@@ -27,6 +27,7 @@ import type { ReviewMode } from "@/lib/settings/store";
 import { previewIntervals, SELF_GRADES, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { requeue } from "@/lib/srs/queue";
 import { OPTION_CLASS, VERDICT_CLASS, VERDICT_PAUSE_MS, optionState, verdictOfCheck, verdictOfRating } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export interface ReviewCard {
   id: string;
@@ -756,7 +757,7 @@ export function ReviewSession({
         return;
       }
 
-      if (e.key === "Enter" || e.key === " ") {
+      if (isAdvanceKey(e)) {
         // While the answer box has focus it owns both keys: a space belongs in
         // the answer, and Enter is the input's own "check this". React flushes
         // discrete events synchronously, so without this the *same* Enter would
@@ -874,9 +875,9 @@ export function ReviewSession({
           </p>
         )}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/" variant="primary" size="lg">Back to Today</ButtonLink>
           <ButtonLink href="/practice" size="lg"><Zap size={15} aria-hidden /> Play a round</ButtonLink>
           <ButtonLink href="/learn/new" size="lg">Learn new words</ButtonLink>
+          <ButtonLink href="/" variant="primary" size="lg">Back to Today</ButtonLink>
         </div>
       </div>
     );

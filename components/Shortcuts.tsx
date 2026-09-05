@@ -35,7 +35,7 @@ const GROUPS: Group[] = [
     title: "Reviewing",
     hint: "the daily loop, and the case drills",
     keys: [
-      { press: ["Space"], does: "Show the answer on a card you flip" },
+      { press: ["Space", "Enter"], does: "Show the answer, or move on once you have read it" },
       { press: ["Enter"], does: "Check what you typed, then grade it" },
       { press: ["1"], does: "Pick the first answer, and 2 to 4 for the rest" },
       { press: ["1", "2"], does: "On a card you flip: I did not know it, I knew it" },
@@ -48,14 +48,14 @@ const GROUPS: Group[] = [
     keys: [
       { press: ["1"], does: "Pick the first option" },
       { press: ["2"], does: "…the second, and so on" },
-      { press: ["Space"], does: "Continue once you have answered" },
+      { press: ["Space", "Enter"], does: "Continue once you have answered" },
     ],
   },
   {
     title: "Case Sprint",
     hint: "the 60-second round",
     keys: [
-      { press: ["Space"], does: "Flip the card, then count it as right" },
+      { press: ["Space", "Enter"], does: "Flip the card, then count it as right" },
       { press: ["⌫"], does: "Count it as missed and move on" },
     ],
   },

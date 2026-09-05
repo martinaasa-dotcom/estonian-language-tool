@@ -12,6 +12,7 @@ import {
   BLANK, MAX_PASSAGE_CHARS, type ClozeItem, isClozeCorrect, isDiacriticSlip,
 } from "@/lib/estonian/passage";
 import { VERDICT_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /** A gap, plus the card it is practicing. */
 type Gap = ClozeItem & { cardId: string | null };
@@ -77,10 +78,10 @@ export function ClozeSession() {
   useEffect(() => {
     if (phase !== "drill") return;
     const onKey = (e: KeyboardEvent) => {
+      if (checked) { if (isAdvanceKey(e)) { e.preventDefault(); next(); } return; }
       if (e.key !== "Enter") return;
       e.preventDefault();
-      if (checked) next();
-      else check();
+      check();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -123,12 +124,12 @@ export function ClozeSession() {
           )}
 
           <div className="mt-4 flex flex-wrap gap-3">
+            <ButtonLink href="/">Back to Today</ButtonLink>
             <Button variant="primary" disabled={busy || !text.trim()} onClick={() => void build()}>
               {busy
                 ? <><Loader2 size={15} className="animate-spin" aria-hidden /> Reading…</>
                 : "Make exercises"}
             </Button>
-            <ButtonLink href="/">Back to Today</ButtonLink>
           </div>
 
           <p className="mt-4 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
@@ -160,10 +161,10 @@ export function ClozeSession() {
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
           <Button onClick={() => { setPhase("paste"); setItems([]); setIndex(0); setCorrect(0); setText(""); }}>
             Another passage
           </Button>
+          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
         </div>
       </div>
     );

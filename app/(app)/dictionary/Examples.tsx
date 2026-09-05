@@ -209,10 +209,10 @@ function AddExample({ lexemeId, onAdded, onCancel }: {
       />
       {error && <p role="alert" className="mt-2 text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}
       <div className="mt-3 flex gap-2">
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
         <Button variant="primary" onClick={save} disabled={pending || et.trim().length < 4}>
           {pending ? "Saving…" : "Save sentence"}
         </Button>
-        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
       </div>
     </div>
   );

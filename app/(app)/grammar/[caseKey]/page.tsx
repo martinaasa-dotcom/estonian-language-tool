@@ -312,20 +312,20 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
         )}
 
         <div className="flex flex-wrap gap-3">
-          <ButtonLink href={`/review?case=${ref.key}`} variant="primary">
-            <Target size={15} aria-hidden /> Drill it
+          <ButtonLink href="/review/write">
+            <PenLine size={15} aria-hidden /> Write a sentence with it
           </ButtonLink>
           {/* Writing a sentence in a case is the hardest thing you can do with
               one, so it belongs on the page that just explained it rather than
               on a menu that cannot say which case you are stuck on. */}
-          <ButtonLink href="/review/write">
-            <PenLine size={15} aria-hidden /> Write a sentence with it
-          </ButtonLink>
           <ButtonLink href="/dictionary">
             <BookOpen size={15} aria-hidden /> Look a word up
           </ButtonLink>
           <ButtonLink href="/tutor">
             <MessageCircleQuestion size={15} aria-hidden /> Ask Anu about it
+          </ButtonLink>
+          <ButtonLink href={`/review?case=${ref.key}`} variant="primary">
+            <Target size={15} aria-hidden /> Drill it
           </ButtonLink>
         </div>
 

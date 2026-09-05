@@ -13,11 +13,12 @@
  * clip, stored for ever and shipped to every phone.
  *
  * So a clip is trimmed to a short lead and a natural release, faded at the
- * cuts so no edge clicks, leveled so every voice sits at the same loudness
- * (Kalev's clips peaked at 0.74 and Mari's at 0.66 for the same word, and a
- * learner switching voice in Settings should not have to reach for the volume
- * key), and written as 16-bit PCM, which halves the store, the egress and the
- * service worker's cache.
+ * cuts so no edge clicks, its pauses capped at the length a speaker leaves,
+ * leveled so every voice sits at the same loudness (Kalev's clips peaked at
+ * 0.74 and Mari's at 0.66 for the same word, and a learner switching voice in
+ * Settings should not have to reach for the volume key), and written as
+ * 16-bit PCM, which halves the store, the egress and the service worker's
+ * cache.
  *
  * NOTHING HERE CHANGES WHAT IS SAID OR HOW FAST. The samples inside the speech
  * are untouched but for a single gain. Speed is not applied here either: it
@@ -38,7 +39,7 @@ export interface Pcm {
  * How much silence stays before the first sound and after the last.
  *
  * The trail is longer than the lead on purpose. A final `s` is quiet, long
- * and falls away slowly, so a trail measured from the last loud sample has to
+ * and falls away slowly, so a trail measured from the last loud frame has to
  * reach past the whole of it: at 160 ms `tingimus` came back as `tingimu`,
  * reported by a learner on the word's own first meeting, and a word cut short
  * is a form this app never taught.
@@ -48,16 +49,49 @@ export const TRAIL_MS = 320;
 /** A cut at a sample that is not zero clicks; this many milliseconds of ramp hides it. */
 export const FADE_MS = 6;
 /**
- * Below this share of the clip's own peak is silence. About -44 dB, which is
- * under the quietest consonant a vocoder produces (a word-final `s` sits
- * around -35 dB against the vowel before it, and 0.02 was cutting it) and
- * still well over the noise floor of one. It is relative rather than absolute
- * so a quiet voice is trimmed the same as a loud one.
+ * WHAT IS SILENCE IS DECIDED FRAME BY FRAME, NOT SAMPLE BY SAMPLE.
+ *
+ * The vocoder does not render a pause as digital zero. It renders about a
+ * third of a second of hiss at -50 dB before the first sound and after the
+ * last, inside the worker's own half-second pad of true zeros. The first
+ * trimmer looked at single samples against a floor of -44 dB, and the peaks
+ * of that hiss reach -40, so it stopped at the hiss and kept the lot:
+ * measured on `tuba`, the "40 ms lead" was 390 ms, and a press on the speaker
+ * was followed by most of half a second of nothing, which is the delay this
+ * trimmer was written to remove. Ten-millisecond frames measured as RMS put
+ * the hiss at -50 dB and a word-final `s` at -34 to -38, so a floor at -42
+ * relative to the loudest frame takes the hiss and keeps the consonant. A
+ * word-initial `h` sits at -37 and is kept too.
  */
-export const SILENCE_SHARE = 0.006;
+export const FRAME_MS = 10;
+export const SILENCE_SHARE = 0.008;
+/**
+ * A PAUSE INSIDE A CLIP IS CAPPED, BECAUSE THE WORKER PADS EVERY SENTENCE.
+ *
+ * A text of two sentences comes back as two renderings joined with half a
+ * second of zeros, and each carries its own hiss ramp on both sides, so the
+ * gap between "Kuidas läheb?" and "Ma lähen poodi" measured 0.8 seconds where
+ * a speaker leaves about 0.4. A pause longer than this is cut to it, from the
+ * middle, faded at the cut. What is said and how fast is untouched, since
+ * nothing inside a word is a pause: the floor above is what says so.
+ */
+export const MAX_PAUSE_MS = 450;
+/**
+ * THE VOICES ARE LEVELED BY LOUDNESS, WITH A CEILING ON THE PEAK.
+ *
+ * They were leveled by peak, and a peak is one sample: Kylli's clips came out
+ * 2.6 dB louder than Tambet's for the same sentence at the same peak, because
+ * one voice is smoother and the other has a sharper plosive. Loudness is the
+ * RMS of the frames that hold sound, so a pause does not count against a
+ * sentence with a pause in it, and every voice is brought to -16 dBFS by
+ * that measure. The ceiling is what keeps a peaky voice from clipping: it is
+ * applied after, and it binds for the sharper voices, which then come out a
+ * little quieter than the target rather than distorted. `MAX_GAIN` is what
+ * keeps a clip that is nearly silent from being turned into noise.
+ */
+export const TARGET_RMS = 0.158;
 /** -1 dBFS: as loud as a clip can be without a resampler clipping it. */
 export const TARGET_PEAK = 0.89;
-/** A clip that is nearly silent is not turned into noise by leveling it. */
 export const MAX_GAIN = 4;
 
 export class WavError extends Error {}
@@ -125,6 +159,58 @@ function peakOf(samples: Float32Array): number {
   return peak;
 }
 
+/** The RMS of each `FRAME_MS` frame of the clip. */
+function frameLevels({ rate, samples }: Pcm): { frame: number; levels: Float64Array } {
+  const frame = Math.max(1, Math.round((rate * FRAME_MS) / 1000));
+  const levels = new Float64Array(Math.ceil(samples.length / frame));
+  for (let f = 0; f < levels.length; f++) {
+    const from = f * frame;
+    const to = Math.min(samples.length, from + frame);
+    let sum = 0;
+    for (let i = from; i < to; i++) {
+      const v = samples[i] ?? 0;
+      sum += v * v;
+    }
+    levels[f] = Math.sqrt(sum / Math.max(1, to - from));
+  }
+  return { frame, levels };
+}
+
+/**
+ * Which frames hold sound: those above `SILENCE_SHARE` of the loudest frame.
+ * Empty for a clip with nothing in it.
+ */
+function soundFrames(pcm: Pcm): { frame: number; sound: boolean[] } {
+  const { frame, levels } = frameLevels(pcm);
+  let loudest = 0;
+  for (let f = 0; f < levels.length; f++) loudest = Math.max(loudest, levels[f] ?? 0);
+  const floor = loudest * SILENCE_SHARE;
+  const sound: boolean[] = [];
+  for (let f = 0; f < levels.length; f++) sound.push(loudest > 0 && (levels[f] ?? 0) >= floor);
+  // A run of under three frames over the floor with silence either side is a
+  // blip in the hiss, not a sound: nothing anybody says is twenty milliseconds
+  // long on its own, since a burst is followed by the vowel it opens.
+  for (let f = 0; f < sound.length; f++) {
+    if (!sound[f]) continue;
+    let g = f;
+    while (g < sound.length && sound[g]) g++;
+    if (g - f < 3) for (let k = f; k < g; k++) sound[k] = false;
+    f = g;
+  }
+  return { frame, sound };
+}
+
+/** A short ramp in at `from` and out before `to`, in place. */
+function fadeEdges(samples: Float32Array, rate: number, from: number, to: number): void {
+  const fade = Math.min(Math.round((rate * FADE_MS) / 1000), Math.floor((to - from) / 2));
+  for (let i = 0; i < fade; i++) {
+    const g = i / fade;
+    samples[from + i] = (samples[from + i] ?? 0) * g;
+    const j = to - 1 - i;
+    samples[j] = (samples[j] ?? 0) * g;
+  }
+}
+
 /**
  * The clip with its dead air taken off, keeping `LEAD_MS` before the first
  * sound and `TRAIL_MS` after the last, and a short fade at each cut. A clip
@@ -133,32 +219,86 @@ function peakOf(samples: Float32Array): number {
  */
 export function trimSilence(pcm: Pcm): Pcm {
   const { rate, samples } = pcm;
-  const peak = peakOf(samples);
-  if (peak === 0) return pcm;
-  const floor = peak * SILENCE_SHARE;
-  let first = 0;
-  while (first < samples.length && Math.abs(samples[first] ?? 0) < floor) first++;
-  let last = samples.length - 1;
-  while (last > first && Math.abs(samples[last] ?? 0) < floor) last--;
+  const { frame, sound } = soundFrames(pcm);
+  const first = sound.indexOf(true);
+  if (first < 0) return pcm;
+  const last = sound.lastIndexOf(true);
 
-  const start = Math.max(0, first - Math.round((rate * LEAD_MS) / 1000));
-  const end = Math.min(samples.length, last + 1 + Math.round((rate * TRAIL_MS) / 1000));
+  const start = Math.max(0, first * frame - Math.round((rate * LEAD_MS) / 1000));
+  const end = Math.min(samples.length, (last + 1) * frame + Math.round((rate * TRAIL_MS) / 1000));
   const out = samples.slice(start, end);
-  const fade = Math.min(Math.round((rate * FADE_MS) / 1000), Math.floor(out.length / 2));
-  for (let i = 0; i < fade; i++) {
-    const g = i / fade;
-    out[i] = (out[i] ?? 0) * g;
-    const j = out.length - 1 - i;
-    out[j] = (out[j] ?? 0) * g;
+  fadeEdges(out, rate, 0, out.length);
+  return { rate, samples: out };
+}
+
+/**
+ * Every pause inside the clip cut to at most `MAX_PAUSE_MS`, from its middle,
+ * so what is kept is the natural fall into the pause and the natural rise out
+ * of it. The lead and the trail are not pauses and are `trimSilence`'s.
+ */
+export function capPauses(pcm: Pcm): Pcm {
+  const { rate, samples } = pcm;
+  const { frame, sound } = soundFrames(pcm);
+  const first = sound.indexOf(true);
+  const last = sound.lastIndexOf(true);
+  if (first < 0) return pcm;
+  const cap = Math.round((rate * MAX_PAUSE_MS) / 1000);
+  const keep: Array<[number, number]> = [];
+  let at = 0;
+  let f = first;
+  while (f <= last) {
+    if (sound[f]) {
+      f++;
+      continue;
+    }
+    let g = f;
+    while (g <= last && !sound[g]) g++;
+    const from = f * frame;
+    const to = g * frame;
+    if (to - from > cap) {
+      const cut = to - from - cap;
+      const middle = from + Math.floor((to - from) / 2);
+      keep.push([at, middle - Math.floor(cut / 2)]);
+      at = middle + Math.ceil(cut / 2);
+    }
+    f = g;
+  }
+  if (keep.length === 0) return pcm;
+  keep.push([at, samples.length]);
+  const total = keep.reduce((n, [a, b]) => n + (b - a), 0);
+  const out = new Float32Array(total);
+  let o = 0;
+  for (const [a, b] of keep) {
+    const piece = samples.slice(a, b);
+    // The cut lands in near silence, so the fade is only there for the seam.
+    if (a > 0) fadeEdges(piece, rate, 0, Math.min(piece.length, Math.round((rate * FADE_MS) / 1000) * 2));
+    if (b < samples.length) {
+      fadeEdges(piece, rate, Math.max(0, piece.length - Math.round((rate * FADE_MS) / 1000) * 2), piece.length);
+    }
+    out.set(piece, o);
+    o += piece.length;
   }
   return { rate, samples: out };
 }
 
-/** Every clip at the same peak, so two voices reading one word are equally loud. */
-export function normalisePeak(pcm: Pcm): Pcm {
+/** Every clip at the same loudness, under one peak, so two voices reading one word are equally loud. */
+export function normaliseLoudness(pcm: Pcm): Pcm {
+  const { frame, sound } = soundFrames(pcm);
   const peak = peakOf(pcm.samples);
   if (peak === 0) return pcm;
-  const gain = Math.min(TARGET_PEAK / peak, MAX_GAIN);
+  let sum = 0;
+  let count = 0;
+  for (let f = 0; f < sound.length; f++) {
+    if (!sound[f]) continue;
+    const to = Math.min(pcm.samples.length, (f + 1) * frame);
+    for (let i = f * frame; i < to; i++) {
+      const v = pcm.samples[i] ?? 0;
+      sum += v * v;
+      count++;
+    }
+  }
+  const loudness = count > 0 ? Math.sqrt(sum / count) : peak;
+  const gain = Math.min(TARGET_RMS / loudness, TARGET_PEAK / peak, MAX_GAIN);
   const out = new Float32Array(pcm.samples.length);
   for (let i = 0; i < out.length; i++) out[i] = (pcm.samples[i] ?? 0) * gain;
   return { rate: pcm.rate, samples: out };
@@ -194,10 +334,10 @@ export function encodeWav16(pcm: Pcm): Uint8Array {
 
 /**
  * What the speech route does to every clip before it is cached: decode, trim,
- * level, and write as 16-bit. Throws `WavError` on bytes that are not a WAV
- * this understands, and the route then keeps the clip as it came, because a
- * clip that is merely untrimmed is better than none.
+ * cap the pauses, level, and write as 16-bit. Throws `WavError` on bytes that
+ * are not a WAV this understands, and the route then keeps the clip as it
+ * came, because a clip that is merely untrimmed is better than none.
  */
 export function prepareClip(bytes: Uint8Array): Uint8Array {
-  return encodeWav16(normalisePeak(trimSilence(decodeWav(bytes))));
+  return encodeWav16(normaliseLoudness(capPauses(trimSilence(decodeWav(bytes)))));
 }
