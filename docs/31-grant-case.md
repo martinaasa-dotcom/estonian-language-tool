@@ -16,9 +16,13 @@ licensed, running at kodukeel.ee. No users yet.
 
 ## 1. The problem
 
-Estonian is spoken by roughly a million people. That figure is the one number in this document
-this repository cannot produce, and it wants a citation from Statistics Estonia before submission
-rather than a rounded memory of one.
+Estonian is the mother tongue of 67 percent of Estonia's population, and 84 percent speak it
+counting those who learned it as a second language. Both figures are Statistics Estonia's own, from
+the 2021 census, published on 14 March 2023 at
+`https://stat.ee/en/news/243-mother-tongues-spoken-estonia`. Against a population of roughly 1.3
+million that is something under a million native speakers in the country, and a little over a
+million counting the diaspora. Use the census percentages in an application rather than the round
+number: they are primary, they are dated, and they are the pair a reviewer can check in a minute.
 
 The size matters because it decides the economics. A language learning company chooses which
 languages to build for by the size of the paying market, and a market of a million people, most of
@@ -29,6 +33,23 @@ is nowhere in any of them. Estonian has fourteen cases, a consonant alternation 
 written down (`docs/02-estonian-domain.md` §1 and `docs/13-mvp-status.md` §5.2), and verb government
 an English speaker cannot reason out. A generic app cannot afford the linguistics, so it teaches
 vocabulary and calls it a language.
+
+Two published figures put a number on that difficulty, and they are better evidence than a headcount
+because they are about what happens to learners rather than about how many there are.
+
+The Foreign Service Institute puts Estonian in **Category IV**, the second hardest of its four
+bands, at 44 weeks or about 1,100 class hours to professional working proficiency for an English
+speaker, alongside Finnish and Hungarian. The Institute teaches full time with small classes and
+prepared materials, which is the most favourable conditions anybody learns a language in, and 1,100
+hours is what that buys. The plan at `/assess` is built on that figure and adds an Estonian
+surcharge on top of it, weighted to the step where the cases and the gradation have to start working
+on their own.
+
+And people do fail. The Education and Youth Board's own 2020 overview gives pass rates falling from
+**72.9 percent at A2 to 62.4 at B1, 51.1 at B2 and 38.4 at C1**. B1 is the level a citizenship
+application asks for, so on the Board's own numbers about two in five candidates at that level do
+not clear it. That is the gap this project is aimed at: not people who have never met the language,
+but people already sitting in a course who cannot yet do the thing the examination asks.
 
 The second half of the problem is what happens after the vocabulary. Almost everybody learning
 Estonian in Estonia freezes at a counter long after they can pass a vocabulary test
@@ -308,12 +329,38 @@ placement check keeps speaking out of the level entirely (`SCORED_SKILLS`). Re-r
 
 Written down so it is not forgotten between this document and a form.
 
-- The number of Estonian speakers, cited to Statistics Estonia or the Institute of the Estonian
-  Language rather than to memory.
-- How many people are studying Estonian for the state examination in a year, from the Education and
-  Youth Board's own figures. The app cannot know this and it is the number that sizes the problem.
-- The Foreign Service Institute hours figure the plan quotes (around 1,100 for an English speaker),
-  cited to its published source. It is on `/assess` with its source named in the app already, and
-  an application should carry the citation rather than the app's paraphrase.
-- Whatever the funder asks about co-financing, which is a decision for the applicant rather than a
-  fact in this repository.
+Three of the four things this list used to hold have been sourced and moved into the text above.
+What is left is what genuinely cannot be settled from a desk, and one number that can be settled
+only by asking for it.
+
+- **How many people sit the state examination in a year**, which is still open and is worth being
+  careful about. The Education and Youth Board publishes an annual overview, and its 2020 one says
+  the desired level was reached 2,647 times. That is **passes, not sittings**, so it is a floor
+  rather than the figure, and 2020 is the year the Board itself says was depressed by postponed
+  examinations. An application should ask the Board for a recent year's registrations rather than
+  quote a pass count from a pandemic year as though it were attendance.
+- **Whatever the funder asks about co-financing**, which is a decision for the applicant rather
+  than a fact in this repository.
+
+And one caution about a figure that is now in the text. The pass rates in section 1 are the Board's
+2020 rates. They are quoted because the shape of them, falling steadily from A2 to C1, is the point
+being made and is not a pandemic artefact. If an application leans on the exact percentages rather
+than the shape, get the current year's from the Board first.
+
+## 10. The outside sources this document uses
+
+Everything else here is checkable against this repository, which is the point of it. These four are
+not, so they are listed with what was taken from each and when it was read. A reviewer who wants to
+disagree with a number should be able to reach the number.
+
+| Claim | Source | Read |
+| --- | --- | --- |
+| 67 percent of Estonia's population has Estonian as a mother tongue, 84 percent speak it | Statistics Estonia, 2021 census, `https://stat.ee/en/news/243-mother-tongues-spoken-estonia`, published 14 March 2023 | 5 September 2026 |
+| Estonian is FSI Category IV, 44 weeks or about 1,100 class hours | Foreign Service Institute language difficulty rankings, US Department of State, `https://www.state.gov/foreign-language-training` | 5 September 2026 |
+| Pass rates 72.9 / 62.4 / 51.1 / 38.4 percent at A2 / B1 / B2 / C1, and 2,647 passes | Education and Youth Board annual overview for 2020, `https://harno.ee/uudised/eesti-keele-tasemeeksamite-ning-kodakondsuseksamite-aastaulevaade` | 5 September 2026 |
+| Estonia sets the age of digital consent at 13 | Recorded in this repository at `lib/legal/operator.ts` and on `/privacy`, and worth citing to the Estonian Personal Data Protection Act in an application | 5 September 2026 |
+
+Two of those want a fresher figure before anything is submitted. The examination pass rates are from
+a year the Board itself describes as disrupted, and the FSI page has moved between State Department
+sites more than once, so quote the ranking rather than a URL if the link will be read months later.
+
