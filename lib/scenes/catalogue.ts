@@ -221,7 +221,7 @@ const DOCTOR: SceneSpec = {
       needs: [{ kind: "anyOf", of: [
         { kind: "datum", slot: "time" },
         { kind: "datum", slot: "time2" },
-        { kind: "lemma", oneOf: ["sobima", "hea", "jah"] },
+        { kind: "lemma", oneOf: ["sobima", "jah"] },
       ] }],
       required: true,
       patience: 2,
@@ -426,7 +426,7 @@ const LANDLORD: SceneSpec = {
         { kind: "datum", slot: "day" },
         { kind: "datum", slot: "time2" },
         { kind: "datum", slot: "day2" },
-        { kind: "lemma", oneOf: ["sobima", "hea", "jah"] },
+        { kind: "lemma", oneOf: ["sobima", "jah"] },
       ] }],
       required: true,
       patience: 2,
