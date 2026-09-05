@@ -90,7 +90,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   table, the words the endings cannot reach, the cards you keep failing, and the words you looked
   up yourself rather than met in a unit, which the queue is otherwise slowest to reach. Everything
   writes to the same review log, so a game still moves the schedule forward.
-- **Where the endings stop.** Three forms memorised and eleven worked out is most of the language
+- **Where the endings stop.** Three forms memorized and eleven worked out is most of the language
   and not all of it: `tuba` goes to `tuppa`, not `toasse`, and its stem is `toa`, which no rule
   predicts. The exception area is every word in the dictionary whose stored form disagrees with the
   pattern, grouped by what breaks, with a drill that shows you the form, asks for it, and then asks

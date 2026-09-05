@@ -119,7 +119,7 @@ check("a case in the dictionary links to its explanation",
 // ─── Where the pattern stops ──────────────────────────────────────────────────
 
 /*
-  The reference teaches "three memorised, eleven worked out", and the thing it
+  The reference teaches "three memorized, eleven worked out", and the thing it
   did not say is where that stops holding. `caseAnswer` prefers an attested form
   over the rule, so the same page that taught the ending `sse` printed `tuppa`,
   and a learner was left to work out which of the two to reach for tomorrow.

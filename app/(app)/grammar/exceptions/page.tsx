@@ -19,7 +19,7 @@ export const metadata = {
 /**
  * THE PAGE THAT SAYS HOW FAR TO TRUST THE PATTERN.
  *
- * `/grammar` opens with "three you memorise, and eleven you can work out",
+ * `/grammar` opens with "three you memorize, and eleven you can work out",
  * which is true and is the most motivating fact a beginner is given. What no
  * screen said is where it stops: `caseAnswer` prefers an attested form over the
  * rule, so a learner meets `tuppa` printed under a heading that taught them

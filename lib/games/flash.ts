@@ -557,7 +557,7 @@ export function markFlash(task: FlashTask, typed: string): FlashMark {
  * Split out of `markFlash` rather than copied, because the exceptions round
  * asks the same question about the same words: type this form. A second marker
  * is where two screens start disagreeing about whether `toast` is a slip or the
- * wrong case, and that judgement is the whole value of the paragraph below.
+ * wrong case, and that judgment is the whole value of the paragraph below.
  *
  * `markFlash` keeps the empty answer and the sentence shape, which are its own.
  */

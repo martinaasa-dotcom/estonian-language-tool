@@ -296,7 +296,7 @@ export const SECTIONS: NavSection[] = [
         href: "/grammar/exceptions", label: "Exceptions",
         blurb: "The words the endings do not reach", icon: "TriangleAlert",
         tone: "butter", within: "/grammar",
-        keywords: "irregular exception gradation stem change tuppa illative unpredictable memorise astmevaheldus",
+        keywords: "irregular exception gradation stem change tuppa illative unpredictable memorize astmevaheldus",
       },
       {
         href: "/dictionary/common", label: "Commonest words",

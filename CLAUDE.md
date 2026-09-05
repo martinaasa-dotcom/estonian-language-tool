@@ -1218,7 +1218,7 @@ passed with the column deleted, because the paragraph explaining why it mattered
 by name, which is the trap `code()` exists for one directory over.
 
 **And the app taught a pattern without ever saying where it stops.** `/grammar` opens with "three
-you memorise, and eleven you can work out", which is true and is the most motivating fact a
+you memorize, and eleven you can work out", which is true and is the most motivating fact a
 beginner is given. `caseAnswer` then quietly prefers an attested form over the rule, so a learner
 meets `tuppa` printed under a heading that taught them `sse` and has no way of knowing which of the
 two to reach for tomorrow. That is worse than not knowing: the pattern is presented as more
@@ -1257,7 +1257,7 @@ would be reported as having none.
 illatives are Estonian, a course teaches them as a pair and `caseAnswer` accepts either, so
 `toasse` is printed beside `tuppa`. Everywhere else the rule's answer is a form nobody says, and
 putting one on screen with a line through it is this app writing Estonian and hoping nobody
-memorised it. `ruleFormIsAlsoRight` is the guard and it is asserted on the member access rather
+memorized it. `ruleFormIsAlsoRight` is the guard and it is asserted on the member access rather
 than on the word, for the reason the readiness card's evidence tier is.
 
 **A word breaks several patterns and each one is its own row.** `aeg` breaks four, and rolling them
@@ -1286,7 +1286,7 @@ seen cannot be recalled; the other two grade through `gradeCard` carrying the sl
 illative they cannot produce on a card. A word the learner holds no card for writes nothing at all,
 which is the answer `/review/emoji` gives about the same situation. `markForm` is the flash round's
 own marker split out rather than copied, because two screens disagreeing about whether `toast` is a
-slip or the wrong case is exactly the judgement that matters here. What a gap may hide is still
+slip or the wrong case is exactly the judgment that matters here. What a gap may hide is still
 `gapForms`, narrowed to the exception being asked about and never widened. And a round spreads
 itself across the kinds: half the dictionary has a short illative, so taking each word's first
 exception gave five illatives and one verb, three of them country names, which is a true sample of

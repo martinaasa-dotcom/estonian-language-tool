@@ -11747,7 +11747,7 @@ check("the exceptions are read off the dictionary and never written down", () =>
   exception and it is right exactly once: both illatives are Estonian, a course
   teaches them as a pair, and `caseAnswer` accepts either. Everywhere else the
   rule's answer is a form nobody says, and printing one with a line through it
-  is this app writing Estonian and hoping nobody memorised it.
+  is this app writing Estonian and hoping nobody memorized it.
 
   `ruleFormIsAlsoRight` is the guard and this is what stops it being optional,
   in the shape the readiness card's evidence tier is asserted in: anchored on

@@ -149,7 +149,7 @@ export default async function ExceptionsRoundPage({
  * The case card for the case being asked where the learner holds one, since
  * that is the card asking the same question, and any card of the word
  * otherwise. `gradeCard` writes the asked slot beside the grade either way, so
- * the review log records what was practised whichever card carried it.
+ * the review log records what was practiced whichever card carried it.
  */
 function cardFor(
   cards: readonly { id: string; lexemeId: string | null; cardType: string; targetCase: string | null }[],
