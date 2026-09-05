@@ -2031,6 +2031,21 @@ because it was chosen by whoever wrote the link. Nobody signed in is the ordinar
 untouched, which is what makes it safe: the link works exactly as it did for the person it was
 mailed to.
 
+**A sign-in finishes on the origin it started on, and a deployment answers on one origin.** The
+form asks Supabase to send Google's code back to `<origin>/auth/callback`, and Supabase honours
+that only where the address is on the project's Redirect URLs; anywhere else it falls back to the
+Site URL, silently. So a sign-in begun on the domain came back on `kodukeel.vercel.app`, where no
+PKCE verifier cookie had ever been written, and the learner read "that sign-in did not go
+through" on a host they had not typed, and pressed the button again from there, which worked.
+`lib/auth/canonical.ts` is the app's half: with `NEXT_PUBLIC_SITE_URL` set, the middleware sends a
+request on any other host to the same path on that one, permanently, before anything else reads
+it; a Vercel preview and a loopback address are exempt by rule, because each is a deployment that
+would otherwise bounce to production. The callback is the other half and reads the verifier cookie
+before it tries the exchange, so a code that arrived in a browser that never asked for one is told
+apart from a spent link and the screen names the setting rather than the link. The dashboard half
+is in the README and is not optional: the Site URL and the Redirect URLs have to name the address
+people use.
+
 **A name a class is going to see is cleaned, not trimmed.** `trim()` does not remove U+200B, so
 two zero-width spaces were a two-character name that passed the empty check and rendered as
 nothing on the roster; U+202E reverses what follows it and can make one pupil's row read as
@@ -3170,6 +3185,19 @@ which takes three queries and a dictionary read off every other render of this p
 is on the *slot* rather than on either card, because two rounds on this page is what the cap was
 added to stop.
 
+**And the order is the learner's, because a home page's reading order is a fact about the
+reader.** The shipped order is an argument and it is still the default, and it is not the only
+honest order: somebody in a class wants the homework first, somebody who plays the game every
+morning wants that first. `lib/ux/todayOrder.ts` is the one table of slots and the one reader of
+the stored row, Settings has a list with two arrows a row, and Today deals through
+`orderTodayCards` and applies `TODAY_CARDS` to what comes out, so an order can move a card past the
+cut and can never grow a seventh box. The reader is forgiving on purpose: an id it no longer knows
+is dropped, a duplicate kept once, and a slot the row leaves out is appended in the default order,
+so a card added to Today after somebody set theirs still appears. Not drag and drop, because a list
+reordered once a year does not earn a gesture library, a phone takes a drag for a scroll, and two
+buttons a row say in words what they did. The rows past the cut say so in words as well, since a
+greyer row is a hue carrying a distinction on its own.
+
 **The cap fails on the shape that rots, which is not the constant.** Nobody lowers `TODAY_CARDS` by
 accident. What happens is somebody adds `{newCard}` beside the sliced array, which reads as a card
 being added and is a card that cannot be cut, so what is asserted is that every child of `Columns`
@@ -3825,6 +3853,77 @@ then the sentence closest to the box. What may **not** happen is filling the spa
 when there is no hint: `hint` is already a ladder that falls to the meaning alone and then to
 nothing, precisely because wherever the gap wants the dictionary form the lemma is the answer
 printed a line above the box, so those thirteen cards lead with the instruction and nothing else.
+
+**The name of a form is not an instruction, and for a year it was the whole instruction.** A learner
+drove the flash round and reported that the ask "was presented so poorly I didn't even know what it
+wanted me to do". The card read **Put it in the lihtminevik · ma** over `kohtuma`, the answer was
+`kohtusin`, and what the card was actually asking is how you say it about yourself, in the past.
+Every word on that screen was true. None of it was something a beginner could act on: a name is a
+thing you look up, and somebody who has to look one up mid card has already lost the sentence they
+were building.
+
+That is **not** an argument against the Estonian names, and this file's own rule about them is
+unchanged: a class in Tallinn, a school textbook and the state examination all name a case by its
+Estonian name and by the question it answers, and a learner who has only ever met "the inessive"
+cannot follow their own teacher. What was missing is the layer under it. So there is a third thing a
+screen can say about a slot, beside the Estonian name and the English one, and it is the one that
+leads on a card: `lib/estonian/plainAsk.ts` is the one table of what a slot means said out loud, a
+clause finishing "How do you say this ...?" that means something to somebody who has never opened a
+grammar book. `kohtuma`, then *How do you say this about yourself, already happened?*, then
+`lihtminevik · ma · the simple past` in one quiet line under it, where it is the cross-reference it
+was always meant to be. Five screens read it: the review card, which is the daily path and where it
+is worth most, the flash round, the writing exercise, which used to lead with `seesütlev` at 24px
+in the accent and say nothing about what sentence to write, and the two rounds that ask by the
+question word alone. Target prints the clause under `kus?`, one line because the round is timed;
+the picture board keeps `kus?` on the tile, where there is room for two words, and puts one line per
+distinct question under the board, since six tiles saying the same sentence is furniture.
+
+**Nothing in that table inflects anything, in either language.** "I met" reads better than "about
+yourself, already happened" and there is no rule that turns "to meet" into "met" for every English
+verb any more than there is one that turns `kohtuma` into `kohtusin`, so a clause describes the form
+and the dictionary spells it, after the answer. It holds no Estonian at all, exactly as
+`lib/estonian/grammar.ts` does. It is **total over the forms a card can ask for**, asserted, because
+the screens fall back to the name they used to print and a fifteenth case arriving without a clause
+would ship a card nobody can read, silently; and it is deliberately empty where there is nothing to
+add, since "how do you say this word" is already the whole of a production card. `gap` and `heard`
+are given no clause for a different reason, which is that the *sentence* is what says which form is
+wanted in those two shapes, and that is the thing a learner has to do in a conversation.
+
+`Review.slot` is what a screen keys on, and one card shape could not be keyed at all: a conjugation
+card carries no `targetCase`, because that column is for cases and widening it would put `indprsg3`
+on the Progress page beside `osastav`. `conjugationSlotFromFront` reads it back off the card's own
+front, which the builder generates as `${lemma} → ${slot.label}` against a closed table of ten, so
+the lookup is exact and a front that names none of them returns null and the screen prints what it
+always printed. It is a read of what the builder wrote and it never reaches the append-only log.
+Since the conjugation card became a sentence with the form taken out, its front names nothing and
+`Card.slot` carries the slot instead, so `slotOfCard` answers for it and the front-parse reaches only
+the cards in a deck built before the column existed. And on a gap-fronted card the clause is printed
+after the answer rather than before it, for the reason the paragraph above gives `gap` and `heard` no
+clause at all: the sentence is what says which form is wanted, and a clause naming the case in front
+of the gap is the answer in two pieces.
+
+**And the feedback box was painting a hue's ink on that hue's own fill.** The same round drew its
+verdict on `background: var(--butter)` with `color: var(--butter-ink)`, which is two halves of one
+mistake. `--butter` is the *fill*, the thing a bar or a button is painted, and `--butter-soft` is the
+tint a panel is painted; `--butter-ink` is the same hue walked down until it clears 4.5:1 **on that
+tint**. So the light theme got a slab of gold with body text set for a white card, and the dark
+theme, where `--butter-ink` resolves to `var(--butter)` exactly, got one colour written on itself.
+Every other feedback panel in the app was already right, the cloze round, listening, sprint and
+pairs among them, so this was one screen out of step rather than a rule nobody had. It is the tint
+and the ink now, in the shape those four use: the verdict on the tint, the answer on the card below
+it where a form is read letter by letter, and the sentence and the provenance under that.
+
+The panel also had **two outcomes where the round has three**. `markFlash` returns a middle rating
+for the right word in the wrong ending, which is the near miss this round exists to catch, and the
+screen put it in the same box as a blank. Mint means recalled, butter means nearly and peach means
+missed, and those are exactly the three, so the box says which without anybody reading a word, and
+says it in words as well, because a hue is never the only thing carrying a distinction here.
+
+Two invariants, both made to fail on the real lines first: every case and every verb slot has a
+plain reading, and no screen anywhere writes `--<hue>-ink` on the solid `--<hue>` fill. The second
+is a source check rather than a browser one on purpose: `test-design.mjs` measures contrast and can
+only measure a state it can reach, and a feedback panel is a state a fixture arrives in only by
+answering a card wrongly.
 
 **A dial that decides how hard a conversation is announced as four unrelated switches.** The
 situations briefing drew its four difficulties as bare `aria-pressed` buttons, so a screen reader
@@ -4812,8 +4911,9 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `distanceLine`, `minutesForCards`, `describeSituation`, `conditionFor`, `describeHearing`,
 `playThrough`, `errandForDay`, `recordEncounter`, `outThere`, `reachedSlot`, `reachedFor`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
-`TODAY_CARDS`, `weakestCase`, `roundCard`,
-`lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`. Most of them now
+`TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
+`lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
+`conjugationSlotFromFront`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

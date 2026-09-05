@@ -50,6 +50,9 @@ export async function GET(request: Request) {
   const tokenHash = url.searchParams.get("token_hash");
   const type = emailOtpType(url.searchParams.get("type"));
   const next = safeNext(url.searchParams.get("next"));
+  /** Every cookie name the browser sent, which both branches below read. */
+  const names = [...request.headers.get("cookie")?.matchAll(/(?:^|;\s*)([^=;]+)=/g) ?? []]
+    .map((m) => m[1]!.trim());
 
   const settle = async (email: string | null | undefined) => {
     // The allowlist is checked here as well as in the middleware so a rejected
@@ -63,6 +66,33 @@ export async function GET(request: Request) {
   };
 
   if (code) {
+    /*
+      A CODE THAT ARRIVED IN A BROWSER THAT NEVER ASKED FOR ONE IS NOT A
+      FAILED EXCHANGE, AND IT WAS BEING REPORTED AS ONE.
+
+      PKCE ties the code to a verifier `signInWithOAuth` left in a cookie on
+      the origin the learner pressed the button on. Supabase sends the code
+      back to the address it was asked for only where that address is on the
+      project's Redirect URLs, and to its Site URL otherwise, so a sign-in
+      begun on the domain used to come back on `kodukeel.vercel.app`, where
+      no verifier had ever been written. The exchange failed, the learner
+      read "that sign-in did not go through", on a host they had not typed,
+      and the button worked on the second press from there. That is a
+      configuration fault wearing a spent link's clothes, and the two need
+      different sentences: one says ask for a new link, the other says which
+      address to add to a dashboard.
+
+      The verifier cookie is what tells them apart. Its name is the storage
+      key plus `-code-verifier`, in every shape `@supabase/ssr` writes it,
+      and it is absent exactly when this browser, on this origin, did not
+      start the sign-in. A mailed link opened on another device is the same
+      state for the same reason, so the sentence covers both. The
+      middleware's canonical redirect stops the host half of this from
+      happening at all; this is what a deployment that has not set it reads.
+    */
+    if (!names.some((name) => name.endsWith("-code-verifier"))) {
+      return NextResponse.redirect(new URL("/sign-in?bounced=1", url.origin));
+    }
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return settle(data.user?.email);
@@ -91,8 +121,6 @@ export async function GET(request: Request) {
       makes this safe to do: the mailed link works exactly as it always did
       for the person it was mailed to.
     */
-    const names = [...request.headers.get("cookie")?.matchAll(/(?:^|;\s*)([^=;]+)=/g) ?? []]
-      .map((m) => m[1]!.trim());
     if (hasSessionCookie(names)) {
       const supabase = await createClient();
       await supabase.auth.signOut();

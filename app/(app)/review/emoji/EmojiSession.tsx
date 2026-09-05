@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Grid2x2, Timer, Trophy } from "lucide-react";
 import { ButtonLink, Button } from "@/components/Button";
 import { Chip, Page, StatTile } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { useFeedbackSound } from "@/components/AudioPrefs";
+import { plainAsk } from "@/lib/estonian/plainAsk";
 import { shuffle } from "@/lib/random/shuffle";
 import { gradeCard } from "@/app/actions";
 
@@ -25,6 +26,8 @@ export interface EmojiPair {
   /** The question the case answers, which is how a class names it. */
   question: string | null;
   caseEt: string | null;
+  /** The case itself, for the plain-English key under the board. */
+  caseKey: string | null;
 }
 
 type Side = "picture" | "word";
@@ -58,6 +61,15 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
   // Snapshotted once on mount, like every session here: a Server Action
   // refreshing this route must not swap the board mid-round.
   const [pairs] = useState(initialPairs);
+  // One entry per distinct question word on this board, with what it asks for.
+  const askedOnBoard = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const p of pairs) {
+      const clause = p.caseKey ? plainAsk(p.caseKey) : null;
+      if (p.question && clause && !seen.has(p.question)) seen.set(p.question, clause);
+    }
+    return [...seen.entries()];
+  }, [pairs]);
   // Laid out once on mount: a board that re-shuffled under a tap would be a
   // different game. `layOut` is called in the initialiser rather than on every
   // render for the same reason.
@@ -174,6 +186,7 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
                   <span className="text-sm" style={{ color: "var(--ink-3)" }}>
                     {" "}from <span lang="et">{p.lemma}</span>
                     {p.caseEt && <>, <span lang="et">{p.caseEt}</span></>}
+                    {p.caseKey && plainAsk(p.caseKey) && <>: the form you use {plainAsk(p.caseKey)}</>}
                   </span>
                 </span>
                 <Speak text={p.form} />
@@ -258,6 +271,27 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
           );
         })}
       </div>
+
+      {/*
+        WHAT THE QUESTION WORDS MEAN, once each, under the board.
+
+        A tile says `kus?` over `majas`, which is what an Estonian says and is
+        the right thing on a tile with room for two words. Somebody who has not
+        learned what `kus?` asks for yet had nothing on the screen to tell
+        them, so the board was a matching game about letters. One line per
+        distinct question on this board, in plain English, rather than a clause
+        on every tile: six tiles saying the same sentence is furniture.
+      */}
+      {askedOnBoard.length > 0 && (
+        <ul className="mt-5 flex flex-col gap-1 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+          {askedOnBoard.map(([question, clause]) => (
+            <li key={question}>
+              <span lang="et" className="font-semibold" style={{ color: "var(--ink)" }}>{question}</span>
+              {" "}is the form you use {clause}.
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

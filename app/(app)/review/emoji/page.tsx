@@ -169,6 +169,7 @@ export default async function EmojiPage() {
       form: card.back.split(" / ")[0]!.trim(),
       question: caseQuestionFor(spec, subjectOf(card.lexeme!)),
       caseEt: grammarTerm(spec.key)?.et ?? spec.et,
+      caseKey: spec.key,
     });
   }
 
@@ -261,6 +262,7 @@ export default async function EmojiPage() {
         form: picked.form,
         question: caseQuestionFor(spec, subjectOf(row)),
         caseEt: grammarTerm(spec.key)?.et ?? spec.et,
+      caseKey: spec.key,
       });
     }
   }

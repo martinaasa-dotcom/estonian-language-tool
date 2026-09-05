@@ -26,6 +26,8 @@ import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
+import { plainAsk } from "../lib/estonian/plainAsk";
+import { CONJUGATION_SLOTS } from "../lib/srs/slots";
 import { SYLLABUS } from "../lib/collections/syllabus";
 import { PRACTICE_MODES } from "../lib/ux/modes";
 import { CARD_TYPES } from "../lib/srs/cards";
@@ -1800,6 +1802,42 @@ check("the forged-request gate runs before anything else looks at the request", 
   );
 });
 
+check("a request on the wrong host is sent home before anything reads it", () => {
+  /*
+    Google sign-in starts on the origin the learner is on and comes back to
+    the project's Site URL wherever that origin is not on Supabase's list, so
+    a deployment answering on two names had sign-ins finishing on the one
+    that never started them, with no verifier to finish them with. With
+    `NEXT_PUBLIC_SITE_URL` set there is one origin, and the redirect has to
+    be the first thing the middleware does: after the forged-request gate it
+    would refuse a legitimate mutation for arriving on the wrong name, and
+    after the auth branch a signed-out visitor would be sent to sign in on
+    the host the sign-in cannot complete on. The callback is the other half:
+    a code arriving with no verifier cookie is told apart from a spent link
+    before the exchange is attempted, because the two need different
+    sentences and the same failure reads as either.
+  */
+  const middleware = code("middleware.ts");
+  const redirect = middleware.indexOf("canonicalRedirect(");
+  const gate = middleware.indexOf("isSameOriginMutation(request)");
+  assert.ok(redirect > 0, "the middleware no longer sends a request on the wrong host home");
+  assert.ok(redirect < gate, "the canonical redirect runs after the forged-request gate");
+  assert.match(middleware, /NextResponse\.redirect\(home, 308\)/, "the canonical redirect is not permanent");
+
+  const canonical = code("lib/auth/canonical.ts");
+  assert.match(canonical, /VERCEL_ENV !== "production"/, "a Vercel preview is being sent to production");
+  assert.match(canonical, /isLoopback\(/, "a developer's own machine is being sent to production");
+
+  const callback = code("app/auth/callback/route.ts");
+  const verifier = callback.indexOf("-code-verifier");
+  const exchange = callback.indexOf("exchangeCodeForSession(");
+  assert.ok(verifier > 0, "the callback no longer looks for the verifier cookie");
+  assert.ok(verifier < exchange, "the verifier check runs after the exchange it exists to explain");
+  assert.match(callback, /sign-in\?bounced=1/, "a bounced sign-in is no longer told apart from a spent link");
+  const signIn = code("app/(chromeless)/sign-in/page.tsx");
+  assert.match(signIn, /params\.bounced/, "the sign-in page no longer reads the bounced refusal");
+});
+
 check("every response carries a policy", () => {
   /*
     A Content Security Policy that only covers the happy path is a policy with
@@ -2622,6 +2660,45 @@ check("Today draws at most TODAY_CARDS under the hero, and every card goes throu
     loose, [],
     `Today draws ${loose.join(", ")} outside the capped list, so the page can grow past ${"TODAY_CARDS"} again`,
   );
+});
+
+/*
+  AND THE ORDER IS THE LEARNER'S, READ THROUGH ONE MODULE, WITH THE CAP STILL
+  APPLIED AFTER IT.
+
+  A home page's reading order is a fact about the reader, so Settings lets
+  them set it. Three things have to stay true for that to be safe. Today has to
+  deal through `orderTodayCards`, so a card cannot be added to the page
+  outside the order the learner set; the cap has to be applied to what comes
+  out of it, so an order can never grow a seventh box; and the key has to be
+  declared once, in the settings store, like the goal keys, so a typo in a
+  page cannot store an order nobody reads.
+*/
+check("Today deals its cards in the learner's order, under the same cap", () => {
+  const today = code("app/(app)/page.tsx");
+  assert.match(
+    today, /orderTodayCards\(/,
+    "Today no longer deals through orderTodayCards, so the order in Settings changes nothing",
+  );
+  assert.match(
+    today, /todayOrderFrom\(settings\[SETTING_KEYS\.todayOrder\]\)/,
+    "Today reads the order from somewhere other than the settings row the panel writes",
+  );
+  // The cap on the deal, not on the candidates: an order must not grow the page.
+  assert.match(
+    today, /orderTodayCards\([\s\S]*?\)\.slice\(0, TODAY_CARDS\)/,
+    "the cap is no longer applied to what orderTodayCards returns",
+  );
+
+  const panel = code("app/(app)/settings/TodayOrderPanel.tsx");
+  assert.match(panel, /setTodayOrder\(/, "the Settings panel no longer writes the order");
+  assert.match(panel, /TODAY_CARDS/, "the panel stopped saying which rows fall past the cut");
+
+  assert.match(read("lib/settings/store.ts"), /todayOrder:/, "todayOrder is not declared in the settings store");
+  for (const file of ALL) {
+    if (file === "lib/settings/store.ts") continue;
+    assert.doesNotMatch(read(file), /["']todayOrder["']/, `${file} writes the todayOrder key as a literal`);
+  }
 });
 
 /*
@@ -5102,6 +5179,108 @@ check("every grammar point the course can name carries the name a class uses", (
   assert.ok(verb, "the grammar reference no longer groups the verb");
   for (const id of verb!.ids) {
     assert.ok(grammarTerm(id)?.et, `the verb point "${id}" has only an English name`);
+  }
+});
+
+/**
+ * A NAME IS NOT AN INSTRUCTION, AND THE CARD LEADS WITH THE INSTRUCTION.
+ *
+ * The rule above is about which *name* leads, and it is right and unchanged. It
+ * is also not the whole of what a card owes somebody. A learner drove the flash
+ * round and reported that the ask "was presented so poorly I didn't even know
+ * what it wanted me to do": the card read "Put it in the lihtminevik · ma" over
+ * `kohtuma`, and the answer was `kohtusin`, which is how you say it about
+ * yourself in the past. Both names were on the screen, in the right order, and
+ * neither is something a beginner can act on. A name is a thing you look up,
+ * and somebody who has to look one up mid card has lost the sentence they were
+ * building.
+ *
+ * `lib/estonian/plainAsk.ts` is the one table of what a slot means said out
+ * loud, and this is the pair of claims that keeps it useful. First, that it is
+ * total over the forms a card can ask for: a fourteenth case or an eleventh
+ * verb slot arriving without a plain reading would ship a card nobody can read,
+ * silently, since the screens fall back to the name they used to print. And
+ * second, that the screens that ask for a form actually read it, anchored on
+ * the call rather than on the import, which is the fault `code()` exists for.
+ */
+check("every form a card can ask for says in plain English what it is asking", () => {
+  for (const spec of CASES) {
+    assert.ok(
+      plainAsk(spec.key),
+      `the ${spec.et} has no plain reading, so a card asking for it prints only its name`,
+    );
+  }
+  for (const slot of CONJUGATION_SLOTS) {
+    assert.ok(
+      plainAsk(slot.code),
+      `the verb slot "${slot.label}" has no plain reading`,
+    );
+  }
+  // And it says nothing where there is nothing to add. "How do you say this"
+  // is already the whole of a production card, and a clause under it would be
+  // the question printed twice.
+  assert.equal(plainAsk("PRODUCTION"), null, "a question about meaning has been given a clause");
+});
+
+check("a screen that asks for a form reads the plain table rather than only naming it", () => {
+  const ASKS = [
+    "app/(app)/review/ReviewSession.tsx",
+    "app/(app)/review/flashcards/FlashSession.tsx",
+    "app/(app)/review/write/WriteSession.tsx",
+    "app/(app)/review/target/TargetSession.tsx",
+    "app/(app)/review/emoji/EmojiSession.tsx",
+  ];
+  for (const file of ASKS) {
+    const source = code(file);
+    assert.match(
+      source,
+      /plainAsk\w*\(/,
+      `${file} asks a learner for a named form and never says in plain English what it wants`,
+    );
+  }
+});
+
+/**
+ * A HUE'S FILL IS NOT A PANEL, AND ITS INK IS NOT FOR ITS FILL.
+ *
+ * Every hue in this palette is a pair, and `docs/14-design-system.md` calls the
+ * pairing the trap: the fill is what a bar, a dot or a button is painted, the
+ * tint is what a panel is painted, and the ink is the same hue walked down
+ * until it clears 4.5:1 *on its own tint*. The flash round's feedback box set
+ * `background: var(--butter)` with `color: var(--butter-ink)`, which is a slab
+ * of gold in the light theme and, in the dark, where `--butter-ink` resolves to
+ * `var(--butter)` exactly, the same colour written on itself.
+ *
+ * That pairing cannot be right in any theme and it is cheap to spot, which is
+ * what makes it worth a check rather than a paragraph: the browser suite
+ * measures contrast, and it can only measure a state it can reach, and a
+ * feedback panel is a state a fixture arrives in only by answering a card
+ * wrongly. Made to fail on the real line before it was fixed.
+ */
+check("no screen writes a hue's ink on that hue's own fill", () => {
+  const HUES = ["mint", "peach", "butter", "sky", "blush", "accent", "good", "hard", "again", "easy"];
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    for (const hue of HUES) {
+      /*
+        WITHIN ONE PANEL, WHICH IS WHAT THE WINDOW STANDS IN FOR. The two
+        declarations are rarely in one object: the box paints the background
+        and the heading inside it takes the colour, which is what the original
+        of this fault looked like, so a window narrow enough to mean "one style
+        object" reads straight past it. 400 characters is a panel and its first
+        child, measured against the real line rather than guessed at, and it is
+        far short of a fill set on a bar and an ink set on the caption under it.
+      */
+      const fill = new RegExp(`background:[^;}\n]*var\\(--${hue}\\)`, "g");
+      for (const hit of source.matchAll(fill)) {
+        const window = source.slice(hit.index ?? 0, (hit.index ?? 0) + 400);
+        assert.equal(
+          new RegExp(`color:[^;}\n]*var\\(--${hue}-ink\\)`).test(window),
+          false,
+          `${file} writes --${hue}-ink on the solid --${hue} fill, which is one colour on itself in the dark theme`,
+        );
+      }
+    }
   }
 });
 

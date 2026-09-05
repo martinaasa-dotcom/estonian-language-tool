@@ -46,6 +46,7 @@ import { hearingFrom } from "@/lib/audio/conditions";
 import { kindFrom } from "@/lib/ux/schedule";
 import { participationValue } from "@/lib/research/participation";
 import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
+import { serialiseTodayOrder, todayOrderFrom } from "@/lib/ux/todayOrder";
 import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
@@ -1343,6 +1344,23 @@ export async function setGlossLanguage(value: string) {
   await writeSetting(ownerId, SETTING_KEYS.glossLanguage, normalised);
   revalidatePath("/", "layout");
   return { ok: true as const, value: normalised };
+}
+
+/**
+ * The order the cards on Today are dealt in.
+ *
+ * Normalised through the one reader on the way in, so a request cannot store
+ * an id Today does not know or leave a slot out: what is written is every
+ * slot, once, in the order asked for. Revalidated on Today and on Settings,
+ * which are the two screens that read it.
+ */
+export async function setTodayOrder(value: string) {
+  const ownerId = await requireUserId();
+  const order = todayOrderFrom(text(value));
+  await writeSetting(ownerId, SETTING_KEYS.todayOrder, serialiseTodayOrder(order));
+  revalidatePath("/");
+  revalidatePath("/settings");
+  return { ok: true as const, order };
 }
 
 export async function setFeedbackSounds(value: string) {

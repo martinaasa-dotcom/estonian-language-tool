@@ -168,8 +168,15 @@ alone gets wrong. The width is what the longest line needs, since "Estonian that
 this size against the 704px the column has at 768; gating it at `lg` instead left a portrait
 tablet with 216px of air over a headline two steps too small for it. The height is what the
 column needs: 88px over a 19px paragraph is about 490px of copy, and a 1024x600 laptop has 397px
-to put it in, so the hero would outgrow the window and take its own peek band under the fold.
+to put it in, so the hero would push the next section clean off the first screen.
 Measured at the boundary: 740 leaves 64px over the headline, 739 falls back to 68px.
+
+**The hero is as tall as what is in it, and the page has one gap.** It used to fill the window
+less the nav and a peek band, and the leftover air under the column plus the next section's own
+padding was 230px of nothing on a 900px window while every other pair of sections stood 160
+apart. `--section-gap` on `.landing` is the one distance now, 88px on a phone and 136px from
+`md`: `main` is a column with that gap, no section carries vertical padding, and the footer
+stands the same distance off the close. `test-design.mjs` measures every seam against it.
 
 11.5px is a floor, not a suggestion: below it an uppercase label stops being readable on a phone
 held at arm's length in the evening, which is when this app is actually used. `.label-xs` sits on

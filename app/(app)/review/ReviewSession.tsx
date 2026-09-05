@@ -16,9 +16,10 @@ import { SuggestFix } from "@/components/SuggestFix";
 import { WordIntro } from "@/components/WordIntro";
 import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
-import { slotLabel } from "@/lib/srs/slots";
-import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
+import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
+import { conjugationSlotFromFront, slotLabel } from "@/lib/srs/slots";
 import { BLANK } from "@/lib/estonian/cloze";
+import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { xpForRating } from "@/lib/gamification/xp";
 import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db";
@@ -82,6 +83,30 @@ const TONE_SOFT: Record<number, string> = {
   1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
 };
 
+
+/**
+ * Which facet of a word this card is asking about.
+ *
+ * The case column where there is one, then `Card.slot`, which a conjugation
+ * card carries since its front became a sentence with the form taken out, and
+ * then the slot the front names, for a card built before the column existed
+ * whose front is still `lugema → olevik · ta`. `slotOfCard` in
+ * `lib/srs/slots.ts` is the same question answered from the columns alone.
+ */
+function slotAsked(card: ReviewCard): string {
+  return card.targetCase ?? card.slot ?? conjugationSlotFromFront(card.front) ?? card.cardType;
+}
+
+/**
+ * A front that is a sentence with the form taken out.
+ *
+ * The plain clause below is printed before the answer on a card whose front
+ * already names what it wants (`hammas → kelle?`), where it cashes the name in.
+ * On a gap it would name the case in front of the gap, which is the answer in
+ * two pieces; the sentence is the ask there, and the clause is printed after
+ * the answer instead, where it explains.
+ */
+const isGap = (card: ReviewCard) => card.front.includes(BLANK);
 
 /**
  * "Why?", at the only moment anyone asks it.
@@ -896,6 +921,24 @@ export function ReviewSession({
               <Speak text={card.lemma ?? card.front} />
             )}
           </div>
+          )}
+
+          {/*
+            WHAT THE CARD IS ASKING, BEFORE WHAT IT IS CALLED.
+
+            A `CASE_FORM` card's front is `tuba → milles? kus?` and its hint
+            is `seesütlev · the inessive`, which is the naming rule this app
+            follows and is two names and no instruction. A learner drove the
+            flash round and reported that they could not tell what was being
+            asked of them; the same is true here, on the daily path, and it is
+            worth more here. So the plain sentence goes between the two: the
+            question stays where it was, the name stays where it was, and
+            somebody who has not met `seesütlev` yet can still answer the card.
+          */}
+          {(isGap(card) ? answerShown : !answerShown) && plainAsk(slotAsked(card)) && (
+            <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+              {plainAskLine(slotAsked(card))}
+            </p>
           )}
 
           {card.hint && !answerShown && (

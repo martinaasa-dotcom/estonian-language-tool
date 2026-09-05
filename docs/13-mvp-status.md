@@ -2139,10 +2139,12 @@ funder as much as for a contributor. This section is what was built and measured
 - **Say it today.** One press a morning to say whether any Estonian was spoken to anybody
   yesterday, and an errand offered where the answer is no; Progress leads with what happened out
   there, beside §30's forecast of it; the research export carries the errands. ADR-027.
-- **The brand.** "Ready for the real thing" replaces "Estonian that finally sticks" on the landing
-  page, the manifest, sign-in and the README; the first-run limits line says the app rehearses the
-  conversation and the people are out there; Practice carries Situations; Anu is told which
-  situation the learner last stalled in and on what.
+- **The brand.** "Ready for the real thing" replaced "Estonian that finally sticks" on the landing
+  page, the manifest, sign-in and the README, and the headline went back the same day at the
+  owner's request: the title, the manifest and the README carry "Estonian that finally sticks"
+  again, and the real-thing line lives on in the descriptions, the feature card and the close. The
+  first-run limits line says the app rehearses the conversation and the people are out there;
+  Practice carries Situations; Anu is told which situation the learner last stalled in and on what.
 
 ### Measured
 
@@ -2304,3 +2306,10 @@ a card drawn loose beside the sliced list, which reads as a card being added and
 cannot be cut, so what is asserted is that every child of `Columns` comes out of the one expression
 the cap is applied to, and that Progress actually renders what the cut sent it. Made to fail three
 ways before it was trusted.
+
+**And the order is the learner's.** The shipped order is an argument and stays the default, and
+Settings has a list with two arrows a row for anybody whose morning reads differently: the homework
+first for somebody in a class, the game first for somebody who plays it every day.
+`lib/ux/todayOrder.ts` is the table and the reader, Today deals through it and applies the cap to
+what comes out, so an order can move a card past the cut and never adds a box, and the rows past
+the cut say so in words on the Settings screen rather than by a tint alone.

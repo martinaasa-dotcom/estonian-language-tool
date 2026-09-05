@@ -19,6 +19,7 @@ import { grammarTerm } from "@/lib/estonian/terms";
 import { caseReviewsFor } from "@/lib/progress/cases";
 import type { DayClock } from "@/lib/time/day";
 import { shows, stageOf, TODAY_CARDS } from "@/lib/ux/disclosure";
+import { orderTodayCards, todayOrderFrom } from "@/lib/ux/todayOrder";
 import { modeAt } from "@/lib/ux/modes";
 import { ButtonLink } from "@/components/Button";
 import { icon } from "@/components/icons";
@@ -103,6 +104,7 @@ export default async function TodayPage() {
     deckSnapshot(ownerId, now),
     readSettings(ownerId, [
       SETTING_KEYS.onboardedAt, SETTING_KEYS.displayName, SETTING_KEYS.cefrPlacement,
+      SETTING_KEYS.todayOrder,
     ]),
     /*
       Which level the course opens at. It was read last, after everything else
@@ -777,25 +779,28 @@ export default async function TodayPage() {
         than reads, on the one screen that has to survive being glanced at from
         a bus stop.
 
-        So the cards are named in priority order and the first `TODAY_CARDS` of
-        them are drawn. The order is the argument: what to say to a real person
-        today, what is actually on today, the one short round, the run of days,
-        a word, and then the course. Everything below the cut is on its own
-        page, in the rail and in the palette; nothing here is the only way to
-        reach anything.
+        So the cards are named by slot and the first `TODAY_CARDS` of them are
+        drawn, in the learner's own order. The shipped order is the argument:
+        what to say to a real person today, what is actually on today, the one
+        short round, the run of days, a word, and then the course. It is a
+        default rather than a rule, because a home page's reading order is a
+        fact about the reader, and Settings is where it is changed; see
+        lib/ux/todayOrder.ts. Everything below the cut is on its own page, in
+        the rail and in the palette; nothing here is the only way to reach
+        anything.
       */}
       <Stack className="min-w-0">
         {doNowCard}
         <Columns>
-          {[
-            errandCard,
-            scheduleCard,
-            planCard,
-            roundCard,
-            streakCard,
-            wordCard,
-            nextCard,
-          ].filter(Boolean).slice(0, TODAY_CARDS)}
+          {orderTodayCards({
+            errand: errandCard,
+            schedule: scheduleCard,
+            plan: planCard,
+            round: roundCard,
+            streak: streakCard,
+            word: wordCard,
+            next: nextCard,
+          }, todayOrderFrom(settings[SETTING_KEYS.todayOrder])).slice(0, TODAY_CARDS)}
         </Columns>
       </Stack>
       {/* Behind a Suspense boundary so three round trips of badge checking do

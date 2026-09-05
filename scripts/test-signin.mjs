@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import { request as httpRequest } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 import { launchChromium } from "./lib/browser.mjs";
 import { suite } from "./lib/checks.mjs";
@@ -58,7 +59,7 @@ const PORT = Number(process.env.SIGNIN_SUITE_PORT ?? 3210);
 const OFF_PORT = PORT + 1;
 const DIST = ".next-signin";
 
-const { check, done, absent } = suite("The sign-in screen", { floor: 19 });
+const { check, done, absent } = suite("The sign-in screen", { floor: 22 });
 
 /*
   A project ref and a key shaped like the real thing, signed with nothing.
@@ -77,6 +78,9 @@ const SUPABASE_ANON_KEY =
 /** What a deployment that has named its operator sets, so the denial can name them. */
 const OPERATOR_EMAIL = "hello@example.test";
 
+/** Where this copy says it lives, for the one request that arrives elsewhere. */
+const SITE_URL = "https://kodukeel.example";
+
 const hostedEnv = {
   ...process.env,
   NEXT_DIST_DIR: DIST,
@@ -85,7 +89,15 @@ const hostedEnv = {
   OPERATOR_NAME: "A Test Operator",
   OPERATOR_ADDRESS: "1 Test Street, Tallinn",
   OPERATOR_EMAIL,
+  /*
+    The address this copy lives at. Every request the suite makes is to a
+    loopback address, which is never redirected, so the servers below answer
+    as themselves; what this switches on is the redirect for a request that
+    arrives naming some other host, checked once below with a `Host` header.
+  */
+  NEXT_PUBLIC_SITE_URL: SITE_URL,
 };
+
 
 /*
   A PORT SOMEBODY ELSE IS HOLDING IS NOT THIS SUITE'S SERVER, AND ANSWERING IS
@@ -124,7 +136,7 @@ if (built.status !== 0) {
     the whole suite, so `done()` will refuse to call that a pass: waiving more
     than half fails outright, which is exactly right here.
   */
-  absent(19, `a hosted-mode build into ${DIST}, which did not complete on this machine`);
+  absent(22, `a hosted-mode build into ${DIST}, which did not complete on this machine`);
   done();
 }
 
@@ -186,7 +198,7 @@ process.on("uncaughtException", (error) => {
 });
 
 if (!(await waitFor(B)) || !(await waitFor(OFF))) {
-  absent(19, `a server on ${PORT} and ${OFF_PORT}, and neither came up`);
+  absent(22, `a server on ${PORT} and ${OFF_PORT}, and neither came up`);
   stop();
   done();
 }
@@ -262,6 +274,50 @@ check("and who to ask, from the operator this deployment named",
 await page.goto(`${B}/sign-in?error=1`, { waitUntil: "domcontentloaded" });
 check("a sign-in that did not complete says so, and why a link may be spent",
   /did not go through/i.test(await page.locator("main").innerText()));
+
+// ── A sign-in that came back to the wrong place ─────────────────────────────
+/*
+  Google sends the learner back to the project's Site URL wherever the origin
+  they started on is not on its Redirect URLs, so the code arrives in a
+  browser holding no verifier for it. That used to be reported as a spent
+  link, on a host nobody had typed. The callback tells the two apart by the
+  verifier cookie, and the app stops the host half of it by redirecting every
+  other host it answers on to the one it lives at.
+*/
+const bounced = await fetch(`${B}/auth/callback?code=not-a-real-code`, { redirect: "manual" });
+check("a code arriving with no verifier cookie is sent back as bounced, not as a spent link",
+  bounced.status >= 300 && bounced.status < 400
+    && new URL(bounced.headers.get("location") ?? "", B).search === "?bounced=1",
+  `${bounced.status} ${bounced.headers.get("location")}`);
+
+await page.goto(`${B}/sign-in?bounced=1`, { waitUntil: "domcontentloaded" });
+const bouncedText = await page.locator("main").innerText();
+check("and the screen says the browser has nothing to finish it with, and who to tell",
+  /nothing to finish/i.test(bouncedText) && bouncedText.includes(OPERATOR_EMAIL));
+
+/*
+  `fetch` strips a `Host` header rather than sending it, silently, so this one
+  request goes through `node:http`, which sends whatever it is given. It is
+  the only way to arrive at a loopback server naming another host.
+*/
+const elsewhere = await new Promise((resolve, reject) => {
+  const req = httpRequest({
+    host: "127.0.0.1",
+    port: PORT,
+    path: "/sign-in?next=%2Fprogress",
+    method: "GET",
+    headers: { host: "kodukeel-old.example" },
+  }, (res) => {
+    res.resume();
+    resolve({ status: res.statusCode, headers: { get: (name) => res.headers[name] ?? null } });
+  });
+  req.on("error", reject);
+  req.end();
+});
+check("a request on any other host is sent to the one address, keeping its path and query",
+  elsewhere.status === 308
+    && elsewhere.headers.get("location") === `${SITE_URL}/sign-in?next=%2Fprogress`,
+  `${elsewhere.status} ${elsewhere.headers.get("location")}`);
 
 // ── The gate itself ─────────────────────────────────────────────────────────
 const gated = await page.goto(`${B}/progress`, { waitUntil: "domcontentloaded" });
