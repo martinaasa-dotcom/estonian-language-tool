@@ -104,14 +104,13 @@ async function measureQueries() {
 
   const { deckSnapshot, dailySummary, resolveStreakFor } = await import("../lib/progress/summary.ts");
 
-  // The page does this once and passes it down, so the benchmark does too:
-  // timing dailySummary with a fresh snapshot each call would measure
-  // deckSnapshot twice and report it as one number.
-  const snapshot = await deckSnapshot(ownerId);
-
   const cases = [
     ["deckSnapshot", () => deckSnapshot(ownerId)],
-    ["dailySummary", () => dailySummary(ownerId, snapshot)],
+    // `dailySummary` used to take the page's own snapshot, because the quests
+    // read the due count off it. The quests are gone and it reads nothing but
+    // its own four counts, so there is no snapshot to pass and nothing here is
+    // measuring `deckSnapshot` twice.
+    ["dailySummary", () => dailySummary(ownerId)],
     ["resolveStreakFor", () => resolveStreakFor(ownerId)],
     [
       /*
