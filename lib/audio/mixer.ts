@@ -2,10 +2,11 @@
  * The room a clip is heard in, made in the browser.
  *
  * `lib/audio/conditions.ts` says what a condition is; this turns one into
- * sound. A clip arrives as the same WAV the speech service always sends, and
- * on its way to the speaker it may be cut to a telephone band, sat inside
- * filtered noise, or started from partway through. None of that touches the
- * text: what changes is the delivery of a sentence a lexicographer recorded.
+ * sound. A clip arrives already at its rate (`lib/audio/stretch.ts`, through
+ * `playClip`), and on its way to the speaker it may be cut to a telephone
+ * band, sat inside filtered noise, or started from partway through. None of
+ * that touches the text: what changes is the delivery of a sentence a
+ * lexicographer recorded.
  *
  * Web Audio rather than a second file, because a café is a filter over noise
  * the browser can generate for nothing, and a phone line is one band-pass.

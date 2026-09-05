@@ -55,7 +55,11 @@ export interface Condition {
   readonly name: string;
   /** How the screen says it after the answer: "Read by Mari, {said}." */
   readonly said: string;
-  /** The rate the speech service is asked for. 1 is what everybody had. */
+  /**
+   * The rate it is played at, of the recording, through the one stretch in
+   * `lib/audio/stretch.ts`. 1 is the recording's own pace; the normal play
+   * sits a little under it (`NORMAL_RATE` in `lib/audio/clip.ts`).
+   */
   readonly speed: number;
   /**
    * Background noise, as a fraction of the voice's own level, and the cut-off
@@ -72,20 +76,21 @@ export interface Condition {
  * The conditions, in the order they open.
  *
  * `quick` is the one clip played faster with the pitch held, which is the
- * same stretch a slow play uses the other way (`lib/audio/clip.ts`), so the
- * voice stays where it is and only the tempo changes. It is not asked of the
- * service: a speech model asked for a tempo holds every phoneme on repeated
- * frames and buzzes. 1.3 is brisk, not a caricature; the state examination's
- * listening texts are read at about that pace and a receptionist is faster.
+ * same stretch a slow play uses the other way (`lib/audio/stretch.ts`), so
+ * the voice stays where it is and only the tempo changes, and the consonants
+ * keep their length in that direction too. It is not asked of the service: a
+ * speech model asked for a tempo holds every phoneme on repeated frames and
+ * buzzes. 1.3 is brisk, not a caricature; the state examination's listening
+ * texts are read at about that pace and a receptionist is faster.
  *
  * `cafe` is filtered noise at a level where the voice still leads. `phone`
  * keeps the 300 to 3400 Hz band a landline keeps, which is enough to lose the
  * difference between `s` and `f` and is exactly what happens on a call. `half`
  * starts two fifths of the way in, which is a sentence caught from the middle
  * of a conversation, and it is last because it is the only one that removes
- * words rather than coloring them. A condition with a room in it keeps a
- * normal rate, asserted: the mixer plays a decoded buffer, and a buffer
- * source cannot hold the pitch the way an element can.
+ * words rather than coloring them. A condition with a room in it keeps the
+ * normal rate, so that each condition changes one thing about the delivery
+ * and the debrief can name it.
  */
 export const CONDITIONS: readonly Condition[] = [
   { id: "clean", name: "A quiet room", said: "in a quiet room", speed: 1, noise: null, band: null, skip: 0 },

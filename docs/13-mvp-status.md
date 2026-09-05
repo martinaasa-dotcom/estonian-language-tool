@@ -2391,3 +2391,34 @@ from `clueFrom`, the clash filter deleted from the pool, and the clash reading n
 2,489 unit tests, and the clue rules moved out of an integration test into a hermetic one, since
 deciding what a clue says is a question about two strings and a part of speech and it was being
 asked behind a Postgres connection.
+
+## 37. The thirty-first pass: a slow play that is a person speaking slowly
+
+**Reported.** The slow play sounded stretched and robotic rather than the same voice going slower,
+the normal play was a touch too quick to be clear, and a word should start and end fully said.
+
+**What was measured first.** The service was probed and sampled: every voice answers at 22,050 Hz
+in 32-bit float, and the frame dump of a prepared word showed three faults nothing had seen. The
+trimmer measured single samples, and the vocoder's own hiss at -50 dB peaks above the floor, so
+`tuba` kept 390 ms of hiss before the word under a comment promising 40. A two-sentence text is two
+renderings joined with half a second of zeros and a hiss ramp each side, 0.8 seconds where a
+speaker leaves 0.4. And peak leveling left the voices 2.6 dB apart in loudness for one sentence.
+
+**What landed.** `lib/audio/stretch.ts`, a pure time stretch that classifies each ten milliseconds
+of the clip and spends the slowing on vowels and pauses, copies bursts straight through, and holds
+the pitch by construction; `lib/audio/clip.ts` stretches every play through it and caches the
+result beside the original, and nothing sets `playbackRate` any more. The normal play is the
+recording at 0.9 and slow is 0.65. `lib/audio/wav.ts` trims by frame, caps pauses at 450 ms and
+levels by loudness under a peak ceiling; the route's key and the worker's cache version both moved.
+
+**Measured after.** First sound at 40 ms on every clip. Pitch held to within 5 Hz on a 230 Hz voice
+and exactly on an 86 Hz one; every onset in the clip is one onset in the stretched copy; a
+synthetic click stays three milliseconds long where the unlocked search made it eight. Five voices
+within a tenth of a decibel. A two-second sentence stretches in about 30 ms in Node. 51 audio unit
+tests, 2,563 in all, and 277 invariants, the rewritten one made to fail on a `playbackRate` put
+back and on a second importer of the stretch.
+
+**What it does not do.** It cannot add quality the model did not produce: the voices are
+TartuNLP's at 22 kHz and the app can only stop degrading them. Nobody here has listened to the
+result, so the measurements above are what stands behind it, and the first learner's report is
+the next measurement.
