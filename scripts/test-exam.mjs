@@ -361,7 +361,7 @@ check("it says why, rather than only greying the boxes out",
   /Record something first/i.test(speakingBody));
 
 check("it says out loud that nothing here scores a recording",
-  /no verified Estonian speech recogniser/i.test(speakingBody));
+  /no verified Estonian speech recognizer/i.test(speakingBody));
 
 // ── Handing in ───────────────────────────────────────────────────────────────
 

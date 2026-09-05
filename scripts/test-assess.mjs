@@ -359,7 +359,7 @@ if (onboarded) {
     (await page.getByRole("radio", { name: /B2/ }).getAttribute("aria-checked")) === "true");
   check("it asks for a deadline", (await page.getByText(/In six months/).count()) > 0);
   check("and how many days a week are realistic",
-    (await page.getByText(/Days a week you will really practise/i).count()) > 0);
+    (await page.getByText(/Days a week you will really practice/i).count()) > 0);
   check("the plan sits under the answers that build it", /study hours to go/i.test(goalStep));
   check("an estimated level is flagged as estimated on the plan",
     /Take the level check whenever you like/i.test(goalStep));
