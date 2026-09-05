@@ -147,8 +147,15 @@ export async function POST(request: Request) {
     the reader sees and this is what the screen runs on, and a branch that
     answers one without the other has not answered.
   */
+  /*
+    How fast they talk: the persona's own pace, and a fifth faster once the
+    "they speed up" curveball has happened in this run, because a line said
+    after that at the old pace is the curveball not having happened.
+  */
+  const speed = (persona?.speed ?? 1) * (state.hurdles.some((h) => h.id === "faster") ? 1.2 : 1);
   const progress = {
     voice,
+    speed,
     response,
     beatId: current?.id ?? null,
     goal: standing?.goal ?? current?.goal ?? null,

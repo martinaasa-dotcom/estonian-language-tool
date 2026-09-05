@@ -8,6 +8,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Card } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
 import { Speak } from "@/components/Speak";
+import { CLEAN } from "@/lib/audio/conditions";
 import { beginScene, finishScene, sceneHelp } from "@/app/actions";
 import type { SceneSpec } from "@/lib/scenes/types";
 import type { Difficulty } from "@/lib/scenes/curveballs";
@@ -124,6 +125,8 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   const [heard, setHeard] = useState<string>("");
   /** Whose voice the other side speaks in, off the run's persona. */
   const [voice, setVoice] = useState<string | undefined>(undefined);
+  /** How fast they talk: the persona's pace, faster once they have sped up. */
+  const [speed, setSpeed] = useState(1);
   const [asked, setAsked] = useState<{ lemma: string; lexemeId: string | null }[]>([]);
   const [helped, setHelped] = useState(false);
   const [draft, setDraft] = useState("");
@@ -189,7 +192,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         return;
       }
       const data = await response.json() as {
-        lines?: Line[]; voice?: string;
+        lines?: Line[]; voice?: string; speed?: number;
         beatId?: string | null; goal?: string | null; done?: string[];
         over?: boolean; error?: string;
         composed?: boolean; note?: string | null;
@@ -200,6 +203,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       setBeatId(data.beatId ?? null);
       setGoal(data.goal ?? null);
       if (data.voice) setVoice(data.voice);
+      if (typeof data.speed === "number" && data.speed > 0) setSpeed(data.speed);
       setDone(data.done ?? []);
       const lines = data.lines ?? [];
       if (lines.length > 0) {
@@ -469,6 +473,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                           <Speak
                             text={line.text}
                             voice={voice}
+                            condition={speed !== 1 ? { ...CLEAN, speed } : undefined}
                             size={14}
                             autoplay={index === turns.length - 1 && at === turn.lines.length - 1}
                             className="press inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-[var(--raised)]"

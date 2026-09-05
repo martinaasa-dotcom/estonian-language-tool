@@ -1,8 +1,28 @@
+/**
+ * Throws hostile and odd turns at every scene and checks what a conversation
+ * must never do.
+ *
+ *   npm run fuzz:scenes   (needs DATABASE_URL, reads the dictionary, writes nothing)
+ *
+ * Every scene, at the easiest and the hardest difficulty, over six seeds and
+ * four sequences: hostile text, a mix of hostile and real, seventy turns of
+ * nonsense, seventy turns of one word. After every turn the reply is checked:
+ * it exists unless the scene is over, no line is blank, no stage direction
+ * carries a slot or an Estonian letter, the repair phrase is never said about
+ * a turn that was read, no Estonian line carries a digit except the time off
+ * the card, and a scene held under seventy turns of anything ends. That last
+ * one found four scenes a learner could hold for ever by typing one word at a
+ * beat that wanted a sentence, which no unit test had asked.
+ *
+ * The route and the screen are not in the loop: this drives `replay`,
+ * `sceneLine` and `replyFor` the way the route does, against the real
+ * dictionary, which is where every rule about a turn lives.
+ */
 import { prisma } from "../lib/db";
 import { SCENES, FALLBACK_PHRASE } from "../lib/scenes/catalogue";
-import { replay, sceneContext, dataFor, type StoredDraw } from "../lib/progress/scene";
+import { replay, sceneContext, type StoredDraw } from "../lib/progress/scene";
 import { planRun } from "../lib/scenes/run";
-import { replyFor, datumLine, stageFor } from "../lib/scenes/reply";
+import { replyFor, datumLine } from "../lib/scenes/reply";
 import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "../lib/scenes/state";
 import { sceneLine } from "../lib/scenes/line";
 import { PERSONAS } from "../lib/scenes/personas";
