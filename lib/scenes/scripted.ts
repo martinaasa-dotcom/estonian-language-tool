@@ -1,4 +1,6 @@
 import { BANK } from "./bank";
+import { curveballById } from "./curveballs";
+import { hurdleBeat } from "./state";
 import type { BeatSpec, SceneSpec } from "./types";
 
 /**
@@ -52,15 +54,19 @@ export interface ScriptedLine {
   readonly reviewed: boolean;
 }
 
-/** The prop kinds whose value is drawn per run, and so cannot be in a line drafted before it. */
-const DRAWN_PER_RUN = new Set(["time", "number", "code"]);
-
-/** Whether a beat's line could be written before the run it is said in. */
-export function scriptable(scene: SceneSpec, beat: BeatSpec): boolean {
-  const perRun = new Set(
-    scene.props.filter((prop) => DRAWN_PER_RUN.has(prop.kind)).map((prop) => prop.slot),
-  );
-  return !beat.needs.some((need) => need.kind === "datum" && perRun.has(need.slot));
+/**
+ * Whether a beat's line could be written before the run it is said in.
+ *
+ * A line that names a value the card dealt cannot be, and the beat's own
+ * stage direction is what says so: "They offer you an appointment at {time}"
+ * carries a slot, so its line has to be composed against this run's card or
+ * said off it (`datumLine`). A beat that merely *asks* for such a value is
+ * fine: "Mis kell?" at a ticket window is the same line whatever the card
+ * says, and the first rule here refused it for waiting on a datum, which
+ * left the ticket seller unable to ask the time keyless.
+ */
+export function scriptable(_scene: SceneSpec, beat: BeatSpec): boolean {
+  return !/\{\w+\}/.test(beat.they);
 }
 
 /** The drafted lines for one beat, in the bank's order. Empty where there are none. */
@@ -72,4 +78,26 @@ export function scriptedFor(scene: SceneSpec, beat: BeatSpec): readonly string[]
 /** Whether a native speaker has read a given line. */
 export function isReviewed(text: string): boolean {
   return BANK.some((row) => row.text === text && row.reviewed);
+}
+
+/**
+ * Every beat a scene can carry a line for: its own, and one per curveball it
+ * admits that has a move to make. A curveball's beat is `hurdle:<id>`, which
+ * is what `raiseHurdle` asks the ladder for, so a line drafted for it here is
+ * the line the other side says when it happens. The drafter, the bank test
+ * and the context builder all read this rather than `scene.beats`, or the
+ * curveballs would be the one part of a conversation nobody could write for.
+ */
+export function sceneBeats(scene: SceneSpec): BeatSpec[] {
+  const hurdles = scene.curveballs.flatMap((id) => {
+    const spec = curveballById(id);
+    if (!spec || !spec.move) return [];
+    const beat = hurdleBeat({ id, beat: 0, tries: 0 });
+    return beat ? [beat] : [];
+  });
+  return [...scene.beats, ...hurdles];
+}
+
+export function beatById(scene: SceneSpec, id: string): BeatSpec | undefined {
+  return sceneBeats(scene).find((beat) => beat.id === id);
 }

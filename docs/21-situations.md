@@ -1696,3 +1696,228 @@ lost a word, shows up as a row that no longer passes rather than as a line a lea
 a friend on the phone: `pood` in the illative, the inessive and the elative, and `piim` in the
 partitive, met once each in the order an errand meets them. A1, in `sina`, because the other side
 is a friend and a first mission should not ask for the polite register on top of the cases.
+
+## 32. ADR-025 amendment 2: the other side reacts, and a usage is not a line
+
+A learner played the first mission and reported that every situation felt strange and the replies
+were horrible. They were right, and the screenshot they sent said why in three bubbles. `Tere!`,
+then `Kuhu sa lähed?`, then, after they had answered `poodi`, a grey card reading "They ask you
+about it." Nothing they said was ever reacted to. The friend on the phone asked a question, was
+answered, and asked the next question as though nothing had been said, and when the ladder ran
+out the friend was replaced by a sentence about the friend.
+
+Two faults, and neither was in the gate, the marker or the state machine, all three of which were
+doing exactly what §2, §3 and §8 asked.
+
+### A usage is about a word, not about a beat
+
+The attested rung took every recorded sentence under a beat's topic words, on the argument in §2:
+a lexicographer's sentence outranks anything a model writes. It does, as Estonian. As a line it
+was measured offline over the four scenes, and this is what it filled the beats with:
+
+| scene, beat | what the other side said |
+|---|---|
+| `poodi-piima`, where you are now | `Olla või mitte olla?` |
+| `poodi-piima`, what you want | `Mis kell on?` |
+| `poodi-piima`, where you are coming from | `Kust sa seda kuulnud oled?` |
+| `arsti-aeg`, the time offered | `Aeg ei peatu.` |
+| `arsti-aeg`, reading it back | `Aastas on 365 päeva.` |
+| `uuri-remont`, they cannot come this week | `Esimesel korrusel on tehtud remont, teisel mitte.` |
+
+Every one of those passed the funnel in `retrieval.ts`: on topic, the right shape, a sentence
+somebody said, every word readable. Every one was printed under a chip calling it a recorded
+sentence, which was true. A usage illustrates a word doing its job in some sentence; a beat wants a
+sentence doing a job in this conversation; and the two meet by luck, which over the catalogue they
+did exactly once, on `Kuhu sa lähed?`.
+
+So the attested rung fills the beats whose line *is* a phrase the course teaches. `Tere!` and
+`Head aega!` are their own sentence (`isPhrase`), and the lemma is the line. Everywhere else the
+line is the scripted bank's or the composer's, and both are now told what the beat is for. A person
+may still pick a usage out where it happens to be the line: `BeatSpec.lines` names one by its text,
+the catalogue test fails on a text that is not a usage of one of the beat's own topic words in the
+harvest, and the context builder drops one the live dictionary no longer holds. `Kuhu sa lähed?` is
+pinned that way. Choosing a lexicographer's sentence is less than hiding a word from one, which
+ADR-005 already allows.
+
+### The other side never said what they were doing
+
+The composer and the drafter were told the beat's `goal`, which is written from the learner's
+side. "Your move: ask. What you are doing is: say since when." A model given that wrote, for the
+landlord, `Millisest päevast alates on teil plaanis remonti teha?`, which asks the tenant when they
+plan to do the repairs. The counter clerk asked `Palun, miks te ei ole esitanud oma avaldust?` of
+somebody who had come in to hand one over. Every beat carries `they` now, one line of English from
+the other side's own point of view, and it does three jobs: it is what the drafter and the composer
+are told they are doing, it is the stage direction printed where no Estonian could be built, and
+it is the translation a helpful persona offers to somebody who wrote English. It may name a value
+off the card, so the receptionist's offer reads "They offer you an appointment at 14:30" rather
+than "They offer you something", and a beat whose `they` names one is not scriptable, which is
+what took `Kas see on neljapäev?` out of the doctor's confirm beat.
+
+Fifteen rows left the bank on the same reading, each for a stated reason: a line said from the
+wrong side, a line pinning a weekday nobody was dealt, a line with no verb in its first clause,
+`Tere, mina olen teie omanik`, and `Head aega, sina!`. The drafter's refusals cannot see any of
+those, because every one passed the four checks. The pull request is where a person reads a row,
+and this is what reading them found.
+
+### A reply is a reaction and then a move
+
+`lib/scenes/reply.ts` is the third change and the one the learner would notice first. `state.ts`
+already decided, per turn, whether the other side answers, narrows, repeats, waits, moves on or
+answers English; the route then ignored that and asked the ladder for the next beat's line
+whatever the answer had been. `replyFor` reads the response and the reading and assembles a short
+list:
+
+- **A turn that landed** gets an acknowledgement, then the next move. `Hästi.`, `Aitäh.`, `Jah.`,
+  rotating on the number of beats met, never after a greeting, since the next line answers that.
+- **A turn nobody could read** gets `Ma ei saa aru` and then the same question again, from the
+  text the learner already heard. A person who was not understood repeats themselves; the old
+  route drew a fresh line from the pool, which was a different question and read as a non
+  sequitur.
+- **A turn that missed the point** is asked again in other words where the ladder has some, and
+  in the same words where it has none. Never the repair phrase: they were understood.
+- **One word where a sentence was due** gets `Jah?` and nothing else. A look and a wait, §8's own
+  words, and on a screen the look is one word with a question mark.
+- **English** gets the question again in Estonian, and from a helpful persona the stage direction
+  under it, which is the translation §8 promised. `PersonaSpec.translates` says who.
+- **Out of patience** gets "They let it go, and move on", in English, and the next beat's line.
+
+Every Estonian word in a reaction is a lemma in `REACTIONS` or the repair phrase, and both are
+requests against `vastused`, `maaramine` and `tervitused`, which every scene declares, so the
+catalogue test that checks a beat's words checks these too. Capitalising a lemma and putting a
+full stop or a question mark after it is presentation, the way `Tere!` is printed as a line, and
+not composition: the word is the dictionary's and the mark is the move. What the route sends is a
+list of lines, each with its provenance; the screen draws a reaction and a move as two bubbles in
+one group, draws a stage direction as italic text with no bubble because nobody said it, and
+labels a line in words under it rather than in a chip shouting under every bubble. "Say that
+again" is a button that says the last line again without a round trip, since a person asked to
+repeat themselves does not rephrase.
+
+Two smaller things came out of it. The echo rule in `readTurn` was being handed the learner's own
+previous turn as "the line the other side just said", so it read a learner repeating themselves as
+parroting and a learner handing the question back as an answer: what they heard travels with each
+turn now, and the transcript keeps it, so a debrief can show both sides. And the shop scene's
+beats wanted a sentence, so `poodi` to `Kuhu sa lähed?` was a fragment and got a look and a wait,
+which is not what a friend on the phone does with a perfectly good one-word answer. §8 already
+said a bare word is an answer at A1; the scene's four case beats say `word` now, and the cases are
+still the whole exercise.
+
+### The second pass, driven in a browser
+
+Playing every scene through on a seeded database found six more things, and every one of them is
+the kind a unit test cannot see because it lives in the seam between the marker, the card and the
+screen.
+
+- **The time on the card could not be said.** `words()` returns letters, `11:30` has none, so the
+  offer beat's datum was unmatchable and the receptionist gave up on every learner who typed the
+  time she had offered. A spelling with a digit in it is looked for in the text now, and so is the
+  time in words: `timeWords` names `üksteist` and `pool kaksteist` as lemma requests against
+  `arvud`, checked like every other request.
+- **The offer and the confirm have an Estonian line keyless.** `BeatSpec.says` names one course
+  word and a slot off the card, and `datumLine` says `Kell 11:30?` for the offer and `Kell 11:30.`
+  to read it back. Every letter is a headword or a datum the learner is already reading off the
+  card, which is the reaction's licence with a value beside it.
+- **A farewell ends the conversation wherever it comes.** `Head aega!` in the middle of a scene was
+  a one-word answer to "where does it hurt", and got `Jah?`. Somebody who says goodbye has left,
+  the other side says goodbye back, and what was not done is what the debrief is for.
+- **One turn can answer two beats.** "Tere, ma lähen poodi" greets and says where you are going,
+  and the friend does not then ask where you are going. A turn that lands is read against the next
+  beat too, and again while it keeps landing.
+- **A short question is a whole turn.** `Kui kaua?` has two words and no finite verb, and
+  `looksLikeSentence` wanted three: it was written to refuse a bare form before the writing
+  exercise spends a call. The scene's rule takes a question mark, or a subject with its verb, as
+  a sentence, and the marker was handed `hasFiniteVerb` for it.
+- **The brisk persona stops acknowledging.** `PersonaSpec.acknowledges` is the difference between
+  brisk and a slightly smaller number: they take the answer and ask the next thing.
+
+### The curveballs are played
+
+The difficulty dial promised "one thing catches you out" and nothing ever did: `planRun` drew the
+curveballs, `beginRun` wrote their ids down, `recencyFor` read them back so the next run would not
+repeat one, and no turn of any conversation was changed by one. They are hurdles now (`raiseHurdle`,
+`advanceHurdle` in `state.ts`). The draw keeps the beat each was placed at; when the conversation
+reaches it the other side does what the curveball says, the beat waits, and the learner's turns are
+read against the curveball's own `needs` from §9 until one lands or `HURDLE_TRIES` have not. A
+learner who ignores it and answers the beat anyway is let through, and the curveball is written
+down as let go, because that is what most people do at a counter and it is worth reading
+afterwards. A silent one takes a try off the beat, which is what a queue is. Each curveball names
+the move the other side makes, so a keyed deployment composes its line inside the same gate, and
+keyless it is a stage direction with the way out as the goal on screen. The debrief lists what went
+wrong on the way and whether it was handled, which is the first time the dial has produced anything
+a learner could read. A run written before the beat was stored holds ids alone and is read as
+nothing in play.
+
+### Lines for the curveballs, and who wrote them
+
+The drafter looped a scene's beats and never its curveballs, so keyless every curveball was a line
+of English about what happened. `sceneBeats` is the list it loops now: the scene's own beats and
+one `hurdle:<id>` beat per curveball the scene admits that has a move to make, and the bank, the
+bank test and the context builder all read the same list. The switch to English is the one
+curveball said in English on purpose, as a bubble labelled as such, because the whole point of it
+is that the other side gave up on Estonian and the learner is practising not to.
+
+The free models this repository can reach wrote nothing usable for those beats, so the lines were
+typed in a session and pushed through the same four checks and the same refusals the drafter
+applies, and only what passed went in: 53 rows, model `authored`, `reviewed` false like every row a
+person has not yet read. A row is in the bank because the checks let it through and a reader can
+see it in the diff, which is the standing every drafted row has had; what a native speaker's pass
+adds is the same for both. That is a widening of the bank's own rule, that nothing in it is typed
+by hand, and it is written down here rather than left for somebody to find: the rule was there to
+keep unchecked Estonian out, and these rows were checked by the very code the rule exists to
+route everything through.
+
+Two of the four checks had to be corrected on the way, and both corrections were found by lines
+the checks refused that any Estonian speaker would say. The government check withheld `Kust sa
+tuled?`, the sentence a lexicographer recorded for `kuhu`, because it wanted a noun in the elative
+beside a verb that governs one and did not know that the question word *is* the complement; and
+it withheld `See aeg ei sobi enam`, where the only nominal is the subject and the complement is
+simply not said. It takes the course's question words now and stands down where one is present,
+and it fires only where a nominal in an oblique case sits beside a governed verb with nothing in
+a case it governs. The old rule and the new are both applied, so nothing the old rule let through
+is refused now. And five units joined the scenes' word lists so the curveballs had words to be said
+with: the weather for small talk, `rääkima` and `ütlema`, the documents unit for a health centre
+and a landlord that ask for papers, and shopping for a landlord and a counter that name a price.
+
+### The third pass: the other side repeats what it heard, speaks, and there are seven scenes
+
+Three more things, each driven in a browser before it was kept.
+
+- **They repeat your word back.** `Evidence.matched` carries the learner's own words that met a
+  requirement, and the reaction to a turn that landed is that word with a full stop: `Pank.` before
+  "Minge otse edasi", `Poodi.` before the next call. It is the learner's form, vouched by the
+  dictionary as the one the beat asked for, so nothing here chose it; a value with a digit in it is
+  never repeated, since the confirm beat reads the time back in its own line. Where nothing was a
+  word, the acknowledgement rotates as before.
+- **The lines are spoken.** §6 promised every line in the persona's voice and the session never
+  played one. Each Estonian bubble carries the app's own speaker button in the run's voice, and the
+  newest line plays itself where the learner has autoplay on, since a turn was just pressed and
+  the gesture the browser wants has happened.
+- **Three more scenes**: ordering a coffee (`kohvikus`, A1), asking the way (`tee-kusimine`, A2)
+  and buying a bus ticket (`bussipilet`, A1). Each is a claim a unit already makes, each deals a
+  word off the card the learner has to produce, and each shipped with its lines and its curveballs'
+  lines written and checked the way the last section describes, so all seven play keyless from the
+  first line to the debrief. `scriptable` was corrected on the way: it refused any beat that waits
+  on a per-run value, which took "Mis kell?" away from the ticket seller, and what actually cannot
+  be drafted is a line that *names* the value, which the stage direction says with a slot.
+
+### Keyless coverage is asserted, and a person can add a line
+
+"All seven play keyless from the first line to the debrief" is a property now rather than a
+sentence in this file: `bank.test.ts` walks every beat of every scene, and every curveball a
+scene admits that has a move to make, and fails on one with no line that is not a phrase beat the
+dictionary answers or a beat said off the card. It found two beats this section had missed on its
+first run, the landlord refusing and the clerk pointing at the queue, which is the argument for it.
+`npm run check:lines lines.json` is how a person adds a line: a list of `[scene, beat, text]`
+goes through the four checks against the scene's own word list and the drafter's refusals, and
+the verdict names which words the scene cannot vouch for. A line that passes goes into the bank by
+hand as `authored`, and the suite checks it again on every run. The tile for each scene reads what
+it practises off its beats, in the words a class uses, and how the last run ended off the runs
+(ADR-014), so the list is a place somebody comes back to rather than a menu.
+
+### What this does not fix
+
+Every row a person typed is `reviewed: false` and should be read by a native speaker, which is
+the standing every drafted row has always had. The `other-register` curveball has no line and
+cannot: a line in the other register fails the gate by design, so it stays a stage direction until
+the gate learns to make an exception it can explain. And the drafter still cannot fill a beat whose
+line has to name a value off the card, so a keyed deployment composes those live and a keyless one
+says `Kell 11:30?` off one course word and the card.

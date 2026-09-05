@@ -3827,6 +3827,36 @@ to answer it with. It carries no `lang="et"` and no report button, because there
 lexicographer got wrong. The conversation carries on instead of stalling on a repair move that
 repairs nothing.
 
+**And a reply is a reaction and then a move, and a usage is not a line.** A learner reported that
+every situation felt strange, and the screenshot said why: `Kuhu sa lähed?`, then `poodi`, then a
+grey card reading "They ask you about it." Nothing they said was ever reacted to, and when the
+ladder ran out the friend on the phone was replaced by a sentence about the friend. Two faults.
+The attested rung took every recorded usage under a beat's topic words, and measured offline that
+filled "where are you now" with `Olla või mitte olla?` and offered a doctor's appointment with
+`Aeg ei peatu.`: a usage illustrates a word, a beat wants a line, and they meet by luck. So
+`poolsFor` takes the phrase entries alone, where the lemma is the line, plus a usage a person
+pinned by text on `BeatSpec.lines`, checked against the harvest. And the route asked the ladder for
+the next beat's line whatever the state machine had decided about the turn. `lib/scenes/reply.ts`
+reads the response and the reading and answers as a person would: an acknowledgement then the
+move, `Ma ei saa aru` then the same question again, `Jah?` and a wait, the question again in
+Estonian for a turn in English. Every reaction is a lemma in `REACTIONS`, taught by units every
+scene declares, and the repair phrase is chosen on `reading === "unrecognised"` and nowhere else,
+asserted. Every beat carries `they`, what the other side does in English from their own side, and
+it is what the drafter and the composer are told they are doing: told the learner's `goal` instead,
+a model drafted the landlord asking the tenant when they planned to do the repairs. Fifteen such
+rows left the bank. And the curveballs are played: `raiseHurdle` stands one in front of its beat
+when the conversation reaches it, the learner's turns are read against the curveball's own needs
+until one lands or the other side lets it go, and the debrief says which. Before that the
+difficulty dial drew them, stored them and changed nothing. The curveballs have lines in the bank
+too, under `hurdle:<id>` beats, and 53 of the rows there were typed in a session rather than
+drafted, because the free models wrote nothing usable: every one went through the same four checks
+and the same refusals the drafter applies, is marked `authored`, and is `reviewed: false` until a
+native speaker reads it. Two of the checks were corrected on the way, since the government check
+was refusing `Kust sa tuled?` and `See aeg ei sobi enam`, which are what people say.
+The other side repeats the learner's own word back before moving on, off `Evidence.matched`, and
+every line is spoken in the persona's voice. Seven scenes, and all seven play keyless from the
+first line to the debrief. `docs/21-situations.md` §32 has the table and what it does not fix.
+
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
 five, so a guesser who has placed the consonants can still be choosing between three words on the

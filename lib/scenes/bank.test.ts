@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { BANK } from "./bank";
 import { SCENES, FALLBACK_PHRASE, sceneById } from "./catalogue";
+import { isPhrase } from "@/lib/dict/pos";
+import { POOL } from "../../scripts/lib/sceneDraft";
 import { passes, runGate } from "./gate";
 import { words } from "./lexicon";
-import { scriptable, scriptedFor } from "./scripted";
+import { beatById, scriptable, scriptedFor, sceneBeats } from "./scripted";
 import { answerForms, keylessContext, lacksFiniteVerb } from "../../scripts/lib/sceneDraft";
 
 /**
@@ -21,14 +23,14 @@ describe("the scripted bank", () => {
     for (const row of BANK) {
       const scene = sceneById(row.scene);
       expect(scene, `${row.scene} is not a scene`).toBeDefined();
-      expect(scene?.beats.map((b) => b.id), `${row.scene}/${row.beat} is not a beat`).toContain(row.beat);
+      expect(scene ? sceneBeats(scene).map((b) => b.id) : [], `${row.scene}/${row.beat} is not a beat`).toContain(row.beat);
     }
   });
 
   it("holds no line for a beat whose value is drawn per run", () => {
     for (const row of BANK) {
       const scene = sceneById(row.scene)!;
-      const beat = scene.beats.find((b) => b.id === row.beat)!;
+      const beat = beatById(scene, row.beat)!;
       expect(scriptable(scene, beat), `${row.scene}/${row.beat} draws a value per run`).toBe(true);
     }
   });
@@ -37,7 +39,7 @@ describe("the scripted bank", () => {
     const contexts = new Map(SCENES.map((scene) => [scene.id, keylessContext(scene)]));
     for (const row of BANK) {
       const scene = sceneById(row.scene)!;
-      const beat = scene.beats.find((b) => b.id === row.beat)!;
+      const beat = beatById(scene, row.beat)!;
       const verdict = runGate(row.text, beat, contexts.get(scene.id)!.gate);
       expect(passes(verdict), `${row.scene}/${row.beat}: "${row.text}" fails ${verdict.failed.join(", ")} [${verdict.unknown.join(" ")}]`)
         .toBe(true);
@@ -53,7 +55,7 @@ describe("the scripted bank", () => {
     const contexts = new Map(SCENES.map((scene) => [scene.id, keylessContext(scene)]));
     for (const row of BANK) {
       const scene = sceneById(row.scene)!;
-      const beat = scene.beats.find((b) => b.id === row.beat)!;
+      const beat = beatById(scene, row.beat)!;
       const answers = answerForms(beat, contexts.get(scene.id)!.lexicon);
       const given = words(row.text).filter((w) => answers.has(w));
       expect(given, `${row.scene}/${row.beat}: "${row.text}" hands over ${given.join(" ")}`).toEqual([]);
@@ -64,7 +66,7 @@ describe("the scripted bank", () => {
     // "Kus pood praegu olema?" passes all four checks and is not a sentence anybody says.
     for (const row of BANK) {
       const scene = sceneById(row.scene)!;
-      const beat = scene.beats.find((b) => b.id === row.beat)!;
+      const beat = beatById(scene, row.beat)!;
       expect(lacksFiniteVerb(row.text, beat), `${row.scene}/${row.beat}: "${row.text}" has no finite verb`).toBe(false);
     }
   });
@@ -103,5 +105,28 @@ describe("the scripted bank", () => {
     // And one that does not is scriptable, whether or not anything was drafted yet.
     const shop = sceneById("poodi-piima")!;
     expect(scriptable(shop, shop.beats[1]!)).toBe(true);
+  });
+
+  /*
+    EVERY SCENE PLAYS KEYLESS FROM THE FIRST LINE TO THE DEBRIEF, and this is
+    what makes that a property rather than a claim: every beat that can carry
+    a line has one, or is a phrase beat the dictionary answers, or names a
+    value off the card and is said by `datumLine`. Every curveball a scene
+    admits that has a move to make has a line for that scene. A scene added
+    without its lines fails here rather than greeting a learner in English.
+  */
+  it("holds a line for every beat and every curveball of every scene, so keyless is whole", () => {
+    const phrases = new Set(POOL.filter((e) => isPhrase(e.pos)).map((e) => e.lemma));
+    for (const scene of SCENES) {
+      for (const beat of sceneBeats(scene)) {
+        const phraseBeat = beat.topic.some((lemma) => phrases.has(lemma));
+        if (phraseBeat || beat.says) continue;
+        if (!scriptable(scene, beat)) continue;
+        expect(
+          scriptedFor(scene, beat).length,
+          `${scene.id}/${beat.id} has no line, so keyless it is English`,
+        ).toBeGreaterThan(0);
+      }
+    }
   });
 });

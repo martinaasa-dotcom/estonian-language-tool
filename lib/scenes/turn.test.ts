@@ -35,6 +35,7 @@ const ENTRIES: DictEntry[] = [
     extraForms: [{ code: "IndPrSg3", value: "on" }],
     usages: [],
   },
+  { lemma: "Head aega!", pos: "PHRASE", cefr: "A1", parts: {}, usages: [] },
 ];
 
 const LEX = buildLexicon(ENTRIES);
@@ -45,6 +46,7 @@ function context(over: Partial<TurnContext> = {}): TurnContext {
     questionWords: new Set(["kus", "millal"]),
     negators: new Set(["ei"]),
     registerForms: new Set(["teie", "teil", "teile"]),
+    hasFiniteVerb: (word: string) => word === "on",
     data: new Map([["since", new Set(["teisipäev", "teisipäevast"])]]),
     previous: "",
     ...over,
@@ -53,7 +55,7 @@ function context(over: Partial<TurnContext> = {}): TurnContext {
 
 function beat(over: Partial<BeatSpec> = {}): BeatSpec {
   return {
-    id: "reason", goal: "Say what is wrong.", move: "ask",
+    id: "reason", goal: "Say what is wrong.", they: "They say something.", move: "ask",
     topic: ["valu"], needs: [{ kind: "lemma", oneOf: ["valu"] }],
     required: true, patience: 2, shape: "word",
     ...over,
@@ -112,11 +114,41 @@ describe("reading a turn", () => {
     expect(advances(seen.reading)).toBe(false);
   });
 
+  it("takes a farewell answered with the same farewell, since the phrase is the answer", () => {
+    /*
+      `Head aega!` to `Head aega!` is every word of their line handed back and
+      is exactly what a person says. The echo rule stands down on a beat whose
+      line *is* a course phrase, or the last turn of every scene would be read
+      as parroting.
+    */
+    const close = beat({
+      move: "close", topic: ["Head aega!"], needs: [{ kind: "lemma", oneOf: ["Head aega!"] }],
+    });
+    const seen = readTurn("Head aega!", close, context({ previous: "Head aega!" }));
+    expect(seen.reading).toBe("complete");
+  });
+
   it("still takes a one-word answer that repeats one of their words", () => {
     // `Neljapäev?` after they said it is what a person says, so the echo rule
     // needs two words before it fires.
     const seen = readTurn("valu", beat(), context({ previous: "Kas teil on valu?" }));
     expect(seen.reading).toBe("complete");
+  });
+
+  it("reads a subject with its verb as a sentence, whatever the word count", () => {
+    const asks = beat({ shape: "sentence" });
+    expect(readTurn("Valu on.", asks, context()).reading).toBe("complete");
+  });
+
+  it("reads a short question as a whole turn", () => {
+    const asks = beat({ shape: "sentence", needs: [{ kind: "question" }] });
+    expect(readTurn("Kui kaua?", asks, context()).reading).toBe("complete");
+  });
+
+  it("does not wait for the rest of a turn it could not read at all", () => {
+    // `xyzzy blorp` is not a short answer; it is a turn nobody understood.
+    const asks = beat({ shape: "sentence" });
+    expect(readTurn("xyzzy blorp", asks, context()).reading).toBe("unrecognised");
   });
 
   it("waits rather than advancing when a sentence was wanted and a word arrived", () => {
@@ -156,5 +188,16 @@ describe("reading a turn", () => {
       expect(advances(reading), `${reading} advanced a scene`).toBe(false);
     }
     expect(advances("complete")).toBe(true);
+  });
+});
+
+describe("what was matched", () => {
+  it("names the learner's own word that met a requirement, and nothing for a question", () => {
+    const seen = readTurn("valu", beat(), context());
+    expect(seen.matched).toEqual(["valu"]);
+    // A word out of a sentence is not repeated back: "Maksta." is not a thing a waiter says.
+    expect(readTurn("Mul on valu", beat({ shape: "sentence" }), context()).matched).toEqual([]);
+    const asked = readTurn("Kui kaua?", beat({ needs: [{ kind: "question" }] }), context());
+    expect(asked.matched).toEqual([]);
   });
 });

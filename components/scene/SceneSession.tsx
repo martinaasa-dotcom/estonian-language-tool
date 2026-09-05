@@ -5,13 +5,16 @@ import { CornerDownLeft, DoorOpen, LifeBuoy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
 import { EstonianInput } from "@/components/EstonianInput";
-import { Card, Chip } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
+import { Speak } from "@/components/Speak";
+import { CLEAN } from "@/lib/audio/conditions";
 import { beginScene, finishScene, sceneHelp } from "@/app/actions";
 import type { SceneSpec } from "@/lib/scenes/types";
 import type { Difficulty } from "@/lib/scenes/curveballs";
 import { BUDGETS } from "@/lib/scenes/curveballs";
 import { SceneDebrief, type Debrief } from "./SceneDebrief";
+import { practises } from "@/lib/scenes/practises";
 
 /**
  * One conversation, from the desk to the debrief.
@@ -29,16 +32,29 @@ import { SceneDebrief, type Debrief } from "./SceneDebrief";
  * ends: two markers would be two answers to "were you understood", and the one
  * nobody watches is the one that drifts.
  *
+ * A REPLY IS A FEW LINES, NOT ONE. The other side reacts to what was said and
+ * then makes their move (`lib/scenes/reply.ts`), so what arrives is a list:
+ * "Hästi." and then the next question, or "Ma ei saa aru" and the same
+ * question again, or "Jah?" on its own while they wait for the rest of a
+ * sentence. Each line still carries where it came from (ADR-025), and a line
+ * of English about what they did is drawn as a stage direction rather than as
+ * a bubble, because it is not something anybody said.
+ *
  * YOU CAN WALK OUT. Leaving is a real option in a real conversation, and the
  * debrief handles it without a word of reproach.
  */
 
-interface Turn {
-  readonly who: "them" | "you";
+type Provenance = "attested" | "scripted" | "composed" | "fallback" | "again" | "english" | "unspoken";
+
+interface Line {
   readonly text: string;
-  readonly provenance?: "attested" | "scripted" | "composed" | "fallback" | "unspoken";
-  readonly reading?: string | null;
+  readonly provenance: Provenance;
+  readonly reaction?: true;
 }
+
+type Turn =
+  | { readonly who: "you"; readonly text: string }
+  | { readonly who: "them"; readonly lines: readonly Line[] };
 
 type Phase = "briefing" | "talking" | "debrief";
 
@@ -47,6 +63,14 @@ interface Opened {
   card: { you: string; props: { slot: string; card: string; given: readonly string[] }[] };
   persona: string;
   composed: boolean;
+}
+
+interface Sent {
+  beatId: string;
+  said: string;
+  helped: boolean;
+  /** The Estonian line this turn answers, for the echo rule and for saying it again. */
+  heard: string;
 }
 
 /**
@@ -64,16 +88,45 @@ const DIFFICULTIES: { id: Difficulty; label: string; blurb: string }[] = [
   { id: "bad", label: "Hard", blurb: "As bad as a Tuesday at a busy desk." },
 ];
 
+/** Whether a line is Estonian the other side said, as opposed to a stage direction or their English. */
+const spokenEstonian = (line: Line) => line.provenance !== "unspoken" && line.provenance !== "english";
+/** Whether a line was said at all, in either language. */
+const spoken = (line: Line) => line.provenance !== "unspoken";
+
+/**
+ * The line the learner is now answering: the other side's last move, which is
+ * never a reaction and never a stage direction. `Jah?` on its own leaves the
+ * question before it standing, which is exactly what waiting means.
+ */
+function moveIn(lines: readonly Line[]): string | null {
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i]!;
+    if (line.reaction) continue;
+    /*
+      A move made in English leaves nothing to say again: the last Estonian
+      question is over and repeating it would be repeating the wrong one,
+      which is what happened when a stage direction stood between two beats.
+    */
+    return spoken(line) ? line.text : "";
+  }
+  return null;
+}
+
 export function SceneSession({ scene }: { scene: SceneSpec }) {
   const [phase, setPhase] = useState<Phase>("briefing");
   const [difficulty, setDifficulty] = useState<Difficulty>("good");
   const [opened, setOpened] = useState<Opened | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [sent, setSent] = useState<{ beatId: string; said: string; helped: boolean }[]>([]);
+  const [sent, setSent] = useState<Sent[]>([]);
   const [beatId, setBeatId] = useState<string | null>(null);
   const [goal, setGoal] = useState<string | null>(null);
   const [done, setDone] = useState<string[]>([]);
   const [used, setUsed] = useState<string[]>([]);
+  const [heard, setHeard] = useState<string>("");
+  /** Whose voice the other side speaks in, off the run's persona. */
+  const [voice, setVoice] = useState<string | undefined>(undefined);
+  /** How fast they talk: the persona's pace, faster once they have sped up. */
+  const [speed, setSpeed] = useState(1);
   const [asked, setAsked] = useState<{ lemma: string; lexemeId: string | null }[]>([]);
   const [helped, setHelped] = useState(false);
   const [draft, setDraft] = useState("");
@@ -99,7 +152,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     twice and then finished lost both words off the debrief, silently, because
     the stale closure sent an empty list. The ref is always this render's.
   */
-  const hangUpRef = useRef<(t: typeof sent, walkedOut: boolean) => Promise<void>>(
+  const hangUpRef = useRef<(t: Sent[], walkedOut: boolean) => Promise<void>>(
     async () => {},
   );
 
@@ -113,7 +166,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     if (box) box.scrollTop = box.scrollHeight;
   }, [turns]);
 
-  const speak = useCallback(async (next: typeof sent) => {
+  const speak = useCallback(async (next: Sent[]) => {
     if (!opened) return;
     setBusy(true);
     setError(null);
@@ -139,9 +192,9 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         return;
       }
       const data = await response.json() as {
-        text?: string | null; provenance?: Turn["provenance"];
+        lines?: Line[]; voice?: string; speed?: number;
         beatId?: string | null; goal?: string | null; done?: string[];
-        over?: boolean; reading?: string | null; error?: string;
+        over?: boolean; error?: string;
         composed?: boolean; note?: string | null;
       };
       if (data.error) { setError(data.error); return; }
@@ -149,16 +202,20 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
 
       setBeatId(data.beatId ?? null);
       setGoal(data.goal ?? null);
+      if (data.voice) setVoice(data.voice);
+      if (typeof data.speed === "number" && data.speed > 0) setSpeed(data.speed);
       setDone(data.done ?? []);
-      if (data.text) {
-        setTurns((was) => [...was, {
-          who: "them", text: data.text!, provenance: data.provenance, reading: data.reading,
-        }]);
+      const lines = data.lines ?? [];
+      if (lines.length > 0) {
+        setTurns((was) => [...was, { who: "them", lines }]);
+        const move = moveIn(lines);
+        if (move !== null) setHeard(move);
         // Both rungs the route passes over once used. A scripted line left out
         // of this would be the one sentence a beat can repeat.
-        if (data.provenance === "attested" || data.provenance === "scripted") {
-          setUsed((was) => [...was, data.text!]);
-        }
+        const fresh = lines
+          .filter((line) => line.provenance === "attested" || line.provenance === "scripted")
+          .map((line) => line.text);
+        if (fresh.length > 0) setUsed((was) => [...was, ...fresh]);
       }
       if (data.over) await hangUpRef.current(next, false);
     } catch {
@@ -208,7 +265,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   async function say() {
     const said = draft.trim();
     if (!said || !beatId || busy) return;
-    const next = [...sent, { beatId, said, helped }];
+    const next = [...sent, { beatId, said, helped, heard }];
     setSent(next);
     setTurns((was) => [...was, { who: "you", text: said }]);
     setDraft("");
@@ -217,7 +274,19 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     await speak(next);
   }
 
-  async function hangUp(finalTurns: typeof sent, walkedOut: boolean) {
+  /*
+    Asking for repetition is the most useful sentence a learner can own, so it
+    is a control rather than something they have to think of. It costs no
+    turn, no patience and no round trip: the line they were answering is said
+    again, as it was, because a person asked to repeat themselves repeats
+    themselves rather than rephrasing.
+  */
+  function again() {
+    if (!heard) return;
+    setTurns((was) => [...was, { who: "them", lines: [{ text: heard, provenance: "again" }] }]);
+  }
+
+  async function hangUp(finalTurns: Sent[], walkedOut: boolean) {
     setBusy(true);
     const result = await finishScene({
       runId: opened?.runId, turns: finalTurns, walkedOut, asked,
@@ -227,10 +296,15 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     setDebrief({
       scene,
       objectives: result.objectives,
+      hurdles: result.hurdles,
       outcome: result.outcome,
       gaps: result.gaps,
       graded: result.graded,
-      turns: turns.filter((turn) => turn.who === "you").map((turn) => turn.text),
+      turns: turns.flatMap((turn): Debrief["turns"][number][] => {
+        if (turn.who === "you") return [{ who: "you", text: turn.text }];
+        const said = turn.lines.filter(spoken).map((line) => line.text).join(" ");
+        return said ? [{ who: "them", text: said }] : [];
+      }),
     });
     setPhase("debrief");
   }
@@ -252,6 +326,10 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         <Card className="flex flex-col gap-2">
           <h2 className="font-medium">{scene.place}</h2>
           <p className="text-sm" style={{ color: "var(--ink-2)" }}>{scene.role}</p>
+          <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+            You will need {practises(scene).join(", ")}. They speak first, you answer, and the card
+            below the conversation says what to get done.
+          </p>
         </Card>
 
         {/*
@@ -353,7 +431,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       {opened && (!opened.composed || note) && (
         <p className="text-xs" style={{ color: "var(--ink-3)" }}>
           {note
-            ?? "No model today: recorded sentences and lines written for the scene, and some turns described rather than said."}
+            ?? "No model today: the lines are the course's own and the ones written for this scene, and a turn nothing was written for is described instead."}
         </p>
       )}
 
@@ -370,44 +448,81 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         aria-relevant="additions"
         aria-label="The conversation"
       >
-        {turns.map((turn, index) => {
-          /*
-            An `unspoken` turn is a line of English about what the other side
-            did, so it is not marked as Estonian and it is not offered to the
-            report queue: there is nothing a lexicographer got wrong, and a
-            reader who reports it would be reporting our own sentence.
-          */
-          const said = turn.who === "them" && turn.provenance !== "unspoken";
-          return (
-            <div key={index} className={turn.who === "you" ? "self-end text-right" : ""}>
-              <Card className="inline-block max-w-full">
-                <p
-                  lang={said ? "et" : undefined}
-                  style={turn.provenance === "unspoken" ? { color: "var(--ink-3)" } : undefined}
-                >
-                  {turn.text}
-                </p>
-              </Card>
-              {turn.who === "them" && turn.provenance && (
-                <div className="mt-1 flex items-center gap-2">
-                  {/* The provenance chip is text, never a colour (ADR-025). */}
-                  <Chip tone="neutral">{PROVENANCE[turn.provenance]}</Chip>
-                  {said && (
-                    <SuggestFix
-                      category="WRONG_CONTENT"
-                      trigger={`Situations · ${scene.id} · ${turn.text}`}
-                      label="Report this line"
-                    />
-                  )}
-                </div>
-              )}
+        {turns.map((turn, index) => (
+          turn.who === "you" ? (
+            <div key={index} className="self-end text-right">
+              <Card className="inline-block max-w-full"><p lang="et">{turn.text}</p></Card>
             </div>
-          );
-        })}
+          ) : (
+            <div key={index} className="flex flex-col items-start gap-1.5">
+              {turn.lines.map((line, at) => (
+                spoken(line) ? (
+                  <div key={at} className="max-w-full">
+                    <Card className="inline-block max-w-full">
+                      <p lang={spokenEstonian(line) ? "et" : "en"} className="flex items-center gap-2">
+                        <span>{line.text}</span>
+                        {/*
+                          Spoken in the persona's voice (§6), and the newest
+                          line plays itself where the learner has autoplay on:
+                          a turn was just pressed, so the gesture the browser
+                          wants has happened. A second persona in a scene
+                          would be a second voice, which is how an
+                          interruption reads as a second person.
+                        */}
+                        {spokenEstonian(line) && (
+                          <Speak
+                            text={line.text}
+                            voice={voice}
+                            condition={speed !== 1 ? { ...CLEAN, speed } : undefined}
+                            size={14}
+                            autoplay={index === turns.length - 1 && at === turn.lines.length - 1}
+                            className="press inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-[var(--raised)]"
+                          />
+                        )}
+                      </p>
+                    </Card>
+                    {/*
+                      Where the line came from, in words rather than a chip
+                      shouting in capitals under every bubble (ADR-025), and
+                      the report button beside it, because "this is not how
+                      anybody says it" needs the line it is about.
+                    */}
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                      <span>{PROVENANCE[line.provenance]}</span>
+                      {line.provenance !== "again" && spokenEstonian(line) && (
+                        <SuggestFix
+                          category="WRONG_CONTENT"
+                          trigger={`Situations · ${scene.id} · ${line.text}`}
+                          label="Report"
+                        />
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  /*
+                    A stage direction: what they did, in English, because no
+                    Estonian line could be built for it or because this
+                    persona translates for somebody who wrote English. Not a
+                    bubble, because nobody said it, and not offered to the
+                    report queue, because a reader who reported it would be
+                    reporting our own sentence.
+                  */
+                  <p key={at} className="text-sm italic" style={{ color: "var(--ink-3)" }}>
+                    {line.text}
+                    <span className="sr-only"> ({PROVENANCE.unspoken})</span>
+                  </p>
+                )
+              ))}
+            </div>
+          )
+        ))}
       </div>
 
       {goal && (
-        <p className="text-sm font-medium" aria-live="polite">{goal}</p>
+        <p className="text-sm" aria-live="polite">
+          <span className="label-xs" style={{ color: "var(--ink-3)" }}>Your turn</span>
+          <span className="block font-medium">{goal}</span>
+        </p>
       )}
       {lent && (
         <p className="text-sm" aria-live="polite">
@@ -429,17 +544,8 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
           <Button onClick={say} disabled={busy || !draft.trim()}>
             <CornerDownLeft size={16} aria-hidden /> Say it
           </Button>
-          {/*
-            Asking for repetition is the most useful sentence a learner can own,
-            so it is a control on the screen rather than something they have to
-            think of. It costs a turn and never patience.
-          */}
-          <Button
-            variant="ghost"
-            onClick={() => { setDraft(""); void speak(sent); }}
-            disabled={busy}
-          >
-            <RotateCcw size={16} aria-hidden /> Ask them to repeat
+          <Button variant="ghost" onClick={again} disabled={busy || !heard}>
+            <RotateCcw size={16} aria-hidden /> Say that again
           </Button>
           {/*
             Asking costs the turn its `helped` flag and nothing else: no
@@ -462,26 +568,30 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   );
 }
 
-/** What the chip says. Text, because a colour cannot carry this on its own. */
-const PROVENANCE: Record<NonNullable<Turn["provenance"]>, string> = {
-  attested: "Recorded sentence",
+/** Where a line came from, in words, because a colour cannot carry this on its own. */
+const PROVENANCE: Record<Provenance, string> = {
+  attested: "From the course",
   /*
     Honest about both halves: a model wrote it, and every word was checked
     against the dictionary before it was kept. "Checked by a native speaker"
-    is a different claim and the chip does not make it until the bank's row
+    is a different claim and the label does not make it until the bank's row
     says so (lib/scenes/scripted.ts).
   */
   scripted: "Written for this scene, checked word by word",
   composed: "Written for this turn",
   fallback: "They did not catch that",
+  again: "Said again",
+  english: "They said it in English",
   /*
-    The fourth is not a line they said, it is what they did, and the chip has
-    to say so or the sentence reads as Estonian rendered in English. See
-    `wayOut` in lib/scenes/line.ts for why this exists at all: "They did not
-    catch that" used to be printed over a turn that had been understood
-    perfectly, which is the app blaming a learner for its own empty pool.
+    The sixth is not a line they said, it is what they did, and the label has
+    to say so or the sentence reads as Estonian rendered in English. It is
+    read to a screen reader beside the stage direction and drawn to nobody:
+    the italics are what a sighted reader gets. See `replyFor` in
+    lib/scenes/reply.ts for why this exists at all: "They did not catch that"
+    used to be printed over a turn that had been understood perfectly, which
+    is the app blaming a learner for its own empty pool.
   */
-  unspoken: "No Estonian line for this one",
+  unspoken: "In English, because no Estonian line could be built for it",
 };
 
 export { BUDGETS };

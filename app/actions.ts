@@ -1066,6 +1066,7 @@ export async function sceneHelp(runId: unknown, turns: unknown) {
           beatId: text(row.beatId).slice(0, 64),
           said: text(row.said).slice(0, MAX_TURN_CHARS),
           helped: row.helped === true,
+          heard: text(row.heard).slice(0, MAX_TURN_CHARS),
         };
       })
     : [];
@@ -1149,6 +1150,7 @@ export async function finishScene(input: {
           beatId: text(row.beatId).slice(0, 64),
           said: text(row.said).slice(0, MAX_TURN_CHARS),
           helped: row.helped === true,
+          heard: text(row.heard).slice(0, MAX_TURN_CHARS),
         };
       })
     : [];
@@ -1199,6 +1201,7 @@ export async function finishScene(input: {
     ok: true as const,
     runId: finished.runId,
     objectives: finished.objectives,
+    hurdles: finished.hurdles,
     outcome: finished.outcome,
     turns: finished.turns,
     gaps: finished.gaps,

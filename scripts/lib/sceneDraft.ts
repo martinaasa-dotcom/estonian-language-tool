@@ -218,8 +218,15 @@ export function lacksFiniteVerb(text: string, beat: BeatSpec): boolean {
 }
 
 /** The gate's context for one scene, built from the shipped dictionary rather than a database. */
+const QUESTION_WORDS: ReadonlySet<string> = new Set(
+  (unitById("kusisonad")?.lemmas ?? []).flatMap((lemma) => {
+    const entry = POOL.find((e) => e.lemma === lemma);
+    return entry ? formsOf(entry) : [lemma];
+  }),
+);
+
 export function gateContext(lexicon: Lexicon, wrongRegister: ReadonlySet<string>): GateContext {
-  return { lexicon, wrongRegister, governed: GOVERNED, caseOf: CASE_OF };
+  return { lexicon, wrongRegister, governed: GOVERNED, caseOf: CASE_OF, questionWords: QUESTION_WORDS };
 }
 
 /**
@@ -317,7 +324,8 @@ export async function compose(
 ): Promise<Composed | null> {
   const user = [
     `You are the ${scene.place}. The learner is a member of the public and you address them as "${scene.register}".`,
-    `Your move now: ${beat.move}. In English, what you are doing is: ${beat.goal}`,
+    `Your move now: ${beat.move}. In English, what you are doing is: ${beat.they}`,
+    `The learner is then expected to: ${beat.goal}`,
     `The line must be about: ${beat.topic.filter((t) => !withhold.includes(t)).join(", ")}`,
     withhold.length > 0
       ? `Do not use ${withhold.join(" or ")} in any form. Ask so that the learner has to be the one to say it.`

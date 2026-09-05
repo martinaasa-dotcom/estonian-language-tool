@@ -45,6 +45,8 @@
     "measure:placement": "tsx scripts/measure-placement.ts",
     "eval:scene": "tsx scripts/eval-scene.ts",
     "draft:lines": "tsx scripts/draft-lines.ts",
+    "check:lines": "tsx scripts/check-lines.ts",
+    "fuzz:scenes": "tsx scripts/fuzz-scenes.ts",
     "audit:questions": "tsx scripts/audit-questions.ts",
     "audit:sense": "tsx scripts/audit-sense.ts",
     "audit:homonyms": "tsx scripts/audit-homonyms.ts",

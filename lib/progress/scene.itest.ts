@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
-import { sceneById } from "@/lib/scenes/catalogue";
+import { SCENES, sceneById } from "@/lib/scenes/catalogue";
 import { planRun } from "@/lib/scenes/run";
 import { beatNow, beginRun, dataFor, finishRun, recencyFor, sceneContext } from "./scene";
 
@@ -97,19 +97,32 @@ describe("a scene against the dictionary", () => {
       "no phrase was taken as its own line").toBe(true);
   });
 
-  it("finds recorded sentences for the beats that carry the encounter", async () => {
-    const context = await sceneContext(DOCTOR.id);
-    let withLines = 0;
-    for (const beat of DOCTOR.beats) {
-      if ((context!.pool.get(beat.id) ?? []).length > 0) withLines += 1;
-    }
+  it("draws a recorded line only where the phrase is the line, or a person pinned one", async () => {
     /*
-      Not every beat, and §25 is why: a lexicographer records a sentence to
-      illustrate a word rather than to ask a question about it, so retrieval
-      fills the moves every conversation shares and the composer is
-      load-bearing. What this checks is that the first rung is not empty.
+      A USAGE IS ABOUT A WORD, NOT ABOUT A BEAT (§32). The first version of
+      this asked that more than two beats have a recorded sentence, and the
+      sentences it was counting were `Aeg ei peatu.` offered as an
+      appointment and `Aastas on 365 päeva.` reading it back. The pool holds
+      the phrases the course teaches, which are their own line, and a usage a
+      person pinned on the beat by its text, and nothing a lexicographer wrote
+      to illustrate a word.
     */
-    expect(withLines, "no beat had a recorded sentence to draw on").toBeGreaterThan(2);
+    for (const scene of SCENES) {
+      const context = await sceneContext(scene.id);
+      for (const beat of scene.beats) {
+        for (const line of context!.pool.get(beat.id) ?? []) {
+          const pinned = beat.lines?.includes(line.text) ?? false;
+          expect(
+            line.text === line.lemma || pinned,
+            `${scene.id}/${beat.id} draws on "${line.text}", which is a usage nobody chose for it`,
+          ).toBe(true);
+        }
+      }
+    }
+    // And a pinned usage the dictionary still holds does reach its beat.
+    const shop = await sceneContext("poodi-piima");
+    const going = shop!.pool.get("going") ?? [];
+    expect(going.map((line) => line.text)).toContain("Kuhu sa lähed?");
   });
 
   it("knows which spellings count as each fact on the card", async () => {
@@ -121,8 +134,9 @@ describe("a scene against the dictionary", () => {
       expect(data.get(prop.slot)?.size, `${prop.slot} accepts nothing at all`)
         .toBeGreaterThan(0);
     }
-    // A time is accepted as digits, which is how anybody writes one down.
+    // A time is accepted as digits, which is how anybody writes one down, and in words, which is how anybody says one.
     expect([...(data.get("time") ?? [])].some((v) => /\d/.test(v))).toBe(true);
+    expect([...(data.get("time") ?? [])].some((v) => /^[a-zõäöü ]+$/.test(v) && !/\d/.test(v))).toBe(true);
     // A word prop resolves to the dictionary's forms rather than to the lemma.
     expect((data.get("symptom") ?? new Set()).size).toBeGreaterThan(3);
   });

@@ -2313,3 +2313,35 @@ first for somebody in a class, the game first for somebody who plays it every da
 `lib/ux/todayOrder.ts` is the table and the reader, Today deals through it and applies the cap to
 what comes out, so an order can move a card past the cut and never adds a box, and the rows past
 the cut say so in words on the Settings screen rather than by a tint alone.
+
+## 35. The twenty-ninth pass: a conversation rather than a list of questions
+
+A learner played the first mission and reported that every situation felt strange and the replies
+were horrible. They were right, and `docs/21-situations.md` §32 is the write-up. What shipped in
+§33 asked the next beat's question whatever the learner had said, filled beats with dictionary
+usages that happened to hold a topic word (`Olla või mitte olla?` for "where are you now"), told
+the drafter the learner's goal rather than the other side's, and drew curveballs it never played.
+
+**What changed, in one sentence each.** The other side reacts and then moves: it repeats the
+learner's own word back, acknowledges, says it did not catch that and asks the same question
+again, says "Jah?" and waits, or asks again in Estonian when the learner wrote English. The
+dictionary rung fills phrase beats alone, plus a usage a person pins by text. Every beat says what
+the other side does, from their side, and that is what the drafter and the composer are told. The
+curveballs are played: one stands in front of its beat until dealt with or let go, the switch to
+English is said in English, and the debrief lists what went wrong and whether it was handled. The
+time on the card can be said, in digits or in words, and the receptionist offers it keyless off one
+course word. A farewell ends the conversation wherever it comes, a turn that answers two beats
+advances both, and every line is spoken in the persona's voice. Seven scenes, three of them new,
+and all seven play keyless from the first line to the debrief, which `bank.test.ts` asserts.
+
+**What was bent, and where it says so.** The bank held only drafted rows; 103 of its 159 are now
+typed in a session and checked by the same four checks and refusals the drafter applies, because
+the free models wrote nothing usable, and every one is `reviewed: false` until a native speaker
+reads it. The government check was refusing `Kust sa tuled?` and `See aeg ei sobi enam` and now
+knows a question word is the complement and a subject is not one. `scriptable` refuses only a beat
+whose line names a value off the card. `npm run check:lines` is the tool for the next person.
+
+**What it was measured with.** Every scene driven through to the debrief in a headless browser on
+a seeded database, on Easy, Normal and Hard; 2,437 unit tests, 215 database tests, 261 invariants
+and the scene browser suite green. What no machine here can judge is whether it feels like talking
+to a person, and that is the thing to ask the next learner who plays it.

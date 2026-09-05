@@ -19,7 +19,7 @@
  * Pure: no React, no Next, no Prisma, no clock.
  */
 import { shuffle } from "@/lib/random/shuffle";
-import type { Requirement } from "./types";
+import type { MoveKind, Requirement } from "./types";
 
 export type CurveballId =
   | "missing-document"
@@ -57,6 +57,21 @@ export interface CurveballSpec {
   readonly from?: "B2";
   /** Whether it changes the persona rather than asking for a turn. */
   readonly silent?: true;
+  /**
+   * The move the other side makes when this happens, for the ladder that
+   * writes its line. Absent where the line cannot be Estonian at all (they
+   * switched to English) or where what happens is not a line (a queue), and
+   * then the learner is told in English what happened and nothing is
+   * composed.
+   */
+  readonly move?: MoveKind;
+  /**
+   * What they say, in English, where the curveball *is* a switch to English.
+   * The one line in the module said in English on purpose, drawn as a bubble
+   * and labelled as such, because the whole point is that the other side
+   * gave up on Estonian and the learner is practising not to.
+   */
+  readonly said?: string;
 }
 
 /**
@@ -84,6 +99,7 @@ export interface CurveballSpec {
 export const CURVEBALLS: readonly CurveballSpec[] = [
   {
     id: "missing-document",
+    move: "ask",
     cost: 2,
     says: "They ask for something you were not given.",
     out: "Say you do not have it.",
@@ -91,6 +107,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "slot-gone",
+    move: "refuse",
     cost: 2,
     says: "The time you asked for has gone.",
     out: "Take the one offered, or ask for another.",
@@ -98,6 +115,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "misheard",
+    move: "confirm",
     cost: 3,
     says: "They heard a word that sounds like yours, and it was the wrong one.",
     out: "Correct them, and say it again.",
@@ -107,11 +125,13 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
     id: "english",
     cost: 3,
     says: "They switch to English.",
+    said: "Sorry, let me switch to English. What was that?",
     out: "Keep going in Estonian, and they come back.",
     needs: [{ kind: "register" }],
   },
   {
     id: "interrupted",
+    move: "instruct",
     cost: 2,
     says: "Somebody else starts talking to them.",
     out: "Wait, or say you were first.",
@@ -119,6 +139,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "faster",
+    move: "instruct",
     cost: 1,
     says: "They speed up.",
     out: "Ask them to slow down. Free, always, and taught.",
@@ -126,6 +147,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "small-talk",
+    move: "ask",
     cost: 1,
     says: "They say something about the weather.",
     out: "Answer it, and come back to what you were doing.",
@@ -133,6 +155,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "their-order",
+    move: "instruct",
     cost: 2,
     says: "The form has to be filled in their order, not yours.",
     out: "Give them the part they asked for.",
@@ -140,6 +163,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "not-possible",
+    move: "refuse",
     cost: 3,
     says: "What you came for cannot be done today.",
     out: "Ask what can, or when.",
@@ -154,6 +178,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "wrong-price",
+    move: "confirm",
     cost: 2,
     says: "The amount is not the one you were told.",
     out: "Query it.",
@@ -169,6 +194,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "contradiction",
+    move: "confirm",
     cost: 3,
     says: "They say the opposite of what they said two turns ago.",
     out: "Notice, and say so.",
@@ -177,6 +203,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "place-instruction",
+    move: "instruct",
     cost: 2,
     says: "They tell you to go somewhere before they can help.",
     out: "Follow it, or ask where.",

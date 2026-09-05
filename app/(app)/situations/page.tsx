@@ -8,6 +8,8 @@ import { unitById } from "@/lib/collections/syllabus";
 import { Card, Chip, Empty, Page, Stack } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
 import { PLACES_TO_TALK } from "@/lib/collections/placesToTalk";
+import { practises } from "@/lib/scenes/practises";
+import { sceneHistoryFor, type SceneHistory } from "@/lib/progress/scene";
 
 export const metadata = { title: "Situations" };
 export const dynamic = "force-dynamic";
@@ -30,8 +32,8 @@ export const dynamic = "force-dynamic";
  * down at the moment they feel that rather than two screens away.
  */
 export default async function SituationsPage() {
-  await requireUserId();
-  const level = await courseLevelFor(await requireUserId());
+  const ownerId = await requireUserId();
+  const [level, history] = await Promise.all([courseLevelFor(ownerId), sceneHistoryFor(ownerId)]);
   const band = bandsAround(level);
 
   const near = SCENES.filter((scene) => band.includes(scene.level));
@@ -57,7 +59,7 @@ export default async function SituationsPage() {
         ) : (
           <>
             <ul className="grid gap-3 sm:grid-cols-2">
-              {near.map((scene) => <SceneTile key={scene.id} scene={scene} />)}
+              {near.map((scene) => <SceneTile key={scene.id} scene={scene} history={history.get(scene.id)} />)}
             </ul>
             {rest.length > 0 && (
               <div>
@@ -65,7 +67,7 @@ export default async function SituationsPage() {
                   A bit above or below you. Worth a go anyway.
                 </p>
                 <ul className="grid gap-3 sm:grid-cols-2">
-                  {rest.map((scene) => <SceneTile key={scene.id} scene={scene} />)}
+                  {rest.map((scene) => <SceneTile key={scene.id} scene={scene} history={history.get(scene.id)} />)}
                 </ul>
               </div>
             )}
@@ -110,22 +112,45 @@ export default async function SituationsPage() {
   );
 }
 
-function SceneTile({ scene }: { scene: (typeof SCENES)[number] }) {
+function SceneTile({ scene, history }: { scene: (typeof SCENES)[number]; history?: SceneHistory }) {
   const unit = unitById(scene.tests);
   const objectives = scene.beats.filter((beat) => beat.required).length;
+  const drills = practises(scene);
   return (
     <li>
       <Link href={`/situations/${scene.id}`} className="block h-full">
         <Card hover className="flex h-full flex-col gap-2">
           <div className="flex items-start justify-between gap-2">
             <h2 className="font-medium">{scene.title}</h2>
-            <Chip tone="neutral">{scene.level}</Chip>
+            {/* A level never wraps: "B1" on two lines reads as two chips. */}
+            <span className="shrink-0"><Chip tone="neutral">{scene.level}</Chip></span>
           </div>
           <p className="text-sm" style={{ color: "var(--ink-2)" }}>{scene.place}</p>
+          {/*
+            What it asks for, read off the beats rather than typed, in the
+            words a class uses: a learner who was told about the seesütlev on
+            Tuesday should be able to find the conversation that asks for it.
+          */}
+          {drills.length > 0 && (
+            <p className="text-xs" style={{ color: "var(--ink-2)" }}>
+              Practises {drills.slice(0, 4).join(", ")}{drills.length > 4 ? " and more" : ""}.
+            </p>
+          )}
           <p className="mt-auto text-xs" style={{ color: "var(--ink-3)" }}>
             {objectives} things to get done · about {minutesFor(scene)} min
             {unit ? ` · ${unit.title}` : ""}
           </p>
+          {/*
+            How it went last time, derived from the runs and never counted
+            (ADR-014). A tile that remembers is what turns a menu into a
+            place somebody comes back to.
+          */}
+          {history && (
+            <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+              {history.plays === 1 ? "Played once" : `Played ${history.plays} times`}
+              {history.last ? `. Last time: ${history.last}` : "."}
+            </p>
+          )}
         </Card>
       </Link>
     </li>

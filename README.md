@@ -43,10 +43,13 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 
 ## What it does
 
-- **Situations.** Somebody behind a desk, a card saying who you are today and what you came for,
-  and the thing to get done in Estonian. The other side speaks in sentences a lexicographer
-  recorded, or in a line composed inside the unit's own words and checked word by word before
-  you see it, and the screen says which. Whether you were understood is decided by the
+- **Situations.** Seven of them: a café, a bus ticket, a street corner, a health centre, a
+  landlord, a counter, and a friend on the phone. A card says who you are today and what you came
+  for, and the other side speaks first, reacts to what you say, repeats your word back, and asks
+  again when you were not understood. Something goes wrong on the way at every difficulty above the
+  easiest, and the debrief says whether you handled it. Every line is a phrase the course teaches
+  or a line written for the scene inside its own words and checked word by word before you see it,
+  the screen says which, and all seven play without a model key. Whether you were understood is decided by the
   dictionary, never by a model, so you cannot be marked wrong for being right. Difficulty is a
   budget of things that go wrong: the slot you asked for has gone, a queue forms, they switch to
   English. You can walk out. The debrief leads with what happened and never with a score.

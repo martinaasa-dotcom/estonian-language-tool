@@ -49,7 +49,7 @@ const verbForms = new Set(formsOf(entries[3]!));
 const hasFiniteVerb = (w: string) => verbForms.has(w);
 
 const beat = (over: Partial<BeatSpec>): BeatSpec => ({
-  id: "b", goal: "g", move: "ask", topic: ["valu"], needs: [{ kind: "any" }],
+  id: "b", goal: "g", they: "They say something.", move: "ask", topic: ["valu"], needs: [{ kind: "any" }],
   required: true, patience: 2, shape: "sentence", ...over,
 });
 

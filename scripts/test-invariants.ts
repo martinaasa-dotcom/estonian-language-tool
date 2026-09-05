@@ -10524,36 +10524,59 @@ check("a scripted line is drafted by a script, said after a recorded one, and ma
  * version and be exactly the bug again.
  */
 check("the repair move is only used on a turn nobody understood", () => {
-  const line = code("lib/scenes/line.ts");
+  /*
+    `Ma ei saa aru` is said about a turn `readTurn` could not read, and about
+    nothing else. It used to be the ladder's way out as well, so a learner
+    greeted with `Tere!`, told to greet back, who wrote `Tere` and watched the
+    objective tick, was answered "I do not understand" because the ladder had
+    nothing to build the *next* line with. `replyFor` in lib/scenes/reply.ts
+    is the one place the phrase is chosen now, and it chooses on the reading
+    the marker produced rather than on which rung answered.
+  */
+  const reply = code("lib/scenes/reply.ts");
   assert.match(
-    line, /export function wayOut\(/,
-    "lib/scenes/line.ts lost wayOut, so the repair phrase is the only way out again",
+    reply, /export function replyFor\(/,
+    "lib/scenes/reply.ts lost replyFor, so the reaction and the move are assembled somewhere else",
   );
   assert.match(
-    line, /reading === "unrecognised"/,
-    "wayOut no longer decides on how the turn was read",
+    reply, /reading === "unrecognised"/,
+    "replyFor no longer decides the repair phrase on how the turn was read",
+  );
+  assert.doesNotMatch(
+    code("lib/scenes/line.ts"), /MOVE_STAGE|wayOut/,
+    "lib/scenes/line.ts is deciding what the other side says about a turn again; the ladder knows nothing about the turn",
   );
 
   const route = code("app/api/scene/route.ts");
   assert.match(
-    route, /wayOut\(\{[^}]*reading: progress\.reading/,
-    "the scene route no longer hands wayOut the reading it marked, so the repair " +
+    route, /replyFor\(\{[\s\S]{0,400}?reading: progress\.reading/,
+    "the scene route no longer hands replyFor the reading it marked, so the repair " +
     "move can be printed at somebody who was understood",
+  );
+  assert.match(
+    route, /wantsFreshLine\(/,
+    "the scene route walks the ladder for a turn that is answered by saying the last line again, " +
+    "which spends a booking on a line nobody wanted",
   );
 
   /*
-    And the screen may not describe the fourth rung as the third. An English
-    line about what the other side did, chipped "They did not catch that", is
-    the same lie one layer up.
+    And the screen may not describe a stage direction as a line somebody said.
+    An English line about what the other side did, labelled "They did not
+    catch that", is the same lie one layer up; drawn as a bubble it reads as
+    Estonian rendered in English.
   */
   const session = code("components/scene/SceneSession.tsx");
   assert.match(
     session, /unspoken:/,
-    "components/scene/SceneSession.tsx has no chip for a turn nothing could be said for",
+    "components/scene/SceneSession.tsx has no label for a turn nothing could be said for",
   );
   assert.doesNotMatch(
     session, /unspoken: "They did not catch/,
-    "an unspoken turn is chipped as a turn nobody understood, which is the bug this fixed",
+    "an unspoken turn is labelled as a turn nobody understood, which is the bug this fixed",
+  );
+  assert.match(
+    session, /lines\.map\(/,
+    "the scene screen reads one line per reply again; a reply is a reaction and then a move",
   );
 });
 
