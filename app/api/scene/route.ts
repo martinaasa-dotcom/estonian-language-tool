@@ -183,6 +183,7 @@ export async function POST(request: Request) {
     card: draw?.card ?? null,
     translates: persona?.translates ?? false,
     acknowledges: persona?.acknowledges ?? true,
+    echo: last?.matched?.[0] ?? null,
     met: state.done.length,
   });
   const answer = (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>

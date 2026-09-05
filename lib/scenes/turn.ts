@@ -71,6 +71,14 @@ export interface Evidence {
   readonly missing: readonly number[];
   /** Every word of the turn, marked. The debrief prints this. */
   readonly words: readonly TurnWord[];
+  /**
+   * The words that satisfied a requirement, in the order the beat asked, and
+   * only where a requirement is about a word: a form of a lemma, a case, a
+   * value off the card. What the other side repeats back ("Poodi.") is one of
+   * these, which is what keeps the repeat the learner's own word rather than
+   * anything this module chose.
+   */
+  readonly matched: readonly string[];
 }
 
 /**
@@ -172,9 +180,22 @@ export function readTurn(
     vouched: context.lexicon.forms.has(word),
   }));
 
-  const met = beat.needs.map((need) => satisfies(need, text, spoken, context));
+  const found = beat.needs.map((need) => satisfies(need, text, spoken, context));
+  const met = found.map((hit) => hit !== null);
   const missing = met.flatMap((ok, i) => (ok ? [] : [i]));
-  const shape = (reading: TurnReading): Evidence => ({ reading, met, missing, words: marked });
+  /*
+    What is worth repeating back: a case form, a value off the card, and a
+    word that answered a one-word question. A word out of a sentence is not,
+    since `Ma tahan maksta` met the bill beat on `maksta` and "Maksta." is
+    not a thing a waiter says.
+  */
+  const matched = found.flatMap((hit, i) => {
+    const need = beat.needs[i];
+    if (!hit || hit === YES || !need) return [];
+    if (need.kind === "lemma" && beat.shape !== "word") return [];
+    return [hit];
+  });
+  const shape = (reading: TurnReading): Evidence => ({ reading, met, missing, words: marked, matched });
 
   if (spoken.length === 0) return shape("unrecognised");
   if (isEnglish(spoken, marked)) return shape("english");
@@ -208,21 +229,33 @@ export function readTurn(
   return shape(vouched >= marked.length * VOUCHED_SHARE ? "offtarget" : "unrecognised");
 }
 
-/** Whether one requirement is met. Every branch is a comparison against the dictionary. */
+/** A requirement met by something other than a word: a question mark, small talk. */
+const YES = "\u0001";
+
+/**
+ * Whether one requirement is met, and by which word. Every branch is a
+ * comparison against the dictionary. Null is not met; `YES` is met by
+ * something that is not a word to repeat back.
+ */
 function satisfies(
   need: Requirement,
   text: string,
   spoken: readonly string[],
   context: TurnContext,
-): boolean {
-  const has = (forms: ReadonlySet<string> | undefined) =>
-    forms !== undefined && spoken.some((word) => forms.has(word));
+): string | null {
+  const has = (forms: ReadonlySet<string> | undefined): string | null =>
+    forms === undefined ? null : spoken.find((word) => forms.has(word)) ?? null;
 
   switch (need.kind) {
     case "any":
-      return true;
-    case "lemma":
-      return need.oneOf.some((lemma) => has(context.lexicon.byLemma.get(lemma)));
+      return YES;
+    case "lemma": {
+      for (const lemma of need.oneOf) {
+        const hit = has(context.lexicon.byLemma.get(lemma));
+        if (hit) return hit;
+      }
+      return null;
+    }
     case "case":
       return has(context.lexicon.byCase.get(caseKeyFor(need.lemma, need.grammCase)));
     /*
@@ -235,10 +268,11 @@ function satisfies(
     */
     case "datum": {
       const accepted = context.data.get(need.slot);
-      if (!accepted) return false;
-      if (has(accepted)) return true;
+      if (!accepted) return null;
+      const hit = has(accepted);
+      if (hit) return hit;
       const lower = text.toLowerCase().replace(/\s+/g, " ");
-      return [...accepted].some((value) => (/\d|\s/.test(value)) && lower.includes(value));
+      return [...accepted].find((value) => (/\d|\s/.test(value)) && lower.includes(value)) ?? null;
     }
     /*
       A question mark or a question word, and the mark counts on its own,
@@ -248,11 +282,11 @@ function satisfies(
       they ask a question" was not a question the dictionary could answer.
     */
     case "question":
-      return text.includes("?") || has(context.questionWords);
+      return text.includes("?") || has(context.questionWords) ? YES : null;
     case "negation":
-      return has(context.negators);
+      return has(context.negators) ? YES : null;
     case "register":
-      return has(context.registerForms);
+      return has(context.registerForms) ? YES : null;
   }
 }
 

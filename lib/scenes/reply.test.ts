@@ -27,7 +27,7 @@ const NOTHING = fallbackLine(FALLBACK_PHRASE);
 function input(over: Partial<ReplyInput> = {}): ReplyInput {
   return {
     beat: ASK, answered: GREET, response: "answer", reading: "complete",
-    line: FRESH, heard: "Tere!", card: CARD, translates: false, acknowledges: true, met: 1, hurdle: null,
+    line: FRESH, heard: "Tere!", card: CARD, translates: false, acknowledges: true, met: 1, hurdle: null, echo: null,
     ...over,
   };
 }
@@ -64,6 +64,16 @@ describe("a turn that landed", () => {
 
   it("is not acknowledged by a persona who does not, and the move still comes", () => {
     expect(replyFor(input({ answered: ASK, acknowledges: false }))).toEqual([FRESH]);
+  });
+
+  it("repeats the learner's own word back before moving on, and never a number", () => {
+    const lines = replyFor(input({ answered: ASK, echo: "poodi" }));
+    expect(lines[0]).toMatchObject({ text: "Poodi.", reaction: true });
+    expect(lines[1]).toEqual(FRESH);
+    const numeric = replyFor(input({ answered: ASK, echo: "13:30" }));
+    expect(numeric[0]?.text).not.toMatch(/\d/);
+    const yes = replyFor(input({ answered: ASK, echo: "jah" }));
+    expect(yes[0]?.text).not.toBe("Jah.");
   });
 
   it("owes nothing once the scene is over", () => {

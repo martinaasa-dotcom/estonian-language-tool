@@ -3796,7 +3796,9 @@ drafted, because the free models wrote nothing usable: every one went through th
 and the same refusals the drafter applies, is marked `authored`, and is `reviewed: false` until a
 native speaker reads it. Two of the checks were corrected on the way, since the government check
 was refusing `Kust sa tuled?` and `See aeg ei sobi enam`, which are what people say.
-`docs/21-situations.md` §32 has the table and what it does not fix.
+The other side repeats the learner's own word back before moving on, off `Evidence.matched`, and
+every line is spoken in the persona's voice. Seven scenes, and all seven play keyless from the
+first line to the debrief. `docs/21-situations.md` §32 has the table and what it does not fix.
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among

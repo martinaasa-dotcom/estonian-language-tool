@@ -71,6 +71,14 @@ export interface ReplyInput {
     /** The curveball's own English line, where it is one (they switched to English). */
     readonly said?: string;
   } | null;
+  /**
+   * The learner's own word that met the beat, to be repeated back: "Poodi."
+   * before the next question is what a person on the phone does, and it is
+   * the learner's word, vouched by the dictionary as the form the beat asked
+   * for, so nothing here chose it. Null where the beat was met by something
+   * that is not a word (a question, a no) or where nothing was met.
+   */
+  readonly echo: string | null;
   /** How many beats have been met, which is what rotates the acknowledgement. */
   readonly met: number;
   /**
@@ -147,9 +155,23 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     does not come back six times. Not after a greeting, since the greeting is
     answered by the next line, and not once the scene is over.
   */
-  if (response === "answer" && answered && answered.move !== "greet" && beat && input.acknowledges) {
-    const choices = REACTIONS.acknowledge;
-    out.push(reaction(choices[input.met % choices.length] ?? choices[0], "."));
+  if (response === "answer" && answered && answered.move !== "greet" && beat) {
+    /*
+      Never a number, which the confirm beat reads back in its own line, and
+      never yes or no: "Jah." repeated back after "Jah, piimaga" is the
+      machine showing through.
+    */
+    const flat = new Set<string>([...REACTIONS.acknowledge, ...REACTIONS.waiting, "ei"]);
+    const echo = input.echo && !/\d/.test(input.echo) && !flat.has(input.echo) ? input.echo : null;
+    if (echo) {
+      out.push({
+        text: echo.charAt(0).toUpperCase() + echo.slice(1) + ".",
+        provenance: "again", reaction: true,
+      });
+    } else if (input.acknowledges) {
+      const choices = REACTIONS.acknowledge;
+      out.push(reaction(choices[input.met % choices.length] ?? choices[0], "."));
+    }
   }
 
   if (response === "moveOn") out.push(stage("They let it go, and move on."));

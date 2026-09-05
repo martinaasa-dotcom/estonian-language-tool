@@ -54,24 +54,19 @@ export interface ScriptedLine {
   readonly reviewed: boolean;
 }
 
-/** The prop kinds whose value is drawn per run, and so cannot be in a line drafted before it. */
-const DRAWN_PER_RUN = new Set(["time", "number", "code"]);
-
-/** Whether a beat's line could be written before the run it is said in. */
-export function scriptable(scene: SceneSpec, beat: BeatSpec): boolean {
-  const perRun = new Set(
-    scene.props.filter((prop) => DRAWN_PER_RUN.has(prop.kind)).map((prop) => prop.slot),
-  );
-  /*
-    Two ways a beat's line has to be about this run: it waits on a per-run
-    datum, or its own stage direction names one. The second was found in the
-    bank rather than reasoned out: the doctor's `confirm` beat needs nothing
-    off the card, so it was scriptable, and what a model drafted for "they
-    read the time back" was `Kas see on neljapäev?`, a weekday nobody had been
-    dealt, said with a chip under it calling it checked word by word.
-  */
-  if (/\{\w+\}/.test(beat.they)) return false;
-  return !beat.needs.some((need) => need.kind === "datum" && perRun.has(need.slot));
+/**
+ * Whether a beat's line could be written before the run it is said in.
+ *
+ * A line that names a value the card dealt cannot be, and the beat's own
+ * stage direction is what says so: "They offer you an appointment at {time}"
+ * carries a slot, so its line has to be composed against this run's card or
+ * said off it (`datumLine`). A beat that merely *asks* for such a value is
+ * fine: "Mis kell?" at a ticket window is the same line whatever the card
+ * says, and the first rule here refused it for waiting on a datum, which
+ * left the ticket seller unable to ask the time keyless.
+ */
+export function scriptable(_scene: SceneSpec, beat: BeatSpec): boolean {
+  return !/\{\w+\}/.test(beat.they);
 }
 
 /** The drafted lines for one beat, in the bank's order. Empty where there are none. */

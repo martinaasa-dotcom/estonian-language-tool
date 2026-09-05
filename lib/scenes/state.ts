@@ -45,6 +45,8 @@ export interface TurnRecord {
   readonly reading: TurnReading;
   /** Which of the beat's requirements this turn met. */
   readonly met: readonly boolean[];
+  /** The words that met them, for the other side to repeat back. Absent on a row written before it was kept. */
+  readonly matched?: readonly string[];
   /** Whether the app had to supply a word for this beat before it was met. */
   readonly helped: boolean;
 }
@@ -145,6 +147,7 @@ export function advance(
     met: evidence.met,
     helped,
     ...(heard ? { heard } : {}),
+    ...(evidence.matched.length > 0 ? { matched: evidence.matched } : {}),
   }];
 
   if (advances(evidence.reading)) {

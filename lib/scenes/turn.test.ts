@@ -190,3 +190,14 @@ describe("reading a turn", () => {
     expect(advances("complete")).toBe(true);
   });
 });
+
+describe("what was matched", () => {
+  it("names the learner's own word that met a requirement, and nothing for a question", () => {
+    const seen = readTurn("valu", beat(), context());
+    expect(seen.matched).toEqual(["valu"]);
+    // A word out of a sentence is not repeated back: "Maksta." is not a thing a waiter says.
+    expect(readTurn("Mul on valu", beat({ shape: "sentence" }), context()).matched).toEqual([]);
+    const asked = readTurn("Kui kaua?", beat({ needs: [{ kind: "question" }] }), context());
+    expect(asked.matched).toEqual([]);
+  });
+});

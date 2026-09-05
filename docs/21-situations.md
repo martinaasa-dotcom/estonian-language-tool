@@ -1877,6 +1877,28 @@ is refused now. And five units joined the scenes' word lists so the curveballs h
 with: the weather for small talk, `rääkima` and `ütlema`, the documents unit for a health centre
 and a landlord that ask for papers, and shopping for a landlord and a counter that name a price.
 
+### The third pass: the other side repeats what it heard, speaks, and there are seven scenes
+
+Three more things, each driven in a browser before it was kept.
+
+- **They repeat your word back.** `Evidence.matched` carries the learner's own words that met a
+  requirement, and the reaction to a turn that landed is that word with a full stop: `Pank.` before
+  "Minge otse edasi", `Poodi.` before the next call. It is the learner's form, vouched by the
+  dictionary as the one the beat asked for, so nothing here chose it; a value with a digit in it is
+  never repeated, since the confirm beat reads the time back in its own line. Where nothing was a
+  word, the acknowledgement rotates as before.
+- **The lines are spoken.** §6 promised every line in the persona's voice and the session never
+  played one. Each Estonian bubble carries the app's own speaker button in the run's voice, and the
+  newest line plays itself where the learner has autoplay on, since a turn was just pressed and
+  the gesture the browser wants has happened.
+- **Three more scenes**: ordering a coffee (`kohvikus`, A1), asking the way (`tee-kusimine`, A2)
+  and buying a bus ticket (`bussipilet`, A1). Each is a claim a unit already makes, each deals a
+  word off the card the learner has to produce, and each shipped with its lines and its curveballs'
+  lines written and checked the way the last section describes, so all seven play keyless from the
+  first line to the debrief. `scriptable` was corrected on the way: it refused any beat that waits
+  on a per-run value, which took "Mis kell?" away from the ticket seller, and what actually cannot
+  be drafted is a line that *names* the value, which the stage direction says with a slot.
+
 ### What this does not fix
 
 Every row a person typed is `reviewed: false` and should be read by a native speaker, which is

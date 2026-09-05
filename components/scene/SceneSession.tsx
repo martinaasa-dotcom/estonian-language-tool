@@ -7,6 +7,7 @@ import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Card } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
+import { Speak } from "@/components/Speak";
 import { beginScene, finishScene, sceneHelp } from "@/app/actions";
 import type { SceneSpec } from "@/lib/scenes/types";
 import type { Difficulty } from "@/lib/scenes/curveballs";
@@ -120,6 +121,8 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   const [done, setDone] = useState<string[]>([]);
   const [used, setUsed] = useState<string[]>([]);
   const [heard, setHeard] = useState<string>("");
+  /** Whose voice the other side speaks in, off the run's persona. */
+  const [voice, setVoice] = useState<string | undefined>(undefined);
   const [asked, setAsked] = useState<{ lemma: string; lexemeId: string | null }[]>([]);
   const [helped, setHelped] = useState(false);
   const [draft, setDraft] = useState("");
@@ -185,7 +188,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         return;
       }
       const data = await response.json() as {
-        lines?: Line[];
+        lines?: Line[]; voice?: string;
         beatId?: string | null; goal?: string | null; done?: string[];
         over?: boolean; error?: string;
         composed?: boolean; note?: string | null;
@@ -195,6 +198,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
 
       setBeatId(data.beatId ?? null);
       setGoal(data.goal ?? null);
+      if (data.voice) setVoice(data.voice);
       setDone(data.done ?? []);
       const lines = data.lines ?? [];
       if (lines.length > 0) {
@@ -293,7 +297,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       graded: result.graded,
       turns: turns.flatMap((turn): Debrief["turns"][number][] => {
         if (turn.who === "you") return [{ who: "you", text: turn.text }];
-        const said = turn.lines.filter(spokenEstonian).map((line) => line.text).join(" ");
+        const said = turn.lines.filter(spoken).map((line) => line.text).join(" ");
         return said ? [{ who: "them", text: said }] : [];
       }),
     });
@@ -446,7 +450,26 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                 spoken(line) ? (
                   <div key={at} className="max-w-full">
                     <Card className="inline-block max-w-full">
-                      <p lang={spokenEstonian(line) ? "et" : "en"}>{line.text}</p>
+                      <p lang={spokenEstonian(line) ? "et" : "en"} className="flex items-center gap-2">
+                        <span>{line.text}</span>
+                        {/*
+                          Spoken in the persona's voice (§6), and the newest
+                          line plays itself where the learner has autoplay on:
+                          a turn was just pressed, so the gesture the browser
+                          wants has happened. A second persona in a scene
+                          would be a second voice, which is how an
+                          interruption reads as a second person.
+                        */}
+                        {spokenEstonian(line) && (
+                          <Speak
+                            text={line.text}
+                            voice={voice}
+                            size={14}
+                            autoplay={index === turns.length - 1 && at === turn.lines.length - 1}
+                            className="press inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-[var(--raised)]"
+                          />
+                        )}
+                      </p>
                     </Card>
                     {/*
                       Where the line came from, in words rather than a chip

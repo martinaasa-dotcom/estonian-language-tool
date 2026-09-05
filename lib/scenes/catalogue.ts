@@ -644,7 +644,281 @@ const SHOP: SceneSpec = {
   ],
 };
 
-export const SCENES: readonly SceneSpec[] = [SHOP, DOCTOR, LANDLORD, COUNTER];
+/*
+  THREE MORE, AND WHAT THEY HAVE IN COMMON. Each is a counter a learner in
+  Estonia meets in their first month, each is a claim a unit already makes,
+  and each was written after the reply module rather than before it, so its
+  beats are shaped by what the other side can now do: repeat a word back, say
+  a price or a time off the card, and stand a curveball in the way. The words
+  are requests against the units, as everywhere in this file.
+*/
+const CAFE: SceneSpec = {
+  id: "kohvikus",
+  title: "Ordering a coffee",
+  place: "The counter of a small café",
+  level: "A1",
+  tests: "sook-ja-jook",
+  /*
+    `restoranis` for `arve` and `tellima`, which is how the bill is asked for
+    and the order taken; `kus-ja-kuhu` for the café itself; `omadussonad` for
+    "large" and "hot".
+  */
+  units: [...COMMON, "sook-ja-jook", "ostmine", "kus-ja-kuhu", "restoranis", "omadussonad"],
+  register: "teie",
+  role: "You have ten minutes before a bus and you would like something to drink. The card says what.",
+  props: [
+    {
+      kind: "word", slot: "drink", oneOf: ["kohv", "tee", "vesi", "mahl"],
+      says: "What you would like. Ask for it in Estonian.",
+    },
+  ],
+  curveballs: ["not-possible", "wrong-price", "small-talk", "faster", "queue", "english", "interrupted"],
+  beats: [
+    {
+      id: "greet",
+      goal: "Say hello.",
+      they: "The person behind the counter says hello.",
+      move: "greet",
+      topic: [...HELLOS],
+      needs: [{ kind: "lemma", oneOf: [...HELLOS] }],
+      required: true,
+      patience: 2,
+      shape: "word",
+    },
+    {
+      id: "order",
+      goal: "Say what you would like.",
+      they: "They ask what you would like.",
+      move: "ask",
+      topic: ["kohv", "tee", "jook", "soovima", "tellima"],
+      needs: [{ kind: "datum", slot: "drink" }],
+      required: true,
+      patience: 3,
+      shape: "word",
+    },
+    {
+      id: "milk",
+      goal: "Say whether you want milk in it.",
+      they: "They ask whether you want milk in it.",
+      move: "ask",
+      topic: ["piim", "suhkur", "kohv"],
+      needs: [{ kind: "lemma", oneOf: ["jah", "ei", "piim", "suhkur"] }],
+      required: true,
+      patience: 2,
+      shape: "word",
+    },
+    {
+      id: "bill",
+      goal: "Ask to pay.",
+      they: "They set it down and ask whether that is everything.",
+      move: "ask",
+      topic: ["arve", "maksma", "raha", "hind"],
+      needs: [{ kind: "lemma", oneOf: ["arve", "maksma", "raha"] }],
+      required: true,
+      patience: 2,
+      shape: "sentence",
+    },
+    {
+      id: "close",
+      goal: "Say thank you, and goodbye.",
+      they: "They say goodbye.",
+      move: "close",
+      topic: [...FAREWELLS],
+      needs: [{ kind: "lemma", oneOf: [...FAREWELLS] }],
+      required: true,
+      patience: 1,
+      shape: "word",
+    },
+  ],
+  outcomes: [
+    { id: "served", when: ["greet", "order", "milk", "bill", "close"], says: "You have your drink, you paid, and you made the bus." },
+    { id: "served-quiet", when: ["order", "bill"], says: "You have your drink and you paid. Not much was said, and that is fine in a café." },
+    { id: "out", when: ["greet", "order"], says: "They were out of it today. You said what you wanted, and that was the part that was yours." },
+    { id: "left", when: [], says: "You left without ordering. The bus was coming anyway." },
+  ],
+};
+
+const DIRECTIONS: SceneSpec = {
+  id: "tee-kusimine",
+  title: "Asking the way",
+  place: "A street corner, with somebody who looks local",
+  level: "A2",
+  tests: "kus-ja-kuhu",
+  /*
+    `kohasonad` for `lähedal` and `kõrval`, `korraldused` for `aitama`, which
+    is how a stranger offers to help, and `reisimine` for `leidma` and
+    `kõndima`. The place on the card is a `word` prop, so the learner has to
+    produce it, in the case the question wants.
+  */
+  units: [...COMMON, "kus-ja-kuhu", "ostmine", "kohasonad", "korraldused", "reisimine", "linn-ja-teenused", "omadussonad"],
+  register: "teie",
+  role: "You are new in town and looking for somewhere. The card says where. You stop somebody on the street.",
+  props: [
+    {
+      kind: "word", slot: "place", oneOf: ["kohvik", "pank", "haigla", "jaam", "hotell", "turg"],
+      says: "Where you are trying to get to.",
+    },
+  ],
+  curveballs: ["faster", "small-talk", "english", "place-instruction", "not-possible", "interrupted"],
+  beats: [
+    {
+      id: "greet",
+      goal: "Say hello, or excuse yourself.",
+      they: "They stop, and say hello.",
+      move: "greet",
+      topic: [...HELLOS, "Vabandust!"],
+      needs: [{ kind: "lemma", oneOf: [...HELLOS, "Vabandust!"] }],
+      required: true,
+      patience: 2,
+      shape: "word",
+    },
+    {
+      id: "where",
+      goal: "Ask where the place on your card is.",
+      they: "They wait for your question.",
+      move: "ask",
+      topic: ["aitama", "otsima", "koht"],
+      needs: [{ kind: "question" }, { kind: "datum", slot: "place" }],
+      required: true,
+      patience: 3,
+      shape: "sentence",
+    },
+    {
+      id: "way",
+      goal: "Say the directions back, or say thank you.",
+      they: "They tell you the way: straight on, then left.",
+      move: "instruct",
+      topic: ["otse", "vasak", "vasakul", "paremal", "edasi", "kõrval"],
+      needs: [{ kind: "lemma", oneOf: ["otse", "vasak", "vasakul", "paremal", "edasi", "Aitäh!", "aitäh"] }],
+      required: true,
+      patience: 2,
+      shape: "word",
+    },
+    {
+      id: "far",
+      goal: "Ask whether it is near.",
+      they: "They wait in case you have another question.",
+      move: "confirm",
+      topic: ["lähedal", "kõndima", "minut"],
+      needs: [{ kind: "question" }],
+      required: false,
+      patience: 1,
+      shape: "sentence",
+    },
+    {
+      id: "close",
+      goal: "Say thank you, and goodbye.",
+      they: "They wish you luck and go on their way.",
+      move: "close",
+      topic: [...FAREWELLS],
+      needs: [{ kind: "lemma", oneOf: [...FAREWELLS] }],
+      required: true,
+      patience: 1,
+      shape: "word",
+    },
+  ],
+  outcomes: [
+    { id: "found", when: ["greet", "where", "way", "close"], says: "You know the way, and you thanked them for it." },
+    { id: "half", when: ["greet", "where"], says: "They told you the way. Whether you caught it is another matter." },
+    { id: "lost", when: ["greet"], says: "They did not know the place either. That happens, and it was not your Estonian." },
+    { id: "left", when: [], says: "You walked on. Somebody else will know." },
+  ],
+};
+
+const TICKET: SceneSpec = {
+  id: "bussipilet",
+  title: "Buying a bus ticket",
+  place: "The ticket window at the bus station",
+  level: "A1",
+  tests: "reisimine",
+  units: [...COMMON, "ostmine", "reisimine", "kus-ja-kuhu", "omadussonad"],
+  register: "teie",
+  role: "You need a bus ticket. The card says where to and when. You are at the window.",
+  props: [
+    {
+      kind: "word", slot: "to", oneOf: ["kesklinn", "jaam", "haigla", "ülikool", "rand"],
+      says: "Where you are going.",
+    },
+    { kind: "time", slot: "time", from: 8, to: 20 },
+  ],
+  curveballs: ["wrong-price", "queue", "faster", "english", "not-possible", "slot-gone", "small-talk"],
+  beats: [
+    {
+      id: "greet",
+      goal: "Say hello.",
+      they: "The person at the window says hello.",
+      move: "greet",
+      topic: [...HELLOS],
+      needs: [{ kind: "lemma", oneOf: [...HELLOS] }],
+      required: true,
+      patience: 2,
+      shape: "word",
+    },
+    {
+      id: "want",
+      goal: "Say you want a ticket.",
+      they: "They ask what you need.",
+      move: "ask",
+      topic: ["pilet", "soovima", "ostma"],
+      needs: [{ kind: "lemma", oneOf: ["pilet"] }],
+      required: true,
+      patience: 3,
+      shape: "word",
+    },
+    {
+      id: "to",
+      goal: "Say where to.",
+      they: "They ask where you are going.",
+      move: "ask",
+      topic: ["kuhu", "sõitma", "buss"],
+      needs: [{ kind: "datum", slot: "to" }],
+      required: true,
+      patience: 3,
+      shape: "word",
+    },
+    {
+      id: "when",
+      goal: "Say what time. Your card has it.",
+      they: "They ask what time.",
+      move: "ask",
+      topic: ["kell", "aeg", "buss"],
+      needs: [{ kind: "datum", slot: "time" }],
+      required: true,
+      patience: 2,
+      shape: "word",
+    },
+    {
+      id: "pay",
+      goal: "Say how you will pay, or just say yes.",
+      they: "They ask whether you are paying by card.",
+      move: "ask",
+      topic: ["maksma", "kaart", "raha"],
+      needs: [{ kind: "lemma", oneOf: ["kaart", "raha", "jah", "ei", "maksma"] }],
+      required: true,
+      patience: 2,
+      shape: "word",
+    },
+    {
+      id: "close",
+      goal: "Say thank you, and goodbye.",
+      they: "They hand you the ticket and say goodbye.",
+      move: "close",
+      topic: [...FAREWELLS],
+      needs: [{ kind: "lemma", oneOf: [...FAREWELLS] }],
+      required: true,
+      patience: 1,
+      shape: "word",
+    },
+  ],
+  outcomes: [
+    { id: "ticket", when: ["greet", "want", "to", "when", "pay", "close"], says: "You have a ticket, for the right bus, and you paid for it." },
+    { id: "ticket-thin", when: ["want", "to", "pay"], says: "You have a ticket. They guessed the time, so check it before you board." },
+    { id: "no-bus", when: ["greet", "want", "to"], says: "There is no bus there today. That is the timetable, not your Estonian." },
+    { id: "left", when: [], says: "You stepped away from the window. The next bus is in an hour." },
+  ],
+};
+
+export const SCENES: readonly SceneSpec[] = [SHOP, DOCTOR, LANDLORD, COUNTER, CAFE, DIRECTIONS, TICKET];
 
 export function sceneById(id: string): SceneSpec | undefined {
   return SCENES.find((s) => s.id === id);

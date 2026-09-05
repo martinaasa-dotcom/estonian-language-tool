@@ -48,6 +48,7 @@ function evidence(reading: TurnReading, met: readonly boolean[] = [true]): Evide
     reading, met,
     missing: met.flatMap((ok, i) => (ok ? [] : [i])),
     words: [],
+    matched: [],
   };
 }
 
