@@ -24,8 +24,9 @@
  *
  * `COURSE`, `FREQUENCY` and `SCENE` are material this app chose: a unit, one of
  * the four commonest-word lists, a situation. `LOOKUP`, `MANUAL`, `TUTOR`,
- * `IMPORT`, `SCAN` and `ALMANAC` are words the learner went and got, one at a
- * time, off an entry, a photograph, a pasted list, Anu or the word of the day.
+ * `IMPORT`, `SCAN`, `ALMANAC` and `SENTENCE` are words the learner went and
+ * got, one at a time, off an entry, a photograph, a pasted list, Anu, the word
+ * of the day, or a word they hit inside the sentence a card was teaching with.
  *
  * `DICTIONARY` is neither and is claimed by nothing. Every card written before
  * this carries it, and a card written before this really could be either, so
@@ -52,6 +53,7 @@ export const CARD_SOURCES = [
   "IMPORT",
   "SCAN",
   "ALMANAC",
+  "SENTENCE",
   "DICTIONARY",
 ] as const;
 
@@ -70,9 +72,17 @@ export const DEFAULT_SOURCE: CardSource = "MANUAL";
  * `SCENE` is deliberately absent. A scene names unit ids and its words are the
  * course's, so a card that arrived through one is material this app chose, in
  * the same way a unit is. `DICTIONARY` is absent for the reason in the header.
+ *
+ * `SENTENCE` is present, and the sentence being the app's choice is not the
+ * question. A first meeting shows an attested sentence and the dictionary
+ * under every word in it; the learner reads the line, hits one word they do
+ * not have, and presses a button about that word. That is the same act as
+ * keeping the word of the day, which the app also chose and which is on this
+ * list: what makes a word theirs is that they stopped and went and got it, one
+ * at a time, rather than which screen it was sitting on.
  */
 export const YOUR_OWN_SOURCES = [
-  "LOOKUP", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC",
+  "LOOKUP", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC", "SENTENCE",
 ] as const satisfies readonly CardSource[];
 
 const KNOWN = new Set<string>(CARD_SOURCES);

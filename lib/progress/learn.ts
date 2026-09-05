@@ -5,7 +5,9 @@ import type { Level } from "@/lib/collections/syllabus";
 import { unitIntroducing } from "@/lib/collections/syllabus";
 import { decoyOptions } from "@/lib/dict/facts";
 import { parseExamples, teachingSentence, usableExamples } from "@/lib/dict/examples";
+import { glossSentences, type GlossedToken } from "@/lib/dict/glossed";
 import { isPhrase } from "@/lib/dict/pos";
+import { resolveProvider } from "@/lib/tutor/provider";
 import { buildCloze, mentions } from "@/lib/estonian/cloze";
 import { gapForms } from "@/lib/estonian/gapForms";
 import {
@@ -101,6 +103,17 @@ export interface LearnWord {
   isPhrase: boolean;
   /** An attested sentence, and which form of the word it carries. */
   sentence: { et: string; en: string | null; form: string | null } | null;
+  /**
+   * That sentence with the dictionary under every word it will vouch for.
+   *
+   * The meet rung is the one screen whose whole job is a word doing something,
+   * and Ekilex records no English for most usages, so it was a line of Estonian
+   * a beginner could read one word of. Null where the batch did not look. See
+   * `lib/dict/glossed.ts`.
+   */
+  tokens: GlossedToken[] | null;
+  /** Whether this deployment has a model to ask for the whole line in English. */
+  canTranslate: boolean;
   /**
    * The same sentence with the word taken out of it.
    *
@@ -276,12 +289,34 @@ export async function learnBatch(
       equivalent: equivalent ? { text: equivalent, lang: glossLanguage } : null,
       isPhrase: isPhrase(lexeme.pos),
       sentence,
+      // Filled below, in one read for the whole batch rather than one a word.
+      tokens: null as GlossedToken[] | null,
+      canTranslate: resolveProvider() !== null,
       gap,
       choices: picked ? picked.options : null,
       rung: rungOf(row.state, row.learningSteps),
       scheduling: schedulingOf(row),
     } satisfies LearnWord;
   });
+
+  /*
+    THE DICTIONARY UNDER EVERY SENTENCE IN THE BATCH, IN ONE READ.
+
+    A loop of lookups is a round trip each and this is five words, so it is one
+    query. Nothing is written and nothing is proposed: `matchEstonianForm`
+    vouches for a word or it is printed plain (ADR-021).
+  */
+  const glossable: { index: number; et: string; form: string | null }[] = [];
+  words.forEach((word, index) => {
+    if (word.sentence) glossable.push({ index, et: word.sentence.et, form: word.sentence.form });
+  });
+  if (glossable.length > 0) {
+    const glossed = await glossSentences(glossable);
+    glossable.forEach((w, i) => {
+      const word = words[w.index];
+      if (word) word.tokens = glossed[i] ?? null;
+    });
+  }
 
   return orderByRung(words, (word) => word.rung);
 }
