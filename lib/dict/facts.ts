@@ -223,17 +223,6 @@ export async function courseForms(): Promise<ReadonlySet<string>> {
 }
 
 /**
- * How many entries the dictionary holds.
- *
- * Read off the rows above rather than as a `count(*)`, which on the badge
- * check meant a whole-table aggregate on every load of Today to decide
- * whether a "the dictionary has a thousand words" badge had been earned.
- */
-export async function dictionarySize(): Promise<number> {
-  return (await gradedLemmas()).length;
-}
-
-/**
  * How many entries the dictionary has at each band.
  *
  * Tallied from the rows above rather than asked for as a `groupBy`, which is

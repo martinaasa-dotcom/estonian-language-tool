@@ -78,7 +78,3 @@ export async function readableHeadlines(limit = 3): Promise<ReadableHeadline[]> 
   return result.slice(0, limit);
 }
 
-/** Forgets what the dictionary made of the last front page. For tests. */
-export function resetHeadlineCache(): void {
-  memo = null;
-}

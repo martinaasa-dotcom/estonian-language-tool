@@ -104,7 +104,3 @@ export function plainAskLine(slot: string): string | null {
   return clause ? `How do you say this ${clause}?` : null;
 }
 
-/** Every slot that has a plain reading. Exported for the checks that count them. */
-export function slotsWithPlainAsk(): readonly string[] {
-  return Object.keys(CLAUSES);
-}

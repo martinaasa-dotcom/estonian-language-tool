@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AudioLines, Coffee, Ear, EarOff, Music, VolumeX } from "lucide-react";
 import { setAutoplay, setFeedbackSounds, setHearing, setVoice } from "@/app/actions";
-import { CONDITIONS, type Hearing } from "@/lib/audio/conditions";
+import { CONDITIONS, removesWords, type Hearing } from "@/lib/audio/conditions";
 import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { Speak } from "@/components/Speak";
 import { playFeedback } from "@/lib/audio/feedback";
@@ -160,7 +160,18 @@ const HEARING: { value: Hearing; label: string; detail: string; icon: typeof Cof
   {
     value: "on",
     label: "The way people talk",
-    detail: `A word you know well comes back ${CONDITIONS.slice(1).map((c) => c.said).join(", ")}. A new one is always clear.`,
+    /*
+      The conditions the rounds this describes can actually produce. It read
+      `CONDITIONS.slice(1)`, which includes "from halfway through", and that one
+      removes words: `openConditions` refuses it unless the caller says it may
+      skip, and listening and dictation both pass `false`, because a word you
+      cannot hear the start of is a different exercise. Only the scene
+      conversation opens it. So the sentence promised the learner a delivery
+      the two rounds it is about will never use.
+    */
+    detail: `A word you know well comes back ${
+      CONDITIONS.slice(1).filter((c) => !removesWords(c)).map((c) => c.said).join(", ")
+    }. A new one is always clear.`,
     icon: Coffee,
   },
   {
