@@ -422,9 +422,30 @@ function rank(c: Candidate, raw: string, folded: string): { score: number; match
     }
   }
 
-  // Nominative plural is the one regular plural: genitive singular + d.
-  const genForPlural = c.forms.find((f) => f.formType === "GEN_SG")?.value;
-  if (genForPlural && folded === fold(genForPlural) + "d") {
+  /*
+    THE NOMINATIVE PLURAL IS ATTESTED OR NOTHING, WHICH IS THE RULE ONE FILE
+    OVER AND WAS NOT THE RULE HERE.
+
+    This derived it as the genitive singular plus `d`, which `lib/estonian/
+    derive.ts` deleted and says why: it is wrong for every pronoun and invents
+    a plural for words that have none. `see` gives `selled` where the word is
+    `need`, `too` gives `tolled` for `nood`, and `kes`, `mis`, `kõik` and `ise`
+    do not change at all. Six of the course's own words, and the first ones
+    anybody learns.
+
+    Being here rather than in `derive.ts` made it worse in two ways. The score
+    is `VOUCHED_SCORE`, so `matchEstonianForm` vouched for `selled` on a
+    photographed page, in a headline, in the chat guard and in the scene
+    importer, all of which exist to refuse anything the dictionary cannot
+    attest; and the branch fired even where the entry stores the real plural,
+    so a derivation overruled an attested form, which is the reverse of
+    `caseAnswer`'s whole ordering. The invariant that forbids joining a case
+    suffix to a stem could not see it, because it is anchored on `.suffix`.
+
+    A stored `NOM_PL` is matched instead, like any other stored form.
+  */
+  const nomPl = c.forms.find((f) => f.formType === "NOM_PL")?.value;
+  if (nomPl && folded === fold(nomPl)) {
     return { score: 85, matchedAs: `mitmuse nimetav (nominative plural) of ${c.lemma}` };
   }
 
@@ -477,8 +498,34 @@ export interface FormMatch {
  * vaguer is not a match: `tuba` must not quietly become `tubli` because the
  * two share three letters.
  *
+ * AN ENTRY A MODEL SUGGESTED VOUCHES FOR NOTHING, INCLUDING ITSELF.
+ *
+ * `createLexeme` writes a shared row from Anu's vocabulary bridge with
+ * `provenance: "AI"` and no forms, marked so on the entry because nobody has
+ * checked it. An exact headword scores 100, above any stored form, so such a
+ * row won every one of these matches. `lib/dict/glossed.ts` found that first
+ * and filtered it there, over `veeta`; the filter belonged here, because the
+ * other four callers are the ones that matter most. The chat guard is the
+ * sharpest of them: it decides whether Anu's own Estonian is verified by
+ * asking the dictionary, which holds the words Anu suggested, so the word the
+ * guard exists to flag was the word that cleared it. A headline offered the
+ * model's lemma as the dictionary's own headword, and a photographed page
+ * resolved to a formless row and built cards from it.
+ *
+ * Inside the function rather than in its callers, for the reason the ledger's
+ * meter lives inside `ask()`: the next caller inherits it by reaching for the
+ * function. The tag goes away by itself the moment Ekilex answers, which is
+ * what the `AI · verify` chip is asking for.
+ *
  * Pure, like `rankCandidates`, so the boundary can be tested over fixtures.
  */
+export function vouchable(candidate: Candidate): boolean {
+  if (candidate.provenance === "AI") return false;
+  return candidate.forms.length > 0
+    || candidate.provenance === "SEED"
+    || candidate.provenance === "EKILEX";
+}
+
 export function matchEstonianForm(candidates: Candidate[], word: string): FormMatch | null {
   const raw = word.trim();
   if (!raw) return null;
@@ -487,6 +534,7 @@ export function matchEstonianForm(candidates: Candidate[], word: string): FormMa
 
   let best: { hit: Candidate; score: number; matchedAs?: string } | null = null;
   for (const candidate of candidates) {
+    if (!vouchable(candidate)) continue;
     const scored = rank(candidate, raw, folded);
     // The English tier: right for a search box, wrong here.
     if (scored.score === 95 && candidate.translation.toLowerCase() === lower) continue;

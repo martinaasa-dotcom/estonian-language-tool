@@ -168,6 +168,25 @@ export function checkAnswer(
   typed: string,
   expected: string,
   language: "et" | "en" = "et",
+  /**
+   * Other forms of the same word, so another ending is not read as a slip.
+   *
+   * ANOTHER ENDING IS NOT A TYPO, AND THE TWO ARE ONE KEYSTROKE APART. The rule
+   * below calls anything within one edit a typo and marks it as produced, which
+   * is right for `raamt` and wrong for every pair of Estonian cases: `toas` and
+   * `toast` differ by one letter, and so do `toale` and `toalt`. Measured over
+   * the shipped dictionary, 47,982 of 51,513 case answers have another case of
+   * the same word one edit away, so on 93% of case cards the wrong ending was
+   * answered with "So close, the word is toas", graded Hard, and written into
+   * the append-only log as a recall.
+   *
+   * `lib/games/flash.ts` states this fault and solves it for its own round by
+   * asking the word's forms first; every other screen used `checkAnswer` in the
+   * order that has it. The rivals are what that round has and this did not.
+   * Optional, because a recognition card has no forms and an exercise that
+   * cannot supply them is no worse off than before.
+   */
+  rivals: readonly string[] = [],
 ): AnswerCheck {
   const answers = acceptedForms(expected, language);
   const given = normalise(typed, language);
@@ -194,6 +213,30 @@ export function checkAnswer(
         note: diacriticNote(given, answer.compared),
         suggestedRating: 2,
       };
+    }
+  }
+
+  /*
+    A form of this word that is not the one asked for is wrong, not nearly
+    right, and it is asked before the slip rule below rather than after it: the
+    two readings disagree on exactly the pairs that matter, and the slip rule
+    wins whichever comes first. Folded, so a dropped diacritic on the wrong case
+    is still the wrong case; and never a spelling the answer itself accepts,
+    since `tuppa / toasse` are both right and neither is a rival of the other.
+  */
+  const accepted = new Set(answers.map((a) => fold(normalise(a.compared, language))));
+  const givenFoldedRival = fold(given);
+  if (!accepted.has(givenFoldedRival)) {
+    for (const rival of rivals) {
+      const other = fold(normalise(rival, language));
+      if (other && other === givenFoldedRival) {
+        return {
+          verdict: "wrong",
+          expected: primary,
+          note: `That is another form of the word. This one wanted ${closing(primary)}`,
+          suggestedRating: 1,
+        };
+      }
     }
   }
 

@@ -157,6 +157,9 @@ function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
     slot: c.slot,
     lemma: c.lexeme?.lemma ?? null,
     lexemeId: c.lexemeId,
+    // Filled in by `withChoices` from the forms it already reads, for the same
+    // reason `choices` is: the query is paid by the sessions that need it.
+    rivals: [],
     // Filled in by `withChoices`, which reads the whole session's stars in one
     // query. A card mapped without that read is drawn unstarred, which is what
     // a session with nothing starred looks like anyway.
@@ -349,10 +352,22 @@ export async function withChoices(
     if (!forms || !lemma) return card;
     const accepted = acceptedAnswers(card.back, "et");
     const answer = accepted[0] ?? card.back;
+    /*
+      EVERY OTHER FORM OF THIS WORD, SO ANOTHER ENDING IS NOT READ AS A SLIP.
+
+      `checkAnswer` calls anything within one edit a typo and marks it as
+      produced, and every pair of Estonian cases is one letter apart. Read off
+      the forms already in hand for the choices, so this costs no query: it is
+      the same list, kept whether or not the card is shown as choices, because
+      a typed card is exactly the one that needs it.
+    */
+    const spellings = new Set(forms.map((f) => f.value.trim()).filter(Boolean));
+    for (const right of accepted) spellings.delete(right.trim());
+    const rivals = [...spellings];
     const options = card.cardType === "CONJUGATION"
       ? verbFormChoices({ lex: { lemma, forms }, accepted, answer, rng: Math.random })
       : caseFormChoices({ stems: stemsFrom(forms), accepted, answer, rng: Math.random });
-    return options ? { ...card, choices: options } : card;
+    return { ...card, rivals, ...(options ? { choices: options } : null) };
   });
 
   if (!cards.some(wantsChoices)) return withForms;
