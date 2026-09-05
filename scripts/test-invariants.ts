@@ -1393,7 +1393,45 @@ check("a withheld note claims Estonian only when it caught Estonian", () => {
     on the day it catches something real, and both screens used to say the
     stronger sentence unconditionally.
   */
+  /*
+    AND EVERY FIELD OF A VERDICT GOES THROUGH IT, NOT JUST THE COMMENT.
+
+    A verdict carries a `comment` and a `rule`, both of which are drawn on the
+    screen under the chip saying a model wrote this. All three graders verified
+    the comment and returned the rule untouched, so the one path where ADR-005
+    is enforced rather than asked for had a second field walking past the
+    enforcement, and two of the three emptied the comment and handed back the
+    same object, so the rule was still drawn beside a notice saying the note had
+    been held back for inventing an Estonian form.
+
+    Anchored on the call rather than on the fields, because the point is that a
+    route hands the whole verdict over and lets one function decide. A route
+    reaching for `verifyComment` again is a route checking whichever halves it
+    remembered.
+  */
+  for (const file of [
+    "app/api/write/route.ts",
+    "app/api/describe/route.ts",
+    "app/api/exam/write/route.ts",
+  ]) {
+    const src = code(file);
+    assert.match(
+      src, /verifyVerdict\(/,
+      `${file}: a grader's reply is verified one field at a time again. `
+      + `Hand the whole verdict to verifyVerdict, or the rule reaches the learner unchecked.`,
+    );
+    assert.ok(
+      !/verifyComment\(/.test(src),
+      `${file}: verifies a single field. verifyVerdict checks both halves and withholds them together.`,
+    );
+  }
+
   const verify = read("lib/tutor/verify.ts");
+  assert.match(
+    code("lib/tutor/verify.ts"),
+    /graded:\s*\{\s*\.\.\.graded,\s*comment:\s*"",\s*rule:\s*""\s*\}/,
+    "verifyVerdict stopped emptying both halves together",
+  );
   assert.match(
     verify,
     /reason:\s*certain \? "estonian-form" : "unvouched-word"/,
@@ -1730,7 +1768,9 @@ check("nothing about the mock exam decides an answer with a model", () => {
     );
   }
   const reader = read("app/api/exam/write/route.ts");
-  assert.match(reader, /verifyComment\(/, "the composition reader skips the form check");
+  // Either verifier: what the rule asks is that the model's Estonian is checked
+  // before it reaches a candidate, not which function does it.
+  assert.match(reader, /verify(Comment|Verdict)\(/, "the composition reader skips the form check");
   assert.match(reader, /authoriseCall\(/, "the composition reader is not metered");
   assert.match(reader, /checkRateLimit\(/, "the composition reader is not rate limited");
 });
@@ -10331,6 +10371,19 @@ check("the research opt-out is applied in the query, and is where the page says"
     /const not = [\s\S]{0,60}Prisma\.sql`WHERE r\."ownerId" NOT IN/,
     "the corpus totals no longer exclude anybody, so the file reports a size that counts people who asked to be left out",
   );
+  /*
+    And the third, which the two above could not see because both are anchored
+    on `r."ownerId"` and this one reads the `Encounter` table. It is the section
+    the pilot is measured on, the conversations somebody says they held outside
+    this app, and the clause could have been deleted with all 282 of these still
+    passing. Exactly the fault the paragraph above was written about, arriving
+    once the query it was written for had a neighbour.
+  */
+  assert.match(
+    route,
+    /const not = [\s\S]{0,60}Prisma\.sql`AND e\."ownerId" NOT IN/,
+    "the reported conversations no longer exclude anybody, so somebody who asked to be left out is published in the errand table",
+  );
 
   const label = "Anonymous statistics";
   for (const file of ["app/privacy/page.tsx", "app/(app)/settings/page.tsx"]) {
@@ -11273,7 +11326,7 @@ check("the scene route marks mechanically before it reaches a provider", () => {
   );
   assert.match(
     src,
-    /verifyComment\(/,
+    /verify(Comment|Verdict)\(/,
     "the describe route no longer verifies what the model wrote (ADR-005).",
   );
 });

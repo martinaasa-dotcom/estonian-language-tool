@@ -12,6 +12,7 @@ import type { PastAttempt, ReadinessSignals, SkillEvidence } from "@/lib/exam/re
 import { SKILLS, type SkillKey } from "@/lib/exam/types";
 import { latestFor } from "./assessment";
 import { deckSnapshot, type DeckSnapshot } from "./summary";
+import { caseReviewsFor } from "@/lib/progress/cases";
 
 /**
  * The database half of the mock examination.
@@ -213,12 +214,20 @@ export async function readinessSignals(
         orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
         take: 20_000,
       }),
-      prisma.review.findMany({
-        where: { ownerId, targetCase: { not: null } },
-        select: { targetCase: true, rating: true },
-        orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
-        take: 20_000,
-      }),
+      /*
+        THE SHARED QUERY, BECAUSE THIS WAS THE FOURTH ANSWER.
+
+        `lib/progress/cases.ts` exists because "your weakest cases" was drawn
+        from three different reads behind one calculation, so a learner who got
+        the partitive wrong three hundred times last year and right three
+        hundred times this month read 100% on one screen and 50% on another on
+        the same day. This was all-time where the others are a half-year, and
+        the hub prints the same case, by name and by percentage, in the gap
+        list beside the readiness figure. The invariant is scoped to `app/`, to
+        excuse the class roster rolling a whole class up in one query, so it
+        could not see a fourth reader here.
+      */
+      caseReviewsFor(ownerId),
       prisma.card.findMany({
         where: { ownerId },
         select: { id: true, cardType: true },

@@ -95,10 +95,25 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
       where: { reviewedAt: { gte: historyStart }, ownerId: { in: ids } },
       select: { reviewedAt: true, rating: true, targetCase: true, ownerId: true },
     }),
-    prisma.card.groupBy({
-      by: ["ownerId"],
-      where: { ownerId: { in: ids }, state: 2 },
-      _count: true,
+    /*
+      WORDS, NOT CARDS, WHICH IS WHAT THE COLUMN SAYS.
+
+      This was a `groupBy` counting mature cards and the roster printed it as
+      "N words known". A word makes anywhere from two to eleven cards depending
+      on what the dictionary can build for it, so the figure overstated by that
+      multiplier, and it counted a word as known on any one mature card where
+      the learner's own deck page requires every card for it. Two readings of
+      "known" for one deck, and the one on a teacher's screen was the one the
+      student could not check, which is the fault this module's own header says
+      `knownLemmasFrom` was split out to prevent. `workplaceRoster` two hundred
+      lines down has always used it.
+
+      Still one query for the whole class: a lemma rather than a count is one
+      more column on a read that was already batched.
+    */
+    prisma.card.findMany({
+      where: { ownerId: { in: ids } },
+      select: { ownerId: true, state: true, lexeme: { select: { lemma: true } } },
     }),
     /*
       Each student's own midnight. A class is the one place where several
@@ -115,7 +130,15 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
     }),
   ]);
 
-  const knownByOwner = new Map(known.map((k) => [k.ownerId, k._count]));
+  const cardsByOwner = new Map<string, { state: number; lemma: string | null }[]>();
+  for (const card of known) {
+    const held = cardsByOwner.get(card.ownerId) ?? [];
+    held.push({ state: card.state, lemma: card.lexeme?.lemma ?? null });
+    cardsByOwner.set(card.ownerId, held);
+  }
+  const knownByOwner = new Map(
+    [...cardsByOwner].map(([ownerId, cards]) => [ownerId, knownLemmasFrom(cards).size]),
+  );
   const zoneByOwner = new Map(zones.map((z) => [z.ownerId, z.value]));
   const byOwner = new Map<string, {
     dates: Date[];

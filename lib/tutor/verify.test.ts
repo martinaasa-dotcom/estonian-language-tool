@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAllowlist, chatEstonianTokens, estonianTokens, verifyComment } from "./verify";
+import { buildAllowlist, chatEstonianTokens, estonianTokens, verifyComment, verifyVerdict } from "./verify";
 
 const FORMS = ["ajalugu", "ajaloo", "ajalugu", "ajaloost", "ajaloos", "tuba", "toa", "toas"];
 const SENTENCE = "Ma näen ajalugu praegu siin.";
@@ -191,5 +191,41 @@ describe("chatEstonianTokens", () => {
 
   it("has nothing to say about plain English", () => {
     expect(chatEstonianTokens("That is the right case for an ongoing action.")).toEqual([]);
+  });
+});
+
+describe("verifyVerdict", () => {
+  const forms = ["raamat", "raamatut"];
+
+  it("withholds a rule that names a form nothing supplied", () => {
+    const out = verifyVerdict(
+      { verdict: "wrong", comment: "Close.", rule: "Kaasaütlev: sõbraga" },
+      forms, "Ma loen raamatut", [],
+    );
+    expect(out.reason).toBe("estonian-form");
+    expect(out.unverified).toContain("sõbraga");
+    expect(out.graded.rule).toBe("");
+  });
+
+  /*
+    The half that was worse than the omission. Two routes emptied the comment
+    and handed back the same object, so the rule was still drawn beside a notice
+    saying the note had been held back for inventing an Estonian form.
+  */
+  it("withholds the rule with the comment rather than beside it", () => {
+    const out = verifyVerdict(
+      { verdict: "wrong", comment: "Use sõbraga here.", rule: "The allative." },
+      forms, "Ma loen raamatut", [],
+    );
+    expect(out.reason).not.toBe(null);
+    expect(out.graded.comment).toBe("");
+    expect(out.graded.rule).toBe("");
+  });
+
+  it("leaves a reply alone when both halves check out", () => {
+    const graded = { verdict: "correct" as const, comment: "That is right.", rule: "The partitive object." };
+    const out = verifyVerdict(graded, forms, "Ma loen raamatut", []);
+    expect(out.reason).toBe(null);
+    expect(out.graded).toBe(graded);
   });
 });

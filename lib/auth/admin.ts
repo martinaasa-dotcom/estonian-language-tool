@@ -1,6 +1,6 @@
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
 import { LOCAL_USER_ID, supabaseConfigured } from "@/lib/auth/mode";
+import { currentLearner } from "@/lib/auth/session";
 
 /**
  * Who may read the suggestion queue and push a change through it.
@@ -76,17 +76,32 @@ export function adminsConfigured(): boolean {
 /**
  * Whether the current request is from a reviewer.
  *
- * Deduplicated per request like `requireUserId`, for the same reason: it
- * validates the token with Supabase over the network, and a page that shows
- * six admin-only sections should not ask six times.
+ * IT ASKS THE IDENTITY THE REQUEST ALREADY RESOLVED, rather than the auth
+ * service again. Both functions here built their own Supabase client and
+ * called `getUser()`, which is a network round trip with no deadline on it,
+ * and `lib/auth/identity.ts` exists because that is what used to cost a page
+ * three of them and a gateway error whenever Supabase had a bad minute.
+ * CLAUDE.md puts it plainly: who is signed in is worked out, never asked for
+ * without a deadline.
+ *
+ * The cost was being paid by learners rather than by reviewers. Its one caller
+ * is `/suggestions`, which is an ordinary page listing the fixes somebody has
+ * sent, and the answer decides whether one extra link is drawn, so every
+ * signed-in person opening it paid a round trip to Supabase to be told they
+ * are not an admin.
+ *
+ * `currentLearner()` is request-cached and resolves through the same path the
+ * middleware and every action use, and the address it carries is a verified
+ * claim on the token, which is exactly what `ALLOWED_EMAIL_DOMAINS` is already
+ * checked against on every gated request. Nothing is trusted here that is not
+ * trusted there.
  */
 export const isAdmin = cache(async (): Promise<boolean> => {
   if (!supabaseConfigured()) return true;
   const admins = adminEmails();
   if (admins.length === 0) return false;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return isAdminEmail(user?.email, admins);
+  const learner = await currentLearner().catch(() => null);
+  return isAdminEmail(learner?.email, admins);
 });
 
 /**
@@ -99,11 +114,11 @@ export const isAdmin = cache(async (): Promise<boolean> => {
  */
 export async function requireAdminId(): Promise<string> {
   if (!supabaseConfigured()) return LOCAL_USER_ID;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
-  if (!isAdminEmail(user.email, adminEmails())) {
+  // The same resolved identity `isAdmin` reads, and it throws where the
+  // session could not be verified rather than returning a default.
+  const learner = await currentLearner();
+  if (!isAdminEmail(learner.email, adminEmails())) {
     throw new Error("That account does not review suggestions.");
   }
-  return user.id;
+  return learner.id;
 }

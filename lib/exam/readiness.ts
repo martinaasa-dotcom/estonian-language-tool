@@ -440,10 +440,35 @@ export function assessReadiness(signals: ReadinessSignals): Readiness {
     level the climb stopped at, one above `assessed` by construction, and the
     two can no longer disagree.
   */
+  /*
+    AND A PAPER THE LEARNER SAT AND PASSED CLEARS THE LEVEL, WHATEVER THE MODEL
+    MAKES OF IT.
+
+    The clamp above stops a weak model dragging a passed paper below the pass
+    mark, and it clamps to exactly the pass mark, which is where `passChance` is
+    exactly one half by construction. So a paper passed at 85 percent by
+    somebody who learned Estonian elsewhere came out at 50, the climb wanted 60,
+    and the hub printed "No level assessed yet" and a question mark over a level
+    list whose own row said "You sat this and scored 85 percent, which is a
+    pass". The clamp fixed the sentence and left the headline arguing with it,
+    which is the fault it was written to end, one screen up.
+
+    CLAUDE.md already states the rule this needs: a paper actually sat outranks
+    the model for its own level. The model is a coverage share of *this app's*
+    word list, which a learner who never used this app has no reason to have
+    met, and it is not evidence against a paper they actually sat.
+
+    Only a pass, and only for its own level. A failed sitting still ends the
+    climb, and a level nobody has sat is still decided by the model, so nothing
+    above or below is promoted by this.
+  */
+  const cleared = (l: LevelReadiness) =>
+    l.confidence >= PASS_PCT || (l.measured && l.expectedTotal >= PASS_PCT);
+
   let assessed: ExamLevel | null = null;
   let next: ExamLevel | null = null;
   for (const l of levels) {
-    if (l.confidence >= PASS_PCT) {
+    if (cleared(l)) {
       assessed = l.level;
       continue;
     }

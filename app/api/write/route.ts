@@ -4,7 +4,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { resolveProvider, TutorError } from "@/lib/tutor/provider";
 import { gradeSentence } from "@/lib/tutor/grader";
-import { verifyComment, type WithholdReason } from "@/lib/tutor/verify";
+import { verifyVerdict, type WithholdReason } from "@/lib/tutor/verify";
 import {
   MAX_SENTENCE_CHARS, checkForm, looksLikeSentence, writingTasksFor,
 } from "@/lib/estonian/writing";
@@ -145,9 +145,10 @@ export async function POST(request: Request) {
     // "it used an Estonian form" is a claim rather than a hedge. See
     // `WithholdReason`.
     let withheldReason: WithholdReason | null = null;
-    if (graded) {
-      const verified = verifyComment(graded.comment, vouchedForms, sentence, [lexeme.translation]);
-      if (verified.comment === null && graded.comment.trim()) {
+    let reply = graded;
+    if (reply) {
+      const verified = verifyVerdict(reply, vouchedForms, sentence, [lexeme.translation]);
+      if (verified.reason) {
         withheld = verified.unverified;
         withheldReason = verified.reason;
         reportError(new Error("grader introduced an unverified Estonian form"), {
@@ -156,10 +157,10 @@ export async function POST(request: Request) {
           extra: { model: config.model, unverified: verified.unverified, lemma: lexeme.lemma },
         });
       }
-      graded.comment = verified.comment ?? "";
+      reply = verified.graded;
     }
 
-    return Response.json({ formCheck, graded, aiAvailable: true, withheld, withheldReason });
+    return Response.json({ formCheck, graded: reply, aiAvailable: true, withheld, withheldReason });
   } catch (error) {
     const booking = decision.reservation;
     if (!settled && booking) after(() => releaseReservation(booking));

@@ -10,7 +10,7 @@ import { taskById } from "@/lib/progress/describe";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { gradeDescription } from "@/lib/tutor/grader";
 import { resolveProvider, TutorError } from "@/lib/tutor/provider";
-import { verifyComment, type WithholdReason } from "@/lib/tutor/verify";
+import { verifyVerdict, type WithholdReason } from "@/lib/tutor/verify";
 import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
 import { courseLevelFor } from "@/lib/progress/level";
 
@@ -165,11 +165,12 @@ export async function POST(request: Request) {
     // what the model said about the rest of the sentence.
     let withheld: string[] = [];
     let withheldReason: WithholdReason | null = null;
-    if (graded) {
-      const verified = verifyComment(
-        graded.comment, vouchedForms, sentence, task.words.map((w) => w.translation),
+    let reply = graded;
+    if (reply) {
+      const verified = verifyVerdict(
+        reply, vouchedForms, sentence, task.words.map((w) => w.translation),
       );
-      if (verified.comment === null && graded.comment.trim()) {
+      if (verified.reason) {
         withheld = verified.unverified;
         withheldReason = verified.reason;
         reportError(new Error("grader introduced an unverified Estonian form"), {
@@ -178,10 +179,10 @@ export async function POST(request: Request) {
           extra: { model: config.model, unverified: verified.unverified, scene: task.sceneId },
         });
       }
-      graded.comment = verified.comment ?? "";
+      reply = verified.graded;
     }
 
-    return Response.json({ mark, reveal, graded, aiAvailable: true, withheld, withheldReason });
+    return Response.json({ mark, reveal, graded: reply, aiAvailable: true, withheld, withheldReason });
   } catch (error) {
     const booking = decision.reservation;
     if (!settled && booking) after(() => releaseReservation(booking));
