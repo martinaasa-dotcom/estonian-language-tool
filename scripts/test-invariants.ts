@@ -30,6 +30,8 @@ import { CASES } from "../lib/estonian/cases";
 import { plainAsk } from "../lib/estonian/plainAsk";
 import { CONJUGATION_SLOTS } from "../lib/srs/slots";
 import { SYLLABUS } from "../lib/collections/syllabus";
+import { HARVESTED } from "../prisma/data/harvested";
+import { mislabelled } from "../lib/collections/senses";
 import { PRACTICE_MODES } from "../lib/ux/modes";
 import { CARD_TYPES } from "../lib/srs/cards";
 import { buildOptions, parseGovernment, type Government } from "../lib/estonian/government";
@@ -2059,6 +2061,61 @@ check("the routes the spend ledger does not price are capped where every instanc
     code("lib/security/rateLimit.ts"),
     /@\/lib\/db|from "@prisma/,
     "lib/security reached for the database",
+  );
+});
+
+check("the counts CLAUDE.md states about the harvest are the harvest's own", () => {
+  /*
+    A NUMBER IN PROSE IS A NUMBER THAT ROTS, AND TWO OF THESE HAD.
+
+    CLAUDE.md said the course's label and Ekilex's agree on all "1,404 words"
+    and that the harvest stores "544 forms across 329" of them. The harvest is
+    1,437 words and 1,672 forms across 352, and had been for a while: the
+    polite imperative and both participles were added by later passes, each of
+    which this file records in its own paragraph without going back to the
+    total three sections up. Nothing could notice, because a stale number reads
+    exactly like a fresh one.
+
+    So the claims are read out of the prose and compared with what the data
+    says. Re-running the harvest is now supposed to make this fail: the numbers
+    are assertions about a file that changed, and the point of writing them
+    down is that somebody looks again when it does.
+  */
+  const prose = read("CLAUDE.md");
+
+  const stated = (pattern: RegExp, what: string): number => {
+    const hit = prose.match(pattern);
+    assert.ok(hit?.[1], `CLAUDE.md no longer states ${what}`);
+    return Number(hit[1].replace(/,/g, ""));
+  };
+
+  assert.equal(
+    stated(/agree on all ([\d,]+) words/, "how many words the two labels agree on"),
+    HARVESTED.length,
+    "the pos agreement count is not the size of the harvest",
+  );
+
+  /*
+    And the claim behind that number, which is the part worth keeping true:
+    the coarsening table explains every disagreement, so there are none left.
+  */
+  const words = HARVESTED.map((e) => ({
+    lemma: e.lemma, pos: e.pos, gloss: e.gloss, note: e.note ?? null, ekilexPos: e.ekilexPos,
+  }));
+  assert.deepEqual(
+    mislabelled(words).map((w) => w.lemma),
+    [],
+    "a course label and Ekilex's disagree in a way no coarsening explains",
+  );
+
+  const withExtra = HARVESTED.filter((e) => (e.extraForms ?? []).length > 0);
+  const forms = withExtra.reduce((sum, e) => sum + (e.extraForms ?? []).length, 0);
+
+  assert.equal(stated(/That is ([\d,]+) forms across/, "how many stored forms"), forms);
+  assert.equal(stated(/forms across ([\d,]+) of the/, "how many words store one"), withExtra.length);
+  assert.equal(
+    stated(/across [\d,]+ of the\s+([\d,]+) course words/, "the course word count"),
+    HARVESTED.length,
   );
 });
 
