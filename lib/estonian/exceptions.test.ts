@@ -1,8 +1,11 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   EXCEPTION_KINDS, FAMILY_TITLES, KIND_NOTES, exceptionsFor, hasExceptions,
   type ExceptionInput, type ExceptionKind,
 } from "./exceptions";
+import { grammarTopic } from "./grammar";
+import { HARVESTED } from "../../prisma/data/harvested";
 
 /** The forms as the seed writes them, which is what every caller holds. */
 const word = (
@@ -14,6 +17,10 @@ const word = (
 
 const kinds = (input: ExceptionInput): ExceptionKind[] =>
   exceptionsFor(input).map((e) => e.kind);
+
+/** The two files `npm run db:seed` loads, which is what the copy check reads. */
+const SHIPPED: { forms: { formType: string; value: string }[] }[] =
+  JSON.parse(readFileSync("prisma/data/expanded.json", "utf8"));
 
 /** The regular noun the whole model is built on. */
 const raamat = word("raamat", "NOUN", {
@@ -200,5 +207,71 @@ describe("the notes", () => {
         if (ex.ruleFormIsAlsoRight) expect(ex.kind).toBe("SHORT_ILLATIVE");
       }
     }
+  });
+
+  /*
+    A KIND POINTS AT A PAGE THAT EXISTS.
+
+    `topic` is what answers "why am I being shown this", which a learner asked
+    about `vihata` and the round had no answer to. A dead id is worse than no
+    id: it draws a link on the one screen this area exists to stop being a dead
+    end, and it fails silently, because `grammarTopic` returning nothing looks
+    exactly like a kind that deliberately has no page.
+  */
+  it("names a grammar topic that exists, or none at all", () => {
+    for (const kind of EXCEPTION_KINDS) {
+      const { topic } = KIND_NOTES[kind];
+      if (topic === null) continue;
+      expect(grammarTopic(topic), `${kind} points at a topic that is not there: ${topic}`)
+        .toBeTruthy();
+    }
+    // And at least one does, or the field has quietly stopped being filled in.
+    expect(EXCEPTION_KINDS.filter((k) => KIND_NOTES[k].topic).length).toBeGreaterThan(4);
+  });
+
+  /*
+    AND THE NOTES NAME NO VERB, WHICH IS THE CHECK THAT WAS MISSING.
+
+    The `da`-infinitive's note read "the form after tahan, saan and pean", and
+    the last of those governs the *other* infinitive: three Estonian words typed
+    into a copy table, one of them the opposite of the truth, taught to
+    everybody who met the kind and re-checked by nothing. The rules in this
+    module are a comparison against the dictionary and cannot be wrong this way;
+    the copy beside them had no such protection.
+
+    So the notes hold endings and English, and a governing verb is described by
+    meaning and named once on the page `topic` points at. This is what says so,
+    against the dictionary's own stored first persons rather than against a list
+    here, because a list here is the same fault one file further out. Made to
+    fail on the sentence that shipped.
+
+    The first person specifically, and at four letters or more: that is the form
+    a copy writer reaches for when naming a governing verb ("the form after
+    tahan"), it is 678 spellings in the shipped dictionary, and measured against
+    the English these notes are written in, none of them collides.
+  */
+  it("names endings rather than verbs", () => {
+    const first = new Set<string>();
+    const add = (value: string) => {
+      const form = value.toLowerCase();
+      if (form.length >= 4) first.add(form);
+    };
+    for (const entry of SHIPPED) {
+      for (const form of entry.forms) if (form.formType === "PRES_1SG") add(form.value);
+    }
+    for (const entry of HARVESTED) {
+      const pres = entry.parts.PRES_1SG;
+      if (pres) add(pres);
+    }
+    expect(first.size).toBeGreaterThan(400);
+
+    const offenders: string[] = [];
+    for (const kind of EXCEPTION_KINDS) {
+      const note = KIND_NOTES[kind];
+      for (const token of `${note.title} ${note.what}`.toLowerCase().match(/[\p{L}]+/gu) ?? []) {
+        if (first.has(token)) offenders.push(`${kind}: ${token}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
