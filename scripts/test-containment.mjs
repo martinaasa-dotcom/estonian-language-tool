@@ -308,7 +308,14 @@ const SPARSE = new Map([
 // have baked that in.
 // Measured at 1231 on the merged tree against a production build with the demo
 // fixture in place, and the floor keeps the same ten under it.
-const { check, absent, done } = suite("Containment", { floor: 1220 });
+//
+// A word opened out of a teaching sentence adds five checks a pass. Measured at
+// 1295 with one of the two passes waiving those five, because the deck it was
+// run against had nothing left to meet by then, so a clean run is 1300 and the
+// floor keeps the same ten under that. The waiver is what makes it safe to set
+// from a run that did not reach the state: `absent` lowers the target by
+// exactly what it could not ask.
+const { check, absent, done } = suite("Containment", { floor: 1290 });
 
 const browser = await launchChromium();
 
@@ -1056,6 +1063,40 @@ async function askedForStates(ctx, at) {
   } else {
     absent(5, `a revealed review card ${at}: /review offered no card of any shape, ` +
       "so this deck genuinely has nothing due. Run `npm run demo`");
+  }
+
+  /*
+    A FIRST MEETING WITH A WORD OUT OF ITS SENTENCE OPEN.
+
+    The teaching sentence has a dictionary under it, and what a tapped word
+    opens is a panel *inside* the card: a headword, which form of it this is,
+    its English and a button. No URL reaches that, and it is the densest thing
+    in the smallest box on the screen, which is exactly the shape this suite
+    exists for.
+
+    Waived rather than failed where the batch has no sentence with a vouched
+    word in it, because which words a deck holds is a fact about the fixture
+    and not about the markup.
+  */
+  await page.goto(`${B}/learn/new`, { waitUntil: "networkidle", timeout: 60000 });
+  let opened = false;
+  for (let tries = 0; tries < 12 && !opened; tries += 1) {
+    const words = page.locator("main p[lang=et] button");
+    if (await words.count()) {
+      await words.last().click().catch(() => {});
+      opened = (await page.getByRole("button", { name: /Add to my deck/ }).count()) > 0;
+      if (opened) break;
+    }
+    const met = page.getByRole("button", { name: /^Got it$/ });
+    if (await met.count()) await met.first().click().catch(() => {});
+    await page.waitForTimeout(500);
+  }
+  if (opened) {
+    await page.waitForTimeout(300);
+    await measure(page, `a word opened out of a teaching sentence ${at}`);
+  } else {
+    absent(5, `a word opened out of a teaching sentence ${at}: no word in this batch ` +
+      "carries a sentence the dictionary can vouch for. Run `npm run demo`");
   }
 
   /*

@@ -98,7 +98,13 @@ import { safeMessage } from "@/lib/observability/report";
  * facts. A closed list costs nothing: every caller in the tree already names
  * one of these.
  */
-const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC", "SCENE"]);
+const CARD_SOURCES = new Set([
+  "DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC", "SCENE",
+  // A word picked out of the sentence a card was teaching with, which is a
+  // different thing from a word looked up: the learner was reading a sentence
+  // and hit one they did not have. See `components/GlossedSentence.tsx`.
+  "SENTENCE",
+]);
 
 /**
  * Add a word to the deck.

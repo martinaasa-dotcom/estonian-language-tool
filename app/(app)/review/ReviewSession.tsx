@@ -14,6 +14,7 @@ import { useAudioPrefs, useFeedbackSound } from "@/components/AudioPrefs";
 import { prefetchClip } from "@/lib/audio/clip";
 import { SuggestFix } from "@/components/SuggestFix";
 import { WordIntro } from "@/components/WordIntro";
+import type { GlossedToken } from "@/lib/dict/glossed";
 import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
 import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
@@ -61,6 +62,20 @@ export interface ReviewCard {
     equivalent: { text: string; lang: string } | null;
     /** An attested sentence, and which form of the word it carries. */
     sentence: { et: string; en: string | null; form: string | null } | null;
+    /** The entry it hangs off, so the sentence can be asked about in English. */
+    lexemeId: string | null;
+    /**
+     * That sentence with the dictionary under every word it will vouch for.
+     *
+     * Ekilex holds no English for most usages, so the sentence that is meant to
+     * show a word behaving was six unreadable words around one glossed one.
+     * Null where the page did not look, which is a different thing from a
+     * sentence nothing in the dictionary could be said about. See
+     * `lib/dict/glossed.ts`.
+     */
+    tokens: GlossedToken[] | null;
+    /** Whether this deployment has a model that could translate the whole line. */
+    canTranslate: boolean;
     /**
      * Whether the entry is a whole utterance rather than a word.
      *
@@ -182,6 +197,9 @@ function MeetWord({ card }: { card: ReviewCard }) {
       gloss={gloss}
       equivalent={card.intro?.equivalent ?? null}
       sentence={card.intro?.sentence ?? null}
+      tokens={card.intro?.tokens ?? null}
+      lexemeId={card.intro?.lexemeId ?? null}
+      canTranslate={card.intro?.canTranslate ?? false}
       isPhrase={card.intro?.isPhrase ?? false}
     >
       {/* What this particular card will want back, once it starts asking. On a

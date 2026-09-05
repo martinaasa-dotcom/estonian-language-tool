@@ -4908,6 +4908,52 @@ check("a headline is read through the dictionary's gate, and the feed writes not
   assert.doesNotMatch(feed, /ownerId|cookies|headers\(/, "the feed request carries something of the learner's");
 });
 
+check("a word under a teaching sentence is one the dictionary vouched for", () => {
+  /*
+    THE SENTENCE A WORD IS TAUGHT WITH IS THE FIFTH DOOR ONTO ADR-021'S GATE,
+    AFTER THE PHOTOGRAPH, THE HEADLINE, THE FREQUENCY COUNT AND THE
+    CONTRIBUTED SENTENCE.
+
+    Ekilex records no English against a usage on a reader key, so a first
+    meeting showed an attested sentence a beginner could read one word of: the
+    screen whose whole claim is a word behaving. Every other word in it is
+    glossed now, and every gloss on it is there because `matchEstonianForm`
+    recognised that exact spelling, a stored form, or a regular case of the
+    genitive stem. A word it will not vouch for is printed plain, because
+    leaving it out would be editing an attested sentence and guessing at it
+    would be worse.
+
+    Three things follow and all three are here. The module decides with the
+    matcher and writes nothing down. The screen underlines what the module
+    vouched for rather than what looks like a word. And the taught word, which
+    is glossed at the top of the same screen, is marked rather than offered a
+    panel repeating it.
+  */
+  const reader = code("lib/dict/glossed.ts");
+  assert.match(reader, /matchEstonianForm\(candidates/, "a sentence's words are no longer vouched by the dictionary");
+  assert.match(reader, /candidatesFor\(/, "the lookup no longer narrows through the scanner's own candidate query");
+  assert.doesNotMatch(
+    reader,
+    /prisma\.(lexeme|form|card|review)\.(create|update|upsert|delete)/,
+    "the sentence reader writes to the dictionary",
+  );
+  // Nothing on the provider chain: a gloss here is a column, never a reading.
+  assert.doesNotMatch(reader, /tutor\/provider|openWithFallback|complete/, "the sentence reader can reach a model");
+
+  const screen = code("components/GlossedSentence.tsx");
+  assert.match(screen, /token\.entry \?|!token\.entry/, "the screen opens something other than a vouched word");
+  assert.match(screen, /token\.taught/, "the taught word is no longer marked apart from the words being looked up");
+  assert.match(
+    reader,
+    /piece\.word && !run\.match/,
+    "the taught form's own runs are being looked up as though they were another word",
+  );
+  // A press, never a render: the panel's button is the only way a word from a
+  // sentence reaches a deck, and it names a source the closed list knows.
+  assert.match(screen, /addToDeck\(entry\.lexemeId/, "the panel no longer adds through the shared action");
+  assert.match(code("app/actions.ts"), /"SENTENCE"/, "a word kept from a sentence has no source of its own");
+});
+
 check("a response built out of one learner's own rows is never cacheable", () => {
   /*
     THE FRAMEWORK'S SILENCE IS NOT A CACHE POLICY.
