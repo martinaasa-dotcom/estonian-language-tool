@@ -302,8 +302,33 @@ async function runLookup(ownerId: string, query: string): Promise<LookupResult |
   // Already stored under this lemma from an earlier lookup or the seed.
   const existing = await prisma.lexeme.findUnique({
     where: { lemma_pos: { lemma: mapped.lemma, pos: mapped.pos } },
-    select: { id: true, translation: true, examples: true },
+    select: { id: true, lemma: true, translation: true, examples: true, provenance: true },
   });
+
+  /*
+    HERS, NOT OURS TO OVERWRITE, WHICH `enrichFromEkilex` SAYS AND THIS PATH
+    DID NOT.
+
+    The guard is thirty lines further up and this is the other door onto the
+    same row. A word somebody typed in by hand carries `USER`, and here it was
+    updated wholesale: the gloss, the level, the provenance relabelled
+    `EKILEX`, and then every form deleted and replaced, including the principal
+    parts they typed. `editedBy` and `editedAt` are not touched by the update,
+    so the entry went on naming a person as answerable for content that had
+    been replaced under them. Reachable whenever a query that misses locally
+    resolves to a lemma and part of speech somebody had already added: an
+    inflected form, or a spelling the local search scored below its threshold.
+
+    The word is handed back as it stands. Upgrading a hand-typed entry to real
+    Ekilex forms is a thing worth wanting, and the answer to it is the one
+    `createLexeme` took: label the row for what it is, rather than take the
+    guard off.
+  */
+  if (existing?.provenance === "USER") {
+    // `NONE` is what `resolveTranslation` returns for a gloss already stored,
+    // which is exactly what this is: nothing was fetched for it.
+    return { id: existing.id, lemma: existing.lemma, translationSource: "NONE" as const };
+  }
 
   const { translation, source } = await resolveTranslation(
     ownerId,
