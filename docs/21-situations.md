@@ -2471,3 +2471,37 @@ scenes at all. Of the forty-five live claims the course makes, seven had a rehea
 one is `reviewed: false`. And a scene is still typed: the spoken unmarked mode of §11 is the same
 distance away it was.
 
+
+## 43. The fourteenth pass: the ask is the loudest thing on the screen
+
+**What was wrong.** Reported from a screenshot, by somebody mid-conversation: the line saying what
+to say next was "very hidden and hard to see". It was. `Your turn` and the beat's goal were a
+`text-sm` paragraph in the quiet ink, floating between the transcript and the box, set smaller than
+the Estonian above it and detached from the field it is an instruction for. The transcript is read
+once; the ask is read before every single turn, and it was the quietest text on the screen.
+
+Two things were missing beside it. Nothing said which step of the conversation was in play: the
+objectives carried a tick each, which says only what is behind you, and the beat the other side is
+actually waiting on was known to the screen the whole time in `beatId` and drawn nowhere. And the
+disclosure over the card said "Your card", which does not say that the list of what to get done is
+inside it, so a learner who collapsed it once had no reason to open it again.
+
+**What changed.**
+
+- The ask, the word the help button lent, the box and the send button are one accent-tinted panel.
+  Accent because it means "this is yours" and the primary action (`docs/14-design-system.md` §1),
+  and this is the one place on the screen the learner is being asked for something. The goal is set
+  above the size of the conversation rather than under it. The field keeps its own white ground, so
+  a box still reads as a box.
+- The send button is alone in its row, so nothing sits between the box and the thing pressed every
+  turn, and `Leave` is no longer beside it. The three quiet controls are a row underneath.
+- The objective in play is named: an arrow, the accent, bold, and a `Now` chip beside it, with the
+  count of what is behind you over the list. A count of ticks is not a meter (§7): there is no bar,
+  no clock and nothing draining, and it is the reading the debrief already gives.
+- The summary says "Your card and what to get done", and names the place beside it.
+- The placeholder says what language to answer in.
+
+**What this does not fix.** The panel is still below the transcript rather than pinned, so on a
+phone a long conversation is a scroll between reading what was said and answering it. Pinning it
+would put a second fixed element over the one the phone bar already owns, which is the measurement
+`lib/layout/dockClearance.ts` exists for, and is a bigger change than this one.

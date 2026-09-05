@@ -5,7 +5,7 @@ import { CornerDownLeft, DoorOpen, LifeBuoy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ChoiceCard, ChoiceGroup } from "@/components/Choice";
 import { EstonianInput } from "@/components/EstonianInput";
-import { Card } from "@/components/ui";
+import { Card, Chip } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
 import { Speak } from "@/components/Speak";
 import { conditionFor } from "@/lib/audio/conditions";
@@ -424,8 +424,9 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
           <h2 className="font-medium">{scene.place}</h2>
           <p className="text-sm" style={{ color: "var(--ink-2)" }}>{scene.role}</p>
           <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-            You will need {practises(scene).join(", ")}. They speak first, you answer, and the card
-            below the conversation says what to get done.
+            You will need {practises(scene).join(", ")}. They speak first, you answer, and the box
+            you type into says what to say each time. The card above the conversation lists what to
+            get done and ticks it off.
           </p>
           {/*
             Said before the first line rather than discovered on the third,
@@ -479,6 +480,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   }
 
   const objectives = scene.beats.filter((beat) => beat.required);
+  const metCount = objectives.filter((beat) => done.includes(beat.id)).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -488,7 +490,10 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         keyboard and a screen reader for free.
       */}
       <details open>
-        <summary className="cursor-pointer text-sm font-medium">Your card</summary>
+        <summary className="cursor-pointer text-sm font-medium">
+          Your card and what to get done
+          <span style={{ color: "var(--ink-3)" }}> · {scene.place}</span>
+        </summary>
         <Card className="mt-2 flex flex-col gap-2">
           <p className="text-sm">{opened?.card.you}</p>
           <ul className="flex flex-col gap-1 text-sm" style={{ color: "var(--ink-2)" }}>
@@ -518,25 +523,54 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
           {opened?.persona && (
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>{opened.persona}</p>
           )}
-          <ul className="mt-1 flex flex-col gap-1">
-            {objectives.map((beat) => {
-              const met = done.includes(beat.id);
-              return (
-                <li key={beat.id} className="flex items-center gap-2 text-sm">
-                  {/*
-                    An icon and a word beside the hue, because mint means
-                    recalled and nothing in this app may be carried by colour
-                    alone.
-                  */}
-                  <span aria-hidden style={{ color: met ? "var(--mint-ink)" : "var(--ink-3)" }}>
-                    {met ? "✓" : "·"}
-                  </span>
-                  <span style={{ color: met ? "var(--ink)" : "var(--ink-3)" }}>{beat.goal}</span>
-                  <span className="sr-only">{met ? "done" : "not yet"}</span>
-                </li>
-              );
-            })}
-          </ul>
+          {/*
+            WHAT TO GET DONE, AND WHICH OF IT IS IN PLAY.
+
+            The ticks were here from the start and said only what was behind
+            you. What a learner mid-conversation asks first is where they are
+            in it, and the answer was on the screen all along in `beatId`: the
+            beat the other side is waiting on. So the objective in play is
+            named, in words as well as in weight, and the count says how many
+            are behind you.
+
+            A count of things done is not a meter (§7). There is no bar, no
+            timer and nothing draining: it is the same ticks added up, which
+            is the reading the debrief is allowed to give and the one somebody
+            glancing at a list wants without counting it themselves.
+          */}
+          <div className="mt-1 flex flex-col gap-1">
+            <p className="label-xs" style={{ color: "var(--ink-3)" }}>
+              What to get done · {metCount} of {objectives.length} done
+            </p>
+            <ul className="flex flex-col gap-1">
+              {objectives.map((beat) => {
+                const met = done.includes(beat.id);
+                const now = !met && beat.id === beatId;
+                return (
+                  <li key={beat.id} className="flex items-start gap-2 text-sm">
+                    {/*
+                      An icon and a word beside the hue, because mint means
+                      recalled and nothing in this app may be carried by colour
+                      alone. The marker holds its own column and the goal wraps
+                      beside it: a `flex-wrap` on the row lets a long objective
+                      push its own bullet onto a line of its own, which reads as
+                      a list that has come apart.
+                    */}
+                    <span aria-hidden className="shrink-0" style={{ color: met ? "var(--mint-ink)" : now ? "var(--accent-deep)" : "var(--ink-3)" }}>
+                      {met ? "✓" : now ? "→" : "·"}
+                    </span>
+                    <span className="flex min-w-0 flex-wrap items-center gap-x-2">
+                      <span style={{ color: met || now ? "var(--ink)" : "var(--ink-3)" }} className={now ? "font-medium" : undefined}>
+                        {beat.goal}
+                      </span>
+                      {now && <Chip tone="accent">Now</Chip>}
+                      <span className="sr-only">{met ? "done" : now ? "this is the one they are waiting on" : "not yet"}</span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </Card>
       </details>
 
@@ -702,32 +736,60 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         ))}
       </div>
 
-      {goal && (
-        <p className="text-sm" aria-live="polite">
-          <span className="label-xs" style={{ color: "var(--ink-3)" }}>Your turn</span>
-          <span className="block font-medium">{goal}</span>
-        </p>
-      )}
-      {lent && (
-        <p className="text-sm" aria-live="polite">
-          <span lang="et" className="font-medium">{lent.lemma}</span>
-          <span style={{ color: "var(--ink-2)" }}> · {lent.gloss}</span>
-        </p>
-      )}
-      {error && <p className="text-sm" style={{ color: "var(--peach-ink)" }}>{error}</p>}
+      {/*
+        THE ASK AND THE BOX ARE ONE OBJECT.
 
-      <div className="flex flex-col gap-2">
+        What to say next was a `text-sm` paragraph between the transcript and
+        the field, in the quiet ink, and it was reported as hidden and hard to
+        see: the single most important sentence on the screen was set smaller
+        than the conversation above it and separated from the box it is an
+        instruction for. Two lines of prose floating between two blocks read as
+        furniture wherever they are put, so it is not a matter of finding a
+        better gap. The instruction belongs *inside* the thing it instructs.
+
+        So the ask, the word the help button lent, the box and the send button
+        are one tinted panel: accent, because the accent is "this is yours" and
+        the primary action (§1), and it is the one place on this screen the
+        learner is being asked for something. The field keeps its own white
+        ground, so the box still reads as a box.
+      */}
+      <Card tone="accent" className="flex flex-col gap-3">
+        <div aria-live="polite">
+          <p className="label-xs" style={{ color: "var(--accent-deep)" }}>Your turn</p>
+          {/*
+            Bigger than the conversation rather than smaller, because it is
+            read before every turn and the transcript is read once. Where the
+            server has no goal for the beat, the panel still says what the
+            box is for rather than standing empty.
+          */}
+          <p className="mt-1 text-lg font-medium leading-snug">{goal ?? "Answer them."}</p>
+        </div>
+        {lent && (
+          <p className="text-sm" aria-live="polite">
+            <span style={{ color: "var(--ink-2)" }}>The word you were reaching for: </span>
+            <span lang="et" className="font-medium">{lent.lemma}</span>
+            <span style={{ color: "var(--ink-2)" }}> · {lent.gloss}</span>
+          </p>
+        )}
+        {error && <p className="text-sm" style={{ color: "var(--peach-ink)" }}>{error}</p>}
+
         <EstonianInput
           value={draft}
           onChange={setDraft}
           onEnter={say}
           ariaLabel="What you say"
-          placeholder="Say something"
+          placeholder="Say it in Estonian"
         />
+        {/*
+          Alone in its row, so the one action a learner takes every turn is the
+          loud one and nothing sits between it and the box. The three quieter
+          controls are a row of their own underneath, which also keeps Leave
+          away from the button being pressed twenty times a conversation.
+        */}
+        <Button onClick={say} disabled={busy || !draft.trim()} variant="primary" className="w-full sm:w-auto sm:self-start">
+          <CornerDownLeft size={16} aria-hidden /> Say it
+        </Button>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={say} disabled={busy || !draft.trim()}>
-            <CornerDownLeft size={16} aria-hidden /> Say it
-          </Button>
           <Button variant="ghost" onClick={again} disabled={busy || !heard}>
             <RotateCcw size={16} aria-hidden /> Say that again
           </Button>
@@ -747,7 +809,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
             <DoorOpen size={16} aria-hidden /> Leave
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
