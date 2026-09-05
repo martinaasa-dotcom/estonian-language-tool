@@ -1377,8 +1377,11 @@ function SpeakQuestion({ item, marks, response, onMark }: {
             <label
               key={criterion}
               className="choice-btn flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[var(--r)] px-3 py-2 text-sm"
+              /* Chosen is accent here as it is on every other option in this
+                 paper: a tick is a selection, and mint is what a marked answer
+                 wears, which nothing on the spoken part can be (ADR-018). */
               style={ticked[index]
-                ? { background: "var(--mint-soft)", color: "var(--ink)" }
+                ? { "--choice-bg": "var(--accent-soft)", borderColor: "var(--accent)", color: "var(--accent-deep)" } as React.CSSProperties
                 : { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties}
             >
               <input
@@ -1390,7 +1393,7 @@ function SpeakQuestion({ item, marks, response, onMark }: {
                   next[index] = event.target.checked;
                   update({ criteria: next });
                 }}
-                className="size-4 shrink-0 accent-[var(--mint)]"
+                className="size-4 shrink-0 accent-[var(--accent)]"
               />
               <span>{criterion}</span>
             </label>

@@ -104,6 +104,32 @@ The vertical spread is set by the element's height, so no angle short of
 horizontal avoids it on something short and wide. `.grad-text` keeps its tilt,
 being clipped to letterforms that have no caps to discolour.
 
+### A verdict is painted once
+
+Correct is green and wrong is red, and the table above has said so since the palette was drawn.
+What decides whether a screen honours it is not the table but who reaches for the tokens, and
+twenty screens reaching for them by hand produced four verdicts written in the fill, one round
+that never marked the option the learner pressed, and a near miss painted the same peach as a
+blank. `lib/ux/verdict.ts` is the vocabulary and `app/globals.css` is the paint:
+
+| Word | Class | Paint |
+|---|---|---|
+| right | `.verdict-right` | `--good-soft` under `--good-ink` |
+| nearly | `.verdict-nearly` | `--hard-soft` under `--hard-ink` |
+| wrong | `.verdict-wrong` | `--again-soft` under `--again-ink` |
+| the answer, among options | `.option-right` | the tint and the ink, and an edge in `--good` |
+| what was pressed instead | `.option-wrong` | the tint and the ink, and a thin edge in `--again` |
+| the rest | `.option-other` | `--raised` under `--ink-3` |
+
+A panel, a chip, a self-grade button or a marked word wears one of the first three; an option
+once the answer is known wears one of the last three, whichever the learner pressed. The
+classes read the grading aliases and never the hue names, so `--again` and a wrong answer are
+one token. A screen that marks an answer reads the module or fails the invariant, and a verdict
+tint written inline in one of those screens fails it too. Nearly is the middle case the app can
+tell apart with certainty, a dropped diacritic or the right word in the wrong ending, and it is
+graded Hard wherever it is painted butter, since a colour that disagrees with the grade under it
+is a small dishonesty a learner catches once.
+
 ## 2. Tokens
 
 Defined twice in `app/globals.css`, deliberately:

@@ -16,6 +16,7 @@ import { askLine, markFlash, plainAskFor, type FlashMark, type FlashTask } from 
 import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import { englishName } from "@/lib/games/flash";
 import { caseByKey } from "@/lib/estonian/cases";
+import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
 
 /** A task, plus where the word stands, which is the thing the round is moving. */
 export interface FlashPrompt extends FlashTask {
@@ -160,7 +161,7 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
           <Stat
             value={`${Math.round((right / prompts.length) * 100)}%`}
             label="Right"
-            tone={right === prompts.length ? "var(--good)" : "var(--hard)"}
+            tone={VERDICT_INK[right === prompts.length ? "right" : "nearly"]}
           />
           <Stat value={`${minutes}m`} label="Time" />
         </div>
@@ -436,23 +437,17 @@ function Feedback({ task, mark }: { task: FlashPrompt; mark: FlashMark }) {
     diacritic somebody dropped or a slip of one letter, which `checkAnswer`
     counts as produced, so it reads as the recall it was.
   */
-  const tone = mark.right
-    ? { bg: "var(--good-soft)", ink: "var(--good-ink)", head: "That is it" }
-    : mark.rating === 2
-      ? { bg: "var(--hard-soft)", ink: "var(--hard-ink)", head: "Nearly" }
-      : { bg: "var(--again-soft)", ink: "var(--again-ink)", head: "Not this time" };
+  const verdict = mark.right ? "right" : verdictOfRating(mark.rating);
+  const head = { right: "That is it", nearly: "Nearly", wrong: "Not this time" }[verdict];
 
   return (
     <div className="mt-6" aria-live="polite">
-      <div
-        className="flex items-start gap-2.5 rounded-md px-3.5 py-3"
-        style={{ background: tone.bg, color: tone.ink }}
-      >
+      <div className={`${VERDICT_CLASS[verdict]} flex items-start gap-2.5 rounded-md px-3.5 py-3`}>
         {mark.right
           ? <Check size={16} className="mt-0.5 shrink-0" aria-hidden />
           : <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />}
         <p className="text-[15px]">
-          <strong className="font-semibold">{tone.head}.</strong>
+          <strong className="font-semibold">{head}.</strong>
           {mark.note && <> {mark.note}</>}
         </p>
       </div>

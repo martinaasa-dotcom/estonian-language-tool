@@ -3907,6 +3907,33 @@ after the answer rather than before it, for the reason the paragraph above gives
 clause at all: the sentence is what says which form is wanted, and a clause naming the case in front
 of the gap is the answer in two pieces.
 
+**Correct is green and wrong is red, and for a year every screen decided that for itself.** The
+palette had fixed it since it was drawn: mint is recalled, butter is nearly, peach is missed, each
+with a tint to paint a panel and an ink to write on it. What it had not done was hold twenty
+screens to it. Each round marked an answer out of the tokens by hand, and the copies disagreed in
+every way copies can. Four rounds wrote their verdict in the fill, at 2.2:1 in the light theme,
+and the fill-as-ink invariant let them through because it matched a literal and they had written
+a ternary. The ladder never marked the option the learner had pressed, on a screen only ever
+reached by pressing the wrong one, so a miss looked exactly like the two options nobody chose.
+The cloze round graded a dropped diacritic Hard and painted it the same peach as a blank, and the
+writing exercise graded the right word in the wrong case Again while the picture round graded the
+same situation Hard. The picture board said nothing in colour at all, a fade for a match and a
+shake for a miss. The exam's list of wrong answers was two bare coloured words on a card. And a
+round's summary tile wrote its accuracy in the fill, eight times over.
+
+`lib/ux/verdict.ts` is the one vocabulary: three words for what happened to an answer, `right`,
+`nearly` and `wrong`, and three states for an option once the answer is known, the answer, the
+one the learner pressed instead, and the rest. Each names a class painted in `app/globals.css`
+and nowhere else, in the tint and the ink of the semantic alias, so the rating scale and a marked
+answer cannot drift apart, and the right option carries an edge in the fill so it is never the
+same weight as the wrong pick. Every screen that marks an answer reads it, none paints a verdict
+tint by hand, and the invariant finds the marking screens by the markers they call rather than by
+a list. Two things stay outside it on purpose: Sõnad, whose three kinds of object are argued at
+the top of its own file, and the selections on the examination paper, which are accent because a
+tick is a choice and mint is what a marked answer wears. The sprint's clock in its last ten
+seconds is peach by the hue's name rather than by the grade's, because it is overdue rather than
+wrong, which is the same colour meaning a different thing and is written down as such.
+
 **And the feedback box was painting a hue's ink on that hue's own fill.** The same round drew its
 verdict on `background: var(--butter)` with `color: var(--butter-ink)`, which is two halves of one
 mistake. `--butter` is the *fill*, the thing a bar or a button is painted, and `--butter-soft` is the
@@ -4918,7 +4945,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
-`conjugationSlotFromFront`. Most of them now
+`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

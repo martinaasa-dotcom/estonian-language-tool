@@ -10,6 +10,7 @@ import { Speak } from "@/components/Speak";
 import { playClip } from "@/lib/audio/clip";
 import { useAudioPrefs } from "@/components/AudioPrefs";
 import { VOICES } from "@/lib/audio/voice";
+import { OPTION_CLASS, VERDICT_INK, optionState } from "@/lib/ux/verdict";
 
 export interface PairQuestion {
   /** The form that is actually played. */
@@ -167,7 +168,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
         >
           <Stat value={questions.length} label="Heard" />
-          <Stat value={`${accuracy}%`} label="Right" tone={accuracy >= 80 ? "var(--good)" : "var(--hard)"} />
+          <Stat value={`${accuracy}%`} label="Right" tone={VERDICT_INK[accuracy >= 80 ? "right" : "nearly"]} />
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
@@ -246,23 +247,15 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             {question.options.map((option, i) => {
               const isAnswer = option.value.toLowerCase() === question.heard.toLowerCase();
               const isPicked = option.value === picked;
-              const tone = !revealed
-                ? { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties
-                : isAnswer
-                  /*
-                    The ink, not the hue. `--good` set as text on `--good-soft`
-                    measures 2.23:1 on the light theme and `--again` on its own
-                    tint 2.50:1, which is what the token block in globals.css
-                    says will happen: the five hues are chosen to read as
-                    colour at full strength, and every one of them has an ink
-                    for the case where it has to be read as words instead.
-                    Dark is unaffected either way, since there the ink is the
-                    hue.
-                  */
-                  ? { background: "var(--good-soft)", color: "var(--good-ink)", borderColor: "transparent" }
-                  : isPicked
-                    ? { background: "var(--again-soft)", color: "var(--again-ink)", borderColor: "transparent" }
-                    : { background: "transparent", color: "var(--ink-3)", borderColor: "var(--rule-soft)" };
+              /*
+                Once revealed, the shared vocabulary paints the option
+                (lib/ux/verdict.ts). The ink, not the hue: `--good` set as
+                text on `--good-soft` measures 2.23:1 on the light theme and
+                `--again` on its own tint 2.50:1, which is what the token block
+                in globals.css says will happen. Four screens had written that
+                by hand before the classes existed, which is why they exist.
+              */
+              const state = revealed ? OPTION_CLASS[optionState(isAnswer, isPicked)] : "";
 
               return (
                 <button
@@ -270,8 +263,8 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
                   type="button"
                   disabled={revealed}
                   onClick={() => choose(option.value)}
-                  className="choice-btn flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default"
-                  style={tone}
+                  className={`choice-btn ${state} flex items-center gap-2.5 rounded-md border px-3.5 py-3 text-left disabled:cursor-default`}
+                  style={revealed ? undefined : { "--choice-bg": "var(--raised)", color: "var(--ink)" } as React.CSSProperties}
                 >
                   {/* Neither of these fades any more. The key hint is one
                       character, which axe declines to rule on, and it measured

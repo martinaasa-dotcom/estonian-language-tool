@@ -10,6 +10,7 @@ import { BLANK } from "@/lib/estonian/cloze";
 import { gradeChoice, gradeDictation, gradeWrite } from "@/lib/assessment/score";
 import type { ChoiceItem, DictationItem, Item, SpeakItem, WriteItem } from "@/lib/assessment/types";
 import type { WordStatus } from "@/lib/estonian/dictation";
+import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
 
 /**
  * One question, and its answer.
@@ -31,13 +32,13 @@ export interface Answer {
   skipped?: boolean;
 }
 
-const WORD_TONE: Record<WordStatus, { background: string; color: string; title: string }> = {
-  right: { background: "var(--good-soft)", color: "var(--good-ink)", title: "Exactly right" },
-  diacritics: { background: "var(--hard-soft)", color: "var(--hard-ink)", title: "The right word, without its Estonian letters" },
-  typo: { background: "var(--hard-soft)", color: "var(--hard-ink)", title: "One keystroke out" },
-  wrong: { background: "var(--again-soft)", color: "var(--again-ink)", title: "A different word" },
-  missing: { background: "var(--again-soft)", color: "var(--again-ink)", title: "Left out" },
-  extra: { background: "var(--raised)", color: "var(--ink-3)", title: "Not in the sentence" },
+const WORD_TONE: Record<WordStatus, { className: string; title: string }> = {
+  right: { className: VERDICT_CLASS.right, title: "Exactly right" },
+  diacritics: { className: VERDICT_CLASS.nearly, title: "The right word, without its Estonian letters" },
+  typo: { className: VERDICT_CLASS.nearly, title: "One keystroke out" },
+  wrong: { className: VERDICT_CLASS.wrong, title: "A different word" },
+  missing: { className: VERDICT_CLASS.wrong, title: "Left out" },
+  extra: { className: "", title: "Not in the sentence" },
 };
 
 /**
@@ -194,14 +195,7 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
               type="button"
               disabled={picked !== null || !played}
               onClick={() => choose(index)}
-              className="choice-btn flex min-h-[52px] items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3 text-left disabled:cursor-default"
-              style={{
-                ...(correct || wrong ? {
-                  borderColor: correct ? "var(--good-ink)" : "var(--again-ink)",
-                  background: correct ? "var(--good-soft)" : "var(--again-soft)",
-                } : {}),
-                opacity: picked !== null && !chosen && !correct ? 0.55 : 1,
-              }}
+              className={`choice-btn ${picked !== null ? OPTION_CLASS[optionState(Boolean(correct), Boolean(chosen))] : ""} flex min-h-[52px] items-center gap-3 rounded-[var(--r-lg)] border px-4 py-3 text-left disabled:cursor-default`}
             >
               <span
                 className="tnum flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
@@ -212,12 +206,12 @@ export function ChoiceQuestion({ item, onAnswer, onNoAudio }: {
               <span
                 lang={item.estonianOptions ? "et" : undefined}
                 className={`min-w-0 flex-1 text-base ${item.estonianOptions ? "font-semibold" : ""}`}
-                style={{ color: "var(--ink)" }}
+                style={picked === null ? { color: "var(--ink)" } : undefined}
               >
                 {option}
               </span>
-              {correct && <Check size={17} aria-hidden style={{ color: "var(--good-ink)" }} />}
-              {wrong && <X size={17} aria-hidden style={{ color: "var(--again-ink)" }} />}
+              {correct && <Check size={17} aria-hidden />}
+              {wrong && <X size={17} aria-hidden />}
             </button>
           );
         })}
@@ -336,8 +330,8 @@ export function DictationQuestion({ item, onAnswer, onNoAudio }: {
                   key={`${word.expected ?? word.typed ?? ""}-${i}`}
                   lang="et"
                   title={tone.title}
-                  className="rounded-[var(--r-sm)] px-2 py-1 text-base"
-                  style={{ background: tone.background, color: tone.color }}
+                  className={`${tone.className} rounded-[var(--r-sm)] px-2 py-1 text-base`}
+                  style={word.status === "extra" ? { background: "var(--raised)", color: "var(--ink-3)" } : undefined}
                 >
                   {word.expected ?? word.typed}
                 </span>

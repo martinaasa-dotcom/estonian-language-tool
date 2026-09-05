@@ -179,7 +179,7 @@ export function CheckpointSession({
             {at + 1 === total ? "Finish" : "Next"}
           </Button>
           {saving && <p className="text-sm" style={{ color: "var(--ink-3)" }}>Marking…</p>}
-          {error && <p className="text-sm" role="alert" style={{ color: "var(--peach-ink)" }}>{error}</p>}
+          {error && <p className="text-sm" role="alert" style={{ color: "var(--again-ink)" }}>{error}</p>}
           <p className="text-xs" style={{ color: "var(--ink-3)" }}>
             Passing moves you up a level. Failing changes nothing: a bad evening is not evidence
             that you have lost a level you already had.

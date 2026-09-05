@@ -26,6 +26,7 @@ import { LEARN_BATCH, ratingFor, rungOf, tally, type Outcome, type Rung } from "
 import type { LearnScheduling, LearnWord } from "@/lib/progress/learn";
 import { grade, type RatingValue } from "@/lib/srs/scheduler";
 import { requeue } from "@/lib/srs/queue";
+import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
 
 /**
  * THE LEARN LADDER, DRIVEN.
@@ -130,6 +131,7 @@ export function LearnSession({
   const [result, setResult] = useState<Result | null>(null);
   const [typed, setTyped] = useState("");
   const [verdict, setVerdict] = useState<AnswerCheck | null>(null);
+  const [chosen, setChosen] = useState<string | null>(null);
   const [answered, setAnswered] = useState(0);
   const [right, setRight] = useState(0);
   const [xp, setXp] = useState(0);
@@ -225,6 +227,7 @@ export function LearnSession({
     setResult(null);
     setTyped("");
     setVerdict(null);
+    setChosen(null);
     shownAt.current = Date.now();
   }, [queue]);
 
@@ -314,6 +317,7 @@ export function LearnSession({
 
   const pick = useCallback((option: string) => {
     if (!word || busy || phase === "feedback") return;
+    setChosen(option);
     const won = option === word.gloss;
     cheer(won);
     void send(won ? "right" : "wrong", {
@@ -515,24 +519,25 @@ export function LearnSession({
                   {word.choices.map((option, i) => {
                     const isAnswer = option === word.gloss;
                     const marked = phase === "feedback";
+                    /* The option the learner pressed is marked as well as the
+                       answer. It used to look exactly like the two nobody
+                       chose, on a screen only ever reached by pressing the
+                       wrong one. */
+                    const state = marked ? optionState(isAnswer, option === chosen) : null;
                     return (
                       <button
                         key={option}
                         type="button"
                         onClick={() => pick(option)}
                         disabled={busy || marked}
-                        className="choice-btn flex items-center gap-3 rounded-[var(--r)] border px-4 py-3.5 text-left text-base"
-                        style={{
-                          borderColor: marked && isAnswer ? "var(--good-ink)" : "var(--rule)",
-                          background: marked && isAnswer ? "var(--good-soft)" : "var(--surface)",
-                          color: "var(--ink)",
-                        }}
+                        className={`choice-btn ${state ? OPTION_CLASS[state] : ""} flex items-center gap-3 rounded-[var(--r)] border px-4 py-3.5 text-left text-base`}
                       >
                         <span className="label-xs shrink-0 rounded-full px-2 py-0.5" style={{ background: "var(--raised)", color: "var(--ink-3)" }}>
                           {i + 1}
                         </span>
                         <span className="min-w-0 flex-1">{option}</span>
-                        {marked && isAnswer && <Check size={16} aria-hidden style={{ color: "var(--good-ink)" }} />}
+                        {state === "right" && <Check size={16} aria-label="Right" />}
+                        {state === "wrong" && <X size={16} aria-label="Your pick" />}
                       </button>
                     );
                   })}
@@ -665,11 +670,7 @@ export function LearnSession({
 
           {phase === "feedback" && result && (
             <div
-              className="mt-2 w-full max-w-md rounded-[var(--r)] px-4 py-3.5 text-left"
-              style={{
-                background: verdict && countsAsRecalled(verdict.verdict) ? "var(--hard-soft)" : "var(--again-soft)",
-                color: verdict && countsAsRecalled(verdict.verdict) ? "var(--hard-ink)" : "var(--again-ink)",
-              }}
+              className={`${VERDICT_CLASS[verdict && countsAsRecalled(verdict.verdict) ? "nearly" : "wrong"]} mt-2 w-full max-w-md rounded-[var(--r)] px-4 py-3.5 text-left`}
             >
               <p className="text-sm font-semibold">
                 {rung === "gap" ? <>The word is <span lang="et">{result.expected}</span></> : result.expected}

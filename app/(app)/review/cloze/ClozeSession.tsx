@@ -11,6 +11,7 @@ import { Speak } from "@/components/Speak";
 import {
   BLANK, MAX_PASSAGE_CHARS, type ClozeItem, isClozeCorrect, isDiacriticSlip,
 } from "@/lib/estonian/passage";
+import { VERDICT_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
 
 /** A gap, plus the card it is practising. */
 type Gap = ClozeItem & { cardId: string | null };
@@ -155,7 +156,7 @@ export function ClozeSession() {
           style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
         >
           <Stat value={items.length} label="Gaps" />
-          <Stat value={`${accuracy}%`} label="Right" tone={accuracy >= 80 ? "var(--good)" : "var(--hard)"} />
+          <Stat value={`${accuracy}%`} label="Right" tone={VERDICT_INK[accuracy >= 80 ? "right" : "nearly"]} />
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
@@ -172,6 +173,9 @@ export function ClozeSession() {
 
   const right = isClozeCorrect(attempt, item.answer);
   const slip = isDiacriticSlip(attempt, item.answer);
+  // The same three the grade above sends: a slip is graded Hard and painted
+  // nearly, rather than the peach a blank gets.
+  const verdict = right ? "right" : slip ? "nearly" : "wrong";
   const [before = "", after = ""] = item.masked.split(BLANK.trim());
 
   return (
@@ -213,11 +217,8 @@ export function ClozeSession() {
           <p lang="et" className="text-lg leading-relaxed" style={{ color: "var(--ink)" }}>
             {before}
             <span
-              className="mx-1 inline-block min-w-[5ch] rounded px-2 text-center"
-              style={{
-                background: checked ? (right ? "var(--good-soft)" : "var(--again-soft)") : "var(--raised)",
-                color: checked ? (right ? "var(--good)" : "var(--again)") : "var(--ink-3)",
-              }}
+              className={`${checked ? VERDICT_CLASS[verdict] : ""} mx-1 inline-block min-w-[5ch] rounded px-2 text-center`}
+              style={checked ? undefined : { background: "var(--raised)", color: "var(--ink-3)" }}
             >
               {checked ? item.answer : "____"}
             </span>
@@ -247,13 +248,7 @@ export function ClozeSession() {
 
           {checked && (
             <div className="mt-5" aria-live="polite">
-              <div
-                className="flex items-start gap-2.5 rounded-md px-3.5 py-3"
-                style={{
-                  background: right ? "var(--good-soft)" : "var(--again-soft)",
-                  color: right ? "var(--good)" : "var(--again)",
-                }}
-              >
+              <div className={`${VERDICT_CLASS[verdict]} flex items-start gap-2.5 rounded-md px-3.5 py-3`}>
                 {right
                   ? <Check size={16} className="mt-0.5 shrink-0" aria-hidden />
                   : <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />}

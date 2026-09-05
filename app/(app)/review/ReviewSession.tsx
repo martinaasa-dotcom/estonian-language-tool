@@ -27,6 +27,7 @@ import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
 import { previewIntervals, SELF_GRADES, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { requeue } from "@/lib/srs/queue";
+import { OPTION_CLASS, VERDICT_CLASS, optionState, verdictOfCheck, verdictOfRating } from "@/lib/ux/verdict";
 
 export interface ReviewCard {
   id: string;
@@ -74,14 +75,6 @@ export interface ReviewCard {
   scheduling: Omit<SchedulingState, "due" | "lastReview"> & { due: string; lastReview: string | null };
 }
 
-// The ink of each grade, not the hue: these are set as text on the matching
-// soft tint, where the hue itself is barely 2.5:1 (globals.css).
-const TONE: Record<number, string> = {
-  1: "var(--again-ink)", 2: "var(--hard-ink)", 3: "var(--good-ink)", 4: "var(--easy-ink)",
-};
-const TONE_SOFT: Record<number, string> = {
-  1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
-};
 
 
 /**
@@ -965,13 +958,7 @@ export function ReviewSession({
           {ask === "type" && verdict && (
             <div className="w-full max-w-sm">
               <p
-                className={`${verdict.verdict === "correct" ? "pop-in" : "shake"} rounded-md px-4 py-2.5 text-sm`}
-                style={{
-                  background: verdict.verdict === "correct" ? "var(--good-soft)"
-                    : verdict.verdict === "wrong" ? "var(--again-soft)" : "var(--hard-soft)",
-                  color: verdict.verdict === "correct" ? "var(--good-ink)"
-                    : verdict.verdict === "wrong" ? "var(--again-ink)" : "var(--hard-ink)",
-                }}
+                className={`${verdict.verdict === "correct" ? "pop-in" : "shake"} ${VERDICT_CLASS[verdictOfCheck(verdict.verdict)]} rounded-md px-4 py-2.5 text-sm`}
               >
                 {verdict.verdict === "correct" ? "Õige!" : verdict.note}
               </p>
@@ -1033,20 +1020,15 @@ export function ReviewSession({
           {ask === "choice" && chosen && (
             <div className="mt-2 grid w-full max-w-md gap-2">
               {card.choices?.map((choice) => {
-                const isAnswer = choice === card.back;
-                const picked = choice === chosen;
+                const state = optionState(choice === card.back, choice === chosen);
                 return (
                   <div
                     key={choice}
-                    className="rounded-[var(--r)] px-4 py-3.5 text-left text-base font-medium"
-                    style={{
-                      background: isAnswer ? "var(--good-soft)" : picked ? "var(--again-soft)" : "var(--raised)",
-                      color: isAnswer ? "var(--good-ink)" : picked ? "var(--again-ink)" : "var(--ink-3)",
-                      outline: isAnswer ? "2px solid var(--good)" : "none",
-                      outlineOffset: -2,
-                    }}
+                    className={`${OPTION_CLASS[state]} flex items-center gap-3 rounded-[var(--r)] border px-4 py-3.5 text-left text-base font-medium`}
                   >
-                    {choice}
+                    <span className="flex-1">{choice}</span>
+                    {state === "right" && <Check size={16} aria-label="Right" />}
+                    {state === "wrong" && <X size={16} aria-label="Your pick" />}
                   </div>
                 );
               })}
@@ -1179,8 +1161,7 @@ export function ReviewSession({
                   disabled={busy}
                   onClick={() => void submit(g.rating)}
                   aria-label={intervals ? `${g.label}, next in ${intervals[g.rating]}` : g.label}
-                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
-                  style={{ background: TONE_SOFT[g.rating], color: TONE[g.rating] }}
+                  className={`${VERDICT_CLASS[verdictOfRating(g.rating)]} press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
                 >
                   <span className="text-base font-bold">{g.label}</span>
                   <span className="tnum text-2xs">{intervals?.[g.rating]}</span>

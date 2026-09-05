@@ -8648,7 +8648,20 @@ check("a hue's fill is never used as its ink", () => {
     `Diagnosis` passes both, a fill for its bar and an ink for its label, which
     is the pairing this is protecting rather than a violation of it.
   */
-  const fillAsInk = /(?:color:\s*|(?<!ink=)\btone=)"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
+  /*
+    AND A TERNARY IS NOT A DISGUISE. The first version of this matched a fill
+    only where it sat immediately after `color:` or `tone=`, so
+    `color: right ? "var(--good)" : "var(--again)"` walked straight past it,
+    and that is exactly the shape a verdict takes. Four rounds were writing
+    their verdict in the fill at 2.2:1 with this check green: cloze, write,
+    describe, and the sprint's clock. The `color:` rule reads the whole
+    declaration now. `tone=` is different, because `Ring` and `Meter` take a
+    fill for a bar and a ternary there is the correct shape; what is asked of
+    `tone=` is the bare literal, and `Stat`, which writes its value as text,
+    is read as a whole element below, ternary and all.
+  */
+  const fillAsInk = /(?:\bcolor:\s*[^;\n]*?|(?<!ink=)\btone=)"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
+  const statAsFill = /\btone=\{?[^}]*?"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
   const offenders: string[] = [];
   for (const file of [...APP, ...COMPONENTS]) {
     for (const line of read(file).split("\n")) {
@@ -8656,6 +8669,9 @@ check("a hue's fill is never used as its ink", () => {
       // label's, and naming both on one line is the correct shape.
       if (/\bink=/.test(line)) continue;
       if (fillAsInk.test(line)) offenders.push(`${file}: ${line.trim().slice(0, 90)}`);
+    }
+    for (const stat of read(file).matchAll(/<Stat\b[\s\S]*?\/>/g)) {
+      if (statAsFill.test(stat[0])) offenders.push(`${file}: ${stat[0].replace(/\s+/g, " ").slice(0, 90)}`);
     }
   }
   assert.deepEqual(offenders, [], "a hue's fill is being used to write words, where its ink belongs");
@@ -11174,6 +11190,74 @@ check("Today's report names no errand, and the research table says what it cover
     read("lib/research/sections.ts"), /REPORTS TIED TO AN ERRAND/,
     "the encounters section no longer tells a reader that it counts errands rather than conversations",
   );
+});
+
+/*
+  A VERDICT IS PAINTED ONCE.
+
+  Correct is green and wrong is red, and the palette had said so since it was
+  drawn (docs/14-design-system.md §1). What it had not done was hold twenty
+  screens to it. Each round marked an answer out of the tokens by hand, and
+  the copies disagreed: four wrote the verdict in the fill at 2.2:1, one
+  never marked the option the learner had pressed, two painted a near miss
+  the same peach as a blank, the picture board said nothing in colour at all,
+  and the exam's list of wrong answers was two bare coloured words on a card.
+
+  `lib/ux/verdict.ts` is the one vocabulary, three words for a verdict and
+  three states for an option, and `app/globals.css` is the one place they are
+  painted. Three things hold it: every class the module names is a rule in
+  the stylesheet, painting the tint and writing in the ink of the semantic
+  alias rather than the hue; every screen that marks an answer reads the
+  module; and none of them paints a verdict tint by hand any more, which is
+  the shape every one of the faults above took.
+*/
+check("a verdict is painted once, in the tint and the ink", () => {
+  const vocabulary = code("lib/ux/verdict.ts");
+  const classes = [...vocabulary.matchAll(/:\s*"((?:verdict|option)-[a-z]+)"/g)].map((m) => m[1]!);
+  assert.ok(classes.length >= 6, "lib/ux/verdict.ts stopped naming its classes");
+
+  for (const name of classes) {
+    const rule = CSS.match(new RegExp(`\\.${name}\\s*\\{([^}]*)\\}`));
+    assert.ok(rule, `.${name} is named in lib/ux/verdict.ts and painted nowhere in app/globals.css`);
+    const body = rule![1]!;
+    const bg = body.match(/(?:^|[\s;])background:\s*var\(--([a-z0-9-]+)\)/)?.[1];
+    const ink = body.match(/(?:^|[\s;])color:\s*var\(--([a-z0-9-]+)\)/)?.[1];
+    assert.ok(bg && ink, `.${name} paints no tint or writes in no ink`);
+    // The semantic aliases, so the rating scale and a marked answer cannot drift
+    // apart, and the raised surface for an option nobody chose.
+    assert.match(bg!, /^(good|hard|again)-soft$|^raised$/, `.${name} paints ${bg}, which is not a verdict tint`);
+    assert.match(ink!, /^(good|hard|again)-ink$|^ink-3$/, `.${name} writes in ${ink}, which is not an ink`);
+  }
+
+  // The screens that mark an answer are the ones that call the app's markers.
+  const marks = /\b(gradeCard|checkAnswer|gradeChoice|gradeDictation|gradeWrite|markFlash|markDescription|isClozeCorrect|wrongCells|allMarks)\(/;
+  // Sõnad is not on this list and is not exempt from it: it marks letters with
+  // three kinds of object rather than three tints, by a design argued at the
+  // top of its own file, and it calls none of the markers above.
+  const exempt: Record<string, string> = {
+    // Marks a paper whole and shows no per-answer verdict, on purpose (line 22).
+    "app/(app)/learn/checkpoint/[level]/CheckpointSession.tsx": "no per-answer verdict by design",
+  };
+  // Screens, not the server actions and page files that call the same markers and draw nothing.
+  const marking = [...APP, ...COMPONENTS].filter(
+    (file) => file.endsWith(".tsx") && !file.endsWith("page.tsx") && marks.test(code(file)),
+  );
+  assert.ok(marking.length >= 20, `only ${marking.length} marking screens found; the marker list has rotted`);
+  for (const file of marking) {
+    const body = code(file);
+    if (file in exempt) {
+      assert.doesNotMatch(body, /lib\/ux\/verdict/, `${file} reads the vocabulary now; drop its exemption`);
+      continue;
+    }
+    assert.match(body, /from "@\/lib\/ux\/verdict"/, `${file} marks an answer without reading lib/ux/verdict.ts`);
+    assert.doesNotMatch(
+      body, /"var\(--(good|again)-soft\)"/,
+      `${file} paints a verdict tint by hand; wear VERDICT_CLASS or OPTION_CLASS instead`,
+    );
+  }
+  for (const file of Object.keys(exempt)) {
+    assert.ok(marking.includes(file), `${file} is exempted and no longer marks anything`);
+  }
 });
 
 console.log(

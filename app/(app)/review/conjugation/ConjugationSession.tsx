@@ -13,6 +13,7 @@ import { SuggestFix } from "@/components/SuggestFix";
 import { useFeedbackSound } from "@/components/AudioPrefs";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { VERB_GROUP_LABELS } from "@/lib/estonian/morph";
+import { VERDICT_CLASS, VERDICT_INK, verdictOfCheck } from "@/lib/ux/verdict";
 
 export type Tense = "present" | "conditional";
 
@@ -139,7 +140,7 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
           style={{ borderColor: "var(--rule)", background: "var(--surface)" }}
         >
           <Stat value={`${tablesRight}/${questions.length}`} label="Tables" />
-          <Stat value={`${accuracy}%`} label="Forms right" tone={accuracy >= 80 ? "var(--good)" : "var(--hard)"} />
+          <Stat value={`${accuracy}%`} label="Forms right" tone={VERDICT_INK[accuracy >= 80 ? "right" : "nearly"]} />
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
@@ -243,14 +244,13 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
                         <div className="flex flex-wrap items-center gap-2">
                           <span
                             lang="et"
-                            className="pop-in text-lg font-semibold"
-                            style={{ color: mark.verdict === "correct" ? "var(--good-ink)" : mark.verdict === "wrong" ? "var(--again-ink)" : "var(--hard-ink)" }}
+                            className={`${VERDICT_CLASS[verdictOfCheck(mark.verdict)]} pop-in rounded-[var(--r-sm)] px-1.5 text-lg font-semibold`}
                           >
                             <Ending stem={question.given.value} form={blank.answer} />
                           </span>
                           <Speak text={blank.answer} size={13} />
                           {mark.verdict === "correct" ? (
-                            <Check size={15} aria-label="Right" style={{ color: "var(--good-ink)" }} />
+                            <Check size={15} aria-label="Right" style={{ color: VERDICT_INK.right }} />
                           ) : (
                             <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                               {typed[i]?.trim()

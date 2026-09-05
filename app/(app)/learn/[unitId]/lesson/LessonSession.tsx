@@ -14,6 +14,7 @@ import { BLANK, sentenceMatches } from "@/lib/estonian/cloze";
 import { checkAnswer, countsAsRecalled } from "@/lib/estonian/answer";
 import { isAnswerable, type LessonStep } from "@/lib/collections/lesson";
 import { grammarPoint } from "@/lib/estonian/grammar";
+import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
 
 interface Answer {
   id: string;
@@ -124,13 +125,12 @@ export function LessonSession({
   );
 }
 
-/** Feedback shown after an answer, in the palette's fixed meanings. */
+/** Feedback shown after an answer, in the palette's fixed meanings (lib/ux/verdict.ts). */
 function Verdict({ ok, note }: { ok: boolean; note?: string }) {
   return (
     <div
-      className="flex items-start gap-2 rounded-[var(--r-sm)] p-3 text-sm"
+      className={`${VERDICT_CLASS[ok ? "right" : "wrong"]} flex items-start gap-2 rounded-[var(--r-sm)] p-3 text-sm`}
       role="status"
-      style={{ background: ok ? "var(--mint-soft)" : "var(--peach-soft)", color: "var(--ink)" }}
     >
       {ok ? <Check size={18} aria-hidden /> : <X size={18} aria-hidden />}
       <span>{note ?? (ok ? "Correct." : "Not this time.")}</span>
@@ -194,11 +194,7 @@ function Options({
             type="button"
             disabled={settled}
             onClick={() => onChoose(i)}
-            className="choice-btn flex min-h-[44px] items-center gap-3 rounded-[var(--r-sm)] border p-3 text-left"
-            style={settled ? {
-              borderColor: isAnswer ? "var(--mint)" : "var(--rule)",
-              background: isAnswer ? "var(--mint-soft)" : picked ? "var(--peach-soft)" : "var(--surface)",
-            } : undefined}
+            className={`choice-btn ${settled ? OPTION_CLASS[optionState(isAnswer, picked)] : ""} flex min-h-[44px] items-center gap-3 rounded-[var(--r-sm)] border p-3 text-left`}
           >
             <span
               className="grid h-6 w-6 shrink-0 place-items-center rounded-[var(--r-sm)] text-xs"

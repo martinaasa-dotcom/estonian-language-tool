@@ -263,7 +263,7 @@ export default async function ProgressPage() {
                     className="flex items-center gap-3.5 rounded-[var(--r-lg)] border px-4 py-3.5"
                     style={{
                       borderColor: q.done ? "transparent" : "var(--rule)",
-                      background: q.done ? "var(--mint-soft)" : "var(--surface)",
+                      background: q.done ? "var(--good-soft)" : "var(--surface)",
                       boxShadow: q.done ? "none" : "var(--shadow-sm)",
                     }}
                   >
