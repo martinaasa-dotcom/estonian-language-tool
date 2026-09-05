@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Compass, Loader2 } from "lucide-react";
 import { completeOnboarding } from "@/app/actions";
@@ -125,13 +125,24 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
 }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  /*
+    A new step opens at the top of the page. The Continue button sits at the
+    bottom of a screen that is often taller than the window, so without this
+    the next step arrived scrolled to its own footer and the reader met the
+    last question before the first.
+  */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.querySelector("main")?.scrollTo?.({ top: 0, left: 0 });
+  }, [step]);
   const [name, setName] = useState(suggestedName);
   const [letters, setLetters] = useState<LetterBar>(DEFAULT_LETTER_BAR);
   const [gloss, setGloss] = useState<GlossLanguage>(DEFAULT_GLOSS_LANGUAGE);
 
   // A set, because almost nobody has one reason: living here, an Estonian
   // partner and a job where the meetings are in Estonian are three answers to
-  // one question and the app used to make somebody pick a favourite.
+  // one question and the app used to make somebody pick a favorite.
   const [reasons, setReasons] = useState<string[]>([]);
   const [target, setTarget] = useState<Band | null>(null);
   /** True once the learner has pressed a target themselves, which ends the offer. */
@@ -589,8 +600,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               </div>
 
               <div>
-                <SectionTitle hint="be honest, the plan is built on it">Days a week you will really practise</SectionTitle>
-                <ChoiceGroup ariaLabel="Days a week you will really practise">
+                <SectionTitle hint="be honest, the plan is built on it">Days a week you will really practice</SectionTitle>
+                <ChoiceGroup ariaLabel="Days a week you will really practice">
                   {[2, 3, 4, 5, 6, 7].map((days) => (
                     <ChoiceChip key={days} even selected={daysPerWeek === days} onSelect={() => setDaysPerWeek(days)}>
                       {days}

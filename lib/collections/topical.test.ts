@@ -34,7 +34,7 @@ describe("the topical calendar", () => {
 
   /*
     The fallback in `themeFor` returns the first theme when nothing matches,
-    which is the right behaviour on a page and would hide a hole in the table
+    which is the right behavior on a page and would hide a hole in the table
     from the test above. So the windows are checked directly as well.
   */
   it("has a window round every day rather than falling back to the first", () => {

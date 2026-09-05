@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TAGGED_LINE, fixFrom, vocabFrom } from "@/lib/tutor/markers";
 
-describe("a tagged line is recognised however a model dresses it", () => {
+describe("a tagged line is recognized however a model dresses it", () => {
   const shapes = ["FIX: Ma loen raamatut.", "3. FIX: Ma loen raamatut.", "**FIX:** Ma loen raamatut.", "**FIX**: Ma loen raamatut.", "`FIX:` Ma loen raamatut.", "fix: Ma loen raamatut."];
   for (const line of shapes) {
     it(`sees ${line.slice(0, 12)} as tagged`, () => {

@@ -34,7 +34,7 @@ describe("the two switches", () => {
 
   it("reads an unrecognised autoplay value as the default rather than as on", () => {
     // The flip to a silent default is only real if it reaches a stored row
-    // nobody recognises. Written as `value === "off" ? "off" : "on"`, this
+    // nobody recognizes. Written as `value === "off" ? "off" : "on"`, this
     // would answer "on" here and the default would apply to nobody.
     expect(autoplayFrom("anything")).toBe("off");
     expect(autoplayFrom("")).toBe("off");

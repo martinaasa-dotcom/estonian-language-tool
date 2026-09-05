@@ -57,7 +57,7 @@ describe("sanitiseItems", () => {
     expect(sanitiseItems([{ et: "tuba" }, { et: "TUBA" }], 10)).toHaveLength(1);
   });
 
-  it("honours the ceiling it is given", () => {
+  it("honors the ceiling it is given", () => {
     const many = Array.from({ length: 30 }, (_, i) => ({ et: `sona${i}` }));
     expect(sanitiseItems(many, 5)).toHaveLength(5);
   });

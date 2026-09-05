@@ -9,7 +9,7 @@
  *
  * Three limits, because they fail in different ways:
  *   - a burst limit stops a runaway client or a held-down key,
- *   - a per-user daily limit stops one enthusiastic person monopolising the key,
+ *   - a per-user daily limit stops one enthusiastic person monopolizing the key,
  *   - a global daily cost cap is the actual guarantee about the bill.
  */
 

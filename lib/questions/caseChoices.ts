@@ -9,7 +9,7 @@ import { attestedForms, conjugationAnswer, type VerbForms } from "@/lib/srs/card
  *
  * A case card used to end in "Not yet" and "Got it": the app held the answer
  * character for character, could have marked it, and asked the learner to mark
- * it instead. That judgement then went into `Review`, the append-only log, and
+ * it instead. That judgment then went into `Review`, the append-only log, and
  * the weakest-case panel, the mastery counter, the readiness rungs and the exam
  * confidence figure are all derived from it. The daily quest is the sharp end
  * of that, because it picks the cases a learner is worst at and then lets them

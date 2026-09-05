@@ -40,7 +40,7 @@ export const COHORT_LABEL: Record<CohortKind, string> = {
 
 export const COHORT_DETAIL: Record<CohortKind, string> = {
   CLASS: "You teach it. You see who is keeping up and which case each person is weakest at.",
-  WORKPLACE: "You sponsor it. You see who is practising and who is on track, never their mistakes.",
+  WORKPLACE: "You sponsor it. You see who is practicing and who is on track, never their mistakes.",
 };
 
 /**
@@ -87,7 +87,7 @@ export const BAND_LABEL: Record<ReadinessBand, string> = {
  * `evidenceFrom` calls anything under 150 reviews "thin" and the model caps its
  * own confidence at 60 to say so. That cap is enough when the reader is the
  * learner. It is not enough when the reader signs the invoice: "needs time"
- * beside an employee's name, computed off nine reviews, is a judgement the data
+ * beside an employee's name, computed off nine reviews, is a judgment the data
  * cannot carry, and the person it lands on has no way to see the arithmetic.
  * Below this tier the band is `unknown` whatever the model says.
  */

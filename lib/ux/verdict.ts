@@ -3,12 +3,12 @@
  *
  * Twenty screens mark an answer, and each one used to paint its own verdict
  * out of the tokens by hand: a tint here, a fill there, an ink on some, the
- * hue itself on others. The palette had already decided what the colours mean
+ * hue itself on others. The palette had already decided what the colors mean
  * (docs/14-design-system.md §1: mint is recalled, butter is nearly, peach is
  * missed), so nothing was wrong on purpose. What went wrong was the copying.
  * Four rounds wrote a verdict in the fill at 2.2:1, one round never marked the
  * option the learner actually pressed, another marked a near miss the same
- * peach as a blank, and the picture board said nothing in colour at all.
+ * peach as a blank, and the picture board said nothing in color at all.
  *
  * So there is one vocabulary and this is it. A verdict is one of three words,
  * and each names a class in `app/globals.css` that paints the tint and writes
@@ -18,11 +18,23 @@
  * verdict tint by hand, and `scripts/test-invariants.ts` fails on one that
  * does.
  *
- * Pure: no React, no tokens, no colour. The colour lives in the stylesheet,
+ * Pure: no React, no tokens, no color. The color lives in the stylesheet,
  * where the theme can flip it.
  */
 
 export type Verdict = "right" | "nearly" | "wrong";
+
+/**
+ * How long a marked answer stays on the screen before the next card comes.
+ *
+ * A right pick and a right typed answer used to move on after 420 ms, which
+ * is under the time it takes to look from the option you pressed to the tint
+ * it turned: a learner reported the card "flashing away" before they knew
+ * whether they had it. A second and a bit is long enough to read a green
+ * tile as green and short enough that nobody reaches for a button. Undo is
+ * still there for the moment somebody wanted longer.
+ */
+export const VERDICT_PAUSE_MS = 1100;
 
 /** The class a panel, a chip or a self-grade button wears for a verdict. */
 export const VERDICT_CLASS: Record<Verdict, string> = {

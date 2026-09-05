@@ -336,7 +336,7 @@ function absorbUsage(provider: ProviderName, frame: unknown, into: UsageReport):
  * Ask the chain until one of them accepts, and say which one did.
  *
  * THE SPLIT BETWEEN OPENING AND READING IS THE WHOLE DESIGN HERE, and it
- * exists so the answer can be labelled. Every reason to fall back, a 429, a
+ * exists so the answer can be labeled. Every reason to fall back, a 429, a
  * rejected key, a provider having a bad minute, arrives in the *head* of the
  * upstream response, before a single token of the reply. So the handshake is
  * finished before this function returns, the caller knows which model is
@@ -525,7 +525,7 @@ async function withRetry(send: () => Promise<Response>, patient: boolean): Promi
  *
  * `usageFrames` is that quirk. Asking for `stream_options: {include_usage:true}`
  * is how the ledger gets exact token counts instead of estimating from
- * characters, and a provider that does not recognise the field rejects the
+ * characters, and a provider that does not recognize the field rejects the
  * whole request rather than ignoring it. Anthropic already cost this codebase
  * that bug once. Gemini's compatibility layer is not documented to accept it,
  * so it is not sent, and the ledger falls back to its estimate, which

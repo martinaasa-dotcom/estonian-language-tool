@@ -25,11 +25,11 @@
 /**
  * Reveals the answer on whatever review card is on screen.
  *
- * Returns the shape it recognised (`"flip"`, `"choice"`, `"typed"`) or null if
+ * Returns the shape it recognized (`"flip"`, `"choice"`, `"typed"`) or null if
  * there was no card to answer, so a caller can say which of those it got
  * rather than only that something happened.
  */
-export async function revealAnswer(page, { timeout = 900 } = {}) {
+export async function revealAnswer(page, { timeout = 1400 } = {}) {
   const app = page.locator("main");
 
   /*
@@ -63,8 +63,8 @@ export async function revealAnswer(page, { timeout = 900 } = {}) {
     await page.keyboard.press("1");
     await page.waitForTimeout(timeout);
     /*
-      A right pick now grades itself after 420ms, which this helper promises
-      not to do. One guess in four lands on the answer and there is no way to
+      A right pick now grades itself after `VERDICT_PAUSE_MS` (1100ms), which
+      this helper promises not to do, so the wait here has to outlast it. One guess in four lands on the answer and there is no way to
       know which before picking, so when it does the grade is taken straight
       back through the app's own undo. Undo is disabled until something has
       been graded in this page's session, and a first meeting writes nothing,
@@ -91,6 +91,31 @@ export async function revealAnswer(page, { timeout = 900 } = {}) {
 }
 
 /**
+ * Types a miss again, which is what the card now asks for before it moves on.
+ *
+ * A typed card marked wrong keeps its screen and asks for the form once more,
+ * against the answer printed above it, and only a correct retype lets the
+ * card go: "Got it, next" is not offered until then. The answer is read off
+ * the screen (`data-answer`), typed into the second box, and the card then
+ * grades the miss it already had and moves on by itself after the verdict
+ * pause. So this *does* let a grade happen, and is deliberately not called
+ * by `revealAnswer`: a caller that wants the card graded calls it, and the
+ * containment suite, which must leave the deck as it found it, never does.
+ *
+ * Returns false when no retype was being asked for.
+ */
+export async function retypeMiss(page, { settle = 1500 } = {}) {
+  const box = page.locator("main").getByLabel(/Type the (answer|word) again/);
+  if (!(await box.count())) return false;
+  const answer = (await page.locator("main [data-answer]").first().textContent())?.trim();
+  if (!answer) return false;
+  await box.first().fill(answer);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(settle);
+  return true;
+}
+
+/**
  * The buttons that write a grade, which only appear once an answer is showing.
  *
  * There used to be four of them, Again, Hard, Good and Easy, and this named
@@ -109,7 +134,7 @@ export function gradeButtons(page) {
   /*
     Matched on the accessible name, which is not the words on the button.
     A self-grade carries `aria-label="Got it, next in 10 min"`, the
-    acknowledgement a miss leaves behind reads "Got it, next Enter" because
+    acknowledgment a miss leaves behind reads "Got it, next Enter" because
     its key cap is inside it, and the first-meeting button, which writes
     nothing at all, is "Got it, ask me later Space". Anchoring on `$` matched
     none of the three and the suite waived four checks a run saying the deck

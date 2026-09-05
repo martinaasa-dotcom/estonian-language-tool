@@ -372,7 +372,7 @@ check("the nominative plural is a required stem, and is never an ending", () => 
 
   `Form`'s unique key includes the value because Estonian has genuine parallel
   forms (`raamatutes` beside `raamatuis`), which is right for the retrieved
-  table and wrong for the six a learner memorises. Ekilex gives two partitive
+  table and wrong for the six a learner memorizes. Ekilex gives two partitive
   plurals for most nouns and `mapEkilexDetails` wrote both down as `PART_PL`:
   2,016 shipped entries carried a doubled partitive plural and 120 a doubled
   genitive plural, and which of the pair the app used was decided by whoever
@@ -576,7 +576,7 @@ check("the mock paper's minutes and marks are the ones the exam doc cites", () =
   clip asked for at 0.6 is every phoneme held on repeated frames: flat, buzzing,
   and reported as robotic. The route forwards no speed, the one clip is played
   slower with the pitch held in lib/audio/clip.ts, and every clip is trimmed,
-  levelled and written as 16-bit by lib/audio/wav.ts before it is cached. A
+  leveled and written as 16-bit by lib/audio/wav.ts before it is cached. A
   second file setting `playbackRate` would be a second answer to how slow is
   done, and a `speed` reappearing in the route would be the model doing it.
 */
@@ -752,7 +752,7 @@ check("a principal part is one form, whatever Ekilex sends", () => {
   place. Three of them wrote it compact and the file in the repository is one
   key per line, so the next full run of any of them would have collapsed 5,363
   entries into a single 3MB line and buried whatever it actually changed.
-  `scripts/lib/expandedFile.ts` is the one serialiser.
+  `scripts/lib/expandedFile.ts` is the one serializer.
 */
 check("the built dictionary has one writer", () => {
   const offenders = sourceFiles("scripts")
@@ -1370,7 +1370,7 @@ check("a withheld note claims Estonian only when it caught Estonian", () => {
     ADR-005 amendment 2. `verifyComment` withholds on two different findings
     and they are not the same claim. A word carrying one of õäöüšž is Estonian
     whatever else it is. A word of five letters or more that nothing supplied
-    is `looksInflected`'s guess, deliberately biased towards withholding, and
+    is `looksInflected`'s guess, deliberately biased toward withholding, and
     on `/api/exam/write` it is handed no glosses, no forms and an allowlist
     of the learner's own text, so an English word Anu quoted back is the thing
     it usually catches. Both drop the note, which is the safe error either way.
@@ -1430,7 +1430,7 @@ check("nothing derived from a stem is stored", () => {
 check("no code path updates a review", () => {
   /*
     It is the one table whose loss is unrecoverable, and it is the input to
-    FSRS parameter optimisation. An undo writes a compensating row.
+    FSRS parameter optimization. An undo writes a compensating row.
 
     `code()` rather than `read()`, which is the fifth time this repository has
     made the same mistake and the first time it was caught by a comment saying
@@ -1528,12 +1528,12 @@ const GRADING_DOORS =
   /\b(gradeCards?|replayGrades|completeLesson|recordCheckpoint|submitExam|recordSonad|recordCrossword|finishScene)\b/;
 
 /**
- * Sessions that measure rather than practise.
+ * Sessions that measure rather than practice.
  *
  * The placement test asks about words the learner may never have had a card for,
  * to decide where to start them. Writing those answers to the review log would
  * put grades against cards that do not exist and tell the scheduler somebody had
- * practised material they have not yet met.
+ * practiced material they have not yet met.
  */
 const MEASURES_RATHER_THAN_PRACTISES: string[] = [];
 
@@ -1542,7 +1542,7 @@ check("every practice mode writes to the same review log", () => {
   /*
     Sprint, Listening, Match, Dictation, Sentences and the unit lessons are not
     side games with scores of their own. They grade through the same actions, so
-    the scheduler sees what was actually practised.
+    the scheduler sees what was actually practiced.
 
     The lesson runner is why this names more than one action. It sits under
     /learn/ rather than /review/ and submits a whole finished lesson at once
@@ -1727,7 +1727,7 @@ check("a session never lets its questions change under the learner", () => {
       is not free.
 
       The property is the same and the lazy form is the stronger of the two: the
-      initialiser runs once on mount and never again, so a refreshed prop cannot
+      initializer runs once on mount and never again, so a refreshed prop cannot
       reach the queue either way. This asserted the plain spelling only, and
       fired on the lazy one, which is a check firing on honest code. The rule is
       widened rather than the code contorted, and what both arms still require
@@ -2064,7 +2064,7 @@ check("every path that adds cards reads and writes under one lock", () => {
 
     The lock is `lib/usage/ledger.ts`'s, for the reasons its header gives: the
     *transaction* form, so a connection pooler cannot strand it, and the
-    blocking one, since the non-blocking form serialises nothing.
+    blocking one, since the non-blocking form serializes nothing.
 
     Asserted per path as the three things together, because each on its own is
     satisfied by a version that still races: a transaction with no lock, a lock
@@ -2109,7 +2109,7 @@ check("every path that adds cards reads and writes under one lock", () => {
     assert.ok(readAt >= 0 && writeAt >= 0, `${what} no longer reads what it has before writing`);
     assert.ok(
       lockAt < readAt && readAt < writeAt,
-      `${what} takes its lock after the read it is meant to protect, which serialises nothing`,
+      `${what} takes its lock after the read it is meant to protect, which serializes nothing`,
     );
   }
 
@@ -2145,7 +2145,7 @@ check("every path that adds cards reads and writes under one lock", () => {
   );
   assert.doesNotMatch(
     lock, /pg_try_advisory/,
-    "lockDeck went to the non-blocking lock, which serialises nothing",
+    "lockDeck went to the non-blocking lock, which serializes nothing",
   );
   assert.match(
     lock, /\$\{`deck:\$\{ownerId\}`\}/,
@@ -2416,7 +2416,7 @@ check("a `take` beside a `distinct` bounds nothing, so it is scoped to one owner
 check("which of two entries for one word wins is decided, not left to the rows", () => {
   /*
     `@@unique` is on `(lemma, pos)`, so one lemma can hold more than one entry
-    and sometimes should: `hall` is grey and also frost. What may not happen is
+    and sometimes should: `hall` is gray and also frost. What may not happen is
     the app having no rule about which of them it leads with, because the entry
     page renders `hits[0]` and nothing else.
 
@@ -2612,7 +2612,7 @@ check("the seasonal row names units of the course, never words of its own", () =
     A hand-written seasonal word list would be this app writing Estonian
     (ADR-005), and the first misspelling would ship in silence. So the
     calendar names unit ids and the words come out of the syllabus, where a
-    lemma is a request the Ekilex harvest either honoured or reported.
+    lemma is a request the Ekilex harvest either honored or reported.
     `topical.test.ts` checks every id is a real unit; this checks the table
     has not started carrying words instead.
   */
@@ -3045,7 +3045,7 @@ check("where you are is one pane, and it arrives under a pointer", () => {
   );
 
   /*
-    A TRAVELLING MARKER IS COMPANY FOR A FINGER AND AN ARGUMENT WITH A POINTER.
+    A TRAVELING MARKER IS COMPANY FOR A FINGER AND AN ARGUMENT WITH A POINTER.
 
     A thumb has nothing else to do while a server answers, so the bar's pill
     slides from the cell you left to the cell you asked for. A pointer has
@@ -3057,7 +3057,7 @@ check("where you are is one pane, and it arrives under a pointer", () => {
     rail's answer to mean anything at all.
   */
   assert.equal(NAV_MOTION.rail.travelMs, 0, "the rail's marker travels again under a pointer");
-  assert.ok(NAV_MOTION.bar.travelMs > 0, "the phone bar's marker stopped travelling");
+  assert.ok(NAV_MOTION.bar.travelMs > 0, "the phone bar's marker stopped traveling");
   assert.match(
     code("lib/layout/navMarker.ts"),
     /durationMs\s*<=\s*0/,
@@ -3088,7 +3088,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
   }
 });
 
-check("colour comes from a token, never a raw hex", () => {
+check("color comes from a token, never a raw hex", () => {
   /*
     The five hues carry fixed meanings: mint is "recalled", peach is
     "missed", and neither is free for decoration. A hex typed into a
@@ -3630,7 +3630,7 @@ check("a suite that writes to the shared dictionary invents the word it writes",
     Ticking a word the dictionary did not vouch for is how `saveScan` makes a
     learner their own entry, and it is a path worth driving. But `Lexeme` is
     unique on `[lemma, pos]` rather than on the lemma alone, deliberately,
-    because `hall` is a noun meaning frost and an adjective meaning grey. So a
+    because `hall` is a noun meaning frost and an adjective meaning gray. So a
     fixture that ticks a word the seed already holds does not collide with it,
     it sits *beside* it, with no paradigm behind it, in a dictionary every
     later suite shares.
@@ -4134,15 +4134,15 @@ check("a question that says \"the verb\" is asked about a verb", () => {
 
 check("a recording never moves a level", () => {
   /*
-    ADR-018: there is no verified Estonian speech recogniser available here, so
-    the speaking section is the learner's own judgement and is reported as
-    theirs. A number invented on top of a recogniser that does not handle
+    ADR-018: there is no verified Estonian speech recognizer available here, so
+    the speaking section is the learner's own judgment and is reported as
+    theirs. A number invented on top of a recognizer that does not handle
     Estonian would be believed, which is what makes it worse than silence.
   */
   const score = read("lib/assessment/score.ts");
   const scored = /SCORED_SKILLS[^=]*=\s*\[([^\]]*)\]/.exec(score)?.[1] ?? "";
   assert.ok(scored.includes("reading"), "the scored skills list moved or was renamed");
-  assert.equal(scored.includes("speaking"), false, "speaking counts towards the level");
+  assert.equal(scored.includes("speaking"), false, "speaking counts toward the level");
 
   // And nothing in the runner may score a recording either.
   const question = read("components/assessment/Question.tsx");
@@ -4321,7 +4321,7 @@ check("a part of speech is read off the sense the gloss came from", () => {
   );
   assert.equal(
     resolvePos({ ...base, sensePos: "VERB", headwordPos: "VERB" }), "NOUN",
-    "a nominal can now be labelled a verb on the page's word alone",
+    "a nominal can now be labeled a verb on the page's word alone",
   );
 });
 
@@ -4748,7 +4748,7 @@ check("dictation says which kind of mistake it was, in text", () => {
     the reason the exercise exists rather than being another listening round.
 
     `diacritics` and `typo` share a background, correctly: the palette has one
-    colour for "nearly" and inventing a sixth hue to carry a distinction is
+    color for "nearly" and inventing a sixth hue to carry a distinction is
     exactly what the design system forbids. So the distinction has to be
     carried by words — and it was carried by a `title` attribute instead,
     which is a hover tooltip. This app is measured at 360px and the README
@@ -4763,7 +4763,7 @@ check("dictation says which kind of mistake it was, in text", () => {
 
   assert.ok(diacritics, "a dropped diacritic is marked with no words on it");
   assert.ok(typo, "a typo is marked with no words on it");
-  assert.notEqual(diacritics, typo, "dictation tells the two kinds of nearly apart by colour alone");
+  assert.notEqual(diacritics, typo, "dictation tells the two kinds of nearly apart by color alone");
 
   const session = code("app/(app)/review/dictation/DictationSession.tsx");
   assert.match(session, /wordNote\(/, "the dictation marking stopped showing which mistake it was");
@@ -4835,20 +4835,20 @@ check("nothing reaches a paid provider without going through the ledger", () => 
   for (const file of callers) {
     const source = read(file);
     /*
-      AUTHORISED IN THE SAME FILE, WITHOUT EXCEPTION.
+      AUTHORIZED IN THE SAME FILE, WITHOUT EXCEPTION.
 
       This was widened once, to admit a route that proved a booking made
       somewhere else: the scene booked one call for a whole conversation, on
       the argument that running out of allowance halfway through one is the
       worst failure available to it. The widening was wrong, and it was wrong
       in the direction this file exists to catch. A call is written down when
-      it is *authorised*, because two of the three limits count `CALL` rows, so
+      it is *authorized*, because two of the three limits count `CALL` rows, so
       one booking in front of a dozen composed turns is eleven calls the
       allowance never saw. The rule was fine; the code was not, and widening a
       rule to fit code is the one move that turns a check into a formality.
 
       "A check that fires on honest code is a check people learn to waive" is
-      still true and is not a licence: the test of honest code is whether the
+      still true and is not a license: the test of honest code is whether the
       rule is right, and here it was.
     */
     assert.match(
@@ -5133,10 +5133,10 @@ check("a response built out of one learner's own rows is never cacheable", () =>
 
 check("a call is booked only once the request is worth answering", () => {
   /*
-    The ledger writes a call down when it authorises it, which is what stops
+    The ledger writes a call down when it authorizes it, which is what stops
     ten tabs reading the same "under the limit"; the price is that anything
     refused after that point has to hand the booking back. /api/tutor
-    authorised first and then returned 400 on an empty message list, so four
+    authorized first and then returned 400 on an empty message list, so four
     empty posts left four pending calls against the global budget and spent
     four of that learner's ten for the day. Every paid route validates first.
   */
@@ -5554,7 +5554,7 @@ check("a screen that asks for a form reads the plain table rather than only nami
  * until it clears 4.5:1 *on its own tint*. The flash round's feedback box set
  * `background: var(--butter)` with `color: var(--butter-ink)`, which is a slab
  * of gold in the light theme and, in the dark, where `--butter-ink` resolves to
- * `var(--butter)` exactly, the same colour written on itself.
+ * `var(--butter)` exactly, the same color written on itself.
  *
  * That pairing cannot be right in any theme and it is cheap to spot, which is
  * what makes it worth a check rather than a paragraph: the browser suite
@@ -5570,7 +5570,7 @@ check("no screen writes a hue's ink on that hue's own fill", () => {
       /*
         WITHIN ONE PANEL, WHICH IS WHAT THE WINDOW STANDS IN FOR. The two
         declarations are rarely in one object: the box paints the background
-        and the heading inside it takes the colour, which is what the original
+        and the heading inside it takes the color, which is what the original
         of this fault looked like, so a window narrow enough to mean "one style
         object" reads straight past it. 400 characters is a panel and its first
         child, measured against the real line rather than guessed at, and it is
@@ -5582,7 +5582,7 @@ check("no screen writes a hue's ink on that hue's own fill", () => {
         assert.equal(
           new RegExp(`color:[^;}\n]*var\\(--${hue}-ink\\)`).test(window),
           false,
-          `${file} writes --${hue}-ink on the solid --${hue} fill, which is one colour on itself in the dark theme`,
+          `${file} writes --${hue}-ink on the solid --${hue} fill, which is one color on itself in the dark theme`,
         );
       }
     }
@@ -5815,7 +5815,7 @@ check("every browser suite that exists is a browser suite CI runs", () => {
  * then looking at a dictionary that no longer has one.
  *
  * `test-scan.mjs` says so out loud when it happens, which is the right
- * behaviour and is not a substitute for the ordering: it reports "no seeded
+ * behavior and is not a substitute for the ordering: it reports "no seeded
  * words" and waives seventeen checks, and the person reading that is sent to
  * reseed a database that was seeded correctly an hour ago. Run second to last
  * on somebody's own machine it costs a suite; the only thing keeping it
@@ -6450,7 +6450,7 @@ check("the funding page reads the environment once, and only for a yes or a no",
 /**
  * THE INFRASTRUCTURE LIST NAMES VARIABLES THAT DO SOMETHING.
  *
- * `lib/funding/services.ts` is a catalogue of what this app runs on, and each
+ * `lib/funding/services.ts` is a catalog of what this app runs on, and each
  * entry that can be switched on names the variable that switches it. A name
  * that nothing in the app reads is worse than no name: the page prints "not
  * set here" for ever, whoever is running it sets the variable, and nothing
@@ -6507,7 +6507,7 @@ check("the funding page is readable without signing in", () => {
  * THE BILL IS GENERATED FROM THE REGISTRY, NEVER ASSEMBLED BESIDE IT.
  *
  * What this app runs on, what a reader is told it runs on, and what appears on
- * the bill used to be three lists: a catalogue in one module, a set of
+ * the bill used to be three lists: a catalog in one module, a set of
  * hand-written line functions in the cost model, and whatever the page had
  * been told about. Adding a service meant remembering all three, and the one
  * certain to go stale is the bill, because nothing fails when a line is
@@ -6558,7 +6558,7 @@ check("the funding bill is generated from the registry rather than a list beside
 /**
  * NOTHING THIS APP RUNS ON IS COUNTED AS FREE.
  *
- * The first version of the funding page modelled a free tier for the host and
+ * The first version of the funding page modeled a free tier for the host and
  * one for the database and picked between them by traffic. It described a
  * deployment nobody runs: a free plan pauses when nobody is on it, forbids
  * commercial use, and hands out an allowance that disappears the week somebody
@@ -6585,7 +6585,7 @@ check("the funding page keeps no free tier for anything it is billed for", () =>
     assert.doesNotMatch(
       facts,
       pattern,
-      `lib/funding/facts.ts has grown ${what}. Nothing this app runs on is modelled as free: ` +
+      `lib/funding/facts.ts has grown ${what}. Nothing this app runs on is modeled as free: ` +
       "a plan that pauses, forbids commercial use, or hands out an allowance is not what " +
       "anybody hosting this for other people is on.",
     );
@@ -6734,7 +6734,7 @@ check("the layers that promise to be pure import no database, React or Next", ()
  * `restoreBackup` and `deleteMyAccount` both end in "and nothing was changed"
  * followed by whatever the database said, which is the right shape: those are
  * the two operations where somebody is owed a reason. What the database says
- * is the problem. Prisma quotes the datasource in an initialisation failure,
+ * is the problem. Prisma quotes the datasource in an initialization failure,
  * and a restore runs a two-minute transaction, which is exactly the window a
  * connection drops in, so the sentence on a learner's Settings screen could
  * carry the deployment's own host, user and password.
@@ -7041,7 +7041,7 @@ check("a practice round has a heading, not only its empty and finished screens",
   language rather than an omission: Estonian's third quantity is not written
   down, so `kooli` the genitive and `kooli` the partitive are the same letters
   and a classifier reading forms as strings cannot tell them apart. What is
-  spelled is the consonant centre changing, which is what the field records.
+  spelled is the consonant center changing, which is what the field records.
 
   `lib/research/sections.ts` describes the exported crosstab to somebody
   outside this project, and it named all three, so a researcher was told the
@@ -7426,7 +7426,7 @@ check("a hover makes a control more present, never less", () => {
 });
 
 /**
- * A control the 44px floor makes bigger still centres what is inside it.
+ * A control the 44px floor makes bigger still centers what is inside it.
  *
  * The floor is a `min-width` and a `min-height`, and an inline box lays its
  * content out from the top left, so on an icon-only button all of the slack
@@ -7437,23 +7437,23 @@ check("a hover makes a control more present, never less", () => {
  * one.
  *
  * Asserted as the pairing rather than as one rule: a floor that inflates a box
- * with no rule centring the box's content is the state that produced this, and
- * a later edit that keeps the floor and drops the centring would put it back.
+ * with no rule centering the box's content is the state that produced this, and
+ * a later edit that keeps the floor and drops the centering would put it back.
  */
-check("a control inflated to the tap-target floor centres its own content", () => {
+check("a control inflated to the tap-target floor centers its own content", () => {
   const floor = /@media\s*\(pointer:\s*coarse\)\s*\{[^]*?min-width:\s*2\.75rem/;
   assert.match(CSS, floor, "the 44px tap-target floor is gone from app/globals.css");
 
   /*
     Every block whose selector reaches an icon-only control, not merely the
     first: the coarse-pointer floor names the same shape now, so matching the
-    first one found the floor's own declarations and reported the centring
+    first one found the floor's own declarations and reported the centering
     rule missing while it sat ten lines below.
   */
   const blocks = [...CSS.matchAll(/:has\(>\s*svg:only-child\)[^{]*\{([^}]*)\}/g)].map((m) => m[1]!);
   assert.ok(blocks.length > 0, "nothing in app/globals.css reaches an icon-only control");
   const centred = blocks.find((b) => b.includes("display: inline-flex"));
-  assert.ok(centred, "nothing in app/globals.css centres an icon-only control's content");
+  assert.ok(centred, "nothing in app/globals.css centers an icon-only control's content");
   for (const declaration of ["display: inline-flex", "align-items: center", "justify-content: center"]) {
     assert.ok(
       centred.includes(declaration),
@@ -7529,7 +7529,7 @@ check("a pointer over something pressable says so", () => {
  * axe". That was honest and it was also the reason five real failures sat in
  * the app unseen: the hand-rolled contrast pass scoped to `main`, so the
  * navigation rail on every signed-in screen was outside it, and it read a
- * colour's own alpha but not an `opacity` inherited from a parent, so a faded
+ * color's own alpha but not an `opacity` inherited from a parent, so a faded
  * container reported as passing while its text sat at 2.63. axe found both in
  * one run, plus an `<ol>` whose `<li>`s were behind a wrapper `div` and which
  * therefore announced itself as an empty list.
@@ -7618,8 +7618,9 @@ check("the verdict band and the found-hours sentence read one figure", () => {
     "foundHours no longer starts from the baseline, so a learner with no exposure is told their week holds nothing",
   );
   const verdictLine = plan.slice(plan.indexOf("const verdict: Verdict"), plan.indexOf("const verdict: Verdict") + 300);
-  assert.match(verdictLine, /found\.low/, "the verdict band no longer reads the least the learner's week holds");
   assert.match(verdictLine, /found\.high/, "the verdict band no longer reads the most the learner's week holds");
+  assert.match(verdictLine, /other\.low/, "the verdict band stopped being drawn at the near end of the distance");
+  assert.match(verdictLine, /COMMIT_HOURS_PER_WEEK/, "the verdict band no longer reads the commitment ceiling");
   const panel = code("components/assessment/PlanPanel.tsx");
   assert.doesNotMatch(
     panel, /weeksNeeded\(/,
@@ -8062,7 +8063,7 @@ check("the plan reads a duration through the one module that units it", () => {
  * declaration is invalid at computed-value time, so the property falls back to
  * its inherited value or, where it does not inherit, to its initial one.
  * Nothing throws, nothing logs, and the contrast pass happily measures whatever
- * colour actually landed.
+ * color actually landed.
  *
  * Two were live when this was written, and they failed in the two different
  * ways the fallback rule produces. `--ink-soft` was read 25 times across the
@@ -8230,7 +8231,7 @@ check("every custom property a screen reads is one something sets", () => {
     0,
     `nothing sets ${[...missing].map(([n, f]) => `${n} (read in ${f})`).join(", ")}. ` +
     "An unset custom property is not an error: the declaration is dropped and the " +
-    "property inherits or resets, so the screen renders in the wrong colour or shape " +
+    "property inherits or resets, so the screen renders in the wrong color or shape " +
     "with nothing to say so.",
   );
 });
@@ -8556,8 +8557,8 @@ check("Sonad decides nothing on the client but what to type", () => {
 
   /*
     AND THE MOVEMENTS ARE ITS OWN, WHICH IS A LEGAL POSITION AND NOT A TASTE.
-    The game this is shaped like turns a square over to reveal a colour and
-    shakes a row sideways to refuse a guess, and both are recognisable enough
+    The game this is shaped like turns a square over to reveal a color and
+    shakes a row sideways to refuse a guess, and both are recognizable enough
     to be part of what that game is. A class here naming keyframes nobody wrote
     is not an error: it is a circle sitting perfectly still, looking exactly
     like one that was meant to.
@@ -8826,7 +8827,7 @@ check("the word of the day reads the learner's level, and reads it in the right 
     onto a word whose gloss carries the day's meaning as a fourth sense, on 31
     days that had the primary one. The almanac asks for `snow`, `hand` and
     `week`, and there is no B1 word for snow. So the band ranks under the
-    sense and never over it, and the fallback, which has no meaning to honour,
+    sense and never over it, and the fallback, which has no meaning to honor,
     filters.
 
     Anchored on the order of two keys in one array rather than on the words
@@ -9042,7 +9043,7 @@ check("what the learner has kept is counted, never stored", () => {
 
 check("a hue's fill is never used as its ink", () => {
   /*
-    `docs/14-design-system.md`: every hue reads as colour at full strength and
+    `docs/14-design-system.md`: every hue reads as color at full strength and
     lands around 2.5:1 as *text on its own tint*, so each one has an ink walked
     down until it clears 4.5:1. The fill paints a bar, a ring, a dot or a
     button; the ink writes a word. They are two tokens and they are one
@@ -9054,7 +9055,7 @@ check("a hue's fill is never used as its ink", () => {
     the fixture never set one. A rule that is only enforced where a fixture
     happens to walk is a rule that holds on about half the app.
 
-    A `tone` prop is included because `Stat` takes a colour rather than a tone
+    A `tone` prop is included because `Stat` takes a color rather than a tone
     name, which is exactly how `/tasks` came to draw its "Known" figure in mint
     at 2.52:1 while `/week` drew the same figure correctly in the ink beside it.
     `Diagnosis` passes both, a fill for its bar and an ink for its label, which
@@ -9626,7 +9627,7 @@ check("the landing page's five words say what the dictionary says", () => {
 
   `lib/estonian/conjugate.ts` builds the present tense, the negative, the
   conditional and the singular imperative from the stored first person, which
-  is the same licence `derive.ts` takes over the genitive (ADR-005 amendment
+  is the same license `derive.ts` takes over the genitive (ADR-005 amendment
   1). It is the only module allowed to, for the reason the case suffixes have
   one home: it is the one that also holds the exceptions, `olema` in the
   present and `minema` in the imperative, and a second copy of the endings is
@@ -9977,7 +9978,7 @@ check("the README's course and practice counts are the code's own", () => {
 
   for (const [count, what] of [
     [SYLLABUS.length, "units"],
-    [PRACTICE_MODES.length, "ways to practise"],
+    [PRACTICE_MODES.length, "ways to practice"],
     [CARD_TYPES.length, "card types"],
   ] as const) {
     assert.ok(
@@ -10237,7 +10238,7 @@ check("the research export counts a right answer the way the rest of the app doe
  * exclusion and it excludes itself, since a variable with that prefix is
  * public by design and is *supposed* to be in the bundle. What it cannot see
  * is a secret named some other way, which is why `ERROR_WEBHOOK_URL` is on
- * the list by somebody's judgement and not by this.
+ * the list by somebody's judgment and not by this.
  *
  * Scoped to `app/`, `lib/` and the middleware because those are what Next
  * builds. A variable only a script reads cannot reach a browser, so requiring
@@ -10313,7 +10314,7 @@ check("every secret-shaped variable the app reads is marked in the CI canary bui
  *
  * And `targetCase` stays what it is. It feeds `caseAccuracy`, which tallies
  * whatever string it finds and hands it to a panel that prints the key in
- * lower case where it recognises nothing, so a morph code written there puts
+ * lower case where it recognizes nothing, so a morph code written there puts
  * `indprsg3` on the Progress page beside `osastav`. Two questions, two
  * columns, and neither bent to be the other.
  */
@@ -10330,7 +10331,7 @@ check("an answer records which form it was about, from a list nothing can widen"
     grade,
     /slotFor\(card, write\.practisedSlot\)/,
     "writeGrade no longer derives the slot, so the flash round's answers stop " +
-    "counting towards the variety half of mastery",
+    "counting toward the variety half of mastery",
   );
   assert.match(
     between(grade, "prisma.review.create"),
@@ -10540,7 +10541,7 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
     prose that used to describe it. The card is built out of a sentence, and
     the sentence has to name the case on its own: `aadressi` is the short
     illative, the omastav and the osastav at once, so gapping it where it is a
-    genitive and labelling the card `sisseütlev` would teach the wrong case and
+    genitive and labeling the card `sisseütlev` would teach the wrong case and
     write the wrong one into `Review.slot`, which every case figure in the app
     is derived from.
   */
@@ -10922,7 +10923,7 @@ check("a scripted line is drafted by a script, said after a recorded one, and ma
  * of a scene, where they were greeted, told to greet back, wrote `Tere`,
  * watched the objective tick, and were answered with "I do not understand".
  *
- * Measured over the catalogue at the time: six of the eight `ask` beats have
+ * Measured over the catalog at the time: six of the eight `ask` beats have
  * no recorded question anywhere in their topic words, because a lexicographer
  * writes a usage to illustrate a word rather than to ask about one. So on a
  * keyless deployment, or one whose allowance has gone, more than half of every
@@ -10973,7 +10974,7 @@ check("the repair move is only used on a turn nobody understood", () => {
 
   /*
     And the screen may not describe a stage direction as a line somebody said.
-    An English line about what the other side did, labelled "They did not
+    An English line about what the other side did, labeled "They did not
     catch that", is the same lie one layer up; drawn as a bubble it reads as
     Estonian rendered in English.
   */
@@ -10984,7 +10985,7 @@ check("the repair move is only used on a turn nobody understood", () => {
   );
   assert.doesNotMatch(
     session, /unspoken: "They did not catch/,
-    "an unspoken turn is labelled as a turn nobody understood, which is the bug this fixed",
+    "an unspoken turn is labeled as a turn nobody understood, which is the bug this fixed",
   );
   assert.match(
     session, /lines\.map\(/,
@@ -11364,7 +11365,7 @@ check("a destination reached from another one really is linked from there", () =
   because the rule is about what the function returns and a regex over the
   arithmetic would pass on a rewrite that changed the answer.
 */
-check("recognising a word on cards never clears the second rung of a situation", () => {
+check("recognizing a word on cards never clears the second rung of a situation", () => {
   const recognised: WordEvidence = {
     recognise: { asked: 200, right: 200, medianMs: 800, lastRight: true },
     produce: { asked: 0, right: 0, medianMs: null, lastRight: null },
@@ -11489,7 +11490,7 @@ check("the dark palette is a choice, never the system's", () => {
   const css = stripped("app/globals.css");
   assert.equal(
     /prefers-color-scheme/.test(css), false,
-    "app/globals.css reads the system's colour scheme again, so the default theme depends on the device",
+    "app/globals.css reads the system's color scheme again, so the default theme depends on the device",
   );
   assert.match(css, /:root\[data-theme="dark"\]\s*\{/, "app/globals.css has lost the chosen dark palette");
   for (const file of [...APP, ...COMPONENTS]) {
@@ -11608,7 +11609,7 @@ check("a conversation is counted by the one rule, never by counting rows", () =>
   ERRAND. The card asks about yesterday in general, so the report it writes
   names no errand: `Encounter.errandId` is nullable for that, and the research
   export groups that column by the unit an errand drew its words from. Writing
-  today's errand id against a conversation with a neighbour would put a unit's
+  today's errand id against a conversation with a neighbor would put a unit's
   name on a table row that no unit earned, in a file published to people
   outside this project.
 */
@@ -11635,8 +11636,8 @@ check("Today's report names no errand, and the research table says what it cover
   screens to it. Each round marked an answer out of the tokens by hand, and
   the copies disagreed: four wrote the verdict in the fill at 2.2:1, one
   never marked the option the learner had pressed, two painted a near miss
-  the same peach as a blank, the picture board said nothing in colour at all,
-  and the exam's list of wrong answers was two bare coloured words on a card.
+  the same peach as a blank, the picture board said nothing in color at all,
+  and the exam's list of wrong answers was two bare colored words on a card.
 
   `lib/ux/verdict.ts` is the one vocabulary, three words for a verdict and
   three states for an option, and `app/globals.css` is the one place they are
@@ -11702,7 +11703,7 @@ check("a verdict is painted once, in the tint and the ink", () => {
  * the dictionary entry, which is the screen a learner is least often on: the
  * word worth keeping turns up on a review card, in the middle of a round. It
  * is on every card that teaches one now, which is nine sessions, and nine
- * copies of a toggle is nine answers to what a favourite looks like, what it
+ * copies of a toggle is nine answers to what a favorite looks like, what it
  * does when the write fails, and which state it is drawn in when the queue
  * moves to the next word. That last one is not hypothetical: the state has to
  * be reset by the word rather than by a key at each call site, and a copy is
@@ -11725,7 +11726,7 @@ check("a word is favourited by one button, and the toggle has one caller", () =>
 /**
  * AND EVERY SCREEN THAT PUTS A WORD UP TO LEARN DRAWS IT.
  *
- * The ask was "anywhere there is a word for the user to memorise", and the
+ * The ask was "anywhere there is a word for the user to memorize", and the
  * shape of that fault is silence: a round added later simply has no star, and
  * nothing looks wrong, because a missing button looks exactly like a button
  * nobody has pressed. So the rounds are read off the filesystem rather than
@@ -11740,7 +11741,7 @@ check("a word is favourited by one button, and the toggle has one caller", () =>
  * tiles has no corner to put a star in and no single word it would be about,
  * and a round whose subject is a sentence is not a round about a word.
  */
-check("every round that puts one word up carries the favourite button", () => {
+check("every round that puts one word up carries the favorite button", () => {
   const exempt: Record<string, string> = {
     [join("app", "(app)", "review", "match", "MatchSession.tsx")]:
       "a board of pairs: several words at once, and no card to put a corner on",
@@ -11772,7 +11773,7 @@ check("every round that puts one word up carries the favourite button", () => {
     if (file in exempt) {
       assert.doesNotMatch(
         body, /<StarWord\b/,
-        `${file} draws the favourite button now, so drop its exemption`,
+        `${file} draws the favorite button now, so drop its exemption`,
       );
       continue;
     }

@@ -136,7 +136,7 @@ function usableWords(words: readonly WordRow[]): WordRow[] {
  *
  * What *is* visible is a second entry under the same lemma, and `@@unique` is
  * on `(lemma, pos)` so the dictionary holds plenty: `hall` is a noun meaning
- * frost and an adjective meaning grey, and offering "grey" as a wrong answer
+ * frost and an adjective meaning gray, and offering "gray" as a wrong answer
  * to "what does hall mean" marks somebody wrong for knowing the word. So every
  * gloss the dictionary files under this lemma is treated as an answer, and
  * none of them can stand as a distractor.
@@ -211,7 +211,7 @@ export interface Gap {
  * Two guards beyond the exam's, both learned from reading what came out.
  *
  * A blank at the very start of the sentence hands the answer over, because the
- * word standing there is capitalised and none of the distractors is: `____ eas
+ * word standing there is capitalized and none of the distractors is: `____ eas
  * naine` offered `Viljakas`, `viljaka`, `viljakat` and `viljakate`, and the
  * capital letter answers it without a word of Estonian.
  *
@@ -693,7 +693,7 @@ export function listeningItems(
  * What it replaces was "write one Estonian sentence using kolmandik (third) in
  * the seesütlev (milles? kus?)", marked on whether `kolmandikus` turned up
  * anywhere in the answer. Three things were wrong with it. It asked for a case
- * by name, so it measured whether somebody had memorised fourteen labels
+ * by name, so it measured whether somebody had memorized fourteen labels
  * before it measured any Estonian. It asked for forms nobody would ever write,
  * because every noun in the dictionary has a grammatical inessive and almost
  * nothing is ever said to be inside a third. And its feedback restated the

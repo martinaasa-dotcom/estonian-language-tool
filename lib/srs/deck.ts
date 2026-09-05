@@ -55,7 +55,7 @@ const WRITE_TIMEOUT_MS = 120_000;
 type Runner = Pick<Prisma.TransactionClient, "$executeRaw">;
 
 /**
- * SERIALISES ONE LEARNER'S DECK WRITES AGAINST EACH OTHER.
+ * SERIALIZES ONE LEARNER'S DECK WRITES AGAINST EACH OTHER.
  *
  * "Is it already there" is check-then-act: every path that adds cards reads
  * what the learner already holds, filters the generated cards against it and
@@ -76,7 +76,7 @@ type Runner = Pick<Prisma.TransactionClient, "$executeRaw">;
  * which is milliseconds of work they asked for twice.
  *
  * A *transaction* advisory lock, so a connection pooler cannot strand it, and
- * the blocking form, since the non-blocking one serialises nothing. Every
+ * the blocking form, since the non-blocking one serializes nothing. Every
  * caller takes exactly one, so there is no ordering between locks to deadlock
  * on.
  */

@@ -48,7 +48,7 @@ import { SETTING_KEYS } from "@/lib/settings/store";
  * Each query returns one row per (cell, person) rather than per review, which
  * is proportional to the number of distinct combinations rather than to the
  * size of the log, and is also the finest thing the dominance rule can be
- * answered from. No individual review is ever materialised in this process.
+ * answered from. No individual review is ever materialized in this process.
  */
 export const dynamic = "force-dynamic";
 
@@ -166,7 +166,7 @@ interface GroupedRow {
 /**
  * The one section not drawn from Review: a learner's own report of a
  * conversation outside the app, under the same gate as everything else.
- * Reads Encounter rather than Review, honours the same opt-out, and hands
+ * Reads Encounter rather than Review, honors the same opt-out, and hands
  * `buildSection` the same shape, so the thresholds and the rounding apply.
  */
 async function tallyEncounters(excluded: readonly string[]): Promise<Contribution[]> {
@@ -177,7 +177,7 @@ async function tallyEncounters(excluded: readonly string[]): Promise<Contributio
     spoken yesterday, so most reports are the learner's own conversations and
     carry no errand: this table is grouped by the unit an errand drew its
     words from, and there is no honest unit to file a conversation with a
-    neighbour under. The section's own note says so, and the coverage line at
+    neighbor under. The section's own note says so, and the coverage line at
     the top of the file is where a reader sees how much that is.
   */
   const rows = await prisma.$queryRaw<{ errandId: string; learner: string; reviews: number; correct: number }[]>`

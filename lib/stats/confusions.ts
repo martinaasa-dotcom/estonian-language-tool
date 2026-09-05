@@ -18,7 +18,7 @@ import { isFormSlot } from "@/lib/srs/slots";
  * the card goes and the sentence goes with it. `Review.reachedSlot` is where
  * it lands now.
  *
- * THE PAIR IS UNORDERED, AND THAT IS A JUDGEMENT RATHER THAN A CONVENIENCE.
+ * THE PAIR IS UNORDERED, AND THAT IS A JUDGMENT RATHER THAN A CONVENIENCE.
  * Writing `poest` when asked for `poes` and writing `poes` when asked for
  * `poest` are one confusion seen from two sides: a learner who could tell them
  * apart would not make either. Splitting them halves the evidence behind a

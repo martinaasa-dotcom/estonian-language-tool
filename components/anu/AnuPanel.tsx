@@ -38,7 +38,7 @@ export function AnuPanel({
     Everything that says "here is how to begin" belongs to the first state and
     nothing else does. The panel used to carry all of it at once: a greeting, a
     bordered button offering to check a sentence, six starters over three rows
-    and three lines of grey provenance, stacked under whatever was being said,
+    and three lines of gray provenance, stacked under whatever was being said,
     so a learner reading an answer about the partitive was reading it through a
     menu they had already used. That is where this started, and withholding the
     lot once a question has been asked was only half of it: on the first screen

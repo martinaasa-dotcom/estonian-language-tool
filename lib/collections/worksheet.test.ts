@@ -118,7 +118,7 @@ describe("buildWorksheet", () => {
     expect(row).toMatchObject({ nominative: "tuba", genitive: "toa", partitive: "tuba" });
   });
 
-  it("honours the limits it is given", () => {
+  it("honors the limits it is given", () => {
     const words = Array.from({ length: 20 }, (_, i) => word({ lemma: `w${i}` }));
     const sheet = buildWorksheet(words, { vocabulary: 3, gaps: 2, cases: 1 });
     expect(sheet.vocabulary).toHaveLength(3);

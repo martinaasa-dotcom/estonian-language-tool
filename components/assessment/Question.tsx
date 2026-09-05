@@ -5,6 +5,7 @@ import { Check, Ear, X } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Speak } from "@/components/Speak";
+import { LEARNING_RATE } from "@/lib/audio/clip";
 import { Chip, Note } from "@/components/ui";
 import { BLANK } from "@/lib/estonian/cloze";
 import { gradeChoice, gradeDictation, gradeWrite } from "@/lib/assessment/score";
@@ -264,6 +265,7 @@ export function DictationQuestion({ item, onAnswer, onNoAudio }: {
         <Speak
           text={item.et}
           label="Play the sentence"
+          rate={LEARNING_RATE}
           size={26}
           className="flex h-16 w-16 items-center justify-center rounded-full"
           style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
@@ -427,7 +429,7 @@ export function WriteQuestion({ item, onAnswer }: { item: WriteItem; onAnswer: (
 /**
  * How sure somebody feels about saying it, which is all this can honestly ask.
  *
- * These used to be four judgements of a recording ("Nothing like it", "A
+ * These used to be four judgments of a recording ("Nothing like it", "A
  * native would work out what I meant") because the screen recorded the learner
  * and played it back beside a native voice for comparison. The recorder is
  * gone, so the wording is too: a scale about a recording nobody made is a
@@ -444,7 +446,7 @@ const SELF_RATINGS = [
 /**
  * Speaking, judged by the only person qualified to judge it here.
  *
- * There is no verified Estonian speech recogniser available to this app
+ * There is no verified Estonian speech recognizer available to this app
  * (ADR-018), so nothing scores anything: `scripts/measure-asr.mjs` puts the
  * best reachable one at a 14.6% word error rate on clean native audio, with
  * its mistakes landing on consonant length and word boundaries, which is

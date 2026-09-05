@@ -55,7 +55,7 @@ const UA = "Kodukeel/0.1 (Estonian learning tool; seed builder)";
  * listed as nouns somewhere on their page. Reversing the order does not fix
  * it, it moves it: `lamp` is in the adjectives category for a colloquial sense
  * meaning "random", `pea` is in the adverbs category for a sense meaning
- * "almost", and both would then have been labelled against the very gloss
+ * "almost", and both would then have been labeled against the very gloss
  * shipped beside them.
  *
  * `build()` reads the part of speech off the heading the chosen gloss sits

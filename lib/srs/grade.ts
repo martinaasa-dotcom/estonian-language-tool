@@ -61,7 +61,7 @@ export interface GradeWrite {
    * card then says the answer was about a meaning when it was about the
    * kaasaütlev, and the variety half of mastery is counted off exactly that.
    * So the round says what it asked and this writes it down. Anything else, and
-   * anything the closed list in `lib/srs/slots.ts` does not recognise, falls
+   * anything the closed list in `lib/srs/slots.ts` does not recognize, falls
    * back to what the card itself is about, because a slot nobody can read is
    * worse than the one fact we are sure of.
    */

@@ -18,7 +18,7 @@ import type { CaseKey } from "@/lib/estonian/types";
  * the sentence used each of the three words, whether the named one carried the
  * case the task asked for, and **which case it carried instead**. Every one of
  * those is a comparison against a form the dictionary vouches for. An opinion:
- * whether the sentence is idiomatic, which is Anu's and is labelled as hers.
+ * whether the sentence is idiomatic, which is Anu's and is labeled as hers.
  *
  * THE THIRD ONE IS THE POINT OF THE MODE. "You did not use the form we asked
  * for" is the least useful true thing this app can say, and it is what every

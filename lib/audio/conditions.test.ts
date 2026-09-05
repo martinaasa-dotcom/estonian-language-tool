@@ -37,8 +37,8 @@ describe("hearing conditions", () => {
   it("is deterministic and reaches every open condition across a round", () => {
     const seen = new Set<string>();
     for (let pos = 0; pos < 20; pos++) {
-      const a = conditionFor(12, pos, "on");
-      const b = conditionFor(12, pos, "on");
+      const a = conditionFor(OPENS_AT.half, pos, "on");
+      const b = conditionFor(OPENS_AT.half, pos, "on");
       expect(a).toBe(b);
       seen.add(a.id);
     }

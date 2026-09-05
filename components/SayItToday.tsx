@@ -27,7 +27,7 @@ import {
  * So it asks first and offers second. The three answers are the whole of what
  * is asked: no note, no where, no who, because a report that costs one press
  * is one a person makes. The switch to English is the only detail worth a
- * word, because it is the thing being practised against, and "not yesterday"
+ * word, because it is the thing being practiced against, and "not yesterday"
  * is worded as a day that happened rather than as a failing, which is also
  * why it is answered with an errand instead of with encouragement.
  */
@@ -48,7 +48,7 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
     setAnswer(outcome);
     start(async () => {
       // No errand id: this is the learner's own day rather than our homework,
-      // and a conversation with a neighbour is not ours to take credit for.
+      // and a conversation with a neighbor is not ours to take credit for.
       await recordEncounter(null, outcome);
       router.refresh();
     });
@@ -73,7 +73,7 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
               onClick={() => report(o)}
               /*
                 `border` and a height, which this card had never asked for:
-                `.choice-btn` paints a border colour and leaves the width to
+                `.choice-btn` paints a border color and leaves the width to
                 the caller, and its resting fill is the card's own surface, so
                 three answers sat on Today as three runs of plain text. Every
                 other caller of the class says both.

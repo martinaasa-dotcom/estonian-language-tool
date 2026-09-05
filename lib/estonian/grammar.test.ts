@@ -130,7 +130,7 @@ describe("case groups", () => {
   it("names a group's endings off its own keys", () => {
     expect(groupEndings(CASE_GROUPS[1]!)).toEqual(["-sse", "-s", "-st"]);
     expect(groupEndings(CASE_GROUPS[2]!)).toEqual(["-le", "-l", "-lt"]);
-    // The memorised three have no ending to name, and say so by saying nothing.
+    // The memorized three have no ending to name, and say so by saying nothing.
     expect(groupEndings(CASE_GROUPS[0]!)).toEqual([]);
     for (const group of CASE_GROUPS) {
       expect(groupEndings(group).join(" "), group.title).not.toMatch(/[A-Z]/);

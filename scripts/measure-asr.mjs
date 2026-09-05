@@ -1,23 +1,23 @@
 #!/usr/bin/env node
 /**
- * Can a speech recogniser be trusted to tell an Estonian learner how they did?
+ * Can a speech recognizer be trusted to tell an Estonian learner how they did?
  *
  * ADR-018 says speaking practice compares and never scores, because there was
- * no verified Estonian recogniser to score with. That was an availability
+ * no verified Estonian recognizer to score with. That was an availability
  * claim, and availability changed: Groq serves whisper-large-v3 on a free key
  * and it takes an Estonian audio file happily. So the claim has to be
  * re-tested, and the honest way to re-test it is to measure rather than to try
  * one sentence and be impressed.
  *
- * The method is deliberately generous to the recogniser. Every utterance is
- * synthesised by the University of Tartu's Estonian voice, which is clean,
+ * The method is deliberately generous to the recognizer. Every utterance is
+ * synthesized by the University of Tartu's Estonian voice, which is clean,
  * native, correctly stressed audio with no background noise. A learner's
- * recording is harder than this in every way. If the recogniser cannot manage
+ * recording is harder than this in every way. If the recognizer cannot manage
  * these, it certainly cannot be the thing that tells somebody their own
  * pronunciation was wrong.
  *
  * The sentences come from the dictionary's own attested Ekilex usages, so this
- * measures the recogniser against the exact Estonian the app teaches.
+ * measures the recognizer against the exact Estonian the app teaches.
  *
  *   node scripts/measure-asr.mjs --backend groq   [--model whisper-large-v3]
  *   node scripts/measure-asr.mjs --backend gemini [--model gemini-flash-latest]
@@ -38,7 +38,7 @@ const MODEL = arg("model", undefined);
 const PACE_MS = Number(arg("pace", 5000));
 
 /*
-  The recognisers worth comparing, and they are not the same kind of thing.
+  The recognizers worth comparing, and they are not the same kind of thing.
 
   Whisper is a dedicated speech model. Gemini is a general multimodal model
   that happens to accept audio, which is a different architecture reaching the
@@ -47,7 +47,7 @@ const PACE_MS = Number(arg("pace", 5000));
   Estonian than a speech model does.
 
   Both hear byte-identical audio, from the same cache, so the only difference
-  between two runs is the recogniser.
+  between two runs is the recognizer.
 */
 const BACKENDS = {
   groq: {
@@ -89,9 +89,9 @@ function sentences() {
 
         The first run of this drew on entries like "Aasta album." and
         "Juurviljaaed.", two-word noun phrases with no surrounding context,
-        which are unusually hard for any recogniser and are not what a speaking
+        which are unusually hard for any recognizer and are not what a speaking
         exercise would ever ask for. Four words is the floor now, so the
-        measurement is fair to the recogniser and closer to the task.
+        measurement is fair to the recognizer and closer to the task.
       */
       const wordCount = text.split(/\s+/).filter(Boolean).length;
       if (wordCount >= 4 && text.length <= 60 && !out.includes(text)) out.push(text);
@@ -127,9 +127,9 @@ function errors(said, heard) {
 }
 
 /*
-  Synthesised once and kept on disk.
+  Synthesized once and kept on disk.
 
-  Two recognisers being compared have to hear the same waveform, or the
+  Two recognizers being compared have to hear the same waveform, or the
   comparison measures the voice as much as the model. It also stops a rerun
   asking a public service to say the same twenty-five sentences again.
 */
@@ -218,7 +218,7 @@ const skipped = [];
  * The first version of this script counted a 429 as "skipped" and carried on,
  * which produced the worst possible outcome: a run where almost every sentence
  * was refused reported a 2% word error rate over the three that got through,
- * and looked like the recogniser had improved fifteenfold. A measurement that
+ * and looked like the recognizer had improved fifteenfold. A measurement that
  * silently shrinks its own sample flatters whatever it is measuring.
  */
 async function withRetry(hear) {
@@ -231,7 +231,7 @@ async function withRetry(hear) {
       /*
         429 is "too many for now" and 503 is "this model is busy for
         everybody"; both clear on their own and neither says anything about the
-        recogniser's accuracy. Only 429 was retried at first, and a run where
+        recognizer's accuracy. Only 429 was retried at first, and a run where
         Gemini answered 503 twenty-five times in a row gave up instantly on
         each one and looked like a decision rather than an outage.
       */
@@ -305,7 +305,7 @@ if (wrong.length) {
 /*
   The number that decides the feature, not a number to admire.
 
-  A learner cannot tell a recogniser's mistake from their own. Every error here
+  A learner cannot tell a recognizer's mistake from their own. Every error here
   is one the app would have reported as *their* mispronunciation, on audio a
   native voice produced perfectly.
 */

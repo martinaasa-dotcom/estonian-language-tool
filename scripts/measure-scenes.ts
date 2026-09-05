@@ -38,7 +38,7 @@ const TOP = arg("top", 25);
   A measurement nobody can spot-check is a measurement nobody can trust, and
   this one has a lot of moving parts between a JSON file and a percentage. With
   `--show 3` every beat prints the lines it found, so the reader can see whether
-  they are things a receptionist says or an artefact of a filter being wrong.
+  they are things a receptionist says or an artifact of a filter being wrong.
   Two of the three corrections this script needed were found exactly that way.
 */
 const SHOW = arg("show", 2);
@@ -57,7 +57,7 @@ const pool: DictEntry[] = shippedDictionary().map((e) => ({
   extraForms: e.extraForms, usages: e.usages,
 }));
 
-/* The corpus: every attested line the dictionary ships, tokenised once. */
+/* The corpus: every attested line the dictionary ships, tokenized once. */
 
 const corpus: { line: Line; tokens: string[] }[] = [];
 const seen = new Set<string>();

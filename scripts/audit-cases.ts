@@ -415,7 +415,7 @@ function nameEveryGovernedCase() {
  *
  * `@@unique([lexemeId, formType, value])` puts the value in `Form`'s key
  * because Estonian has genuine parallel forms, which is right for the whole
- * retrieved table and wrong for the six a learner memorises. Ekilex gives two
+ * retrieved table and wrong for the six a learner memorizes. Ekilex gives two
  * partitive plurals for most nouns (`aadresse` and `aadressisid`) and
  * `mapEkilexDetails` wrote both down as `PART_PL`, so which one the app used
  * was decided by whoever read the rows: `stemsFrom` takes the first it finds,

@@ -13,7 +13,7 @@
  * the scene's own word list is not difficulty, it is a bug in a costume.
  *
  * WHAT THIS FILE MAY WRITE. English, and a lemma, which is the standing the
- * scene catalogue has. Every lemma named in an out is checked against the units
+ * scene catalog has. Every lemma named in an out is checked against the units
  * the scene declares, word by word, the same way a beat's are.
  *
  * Pure: no React, no Next, no Prisma, no clock.
@@ -68,21 +68,21 @@ export interface CurveballSpec {
   /**
    * What they say, in English, where the curveball *is* a switch to English.
    * The one line in the module said in English on purpose, drawn as a bubble
-   * and labelled as such, because the whole point is that the other side
-   * gave up on Estonian and the learner is practising not to.
+   * and labeled as such, because the whole point is that the other side
+   * gave up on Estonian and the learner is practicing not to.
    */
   readonly said?: string;
 }
 
 /**
- * The catalogue.
+ * The catalog.
  *
  * Three deserve a note and they are the three that could not be built any other
  * way.
  *
  * **The switch to English is the most real thing in this table.** It is what
  * happens to a foreigner speaking Estonian in Tallinn, it is a large part of
- * why people stop practising, and no textbook rehearses it because a textbook
+ * why people stop practicing, and no textbook rehearses it because a textbook
  * cannot. Here the other side switches, the learner may switch too, and holding
  * the line in Estonian brings them back.
  *
@@ -236,7 +236,7 @@ export interface DrawnCurveball {
    *
    * §5 promises no curveball repeats within five, and a scene that admits fewer
    * than five cannot keep it. A pool too thin for the promise is a fact about
-   * the catalogue and is **reported rather than papered over**, the way
+   * the catalog and is **reported rather than papered over**, the way
    * `paper.ts` reports a shortfall: the alternative is a run with nothing in it,
    * or a quiet cycle that nobody could measure.
    */
@@ -294,7 +294,7 @@ export function drawCurveballs(
     order they matter.
 
     Freshness leads because §5 makes it a promise: no curveball repeats within
-    five runs. A lean is flavour, so it orders within each freshness group, and
+    five runs. A lean is flavor, so it orders within each freshness group, and
     it is a preference rather than a filter because a persona who leans nowhere
     the scene admits would otherwise get no curveballs at all.
 

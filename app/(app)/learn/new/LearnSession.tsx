@@ -27,7 +27,7 @@ import { LEARN_BATCH, ratingFor, rungOf, tally, type Outcome, type Rung } from "
 import type { LearnScheduling, LearnWord } from "@/lib/progress/learn";
 import { grade, type RatingValue } from "@/lib/srs/scheduler";
 import { requeue } from "@/lib/srs/queue";
-import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
+import { OPTION_CLASS, VERDICT_CLASS, VERDICT_PAUSE_MS, optionState } from "@/lib/ux/verdict";
 
 /**
  * THE LEARN LADDER, DRIVEN.
@@ -133,6 +133,14 @@ export function LearnSession({
   const [typed, setTyped] = useState("");
   const [verdict, setVerdict] = useState<AnswerCheck | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
+  /*
+    A miss at the gap is typed again before the round moves on, for the reason
+    the review session gives: reading the right form is not producing it. The
+    grade already went; this is rehearsal.
+  */
+  const [retyped, setRetyped] = useState("");
+  const [retypeOk, setRetypeOk] = useState(false);
+  const [retypeNote, setRetypeNote] = useState<string | null>(null);
   const [answered, setAnswered] = useState(0);
   const [right, setRight] = useState(0);
   const [xp, setXp] = useState(0);
@@ -150,6 +158,12 @@ export function LearnSession({
     is deliberately never refreshed.
   */
   const scheduled = useRef(new Map<string, LearnScheduling>());
+  /*
+    A right answer stays on the screen for `VERDICT_PAUSE_MS` and then moves
+    on by itself. The timer is held so that Enter or the button during the
+    pause moves on once rather than twice.
+  */
+  const autoNext = useRef<number | null>(null);
   const shownAt = useRef(Date.now());
   const startedAt = useRef(Date.now());
   const checked = useRef(false);
@@ -216,6 +230,7 @@ export function LearnSession({
    * sighting a retrieval rather than a re-read.
    */
   const advance = useCallback((updated: Record<string, Rung>) => {
+    if (autoNext.current !== null) { window.clearTimeout(autoNext.current); autoNext.current = null; }
     const rest = [...queue];
     const [head] = rest.splice(0, 1);
     const next = head && updated[head] !== "kept" ? requeue(rest, head, 0, LEARN_BATCH) : rest;
@@ -229,6 +244,9 @@ export function LearnSession({
     setTyped("");
     setVerdict(null);
     setChosen(null);
+    setRetyped("");
+    setRetypeOk(false);
+    setRetypeNote(null);
     shownAt.current = Date.now();
   }, [queue]);
 
@@ -301,10 +319,17 @@ export function LearnSession({
     setXp((x) => x + xpForRating(rating));
     if (rating >= 3) setRight((n) => n + 1);
 
-    // A clean hit moves on. A miss keeps its screen, because the correction is
-    // the one moment in a round worth stopping for.
-    if (outcome === "right" || outcome === "known") advance(moved);
-    else { setRungs(moved); setResult(shown); setPhase("feedback"); }
+    // A claim moves on at once. A clean hit shows itself first, green, for
+    // long enough to be seen, then moves on by itself. A miss keeps its
+    // screen, because the correction is the one moment in a round worth
+    // stopping for, and at the gap it waits to be typed again.
+    if (outcome === "known") advance(moved);
+    else {
+      setRungs(moved); setResult(shown); setPhase("feedback");
+      if (outcome === "right") {
+        autoNext.current = window.setTimeout(() => { autoNext.current = null; advance(moved); }, VERDICT_PAUSE_MS);
+      }
+    }
     } finally {
       setBusy(false);
     }
@@ -341,10 +366,25 @@ export function LearnSession({
     );
   }, [word, busy, phase, typed, cheer, send]);
 
+  /** Whether the gap is waiting for the miss to be typed again. */
+  const needsRetype = phase === "feedback" && rung === "gap" && result?.outcome === "wrong" && !retypeOk;
+
   const carryOn = useCallback(() => {
-    if (!word) return;
+    if (!word || needsRetype) return;
     advance(rungs);
-  }, [word, rungs, advance]);
+  }, [word, rungs, advance, needsRetype]);
+
+  const checkRetype = useCallback(() => {
+    if (!word || !result || retypeOk) return;
+    const again = checkAnswer(retyped, result.expected, "et");
+    if (again.verdict === "correct") {
+      setRetypeOk(true);
+      setRetypeNote(null);
+      autoNext.current = window.setTimeout(() => { autoNext.current = null; advance(rungs); }, VERDICT_PAUSE_MS);
+    } else {
+      setRetypeNote("Not yet. Copy the word above exactly, letter for letter.");
+    }
+  }, [word, result, retyped, retypeOk, advance, rungs]);
 
   /*
     The digits pick an option, exactly as they do in review, and Enter carries
@@ -446,7 +486,7 @@ export function LearnSession({
               <Sparkles size={15} aria-hidden /> Learn {Math.min(more, LEARN_BATCH)} more
             </ButtonLink>
           )}
-          <ButtonLink href="/review" size="lg">Practise what is due</ButtonLink>
+          <ButtonLink href="/review" size="lg">Practice what is due</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
         <AchievementToasts badges={newBadges} />
@@ -503,7 +543,12 @@ export function LearnSession({
 
         <div className="flex min-h-[16rem] flex-col items-center justify-center gap-3 px-5 py-8 text-center">
           {rung === "meet" && (
+            /* Keyed on the card. The intro holds an open word panel and the
+               sentence's English, and a learner reported the last word's
+               sentence still standing under the next word: a fresh subtree
+               per word is what makes that impossible. */
             <WordIntro
+              key={word.cardId}
               lemma={word.lemma}
               gloss={word.gloss}
               equivalent={word.equivalent}
@@ -569,7 +614,7 @@ export function LearnSession({
 
                   This read the other way round: a sentence with a hole in it,
                   its translation, the word, and the question, four blocks of
-                  the same weight in four different colours. A learner reported
+                  the same weight in four different colors. A learner reported
                   that they could not tell at a glance what was being asked,
                   which is exactly what that order produces. You read the
                   sentence, work out that something is missing, read on to find
@@ -679,10 +724,12 @@ export function LearnSession({
 
           {phase === "feedback" && result && (
             <div
-              className={`${VERDICT_CLASS[verdict && countsAsRecalled(verdict.verdict) ? "nearly" : "wrong"]} mt-2 w-full max-w-md rounded-[var(--r)] px-4 py-3.5 text-left`}
+              className={`${result.outcome === "right" ? "pop-in" : ""} ${VERDICT_CLASS[result.outcome === "right" ? "right" : verdict && countsAsRecalled(verdict.verdict) ? "nearly" : "wrong"]} mt-2 w-full max-w-md rounded-[var(--r)] px-4 py-3.5 text-left`}
             >
               <p className="text-sm font-semibold">
-                {rung === "gap" ? <>The word is <span lang="et">{result.expected}</span></> : result.expected}
+                {result.outcome === "right"
+                  ? "Õige!"
+                  : rung === "gap" ? <>The word is <span lang="et" data-answer>{result.expected}</span></> : result.expected}
               </p>
               {result.note && <p className="mt-1 text-sm">{result.note}</p>}
               {rung === "gap" && word.gap && (
@@ -696,12 +743,44 @@ export function LearnSession({
               )}
             </div>
           )}
+
+          {phase === "feedback" && rung === "gap" && result?.outcome === "wrong" && (
+            <div className="w-full max-w-sm text-left">
+              {retypeOk ? (
+                <p className={`pop-in ${VERDICT_CLASS.right} rounded-md px-4 py-2.5 text-sm`}>
+                  Õige! That is the one.
+                </p>
+              ) : (
+                <>
+                  <p className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Now type it again</p>
+                  <EstonianInput
+                    value={retyped}
+                    onChange={(v) => { setRetyped(v); setRetypeNote(null); }}
+                    onEnter={checkRetype}
+                    autoFocus
+                    ariaLabel="Type the word again"
+                    placeholder="Type in Estonian"
+                    large
+                  />
+                  {retypeNote && (
+                    <p role="alert" className="mt-2 text-xs" style={{ color: "var(--again-ink)" }}>{retypeNote}</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-3 border-t px-5 py-4" style={{ borderColor: "var(--rule-soft)" }}>
           {phase === "feedback" ? (
             <>
-              <Button variant="primary" onClick={carryOn} disabled={busy}>Got it</Button>
+              <Button
+                variant="primary"
+                onClick={needsRetype ? checkRetype : carryOn}
+                disabled={busy || retypeOk || result?.outcome === "right"}
+              >
+                {needsRetype ? "Check it again" : result?.outcome === "right" ? "Õige!" : "Got it"}
+              </Button>
               {rung === "gap" && (
                 <SuggestFix
                   category="MARKED_WRONG"

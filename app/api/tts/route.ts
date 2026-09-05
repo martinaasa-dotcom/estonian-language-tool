@@ -97,7 +97,7 @@ export async function POST(request: Request) {
   const speaker = voice ?? voiceFrom(process.env.TTS_SPEAKER ?? DEFAULT_VOICE);
   // `v2` because a clip under the old key is float32 with half a second of
   // silence on each end, and the key has to say which shape is behind it.
-  const hash = createHash("sha256").update(`v2|${text}|${speaker}`).digest("hex");
+  const hash = createHash("sha256").update(`v3|${text}|${speaker}`).digest("hex");
   // Content-addressed and shared across instances and users: a clip fetched
   // once is available to everybody, forever. Writing to /tmp instead, as this
   // did, is per-instance and wiped on every cold start — not a cache, just a
@@ -208,7 +208,7 @@ async function speak(
 }
 
 /**
- * Trimmed, levelled and written as 16-bit before it is kept; see lib/audio/wav.ts.
+ * Trimmed, leveled and written as 16-bit before it is kept; see lib/audio/wav.ts.
  * A response this cannot read is kept as it came, reported, and still spoken,
  * because an untrimmed clip is better than none and the report is how anybody
  * learns the service changed its format.

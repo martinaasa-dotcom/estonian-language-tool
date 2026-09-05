@@ -60,7 +60,7 @@ describe("government, as Ekilex actually writes it", () => {
   ])("leaves %j unnamed", (pattern) => {
     const mapped = mapEkilexDetails(verb([pattern]));
     // Kept verbatim for display, but claiming nothing: a wrong case in a drill
-    // is worse than a missing one, because the learner memorises it.
+    // is worse than a missing one, because the learner memorizes it.
     expect(mapped?.government).toBe(pattern);
   });
 
@@ -90,7 +90,7 @@ describe("government, as Ekilex actually writes it", () => {
 });
 
 describe("what the mapper carries across", () => {
-  it("keeps the principal parts a verb is memorised by", () => {
+  it("keeps the principal parts a verb is memorized by", () => {
     const forms = mapEkilexDetails(verb(["mida"]))?.forms ?? [];
     const principal = Object.fromEntries(
       forms.filter((f) => f.isPrincipal).map((f) => [f.formType, f.value]),

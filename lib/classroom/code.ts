@@ -7,7 +7,7 @@
  * around 600 million codes — collisions are a non-issue at any plausible scale,
  * and the generator checks the database anyway.
  *
- * Note what normalisation deliberately does *not* do: guess. It uppercases and
+ * Note what normalization deliberately does *not* do: guess. It uppercases and
  * drops the spaces and dashes people add themselves, and stops there. Mapping a
  * mistyped `0` onto `Q` would risk quietly putting a student in the wrong
  * class, which is far worse than telling them the code was not found.

@@ -9,7 +9,7 @@
  *
  * NOTHING HERE IS AUTHORED ESTONIAN. Every window names *unit ids from the
  * course*, and the words come out of `lib/collections/syllabus/`, where a
- * lemma is already a request the Ekilex harvest either honoured or reported.
+ * lemma is already a request the Ekilex harvest either honored or reported.
  * That is the whole reason this is a table of ids rather than a table of
  * words: a hand-written seasonal word list would be somebody writing Estonian
  * into the app (ADR-005), and the first misspelling would ship silently.

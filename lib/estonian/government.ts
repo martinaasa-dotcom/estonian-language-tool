@@ -36,7 +36,7 @@ export interface Government {
    * correct case and marked wrong for choosing it.
    */
   alsoGoverned: readonly CaseKey[];
-  /** The Estonian example, exactly as stored. Never synthesised. */
+  /** The Estonian example, exactly as stored. Never synthesized. */
   example: string | null;
   /** The English gloss that followed the example in brackets. */
   gloss: string | null;
@@ -123,7 +123,7 @@ export function parseGovernment(raw: string | null | undefined): Government | nu
     came first in *the app's own list*, not in the entry: `aitama` survived
     that by luck, and a verb governing the allative was drilled as partitive.
     A drill that states the wrong rektsioon is worse than no drill, because
-    the learner memorises it.
+    the learner memorizes it.
 
     So the case is whichever one is named earliest in the text. That is the
     front for the seed shape and the primary government for the Ekilex shape,

@@ -48,7 +48,7 @@ interface Tile { key: string; pairId: string; side: Side }
  * in one move.
  *
  * IT GRADES WHAT IT CAN. Every mode writes to the review log (ADR-016) so the
- * scheduler sees what was actually practised, and this one does too: a pair
+ * scheduler sees what was actually practiced, and this one does too: a pair
  * drawn from the learner's own deck is graded on the match. Found first time is
  * a recognition and grades Good; found after a wrong try grades Hard, which is
  * what a near miss is graded everywhere else in this app.
@@ -72,7 +72,7 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
     return [...seen.entries()];
   }, [pairs]);
   // Laid out once on mount: a board that re-shuffled under a tap would be a
-  // different game. `layOut` is called in the initialiser rather than on every
+  // different game. `layOut` is called in the initializer rather than on every
   // render for the same reason.
   const [tiles] = useState<Tile[]>(() => layOut(initialPairs));
   const [picked, setPicked] = useState<Tile | null>(null);
@@ -246,7 +246,7 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
               /*
                 A solved pair turns mint and then leaves; a wrong pair turns
                 peach and shakes. Both used to be motion alone, a fade and a
-                shake with no colour on either, on the one board in the app
+                shake with no color on either, on the one board in the app
                 that said nothing in the palette's own words for right and
                 wrong. The fade waits long enough for the mint to be seen.
               */

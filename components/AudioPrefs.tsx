@@ -13,7 +13,7 @@ import { DEFAULT_HEARING, type Hearing } from "@/lib/audio/conditions";
  * than a `data-` attribute read off the document, because the values are
  * needed inside event handlers and effects where a hook is the natural
  * shape. The defaults are what a screen outside the shell gets, which is the
- * same voice and the same behaviour everybody had before this was a setting.
+ * same voice and the same behavior everybody had before this was a setting.
  */
 export interface AudioPrefs {
   readonly voice: string;

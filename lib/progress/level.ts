@@ -30,7 +30,7 @@ import { BANDS, PRE_A1, type Level as AssessedLevel } from "@/lib/assessment/typ
  *
  * A declaration with no timestamp is read as older than any measurement. That
  * is every row written before the picker existed, and reading it that way is
- * exactly the behaviour those deployments already had.
+ * exactly the behavior those deployments already had.
  *
  * `pre-A1` is a real result and not a level the course has units for, so it
  * opens at A1 — which is where somebody below A1 should start anyway.

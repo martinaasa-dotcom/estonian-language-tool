@@ -217,8 +217,8 @@ describe("the practice modes", () => {
   });
 
   it("gives the six quick rounds six different hues", () => {
-    // Today lays them out as a grid of coloured tiles, and two modes sharing a
-    // colour there reads as two of the same thing.
+    // Today lays them out as a grid of colored tiles, and two modes sharing a
+    // color there reads as two of the same thing.
     expect(QUICK_MODES).toHaveLength(6);
     expect(new Set(QUICK_MODES.map((m) => m.tone)).size).toBe(6);
   });

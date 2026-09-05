@@ -55,7 +55,7 @@ a report on something that has not happened yet, and it can only ever see the co
 app set: somebody who spent an hour with their Estonian mother-in-law and ignored the errand was
 recorded as having done nothing, in the one number this app says it is measured by. A report
 collected that way names no errand, which is why `Encounter.errandId` is nullable and why a
-conversation with a neighbour appears in no unit's row of the research file.
+conversation with a neighbor appears in no unit's row of the research file.
 
 A day answered is not a day with a conversation in it, and both readings of the table count only
 the two answers that are one (`isConversation`). Counting every row would report a fortnight of
@@ -68,7 +68,7 @@ printed beside it and never as a percentage (`docs/22-readiness.md`); the errand
 tests the reading against a person.
 
 **Where the people are.** The situations screen names the Integration Foundation's Estonian
-Language Houses, the state's Settle in Estonia programme and the Keeleklikk course, with links
+Language Houses, the state's Settle in Estonia program and the Keeleklikk course, with links
 opened before they were written down. A learning app that never says where the people are is one
 that would rather you stayed.
 
@@ -99,7 +99,7 @@ encounter, because a lexicographer records a sentence to illustrate a word and o
 of what Ekilex holds is a question. So a deployment with no model key gets a real but shorter
 scene, with the other side asking again wherever nothing recorded fits, and the reviewed phrase bank of the
 design's Phase 3 is what turns that into a whole conversation. And speech recognition was
-measured and turned down: the one recogniser reachable from here gets native speakers wrong on
+measured and turned down: the one recognizer reachable from here gets native speakers wrong on
 exactly the sounds a learner is weakest at, so speaking is rehearsed and never scored.
 
 ## 4. What is honest about it
@@ -125,7 +125,7 @@ screen of first run rather than in a footnote.
 
 **The switch to English is the honest metric and it is self-reported.** It is the most real thing
 that happens to a foreigner speaking Estonian in Tallinn, it is a large part of why people stop
-practising, and it should fall as their Estonian holds. It is one press and it can be lied about.
+practicing, and it should fall as their Estonian holds. It is one press and it can be lied about.
 Across a cohort it is still the only signal anybody has, and it is published under a disclosure
 gate that shows nothing resting on fewer than ten people.
 
@@ -143,7 +143,7 @@ sixty a day per learner; a scene at Ordinary day composes between two and six li
 
 The floor is about three hundred dollars a month before a learner arrives and most of it does not
 move when they do. What is given, Ekilex, Wiktionary and TartuNLP's speech, is credited and never
-billed. The code is MIT. The data is the Institute's and Wiktionary's under their own licences. If
+billed. The code is MIT. The data is the Institute's and Wiktionary's under their own licenses. If
 the money stops, the app keeps working with no model key at all: the dictionary, the course, the
 review, the hearing conditions and the errands need none, and Situations plays the beats retrieval
 can fill and says so.
@@ -168,7 +168,7 @@ course that ends with a test and a course that ends with somebody booking their 
 
 - No two learners in one scene: it needs realtime infrastructure this app does not have.
 - No hand-written dialogue and no slang, by the founding rule.
-- No spoken turns marked by a recogniser, measured and turned down.
+- No spoken turns marked by a recognizer, measured and turned down.
 - No score on a conversation. Every version of a percentage read worse than the sentence that
   replaced it.
 - No business model beyond what `/funding` states. That page argues nothing is sold and no margin

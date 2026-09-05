@@ -14,7 +14,7 @@ import { TaskRow, type TaskView } from "@/components/TaskRow";
  *
  * Headings instead, from `lib/ux/agenda.ts`, late first. Late is the only kind
  * of task that gets worse while you look at it, so it goes at the top and it
- * says so in words rather than in a colour: a red date is not a heading, and a
+ * says so in words rather than in a color: a red date is not a heading, and a
  * hue that has to carry the whole distinction is the thing the design system
  * forbids.
  *

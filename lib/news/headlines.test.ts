@@ -43,13 +43,13 @@ describe("the words in a headline", () => {
     word meaning a shore, so without this the dictionary would vouch for it and
     the row would offer a beginner a word off the back of a politician's name.
   */
-  it("drops a name capitalised inside a sentence", () => {
+  it("drops a name capitalized inside a sentence", () => {
     for (const name of ["karel", "liis", "grete", "hussar", "kallase", "saksamaa", "tartus"]) {
       expect(words, `kept ${name}`).not.toContain(name);
     }
   });
 
-  it("keeps a word capitalised because it opens a sentence", () => {
+  it("keeps a word capitalized because it opens a sentence", () => {
     expect(words).toContain("maardu");
     expect(words).toContain("rong");
     expect(words).toContain("prantsusmaa");

@@ -18,8 +18,8 @@ const ROUND = 6;
  * Free production: the learner writes their own sentence rather than recalling
  * one side of a card.
  *
- * Words are drawn from their own deck, weighted towards the cases they have
- * actually been getting wrong — the point is to practise producing, not to meet
+ * Words are drawn from their own deck, weighted toward the cases they have
+ * actually been getting wrong — the point is to practice producing, not to meet
  * new vocabulary, so everything here is a word they have already met.
  */
 export default async function WritePage() {
@@ -33,7 +33,7 @@ export default async function WritePage() {
   });
 
   /*
-    The card this exercise is really practising.
+    The card this exercise is really practicing.
     ADR-016: a practice mode is not a side game with a score of its own. Writing
     a sentence with `tuba` in the inessive is evidence about that word, so it
     grades the same card the daily loop would, and the scheduler sees it. A
@@ -112,7 +112,7 @@ export default async function WritePage() {
   }
 
   /*
-    Which of the round's words are already favourites, in one read rather than
+    Which of the round's words are already favorites, in one read rather than
     one per prompt. After the round is picked rather than before it, since the
     pool is every word in the deck that can carry a writing task and the round
     is six.

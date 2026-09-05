@@ -122,7 +122,7 @@ function shapeOk(text: string, tokens: readonly string[], beat: BeatSpec): boole
  * say, and it passes them.
  *
  * Measured before it shipped rather than reasoned about. `npm run eval:scene`
- * builds a labelled set out of attested lines and the same lines with one
+ * builds a labeled set out of attested lines and the same lines with one
  * nominal moved into a case the verb does not govern: it withholds 44.3% of
  * real errors and 8.3% of good lines over 494 pairs, so §2's condition is met.
  * A check that fires on honest output is a check somebody waives.

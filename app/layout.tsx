@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     template: "%s · Kodukeel",
   },
   description:
-    "Estonian for the counter, the clinic and the neighbour: practice that sticks, a conversation " +
+    "Estonian for the counter, the clinic and the neighbor: practice that sticks, a conversation " +
     "to rehearse with somebody who has an agenda of their own, and one thing to say out loud today.",
   icons: { icon: "/icon.svg" },
   applicationName: "Kodukeel",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   /*
-    One colour, the light ground. The palette no longer follows the system
+    One color, the light ground. The palette no longer follows the system
     (see the note over `[data-theme="dark"]` in globals.css), so a media query
     here would paint the browser chrome for a theme the page is not wearing.
     The toggle in the rail rewrites this tag when somebody chooses dark.

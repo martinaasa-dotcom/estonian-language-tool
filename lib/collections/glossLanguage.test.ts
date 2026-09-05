@@ -9,7 +9,7 @@ describe("glossLanguageFrom", () => {
   });
 
   /*
-    A missing row has to read as the behaviour everybody already had, and a
+    A missing row has to read as the behavior everybody already had, and a
     stored value can be anything: this is a `Setting` row, and a row is a
     string until something checks it.
   */

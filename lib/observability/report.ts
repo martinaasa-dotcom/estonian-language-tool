@@ -62,7 +62,7 @@ export function redact(value: unknown, depth = 0): unknown {
  * followed by whatever the database said, which is right: those are the two
  * operations where somebody is owed a reason. What the database says can carry
  * the deployment's own connection string, host and user — Prisma quotes the
- * datasource in an initialisation failure, and a restore runs a two-minute
+ * datasource in an initialization failure, and a restore runs a two-minute
  * transaction, which is exactly the window a connection drops in.
  *
  * `redact` above already knows a DSN is a credential, because the log has to
@@ -119,7 +119,7 @@ export function reportError(error: unknown, context: ErrorContext): void {
   try {
     console.error(JSON.stringify(record));
   } catch {
-    console.error(`[${context.at}] error could not be serialised`);
+    console.error(`[${context.at}] error could not be serialized`);
   }
 
   const webhook = process.env.ERROR_WEBHOOK_URL;

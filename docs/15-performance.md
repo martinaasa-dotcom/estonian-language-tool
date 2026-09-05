@@ -184,7 +184,7 @@ base.$extends({ query: { async $allOperations({ args, query }) {
 } } });
 ```
 
-At 20ms, which is about what a pooled connection to a neighbouring region
+At 20ms, which is about what a pooled connection to a neighboring region
 costs, Today was 400ms and made **fourteen** waits one after another: the
 clock, then the deck, then the settings, then a batch, then another batch, then
 the badge check, then the level. It is now 220ms and about five, and the badge

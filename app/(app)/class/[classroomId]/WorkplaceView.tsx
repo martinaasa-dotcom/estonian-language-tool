@@ -16,7 +16,7 @@ import { Card, Chip, Empty, Note, SectionTitle, StatTile } from "@/components/ui
  * describes. None of the three is hidden here: `workplaceRoster` never reads
  * them, and `CohortSummary` has nowhere to put them.
  *
- * What is left is what somebody paying for this can act on: who is practising,
+ * What is left is what somebody paying for this can act on: who is practicing,
  * and who is on track for the paper the group is aiming at.
  */
 export function WorkplaceView({ summary, sponsor }: {
@@ -31,7 +31,7 @@ export function WorkplaceView({ summary, sponsor }: {
     <>
       <div className="grid gap-3 sm:grid-cols-3">
         <StatTile value={summary.members.length} label="People" tone="sky" />
-        <StatTile value={summary.active} label={`Practised in ${QUIET_DAYS} days`} tone="mint" />
+        <StatTile value={summary.active} label={`Practiced in ${QUIET_DAYS} days`} tone="mint" />
         <StatTile value={counts.likely} label={`On track for ${summary.level}`} tone="accent" />
       </div>
 
@@ -109,7 +109,7 @@ export function WorkplaceView({ summary, sponsor }: {
 
       {sponsor && (
         <Note tone="neutral">
-          You see who is practising and roughly where they stand. You do not see anybody&rsquo;s deck,
+          You see who is practicing and roughly where they stand. You do not see anybody&rsquo;s deck,
           their searches, their answers, or which grammar they personally find hard. That line is a
           different query rather than a hidden column, see{" "}
           <code className="text-xs">lib/classroom/roster.ts</code>.
@@ -122,7 +122,7 @@ export function WorkplaceView({ summary, sponsor }: {
             <Building2 size={20} aria-hidden className="mt-0.5 shrink-0" style={{ color: "var(--accent-deep)" }} />
             <div>
               <p className="text-base" style={{ color: "var(--ink-2)" }}>
-                Whoever runs this group sees your name, whether you have been practising, and one of
+                Whoever runs this group sees your name, whether you have been practicing, and one of
                 four bands for {summary.level}. They do not see your deck, your searches, your
                 answers, or which grammar you find hard.
               </p>
@@ -138,7 +138,7 @@ export function WorkplaceView({ summary, sponsor }: {
 }
 
 /**
- * A band's colour, borrowed from the ratings rather than invented.
+ * A band's color, borrowed from the ratings rather than invented.
  *
  * Mint already means recalled and peach already means missed everywhere else in
  * this app, so a band that means "on track" wearing the recalled hue is the

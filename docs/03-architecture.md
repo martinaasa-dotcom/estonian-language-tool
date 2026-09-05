@@ -80,18 +80,18 @@ behind a function four hundred tests call.
 1. Client calls `/api/dictionary/search?q=tuba`.
 2. Handler checks the local `Lexeme` cache. Fresh → return, no network.
 3. Miss → Ekilex `/api/word/search` with the server-held key.
-4. `mapper.ts` normalises Ekilex form data into our principal-parts model.
+4. `mapper.ts` normalizes Ekilex form data into our principal-parts model.
 5. Result persisted with `provenance: EKILEX` and a fetch timestamp.
 6. Client renders stored forms + `derive.ts` output for the ten derived cases, visually distinguished.
 
-Cache-first is not only a latency optimisation: it is how the dictionary keeps working offline, and
+Cache-first is not only a latency optimization: it is how the dictionary keeps working offline, and
 how we stay a polite consumer of a free academic API (audit C11).
 
 ## 5. Failure posture
 
 Every integration has a defined degraded mode. Nothing renders a blank tab.
 
-| Dependency | Down / missing | Behaviour |
+| Dependency | Down / missing | Behavior |
 |---|---|---|
 | Ekilex | key not yet issued, 5xx, rate limit | Serve cache; banner "showing cached results"; search still works over local data; card creation still works with manual entry |
 | TartuNLP TTS | 5xx / timeout | Serve cached audio; else fall back to Web Speech; else hide the play button (never a dead button) |
@@ -109,7 +109,7 @@ local database.
 cannot render. *Decision:* consume the Ekilex REST API server-side and build our own UI.
 *Consequences:* more work; we own the layout; **structured data instead of pixels**, which is what
 makes `+ Add to Deck`, offline cache and the derived case table possible at all. The blocker turned
-out to be a favour.
+out to be a favor.
 
 **ADR-002: SQLite + Prisma for v1; schema kept Postgres-portable.**
 *Context:* v4.0 said "Supabase (PostgreSQL) **or** SQLite via Prisma" and never chose (audit C4).
@@ -124,7 +124,7 @@ that must never fail.
 *Context:* v4.0 says "Leitner / SM-2", two different algorithms, undecided (audit D6). *Decision:*
 FSRS via `ts-fsrs`. *Rationale:* fewer reviews for the same retention, a tunable target retention,
 actively maintained, MIT. *Consequences:* store FSRS state per card (stability, difficulty, state,
-lapses) rather than an SM-2 ease factor; a review log enables later parameter optimisation.
+lapses) rather than an SM-2 ease factor; a review log enables later parameter optimization.
 
 **ADR-004: Provider-agnostic tutor (SUPERSEDED the original `claude-opus-5` pin, see `13-mvp-status.md` §2).**
 *Context:* v4.0 pins `claude-3-5-sonnet`, which is not a current model identifier (audit C2).
@@ -138,7 +138,7 @@ Details and cost model in `06-anu-tutor.md`.
 *Context:* an LLM will happily produce a plausible, wrong partitive plural. *Decision:* authoritative
 forms come from Ekilex only; AI output is tagged `provenance: AI` and requires explicit confirmation
 before entering a card's answer field. *Consequences:* the dictionary is bounded by Ekilex coverage;
-that is the correct trade. An unverified form in a flashcard gets *memorised wrong*, which is worse
+that is the correct trade. An unverified form in a flashcard gets *memorized wrong*, which is worse
 than a gap.
 
 *Amendment 1: what "generate" means, and who is allowed to do it.* The decision clause says forms
@@ -317,7 +317,7 @@ asserted. Re-run `npm run audit:cases` before widening the table.
 *Amendment 2 (2026-09-02): a principal part is one form, whatever Ekilex sends.* `Form`'s unique
 key includes the value because Estonian has genuine parallel forms (`raamatutes` beside
 `raamatuis`), which is right for the whole retrieved table and wrong for the six a learner
-memorises. Ekilex gives two partitive plurals for most nouns and `mapEkilexDetails` wrote both down
+memorizes. Ekilex gives two partitive plurals for most nouns and `mapEkilexDetails` wrote both down
 as `PART_PL`: 2,016 shipped entries carried a doubled partitive plural and 120 a doubled genitive
 plural, and which of the pair the app used was decided by whoever read the rows, since `stemsFrom`
 takes the first the database returns and every caller building a record with `Object.fromEntries`
@@ -381,9 +381,9 @@ usual arrangement where a game keeps its own score and touches nothing real. *Pr
 results evaporate is a mode nobody plays twice, and worse, it splits "what I studied" from "what the
 scheduler knows". *Decision:* every mode grades through `gradeCard`, so FSRS sees the same evidence
 from a match round as from a review. Match rates a pair found first time as Good and one that took a
-wrong guess as Hard. Recognising a word among seven others under time pressure is genuine recall,
+wrong guess as Hard. Recognizing a word among seven others under time pressure is genuine recall,
 and pretending otherwise would be as dishonest as pretending it is a full production test.
-*Consequences:* games count towards the daily goal and the quests, which is the point; an abandoned
+*Consequences:* games count toward the daily goal and the quests, which is the point; an abandoned
 round writes nothing, because nothing was answered.
 
 **ADR-017: Example sentences come from Ekilex usages; exercises rearrange them, never write them.**
@@ -412,14 +412,14 @@ service this app already uses and nothing comparable in the other direction; the
 recording back to back and judge for yourself. The audio is a blob URL that never leaves the
 browser. The card is graded by the learner on the same 1-4 scale as any flip, because the prompt is
 a meaning and the answer is Estonian, which is a production test whatever the microphone does.
-*Consequences:* the app has a speaking mode without a lie in it. If a verified Estonian recogniser
+*Consequences:* the app has a speaking mode without a lie in it. If a verified Estonian recognizer
 appears, this is where it plugs in. *Rejected:* comparing waveforms or durations locally, which
 measures the wrong thing and dresses it as a score.
 
 *Re-tested 2026-08-29, and the decision survived on measurement rather than on the old assumption.*
 The availability half of the problem statement above is now out of date: TartuNLP do publish a
 speech-to-text service, and Groq serve `whisper-large-v3` on a free key, which takes Estonian audio
-happily. So the question stopped being "is there a recogniser" and became "is it good enough to
+happily. So the question stopped being "is there a recognizer" and became "is it good enough to
 tell somebody their own pronunciation was wrong", and `scripts/measure-asr.mjs` answers it.
 
 The method is deliberately generous. Every utterance is a sentence the dictionary already carries
@@ -432,7 +432,7 @@ five came back with at least one word wrong, on audio a native voice produced pe
 the rate is where the errors fall: `Poiss` heard as `Pois` and `majja` as `maija`, which is
 consonant length, the single thing `/review/pairs` exists to teach; `abikaasaga` as `abigaasaga`
 and `räägin` as `rääkin`, which is voicing; `Nõukogude aeg` as `Nõukogu taeg`, which is a word
-boundary. The recogniser is weakest exactly where the learner is, and a learner cannot tell the
+boundary. The recognizer is weakest exactly where the learner is, and a learner cannot tell the
 machine's mistake from their own.
 
 So showing a transcript beside the target would report perfect pronunciation as a mistake most of
@@ -452,11 +452,11 @@ that got through before the free tier's quota stopped the run, it transcribed `P
 aia.` exactly, which is one of the sentences Whisper turned into `Pois`. That is interesting and
 it is not a result: the sample was too small to be one. **No number for Gemini is recorded here on
 purpose.** The quota is twenty requests a minute and tighter in practice, which is also a finding
-in itself, since a recogniser that cannot be called more than that is not one a class of learners
+in itself, since a recognizer that cannot be called more than that is not one a class of learners
 could share. Finish the measurement on a paid key, or when the quota resets, before believing
 anything about it.
 
-*The script refuses to flatter a recogniser, because the first version did.* A run whose sentences
+*The script refuses to flatter a recognizer, because the first version did.* A run whose sentences
 were mostly refused reported a 2.0% word error rate over the three that survived and read as a
 fifteenfold improvement. It now names how many sentences were actually measured and exits without
 a verdict below two thirds of them, on the same reasoning as the browser suites' counting harness:
@@ -568,7 +568,7 @@ touched, which is what keeps `Assessment` append-only in the sense that matters.
 (a hallucination that marks a right answer wrong on somebody's first day destroys the only trust
 this app has), a single number rather than a profile (it hides which skill is behind, which is the
 one actionable thing here), and scoring the recording (see ADR-018; the absence of an honest
-recogniser did not change because a test wanted one).
+recognizer did not change because a test wanted one).
 
 *Amendment 1 (a wrong answer is chosen, not shuffled).* The three rules above make a mark
 trustworthy and say nothing about whether the question was worth marking. The wrong answers were
@@ -589,7 +589,7 @@ and no sentence offered against another recorded under the same headword.
 **ADR-021: A photograph is read by a model; whether it is *believed* is decided by the dictionary.**
 *Context:* half of an Estonian course is on paper (a handout, a textbook page, a list copied off a
 whiteboard) and typing it back in is the step where a learner stops. Reading it needs optical
-character recognition, and the only recogniser available here is a model, which is the one thing
+character recognition, and the only recognizer available here is a model, which is the one thing
 ADR-005 says may never supply an Estonian form. *Decision:* separate the two claims. The model
 transcribes and nothing more (`lib/scan/extract.ts`, pure, no database, no network); every string it
 returns is then resolved against the dictionary by `matchEstonianForm`, which accepts only an exact
@@ -619,7 +619,7 @@ fails the whole thing however the other three went. An app that teaches Estonian
 somebody which of those they could pass today is answering a smaller question than the one being
 asked. *Problem:* a mock exam is the single most tempting place in this codebase to break ADR-005. A
 model would produce four reading passages and thirty questions in a second, and roughly one form in
-every ten would be invented, and it would be invented inside the one artefact a learner will treat
+every ten would be invented, and it would be invented inside the one artifact a learner will treat
 as a measurement rather than as practice. *Decision:* three separations, and each one is asserted.
 **The paper is assembled, never written**: `lib/exam/paper.ts` only hides, shuffles and surrounds
 sentences Ekilex recorded, exactly as `lib/estonian/cloze.ts` already does for a single exercise, and
@@ -680,7 +680,7 @@ called, keyed by the topic ids `grammar.ts` already uses and falling back to `ca
 fourteen cases, so a heading does not have to know whether it is looking at a case or a mood. It is
 deliberately partial: a point is in it only where a class actually has a term, and `irony` correctly
 has none. `grammar.ts` keeps its "no Estonian at all" tripwire, which is the reason the terms live
-in a neighbouring module rather than in the prose; `terms.ts` has the mirror-image tripwire, holding
+in a neighboring module rather than in the prose; `terms.ts` has the mirror-image tripwire, holding
 every entry to the shape of a term rather than of a form. *Consequences:* three hand-typed English
 label tables in `search.ts`, `actions.ts` and the minimal-pairs page collapse into one derived
 `formName()` in `morph.ts`, so `toas` now resolves as "seesütlev (inessive) of tuba" in every one of
@@ -754,8 +754,8 @@ as a form, a card answer or a sentence. Speaking is unmarked (ADR-018) and the m
 nothing to any level (ADR-020). The role card is fiction, so no transcript holds a fact about the
 learner. *Rejected:* hand-written dialogue, which is ADR-005 broken in the most direct way
 available; a branching tree, which multiplies the authoring by the thing it is trying to fix;
-building it into Anu, who streams and so cannot be gated; a recogniser advancing a turn, measured
-and turned down; a model deciding whether the learner was understood, which is the judgement it is
+building it into Anu, who streams and so cannot be gated; a recognizer advancing a turn, measured
+and turned down; a model deciding whether the learner was understood, which is the judgment it is
 least qualified to make with the worst failure available; and a score.
 
 **ADR-026: Readiness for real life is read per situation on three rungs, and recognition alone
@@ -800,7 +800,7 @@ an account of anything. And it could only ever count the conversations this app 
 who spent an hour with their Estonian mother-in-law and ignored the errand was recorded as having
 done nothing, in the one number this ADR says the app is measured by. So Today asks whether any
 Estonian was spoken to anybody yesterday, and offers the errand where the answer is no. Two things
-follow. `Encounter.errandId` is nullable, because a conversation with a neighbour is not this
+follow. `Encounter.errandId` is nullable, because a conversation with a neighbor is not this
 app's to file under a unit, and the research export's table of errands says out loud that it
 covers a shrinking share of the reports rather than quietly speaking for all of them. And a day
 that was answered is not a day that held a conversation: `isConversation` is the one place that is

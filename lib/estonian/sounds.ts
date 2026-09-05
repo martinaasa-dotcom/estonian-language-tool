@@ -6,7 +6,7 @@
  * the word. Nobody in this app has only read them. A learner in a shop, in a
  * class or on a bus hears a word, tries to write it down, and gets it wrong in
  * one of three ways, which is not a guess: `scripts/measure-asr.mjs` measured
- * a recogniser on clean native audio and its mistakes landed on consonant
+ * a recognizer on clean native audio and its mistakes landed on consonant
  * length (`Poiss` as `Pois`), voicing (`abikaasaga` as `abigaasaga`) and word
  * boundaries. A machine listening to a native speaker makes the learner's
  * mistakes, which is the whole reason that measurement is in the repository.

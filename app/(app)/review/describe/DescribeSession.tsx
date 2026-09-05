@@ -19,7 +19,7 @@ import { VERDICT_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
 export interface ScenePrompt {
   sceneId: string;
   situation: string;
-  /** The card this practises, where the learner has one for the named word. */
+  /** The card this practices, where the learner has one for the named word. */
   cardId: string | null;
   /**
    * The three things: the character, and what it means in English.
@@ -65,7 +65,7 @@ interface Marked {
  * Two authorities on the screen and they stay apart, which is the arrangement
  * `/review/write` settled on: whether the case was right is the dictionary's
  * answer and is certain, and what Anu says about the rest of the sentence is a
- * model's opinion and is labelled as one. What is new here is the middle
+ * model's opinion and is labeled as one. What is new here is the middle
  * verdict. A learner who wrote the right word with the wrong ending is told
  * which ending they wrote, by name, because `lib/estonian/whichCase.ts` can
  * work that out with certainty and "not the form we asked for" is the least
@@ -133,7 +133,7 @@ export function DescribeSession({ prompts: initialPrompts, aiAvailable }: {
           says the answer was about whatever that card happens to be. That is
           the fault `Review.slot` was added to fix, in a round written after
           the fix and told about none of it: the mastery counter could not see
-          that the word had been practised in the kaasaütlev, and neither could
+          that the word had been practiced in the kaasaütlev, and neither could
           anything else.
 
           The sixth is the case they reached for instead. `markDescription`
@@ -324,7 +324,7 @@ function nameOf(key: string): string | null {
  *
  * The case, which is certain. Then the picture, which is the other mechanical
  * thing this knows and the reason the words are worth revealing at all. Then
- * Anu, labelled, last, and never allowed to look like part of the first.
+ * Anu, labeled, last, and never allowed to look like part of the first.
  */
 function Feedback({ marked, prompt }: { marked: Marked; prompt: ScenePrompt }) {
   const { mark, reveal, graded, quotaMessage, withheld, withheldReason } = marked;

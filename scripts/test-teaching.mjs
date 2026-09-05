@@ -1,6 +1,6 @@
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
-import { revealAnswer } from "./lib/review.mjs";
+import { retypeMiss, revealAnswer } from "./lib/review.mjs";
 
 /**
  * The teaching layer: the grammar reference, dictation, the printable worksheet,
@@ -231,7 +231,9 @@ for (let i = 0; i < 6 && !revealed; i++) {
     // card. It used to press 3, which was Good when every card had four grading
     // buttons under it; on a card that does not, that is a keystroke into the
     // void and the loop spun six times over the same card.
-    if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
+    if (await retypeMiss(page)) {
+      // A miss typed again grades itself and moves on.
+    } else if (await page.getByRole("button", { name: /Got it, next/ }).count()) {
       await page.keyboard.press("Enter");
     } else {
       await page.keyboard.press("2");

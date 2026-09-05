@@ -16,7 +16,7 @@
  *
  * `raamat` is the baseline and does nothing at all. `tuba` swaps its vowel and
  * comes out `toa`. `sõber` is the one where the two stems disagree with each
- * other, `sõbra` against `sõpra`, so even the ones you memorise are not one
+ * other, `sõbra` against `sõpra`, so even the ones you memorize are not one
  * stem. `käsi` goes to `käe`, which shares two letters with the word you
  * looked up. `mees` turns its s into an h. Every one of those is a word a
  * beginner meets in their first month, which is the point: these are not

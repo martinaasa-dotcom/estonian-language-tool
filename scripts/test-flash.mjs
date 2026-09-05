@@ -93,7 +93,7 @@ const page = await browser.newPage();
  *
  * A route group's `loading.tsx` renders a `main` too, so waiting for the
  * element is waiting for the skeleton: the first version of this suite read
- * four screens of grey rectangles and reported four real failures. Best
+ * four screens of gray rectangles and reported four real failures. Best
  * effort, with a budget: a page that genuinely renders nothing runs the clock
  * out and reaches the check, which then says what it found rather than
  * "Timeout".

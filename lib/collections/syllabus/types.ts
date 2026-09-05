@@ -38,7 +38,7 @@ export type Pos = "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PRONOUN" | "PHRASE
 /**
  * A word the course asks for.
  *
- * THE FOURTH SLOT NAMES WHICH WORD, WHERE ESTONIAN HAS TWO OF THEM SPELT THE
+ * THE FOURTH SLOT NAMES WHICH WORD, WHERE ESTONIAN HAS TWO OF THEM SPELLED THE
  * SAME. Ekilex numbers homonyms, and the harvest used to take the first one
  * whose forms fit, silently: 87 of the 1,185 course words have more than one
  * exact match and six of them came back as the wrong word entirely. `kohus`
@@ -126,7 +126,7 @@ export function inferPos(lemma: string, given?: Pos): Pos {
  * It is added here rather than typed into unit literals because it is a
  * property of the word and not a choice the unit makes: a learner who cannot
  * say `hamba` cannot say `hambaga` either. The generator produces nothing for
- * a word that does not gradate, so a unit of colours gets none.
+ * a word that does not gradate, so a unit of colors gets none.
  */
 function withGradation(types: readonly CardType[]): readonly CardType[] {
   // `CASE_FORM` and not `CONJUGATION`: the card asks for the genitive, and a

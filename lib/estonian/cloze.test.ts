@@ -113,7 +113,7 @@ describe("sentenceMatches", () => {
     expect(sentenceMatches(["Kitsed", "olid", "ojal", "joomas"], original)).toBe(true);
   });
 
-  it("ignores capitalisation", () => {
+  it("ignores capitalization", () => {
     expect(sentenceMatches(["kitsed", "olid", "ojal", "joomas"], original)).toBe(true);
   });
 

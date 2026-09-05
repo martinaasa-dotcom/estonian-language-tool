@@ -1,10 +1,10 @@
 import { requireUserId } from "@/lib/auth/session";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page, Stack } from "@/components/ui";
-import { Favourites } from "@/components/Favourites";
+import { Favorites } from "@/components/Favorites";
 import { MasteryBoard } from "@/components/MasteryBoard";
 import { masteryCounts, masteryFor } from "@/lib/progress/mastery";
-import { favouriteCount, favourites } from "@/lib/progress/stars";
+import { favoriteCount, favorites } from "@/lib/progress/stars";
 
 export const metadata = { title: "Where your words stand" };
 
@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic";
  * screens telling one learner three different things about one word is how a
  * number stops being believed.
  *
- * THE FAVOURITES LIVE HERE TOO, AND THEY LEAD.
+ * THE FAVORITES LIVE HERE TOO, AND THEY LEAD.
  *
  * Starring a word has existed since the dictionary did and could be done on
  * one screen and read back on that same screen, which is the screen a learner
@@ -45,14 +45,14 @@ export default async function MasteryPage() {
   */
   const [words, kept, keptTotal] = await Promise.all([
     masteryFor(ownerId),
-    favourites(ownerId),
-    favouriteCount(ownerId),
+    favorites(ownerId),
+    favoriteCount(ownerId),
   ]);
 
   return (
     <Page
       title="Where your words stand"
-      lead="Your favourites, and how well every other word is sticking."
+      lead="Your favorites, and how well every other word is sticking."
       actions={<ButtonLink href="/review/flashcards" variant="primary">Flash cards</ButtonLink>}
     >
       {words.length === 0 && kept.length === 0 ? (
@@ -63,7 +63,7 @@ export default async function MasteryPage() {
         />
       ) : (
         <Stack>
-          <Favourites words={kept} total={keptTotal} />
+          <Favorites words={kept} total={keptTotal} />
           {words.length > 0 && <MasteryBoard words={words} counts={masteryCounts(words)} />}
         </Stack>
       )}

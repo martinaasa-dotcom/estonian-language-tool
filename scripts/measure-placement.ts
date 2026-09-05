@@ -9,7 +9,7 @@
  * other and not with the ones in that test.
  *
  * It drives the real ladder (`nextCursor`) and the real scorer (`placement`)
- * over the real blueprint, with the learner the only thing modelled: a true
+ * over the real blueprint, with the learner the only thing modeled: a true
  * level, and a probability of credit on a question that falls with how far
  * the band sits above it. Reading and listening are four-option questions, so
  * a learner far above their level still scores at about chance; writing is

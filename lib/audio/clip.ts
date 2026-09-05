@@ -35,6 +35,13 @@ export interface ClipRequest {
    * reason SLOW_RATE gives below.
    */
   readonly condition?: Condition;
+  /**
+   * A gentler rate than the service's own, for a screen where the learner is
+   * writing down what they hear. Applied exactly as `slow` is, at playback
+   * with the pitch held, and ignored where `slow` or a condition already
+   * decides the rate.
+   */
+  readonly rate?: number;
 }
 
 /**
@@ -64,6 +71,18 @@ export interface ClipRequest {
  * trimmed off on the server, so slowing it does not slow the wait for it.
  */
 export const SLOW_RATE = 0.7;
+
+/**
+ * The rate a whole sentence is read at when somebody has to write it down.
+ *
+ * TartuNLP reads at a newsreader's clip, which is right for a word on a card
+ * and was reported as far too fast for the dictation in the level check,
+ * where a learner has to hold four words in their head long enough to type
+ * them. 0.85 is a person speaking carefully rather than slowly: the stretch
+ * is inaudible at that rate, and the slow half of the same control is still
+ * a step down from it.
+ */
+export const LEARNING_RATE = 0.85;
 
 /**
  * One clip per word and voice. The rate is not in the key, because a
@@ -143,6 +162,9 @@ export async function playClip(
     // the pitch for the same reason: a faster tape is a higher voice.
     audio.preservesPitch = true;
     audio.playbackRate = condition.speed;
+  } else if (request.rate !== undefined && request.rate !== 1) {
+    audio.preservesPitch = true;
+    audio.playbackRate = request.rate;
   }
   try {
     await audio.play();

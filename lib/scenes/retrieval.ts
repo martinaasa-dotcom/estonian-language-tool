@@ -64,7 +64,7 @@ export interface Line {
  *
  * Greeting and leaving are the exception and it is not a special case, it is
  * the shape of those two acts: `Tere!` is a complete turn and so is
- * `Nägemist!`. The floor of two dropped every greeting in the catalogue, which
+ * `Nägemist!`. The floor of two dropped every greeting in the catalog, which
  * is how this was found.
  */
 export const MAX_WORDS = 14;

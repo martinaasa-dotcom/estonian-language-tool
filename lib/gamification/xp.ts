@@ -37,7 +37,7 @@ export function xpFromRatingCounts(counts: Record<number, number>): number {
 /**
  * Level titles, in Estonian with a gloss.
  *
- * They are flavour, not a CEFR claim — the app never pretends a level here says
+ * They are flavor, not a CEFR claim — the app never pretends a level here says
  * anything about real proficiency, which is what the CEFR tags on words are for.
  */
 export const LEVEL_TITLES: readonly { title: string; gloss: string }[] = [

@@ -82,7 +82,7 @@ function normalise(word: string): string {
     .trim();
 }
 
-/** Words as typed, with anything that normalises to nothing dropped. */
+/** Words as typed, with anything that normalizes to nothing dropped. */
 export function dictationWords(text: string): string[] {
   return text.split(/\s+/).map((w) => w.trim()).filter((w) => normalise(w).length > 0);
 }

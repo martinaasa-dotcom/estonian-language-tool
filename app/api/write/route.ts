@@ -116,7 +116,7 @@ export async function POST(request: Request) {
 
   // Set the moment the reservation is settled, so the catch below can tell a
   // grader that never ran from one that ran and then tripped over its own
-  // verification. Only the first is owed its authorisation back.
+  // verification. Only the first is owed its authorization back.
   let settled = false;
   try {
     const { graded, usage } = await gradeSentence(config, {

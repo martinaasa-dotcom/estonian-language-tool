@@ -14,7 +14,7 @@ Supersedes v4.0. Every change from v4.0 is justified in `00-audit-v4.md`.
 
 One user: a native English speaker taking a structured Estonian class, studying most days, on a
 laptop, at a desk. Not a consumer product, not multi-tenant, not a startup. Every decision below
-optimises for *one committed learner using this daily for a year*, which permits choices a SaaS
+optimizes for *one committed learner using this daily for a year*, which permits choices a SaaS
 could not make (local database, no signup, no onboarding funnel) and forbids others (no data loss,
 ever; the review history is irreplaceable).
 
@@ -34,7 +34,7 @@ and no answer to "what now". Hence the Today view (§3.0) as the default route.
 3. **Never invent Estonian.** Authoritative forms come from Ekilex. The AI explains; it does not
    supply answer keys. Provenance is visible. (See `02-estonian-domain.md` §5.)
 4. **Degrade, never blank.** Every integration is someone else's server. Each has a defined offline
-   and failure behaviour. (Fixes C6.)
+   and failure behavior. (Fixes C6.)
 5. **The data is the user's.** Local-first, exportable to JSON and Anki from Phase 3. (Fixes C10.)
 6. **Teach the pattern, not the form.** Show *why* `toa` is what it is, not just that it is.
 7. **The point is to leave.** Every feature is measured by whether it gets somebody through a real
@@ -124,7 +124,7 @@ imports into Anki.
 feed removes its events and nothing else. A malformed or unreachable feed shows a per-feed error and
 leaves other feeds working.
 
-### 3.6 Imports (v4.0 Feature 5: generalised)
+### 3.6 Imports (v4.0 Feature 5: generalized)
 
 Speakly-specific parsing replaced with a format-agnostic importer (audit A3).
 
@@ -134,7 +134,7 @@ Speakly-specific parsing replaced with a format-agnostic importer (audit A3).
 - Speakly and Sõnaveeb are supported *shapes*, not required *integrations*.
 
 **Acceptance:** pasting 20 lines of `sõna - word` produces 20 reviewable cards with principal parts
-filled in for those Ekilex recognises, duplicates flagged, and nothing written until confirmed.
+filled in for those Ekilex recognizes, duplicates flagged, and nothing written until confirmed.
 
 ### 3.7 Progress (NEW)
 

@@ -7,7 +7,7 @@
  * A Vercel deployment answers on two names at least, `<app>.vercel.app` and
  * whatever domain was pointed at it, and sign-in is the one path that cannot
  * survive the difference. `signInWithOAuth` asks Supabase to send the learner
- * back to `<origin>/auth/callback`, and Supabase honours that only where the
+ * back to `<origin>/auth/callback`, and Supabase honors that only where the
  * address is on the project's Redirect URLs list; anywhere else it falls back
  * to the project's Site URL, silently. So somebody signing in on the custom
  * domain came back on `kodukeel.vercel.app`, and the exchange there failed,

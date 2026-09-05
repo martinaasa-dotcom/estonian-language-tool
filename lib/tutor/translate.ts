@@ -22,7 +22,7 @@ export type TranslationOutcome =
  * One short answer from whichever provider will give one.
  *
  * These two callers want a handful of words, not a conversation, so they get
- * the chain's fallback behaviour and none of its streaming: a gloss that
+ * the chain's fallback behavior and none of its streaming: a gloss that
  * arrives a word at a time is a gloss nobody watches arrive. `cap` stops a
  * model that has decided to write an essay from being read to the end.
  *
@@ -86,7 +86,7 @@ async function ask(
     );
   } catch (error) {
     // No provider took the question, so nothing was spent and the
-    // authorisation goes back. Without this, a gloss nobody could get would
+    // authorization goes back. Without this, a gloss nobody could get would
     // still count against the day.
     const booking = decision.reservation;
     if (booking) after(() => releaseReservation(booking));

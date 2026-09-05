@@ -16,7 +16,7 @@
  * as `lib/scan/extract.ts` produces candidates from a photograph, and for the
  * same reason: this is text from outside the app, and outside text does not
  * get to add Estonian to anything. `lib/dict/suggest.ts` hands each one to
- * `matchEstonianForm`, which offers it only if the dictionary recognises the
+ * `matchEstonianForm`, which offers it only if the dictionary recognizes the
  * exact spelling, a stored form, or a regular case of the genitive stem. A
  * headline could be about a company nobody has heard of and the worst that can
  * happen is that no word from it is offered.
@@ -34,7 +34,7 @@ const MAX_HEADLINES = 60;
 /**
  * A sentence boundary, for deciding which capital letters are ordinary.
  *
- * A headline capitalises its first word, and Estonian capitalises proper nouns
+ * A headline capitalizes its first word, and Estonian capitalizes proper nouns
  * and very little else, so a capital *inside* a sentence is the one reliable
  * signal that a token is a name. `Politico: Prantsusmaa ja Saksamaa tegid
  * ettepaneku Kallase rolli tugevdada` has to lose four words and keep three,
@@ -99,7 +99,7 @@ export function parseHeadlines(xml: string): string[] {
  * Two things are dropped and both are about names rather than about quality,
  * because quality is the dictionary's call and not this function's:
  *
- * A token capitalised mid-sentence is a proper noun. Estonian capitalises
+ * A token capitalized mid-sentence is a proper noun. Estonian capitalizes
  * names and sentence openings and almost nothing else, so this is close to
  * exact, and it is also the difference between offering somebody `kallas`,
  * meaning a shore, because a politician called Kallas was in the news.

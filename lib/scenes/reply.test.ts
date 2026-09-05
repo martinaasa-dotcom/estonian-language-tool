@@ -55,7 +55,7 @@ describe("a turn that landed", () => {
     expect(replyFor(input({ answered: GREET }))).toEqual([FRESH]);
   });
 
-  it("rotates the acknowledgement so the same word does not come back every time", () => {
+  it("rotates the acknowledgment so the same word does not come back every time", () => {
     const seen = new Set<string>();
     for (let met = 0; met < REACTIONS.acknowledge.length; met += 1) {
       seen.add(replyFor(input({ answered: ASK, met }))[0]!.text);
@@ -180,7 +180,7 @@ describe("a turn in English", () => {
 });
 
 describe("running out of patience", () => {
-  it("says so in English and moves to the next beat's line, with no acknowledgement", () => {
+  it("says so in English and moves to the next beat's line, with no acknowledgment", () => {
     const lines = replyFor(input({ answered: ASK, beat: OFFER, response: "moveOn", reading: "offtarget", line: FRESH }));
     expect(lines[0]?.provenance).toBe("unspoken");
     expect(lines[1]).toEqual(FRESH);
@@ -206,7 +206,7 @@ describe("the stage direction", () => {
 });
 
 describe("a reaction", () => {
-  it("is the course's own word, capitalised, with the mark that makes it the move", () => {
+  it("is the course's own word, capitalized, with the mark that makes it the move", () => {
     expect(reaction("hästi", ".")).toMatchObject({ text: "Hästi.", provenance: "attested", from: "hästi", reaction: true });
     expect(reaction("jah", "?").text).toBe("Jah?");
   });

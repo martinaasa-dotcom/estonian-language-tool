@@ -167,7 +167,7 @@ describe("a principal part", () => {
 
     `Form`'s unique key includes the value, deliberately, because Estonian has
     genuine parallel forms and a key without it would drop one. That is right
-    for the whole retrieved table and wrong for the six a learner memorises:
+    for the whole retrieved table and wrong for the six a learner memorizes:
     Ekilex gives two partitive plurals for most nouns and both were written
     down as `PART_PL`, so which the app used was decided by whoever read the
     rows. `stemsFrom` takes the first it finds, in whatever order the database

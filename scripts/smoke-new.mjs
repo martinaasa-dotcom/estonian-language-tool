@@ -25,7 +25,7 @@ const browser = await launchChromium();
 
 /*
   Floor: what CI reaches, three more than before, because the marker checks
-  below went from five to eight when the rail stopped travelling and the phone
+  below went from five to eight when the rail stopped traveling and the phone
   bar grew checks of its own. This box reaches 66 against a seeded database
   with the demo history laid down; the ones above the floor are gated on the
   deck holding enough to build a government drill and a minimal pair, which a
@@ -296,7 +296,7 @@ check("the marker leaves on the press, not on the page",
 /*
   AND UNDER A POINTER IT ARRIVES RATHER THAN TRAVELS.
 
-  A travelling pill is company for a thumb and an argument with a mouse: you
+  A traveling pill is company for a thumb and an argument with a mouse: you
   clicked one row, you know which, and watching a marker take a quarter of a
   second to agree with you is the rail being slower than you are. What carries
   the movement here is the pointer's own pane, which has been following the
@@ -304,7 +304,7 @@ check("the marker leaves on the press, not on the page",
   already where the marker lands. The phone bar keeps the travel, and the two
   checks below measure it there.
 */
-check("and under a pointer it arrives rather than travelling to the row",
+check("and under a pointer it arrives rather than traveling to the row",
   aimed.running === 0, `${aimed.running} animations in flight`);
 
 /*
@@ -348,14 +348,14 @@ check("a navigation puts the marker in one place, not three", places.length === 
   `${places.length} places: ${places.join(" then ")}`);
 
 /*
-  AN ABANDONED PRESS IS ONE THAT WANDERED, NOT ONE THE BROWSER CANCELLED.
+  AN ABANDONED PRESS IS ONE THAT WANDERED, NOT ONE THE BROWSER CANCELED.
 
   A cancel used to be read as the press being given up, and on a fixed bar that
   is wrong: the browser fires one at a finger that has done nothing at all,
   because it has taken the touch to stop the page's momentum, and refusing that
   is a tap that does nothing. What tells the two apart is whether the pointer
   moved, which is the same question the click deadline asks. So this drags the
-  press well off the cell before cancelling it.
+  press well off the cell before canceling it.
 */
 const abandoned = await page.evaluate(async () => {
   const nav = document.querySelector('nav[aria-label="Main"]');
@@ -377,7 +377,7 @@ const abandoned = await page.evaluate(async () => {
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   return { home, aimed, back: at(), running: pane.getAnimations().length };
 });
-check("a press dragged off the cell arrives home rather than travelling back",
+check("a press dragged off the cell arrives home rather than traveling back",
   abandoned.aimed !== abandoned.home && abandoned.back === abandoned.home && abandoned.running === 0,
   `aimed at ${abandoned.aimed}, back at ${abandoned.back} against ${abandoned.home}, ` +
   `${abandoned.running} animations`);
@@ -550,7 +550,7 @@ check("a press the browser never turned into a click still goes where it was aim
 
 /*
   And a press that panned away is not a tap. It goes nowhere, and the marker
-  arrives home rather than travelling back, since reverting is a correction
+  arrives home rather than traveling back, since reverting is a correction
   and not a journey.
 */
 await mobile.goto(`${BASE}/learn`, { waitUntil: "networkidle" });

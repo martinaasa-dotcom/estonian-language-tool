@@ -9,7 +9,7 @@
  *
  * The notes are the point. A figure with no stated denominator is not a figure,
  * and the mistake this file exists to prevent is the one that makes a research
- * artefact worthless: a reader who takes "the partitive is answered correctly
+ * artifact worthless: a reader who takes "the partitive is answered correctly
  * 61% of the time" to mean something about Estonian, when it may equally mean
  * something about which cards this app happens to build. Every table says which
  * of those it can support.
@@ -131,7 +131,7 @@ export const SECTIONS: readonly SectionSpec[] = [
     groupBy: 0,
     note:
       "Every answer in the corpus, grouped by what the card asked for. These are not " +
-      "comparable to each other as measures of difficulty: recognising a word from its " +
+      "comparable to each other as measures of difficulty: recognizing a word from its " +
       "English and producing a case form are different tasks, not the same task at two " +
       "levels. The row is here so that every other table can be read against the mix it " +
       "was drawn from. Answers whose card has since been deleted are not here: see " +
@@ -164,8 +164,8 @@ export const SECTIONS: readonly SectionSpec[] = [
     note:
       "An empirical difficulty ordering of Estonian vocabulary, which is the table with " +
       "no equivalent anywhere else and the one to treat most carefully. A word is here " +
-      "only if enough different people met it often enough, so the list is biased towards " +
-      "words the course teaches early and towards words with many forms recorded. It says " +
+      "only if enough different people met it often enough, so the list is biased toward " +
+      "words the course teaches early and toward words with many forms recorded. It says " +
       "which of the words learners actually meet are hard. It does not say which words in " +
       "Estonian are hard.",
   },

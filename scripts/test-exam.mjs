@@ -110,7 +110,7 @@ if (aiming) {
   absent(1, "a target level set on this database, which the demo fixture writes");
 }
 
-const firstGapLink = page.locator("a", { hasText: /Open the path|Practise|Take a dictation|Record yourself|Fill some gaps|Write a sentence|Read the rule|Open the clinic|Review now/ }).first();
+const firstGapLink = page.locator("a", { hasText: /Open the path|Practice|Take a dictation|Record yourself|Fill some gaps|Write a sentence|Read the rule|Open the clinic|Review now/ }).first();
 check("every gap hands over somewhere to go", (await firstGapLink.count()) > 0);
 
 // ── The briefing ─────────────────────────────────────────────────────────────
@@ -301,7 +301,7 @@ check("a word the task asked for is ticked off once it is used",
   usedAfter > usedBefore,
   `${firstWord}: ${usedBefore} then ${usedAfter}`);
 
-check("the length meter counts what was written towards the length that carries the marks",
+check("the length meter counts what was written toward the length that carries the marks",
   /\d+ of \d+ words/.test(afterTyping));
 
 const writing = await answerAndAdvance(false);

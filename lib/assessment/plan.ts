@@ -5,13 +5,21 @@ import type { Reason } from "./goals";
 export type { HourRange } from "./types";
 
 /**
- * How long this is actually going to take.
+ * How long this is actually going to take, and what it takes to get there.
  *
- * The point of this module is to be the least flattering screen in the app. A
- * learning app that answers "how long until I speak Estonian" with a streak
+ * A learning app that answers "how long until I speak Estonian" with a streak
  * counter is answering a different question than the one asked, and the honest
- * answer is measured in hundreds of hours. Saying so on day one costs a few
- * sign-ups and saves the ones who stay from finding out in March.
+ * answer is measured in hundreds of hours. This module says so. What it does
+ * not do any more is read that number pessimistically. The first verdicts were
+ * drawn at the far end of every range against the least a week could hold, so
+ * a B1 speaker with a year, living in Estonia and working in Estonian, read
+ * "it fits, but only with study outside this app" over a tile saying the app
+ * alone would take five hundred weeks. Both were true and neither was the
+ * answer, which is that B2 in a year is about five hours a week of Estonian,
+ * and somebody who has decided to do it will. The plan now assumes the person
+ * in front of it means it: the distance is quoted honestly, the verdict is
+ * drawn at the near end of it, and what it asks for is a number of hours a
+ * week to commit to rather than a reason it will not work.
  *
  * Unflattering is not the same as one number for everybody, and for a while it
  * was. The plan quoted one table, assumed the same five found hours a week of
@@ -69,7 +77,7 @@ export const GUIDED_LEARNING_HOURS: Record<Band, HourRange> = {
  * genuinely longer, so the surcharge climbs again at the top.
  *
  * So the factor peaks at B1 and dips at B2, and the shape is asserted rather
- * than remembered. It is a judgement over published figures, stated as one;
+ * than remembered. It is a judgment over published figures, stated as one;
  * nothing published gives the ratio band by band. The whole climb still lands
  * within the FSI ratio, which is what keeps it a reading of that source and
  * not a replacement for it.
@@ -224,18 +232,17 @@ export function countedBySkill(standing: Standing, to: Band): boolean {
 export type Verdict =
   /** Already at or past the target level. */
   | "arrived"
-  /** The plan gets there with room to spare. */
+  /** The app's own pace alone covers the whole distance. */
   | "comfortable"
-  /** It fits, but only if nothing slips. */
+  /** It fits: the hours beyond the app are ones a normal week already holds. */
   | "tight"
   /**
-   * It fits only if the Estonian already around the learner is actually used.
-   *
-   * Reachable only where a week holds more than the baseline, since a week
-   * holding exactly the baseline has one figure and nothing between the two.
+   * It fits, if the learner commits to it: the hours beyond the app are more
+   * than the week supplies on its own and still inside what a person who has
+   * decided to do this puts in (`COMMIT_HOURS_PER_WEEK`).
    */
   | "possible"
-  /** It does not fit, and pretending otherwise helps nobody. */
+  /** More than any normal week holds beside a life, so the date or the pace has to move. */
   | "short"
   /** No deadline was given, so there is nothing to fit into. */
   | "open"
@@ -255,12 +262,23 @@ export type Verdict =
 export const FOUND_HOURS_PER_WEEK = 5;
 
 /**
+ * The most a plan asks anybody to commit beyond this app, in hours a week.
+ *
+ * Ten is a serious evening course plus its homework, or an hour a day and a
+ * long Saturday, which is what people who set a date and mean it actually do.
+ * The verdict assumes the learner will, because a plan that assumes the
+ * opposite is a reason rather than a plan. Above it the honest thing is to
+ * say the date or the pace has to move.
+ */
+export const COMMIT_HOURS_PER_WEEK = 10;
+
+/**
  * Hours a week of Estonian the learner's own situation puts within reach,
  * from the reasons they gave.
  *
  * The largest counts whole and each further one counts half, because the same
  * evening is not spent twice: somebody who lives here and has an Estonian
- * partner is talking to the same neighbours their partner introduced them to.
+ * partner is talking to the same neighbors their partner introduced them to.
  * Nothing chosen is nothing offered.
  */
 export function weeklyExposure(reasons: readonly Reason[]): HourRange {
@@ -455,28 +473,25 @@ export function project(input: PlanInput): Projection {
   };
 
   /*
-    The bands are drawn where a person's week actually breaks, and they are
-    drawn at the pessimistic end of every range, because "it fits" is a claim
-    and a claim is only worth making about the whole range. Nothing more to
-    find is "comfortable". Everything still inside the least the week holds is
-    "tight": a class and some reading, plus whatever the learner's life already
-    supplies on a quiet week. Inside the most it holds is "possible", which is
-    the honest verdict for somebody living in the language who has not said
-    how much of it they use. Past that, on top of a job, is not a plan, it is a
-    wish, and saying so now is the useful thing.
+    The bands are drawn at the near end of the distance, on purpose. The
+    published range says a B1 speaker is 200 to 330 hours from B2, and a
+    learner who reached B1 in the fewer hours is the learner who reaches B2 in
+    the fewer, so the near end is the honest figure for somebody who has
+    decided to do this. Nothing more to find is "comfortable". Inside what the
+    week already holds, a class and some reading plus whatever the learner's
+    life supplies, is "tight", which the screen prints as "it fits". Inside
+    what a committed person adds on top (`COMMIT_HOURS_PER_WEEK`) is
+    "possible", printed as "it fits if you commit", with the number. Past that
+    the date or the pace has to move, and saying so is the useful thing.
 
-    The threshold used to be ten hours a week measured against the *optimistic*
-    end of the distance, which called a plan needing ten to fourteen hours a
-    week of found study "It fits", directly over a sentence saying that at five
-    found hours the date was three years out. Drawing every band against
-    `found` makes the headline and that sentence the same claim: `other.high`
-    at or under `found.low` is exactly the condition for `weeksWithFound.high`
-    to land inside the deadline, and under `found.high` for its near end to.
+    Drawn against the projection's own `found`, so the headline and the note
+    under it are one claim: `other.low` at or under `found.high` is exactly the
+    condition for `weeksWithFound.low` to land inside the deadline.
   */
   const verdict: Verdict = other.high === 0
     ? "comfortable"
-    : other.high <= found.low ? "tight"
-      : other.high <= found.high ? "possible" : "short";
+    : other.low <= found.high ? "tight"
+      : other.low <= COMMIT_HOURS_PER_WEEK ? "possible" : "short";
 
   return { ...common, weeksOnAppAlone, appHoursAvailable, otherHoursPerWeek: other, verdict };
 }
@@ -522,10 +537,17 @@ export function distanceLine(plan: Projection): string {
     case "open": return `${opening} No date is set, so that is the whole answer.`;
     case "passed": return `${opening} The date you gave has gone.`;
     case "comfortable": return `${opening} Your date is ${plan.weeksAvailable} weeks off, and this app alone covers it.`;
-    case "tight": return `${opening} Your date is ${plan.weeksAvailable} weeks off. It fits, with a class and some reading beside the app.`;
-    case "possible": return `${opening} Your date is ${plan.weeksAvailable} weeks off. It could fit, if the Estonian around you gets used.`;
+    case "tight": return `${opening} Your date is ${plan.weeksAvailable} weeks off. It fits, with the Estonian a normal week already holds beside the app.`;
+    case "possible": return `${opening} Your date is ${plan.weeksAvailable} weeks off. It fits if you commit to it: about ${hoursAWeek(plan)} a week of Estonian beyond this app.`;
     default: return `${opening} Your date is ${plan.weeksAvailable} weeks off, so something has to move: the pace, the date, or the hours outside this app.`;
   }
+}
+
+/** The hours a week beyond the app a plan asks for, at the near end, as words. */
+function hoursAWeek(plan: Projection): string {
+  const need = plan.otherHoursPerWeek?.low ?? 0;
+  const rounded = need >= 1 ? Math.round(need * 2) / 2 : Math.round(need * 10) / 10;
+  return rounded === 1 ? "an hour" : `${rounded} hours`;
 }
 
 /**
@@ -652,8 +674,8 @@ export const FACTS: readonly Fact[] = [
     id: "exam",
     icon: "Stamp",
     claim:
-      "The state language exams run at A2, B1, B2 and C1. Naturalisation asks for B1. If you are working " +
-      "towards an official level, check the current requirement with the authority that sets it, because " +
+      "The state language exams run at A2, B1, B2 and C1. Naturalization asks for B1. If you are working " +
+      "toward an official level, check the current requirement with the authority that sets it, because " +
       "this app is not the source of truth for that.",
     source: "Estonian state language proficiency exams (tasemeeksam)",
   },

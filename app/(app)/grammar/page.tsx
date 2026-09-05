@@ -53,7 +53,7 @@ export default async function GrammarIndexPage() {
     <Page
       eyebrow="Reference"
       title="Grammar"
-      lead="Fourteen endings. Three you memorise, and eleven you can work out."
+      lead="Fourteen endings. Three you memorize, and eleven you can work out."
     >
       <Stack>
         <Card tone="accent">
@@ -64,7 +64,7 @@ export default async function GrammarIndexPage() {
                 One word, eleven endings
               </p>
               <p className="mt-2 max-w-[60ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                Three forms of a word are memorised. Every other case is one of those three with an
+                Three forms of a word are memorized. Every other case is one of those three with an
                 ending stuck on, and it is the same ending for every word in the language.
               </p>
               {demo && (
@@ -179,7 +179,7 @@ export default async function GrammarIndexPage() {
                     >
                       <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         {ref.spec.principal ? (
-                          <Chip tone="hard">memorised</Chip>
+                          <Chip tone="hard">memorized</Chip>
                         ) : (
                           <span lang="et" className="text-xl font-bold" style={{ color: "var(--accent-deep)" }}>
                             -{ref.spec.suffix}
@@ -321,7 +321,7 @@ export default async function GrammarIndexPage() {
 }
 
 interface StripRow {
-  /** Everything before the ending, so the ending can be picked out in colour. */
+  /** Everything before the ending, so the ending can be picked out in color. */
   readonly stem: string;
   readonly suffix: string;
   /** What the ending means, from `CASE_NOTES`. */

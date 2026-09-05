@@ -1,6 +1,6 @@
 # Audit of Specification v4.0
 
-**Audited artefact:** `estonian_learning_dashboard_spec_v4.pdf` (Gemini-authored, 5 sections).
+**Audited artifact:** `estonian_learning_dashboard_spec_v4.pdf` (Gemini-authored, 5 sections).
 **Repository state at audit time:** empty. No commits, no source files, no configuration. The
 specification document is the entire project, so this audit is a document audit, not a code audit.
 
@@ -106,7 +106,7 @@ extra endings. It is not.
 ### B1. "3 core base noun cases" is the right instinct, wrongly framed
 
 Nominative / genitive / partitive are not "3 of the 14 cases you display". They are the
-**principal parts** (*põhivormid*): the unpredictable forms you must memorise because the other
+**principal parts** (*põhivormid*): the unpredictable forms you must memorize because the other
 eleven are *derived* from them. That distinction is the entire reason the feature exists, and the
 spec does not state it.
 
@@ -125,7 +125,7 @@ A tool that shows three forms will confidently teach an incomplete set of them.
 ### B3. Consonant gradation (*astmevaheldus*) is absent, and it is the actual difficulty
 
 `sepp : sepa`, `tuba : toa`, `lugema : loen`. The strong/weak grade alternation, qualitative
-(*laadivaheldus*) and quantitative (*vältevaheldus*), is *why* principal parts must be memorised. A dictionary feature that displays forms without ever naming the pattern
+(*laadivaheldus*) and quantitative (*vältevaheldus*), is *why* principal parts must be memorized. A dictionary feature that displays forms without ever naming the pattern
 teaches the user nothing transferable. Gradation type is the single highest-value thing to surface,
 tag, and drill.
 
@@ -147,7 +147,7 @@ parts: `lugema` (ma-inf), `lugeda` (da-inf), `loen` (present 1sg), `lugesin` (pa
 
 **Fix.** A first-class Estonian domain model (`02-estonian-domain.md`) that all other features
 consume. This is the app's actual moat. Any competent developer can build a tab bar; the value is in
-modelling the language correctly.
+modeling the language correctly.
 
 ---
 
@@ -160,7 +160,7 @@ modelling the language correctly.
 | C3 | No data model | Six features sharing an undefined schema; the flashcard bridge has nothing to write into | Full Prisma schema, `04-data-model.md` |
 | C4 | "Supabase **or** SQLite" left undecided | Two incompatible deployment stories; blocks every downstream decision | Decide: SQLite + Prisma locally, Postgres-portable schema, documented migration path (ADR-002) |
 | C5 | No cost control on the AI tutor | An unbounded chat loop against a metered API | Token budget, per-day spend cap, cached system prompt, usage meter in UI (`06-anu-tutor.md`) |
-| C6 | No error, empty, loading or offline states | Every integration can fail; none has a defined behaviour | Per-integration degradation table (`05-integrations.md`) |
+| C6 | No error, empty, loading or offline states | Every integration can fail; none has a defined behavior | Per-integration degradation table (`05-integrations.md`) |
 | C7 | No testing strategy, no CI | "It works" is unfalsifiable | `10-testing-quality.md` |
 | C8 | No accessibility, no keyboard model | An SRS app used daily is unusable without keyboard review | `08-ux-ia-a11y.md` |
 | C9 | No Estonian input affordance | Typing `õäöü` on a US keyboard is a daily friction point | Diacritic input helper, spec'd in `08` |
@@ -229,13 +229,13 @@ Worth keeping explicitly, so the rewrite does not lose it:
 | Calendar with iCal feeds | **Keep**, move earlier, read-only subscribe | Phase 4 |
 | Embedded Sõnastik iframe | **Cannot work (A1)**, replaced | Native UI on Ekilex API, Phase 2 |
 | 3 noun cases + 2 verb infinitives | **Deepen** to 5 noun principal parts + 5 verb principal parts + gradation | Phase 2 |
-| Sõnaveeb favourites JSON import | **Unfounded (A3)**, generalised | Generic paste importer, Phase 3 |
+| Sõnaveeb favorites JSON import | **Unfounded (A3)**, generalized | Generic paste importer, Phase 3 |
 | TTS for vowels via Web Speech API | **Replace (A4)** | TartuNLP + cache, Phase 2 |
 | AI tutor "Anu" + prompt chips | **Keep**, harden (key, cost, caching, evals) | Phase 2 |
 | Voice input to Anu | **Unproven (A5)**, spike first | Phase 4 spike |
 | `+ Add to Deck` from Anu output | **Keep**, promoted to core principle | Phase 3 |
 | Speakly iframe | **Cannot verify (A3)**, link out instead | Phase 4 optional |
-| Speakly import parser | **Generalise** to any pasted text | Phase 3 |
+| Speakly import parser | **Generalize** to any pasted text | Phase 3 |
 | SM-2 / Leitner SRS | **Upgrade** to FSRS, add card types | Phase 3 |
 | Offline caching | **Keep**, specify properly | Phase 5 |
 | Browser extension | **Defer**, separate product | Post-v1, out of scope |

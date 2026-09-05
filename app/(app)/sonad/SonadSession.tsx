@@ -18,7 +18,7 @@ import { loadBoard, saveBoard } from "./resume";
  * SÕNAD'S BOARD.
  *
  * Circles rather than squares, the app's own three hues rather than green,
- * yellow and grey, and its own movements. `lib/games/sonad.ts` says what is
+ * yellow and gray, and its own movements. `lib/games/sonad.ts` says what is
  * owned by whom and why none of that is an accident.
  *
  * THE ANSWER IS IN THE BROWSER AND THE SCORE IS NOT. Marking a guess without a
@@ -38,9 +38,9 @@ import { loadBoard, saveBoard } from "./resume";
  */
 
 /**
- * WHAT EACH OF THE THREE LOOKS LIKE, AND WHY COLOUR IS NOT ALL OF IT.
+ * WHAT EACH OF THE THREE LOOKS LIKE, AND WHY COLOR IS NOT ALL OF IT.
  *
- * The design system's rule is that a colour may never be the only thing
+ * The design system's rule is that a color may never be the only thing
  * carrying a distinction, and this board is the exact case it is written for.
  * The first version was mint, butter's tint and `--raised`, which in the light
  * theme is a strong green beside two pale washes: the two that matter most to
@@ -55,7 +55,7 @@ import { loadBoard, saveBoard } from "./resume";
  *   elsewhere  a tint with a ring round it. In play, and not placed.
  *   absent     a flat wash, no ring, a muted letter. Spent.
  *
- * The ring is the part that is not colour, and it is what tells `elsewhere`
+ * The ring is the part that is not color, and it is what tells `elsewhere`
  * from `absent` for somebody who cannot see the difference between a pale
  * cream and a pale lavender. Its first draft dropped the fill as well, on the
  * argument that an outline says "in play" better than a wash does, and that
@@ -77,7 +77,7 @@ const HUE: Record<Mark, { bg: string; ink: string; ring: string }> = {
   absent: { bg: "var(--raised)", ink: "var(--ink-3)", ring: "transparent" },
 };
 
-/** How thick each ring is, which is the half of the signal that is not colour. */
+/** How thick each ring is, which is the half of the signal that is not color. */
 const RING: Record<Mark, string> = { here: "0", elsewhere: "3px", absent: "0" };
 
 /**
@@ -486,7 +486,7 @@ function Finish({ puzzle, outcome, at, kept, onKeep }: {
       )}
       {kept && (
         <p className="mt-4 text-sm" style={{ color: "var(--ink-3)" }}>
-          It is in your deck, so this round counted towards it.
+          It is in your deck, so this round counted toward it.
         </p>
       )}
       <p className="mt-4 text-sm" style={{ color: "var(--ink-3)" }}>

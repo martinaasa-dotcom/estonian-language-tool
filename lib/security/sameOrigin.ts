@@ -2,7 +2,7 @@
  * Is this state-changing request coming from our own pages?
  *
  * The Supabase session cookie is `SameSite=Lax`, so a browser will not attach
- * it to a cross-site POST, and that is genuinely most of the defence against a
+ * it to a cross-site POST, and that is genuinely most of the defense against a
  * forged request. It is also all of it, and it is a default owned by a
  * dependency rather than a rule this app states: a cookie option changed
  * upstream, a route that starts reading a bearer token, or an

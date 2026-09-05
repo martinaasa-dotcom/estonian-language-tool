@@ -15,7 +15,7 @@ import {
 */
 export type { UsageKind };
 
-/** A request that was authorised. Counted against the burst and daily limits. */
+/** A request that was authorized. Counted against the burst and daily limits. */
 const CALL = "CALL";
 /** The correction that follows one, once the provider has said what it cost. */
 const SETTLEMENT = "SETTLEMENT";
@@ -32,7 +32,7 @@ const SETTLEMENT = "SETTLEMENT";
  * the three limits and not the other two.
  *
  * A third kind rather than a delete, because `UsageEvent` is append-only for
- * the reason `Review` is: the authorisation happened and stays in the log.
+ * the reason `Review` is: the authorization happened and stays in the log.
  * What the row says is that it came to nothing.
  */
 const RELEASE = "RELEASE";
@@ -109,7 +109,7 @@ const ALLOWANCE: Record<UsageKind, { burst: number; daily: number }> = {
 };
 
 /**
- * An authorised call, before it has happened.
+ * An authorized call, before it has happened.
  *
  * Handed back by `authoriseCall` and handed to `recordUsage`, which is what
  * lets the second write a correction rather than a whole new charge.
@@ -216,7 +216,7 @@ export async function snapshotUsage(
  * all went ahead, and the limit that was supposed to be the hard backstop on
  * the whole deployment's bill was the one with the widest window of the three.
  *
- * So the call is written down at the moment it is authorised, at an estimate,
+ * So the call is written down at the moment it is authorized, at an estimate,
  * inside the same transaction that read the counters — and that transaction
  * takes an advisory lock first, because two transactions reading before either
  * writes is the same race with a smaller window rather than none. The lock is
@@ -229,8 +229,8 @@ export async function snapshotUsage(
  * it safe behind a connection pooler: it is released when the transaction ends,
  * whichever backend served it, so a pooler handing the next statement to a
  * different session cannot strand it. The blocking form, because the
- * non-blocking one serialises nothing — that was tried first and twelve
- * concurrent authorisations all sailed through it, which is the bug this is
+ * non-blocking one serializes nothing — that was tried first and twelve
+ * concurrent authorizations all sailed through it, which is the bug this is
  * here to fix wearing a lock as a hat.
  *
  * `lock_timeout` is set so waiting has a floor under it. If the lock cannot be
@@ -261,7 +261,7 @@ export async function authoriseCall(
       await tx.$executeRaw`SET LOCAL lock_timeout = '3s'`;
       // `$executeRaw`, not `$queryRaw`: this function returns void, and asking
       // Prisma to read a row out of it fails at the driver with a message
-      // about deserialising a column, which reads as a schema problem and is
+      // about deserializing a column, which reads as a schema problem and is
       // not one.
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(${LEDGER_LOCK})`;
 
@@ -327,7 +327,7 @@ export async function recordUsage(input: {
   model: string;
   inputTokens: number;
   outputTokens: number;
-  /** The authorisation this call is settling, from `authoriseCall`. */
+  /** The authorization this call is settling, from `authoriseCall`. */
   reservation?: Reservation;
   /**
    * Overrides the price table. Pass 0 for a service that genuinely costs
@@ -371,7 +371,7 @@ export async function recordUsage(input: {
 }
 
 /**
- * Gives back an authorisation whose call never happened.
+ * Gives back an authorization whose call never happened.
  *
  * A reservation is a charge, so a request that is refused by the provider, or
  * that throws before a single token is spent, has to hand it back. Otherwise
@@ -379,7 +379,7 @@ export async function recordUsage(input: {
  * over calls none of them ever received.
  *
  * It is a settlement at zero rather than a delete, for the same reason a
- * settlement is not an update: the fact that a call was authorised is true and
+ * settlement is not an update: the fact that a call was authorized is true and
  * stays in the log. What changes is what it cost, which is nothing.
  */
 export async function releaseReservation(

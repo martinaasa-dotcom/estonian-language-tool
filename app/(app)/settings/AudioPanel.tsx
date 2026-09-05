@@ -110,7 +110,7 @@ const SOUNDS: { value: FeedbackSounds; label: string; detail: string; icon: type
   {
     value: "off",
     label: "Silent",
-    detail: "The colour and the words carry the verdict on their own.",
+    detail: "The color and the words carry the verdict on their own.",
     icon: VolumeX,
   },
 ];

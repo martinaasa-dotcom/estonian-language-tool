@@ -89,7 +89,7 @@ describe("spokenLine", () => {
   });
 
   /*
-    The floor of two words dropped every greeting in the catalogue and took
+    The floor of two words dropped every greeting in the catalog and took
     four beats to zero. Greeting and leaving are complete turns at one word.
   */
   it("accepts a one-word greeting, and only for greeting and leaving", () => {

@@ -36,7 +36,7 @@
  *
  * AND THE INSTITUTE SAYS "SYNONYM" IN TWO WAYS, NOT ONE. Comparing the
  * definitions as strings reads only the first of them. Where Ekilex has
- * nothing to say beyond naming the neighbours, its definition *is* a list of
+ * nothing to say beyond naming the neighbors, its definition *is* a list of
  * synonyms: `teravmeelne` is defined as "vaimukas, nutikas, leidlik" and
  * `vaimukas` as "teravmeelne, ootamatu ja leidlik". Two different strings, and
  * each one names the other word. Read as a disagreement, that pair sat on the
@@ -196,7 +196,7 @@ export function alsoAcceptedByLemma(groups: readonly PromptGroup[]): Map<string,
  * about what the app needs rather than a shrug. An Estonian numeral declines,
  * so `kakskümmend` has to be a nominal here or it gets no case table and the
  * numbers unit teaches nothing about `kahekümne`. The ordinal `teine` agrees
- * like an adjective, which is what it is labelled. Ekilex calls all five of
+ * like an adjective, which is what it is labeled. Ekilex calls all five of
  * them `num` and is right; this course has no such label and does not need one.
  */
 export const COARSENS: Record<string, readonly string[]> = {

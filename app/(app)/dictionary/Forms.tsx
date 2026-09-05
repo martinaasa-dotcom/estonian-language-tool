@@ -322,7 +322,7 @@ function OtherForms({ forms, used }: { forms: WordForm[]; used: Set<string> }) {
  * What a seeded verb shows before Ekilex has been asked about it, which on a
  * deployment without a key is for ever. Five principal parts are the whole
  * entry there, so `lugema` stopped at `loen` and a learner met a verb with
- * one person. The rule in `lib/estonian/conjugate.ts` is the same licence the
+ * one person. The rule in `lib/estonian/conjugate.ts` is the same license the
  * case table above takes over the genitive, and it was checked against every
  * verb in the dictionary before it was allowed on a screen: 797 verbs, every
  * slot, no disagreement with Ekilex. `olema` is the one it declines, and this
@@ -330,7 +330,7 @@ function OtherForms({ forms, used }: { forms: WordForm[]; used: Set<string> }) {
  *
  * Drawn as the same table the retrieved forms use, persons down and tenses
  * across, so a word that gets enriched later does not change shape under the
- * reader. Labelled as derived, once, at the top, the way the case table is.
+ * reader. Labeled as derived, once, at the top, the way the case table is.
  */
 export function DerivedVerbForms({ lemma, forms }: {
   lemma: string;

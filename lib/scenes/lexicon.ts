@@ -48,7 +48,7 @@ export interface DictEntry {
   readonly usages: readonly string[];
 }
 
-/** Lowercased words of a string, by the app's one tokeniser. */
+/** Lowercased words of a string, by the app's one tokenizer. */
 export function words(text: string): string[] {
   return (text.match(ESTONIAN_WORD) ?? []).map((w) => w.toLowerCase());
 }

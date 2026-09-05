@@ -10,7 +10,7 @@ import type { EkilexDetails } from "./client";
  * breaks and one contract test fails, instead of the whole app.
  */
 
-/** Ekilex morph codes for the forms a learner must memorise. */
+/** Ekilex morph codes for the forms a learner must memorize. */
 const PRINCIPAL_PARTS: Record<string, string> = {
   // Nouns and adjectives
   SgN: "NOM_SG",
@@ -154,7 +154,7 @@ export function mapEkilexDetails(details: EkilexDetails): MappedLexeme | null {
     deliberately, because Estonian has genuine parallel forms (`raamatutes`
     beside `raamatuis`) and a key without it would drop one. That is right for
     the whole retrieved table and it is wrong for the six principal parts,
-    which are the forms a learner memorises: 2,016 of the 5,363 shipped entries
+    which are the forms a learner memorizes: 2,016 of the 5,363 shipped entries
     carried two `PART_PL` rows and 120 carried two `GEN_PL`, and which of the
     pair the app used was decided by whoever read them. `stemsFrom` takes the
     first row it finds, in whatever order the database returns; every caller

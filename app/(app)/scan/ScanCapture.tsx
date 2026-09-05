@@ -27,7 +27,7 @@ type Phase = "idle" | "reading" | "review" | "saving" | "saved";
  *
  * THE CONFIRMATION STEP IS THE FEATURE, not an obstacle in front of it. A
  * model read the photograph and the dictionary vouched for the words it
- * recognised, but the only person who can say what is actually printed on the
+ * recognized, but the only person who can say what is actually printed on the
  * paper is the one holding it. So every word arrives ticked but editable, each
  * row says plainly whether the dictionary knows it, and nothing becomes a
  * flashcard until somebody has said yes. That is the same standard the paste
@@ -319,7 +319,7 @@ export function ScanCapture() {
       <Card>
         <p className="text-base" style={{ color: "var(--ink-2)" }}>
           Photograph a vocabulary list, a page from your textbook, or last night&apos;s homework. We
-          match the words against the dictionary, so anything it recognises comes with its real
+          match the words against the dictionary, so anything it recognizes comes with its real
           forms, and an inflected form on a worksheet gets traced back to the word it belongs to.
         </p>
 
@@ -328,7 +328,7 @@ export function ScanCapture() {
             {preview && (
               /*
                 A data URL for a picture that exists only in this tab for the
-                next few seconds. `next/image` optimises files it can fetch and
+                next few seconds. `next/image` optimizes files it can fetch and
                 cache, and there is nothing here to fetch or cache.
               */
               // eslint-disable-next-line @next/next/no-img-element

@@ -3,7 +3,7 @@
  *
  * Their own module because the registry in `services.ts` and the arithmetic in
  * `model.ts` both need them, and each importing the other is how a cycle
- * starts. Nothing here has any behaviour.
+ * starts. Nothing here has any behavior.
  */
 
 /** How the tutor is paid for. There is no free option: see `services.ts`. */
@@ -151,7 +151,7 @@ export interface PriceRef {
  *
  * THE WHOLE POINT OF THIS TYPE IS THAT THERE IS ONE LIST. What the app depends
  * on, what a reader is told it depends on, and what appears on the bill used
- * to be three lists: a catalogue in one module, a set of hand-written line
+ * to be three lists: a catalog in one module, a set of hand-written line
  * functions in another, and whatever the page happened to render. Adding a
  * service meant remembering all three, and the one that would quietly go stale
  * is the bill.

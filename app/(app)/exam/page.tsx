@@ -72,7 +72,7 @@ export default async function ExamPage() {
   return (
     <Page
       eyebrow="Mock examination"
-      title="Practise the state exam, before you sit the real one"
+      title="Practice the state exam, before you sit the real one"
       /*
         278 characters, in four literals joined with `+`, which is how it got
         past the 95-character ceiling on a page lead: the sweep measured each
@@ -324,7 +324,7 @@ export default async function ExamPage() {
           </li>
           <li>
             <CircleAlert size={13} className="mr-1 inline" aria-hidden />
-            Nothing here scores your pronunciation. We tested a speech recogniser and it
+            Nothing here scores your pronunciation. We tested a speech recognizer and it
             wasn&apos;t accurate enough, so instead you record yourself, listen back, and judge how
             you did. You&apos;ll see this note again on your result.
           </li>

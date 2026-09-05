@@ -185,7 +185,7 @@ export function extractEstonianEntries(wikitext: string): EstonianSense[] {
     and it broke more than it fixed: `soldat` is tagged `obsolete` on "soldier"
     and would have been drilled as "jack", `vats` is `dialectal` on "belly" and
     became "rumen", `raisk` is `dated` on "carrion" and landed on a vulgar
-    usage note. Which sense a learner needs is a lexical judgement, and the
+    usage note. Which sense a learner needs is a lexical judgment, and the
     labels do not carry it. Entries like `kõrb` are for a person to correct,
     which the dictionary is editable for.
   */
@@ -293,7 +293,7 @@ function unwrapLinkTemplates(text: string): string {
       const shown = (params[2] ?? "").trim() || (params[1] ?? "").trim();
       return shown;
     }
-    // {{tcl|et|October}}: the Estonian word's English translation, categorised.
+    // {{tcl|et|October}}: the Estonian word's English translation, categorized.
     if (name === "tcl") return (params[1] ?? "").trim();
     // {{vern|common magpie}}: an English vernacular name.
     if (name === "vern") return (params[0] ?? "").trim();

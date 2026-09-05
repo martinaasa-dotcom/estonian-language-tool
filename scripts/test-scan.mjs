@@ -271,7 +271,7 @@ await page.waitForURL(/\/review\?scan=/, { timeout: 20_000 });
 // Unanchored at the end on purpose: these buttons carry their keyboard hint
 // inside them, so the accessible name of the one that says "Got it, next" is
 // "Got it, next Space" and a `$` matches none of them.
-const ratings = page.getByRole("button", { name: /^(got it|not yet)/i });
+const ratings = page.getByRole("button", { name: /^(got it|not yet|check it again)/i });
 const reveal = page.getByRole("button", { name: /show answer/i });
 const pick = page.getByText(/Pick the meaning/);
 const typed = page.locator("main input[type='text'], main input:not([type])").first();

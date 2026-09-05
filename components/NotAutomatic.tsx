@@ -138,7 +138,7 @@ function SlowRow({ pace }: { pace: SlotAnswerTime }) {
  * emoji rule draws for the one in "Estonian to English". It says nothing to a
  * screen reader, so the label spells the pair out in words. Written as the
  * character rather than as `&#8596;`, because an entity is a hex-shaped string
- * and the rule that no component carries a raw colour reads it as one.
+ * and the rule that no component carries a raw color reads it as one.
  */
 function MixedRow({ confusion }: { confusion: Confusion }) {
   const [a, b] = confusion.pair;

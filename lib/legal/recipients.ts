@@ -30,7 +30,7 @@ export interface Recipient {
 }
 
 /**
- * Where each provider is established. A judgement about the company, not about
+ * Where each provider is established. A judgment about the company, not about
  * a region setting on somebody's account, which is why the two that offer a
  * choice are recorded as unknown rather than guessed.
  */

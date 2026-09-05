@@ -19,7 +19,7 @@ import type { CaseKey } from "./types";
  * ONE RULE, AND IT IS DELIBERATELY THE STRICT ONE. A case is named only when
  * it is the only case that spells the word that way. That is the same
  * discipline `lib/estonian/gapForms.ts` states about the principal parts, and
- * generalising it is what makes it correct rather than nearly correct: `tuba`
+ * generalizing it is what makes it correct rather than nearly correct: `tuba`
  * is its own nominative and its own partitive, so neither may be named, while
  * `raamatu` is only ever the omastav and naming it teaches something. A rule
  * that skipped the principal parts wholesale would lose `raamatu`, and a rule

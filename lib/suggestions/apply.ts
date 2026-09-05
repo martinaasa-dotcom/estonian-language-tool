@@ -17,7 +17,7 @@ import type { Patch } from "./model";
  *   `upsertLexemeWithForms` enforces and what the form branch below repeats
  *   for the one-field case.
  * - **An example is only ever removed, never rewritten.** Dropping a
- *   misleading sentence is a judgement about which attested sentence to show;
+ *   misleading sentence is a judgment about which attested sentence to show;
  *   editing one would be this app writing Estonian, which it may not do.
  * - **The edit is attributed to the reviewer**, not to the person who
  *   suggested it. `editedBy` answers "who is answerable for what the

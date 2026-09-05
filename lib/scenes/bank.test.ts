@@ -19,7 +19,7 @@ import { answerForms, keylessContext, lacksFiniteVerb } from "../../scripts/lib/
  * row that no longer passes, which is the row a learner would otherwise meet.
  */
 describe("the scripted bank", () => {
-  it("names only scenes and beats the catalogue has", () => {
+  it("names only scenes and beats the catalog has", () => {
     for (const row of BANK) {
       const scene = sceneById(row.scene);
       expect(scene, `${row.scene} is not a scene`).toBeDefined();

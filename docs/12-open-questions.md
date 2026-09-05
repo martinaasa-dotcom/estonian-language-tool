@@ -18,8 +18,8 @@ complexity. *If phone review matters more than offline reliability, say so now. 
 
 ### Q2: Which class, which level, which exam?
 
-The app can organise around a concrete goal (A2/B1/B2 *tasemeeksam*) or stay open-ended. Concrete is
-better: it gives Progress something to measure against and Today something to prioritise for.
+The app can organize around a concrete goal (A2/B1/B2 *tasemeeksam*) or stay open-ended. Concrete is
+better: it gives Progress something to measure against and Today something to prioritize for.
 
 **Needed:** current CEFR level, target level, and whether an exam date exists.
 **Default if unanswered:** A1→A2, no exam date.

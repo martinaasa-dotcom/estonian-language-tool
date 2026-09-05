@@ -62,7 +62,7 @@ interface ItemBase {
   lemma: string;
 }
 
-/** Pick one of four. The only kind that can be marked without any judgement. */
+/** Pick one of four. The only kind that can be marked without any judgment. */
 export interface ChoiceItem extends ItemBase {
   kind: "choice";
   /** The Estonian being asked about. Empty when the question needs no prompt. */
@@ -147,7 +147,7 @@ export type ItemRef = Pick<Item, "id" | "skill" | "band">;
  * sentence about nothing.
  *
  * A speaking response carries `selfRating` and no credit at all. That is not an
- * oversight, it is ADR-018: there is no verified Estonian speech recogniser
+ * oversight, it is ADR-018: there is no verified Estonian speech recognizer
  * available here, so nothing in this app may score a recording, including this.
  */
 export interface Response {

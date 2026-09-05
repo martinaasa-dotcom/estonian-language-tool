@@ -23,7 +23,7 @@ describe("the levels the state examines", () => {
     expect(specFor("A1").official).toBe(false);
   });
 
-  it("recognises a level string and rejects anything else", () => {
+  it("recognizes a level string and rejects anything else", () => {
     expect(isExamLevel("B2")).toBe(true);
     expect(isExamLevel("D1")).toBe(false);
     expect(isExamLevel("b2")).toBe(false);
@@ -83,7 +83,7 @@ describe("the writing part, which is two pieces of writing", () => {
     /*
       The real writing part is two pieces of writing and its published minutes
       are for those two, so four tasks under that clock is a distortion however
-      well the tasks themselves are labelled. It is a small one, since the texts
+      well the tasks themselves are labeled. It is a small one, since the texts
       set here are shorter than the real ones and the drills fill the slack
       rather than eating the letter, and a distortion this app does not declare
       is the only kind it is not allowed.

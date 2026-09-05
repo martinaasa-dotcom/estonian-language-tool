@@ -11,7 +11,7 @@ a single implicit card type. Both are upgraded here.
 |---|---|---|
 | Memory model | One "ease factor" | Separate **stability** and **difficulty** |
 | Retention target | Emergent, unsettable | **Explicitly configurable** |
-| Tuning | Hand-tuned constants | Parameters optimisable from the user's own review log |
+| Tuning | Hand-tuned constants | Parameters optimizable from the user's own review log |
 | Typical result | Baseline | Same retention for meaningfully fewer reviews |
 
 For a learner reviewing daily for a year, "fewer reviews for the same retention" is the entire
@@ -26,9 +26,9 @@ const next = scheduling[Rating.Good].card;
 
 Fuzz is on: without it, cards added in one session return in one clump forever.
 
-**Why the `Review` log is append-only** (`04-data-model.md`): FSRS parameters can be optimised
+**Why the `Review` log is append-only** (`04-data-model.md`): FSRS parameters can be optimized
 against a user's own history once there are ~1 000 reviews. Discarding review history discards the
-ability to ever personalise the schedule. Phase 5 adds an "optimise my parameters" action.
+ability to ever personalize the schedule. Phase 5 adds an "optimize my parameters" action.
 
 ## 2. Card types: the Estonian-specific part
 
@@ -45,7 +45,7 @@ One card type cannot teach Estonian. A learner who can translate `tuba → room`
 | `LISTENING` | audio only, no text | `tuba` / room | Aural recognition; quantity contrasts |
 | `OBJECT_CASE` | "I read the book (finished)" | `Lugesin raamatu läbi`, total object | Aspect via case |
 
-`RECOGNITION` and `PRODUCTION` are separate cards with independent scheduling, because recognising a
+`RECOGNITION` and `PRODUCTION` are separate cards with independent scheduling, because recognizing a
 word and producing it are genuinely different memories with different decay.
 
 **Auto-generation.** Adding a lexeme from the dictionary offers a checklist of card types, defaulting

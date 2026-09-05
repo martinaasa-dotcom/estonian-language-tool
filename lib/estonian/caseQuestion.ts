@@ -112,7 +112,7 @@ const LOCAL: readonly CaseKey[] = [...INSIDE_CASES, ...OUTSIDE_CASES];
 /**
  * Is this a case worth asking this word about?
  *
- * Only the six local cases are ever refused, and only in favour of their
+ * Only the six local cases are ever refused, and only in favor of their
  * opposite number: the other eight are asked of every word exactly as before.
  * `hobusena` and `hobuseta` are ordinary Estonian and so is `õpetajaks`, so
  * nothing here narrows a word to the trio it takes.

@@ -66,7 +66,7 @@ export type NavDir = "forward" | "back" | null;
  * They are not the same numbers because they are not the same object, and the
  * one that matters most is the rail's zero.
  *
- * A TRAVELLING MARKER IS COMPANY FOR A FINGER AND AN ARGUMENT WITH A POINTER.
+ * A TRAVELING MARKER IS COMPANY FOR A FINGER AND AN ARGUMENT WITH A POINTER.
  * The phone bar is a floating capsule of five cells that a thumb hits, and a
  * thumb has nothing else to do while it waits, so a pill crossing the bar is
  * the app keeping the reader company through a wait that is real. A pointer
@@ -260,7 +260,7 @@ export function travelKeyframes(
 /**
  * The capsule's own breath for one travel.
  *
- * Traced off the reference at 30fps and normalised against its own peak, with
+ * Traced off the reference at 30fps and normalized against its own peak, with
  * t measured from the start of the travel. It takes forty percent of its life
  * to reach the peak and comes back through a slight undershoot before it
  * settles, which is the response of something springy. The curve it replaced

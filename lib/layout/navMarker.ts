@@ -243,7 +243,7 @@ export function useNavMarker(surface: NavSurface, axis: NavAxis): NavMarkerState
 
   /*
     The capsule's breath, run on the well itself for the length of one travel,
-    and cancelled rather than stacked on. Two animations of one property both
+    and canceled rather than stacked on. Two animations of one property both
     apply with the newer winning, so when the newer finishes and drops off, an
     older one still running takes the bar back over and it jumps. Tapping
     quickly along the bar is exactly how somebody would find that.

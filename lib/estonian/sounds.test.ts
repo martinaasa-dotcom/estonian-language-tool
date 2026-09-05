@@ -3,7 +3,7 @@ import { soundAlike, soundKey } from "./sounds";
 
 describe("soundKey", () => {
   /*
-    The three things `scripts/measure-asr.mjs` measured a recogniser getting
+    The three things `scripts/measure-asr.mjs` measured a recognizer getting
     wrong on clean native audio, which are the three a learner gets wrong.
   */
   it("hears one length where Estonian writes two", () => {

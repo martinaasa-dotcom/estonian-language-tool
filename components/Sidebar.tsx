@@ -46,7 +46,7 @@ export function Sidebar() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [bar, setBar] = useState<HTMLElement | null>(null);
   /*
-    One pill per surface, travelling from the place you left to the place you
+    One pill per surface, traveling from the place you left to the place you
     asked for. The rail runs down its column and the bar runs across, which is
     the only difference between the two: `lib/layout/navMarker.ts` measures the
     cells and `app/nav.css` says how a pane behaves once it has been placed.
@@ -412,11 +412,11 @@ export function Sidebar() {
  * current row used to draw for itself is one pane that the marker places, and
  * a row that also painted itself would be a second answer to the same
  * question arriving a beat later. What is left here is what a pane cannot
- * say: which row is bold, and which glyph wears its own colour. Those two are
+ * say: which row is bold, and which glyph wears its own color. Those two are
  * also the whole of what tells the row you are on from the row you are
  * pointing at, since both now carry the same pane; see `app/nav.css`.
  *
- * The ink reads `--nav-ink` rather than naming its resting colour, because an
+ * The ink reads `--nav-ink` rather than naming its resting color, because an
  * inline style beats a class hover, silently, which is the mechanism that
  * left half the controls in this app dead under a pointer. A custom property
  * is how a caller passes a tone *through* one, and `app/nav.css` spends it
@@ -553,7 +553,7 @@ function SignOutButton({ labelled }: { labelled?: boolean }) {
   preference when nothing was stored, and the palette followed it too, so half
   the people who opened the app met a theme nobody had picked. Now nothing
   stored means light, the same answer globals.css gives, and the only way to
-  dark is this button. The browser chrome's colour is rewritten with it, since
+  dark is this button. The browser chrome's color is rewritten with it, since
   `themeColor` in app/layout.tsx is a single light value for the same reason,
   and the value written here is read off the stylesheet once the attribute has
   flipped, so the tag says whatever `--ground` says and no hex is typed twice.

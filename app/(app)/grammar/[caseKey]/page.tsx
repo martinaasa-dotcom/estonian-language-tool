@@ -20,9 +20,9 @@ export function generateStaticParams() {
   return CASES.map((c) => ({ caseKey: c.key.toLowerCase() }));
 }
 
-/** The ending, or the word "memorised" where there is no ending to give. */
+/** The ending, or the word "memorized" where there is no ending to give. */
 function endingOf(ref: { spec: { principal: boolean; suffix: string } }): string {
-  return ref.spec.principal ? "memorised" : `-${ref.spec.suffix}`;
+  return ref.spec.principal ? "memorized" : `-${ref.spec.suffix}`;
 }
 
 /** The plain meaning as a heading. Everything else about it stays as written. */
@@ -46,11 +46,11 @@ const ORIGIN_LABEL: Record<CaseExample["origin"], { label: string; title: string
     title: "The form as the Institute of the Estonian Language records it",
   },
   STORED: {
-    // "memorised" rather than "principal part", because on the sisseütlev page
+    // "memorized" rather than "principal part", because on the sisseütlev page
     // every stored form is the short illative and `tuppa` is not one of the
     // three. The title under it was already saying the true thing.
-    label: "memorised",
-    title: "A memorised form held in the dictionary, not worked out from a stem",
+    label: "memorized",
+    title: "A memorized form held in the dictionary, not worked out from a stem",
   },
   DERIVED: {
     label: "from the genitive",
@@ -121,7 +121,7 @@ export default async function CasePage({ params }: { params: Promise<{ caseKey: 
               <dd className="mt-1 text-lg font-bold" style={{ color: "var(--ink)" }}>
                 {ref.spec.principal ? (
                   <span className="text-base font-semibold" style={{ color: "var(--ink-2)" }}>
-                    none, this one is memorised
+                    none, this one is memorized
                   </span>
                 ) : (
                   <>

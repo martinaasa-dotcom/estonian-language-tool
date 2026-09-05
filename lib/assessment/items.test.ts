@@ -299,8 +299,8 @@ describe("buildPaper", () => {
 /**
  * The question from the report, with the pool it was drawn out of.
  *
- * Real rows again: the six colours the course teaches in one unit, the noun
- * that shares `hall` with the grey one, and the three far entries that turned
+ * Real rows again: the six colors the course teaches in one unit, the noun
+ * that shares `hall` with the gray one, and the three far entries that turned
  * up beside "black" in the version that shipped. A learner who has never seen
  * an Estonian word can cross out a plastic bag and a C1 abstract noun from an
  * A1 question, so the answer was the only option left worth reading.
@@ -331,7 +331,7 @@ const NEIGHBOURS: WordRow[] = [
 const FAR_GLOSSES = ["plastic bag", "narcomania, drug addiction, substance abuse", "settlement, city, town, village"];
 
 describe("the wrong answers are worth reading", () => {
-  it("asks what a colour means among colours, at every seed", () => {
+  it("asks what a color means among colors, at every seed", () => {
     for (let seed = 1; seed < 30; seed++) {
       const heard = listeningItems(NEIGHBOURS, mulberry32(seed))
         .find((i): i is ChoiceItem => i.id === "l-word-must");
@@ -455,11 +455,11 @@ describe("the explanation after a gap", () => {
 });
 
 describe("a word's other recorded sense is never a wrong answer", () => {
-  it("does not offer grey against hall meaning frost", () => {
+  it("does not offer gray against hall meaning frost", () => {
     const hall: WordRow[] = [
       { id: "hall-n", lemma: "hall", translation: "frost", pos: "NOUN", cefr: "A2", government: null,
         forms: [{ formType: "NOM_SG", value: "hall" }], examples: [] },
-      { id: "hall-a", lemma: "hall", translation: "grey", pos: "ADJECTIVE", cefr: "A2", government: null,
+      { id: "hall-a", lemma: "hall", translation: "gray", pos: "ADJECTIVE", cefr: "A2", government: null,
         forms: [{ formType: "NOM_SG", value: "hall" }], examples: [] },
       { id: "must", lemma: "must", translation: "black", pos: "ADJECTIVE", cefr: "A1", government: null,
         forms: [{ formType: "NOM_SG", value: "must" }], examples: [] },
@@ -473,7 +473,7 @@ describe("a word's other recorded sense is never a wrong answer", () => {
     for (let seed = 1; seed < 30; seed++) {
       for (const item of readingItems(hall, mulberry32(seed))) {
         if (!item.id.startsWith("r-mean-hall-")) continue;
-        const other = item.options[item.answer] === "frost" ? "grey" : "frost";
+        const other = item.options[item.answer] === "frost" ? "gray" : "frost";
         expect(item.options, `${item.id} at seed ${seed}`).not.toContain(other);
       }
     }

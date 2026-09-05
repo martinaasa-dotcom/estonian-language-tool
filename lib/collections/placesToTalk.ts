@@ -1,7 +1,7 @@
 /**
  * Where to talk to real people, which no learning app usually says.
  *
- * Every entry is a public programme, credited by name, with a link that was
+ * Every entry is a public program, credited by name, with a link that was
  * opened before it was written down: a dead link on the one screen that
  * points out of the app would be the app saying "go" and not meaning it.
  * The descriptions are English and make no claim that needs checking beyond
@@ -23,7 +23,7 @@ export const PLACES_TO_TALK: readonly PlaceToTalk[] = [
   },
   {
     name: "Settle in Estonia",
-    what: "The state's welcome programme for people who have moved here, with free Estonian language courses run by teachers in a room with other beginners.",
+    what: "The state's welcome program for people who have moved here, with free Estonian language courses run by teachers in a room with other beginners.",
     href: "https://www.settleinestonia.ee/",
   },
   {

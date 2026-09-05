@@ -23,7 +23,7 @@ import { Card, CardLink, Ring, SectionTitle } from "@/components/ui";
  * AND WHERE NOBODY NAMED A BAND, THE CARD SAYS WHOSE IT IS. Skipping the goal
  * screen used to mean no confidence figure anywhere on the home page, which is
  * the one number here that answers "how am I doing" in a unit somebody outside
- * this app would recognise. `examCountdown` falls back to the level the climb
+ * this app would recognize. `examCountdown` falls back to the level the climb
  * stopped at and `chosen` travels with it, so the heading and the line under
  * the ring both change: a band the app worked out is never printed under a
  * heading claiming the learner picked it.
@@ -34,10 +34,10 @@ import { Card, CardLink, Ring, SectionTitle } from "@/components/ui";
  * phone this app is measured on. So it is printed, in words, under the number,
  * from the same table the examination hub reads.
  *
- * The colour is a claim rather than decoration: mint means "you would pass"
+ * The color is a claim rather than decoration: mint means "you would pass"
  * and the accent means "not yet", which is the palette's own rule about a hue
  * carrying meaning, and the percentage says the same thing in digits so the
- * colour is never the only channel.
+ * color is never the only channel.
  */
 export function ExamCountdownCard({ countdown, zone, className }: {
   countdown: ExamCountdown;

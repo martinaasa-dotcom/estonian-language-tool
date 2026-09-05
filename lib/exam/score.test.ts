@@ -213,7 +213,7 @@ describe("what one answer is worth", () => {
       The real paper offers a story or a personal letter, so this one does. The
       choice may not move a mark: both are marked on length and on the words the
       task named, and a mock where picking the letter scored differently would be
-      inventing a judgement about somebody's Estonian.
+      inventing a judgment about somebody's Estonian.
     */
     const compose = paper.parts
       .flatMap((p) => p.tasks)

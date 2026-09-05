@@ -89,7 +89,7 @@ describe("answering a pointer", () => {
       .toEqual(NO_LEAN);
   });
 
-  it("slides along its own edge towards the pointer", () => {
+  it("slides along its own edge toward the pointer", () => {
     const lean = leanFor({ edge: "top", pointer: { x: 560, y: 300 }, centre, reach: 200, pull: 10 });
     expect(lean.x).toBeGreaterThan(0);
     const back = leanFor({ edge: "top", pointer: { x: 440, y: 300 }, centre, reach: 200, pull: 10 });

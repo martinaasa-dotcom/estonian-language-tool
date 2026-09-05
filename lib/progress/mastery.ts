@@ -163,13 +163,13 @@ export async function masteryFor(ownerId: string): Promise<MasteredWord[]> {
     two entries, two sets of cards and two sets of reviews, and a list headed
     "mastered" would print the word twice with two different verdicts. Merging
     on the lemma alone would be wrong the other way: `hall` is a noun meaning
-    frost and an adjective meaning grey, and they are two words that happen to
+    frost and an adjective meaning gray, and they are two words that happen to
     be spelled alike.
 
     `@@unique` on `Lexeme` is `(lemma, pos)`, so that is the line between "two
     rows for one word" and "two words". Two entries sharing it are duplicates
     and their answers are one word's history; the reviews are merged rather than
-    one entry picked, because a learner who practised both practised the word.
+    one entry picked, because a learner who practiced both practiced the word.
   */
   const merged = new Map<
     string, MasteredWord & { reviews: WordReview[]; askable: number }

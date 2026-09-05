@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState, type ComponentProps } from "r
  * seven milliseconds and no database query at all. It is the skeleton. So the
  * skeleton arrives early and the page a learner is actually waiting for still
  * starts being built when they click, which is the whole of why pressing a row
- * of the rail means watching a grey rectangle for a third of a second.
+ * of the rail means watching a gray rectangle for a third of a second.
  *
  * `prefetch` set to `true` fetches the page itself. Setting it on all sixteen
  * rows of the rail would render somebody's dashboard, charts and deck every

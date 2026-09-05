@@ -318,7 +318,7 @@ function markWritten(
 /**
  * The spoken part, marked by the learner.
  *
- * ADR-018: there is no verified Estonian speech recogniser available to this
+ * ADR-018: there is no verified Estonian speech recognizer available to this
  * app, so nothing here scores a recording and nothing pretends to. The learner
  * plays themselves back and ticks the criteria they met. A recording that was
  * never made scores nothing, because ticking boxes about a thing you did not do
@@ -504,7 +504,7 @@ export function allMarks(result: ExamResult): ItemMark[] {
  * The grades a submitted paper writes to the review log.
  *
  * ADR-016: every mode grades through `gradeCard`, so the scheduler sees what was
- * actually practised, and a mock exam is a mode. Only items built on a word the
+ * actually practiced, and a mock exam is a mode. Only items built on a word the
  * learner already has a card for produce anything; a paper two levels above them
  * is mostly words they have never added, and inventing cards for those would
  * turn a curiosity into a hundred card backlog nobody asked for.

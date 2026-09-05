@@ -39,7 +39,7 @@ import { caseAccuracy } from "@/lib/stats/history";
  * a row about a card that does not exist would be worse than no row.
  */
 
-/** A task with the card it practises, where the learner has one. */
+/** A task with the card it practices, where the learner has one. */
 export interface DescribePrompt {
   readonly task: DescribeTask;
   /** The card the named word already has in this deck, or null. */
@@ -91,7 +91,7 @@ export async function describeRound(
   ]);
 
   /*
-    The card a scene's word is practised through. A case-form card is the
+    The card a scene's word is practiced through. A case-form card is the
     closest match to what this round actually asks, and production is the
     fallback, which is the ranking `/review/write` already settled on.
   */
@@ -196,7 +196,7 @@ export async function describeRound(
 /**
  * A sentence to read after answering, and what it is evidence of.
  *
- * Three sources and three different claims, which is why this is a labelled
+ * Three sources and three different claims, which is why this is a labeled
  * union rather than a string: "a native speaker wrote this about this
  * picture", "a lexicographer wrote this with the very form you were asked
  * for", and "a lexicographer wrote this with this word in it" are worth
