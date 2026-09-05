@@ -49,21 +49,22 @@ export const CORRECT_FROM_RATING = 3;
 export const SECTIONS: readonly SectionSpec[] = [
   {
     id: "encounters",
-    title: "Real conversations reported from outside the app, by the unit the errand drew on",
-    dimensions: ["unit"],
+    title: "Real conversations reported from outside the app, by month",
+    dimensions: ["month"],
     groupBy: 0,
     note:
       "Today asks each morning whether the learner spoke any Estonian to anybody yesterday, " +
       "and the answer is one of three words: yes and they understood, they switched to " +
-      "English, not yesterday. This table counts those reports rather than answers to cards, " +
-      "and \"correct\" here means understood. It is self-reported and it is the only figure " +
-      "in this file about anything that happened away from a screen. IT COVERS ONLY THE " +
-      "REPORTS TIED TO AN ERRAND THIS APP SET, which is a shrinking share of them: a " +
-      "conversation the learner had on their own carries no unit to be grouped by and is not " +
-      "in this table at all, so read it as a count of errands done rather than of " +
-      "conversations held. The unit is the one the errand drew its words from, which is how " +
-      "the errand was chosen, not a measurement of what was said. Mature figures do not " +
-      "apply and are zero.",
+      "English, not yesterday. This table counts the first two, which are the conversations, " +
+      "by the month the report was made in; a day answered \"not yesterday\" is not a row. " +
+      "\"Correct\" means understood, so one minus the rate is the share of conversations in " +
+      "which the other person switched to English, which is the figure a pilot watches from " +
+      "the start of a term to the end. It is self-reported and it is the only figure in this " +
+      "file about anything that happened away from a screen. " +
+      "NOTHING HERE SAYS WHAT A CONVERSATION WAS ABOUT: a report names no unit and no errand, " +
+      "because a conversation the learner had on their own is not this app's to file under a " +
+      "lesson. Mature figures " +
+      "do not apply and are zero.",
   },
   {
     id: "case",

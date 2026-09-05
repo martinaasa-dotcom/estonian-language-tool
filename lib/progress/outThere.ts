@@ -18,18 +18,27 @@
  * that is decided and both figures here read it.
  */
 import { prisma } from "@/lib/db";
-import { isConversation, outcomeFrom, OUTCOMES, type Outcome } from "@/lib/collections/errands";
+import { isConversation, outcomeFrom, type Outcome } from "@/lib/collections/errands";
 import type { DayClock } from "@/lib/time/day";
 
 export const OUT_THERE_DAYS = 30;
+
+/** How the conversations went over a stretch of days. */
+export interface OutThereWindow {
+  /** Conversations that happened. The days answered "not yesterday" are not in it. */
+  readonly total: number;
+  readonly switched: number;
+}
 
 export interface OutThere {
   readonly days: number;
   /** Conversations that happened. The days answered "not yesterday" are not in it. */
   readonly total: number;
   readonly byOutcome: Readonly<Record<Outcome, number>>;
-  /** The run of days ending today with at least one conversation in them. */
+  /** The run of days ending yesterday with a conversation in each. */
   readonly streak: number;
+  /** The thirty days before the window, for the switch to be read against. */
+  readonly previous: OutThereWindow;
 }
 
 /** What Today's card needs: whether the day's question is answered, and the month behind it. */
@@ -41,62 +50,83 @@ export interface OutThereToday {
   readonly conversations: number;
 }
 
-export async function outThere(ownerId: string, clock: DayClock, now = new Date()): Promise<OutThere> {
-  const since = clock.startOfDay(now);
-  since.setDate(since.getDate() - OUT_THERE_DAYS);
-  const rows = await prisma.encounter.findMany({
-    where: { ownerId, createdAt: { gte: since } },
-    select: { outcome: true, createdAt: true },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-  });
-  const byOutcome = { UNDERSTOOD: 0, SWITCHED: 0, BAILED: 0 } as Record<Outcome, number>;
-  const days = new Set<string>();
-  let total = 0;
-  for (const r of rows) {
-    if (!(OUTCOMES as readonly string[]).includes(r.outcome)) continue;
-    const outcome = r.outcome as Outcome;
-    byOutcome[outcome] += 1;
-    if (!isConversation(outcome)) continue;
-    total += 1;
-    days.add(clock.dayKey(r.createdAt));
-  }
-  let streak = 0;
-  for (const day of clock.recentDayKeys(OUT_THERE_DAYS, now).reverse()) {
-    if (!days.has(day)) break;
-    streak += 1;
-  }
-  return { days: OUT_THERE_DAYS, total, byOutcome, streak };
+/** One report per reporting day, keyed on the day it is about. */
+interface Report {
+  readonly reportedOn: string;
+  readonly about: string;
+  readonly outcome: Outcome;
 }
 
 /**
- * Today's card, off one query.
+ * The reports over the last two windows, one per reporting day, last wins.
  *
- * Today already read this table to find out whether the day had been answered
- * and could have had the month for the same round trip, which is what it does
- * now: a `findMany` over the window answers both, and the card is the one
- * screen where the count is worth printing, because it is the thing the
- * question is collecting.
- *
- * The answer is the last one given today, since the day's question is asked
- * once and a second row for one day can only come from two tabs.
+ * Reports made on the last `days` reporting days, today included, are about
+ * the `days` days ending yesterday, which is the window; the `days` reporting
+ * days before those are the previous one. One `findMany` for both readers.
  */
-export async function outThereToday(ownerId: string, clock: DayClock, now = new Date()): Promise<OutThereToday> {
-  const since = clock.startOfDay(now);
-  since.setDate(since.getDate() - OUT_THERE_DAYS);
+async function reports(ownerId: string, clock: DayClock, now: Date): Promise<Report[]> {
+  const since = clock.shiftDay(now, 2 * OUT_THERE_DAYS - 1);
   const rows = await prisma.encounter.findMany({
     where: { ownerId, createdAt: { gte: since } },
     select: { outcome: true, createdAt: true },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
   });
-  const startOfToday = clock.startOfDay(now);
-  let answered: Outcome | null = null;
-  let conversations = 0;
+  const byDay = new Map<string, Report>();
   for (const r of rows) {
     const outcome = outcomeFrom(r.outcome);
     if (!outcome) continue;
-    if (isConversation(outcome)) conversations += 1;
-    if (r.createdAt >= startOfToday) answered = outcome;
+    const reportedOn = clock.dayKey(r.createdAt);
+    byDay.set(reportedOn, { reportedOn, about: clock.dayKey(clock.shiftDay(r.createdAt, 1)), outcome });
+  }
+  return [...byDay.values()];
+}
+
+export async function outThere(ownerId: string, clock: DayClock, now = new Date()): Promise<OutThere> {
+  const all = await reports(ownerId, clock, now);
+  const recent = new Set(clock.recentDayKeys(OUT_THERE_DAYS, now));
+  const byOutcome = { UNDERSTOOD: 0, SWITCHED: 0, BAILED: 0 } as Record<Outcome, number>;
+  const days = new Set<string>();
+  let total = 0;
+  const previous = { total: 0, switched: 0 };
+  for (const r of all) {
+    if (!recent.has(r.reportedOn)) {
+      if (isConversation(r.outcome)) {
+        previous.total += 1;
+        if (r.outcome === "SWITCHED") previous.switched += 1;
+      }
+      continue;
+    }
+    byOutcome[r.outcome] += 1;
+    if (!isConversation(r.outcome)) continue;
+    total += 1;
+    days.add(r.about);
+  }
+  let streak = 0;
+  for (const day of clock.recentDayKeys(OUT_THERE_DAYS, clock.shiftDay(now, 1)).reverse()) {
+    if (!days.has(day)) break;
+    streak += 1;
+  }
+  return { days: OUT_THERE_DAYS, total, byOutcome, streak, previous };
+}
+
+/**
+ * Today's card, off the same query.
+ *
+ * The answer is the one given today, about yesterday, and the count is the
+ * window's, this morning's answer included, because the card is the one
+ * screen where the count is worth printing: it is the thing the question is
+ * collecting.
+ */
+export async function outThereToday(ownerId: string, clock: DayClock, now = new Date()): Promise<OutThereToday> {
+  const all = await reports(ownerId, clock, now);
+  const recent = new Set(clock.recentDayKeys(OUT_THERE_DAYS, now));
+  const today = clock.dayKey(now);
+  let answered: Outcome | null = null;
+  let conversations = 0;
+  for (const r of all) {
+    if (!recent.has(r.reportedOn)) continue;
+    if (isConversation(r.outcome)) conversations += 1;
+    if (r.reportedOn === today) answered = r.outcome;
   }
   return { days: OUT_THERE_DAYS, answered, conversations };
 }
-

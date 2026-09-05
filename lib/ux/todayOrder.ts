@@ -34,7 +34,7 @@ export const TODAY_SLOTS = [
   {
     id: "errand",
     title: "Say it today",
-    detail: "One thing to say to a real person, and how it went.",
+    detail: "Whether you spoke Estonian yesterday, and one thing to say today.",
   },
   {
     id: "schedule",

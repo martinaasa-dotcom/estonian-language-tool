@@ -125,11 +125,20 @@ export type Panel = (typeof PANELS)[number];
 
 const SHOWN: Record<Stage, readonly Panel[]> = {
   /*
-    Three things that are all true on a log with nothing in it: the way in,
-    what the course does next, and a word out of the dictionary with a reason
-    attached to it. Everything else here would be reporting a nought.
+    Four things that are all true on a log with nothing in it: the way in,
+    what the course does next, a word out of the dictionary with a reason
+    attached to it, and the question about yesterday. That last one is not
+    about the deck at all, it is about the learner's own day, and it is
+    answerable on the first morning by anybody who lives here. It was held
+    back with the errand on the argument that the errand pool is thin before
+    a unit is started, which is true of the errand and not of the question:
+    the count of conversations is the number this app says it is measured
+    by, and holding it back from the people most likely to be silent loses
+    the baseline a pilot compares the end of term against. The errand a new
+    deck gets is "say hello to the first person you deal with", which is a
+    fair first day. Everything else here would be reporting a nought.
   */
-  arriving: ["review", "next", "word"],
+  arriving: ["review", "next", "word", "errand"],
   /*
     The daily loop, the reason to come back tomorrow, and what is due this
     week. Not the quest: four reviews is not enough to call any case a problem.

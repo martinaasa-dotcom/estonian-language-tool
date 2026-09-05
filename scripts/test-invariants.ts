@@ -11598,26 +11598,30 @@ check("a conversation is counted by the one rule, never by counting rows", () =>
 });
 
 /*
-  AND A CONVERSATION THE LEARNER HAD ON THEIR OWN IS NOT OURS TO FILE UNDER AN
-  ERRAND. The card asks about yesterday in general, so the report it writes
-  names no errand: `Encounter.errandId` is nullable for that, and the research
-  export groups that column by the unit an errand drew its words from. Writing
-  today's errand id against a conversation with a neighbor would put a unit's
-  name on a table row that no unit earned, in a file published to people
-  outside this project.
+  AND A CONVERSATION THE LEARNER HAD ON THEIR OWN IS NOT OURS TO FILE UNDER A
+  UNIT. The card asks about yesterday in general, so the report it writes
+  names no errand: `Encounter.errandId` is nullable for that. The research
+  export used to group that column by the unit an errand drew its words from,
+  which was empty by construction once nothing wrote the column, and a table
+  that is always empty is a promise in a file sent to people outside this
+  project. It groups by the month of the report now, which is the one
+  dimension a report honestly carries, and it may not grow a unit back:
+  writing a unit's name against a conversation with a neighbor would put it
+  on a row no unit earned.
 */
-check("Today's report names no errand, and the research table says what it covers", () => {
+check("Today's report names no errand, and the research table files a conversation under no unit", () => {
   assert.match(
     code("components/SayItToday.tsx"), /recordEncounter\(\s*null\s*,/,
     "components/SayItToday.tsx credits an errand with a conversation the learner had on their own",
   );
+  const route = code("app/api/research/route.ts");
+  const tally = route.slice(route.indexOf("async function tallyEncounters"), route.indexOf("async function tally("));
+  assert.ok(tally.length > 0, "app/api/research/route.ts has no tallyEncounters");
+  assert.doesNotMatch(tally, /errandById|"errandId"|unit/, "the encounters section files a report under a unit or an errand");
+  assert.match(tally, /isConversation/, "the encounters section counts a day with no conversation in it as one");
   assert.match(
-    code("app/api/research/route.ts"), /"errandId"\s+IS\s+NOT\s+NULL/,
-    "app/api/research/route.ts groups reports by unit without excluding the ones that name no errand",
-  );
-  assert.match(
-    read("lib/research/sections.ts"), /REPORTS TIED TO AN ERRAND/,
-    "the encounters section no longer tells a reader that it counts errands rather than conversations",
+    read("lib/research/sections.ts"), /NOTHING HERE SAYS WHAT A CONVERSATION WAS ABOUT/,
+    "the encounters section no longer tells a reader that it does not know what a conversation was about",
   );
 });
 

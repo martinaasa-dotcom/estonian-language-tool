@@ -53,10 +53,11 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   dictionary, never by a model, so you cannot be marked wrong for being right. Difficulty is a
   budget of things that go wrong: the slot you asked for has gone, a queue forms, they switch to
   English. You can walk out. The debrief leads with what happened and never with a score.
-- **Say it today.** One small errand a day, order a coffee, ask the time, drawn from the units you
-  have started, and one press to say how it went: they understood me, they switched to English,
-  I did not manage it. Progress counts those ahead of every chart, because a conversation you had
-  is the only measure that matters here.
+- **Say it today.** Each morning, one press to say whether you spoke Estonian to anybody
+  yesterday: they understood, they switched to English, not yesterday. Where the answer is no,
+  one small errand for today, order a coffee, ask the time, drawn from the units you have
+  started, with the scene that rehearses it a link away. Progress counts the conversations ahead
+  of every chart, because a conversation you had is the only measure that matters here.
 - **Hearing the way people talk.** A word you know well comes back at speed, over café noise, down
   a phone line, from halfway through, in a different voice each time. The words never change; the
   delivery does, because nobody at a counter talks like a clean synthetic voice in a quiet room.

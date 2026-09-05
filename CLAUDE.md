@@ -105,13 +105,38 @@ measured by. So Today asks whether any Estonian was spoken to anybody yesterday,
 errand where the answer is no, which is also the only kind moment to offer one (ADR-027 amendment 1).
 
 Two things follow and both are asserted. **`Encounter.errandId` is nullable and Today writes none**,
-because a conversation with a neighbor is not this app's to file under a unit and the research
-export groups that column by the unit an errand drew its words from; that table now says out loud
-that it covers the reports tied to an errand rather than speaking for all of them. And **a day that
+because a conversation with a neighbor is not this app's to file under a unit. The research export
+used to group that column by the unit an errand drew its words from, and once nothing wrote the
+column that table was empty by construction, in a file sent to people outside the project; it
+groups by the month of the report now, which is the one dimension a report honestly carries and the
+one a pilot is measured on, conversations and the share that switched to English, start of term
+against end. It may not grow a unit back, asserted. And **a day that
 was answered is not a day that held a conversation**: `isConversation` is the one place that is
 decided, both readings in `lib/progress/outThere.ts` ask it, and counting rows instead would report
 a fortnight of honest noes back as a fortnight of real conversations and a run of fourteen days, on
 the panel whose own heading says it matters more than any chart on the page.
+
+**And a report was filed under the day it was made, which is the day after the one it is about.**
+A row written on Tuesday morning is a fact about Monday, and both readings keyed it on Tuesday, so
+the run of days on Progress read nought every morning until the card had been pressed, because the
+walk started at today and today's row is about yesterday. A report is keyed on the day it is about
+now and the run is walked back from yesterday, which is the last day anybody can have reported on;
+two rows on one morning, which only two tabs make, are one answer for both readers rather than two
+conversations on the panel; and the same query reads the thirty days before the window, so the
+sentence "the switch to English is the figure to watch" is printed over the figure it was to be
+watched against.
+
+**The rehearsal and the errand point at each other, and for a while neither did.** An `Errand`
+names the scene that rehearses it where one exists (`sceneForErrand`, `errandForScene`), asserted
+against the catalogue and against the scene declaring the errand's unit, since a rehearsal that
+could not vouch for the words the errand needs is a rehearsal of something else. The card offering
+the errand offers the rehearsal beside it, and a scene whose every required beat was met ends in the
+errand it rehearses and in where the people are, where it used to end in "have it again". Only
+where every required beat was met, because sending somebody out on the strength of a conversation
+they did not get through is the false confidence the readiness screen is built against. And the
+question about yesterday is asked from the first morning rather than from the first graded card: it
+is about the learner's own day and not about the deck, and the count it collects is the baseline a
+pilot compares the end of term against.
 
 **And eighteen errands is thin for the days the answer is no.** Thirteen are A1 and five A2, none
 above, and the pool is filtered to the units a deck has started: four on a starter deck, thirteen

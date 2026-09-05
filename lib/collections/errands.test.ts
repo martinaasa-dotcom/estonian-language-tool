@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ERRANDS, errandForDay, isConversation, outcomeFrom, OUTCOMES, OUTCOME_LABEL } from "./errands";
+import {
+  ERRANDS, errandForDay, errandForScene, isConversation, outcomeFrom, OUTCOMES, OUTCOME_LABEL, sceneForErrand,
+} from "./errands";
+import { SCENES } from "@/lib/scenes/catalogue";
 import { unitById } from "./syllabus";
 
 describe("errands", () => {
@@ -10,6 +13,26 @@ describe("errands", () => {
       expect(e.says).not.toMatch(/[õäöüšž]/);
     }
     expect(new Set(ERRANDS.map((e) => e.id)).size).toBe(ERRANDS.length);
+  });
+
+  it("rehearses an errand only in a scene that teaches its words", () => {
+    /*
+      The scene is the join the purpose rests on, so a stale id or a scene
+      that could not vouch for the errand's unit fails here rather than
+      rendering a link to the wrong conversation. And every scene has an
+      errand: a rehearsal with no door out of it is the thing the app is
+      built against.
+    */
+    for (const e of ERRANDS) {
+      if (e.scene === undefined) continue;
+      const scene = sceneForErrand(e);
+      expect(scene, `${e.id} names scene ${e.scene}`).toBeDefined();
+      expect(scene!.units, `${e.scene} teaches ${e.unit}`).toContain(e.unit);
+    }
+    for (const s of SCENES) {
+      expect(errandForScene(s.id), `${s.id} has an errand`).toBeDefined();
+    }
+    expect(errandForScene("not-a-scene")).toBeUndefined();
   });
 
   it("offers only what the learner has started, and always something", () => {

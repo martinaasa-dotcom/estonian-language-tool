@@ -7,7 +7,7 @@ import { recordEncounter } from "@/app/actions";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Card, SectionTitle } from "@/components/ui";
 import {
-  isConversation, OUTCOMES, OUTCOME_LABEL,
+  isConversation, OUTCOMES, OUTCOME_LABEL, sceneForErrand,
   type Conversation, type Errand, type Outcome,
 } from "@/lib/collections/errands";
 
@@ -95,6 +95,7 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
     argument this card was rebuilt on.
   */
   if (!isConversation(answer)) {
+    const scene = sceneForErrand(errand);
     return (
       <Card>
         <SectionTitle>Say it today</SectionTitle>
@@ -111,6 +112,17 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
           <Link href={`/learn/${errand.unit}`} className="underline">{unitTitle}</Link>.
           {" "}Nobody will slow down for you, and that is the practice.
         </p>
+        {/*
+          The rehearsal, where the course has one. Situations plays this
+          same encounter on somebody with an agenda of their own, and for a
+          while the two never pointed at each other: the errand sent people
+          to a word list and the scene ended in "have it again".
+        */}
+        {scene && (
+          <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+            Not sure of the words? <Link href={`/situations/${scene.id}`} className="underline">Rehearse it first</Link>, then go.
+          </p>
+        )}
       </Card>
     );
   }

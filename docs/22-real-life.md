@@ -23,8 +23,9 @@ outside it, which is the one number no learning app reports and the one that mat
 
 ## 2. What is built
 
-**Situations** (`lib/scenes/`, `/situations`). Three scenes: a health centre and an office counter
-at A2, a landlord on the phone at B1. Each is a machine authored in English that
+**Situations** (`lib/scenes/`, `/situations`). Seven scenes: the corner shop, a café counter and
+a bus ticket window at A1, a health centre, an office counter and asking the way at A2, a landlord
+on the phone at B1. Each is a machine authored in English that
 knows the shape of an encounter and holds not one word of Estonian. The other side speaks in a
 sentence a lexicographer recorded where one fits the beat, and otherwise in a line composed inside
 the scene's own closed word list and checked four ways before anybody sees it: the shape, every
@@ -42,7 +43,12 @@ words never change, because a mumbled spelling would be this app writing Estonia
 does, made in the browser out of filtered noise and a band-pass, so nothing ships and nothing
 needs a licence.
 
-**Say it today** (`lib/collections/errands.ts`). Today asks each morning whether the learner spoke
+**Say it today** (`lib/collections/errands.ts`). The two above point at each other: an errand
+names the scene that rehearses it where one exists, the card offers the rehearsal, and a scene
+whose every required beat was met ends in the errand it rehearses and in where the people are,
+rather than in "have it again". A rehearsal that ends in another rehearsal keeps somebody inside.
+
+Today asks each morning whether the learner spoke
 any Estonian to anybody yesterday, and the answer is one press: yes and they understood, they
 switched to English, not yesterday. Where the answer is no it offers an errand for today, drawn
 from the units the learner has started and naming a unit id rather than a word. That report is an
@@ -54,8 +60,8 @@ what it buys. A card that sets a task in the morning and puts three answers unde
 a report on something that has not happened yet, and it can only ever see the conversations this
 app set: somebody who spent an hour with their Estonian mother-in-law and ignored the errand was
 recorded as having done nothing, in the one number this app says it is measured by. A report
-collected that way names no errand, which is why `Encounter.errandId` is nullable and why a
-conversation with a neighbor appears in no unit's row of the research file.
+collected that way names no errand, which is why `Encounter.errandId` is nullable and why the
+research file groups conversations by the month they were reported in and never by a unit.
 
 A day answered is not a day with a conversation in it, and both readings of the table count only
 the two answers that are one (`isConversation`). Counting every row would report a fortnight of

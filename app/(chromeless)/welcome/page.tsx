@@ -909,7 +909,7 @@ const FAQS = [
   ],
   [
     "Will it actually get me talking to people?",
-    "That is what it is for. Situations puts you in front of somebody with an agenda of their own, a receptionist, a landlord, a clerk, and marks you against the dictionary rather than a model, so you cannot be told you were wrong when you were right. Today sets one small errand to do out loud, and Progress counts how those went, including the times somebody switched to English. Nothing here scores your pronunciation, because the only recognizer available gets native speakers wrong, and we would rather say so than pretend.",
+    "That is what it is for. Situations puts you in front of somebody with an agenda of their own, a receptionist, a landlord, a clerk, and marks you against the dictionary rather than a model, so you cannot be told you were wrong when you were right. Today asks each morning whether you spoke Estonian to anybody yesterday, offers one small thing to say out loud where the answer is no, and Progress counts the conversations, including the times somebody switched to English. Nothing here scores your pronunciation, because the only recognizer available gets native speakers wrong, and we would rather say so than pretend.",
   ],
   [
     "What happens to my data?",
