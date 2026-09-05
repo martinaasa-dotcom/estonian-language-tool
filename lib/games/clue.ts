@@ -128,6 +128,21 @@ export function clueFrom(translation: string, answer: string, pos: string): stri
 }
 
 /**
+ * A clue read back into the gloss and the kind of word it named.
+ *
+ * The one reader of the separator, so nothing else has to know how a clue is
+ * put together to take it apart again: a test that split on a middot of its own
+ * would go on passing the day the label moved, about a clue nobody sets.
+ * `kind` is empty where the clue names none, which is what a caller handed an
+ * entry with no part of speech has to be able to tell apart from a clue.
+ */
+export function clueParts(clue: string): { gloss: string; kind: string } {
+  const at = clue.lastIndexOf(LABEL);
+  if (at < 0) return { gloss: clue, kind: "" };
+  return { gloss: clue.slice(0, at), kind: clue.slice(at + LABEL.length) };
+}
+
+/**
  * Every entry whose clue another entry answers just as well.
  *
  * Returns `lemma|pos` keys, and returns **both** sides of a clash rather than

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clueClashes, clueFrom, clueKey, type ClueWord } from "./clue";
+import { clueClashes, clueFrom, clueKey, clueParts, type ClueWord } from "./clue";
 
 /**
  * The clue, over invented entries.
@@ -60,6 +60,28 @@ describe("clueFrom", () => {
   it("names the kind of word it wants", () => {
     expect(clueFrom("human", "inimlik", "ADJECTIVE")).toBe("human · adjective");
     expect(clueFrom("human being", "inimene", "NOUN")).toBe("human being · noun");
+  });
+});
+
+/*
+  The label is this app's and the gloss is the dictionary's, so anything
+  comparing a clue against the entry it came from has to take the two apart
+  first. `crossword.itest.ts` asserted that a grid's clue is contained in its
+  own gloss and read the whole line, which the kind of word broke: "dance" does
+  not contain "dance · noun".
+*/
+describe("clueParts", () => {
+  it("reads a clue back into the gloss and the kind", () => {
+    expect(clueParts("a devil, an evil spirit · noun"))
+      .toEqual({ gloss: "a devil, an evil spirit", kind: "noun" });
+  });
+
+  it("says a clue naming no kind names none, rather than guessing one", () => {
+    expect(clueParts("a market")).toEqual({ gloss: "a market", kind: "" });
+  });
+
+  it("takes the last separator, since a gloss may carry one", () => {
+    expect(clueParts("a · b · verb")).toEqual({ gloss: "a · b", kind: "verb" });
   });
 });
 

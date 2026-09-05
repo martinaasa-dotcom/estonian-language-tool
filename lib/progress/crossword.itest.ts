@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { cellsOf, MAX_ENTRIES, MAX_SIDE, MIN_ENTRIES, solvedEntries } from "@/lib/games/crossword";
 import type { DayKey } from "@/lib/time/day";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
-import { clueClashes, clueKey } from "@/lib/games/clue";
+import { clueClashes, clueKey, clueParts } from "@/lib/games/clue";
 import { crosswordFor } from "./crossword";
 
 /**
@@ -124,7 +124,7 @@ describe("the daily crossword", () => {
         // row with that lemma, because `@@unique` is on `(lemma, pos)` and
         // `hall` is two entries: a `find` would pick whichever the query
         // happened to return first and ask about the other word.
-        const kind = entry.clue.slice(entry.clue.lastIndexOf(" · ") + 3);
+        const { kind } = clueParts(entry.clue);
         const row = rows.find((r) => r.lemma === entry.lemma && r.pos.toLowerCase() === kind);
         expect(row, `${entry.lemma} is clued as a ${kind} and the dictionary has no such entry`)
           .toBeTruthy();
@@ -149,7 +149,10 @@ describe("the daily crossword", () => {
       const row = rows.find((r) => r.id === entry.lexemeId)!;
       expect(entry.lemma).toBe(row.lemma);
       // And the clue is that entry's own gloss, cut down rather than written.
-      expect(row.translation.toLowerCase()).toContain(entry.clue.split(",")[0]!.toLowerCase());
+      // The kind of word is named after it and is this app's, so it comes off
+      // before the gloss is compared with the one the dictionary holds.
+      const { gloss } = clueParts(entry.clue);
+      expect(row.translation.toLowerCase()).toContain(gloss.split(",")[0]!.toLowerCase());
     }
   });
 
