@@ -60,10 +60,43 @@ export function isSameOriginMutation(req: {
   const site = req.headers.get("sec-fetch-site");
   if (site) return site === "same-origin" || site === "none";
 
-  const origin = hostname(req.headers.get("origin"));
-  if (!origin) return true;
+  /*
+    ABSENT AND UNREADABLE ARE DIFFERENT ANSWERS, AND THIS USED TO GIVE THEM
+    THE SAME ONE.
+
+    `hostname()` returns null for an empty header and for one it cannot parse,
+    and both fell into "no origin, so not a browser, so allow". The second is
+    not that. A request carrying an `Origin` is a request from something that
+    believes it is a browser, and one whose value will not parse is a request
+    to be suspicious of rather than to wave through. Found by
+    `scripts/test-security.mjs` asking the running server:
+    `Origin: http://localhost:3000.evil.example` is unparseable, because
+    `3000.evil.example` is not a port, and it was answered as though no origin
+    had been sent at all.
+
+    Refusing it costs nothing real. No browser sends a malformed Origin, and
+    the one odd value they genuinely do send, the literal `null` from a
+    sandboxed frame or a `data:` URL, parses fine and is compared like any
+    other name, which is what already refuses it.
+  */
+  const rawOrigin = req.headers.get("origin")?.trim();
+  if (!rawOrigin) return true;
+
+  const origin = hostname(rawOrigin);
+  if (!origin) return false;
 
   const host = hostname(req.headers.get("host"));
   if (!host) return true;
+
+  /*
+    NAME ONLY, NOT SCHEME AND NOT PORT, AND THAT IS DELIBERATE RATHER THAN
+    OVERLOOKED. A deployment behind a reverse proxy sees `Host: localhost:3000`
+    on a request whose `Origin` is `https://kodukeel.ee`, and comparing whole
+    origins would refuse every mutation on it. What ignoring them costs is an
+    attacker who already controls another port or the plaintext scheme on this
+    very hostname, which on a host with HSTS preloaded is not a position
+    anybody reaches from outside. Written down in docs/27-security.md as a
+    residual rather than left to be rediscovered.
+  */
   return origin === host;
 }

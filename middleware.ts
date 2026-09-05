@@ -132,6 +132,15 @@ export async function middleware(request: NextRequest) {
     // What it costs to run and who pays for it is the same kind of question,
     // and the people most likely to ask it have no account here.
     path.startsWith("/funding") ||
+    // The two pages somebody deciding whether to put this in front of a class
+    // is sent to. Both are written for a reader who has no account here and is
+    // not going to make one to read them.
+    path.startsWith("/trust") ||
+    path.startsWith("/accessibility") ||
+    // Whether the app is up is not a question with an owner. It carries no
+    // count, no identifier and nothing about anybody, and a health check
+    // behind a session is one no monitor can make.
+    path.startsWith("/api/health") ||
     // The offline fallback holds no data and has to render from the service
     // worker's cache, where there is no session to check.
     path.startsWith("/offline") ||

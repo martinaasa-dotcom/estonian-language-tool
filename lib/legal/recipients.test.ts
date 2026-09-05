@@ -81,3 +81,36 @@ describe("the recipients a deployment discloses", () => {
     expect(names().some((n) => n.includes("TartuNLP"))).toBe(true);
   });
 });
+
+describe("the machine the code runs on", () => {
+  const KEEP = process.env.VERCEL;
+  afterEach(() => {
+    if (KEEP === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = KEEP;
+  });
+
+  it("names the host, because it handles every request on the page", () => {
+    /*
+      The list was built by asking the code which services it was configured to
+      call, and the machine it runs on is not one of those, so the one
+      recipient touching every single request was the one never named.
+    */
+    process.env.VERCEL = "1";
+    const hosts = resolveRecipients().filter((r) => /Vercel/.test(r.name));
+    expect(hosts.length).toBe(1);
+    expect(hosts[0]?.eea).toBe(false);
+    expect(hosts[0]?.what).toMatch(/request/i);
+  });
+
+  it("says nothing where the operator is the host", () => {
+    // Self-hosted, the operator named at the top of the page owns the machine.
+    // Listing them as a recipient of their own data is noise.
+    delete process.env.VERCEL;
+    expect(resolveRecipients().some((r) => /Vercel/.test(r.name))).toBe(false);
+  });
+
+  it("makes the transfer disclosure fire, since the company is not in the Union", () => {
+    process.env.VERCEL = "1";
+    expect(transfersOutsideEea(resolveRecipients())).toBe(true);
+  });
+});

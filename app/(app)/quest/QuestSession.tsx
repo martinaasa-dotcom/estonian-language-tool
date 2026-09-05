@@ -10,10 +10,10 @@ import { useFeedbackSound } from "@/components/AudioPrefs";
 import type { QuestCard } from "@/lib/progress/quest";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
+import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { roundLength } from "@/lib/ux/roundClock";
 
-/** Two minutes, which is what was asked for and is about right for 24 cards. */
-const DURATION_S = 120;
 
 export interface AimedCase {
   key: string;
@@ -25,10 +25,13 @@ export interface AimedCase {
 /**
  * THE DAILY QUEST.
  *
- * Two minutes, self-graded by comparison, on the cards behind the cases this
- * learner is worst at. It is the one round that opens by saying what it is
- * about: "your seesütlev is at 54%" is the reason to press it, and a round that
- * hid that would be another timer.
+ * Two minutes by default, self-graded by comparison, on the cards behind the
+ * cases this learner is worst at. It is the one round that opens by saying what
+ * it is about: "your seesütlev is at 54%" is the reason to press it, and a round
+ * that hid that would be another timer. How long the clock runs is the
+ * learner's, resolved on the server from `lib/ux/roundClock.ts`: a fixed limit
+ * is WCAG 2.2.1 failed, and somebody who reads slowly was shut out of this
+ * round rather than playing a harder one.
  *
  * A PICK RATHER THAN A TYPED ANSWER, deliberately. Two minutes at a typed
  * answer is about eight cards, and the point of this round is volume across a
@@ -60,7 +63,9 @@ export interface AimedCase {
  * abandoned round writes only the cards actually answered, which is what the
  * log should say.
  */
-export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[]; aimed: AimedCase[] }) {
+export function QuestSession({
+  cards: initialCards, aimed, seconds,
+}: { cards: QuestCard[]; aimed: AimedCase[]; seconds: number }) {
   // Snapshotted once on mount and never updated from later props: `gradeCard`
   // refreshes this route's Server Component on every call, which would hand
   // down a shrinking pool mid-round. See ReviewSession for the same reasoning.
@@ -72,7 +77,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
   const [attempted, setAttempted] = useState(0);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(DURATION_S);
+  const [secondsLeft, setSecondsLeft] = useState(seconds);
   const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
   const [busy, setBusy] = useState(false);
   const shownAt = useRef(Date.now());
@@ -170,7 +175,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
 
   if (cards.length === 0) {
     return (
-      <Page title="Daily quest" lead="Two minutes on whatever keeps going wrong.">
+      <Page title="Daily quest" lead={`${roundLength(seconds)} on whatever keeps going wrong.`}>
         <Empty
           title="Nothing to work on yet"
           body="This round draws on the cards you have already answered."
@@ -182,7 +187,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
 
   if (phase === "ready") {
     return (
-      <Page title="Daily quest" lead="Two minutes on whatever keeps going wrong.">
+      <Page title="Daily quest" lead={`${roundLength(seconds)} on whatever keeps going wrong.`}>
         <div className="mx-auto flex max-w-md flex-col items-center gap-5 text-center">
           <span
             className="flex h-20 w-20 items-center justify-center rounded-full quest-pulse"
@@ -218,9 +223,18 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
           )}
 
           <Button variant="primary" size="lg" onClick={() => { setPhase("running"); shownAt.current = Date.now(); }}>
-            Start the two minutes
+            Start the {roundLength(seconds)}
           </Button>
           <ButtonLink href="/">Not now</ButtonLink>
+          {/* Where the clock is set, said on the screen somebody is standing
+              on when they find the round too fast. */}
+          <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+            Need longer?{" "}
+            <Link href="/settings#round-pace" className="underline underline-offset-2">
+              Give yourself more time
+            </Link>
+            , up to ten times this.
+          </p>
         </div>
       </Page>
     );
@@ -250,7 +264,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
     );
   }
 
-  const pct = (secondsLeft / DURATION_S) * 100;
+  const pct = seconds > 0 ? (secondsLeft / seconds) * 100 : 0;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-5 py-6 md:px-10 md:py-10">

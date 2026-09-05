@@ -1,6 +1,7 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowLeft, Check } from "lucide-react";
 import { supabaseConfigured } from "@/lib/auth/mode";
+import { readSsoPolicy } from "@/lib/auth/sso";
 import { resolveOperator } from "@/lib/legal/operator";
 import { Note } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
@@ -55,6 +56,18 @@ export default async function SignInPage({ searchParams }: {
     to set up before the second person asks for a link.
   */
   const emailLink = (process.env.EMAIL_SIGN_IN ?? "").trim().toLowerCase() !== "off";
+  /*
+    ENTERPRISE SIGN-IN IS READ HERE AND NOWHERE ELSE.
+
+    `SSO_DOMAINS` names the email domains a company's identity provider
+    answers for, and the form needs both halves of it: whether to draw the
+    box at all on a copy with the mailed link switched off, and which
+    addresses go to the provider rather than into an inbox. The domains are
+    not a secret, they are printed on everybody's business card, but the
+    environment is still the server's to read: a client component reaching
+    for it would be a variable that has to be public to work at all.
+  */
+  const ssoDomains = readSsoPolicy().domains;
   const denied = params.denied !== undefined;
   const failed = params.error !== undefined;
   /*
@@ -144,7 +157,7 @@ export default async function SignInPage({ searchParams }: {
 
           <div className="mt-7">
             {configured ? (
-              <SignInForm emailLink={emailLink} />
+              <SignInForm emailLink={emailLink} ssoDomains={ssoDomains} />
             ) : (
               <div className="rounded-[var(--r-lg)] p-5 text-left" style={{ background: "var(--raised)" }}>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
@@ -175,7 +188,24 @@ export default async function SignInPage({ searchParams }: {
           </ul>
         </div>
 
+        {/*
+          THE AGE, SAID ONCE, WHERE SOMEBODY IS ABOUT TO SIGN UP.
+
+          Estonia sets the age at which somebody can agree to a service like
+          this for themselves at 13, /privacy has always named that number, and
+          the one screen where it is worth reading never mentioned it. Not a
+          checkbox: a tick nobody can check verifies nothing, adds a step to
+          the one screen that should have none, and would make the honest parts
+          of the same page harder to believe. Stating the rule is the whole of
+          what this app is in a position to do, and a teacher signing a class
+          up is the reader it is actually for.
+        */}
         <p className="mx-auto mt-6 max-w-[46ch] text-center text-xs" style={{ color: "var(--ink-3)" }}>
+          Kodukeel is for people aged 13 and over. Younger than that and a parent needs to
+          agree first.
+        </p>
+
+        <p className="mx-auto mt-3 max-w-[46ch] text-center text-xs" style={{ color: "var(--ink-3)" }}>
           Estonian forms and example sentences from Ekilex (Institute of the Estonian Language,
           CC BY 4.0). English glosses from English Wiktionary (CC BY-SA 4.0). Word counts from
           FrequencyWords over OpenSubtitles (CC BY-SA 4.0). Every spelling of every word from Ekilex

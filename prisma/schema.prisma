@@ -712,3 +712,43 @@ model SceneGap {
   @@index([ownerId, lexemeId])
   @@index([runId])
 }
+
+/// One fixed window of a rate limit, counted where every instance can see it.
+///
+/// `lib/security/rateLimit.ts` is a Map in one warm instance, and its own header
+/// says what that is worth: it catches a retry loop hitting one instance and a
+/// burst spread across cold starts meets an empty Map every time. For spending
+/// that is survivable, because `UsageEvent` above is the real bound and is the
+/// same number whichever instance answers. For the routes the ledger does not
+/// price at all, speech, the share card, the export and the restore, the Map
+/// was the only thing there was, and "the limit is however many instances are
+/// warm" is the answer a buyer's engineer asks about first.
+///
+/// So the counter is a row, and the increment is one statement:
+/// `INSERT ... ON CONFLICT DO UPDATE SET count = count + 1 RETURNING count`.
+/// Atomic on its own, with no transaction and no advisory lock, because unlike
+/// the ledger there is nothing here to read before deciding: the returned count
+/// *is* the decision. The in-memory limiter stays in front of it, which is what
+/// keeps an obvious loop from making a database round trip per refusal.
+///
+/// NOT OWNER-SCOPED, AND THAT IS THE POINT OF `bucket` BEING A DIGEST. A rate
+/// limit needs to tell two callers apart and never needs to know who they are,
+/// so storing an owner id here would be a second copy of who was awake at
+/// 03:00, kept for no reason anybody could state. The digest cannot be read
+/// back into an id, the row is deleted once its window has passed, and there is
+/// nothing in the table for the export or the erasure to carry.
+model RateLimit {
+  /// SHA-256 of the caller-and-endpoint key, hex. Never the key itself.
+  bucket      String
+  /// Start of the window, floored to its own length, so a row is the window.
+  windowStart DateTime
+  /// Requests in this window, capped one past the limit by the increment:
+  /// past the limit the answer is the same and an unbounded counter is not.
+  count       Int      @default(1)
+  /// When this row stops meaning anything. Pruned opportunistically, and
+  /// indexed so the prune is a range scan rather than a table walk.
+  expiresAt   DateTime
+
+  @@id([bucket, windowStart])
+  @@index([expiresAt])
+}

@@ -9,8 +9,9 @@ import { resolveProviders } from "@/lib/tutor/provider";
 import { priceFor } from "@/lib/usage/pricing";
 import { DEFAULT_LIMITS } from "@/lib/usage/quota";
 import { SERVICES } from "@/lib/funding/model";
+import { CONTINUITY, floorUsd, retrenchment } from "@/lib/funding/sustainability";
 import {
-  COMPUTE, DEVTOOLS, DOMAIN, EMAIL, ERRORS, FX, MEASURED, MEASURED_ON,
+  COMPUTE, DEFAULT_SHAPE, DEVTOOLS, DOMAIN, EMAIL, ERRORS, FX, MEASURED, MEASURED_ON,
   PRICES_CHECKED, SPEECH_MARKET, SUPABASE, VERCEL,
 } from "@/lib/funding/facts";
 
@@ -44,11 +45,20 @@ export const dynamic = "force-dynamic";
  * this repository, quoted off a vendor's price list with the date it was read,
  * or named as an assumption the reader can change. The interactive part is not
  * decoration: a total somebody can move is a total they can check, and the
- * three least flattering findings on the page (that the floor is about three
- * hundred dollars before anybody arrives, that speech is the fastest-growing
- * line once anybody puts a figure on it, and that what is given to this app
- * outgrows what it pays for) are all things the model surfaced rather than
- * things anybody chose to admit.
+ * three least flattering findings on the page (that the bill is about three
+ * hundred dollars a month before a single learner arrives, that speech is the
+ * fastest-growing line once anybody puts a figure on it, and that what is
+ * given to this app outgrows what it pays for) are all things the model
+ * surfaced rather than things anybody chose to admit.
+ *
+ * THAT FIRST FIGURE READ "ABOUT FORTY-SIX DOLLARS" UNTIL A GRANT CASE WAS
+ * WRITTEN OFF THIS PAGE AND THE NUMBERS WERE RUN AGAIN. `billFor` at one
+ * learner is 301.07, which is what CLAUDE.md has said all along. Forty-six is
+ * close to what the retrenchment ladder now calls Lights on, 45, which is the
+ * bill with nobody paid, no tooling and the tutor switched off. Those are two
+ * different questions and the comment had quietly answered the wrong one: a
+ * page whose whole argument is that its numbers are checkable cannot carry a
+ * stale one in its own header.
  */
 export default function FundingPage() {
   const operator = resolveOperator();
@@ -82,6 +92,16 @@ export default function FundingPage() {
   */
   const switchedOn = (key: string | undefined): boolean =>
     key === undefined ? true : Boolean(process.env[key]?.trim());
+
+  /*
+    The retrenchment ladder is priced at the same default size the cost
+    explorer opens on, so the first figure in that section is the same number
+    the explorer shows above it. A reader who changes the explorer is asking a
+    different question, and this section is deliberately not tied to it: what
+    it costs to keep alive is one number, not a slider.
+  */
+  const ladder = retrenchment(DEFAULT_SHAPE);
+  const floor = floorUsd(DEFAULT_SHAPE);
 
   return (
     <Legal title="Funding" updated="2 September 2026">
@@ -231,11 +251,9 @@ export default function FundingPage() {
           year fits in less space than a phone photograph album. And a spoken clip is
           uncompressed audio, 43 KB for every second of it once trimmed and stored as
           16-bit, which still makes speech the largest thing this app moves by a wide
-          margin. What it is not is the biggest
-          saving available, and it is worth saying so on a page about the bill: the
-          speech is given rather than charged, so turning it off in the panel above saves
-          nothing at all at a hundred learners and about fifty dollars a month at a
-          hundred thousand. Turning the tutor off saves twenty-two and six hundred.
+          margin. Turning the audio off in the
+          panel above is the single biggest saving available, and it is also the feature
+          hardest to argue for losing.
         </P>
       </S>
 
@@ -352,6 +370,61 @@ export default function FundingPage() {
           size worth funding the decent thing is to support the work rather than only to
           use it: a contribution, a corrected entry sent back, or paying for the compute
           somebody else is currently absorbing.
+        </P>
+      </S>
+
+      <S title="What happens when the money stops">
+        <P>
+          The question a grant is scored on, and the one a cost page usually leaves out.
+          The figures below are the same bill as above with things switched off, in the
+          order somebody would actually switch them off: the tooling that writes the
+          software first, because a reader opening the app tomorrow does not notice it,
+          and the server and the database last, because without those there is nothing.
+        </P>
+        {ladder.map((step) => (
+          <P key={step.stage.id}>
+            <strong>{step.stage.name}, ${step.usd.toFixed(0)} a month.</strong>{" "}
+            {step.stage.why}
+            {step.lost.length > 0 ? (
+              <>
+                {" "}What goes: {step.lost.map((l) => `${l.name}. ${l.cost}`).join(" ")}
+              </>
+            ) : null}
+          </P>
+        ))}
+        <P>
+          The fall is gradual because most of what this app is made of was never bought.
+          The dictionary is Ekilex, the speech is TartuNLP, the English is Wiktionary, and
+          all three are public institutions that decided this work should be available. The
+          scheduler, the course, the exams, the games and the grammar run on a server and a
+          database and nothing else. What money buys is the tutor, the polish, and somebody
+          to work on it.
+        </P>
+        <P>
+          So the honest claim is not that this becomes profitable. It is that at{" "}
+          ${floor.toFixed(0)} a month it can be kept alive by one person who has not been
+          paid, and that it keeps teaching Estonian the whole way down.
+        </P>
+      </S>
+
+      <S title="What survives even that">
+        <P>
+          Six things, and every one of them is a file somebody can open rather than an
+          intention somebody has stated.
+        </P>
+        {CONTINUITY.map((item) => (
+          <P key={item.id}>
+            {item.claim}{" "}
+            <span style={{ color: "var(--ink-3)" }}>({item.checkableAt})</span>
+          </P>
+        ))}
+        <P>
+          Which is the answer to the question under the question. A funder is not really
+          asking whether the lights stay on. They are asking whether the money buys
+          something that outlives the project, and for a language this size the thing worth
+          buying is a corrected dictionary, a course built out of attested sources, and the
+          code to run both, all of it published under a licence that lets somebody else
+          pick it up.
         </P>
       </S>
 

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
+import { bucketForOwner, rateLimited } from "@/lib/security/rateLimit";
+import { checkSharedRateLimit } from "@/lib/usage/sharedLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ export async function GET() {
     app. Six an hour is more than anybody backing up their own work needs and
     far less than a loop would ask for.
   */
-  const limit = checkRateLimit(`export:${bucketForOwner(ownerId)}`, 6, 60 * 60_000);
+  const limit = await checkSharedRateLimit(`export:${bucketForOwner(ownerId)}`, 6, 60 * 60_000);
   if (!limit.ok) {
     return rateLimited(
       limit,
