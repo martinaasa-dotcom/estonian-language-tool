@@ -137,9 +137,14 @@ practicing, and it should fall as their Estonian holds. It is one press and it c
 Across a cohort it is still the only signal anybody has, and it is published under a disclosure
 gate that shows nothing resting on fewer than ten people.
 
-**The classroom has not been piloted.** It is built, and a language house can set a scene for a
-week and see who finished it and which objective the group missed most, and see no transcript at
-all. It should not be cited as a result until one class has run one course with it.
+**The classroom cannot set a scene, and this document said it could.** What is built is a class
+that a teacher can assign a *unit* or a piece of homework to (`assignUnit`, `assignHomework`), with
+a roster showing effort and each learner's weakest case as a roll-up, and no transcript and no
+deck. Nothing in `lib/classroom/` reads `SceneRun` or `SceneGap`, so neither "who finished the
+scene" nor "which objective the group missed most" exists. The boundary those would sit inside is
+drawn and holds (ADR-019, effort never contents); the reading itself is unbuilt, and it is the
+first thing to build for a language house pilot. It has also not been piloted: no real class has
+used any of it, and none of it should be cited as a result until one has.
 
 ## 5. What it costs, and what happens when the money stops
 
@@ -166,7 +171,8 @@ end of the term, all of which the app already produces without a survey:
   encounters table carries, by month, under the disclosure gate;
 - for each unit's "you can do this" claim, the share of learners who got every required beat of its
   situation done at least once;
-- which objective a class most often missed, which is what the class panel already shows a teacher;
+- which objective a class most often missed, which is the one figure on this list the app does not
+  yet produce: see §4, it is the first thing a pilot needs built;
 - the gate rejection rate on the deployment's own model, which says whether composition is
   carrying the encounter or the phrase bank is needed first.
 

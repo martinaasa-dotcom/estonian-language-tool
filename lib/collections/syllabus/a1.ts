@@ -228,6 +228,8 @@ export const A1 = [
       ["laupäev", "Saturday"],
       ["pühapäev", "Sunday"],
       ["kellaaeg", "time of day"],
+      // "Üks hetk" is what anybody behind a counter says while they look.
+      ["hetk", "moment"],
     ],
   }),
 
@@ -347,6 +349,7 @@ export const A1 = [
       ["kerge", "easy, light", "ADJECTIVE"],
       ["lihtne", "simple", "ADJECTIVE"],
       ["valmis", "ready", "ADJECTIVE"],
+      ["keeruline", "complicated", "ADJECTIVE"],
     ],
   }),
 
@@ -478,6 +481,9 @@ export const A1 = [
       ["auto", "car"],
       ["jaam", "station"],
       ["park", "park"],
+      // The currency every counter names, and the dictionary held `sent` and not
+      // this. `npm run eval:scene` withheld a pharmacy line over it twice.
+      ["euro", "euro"],
     ],
   }),
 
@@ -694,6 +700,8 @@ export const A1 = [
       ["mööda", "along", "ADVERB"],
       ["alates", "from, starting from", "ADVERB"],
       ["kaasas", "along, with you", "ADVERB"],
+      // `valu vastu`, which is how a pharmacist says what a medicine is for.
+      ["vastu", "against, for (a pain)", "ADVERB"],
     ],
   }),
 
@@ -764,6 +772,9 @@ export const A1 = [
       ["välismaalane", "foreigner"],
       ["kodumaa", "homeland"],
       ["rahvus", "nationality"],
+      // `Kust sa pärit oled?` is how the question is actually asked, and the
+      // dictionary carries that very sentence while teaching no unit the word.
+      ["pärit", "originally from", "ADVERB"],
     ],
   }),
 
@@ -897,6 +908,21 @@ export const A1 = [
       ["siin", "here", "ADVERB", 233338],
       ["siit", "from here", "ADVERB"],
       ["sinna", "to there", "ADVERB"],
+      /*
+        Two the eval watched a model reach for and the course taught at no
+        level. `Kas te elate üksi?` is the second question anybody asks on a
+        stairwell, and `rääkige aeglasemalt` is the single most useful
+        sentence a learner owns, off an adjective the course already teaches
+        and an adverb it did not.
+
+        A third was asked for and did not arrive. `olemas` is how a shop says
+        it has the thing (`meil on see olemas`) and Ekilex holds no headword
+        for it, so the harvest dropped it and said so, which is the whole
+        point of a lemma being a request rather than a fact (ADR-005). It is
+        not written in here as a word this project decided on.
+      */
+      ["üksi", "alone", "ADVERB"],
+      ["aeglaselt", "slowly", "ADVERB"],
     ],
   }),
 ] as const;

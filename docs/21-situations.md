@@ -952,11 +952,15 @@ The offline scene is not in the suite because it is not in the build (§13).
 
 ## 22. For a language house pilot
 
-The classroom already draws the boundary this needs: effort, never contents (ADR-019). A teacher can
-set a scene for a week, see who finished it, and see which objective the group missed most often,
-and can see no transcript at all. That is the honest shape of what a language house wants, which is
-to know whether the class can book an appointment, and not to read twenty people's practice
-attempts.
+The classroom already draws the boundary this needs: effort, never contents (ADR-019), and a
+teacher can assign a unit or a piece of homework and read a roster of effort with no transcript and
+no deck in it. What it cannot do is the thing this section was written as though it already did:
+**nothing in `lib/classroom/` reads `SceneRun` or `SceneGap`**, so a teacher can set a unit and not
+a scene, and can see neither who finished one nor which objective the group missed most often. The
+boundary is the hard part and it is done; the reading is a roster query over the runs of a class's
+members, and it is the first thing to build for a language house. Written down here as unbuilt
+rather than left as a sentence in the present tense, because this is the paragraph a funding
+application would quote.
 
 One thing belongs here because it is easy to get wrong in a funding application: the classroom
 feature is built and no real class has used it. It should not be cited as a case study until one
@@ -2017,8 +2021,6 @@ scenes at all. Of the forty-five live claims the course makes, seven had a rehea
 - The learner's own turn carries the speaker, which §11 promised and nothing drew.
 
 **What this does not fix.** A native speaker has read none of the 296 lines in the bank, and every
-one is `reviewed: false`. The eval (`npm run eval:scene`) has not been run over the seven new
-scenes, because it needs a key this environment does not carry; the ranked list of withheld words
-is what will say which units they should also declare. And a scene is still typed: the spoken
-unmarked mode of §11 is the same distance away it was.
+one is `reviewed: false`. And a scene is still typed: the spoken unmarked mode of §11 is the same
+distance away it was.
 

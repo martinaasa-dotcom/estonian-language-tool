@@ -1012,6 +1012,9 @@ export async function beginScene(sceneId: unknown, difficulty: unknown) {
     ok: true as const,
     runId: opened.runId,
     briefing: opened.briefing,
+    // How many times they have had this one before, which is what opens the
+    // hearing pool for the other side's lines.
+    plays: opened.plays,
     composed: resolveProviders().length > 0,
   };
 }

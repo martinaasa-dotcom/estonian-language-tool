@@ -75,7 +75,13 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
     the room, and before the answer it would be a clue.
   */
   const { hearing } = useAudioPrefs();
-  const condition = card ? conditionFor(card.reps, index, hearing) : undefined;
+  /*
+    Never a condition that removes words: the clip here is a single lemma, so
+    a delivery that starts two fifths in starts after the question. The
+    learner would be marked wrong on a word they were not played and the
+    card's schedule would move for it.
+  */
+  const condition = card ? conditionFor(card.reps, index, hearing, false) : undefined;
   const finished = !card;
   const answered = selected !== null;
 

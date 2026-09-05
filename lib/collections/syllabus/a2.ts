@@ -107,6 +107,7 @@ export const A2 = [
       ["terve", "healthy, whole", "ADJECTIVE"],
       ["väsinud", "tired", "ADJECTIVE"],
       ["valutama", "to hurt, to ache"],
+      ["tablett", "tablet"],
     ],
   }),
 
@@ -367,6 +368,8 @@ export const A2 = [
       ["vabandama", "to apologize"],
       ["tänama", "to thank"],
       ["tervitama", "to greet"],
+      // "Kas ma tohin?" is the polite ask this unit is about.
+      ["tohtima", "to be allowed to"],
     ],
   }),
 

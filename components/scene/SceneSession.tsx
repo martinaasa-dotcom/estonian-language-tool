@@ -8,7 +8,8 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Card } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
 import { Speak } from "@/components/Speak";
-import { CLEAN } from "@/lib/audio/conditions";
+import { conditionFor } from "@/lib/audio/conditions";
+import { useAudioPrefs } from "@/components/AudioPrefs";
 import { beginScene, finishScene, sceneHelp } from "@/app/actions";
 import type { SceneSpec } from "@/lib/scenes/types";
 import type { Difficulty } from "@/lib/scenes/curveballs";
@@ -60,6 +61,8 @@ type Phase = "briefing" | "talking" | "debrief";
 
 interface Opened {
   runId: string;
+  /** Runs of this scene before this one, which opens the hearing pool. */
+  plays: number;
   card: { you: string; props: { slot: string; card: string; given: readonly string[]; returned?: true }[] };
   persona: string;
   composed: boolean;
@@ -141,6 +144,23 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   const [note, setNote] = useState<string | null>(null);
   /** The word the help button last handed over, shown until the next turn. */
   const [lent, setLent] = useState<{ lemma: string; gloss: string } | null>(null);
+  /*
+    HOW THE OTHER SIDE SOUNDS, WHICH IS THE ROOM THIS FEATURE WAS WRITTEN FOR.
+
+    `lib/audio/conditions.ts` opens with a counter, a clinic ringing back on a
+    bad line and a sentence caught from the middle of a conversation, and for
+    its whole life it reached two flashcard rounds and never a conversation:
+    the receptionist was the one voice in the app that always spoke from a
+    studio. The pool opens on how many times this learner has had *this*
+    conversation, which is the same claim the word pool makes one level down,
+    so a first visit to a health centre is a quiet room and the harder
+    deliveries arrive once the encounter itself has stopped being the hard
+    part. Skippable, because nothing marks the words of a line the other side
+    says: the learner answers the beat, and catching a sentence from halfway
+    is the thing the table exists to rehearse rather than a way to be marked
+    down.
+  */
+  const { hearing } = useAudioPrefs();
 
   const log = useRef<HTMLDivElement>(null);
   /*
@@ -245,6 +265,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     */
     setOpened({
       runId: result.runId,
+      plays: result.plays,
       card: { you: result.briefing.you, props: [...result.briefing.props] },
       persona: result.briefing.persona,
       composed: result.composed,
@@ -498,7 +519,17 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                           <Speak
                             text={line.text}
                             voice={voice}
-                            condition={speed !== 1 ? { ...CLEAN, speed } : undefined}
+                            /*
+                              The room, and the pace beside it. `playClip`
+                              takes the two apart: a condition with a room in
+                              it goes through the mixer, which cannot hold a
+                              pitch, so the persona's rate is passed as `rate`
+                              and applies only where the delivery is otherwise
+                              clean. That is the same division the module
+                              already draws between "at speed" and a room.
+                            */
+                            condition={conditionFor(opened?.plays ?? 0, index, hearing, true)}
+                            rate={speed}
                             size={14}
                             autoplay={index === turns.length - 1 && at === turn.lines.length - 1}
                             className="press inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-[var(--raised)]"

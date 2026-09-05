@@ -1125,7 +1125,9 @@ const PHONE: SceneSpec = {
     the shop and the money. `linn-ja-teenused` because a shop that has a thing
     is a shop that has it in stock, which is `kaup`.
   */
-  units: [...COMMON, "suhtlemine", "kodu", "ostmine", "linn-ja-teenused", "plaanid", "omadussonad"],
+  // `kodutood` for `avama` and `sulgema`, which is what a shop's opening
+  // hours are said with and the one thing this call is about.
+  units: [...COMMON, "suhtlemine", "kodu", "ostmine", "linn-ja-teenused", "plaanid", "omadussonad", "kodutood"],
   register: "teie",
   role: "You need something from a shop across town before the weekend, and you ring first rather than go and find it shut. The card says what you are after.",
   props: [
@@ -1338,7 +1340,9 @@ const PHARMACY: SceneSpec = {
     scene tests the same claim, and this is the half of it people meet more
     often: most of what hurts never reaches a doctor.
   */
-  units: [...COMMON, "keha-ja-tervis", "restoranis", "plaanid", "ostmine", "omadussonad", "linn-ja-teenused"],
+  // `minevik` for `ootama`: a pharmacist says "one moment, wait here", and
+  // the eval withheld a line over the polite imperative of it.
+  units: [...COMMON, "keha-ja-tervis", "restoranis", "plaanid", "ostmine", "omadussonad", "linn-ja-teenused", "minevik"],
   register: "teie",
   role: "Something has been hurting since earlier in the week and you would rather not see a doctor for it. You are at the pharmacy counter. The card says what hurts and since when.",
   props: [

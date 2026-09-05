@@ -589,12 +589,24 @@ export async function beginRun(input: {
   sceneId: string;
   level: string;
   difficulty: Difficulty;
-}): Promise<{ runId: string; seed: string; run: SceneRunPlan; briefing: Briefing } | null> {
+}): Promise<{ runId: string; seed: string; run: SceneRunPlan; plays: number; briefing: Briefing } | null> {
   const scene = sceneById(input.sceneId);
   if (!scene) return null;
 
   const seed = randomUUID();
-  const recent = await recencyFor(input.ownerId, scene.id);
+  /*
+    How many times this learner has had this conversation before, which is
+    what opens the hearing pool for it (`lib/audio/conditions.ts`). A word is
+    heard cleanly until it is nearly known and a scene is the same claim one
+    level up: the first time through a health centre is a quiet room, and the
+    café, the phone line and the sentence caught from the middle arrive as the
+    encounter itself stops being the hard part. Counted rather than derived
+    from the recency read, which takes only the last few rows.
+  */
+  const [recent, plays] = await Promise.all([
+    recencyFor(input.ownerId, scene.id),
+    prisma.sceneRun.count({ where: { ownerId: input.ownerId, sceneId: scene.id } }),
+  ]);
   const run = planRun(scene, seed, input.level, input.difficulty, recent);
 
   /*
@@ -630,7 +642,7 @@ export async function beginRun(input: {
     select: { id: true },
   });
 
-  return { runId: created.id, seed, run, briefing: briefingOf(run, glosses) };
+  return { runId: created.id, seed, run, plays, briefing: briefingOf(run, glosses) };
 }
 
 /**

@@ -33,7 +33,6 @@
  * plain numbers and never over `new Date()`, because a card drawn from a seed
  * has to be the same card on a reload.
  */
-import type { CaseKey } from "@/lib/estonian/types";
 
 /**
  * One fact the card carries, before it is drawn.
@@ -52,8 +51,6 @@ export type PropSpec =
       readonly oneOf: readonly string[];
       /** How the card says it, with the gloss standing in for the word. */
       readonly says: string;
-      /** The case a beat will ask this word in, if one does. */
-      readonly grammCase?: CaseKey;
     }
   /**
    * A time of day, on the hour or the half hour, inside a window.
