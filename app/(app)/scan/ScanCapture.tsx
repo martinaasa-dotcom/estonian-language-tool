@@ -228,7 +228,7 @@ export function ScanCapture() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={80}
-            className="mt-2 w-full rounded-[var(--r-lg)] border px-5 py-3 text-base"
+            className="field-lg mt-2 w-full text-base"
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           />
 
@@ -534,7 +534,7 @@ function ScanRow({ row, editing, busy, onToggle, onEdit, onChange, onRecheck }: 
               value={row.en}
               onChange={(e) => onChange({ en: e.target.value })}
               aria-label="English translation"
-              className="w-full rounded-[var(--r-lg)] border px-5 py-3 text-base"
+              className="field-lg w-full text-base"
               style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
             />
           </div>

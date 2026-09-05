@@ -109,10 +109,10 @@ export function ClozeSession() {
             maxLength={MAX_PASSAGE_CHARS}
             onChange={(e) => setText(e.target.value)}
             placeholder="Kleebi siia artikkel, kodutöö või sõnum…"
-            className="mt-2 w-full resize-y rounded-md border px-3.5 py-3 text-base"
+            className="field-lg mt-2 w-full resize-y text-base"
             style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
           />
-          <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="under-field flex items-center justify-between gap-3">
             <DiacriticBar />
             <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
               {text.length}/{MAX_PASSAGE_CHARS}
@@ -241,10 +241,10 @@ export function ClozeSession() {
               autoFocus
               disabled={checked}
               onChange={(e) => setAttempt(e.target.value)}
-              className="mt-2 w-full rounded-md border px-3.5 py-2.5 text-lg disabled:opacity-70"
+              className="field-lg mt-2 w-full text-lg disabled:opacity-70"
               style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
             />
-            {!checked && <div className="mt-2"><DiacriticBar /></div>}
+            {!checked && <div className="under-field"><DiacriticBar /></div>}
           </div>
 
           {checked && (
@@ -272,7 +272,7 @@ export function ClozeSession() {
           )}
         </div>
 
-        <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
+        <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }}>
           {!checked ? (
             <Button variant="primary" className="w-full py-3" disabled={!attempt.trim()} onClick={check}>
               Check <kbd className="ml-1">↵</kbd>

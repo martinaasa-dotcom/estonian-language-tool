@@ -252,10 +252,10 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(); }
               }}
               placeholder="Kirjuta oma lause siia…"
-              className="mt-2 w-full resize-none rounded-md border px-3.5 py-3 text-[17px] disabled:opacity-70"
+              className="field-lg mt-2 w-full resize-none text-[17px] disabled:opacity-70"
               style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
             />
-            {!marked && <div className="mt-2"><DiacriticBar /></div>}
+            {!marked && <div className="under-field"><DiacriticBar /></div>}
           </div>
 
           {error && (
@@ -265,7 +265,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
           {marked && <Feedback marked={marked} />}
         </div>
 
-        <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
+        <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }}>
           {!marked ? (
             <Button
               variant="primary"

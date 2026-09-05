@@ -282,13 +282,13 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
             the first while nothing does.
           */}
           {!revealed && (
-            <div className="mt-3">
+            <div className="under-field pl-16">
               <DiacriticBar standalone={false} fallbackRef={inputs[0]} />
             </div>
           )}
         </div>
 
-        <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
+        <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
           {!revealed ? (
             <Button variant="primary" onClick={check}>
               Check the table <kbd className="ml-1">↵</kbd>

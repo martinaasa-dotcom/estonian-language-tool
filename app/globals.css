@@ -194,6 +194,9 @@
     --r-lg: 22px;
     --r-xl: 30px;
 
+    /* Between a text box and the row of Estonian keys under it. See `.under-field`. */
+    --field-gap: 14px;
+
     --shadow-sm: 0 1px 2px rgb(36 31 53 / 0.04), 0 4px 12px -8px rgb(66 48 150 / 0.18);
     --shadow: 0 1px 2px rgb(36 31 53 / 0.04), 0 14px 34px -18px rgb(66 48 150 / 0.28);
     --shadow-lg: 0 2px 4px rgb(36 31 53 / 0.04), 0 30px 60px -28px rgb(66 48 150 / 0.38);
@@ -732,6 +735,53 @@
     .letters-choice { display: block; }
     [data-letters="off"] .letter-bar { display: none; }
   }
+
+  /*
+    THE AIR BETWEEN A FIELD AND THE KEYS UNDER IT, DECIDED ONCE.
+
+    Eleven screens put the row of six keys under a text box and every one of
+    them typed its own distance, which was 8px on ten of them and 12px on the
+    eleventh. 8px is the rhythm between rows in a list, and a row of 36px
+    circles is not a row in a list: pressed against the bottom edge of a
+    bordered box it read as welded on, which is how a learner described it.
+    `--field-gap` is the one distance and `.under-field` is how a caller asks
+    for it, whether the thing under the field is the bar alone or a row
+    holding the bar and a character count. The wrapper carries it as margin
+    rather than the bar itself, because the bar also stands beside a button
+    on the add-a-word form and under a crossword clue, where there is no field
+    edge to stand off from.
+
+    14px rather than 12 or 16: the key is 36px tall, the field's own inner
+    padding is 14px, and the same distance inside the box and under it is what
+    makes the two read as one control rather than a box with a thing stuck on.
+  */
+  .under-field { margin-top: var(--field-gap); }
+
+  /*
+    ONE SHAPE FOR A TEXT BOX, IN TWO SIZES.
+
+    There were nine. Fields came with px-2.5, px-3, px-3.5, px-4 and px-5,
+    with py-1.5 up to py-4, and on three radii, so the caret sat a different
+    distance in from the edge on every screen that asked for a word and two
+    boxes on one form did not match each other. Every field that takes
+    typing wears one of these now. `.field` is a form's field, the class
+    forms, the calendar, the report form, the dictionary's add-a-word form,
+    at `--r` and 10px by 14px. `.field-lg` is the answer box a round leads
+    with, a search box or an exam paper, at `--r-lg` and 14px by 20px, and
+    it is also what the shared `EstonianInput` wears, so a field beside it
+    on a form matches it. Type size and colour stay with the caller, since a
+    box in a card sits on `--raised` and a box on a page on `--surface`, and
+    that is a fact about the surface under it rather than about the box.
+    The invariant reads every input and textarea in the tree and fails on
+    one that pads itself, so a tenth shape cannot arrive by hand.
+  */
+  .field, .field-lg {
+    border-width: 1px;
+    transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .field { border-radius: var(--r); padding: 10px 14px; }
+  .field-lg { border-radius: var(--r-lg); padding: 14px 20px; }
+  .field:focus, .field-lg:focus { box-shadow: var(--shadow); }
 
   /*
     THE DAILY QUEST'S THREE MOVEMENTS.

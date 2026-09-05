@@ -423,7 +423,7 @@ export function SentenceCheck({
         onChange={(e) => onMeaning(e.target.value)}
         placeholder="What you meant, in English (optional but it helps)"
         aria-label="What you meant, in English"
-        className="mt-2 w-full rounded-md border px-3.5 py-2.5 text-base"
+        className="field-lg mt-2 w-full text-base"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       {/*

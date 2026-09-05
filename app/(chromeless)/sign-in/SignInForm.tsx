@@ -137,7 +137,7 @@ export function SignInForm({ emailLink }: { emailLink: boolean }) {
               required
               autoComplete="email"
               placeholder="you@example.com"
-              className="w-full rounded-[var(--r-lg)] border px-4 py-3 text-sm"
+              className="field-lg w-full text-sm"
               style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
             />
             <Button
