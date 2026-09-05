@@ -1,8 +1,8 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { notFound } from "next/navigation";
 import {
-  ArrowRight, BadgeCheck, FileWarning, Info, Repeat, TrendingDown, TrendingUp, Trophy,
-  TriangleAlert,
+  ArrowRight, BadgeCheck, Check, FileWarning, Info, Repeat, TrendingDown, TrendingUp, Trophy,
+  TriangleAlert, X,
 } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { attemptById, bestAt, previousAttempt } from "@/lib/progress/exam";
@@ -17,6 +17,7 @@ import { ButtonLink } from "@/components/Button";
 import { Card, Chip, Meter, Note, Page, Ring, SectionTitle } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
 import { AnuReading } from "./AnuReading";
+import { VERDICT_CLASS } from "@/lib/ux/verdict";
 
 export const metadata = { title: "Exam result" };
 
@@ -345,22 +346,26 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
               const et = mark.language !== "en";
               return (
               <Card as="li" key={mark.itemId} className="!py-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                {/* The answer and what was written, each in the palette's own
+                    word for it (lib/ux/verdict.ts), with an icon beside each
+                    so a hue is never the only thing carrying the difference.
+                    This list used to be two bare coloured words on a card,
+                    which is how no other marked list in the app is drawn. */}
+                <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className="text-md"
-                    style={{ color: "var(--mint-ink)" }}
+                    className={`${VERDICT_CLASS.right} inline-flex items-center gap-1.5 rounded-[var(--r-sm)] px-2 py-1 text-md`}
                     lang={et ? "et" : undefined}
                   >
+                    <Check size={14} aria-label="The answer" />
                     {mark.expected}
                   </span>
-                  <span className="text-sm" style={{ color: "var(--ink-3)" }}>
-                    you wrote{" "}
-                    <span
-                      lang={et ? "et" : undefined}
-                      style={{ color: "var(--peach-ink)" }}
-                    >
-                      {mark.given || NO_VALUE}
-                    </span>
+                  <span className="text-sm" style={{ color: "var(--ink-3)" }}>you wrote</span>
+                  <span
+                    className={`${VERDICT_CLASS.wrong} inline-flex items-center gap-1.5 rounded-[var(--r-sm)] px-2 py-1 text-sm`}
+                    lang={et && mark.given ? "et" : undefined}
+                  >
+                    <X size={14} aria-label="Your answer" />
+                    {mark.given || NO_VALUE}
                   </span>
                 </div>
                 {mark.note && (

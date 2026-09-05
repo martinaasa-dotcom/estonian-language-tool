@@ -9,6 +9,7 @@ import { useFeedbackSound } from "@/components/AudioPrefs";
 import { plainAsk } from "@/lib/estonian/plainAsk";
 import { shuffle } from "@/lib/random/shuffle";
 import { gradeCard } from "@/app/actions";
+import { OPTION_CLASS } from "@/lib/ux/verdict";
 
 export interface EmojiPair {
   id: string;
@@ -76,7 +77,7 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
   const [tiles] = useState<Tile[]>(() => layOut(initialPairs));
   const [picked, setPicked] = useState<Tile | null>(null);
   const [matched, setMatched] = useState<ReadonlySet<string>>(() => new Set());
-  const [wrong, setWrong] = useState<string | null>(null);
+  const [wrong, setWrong] = useState<readonly string[]>([]);
   const [misses, setMisses] = useState(0);
   /** Pairs a wrong try has already touched, so a match after one grades Hard. */
   const missedPairs = useRef<Set<string>>(new Set());
@@ -122,9 +123,9 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
     setMisses((n) => n + 1);
     missedPairs.current.add(picked.pairId);
     missedPairs.current.add(tile.pairId);
-    setWrong(tile.key);
+    setWrong([picked.key, tile.key]);
     setPicked(null);
-    window.setTimeout(() => setWrong(null), 420);
+    window.setTimeout(() => setWrong([]), 420);
   }, [phase, picked, matched, pairs, sound]);
 
   if (phase === "ready") {
@@ -211,7 +212,7 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
         <span className="flex items-center gap-2 text-sm font-semibold tabular-nums" style={{ color: "var(--ink-2)" }}>
           <Timer size={15} aria-hidden /> {elapsed}s
         </span>
-        <Chip tone={matched.size === pairs.length ? "good" : "hard"}>
+        <Chip tone={matched.size === pairs.length ? "good" : "neutral"}>
           {matched.size} of {pairs.length}
         </Chip>
       </div>
@@ -242,13 +243,19 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
                 by somebody for whom the picture is nothing at all.
               */
               aria-label={tile.side === "word" ? pair.form : undefined}
-              className={`choice-btn flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-[var(--r-lg)] p-3 ${
-                wrong === tile.key ? "emoji-shake" : ""}`}
+              /*
+                A solved pair turns mint and then leaves; a wrong pair turns
+                peach and shakes. Both used to be motion alone, a fade and a
+                shake with no colour on either, on the one board in the app
+                that said nothing in the palette's own words for right and
+                wrong. The fade waits long enough for the mint to be seen.
+              */
+              className={`choice-btn ${gone ? `pop-in ${OPTION_CLASS.right}` : wrong.includes(tile.key) ? `emoji-shake ${OPTION_CLASS.wrong}` : ""} flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-[var(--r-lg)] p-3`}
               style={{
                 opacity: gone ? 0 : 1,
                 pointerEvents: gone ? "none" : undefined,
-                transition: "opacity 220ms ease",
-                ...(chosen
+                transition: gone ? "opacity 260ms ease 480ms" : "opacity 220ms ease",
+                ...(chosen && !gone
                   ? { ["--choice-bg" as string]: "var(--accent-soft)", color: "var(--accent-deep)" }
                   : {}),
               }}

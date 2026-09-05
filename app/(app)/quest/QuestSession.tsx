@@ -11,6 +11,7 @@ import { useFeedbackSound } from "@/components/AudioPrefs";
 import type { Badge } from "@/lib/achievements/badges";
 import type { QuestCard } from "@/lib/progress/quest";
 import { acceptedAnswers } from "@/lib/estonian/answer";
+import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
 
 /** Two minutes, which is what was asked for and is about right for 24 cards. */
 const DURATION_S = 120;
@@ -323,9 +324,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
                 const chosen = picked === option.text;
                 const isAnswer = revealed && acceptedAnswers(card.back, "et")
                   .some((f) => f.toLocaleLowerCase("et") === option.text.toLocaleLowerCase("et"));
-                const tone = !revealed
-                  ? null
-                  : isAnswer ? "good" : chosen ? "again" : null;
+                const state = revealed ? OPTION_CLASS[optionState(isAnswer, chosen)] : "";
                 return (
                   <button
                     key={option.text}
@@ -333,12 +332,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
                     lang="et"
                     onClick={() => choose(option)}
                     disabled={busy || picked !== null}
-                    className="choice-btn flex items-center justify-between gap-2 rounded-[var(--r)] border px-4 py-3 text-left text-lg font-semibold"
-                    style={{
-                      borderColor: tone ? `var(--${tone}-ink)` : "var(--rule)",
-                      background: tone ? `var(--${tone}-soft)` : "var(--surface)",
-                      color: tone ? `var(--${tone}-ink)` : "var(--ink)",
-                    }}
+                    className={`choice-btn ${state} flex items-center justify-between gap-2 rounded-[var(--r)] border px-4 py-3 text-left text-lg font-semibold`}
                   >
                     <span>{option.text}</span>
                     {revealed && isAnswer
@@ -361,12 +355,24 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
                 <Speak text={card.back.split(" / ")[0]!.trim()} />
               </div>
               <div className="mt-2 grid w-full max-w-sm grid-cols-2 gap-2">
-                <Button onClick={() => void answer(false)} disabled={busy}>
+                {/* The two self-grades in the palette's own words, as Sprint
+                    and the review card draw them. */}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void answer(false)}
+                  className={`${VERDICT_CLASS.wrong} press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
+                >
                   Missed it <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">1</kbd>
-                </Button>
-                <Button variant="primary" onClick={() => void answer(true)} disabled={busy}>
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void answer(true)}
+                  className={`${VERDICT_CLASS.right} press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
+                >
                   Had it <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">2</kbd>
-                </Button>
+                </button>
               </div>
             </>
           ) : (

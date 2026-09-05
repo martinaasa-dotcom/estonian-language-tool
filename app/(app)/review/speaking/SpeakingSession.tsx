@@ -13,6 +13,7 @@ import { SpeakPair } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { xpForRating } from "@/lib/gamification/xp";
 import { SELF_GRADES, type RatingValue } from "@/lib/srs/scheduler";
+import { VERDICT_CLASS, verdictOfRating } from "@/lib/ux/verdict";
 
 export interface SpeakingCard {
   cardId: string;
@@ -24,14 +25,6 @@ export interface SpeakingCard {
   /** True when `et` is a whole sentence rather than a single word. */
   isSentence: boolean;
 }
-
-// Inks, not hues: these colour text on the matching soft tint.
-const TONE: Record<number, string> = {
-  1: "var(--again-ink)", 2: "var(--hard-ink)", 3: "var(--good-ink)", 4: "var(--easy-ink)",
-};
-const TONE_SOFT: Record<number, string> = {
-  1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
-};
 
 /**
  * Say it out loud.
@@ -242,8 +235,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
                   type="button"
                   disabled={busy}
                   onClick={() => void submit(g.rating)}
-                  className="press flex items-center justify-center rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
-                  style={{ background: TONE_SOFT[g.rating], color: TONE[g.rating] }}
+                  className={`${VERDICT_CLASS[verdictOfRating(g.rating)]} press flex items-center justify-center rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
                 >
                   <span className="text-base font-bold">{g.label}</span>
                 </button>

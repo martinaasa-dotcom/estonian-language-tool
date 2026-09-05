@@ -10,6 +10,7 @@ import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
+import { VERDICT_CLASS } from "@/lib/ux/verdict";
 
 export interface SprintCard {
   id: string;
@@ -195,7 +196,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
         </Link>
         <div
           className="tnum flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold"
-          style={{ background: secondsLeft <= 10 ? "var(--again-soft)" : "var(--raised)", color: secondsLeft <= 10 ? "var(--again)" : "var(--ink-2)" }}
+          style={{ background: secondsLeft <= 10 ? "var(--peach-soft)" : "var(--raised)", color: secondsLeft <= 10 ? "var(--peach-ink)" : "var(--ink-2)" }}
         >
           <Timer size={14} aria-hidden /> {secondsLeft}s
         </div>
@@ -252,8 +253,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 type="button"
                 disabled={busy}
                 onClick={() => void answer(1)}
-                className="press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40"
-                style={{ background: "var(--again-soft)", color: "var(--again-ink)" }}
+                className={`${VERDICT_CLASS.wrong} press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
               >
                 Missed it <kbd className="ml-1">⌫</kbd>
               </button>
@@ -261,8 +261,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
                 type="button"
                 disabled={busy}
                 onClick={() => void answer(3)}
-                className="press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40"
-                style={{ background: "var(--good-soft)", color: "var(--good-ink)" }}
+                className={`${VERDICT_CLASS.right} press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
               >
                 Got it <kbd className="ml-1">Enter</kbd>
               </button>

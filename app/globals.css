@@ -1224,6 +1224,60 @@
   .choice-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
 
   /*
+    A VERDICT, PAINTED ONCE.
+
+    Three words for what happened to an answer and three states for an option
+    once the answer is known, named in `lib/ux/verdict.ts` and painted here and
+    nowhere else. Every screen that marks an answer wears one of these rather
+    than reaching for the tokens itself, because twenty screens reaching for
+    them by hand produced four verdicts written in the fill at 2.2:1, one round
+    that never marked the option the learner pressed, and a near miss painted
+    the same peach as a blank.
+
+    The tint and the ink, always: the fill paints a bar or a button, the tint
+    paints a panel, and the ink is the hue walked down until it clears 4.5:1 on
+    that tint (docs/14-design-system.md, "Every hue has an ink"). In the dark
+    theme the ink is the hue, and these flip with the tokens.
+
+    An option reads the semantic aliases (`--good`, `--again`) rather than the
+    hue names, so the rating scale and the marked answer can never drift apart.
+    The right one carries an edge in the fill as well as the tint, since it is
+    the one thing on the screen worth reading twice; the one the learner
+    pressed instead carries the tint and a thin edge and nothing more, so the
+    two are never the same weight. The rest step back. They set `--choice-bg`
+    and `--choice-border` as well as the properties, so a `.choice-btn` and a
+    bare box both read them; a settled option is disabled, which is what keeps
+    the hover rule above out of the way.
+  */
+  .verdict-right { background: var(--good-soft); color: var(--good-ink); }
+  .verdict-nearly { background: var(--hard-soft); color: var(--hard-ink); }
+  .verdict-wrong { background: var(--again-soft); color: var(--again-ink); }
+  .option-right {
+    --choice-bg: var(--good-soft);
+    --choice-border: var(--good);
+    background: var(--good-soft);
+    border-color: var(--good);
+    color: var(--good-ink);
+    box-shadow: inset 0 0 0 1px var(--good);
+  }
+  .option-wrong {
+    --choice-bg: var(--again-soft);
+    --choice-border: var(--again);
+    background: var(--again-soft);
+    border-color: var(--again);
+    color: var(--again-ink);
+    box-shadow: none;
+  }
+  .option-other {
+    --choice-bg: var(--raised);
+    --choice-border: transparent;
+    background: var(--raised);
+    border-color: transparent;
+    color: var(--ink-3);
+    box-shadow: none;
+  }
+
+  /*
     An option that stays chosen, which a multiple-choice answer never is.
 
     `components/Choice.tsx` asks the settings and first-run questions, where
