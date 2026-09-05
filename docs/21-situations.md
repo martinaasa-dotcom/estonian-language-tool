@@ -1550,7 +1550,7 @@ and `haiguseid`, and both are Estonian.
 
 That is the whole value of running this before Phase 1 rather than after it. All three gaps were in
 the morphology the app can produce, all three were invisible from inside the app, and all three were
-found by watching a model try to hold a conversation. 814 forms, on the same 6,110 words.
+found by watching a model try to hold a conversation. 814 forms, and no new word with them.
 
 ### What this says about Phase 1
 

@@ -225,7 +225,7 @@ without saying so.
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
 
-- **Dictionary**, 6,110 words (A1 to C2) with principal parts, consonant gradation and the
+- **Dictionary**, 6,116 words (A1 to C2) with principal parts, consonant gradation and the
   full case table worked out from the genitive. Search an inflected form you met in class,
   `toas`, `lugesin`, `tubadega`, `helistab`, and it finds the word *and* tells you which form you
   typed.

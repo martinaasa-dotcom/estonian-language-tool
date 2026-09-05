@@ -12,6 +12,7 @@ import { cardInPlay, counterBeat, datumLine, replyFor, stageFor, wantsFreshLine 
 import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "@/lib/scenes/state";
 import { personaById, type PersonaSpec } from "@/lib/scenes/personas";
 import { DEFAULT_VOICE } from "@/lib/audio/voice";
+import { glossSentences } from "@/lib/dict/glossed";
 import { MAX_WORDS } from "@/lib/scenes/retrieval";
 
 /**
@@ -200,8 +201,39 @@ export async function POST(request: Request) {
     echo: last?.matched?.[0] ?? null,
     met: state.done.length,
   });
-  const answer = (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>
-    Response.json({ ...progress, lines, ...extra }, { headers: NO_STORE });
+  /*
+    THE OTHER SIDE'S LINE, WITH THE DICTIONARY UNDER IT.
+
+    `lib/dict/glossed.ts` argues that an attested sentence a beginner can read
+    one word of is the sentence doing the opposite of its job, and it was
+    built for the first meeting of a word. The screen that needed it most had
+    none: a receptionist says a sentence and the learner either knows it or
+    is stuck, in the one place in the app where being stuck is the point of
+    the exercise. So every Estonian line the other side says is glossed the
+    same way, by the same module, at the same standard: `matchEstonianForm`
+    decides at the confidence a photographed page has to clear (ADR-021), a
+    word it will not vouch for is printed plain, and what opens is the
+    dictionary's own headword rather than a reading of this sentence.
+
+    It cannot hand over the answer, and that is a property rather than a
+    hope: `bank.test.ts` and the drafter both refuse a line containing the
+    form the beat is about to ask for, so what is glossed is the question.
+
+    One query per turn, bounded by `WORD_BUDGET`, on a route that already
+    reads the run and may call a model.
+  */
+  const glossedLines = async (lines: readonly SpokenLine[]) => {
+    const spoken = lines.filter((l) => l.provenance !== "unspoken" && l.provenance !== "english");
+    if (spoken.length === 0) return lines;
+    const tokens = await glossSentences(spoken.map((l) => ({ et: l.text, form: null })));
+    const byText = new Map(spoken.map((l, i) => [l.text, tokens[i]]));
+    return lines.map((l) => {
+      const found = byText.get(l.text);
+      return found ? { ...l, tokens: found } : l;
+    });
+  };
+  const answer = async (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>
+    Response.json({ ...progress, lines: await glossedLines(lines), ...extra }, { headers: NO_STORE });
 
   /*
     Which beat the ladder is asked for: the hurdle where one stands, and once

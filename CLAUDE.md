@@ -771,7 +771,7 @@ matching set while `formMap` keeps taking one, and the two infinitives joined `V
 their parallels alone. Safe because both sets belong to one `wordId`: a homonym is a different word
 with its own id, which is what the pinning is for, while two matching sets under one id are two
 ways the same word inflects, `haigus` with `haigusi` and `haiguseid`. 167 of the 2,057 sets the
-course reads have a second, and the three together are 814 more forms on the same 6,110 words.
+course reads have a second, and the three together are 814 more forms on the words already there.
 
 **And the tie-break in the scanner is a separate question that was measured and left alone.**
 `matchEstonianForm` scores a diacritic-folded lemma at 90 and a stored form at 88, so `oli` resolves

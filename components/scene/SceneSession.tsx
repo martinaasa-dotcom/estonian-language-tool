@@ -9,6 +9,8 @@ import { Card } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
 import { Speak } from "@/components/Speak";
 import { conditionFor } from "@/lib/audio/conditions";
+import { GlossedSentence } from "@/components/GlossedSentence";
+import type { GlossedToken } from "@/lib/dict/glossed";
 import { useAudioPrefs } from "@/components/AudioPrefs";
 import { beginScene, finishScene, sceneHelp } from "@/app/actions";
 import type { SceneSpec } from "@/lib/scenes/types";
@@ -51,6 +53,12 @@ interface Line {
   readonly text: string;
   readonly provenance: Provenance;
   readonly reaction?: true;
+  /**
+   * The line read word by word, so a learner can open any word the
+   * dictionary vouches for without leaving the conversation. Absent on a
+   * stage direction, and on any line the route could not gloss.
+   */
+  readonly tokens?: GlossedToken[];
 }
 
 type Turn =
@@ -505,29 +513,46 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                 spoken(line) ? (
                   <div key={at} className="max-w-full">
                     <Card className="inline-block max-w-full">
+                      {/*
+                        Spoken in the persona's voice (§6), in the room this
+                        scene is heard in, and the newest line plays itself
+                        where the learner has autoplay on: a turn was just
+                        pressed, so the gesture the browser wants has
+                        happened. A second persona in a scene would be a
+                        second voice, which is how an interruption reads as a
+                        second person.
+
+                        The room and the pace go separately, because
+                        `playClip` takes the two apart: a condition with a
+                        room in it goes through the mixer, which cannot hold a
+                        pitch, so the persona's rate applies only where the
+                        delivery is otherwise clean.
+                      */}
+                      {line.tokens ? (
+                        /*
+                          The line with the dictionary under it, which is the
+                          same component a first meeting uses and at the same
+                          standard. A learner who cannot read what was said to
+                          them is stuck in the one place being stuck is not
+                          the exercise.
+                        */
+                        <GlossedSentence
+                          tokens={line.tokens}
+                          sentence={line.text}
+                          speak={{
+                            voice,
+                            condition: conditionFor(opened?.plays ?? 0, index, hearing, true),
+                            rate: speed,
+                            autoplay: index === turns.length - 1 && at === turn.lines.length - 1,
+                          }}
+                        />
+                      ) : (
                       <p lang={spokenEstonian(line) ? "et" : "en"} className="flex items-center gap-2">
                         <span>{line.text}</span>
-                        {/*
-                          Spoken in the persona's voice (§6), and the newest
-                          line plays itself where the learner has autoplay on:
-                          a turn was just pressed, so the gesture the browser
-                          wants has happened. A second persona in a scene
-                          would be a second voice, which is how an
-                          interruption reads as a second person.
-                        */}
                         {spokenEstonian(line) && (
                           <Speak
                             text={line.text}
                             voice={voice}
-                            /*
-                              The room, and the pace beside it. `playClip`
-                              takes the two apart: a condition with a room in
-                              it goes through the mixer, which cannot hold a
-                              pitch, so the persona's rate is passed as `rate`
-                              and applies only where the delivery is otherwise
-                              clean. That is the same division the module
-                              already draws between "at speed" and a room.
-                            */
                             condition={conditionFor(opened?.plays ?? 0, index, hearing, true)}
                             rate={speed}
                             size={14}
@@ -536,6 +561,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                           />
                         )}
                       </p>
+                      )}
                     </Card>
                     {/*
                       Where the line came from, in words rather than a chip
