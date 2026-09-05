@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
-import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { parseExamples, usableExamples, type Example } from "@/lib/dict/examples";
+import { borrowedSentences } from "@/lib/dict/facts";
 import { askableSlots, flashTask, hasSentence, type FlashWord } from "@/lib/games/flash";
 import { masteryFor, type MasteredWord } from "@/lib/progress/mastery";
 import { MASTERY_CORRECT, MASTERY_ORDER } from "@/lib/srs/mastery";
@@ -101,7 +102,7 @@ export default async function FlashcardsPage() {
     shortfall out of a longer list is one query; discovering it afterwards
     would be another.
   */
-  const [lexemes, cards] = await Promise.all([
+  const [lexemes, cards, borrowed] = await Promise.all([
     prisma.lexeme.findMany({
       where: { id: { in: lexemeIds } },
       select: {
@@ -118,6 +119,10 @@ export default async function FlashcardsPage() {
       select: { id: true, lexemeId: true, cardType: true, targetCase: true },
       orderBy: { id: "asc" },
     }),
+    // The sentences each word may borrow from the rest of the dictionary, so
+    // a form is shown in use wherever a lexicographer wrote it, not only
+    // where one wrote it under this headword. See lib/dict/borrow.ts.
+    borrowedSentences(),
   ]);
 
   const byLexeme = new Map(lexemes.map((l) => [l.id, l]));
@@ -132,6 +137,7 @@ export default async function FlashcardsPage() {
     if (prompts.length >= ROUND) break;
     const prompt = promptFor(
       word, byLexeme.get(word.lexemeId), cardsFor.get(word.lexemeId) ?? [], prompts.length,
+      borrowed.get(word.lexemeId) ?? [],
     );
     if (prompt) prompts.push(prompt);
   }
@@ -170,6 +176,8 @@ function promptFor(
   cards: { id: string; lexemeId: string | null; cardType: string; targetCase: string | null }[],
   /** Where this word sits in the round, which is half of what varies the case. */
   offset: number,
+  /** Sentences recorded under other words that carry one of this word's forms. */
+  borrowed: readonly Example[] = [],
 ): FlashPrompt | null {
   if (!lexeme || cards.length === 0) return null;
 
@@ -180,7 +188,9 @@ function promptFor(
     pos: lexeme.pos,
     semanticTypes: lexeme.semanticTypes,
     forms: lexeme.forms,
-    examples: usableExamples(parseExamples(lexeme.examples)),
+    // The word's own sentences first, then the borrowed ones, so `sentenceFor`
+    // reaches a usage filed under the word before one filed under another.
+    examples: [...usableExamples(parseExamples(lexeme.examples)), ...borrowed],
   };
 
   /*

@@ -19,6 +19,7 @@ import { cohortKind } from "@/lib/classroom/cohort";
 import { EXAM_LEVELS, type ExamLevel } from "@/lib/exam/spec";
 import { loadRecentMessages } from "@/lib/tutor/history";
 import { mergeExamples, parseExamples, serialiseExamples, MAX_CHARS as EXAMPLE_MAX_CHARS } from "@/lib/dict/examples";
+import { borrowedSentences } from "@/lib/dict/facts";
 import { lookupAndStore } from "@/lib/dict/lookup";
 import { upsertLexemeWithForms } from "@/lib/dict/upsert";
 import { requireAdminId } from "@/lib/auth/admin";
@@ -133,10 +134,15 @@ export async function addToDeck(lexemeId: string, types: CardType[], source = "D
 async function addCardsFor(
   owner: string, lexemeId: string, types: CardType[], source: string,
 ) {
-  const lexeme = await prisma.lexeme.findUnique({
-    where: { id: lexemeId },
-    include: { forms: true },
-  });
+  const [lexeme, borrowed] = await Promise.all([
+    prisma.lexeme.findUnique({
+      where: { id: lexemeId },
+      include: { forms: true },
+    }),
+    // The sentences this word may borrow for its case and conjugation cards,
+    // a cached fact about the shared dictionary. See lib/dict/borrow.ts.
+    borrowedSentences(),
+  ]);
   if (!lexeme) return { ok: false as const, error: "That word no longer exists." };
 
   /*
@@ -181,8 +187,9 @@ async function addCardsFor(
     });
     const seen = new Set(existing.map((c) => `${c.cardType}|${c.front}`));
 
-    const generated = generateCards(lexeme as LexemeForCards, types)
-      .filter((c) => !seen.has(`${c.cardType}|${c.front}`));
+    const generated = generateCards(
+      { ...(lexeme as LexemeForCards), borrowed: borrowed.get(lexemeId) ?? [] }, types,
+    ).filter((c) => !seen.has(`${c.cardType}|${c.front}`));
     if (generated.length === 0) return 0;
 
     await tx.card.createMany({

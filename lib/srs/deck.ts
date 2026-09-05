@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { unitById } from "@/lib/collections/syllabus";
 import { prisma } from "@/lib/db";
 import { generateCards, type CardType, type GeneratedCard, type LexemeForCards } from "@/lib/srs/cards";
-import { alsoAcceptedByLemma } from "@/lib/dict/facts";
+import { alsoAcceptedByLemma, borrowedSentences } from "@/lib/dict/facts";
 import { emptyScheduling } from "@/lib/srs/scheduler";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
@@ -172,7 +172,7 @@ async function loadLexemes(lemmas: readonly string[]): Promise<DeckLexeme[]> {
     keeps this a fixed number of queries, which is the rule a deck build is
     already held to.
   */
-  const [rows, alsoAccepted] = await Promise.all([
+  const [rows, alsoAccepted, borrowed] = await Promise.all([
     prisma.lexeme.findMany({
       where: { lemma: { in: [...lemmas] } },
       select: {
@@ -192,6 +192,10 @@ async function loadLexemes(lemmas: readonly string[]): Promise<DeckLexeme[]> {
       },
     }),
     alsoAcceptedByLemma(),
+    // And the sentences each word may borrow from the rest of the dictionary
+    // for its case and conjugation cards, which is the same kind of fact and
+    // cached the same way. See lib/dict/borrow.ts.
+    borrowedSentences(),
   ]);
 
   /*
@@ -205,6 +209,7 @@ async function loadLexemes(lemmas: readonly string[]): Promise<DeckLexeme[]> {
   return oneEntryPerLemma(rows, lemmas).map((row) => ({
     ...row,
     alsoAccepted: alsoAccepted.get(`${row.lemma}|${row.pos}`) ?? [],
+    borrowed: borrowed.get(row.id) ?? [],
   }));
 }
 

@@ -850,6 +850,43 @@ have rewritten as well as the ones it cannot; run against a seeded local databas
 cards on four words came back as one rewritten and ten named, the twelfth being `isa → milles?`,
 which the older rule already knew about.
 
+**A sentence recorded under another word is still a lexicographer's sentence, and a word may
+borrow it.** The rule above made the sentence the card and left most words with nothing to cut one
+from: a word's own usages are a handful, Ekilex filed three under `ravim` and none in a case, and the
+dictionary ships twelve thousand natural sentences that are about every word in them, not only the
+headword each was filed under. `lib/dict/borrow.ts` lends a word the sentences recorded under other
+entries that carry one of its forms, for the two cards that are about a form, and `formSentencesFor`
+in the builder reads the word's own first and the borrowed pool behind them. Measured over the
+shipped dictionary: 996 case cards over 914 words became 1,546 over 1,327, and 539 conjugation cards
+over 427 verbs became 821 over 496, with nothing written and no source added. `ravim → millega?`
+became `Organism harjus ____ ja see ei toiminud enam.` on the same deployment where it had been named
+for removal.
+
+**The spelling has to belong to this word and no other, and the claim index over-reaches on
+purpose.** A word's own usages are about the word, so a form found in one is that word's; a sentence
+found across the dictionary makes no such promise. `Tolm ajas aevastama` carries `ajas`, which is
+the inessive of `aeg` and the past of `ajama`, and the sentence means the second. So a spelling is
+claimed by every entry whose forms reach it and a sentence is lent only for a spelling exactly one
+entry claims, and the index claims more than `gapForms` reaches: the simple past is derived nowhere
+in this app, since `tahtsin` goes to `tahtis`, but a *refusal* can afford to over-reach, so a verb
+also claims its stored first-person past with the `in` taken off. A claim too many costs a
+sentence; a claim too few costs a wrong card. What it cannot see is a homograph the dictionary does
+not hold at all, and that is the residual; `npm run audit:questions` builds the borrowed cards with
+the rest, 10,887 in the deck section now against 9,711. The pool is a fact about the shared
+dictionary, so `borrowedSentences` in `lib/dict/facts.ts` caches it, and an invariant holds every
+path that builds a form card to being handed it: the deck build, the single add, the flash round,
+the seed's repair and both audits. The gap-fill card keeps to the word's own sentences, because it
+hides whatever form a sentence happens to hold and is capped at two a word, so widening its pool
+would change how big a deck is without teaching a form the word could not already show.
+
+**Tatoeba was measured for the same job and left out, with the number written down.** Its Estonian
+export is 6,315 sentences under CC BY, and a whole-sentence gate through the dictionary at the
+scanned-page standard passes 149 of them, because the corpus is full of `Tom` and the dictionary's
+claim index does not carry the short forms of `olema` and the pronouns outside the course harvest.
+Those 149 add 27 case cards. A new table, a licence credit in four places and a second source of
+provenance are not worth 27 cards; the sentences a native speaker writes through
+`docs/20-contributed-sentences.md` are the source that changes this number.
+
 **The flash round leads with the sentence for the same reason, and it had it backwards.** It opened
 every word on the bare ask and reached the gap on the second correct answer, on the argument that
 the plainest shape opens the pool. The same learner said the ask was still not specific enough:
@@ -5006,7 +5043,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `repairCaseFronts`,
-`unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`. Most of them now
+`unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`, `claimIndex`,
+`borrowedSentences`, `formSentencesFor`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

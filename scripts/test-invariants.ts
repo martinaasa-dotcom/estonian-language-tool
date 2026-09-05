@@ -1050,6 +1050,61 @@ check("a bare case card is rewritten into a sentence, or reported", () => {
   );
 });
 
+/**
+ * A SENTENCE RECORDED UNDER ANOTHER WORD IS STILL A LEXICOGRAPHER'S SENTENCE,
+ * AND EVERY BUILDER IS HANDED THE SAME POOL.
+ *
+ * A case card is cut from a sentence carrying the form, and a word's own
+ * usages are a handful; `lib/dict/borrow.ts` lends a word the sentences filed
+ * under other words that carry a spelling only it claims. Measured over the
+ * shipped dictionary: 996 case cards became 1,546 and 539 conjugation cards
+ * became 821, with nothing written. Two things hold it. The claim index
+ * over-reaches on the simple past, because `ajas` is the inessive of `aeg` and
+ * the past of `ajama` and only a claim from the verb keeps the sentence off
+ * the noun. And every path that builds a form card is handed the pool, since
+ * a builder that is not is the deck asking for a card the seed's repair would
+ * make and the audit would count, which is the `objekt` fault one layer down.
+ */
+check("a word borrows sentences under one rule, and every builder is handed them", () => {
+  const rule = code("lib/dict/borrow.ts");
+  const claims = rule.slice(rule.indexOf("export function claimIndex"), rule.indexOf("export function borrowSentences"));
+  assert.match(
+    claims,
+    /PAST_1SG/,
+    "claimIndex no longer claims a verb's past off its stored first person, so `Tolm ajas " +
+    "aevastama` is lent to `aeg` as its inessive",
+  );
+  assert.match(
+    rule,
+    /claimed\.size !== 1/,
+    "borrowSentences lends a sentence for a spelling more than one entry claims",
+  );
+
+  const builder = code("lib/srs/cards.ts");
+  assert.match(
+    builder.slice(builder.indexOf("function formSentencesFor")),
+    /lex\.borrowed/,
+    "lib/srs/cards.ts no longer reads the borrowed pool for its form cards",
+  );
+
+  const handed: Record<string, RegExp> = {
+    "lib/srs/deck.ts": /borrowedSentences\(\)/,
+    "app/actions.ts": /borrowedSentences\(\)/,
+    "app/(app)/review/flashcards/page.tsx": /borrowedSentences\(\)/,
+    "prisma/repair.ts": /borrowSentences\(/,
+    "scripts/audit-decks.ts": /borrowSentences\(/,
+    "scripts/audit-questions.ts": /borrowSentences\(/,
+  };
+  for (const [file, call] of Object.entries(handed)) {
+    assert.match(
+      code(file),
+      call,
+      `${file} builds form cards without the sentences the word may borrow, so it builds ` +
+      "fewer cards than the seed's repair and the audits count",
+    );
+  }
+});
+
 check("every generator that picks a case asks which ones the word takes", () => {
   const askers = [
     "lib/srs/cards.ts",
@@ -10211,7 +10266,7 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
 
   assert.match(
     caseBlock,
-    /naturalSentencesFor\(lex\)/,
+    /formSentencesFor\(lex\)/,
     "lib/srs/cards.ts builds a case card without asking for a sentence to build it out " +
     "of. That is the `ravim → millesse? kuhu?` fault: a form nobody can be shown " +
     "using is a form this app cannot teach.",
@@ -10249,7 +10304,7 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
   );
   assert.match(
     verbBlock,
-    /naturalSentencesFor\(lex\)/,
+    /formSentencesFor\(lex\)/,
     "lib/srs/cards.ts builds a conjugation card without a sentence to build it out of, " +
     "which is `lugema → olevik · ta` again: a suffix on a stem with nothing saying why.",
   );

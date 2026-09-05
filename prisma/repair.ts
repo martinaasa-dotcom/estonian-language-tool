@@ -39,6 +39,8 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { alsoAcceptedByLemma, sharedPrompts } from "../lib/collections/senses";
 import { generateCards, isBareCaseFront, type LexemeForCards } from "../lib/srs/cards";
+import { borrowSentences } from "../lib/dict/borrow";
+import { parseExamples } from "../lib/dict/examples";
 
 /** Postgres binds at most 65,535 parameters, and each row here spends three. */
 const CHUNK = 500;
@@ -146,13 +148,30 @@ export async function repairCaseFronts(prisma: PrismaClient): Promise<number> {
   });
   if (bare.length === 0) return 0;
 
+  /*
+    And what each word may borrow from the rest of the dictionary, read off
+    the same client rather than the cached fact in `lib/dict/facts.ts`, since
+    the seed runs on its own connection. The builder is asked with the same
+    pool the deck builder asks it with, or a repaired card and a fresh one
+    would stop being the same card. See lib/dict/borrow.ts.
+  */
+  const all = await prisma.lexeme.findMany({
+    select: {
+      id: true, lemma: true, pos: true, examples: true,
+      forms: { select: { formType: true, value: true, morphCode: true } },
+    },
+  });
+  const borrowed = borrowSentences(all.map((r) => ({
+    key: r.id, lemma: r.lemma, pos: r.pos, forms: r.forms, examples: parseExamples(r.examples),
+  })));
+
   const rows: { id: string; from: string; front: string; hint: string | null; back: string }[] = [];
   const builtFor = new Map<string, Map<string, { front: string; hint: string | null; back: string }>>();
   for (const card of bare) {
     if (!card.lexeme || !card.lexemeId || !card.targetCase || !isBareCaseFront(card.front)) continue;
     let byCase = builtFor.get(card.lexemeId);
     if (!byCase) {
-      const lex: LexemeForCards = card.lexeme;
+      const lex: LexemeForCards = { ...card.lexeme, borrowed: borrowed.get(card.lexemeId) ?? [] };
       byCase = new Map(
         generateCards(lex, ["CASE_FORM"])
           .filter((c) => c.targetCase)

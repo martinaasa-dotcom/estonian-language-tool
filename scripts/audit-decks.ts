@@ -76,6 +76,8 @@
 import { prisma } from "../lib/db";
 import { acceptedAnswers } from "../lib/estonian/answer";
 import { retirableCaseCards, unsentencedCaseCards, type Retirement } from "../lib/srs/retire";
+import { borrowSentences } from "../lib/dict/borrow";
+import { parseExamples } from "../lib/dict/examples";
 
 const write = process.argv.includes("--write");
 
@@ -91,7 +93,7 @@ async function main() {
   const cards = await prisma.card.findMany({
     where: { cardType: "CASE_FORM", lexemeId: { not: null } },
     select: {
-      id: true, back: true, front: true, ownerId: true, targetCase: true,
+      id: true, back: true, front: true, ownerId: true, targetCase: true, lexemeId: true,
       lexeme: {
         select: {
           lemma: true, translation: true, pos: true, semanticTypes: true,
@@ -155,7 +157,27 @@ async function main() {
     under the fault its reader knows. This one needs the whole entry, which is
     why the query above reads more than the first two need.
   */
-  for (const gone of unsentencedCaseCards(cards)) {
+  /*
+    With the sentences each word may borrow from the rest of the dictionary,
+    because the builder is given them too: a card the deck builder can make
+    is not a card to remove. See lib/dict/borrow.ts.
+  */
+  const all = await prisma.lexeme.findMany({
+    select: {
+      id: true, lemma: true, pos: true, examples: true,
+      forms: { select: { formType: true, value: true, morphCode: true } },
+    },
+  });
+  const borrowed = borrowSentences(all.map((r) => ({
+    key: r.id, lemma: r.lemma, pos: r.pos, forms: r.forms, examples: parseExamples(r.examples),
+  })));
+  const withBorrowed = cards.map((card) => ({
+    ...card,
+    lexeme: card.lexeme && card.lexemeId
+      ? { ...card.lexeme, borrowed: borrowed.get(card.lexemeId) ?? [] }
+      : card.lexeme,
+  }));
+  for (const gone of unsentencedCaseCards(withBorrowed)) {
     condemn({
       id: gone.id,
       lemma: gone.lemma,
