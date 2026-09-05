@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FALLBACK_PHRASE, REACTIONS } from "./catalogue";
 import { fallbackLine, type SpokenLine } from "./line";
-import { datumLine, replyFor, reaction, stageFor, wantsFreshLine, type ReplyInput } from "./reply";
+import { cardInPlay, counterBeat, datumLine, replyFor, reaction, stageFor, wantsFreshLine, type ReplyInput } from "./reply";
 import { caseKeyFor, type Lexicon } from "./lexicon";
 import type { RoleCard } from "./props";
 import type { BeatSpec } from "./types";
@@ -300,5 +300,47 @@ describe("a curveball in the way", () => {
   it("is said in English, as a line, where the curveball is the switch to English", () => {
     const lines = replyFor(input({ answered: ASK, hurdle: { beat: hurdle, line: null, said: "Sorry, what was that?" } }));
     expect(lines.at(-1)).toEqual({ text: "Sorry, what was that?", provenance: "english" });
+  });
+});
+
+describe("a second offer", () => {
+  const offers: BeatSpec = {
+    ...OFFER,
+    says: [{ lemma: "kell" }, { slot: "time" }],
+    counter: {
+      they: "They offer {time2} instead and ask whether that one works.",
+      says: [{ lemma: "kell" }, { slot: "time2" }],
+      replaces: [["time", "time2"]],
+    },
+  };
+  const card: RoleCard = {
+    ...CARD,
+    props: [...CARD.props, { slot: "time2", card: "", literal: ["10:00"], lemmas: [], value: "10:00" }],
+  };
+
+  it("is spoken as the beat's counter, under an id of its own, off the second slot", () => {
+    const second = counterBeat(offers);
+    expect(second.id).toBe("offer:counter");
+    expect(datumLine(second, card)?.text).toBe("Kell 10:00?");
+    expect(stageFor(second, card)).toBe("They offer 10:00 instead and ask whether that one works.");
+    expect(counterBeat(OFFER)).toBe(OFFER);
+  });
+
+  it("is said fresh and never as the first offer again", () => {
+    const line = datumLine(counterBeat(offers), card)!;
+    const lines = replyFor(input({ beat: counterBeat(offers), answered: offers, response: "counter", reading: "declined", line, heard: "Kell 14:30?" }));
+    expect(texts(lines)).toEqual(["Kell 10:00?"]);
+    const none = replyFor(input({ beat: counterBeat(offers), answered: offers, response: "counter", reading: "declined", line: NOTHING, heard: "Kell 14:30?" }));
+    expect(none.at(-1)).toMatchObject({ provenance: "unspoken" });
+    expect(texts(none)).not.toContain("Kell 14:30?");
+  });
+
+  it("stands the second offer's values in for the first on every later line, and leaves the card itself alone", () => {
+    const inPlay = cardInPlay(card, [offers], ["offer"])!;
+    expect(inPlay.props.find((p) => p.slot === "time")?.value).toBe("10:00");
+    expect(card.props.find((p) => p.slot === "time")?.value).toBe("14:30");
+    expect(cardInPlay(card, [offers], [])).toBe(card);
+    expect(cardInPlay(card, [offers], undefined)).toBe(card);
+    expect(datumLine(offers, inPlay)?.text).toBe("Kell 10:00?");
   });
 });

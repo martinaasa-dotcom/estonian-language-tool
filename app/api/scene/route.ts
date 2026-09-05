@@ -8,7 +8,7 @@ import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
 import { MAX_TURNS, MAX_TURN_CHARS, readDraw, replay, sceneContext } from "@/lib/progress/scene";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { sceneLine, type SpokenLine } from "@/lib/scenes/line";
-import { datumLine, replyFor, stageFor, wantsFreshLine } from "@/lib/scenes/reply";
+import { cardInPlay, counterBeat, datumLine, replyFor, stageFor, wantsFreshLine } from "@/lib/scenes/reply";
 import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "@/lib/scenes/state";
 import { personaById, type PersonaSpec } from "@/lib/scenes/personas";
 import { DEFAULT_VOICE } from "@/lib/audio/voice";
@@ -135,6 +135,13 @@ export async function POST(request: Request) {
     learner is asked for, and the beat waits behind it (`raiseHurdle`).
   */
   const standing = state.hurdle ? hurdleBeat(state.hurdle) : null;
+  /*
+    The offer was turned down and they offer again: the beat is spoken as
+    its counter, and from here on every line reads the second offer's values
+    off the card, so a time read back later is the one that was accepted.
+  */
+  const speaking = response === "counter" && current?.counter ? counterBeat(current) : current;
+  const card = cardInPlay(draw?.card ?? null, scene.beats, state.countered);
   const last = state.turns[state.turns.length - 1] ?? null;
   const answered = last ? scene.beats.find((b) => b.id === last.beatId) ?? null : null;
   const heard = last?.heard ?? null;
@@ -178,7 +185,7 @@ export async function POST(request: Request) {
     not wanted (§16).
   */
   const reply = (line: SpokenLine | null) => replyFor({
-    beat: current,
+    beat: speaking,
     hurdle: standing
       ? { beat: standing, line: standing === spokenFor ? line : null, said: hurdleSpec(state)?.said }
       : null,
@@ -187,7 +194,7 @@ export async function POST(request: Request) {
     reading: progress.reading,
     line,
     heard,
-    card: draw?.card ?? null,
+    card,
     translates: persona?.translates ?? false,
     acknowledges: persona?.acknowledges ?? true,
     echo: last?.matched?.[0] ?? null,
@@ -201,7 +208,7 @@ export async function POST(request: Request) {
     the scene is over, the farewell, since somebody who said goodbye first is
     still owed one back.
   */
-  const spokenFor = standing ?? current ?? (answered?.move === "close" ? answered : undefined);
+  const spokenFor = standing ?? speaking ?? (answered?.move === "close" ? answered : undefined);
   if (!spokenFor) return answer(reply(null));
   if (!wantsFreshLine(turns.length > 0 ? response : null, heard)) return answer(reply(null));
   const beat = spokenFor;
@@ -238,7 +245,7 @@ export async function POST(request: Request) {
   const cheap = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
   if (cheap.provenance !== "fallback") return answer(reply(cheap));
   // A line the beat can say out of course words and the card's own values: `Teisipäeval kell 13:30?`.
-  const dealt = datumLine(beat, draw?.card ?? null, context.lexicon);
+  const dealt = datumLine(beat, card, context.lexicon);
   if (dealt) return answer(reply(dealt));
 
   /*
@@ -272,7 +279,7 @@ export async function POST(request: Request) {
     compose: (avoid) => compose(chain, {
       ownerId,
       move: beat.move,
-      they: stageFor(beat, draw?.card ?? null),
+      they: stageFor(beat, card),
       register: scene.register,
       words: [...context.lexicon.byLemma.keys()],
       /*

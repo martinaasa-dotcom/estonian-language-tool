@@ -1970,8 +1970,22 @@ the question the beat wanted, the reaction is the move that answers it, never `J
 `14:30` is read as the time it is, which it was not: `words()` returns letters, a turn with none was
 "unrecognised" before the datum rule was consulted, and the datum rule had already found it.
 
-Driven offline against the harvest, the transcript above now meets all seven beats and ends on the
-outcome that says so. What it does not fix: a learner who says the time will not do is told goodbye
-rather than offered another, since a second offer is a branch and the machine is a line, and every
+**And a no gets a second offer.** The first version of this pass read `ei sobi` as the beat met,
+since the goal allows saying it will not do, and the landlord said goodbye. Nobody does that: a
+person who hears no tries another day. So a beat can carry a `counter`, what the other side does
+when the offer is turned down, with its own parts off the card, and the card deals a second day and
+a second time drawn to differ from the first (`differentFrom`). The marker reads a no on such a beat
+as `declined` before it reads anything else, because `Ei sobi` holds the very word that accepts the
+offer and would otherwise accept it. The machine counters once, at no cost to patience, and a second
+no is the learner saying it will not do, which meets the beat. `counter.replaces` names which of the
+card's values the second offer stands in for, and `cardInPlay` is the view of the card every later
+line reads, so the receptionist's `Kell 14:00.` reads back the time that was accepted rather than
+the one that was refused. The route speaks the beat as `counterBeat` on that turn, under an id of
+its own, so nothing drafted for the first offer is said as the second.
+
+Driven offline against the harvest: the transcript above meets all seven beats and ends on the
+outcome that says so; `Ei sobi` then `Sobib` does the same by way of `Reedel kell 11:30?`; `Ei sobi`
+then `Ei` ends on `Hästi.` and the farewell with the beat met. What it does not fix: there is one
+counter and not a negotiation, since a third offer is a branch and the machine is a line, and every
 line the bank holds is still `reviewed: false`.
 

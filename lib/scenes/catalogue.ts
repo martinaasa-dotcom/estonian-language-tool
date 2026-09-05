@@ -144,6 +144,8 @@ const DOCTOR: SceneSpec = {
       says: "It started earlier this week, on this day.",
     },
     { kind: "time", slot: "time", from: 9, to: 16 },
+    // The second slot they offer when the first will not do, and never the same one.
+    { kind: "time", slot: "time2", from: 8, to: 16, differentFrom: "time" },
   ],
   curveballs: [
     "slot-gone", "small-talk", "faster", "queue", "not-possible",
@@ -207,10 +209,19 @@ const DOCTOR: SceneSpec = {
         time alone, so the one word a receptionist is waiting for was read as
         Estonian off the point and the time was offered again.
       */
+      /*
+        And a no gets another time rather than the end of the conversation:
+        a receptionist who hears "ei sobi" looks for the next free slot.
+      */
+      counter: {
+        they: "They offer {time2} instead and ask whether that one works.",
+        says: [{ lemma: "kell" }, { slot: "time2" }],
+        replaces: [["time", "time2"]],
+      },
       needs: [{ kind: "anyOf", of: [
         { kind: "datum", slot: "time" },
+        { kind: "datum", slot: "time2" },
         { kind: "lemma", oneOf: ["sobima", "hea", "jah"] },
-        { kind: "negation" },
       ] }],
       required: true,
       patience: 2,
@@ -307,6 +318,13 @@ const LANDLORD: SceneSpec = {
       oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
       says: "The day they can come.",
     },
+    // The second offer, for a tenant who says the first will not do: another day, another time.
+    {
+      kind: "weekday", slot: "day2", theirs: true, differentFrom: "day",
+      oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
+      says: "The other day they can come.",
+    },
+    { kind: "time", slot: "time2", from: 8, to: 18, differentFrom: "time" },
   ],
   /*
     No queue: this one is a telephone call, so the only curveball in the
@@ -393,11 +411,22 @@ const LANDLORD: SceneSpec = {
         anybody come" names a day or it has not answered.
       */
       says: [{ slot: "day", grammCase: "ADESSIVE" }, { lemma: "kell" }, { slot: "time" }],
+      /*
+        "Ei sobi" is not the end of the call. A landlord who hears it offers
+        another day, and only a second no is the tenant saying it will not
+        do, which is what the goal allows.
+      */
+      counter: {
+        they: "They offer {day2} at {time2} instead and ask whether that works.",
+        says: [{ slot: "day2", grammCase: "ADESSIVE" }, { lemma: "kell" }, { slot: "time2" }],
+        replaces: [["day", "day2"], ["time", "time2"]],
+      },
       needs: [{ kind: "anyOf", of: [
         { kind: "datum", slot: "time" },
         { kind: "datum", slot: "day" },
+        { kind: "datum", slot: "time2" },
+        { kind: "datum", slot: "day2" },
         { kind: "lemma", oneOf: ["sobima", "hea", "jah"] },
-        { kind: "negation" },
       ] }],
       required: true,
       patience: 2,
@@ -419,7 +448,7 @@ const LANDLORD: SceneSpec = {
     {
       id: "fixed",
       when: ["greet", "problem", "where", "since", "refuse", "agree", "close"],
-      says: "They know what is broken, where, and since when, and you settled between you when somebody comes.",
+      says: "They know what is broken, where and since when, and you talked through when somebody comes.",
     },
     {
       id: "logged",

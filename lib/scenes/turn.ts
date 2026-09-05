@@ -48,7 +48,14 @@ export type TurnReading =
   /** Their own line handed back. Answered once, and advances nothing. */
   | "echo"
   /** One word where a person would have said a sentence. A look, and a wait. */
-  | "fragment";
+  | "fragment"
+  /**
+   * A no, on a beat that has something else to offer. Not a miss and not the
+   * beat met: the other side counters, once, and only a second no is the
+   * learner saying it will not do. Read only where the beat carries a
+   * `counter`, so a no anywhere else is whatever the requirements make it.
+   */
+  | "declined";
 
 /** One word of a turn, and whether the scene's own list could vouch for it. */
 export interface TurnWord {
@@ -214,6 +221,19 @@ export function readTurn(
   */
   const phraseBeat = beat.move === "greet" || beat.move === "close";
   if (!phraseBeat && isEcho(spoken, context.previous)) return shape("echo");
+  /*
+    A NO ON AN OFFER IS A NO, WHATEVER ELSE IS IN THE TURN. `Ei sobi` holds a
+    form of `sobima`, which is the word that accepts the offer, so read by the
+    requirements alone it would accept it. Before them, on a beat that has a
+    counter to make, and with nothing marked met, because a turn that
+    declined is not evidence the learner produced the word the beat wanted.
+  */
+  if (beat.counter && spoken.some((word) => context.negators.has(word))) {
+    return {
+      reading: "declined", met: beat.needs.map(() => false),
+      missing: beat.needs.map((_, i) => i), words: marked, matched: [],
+    };
+  }
   /*
     A fragment is Estonian the scene knows, cut short. Two words it cannot
     vouch for at all are not a short answer, they are a turn nobody could

@@ -29,7 +29,7 @@ function lemmasOf(scene: (typeof SCENES)[number]): string[] {
   const out: string[] = [];
   for (const beat of scene.beats) {
     out.push(...beat.topic);
-    for (const part of beat.says ?? []) if ("lemma" in part) out.push(part.lemma);
+    for (const part of [...(beat.says ?? []), ...(beat.counter?.says ?? [])]) if ("lemma" in part) out.push(part.lemma);
     for (const { need } of leafNeeds(beat.needs)) {
       if (need.kind === "lemma") out.push(...need.oneOf);
       if (need.kind === "case") out.push(need.lemma);
@@ -132,9 +132,12 @@ describe("the scene catalogue", () => {
     for (const scene of SCENES) {
       const slots = new Set(scene.props.map((prop) => prop.slot));
       for (const beat of scene.beats) {
-        for (const part of beat.says ?? []) {
+        for (const part of [...(beat.says ?? []), ...(beat.counter?.says ?? [])]) {
           if (!("slot" in part)) continue;
           expect(slots.has(part.slot), `${scene.id}/${beat.id} says a slot the card never deals`).toBe(true);
+        }
+        for (const [from, to] of beat.counter?.replaces ?? []) {
+          expect(slots.has(from) && slots.has(to), `${scene.id}/${beat.id} counters with a slot the card never deals`).toBe(true);
         }
       }
     }

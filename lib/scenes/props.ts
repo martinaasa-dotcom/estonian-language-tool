@@ -55,8 +55,18 @@ export type PropSpec =
       /** The case a beat will ask this word in, if one does. */
       readonly grammCase?: CaseKey;
     }
-  /** A time of day, on the hour or the half hour, inside a window. */
-  | { readonly kind: "time"; readonly slot: string; readonly from: number; readonly to: number }
+  /**
+   * A time of day, on the hour or the half hour, inside a window.
+   * `differentFrom` names an earlier slot whose value this one may not
+   * repeat, so a second offer is a second time.
+   */
+  | {
+      readonly kind: "time";
+      readonly slot: string;
+      readonly from: number;
+      readonly to: number;
+      readonly differentFrom?: string;
+    }
   /**
    * A weekday, as one of the course's own weekday lemmas.
    *
@@ -73,6 +83,8 @@ export type PropSpec =
       readonly oneOf: readonly string[];
       readonly says: string;
       readonly theirs?: true;
+      /** An earlier slot this one may not repeat: the second day offered is another day. */
+      readonly differentFrom?: string;
     }
   /** A plain number: a floor, a room, an amount. */
   | { readonly kind: "number"; readonly slot: string; readonly min: number; readonly max: number; readonly says: string }
@@ -192,7 +204,20 @@ export function drawCard(
   random: () => number,
   avoid: ReadonlySet<string> = new Set(),
 ): RoleCard {
-  return { you, props: specs.map((spec) => drawProp(spec, random, avoid)) };
+  const props: DrawnProp[] = [];
+  for (const spec of specs) {
+    /*
+      A slot drawn to differ from an earlier one adds that one's value to
+      what it avoids. `pick` prefers a fresh candidate, so the two differ
+      wherever the pool has two, and a pool of one repeats rather than fails.
+    */
+    const other = "differentFrom" in spec && spec.differentFrom
+      ? props.find((p) => p.slot === spec.differentFrom)?.value
+      : undefined;
+    const shun = other ? new Set([...avoid, other]) : avoid;
+    props.push(drawProp(spec, random, shun));
+  }
+  return { you, props };
 }
 
 /** The slot a beat's `datum` requirement names, as the marker wants it. */

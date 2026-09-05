@@ -252,3 +252,30 @@ describe("a phrase that answers the question", () => {
     expect(readTurn("valu valu", wants, context()).reading).toBe("fragment");
   });
 });
+
+describe("a no on an offer that has a counter", () => {
+  const offer = beat({
+    id: "agree", shape: "word",
+    counter: { they: "They offer another time.", replaces: [["time", "time2"]] },
+    needs: [{ kind: "anyOf", of: [{ kind: "datum", slot: "time" }, { kind: "lemma", oneOf: ["valu"] }] }],
+  });
+  const ctx = context({ data: new Map([["time", new Set(["14:30"])]]) });
+
+  it("is read as declined, and marks nothing met even where the accepting word is in the turn", () => {
+    for (const said of ["Ei", "Ei sobi", "ei valu"]) {
+      const seen = readTurn(said, offer, ctx);
+      expect(seen.reading, said).toBe("declined");
+      expect(seen.met).toEqual([false]);
+      expect(seen.matched).toEqual([]);
+    }
+  });
+
+  it("is only ever read on a beat that has something else to offer", () => {
+    const plain = beat({ ...offer, counter: undefined });
+    expect(readTurn("Ei", plain, ctx).reading).not.toBe("declined");
+  });
+
+  it("does not stop a yes being a yes", () => {
+    expect(readTurn("14:30", offer, ctx).reading).toBe("complete");
+  });
+});

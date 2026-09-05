@@ -194,6 +194,25 @@ export interface BeatSpec {
    * learner reported as the landlord agreeing to nothing in particular.
    */
   readonly says?: readonly SaysPart[];
+  /**
+   * What they say when the learner turns the offer down: a second offer.
+   *
+   * A person who hears "ei sobi" does not take it as the end of the
+   * conversation, they try another day. So a beat that can be declined says
+   * what the other side does instead, from their side, and how, as parts off
+   * the card the way `says` is: the second day and the second time are
+   * props of their own, drawn to differ from the first. The marker reads a
+   * no on such a beat as `declined` rather than as the beat met, the machine
+   * makes the counter once, and a second no is the learner saying it will
+   * not do, which the goal allows. `replaces` names which of the card's
+   * values the counter stands in for, so a later beat that reads the time
+   * back (`Kell 10:30.`) reads the one that was actually accepted.
+   */
+  readonly counter?: {
+    readonly they: string;
+    readonly says?: readonly SaysPart[];
+    readonly replaces: readonly (readonly [from: string, to: string])[];
+  };
   /** What counts as the learner's turn being complete. */
   readonly needs: readonly Requirement[];
   /** Required beats are the objectives; optional ones are the colour. */

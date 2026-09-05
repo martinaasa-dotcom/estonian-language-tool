@@ -22,7 +22,7 @@ import { prisma } from "../lib/db";
 import { SCENES, FALLBACK_PHRASE } from "../lib/scenes/catalogue";
 import { replay, sceneContext, type StoredDraw } from "../lib/progress/scene";
 import { planRun } from "../lib/scenes/run";
-import { replyFor, datumLine } from "../lib/scenes/reply";
+import { replyFor, datumLine, cardInPlay, counterBeat } from "../lib/scenes/reply";
 import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "../lib/scenes/state";
 import { sceneLine } from "../lib/scenes/line";
 import { PERSONAS } from "../lib/scenes/personas";
@@ -69,7 +69,9 @@ async function main() {
             } catch (e) { bad(`${scene.id} ${difficulty} replay threw: ${(e as Error).message}`); break; }
             const beat = currentBeat(scene, state);
             const standing = state.hurdle ? hurdleBeat(state.hurdle) : null;
-            const spokenFor = standing ?? beat;
+            const speaking = response === "counter" && beat?.counter ? counterBeat(beat) : beat;
+            const card = cardInPlay(draw.card, scene.beats, state.countered);
+            const spokenFor = standing ?? speaking;
             let line = null;
             if (spokenFor) {
               const cheap = await sceneLine({
@@ -78,15 +80,15 @@ async function main() {
                 hasFiniteVerb: context.hasFiniteVerb, fallback: context.fallback,
                 scripted: context.scripted.get(spokenFor.id) ?? [], used: new Set(),
               });
-              line = cheap.provenance !== "fallback" ? cheap : (datumLine(spokenFor, draw.card, context.lexicon) ?? cheap);
+              line = cheap.provenance !== "fallback" ? cheap : (datumLine(spokenFor, card, context.lexicon) ?? cheap);
             }
             const last = state.turns[state.turns.length - 1] ?? null;
             const answered = last ? scene.beats.find((b) => b.id === last.beatId) ?? null : null;
             let lines;
             try {
               lines = replyFor({
-                beat, answered: turns.length ? answered : null, response: turns.length ? response : null,
-                reading: last?.reading ?? null, line, heard: last?.heard ?? null, card: draw.card,
+                beat: speaking, answered: turns.length ? answered : null, response: turns.length ? response : null,
+                reading: last?.reading ?? null, line, heard: last?.heard ?? null, card,
                 translates: persona.translates, acknowledges: persona.acknowledges,
                 echo: last?.matched?.[0] ?? null, met: state.done.length,
                 hurdle: standing ? { beat: standing, line: standing === spokenFor ? line : null, said: hurdleSpec(state)?.said } : null,

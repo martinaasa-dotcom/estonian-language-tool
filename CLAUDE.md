@@ -3869,6 +3869,10 @@ joined here, so the offer is `Teisipäeval kell 14:00?` and is withheld whole wh
 missing; the day is a prop marked `theirs`, stored with the draw and never printed on the card,
 with the dictionary's English beside it for the stage direction; a two-word turn that meets the
 beat is an answer and a turn the beat wanted as a question gets no `Jah.` in front of the move.
+And a no is not the end of the call: a beat can carry a `counter`, the marker reads `ei sobi` on
+such a beat as `declined` before it reads the `sobi` in it, the machine offers again once off a
+second day and time drawn to differ from the first, a second no meets the beat, and `cardInPlay`
+is what every later line reads so a time read back is the one that was accepted.
 `docs/21-situations.md` §33 is the transcript and what it does not fix.
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
@@ -4989,7 +4993,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
-`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `leafNeeds`, `caseForm`. Most of them now
+`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

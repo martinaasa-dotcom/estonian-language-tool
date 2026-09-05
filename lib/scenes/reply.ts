@@ -144,6 +144,48 @@ export function datumLine(beat: BeatSpec, card: RoleCard | null, lexicon?: Lexic
 }
 
 /**
+ * The beat as the other side speaks it after the offer was turned down: the
+ * counter's own stage direction and parts, under an id of its own so nothing
+ * drafted for the first offer is said as the second. The route hands this to
+ * the ladder and to `replyFor` where the response is `counter`.
+ */
+export function counterBeat(beat: BeatSpec): BeatSpec {
+  if (!beat.counter) return beat;
+  const { they, says } = beat.counter;
+  const { lines: _lines, ...rest } = beat;
+  return { ...rest, id: `${beat.id}:counter`, they, ...(says ? { says } : {}) };
+}
+
+/**
+ * The card with every countered beat's values stood in for by its second
+ * offer's, so a line that reads the time back reads the one that was
+ * accepted. The card itself is never rewritten: the draw is what a reload and
+ * the debrief read, and this is a view of it for the lines said after a
+ * counter.
+ */
+export function cardInPlay(
+  card: RoleCard | null,
+  beats: readonly BeatSpec[],
+  countered: readonly string[] | undefined,
+): RoleCard | null {
+  if (!card || !countered || countered.length === 0) return card;
+  const swaps = new Map<string, string>();
+  for (const beat of beats) {
+    if (!countered.includes(beat.id) || !beat.counter) continue;
+    for (const [from, to] of beat.counter.replaces) swaps.set(from, to);
+  }
+  if (swaps.size === 0) return card;
+  return {
+    ...card,
+    props: card.props.map((prop) => {
+      const to = swaps.get(prop.slot);
+      const stand = to ? propBySlot(card, to) : undefined;
+      return stand ? { ...stand, slot: prop.slot } : prop;
+    }),
+  };
+}
+
+/**
  * Whether the route has to walk the ladder at all for this turn.
  *
  * A turn nobody understood, a turn in English and a one-word turn are all
@@ -250,7 +292,7 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     out.push({ text: heard, provenance: "again" });
   } else if (line && line.provenance !== "fallback") {
     out.push(line);
-  } else if (heard && response !== "answer" && response !== "moveOn") {
+  } else if (heard && response !== "answer" && response !== "moveOn" && response !== "counter") {
     out.push({ text: heard, provenance: "again" });
   } else {
     out.push(stage(stageFor(beat, card), line?.withheld));
