@@ -14,8 +14,8 @@ import { revealAnswer } from "./lib/review.mjs";
  * confident number computed from six reviews.
  */
 const B = baseUrl();
-// Floor: 45, measured in the state CI seeds. A thinner database reads as short.
-const { check, absent, done } = suite("Teaching layer", { floor: 46 });
+// Floor: 55, measured in the state CI seeds. A thinner database reads as short.
+const { check, absent, done } = suite("Teaching layer", { floor: 56 });
 
 const browser = await launchChromium();
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 1100 } })).newPage();
@@ -115,6 +115,70 @@ check("the drill for this case is one click away",
 await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
 check("a case in the dictionary links to its explanation",
   (await page.locator('a[href^="/grammar/"]').count()) > 0);
+
+// ─── Where the pattern stops ──────────────────────────────────────────────────
+
+/*
+  The reference teaches "three memorised, eleven worked out", and the thing it
+  did not say is where that stops holding. `caseAnswer` prefers an attested form
+  over the rule, so the same page that taught the ending `sse` printed `tuppa`,
+  and a learner was left to work out which of the two to reach for tomorrow.
+
+  What is checked is the chain rather than any one screen: the reference points
+  at the area, the area is built out of the dictionary rather than a list, one
+  word's own entry says where that word departs, and the round refuses to ask
+  for a form that is spelled like the word in the question.
+*/
+await page.goto(`${B}/grammar`, { waitUntil: "networkidle" });
+check("the reference says where the endings stop",
+  (await page.locator('a[href="/grammar/exceptions"]').count()) > 0);
+
+await page.goto(`${B}/grammar/exceptions`, { waitUntil: "networkidle" });
+const areaBody = (await page.textContent("body")) ?? "";
+check("the area counts the words rather than claiming a number",
+  /\d[\d,]* graded words in this dictionary break a pattern/.test(areaBody), areaBody.slice(0, 0));
+check("it groups them by what breaks",
+  (await page.locator('a[href^="/grammar/exceptions/"]').count()) >= 3,
+  `${await page.locator('a[href^="/grammar/exceptions/"]').count()} kinds`);
+
+const stemCard = await page.locator('a[href="/grammar/exceptions/stem"]').first().innerText();
+// The count is a chip, and a chip is set in `label-xs`, which uppercases.
+check("a kind names the words under its own count", /\d+ near you/i.test(stemCard), stemCard.split("\n")[0]);
+
+await page.goto(`${B}/grammar/exceptions/stem`, { waitUntil: "networkidle" });
+const stemBody = (await page.textContent("body")) ?? "";
+check("a kind's page lists real entries from the dictionary",
+  (await page.locator('a[href^="/dictionary?q="]').count()) > 0,
+  `${await page.locator('a[href^="/dictionary?q="]').count()} words`);
+/*
+  A word with several exceptions says so. `aeg` breaks four patterns, and a page
+  about one of them that mentions none of the others sends somebody away with a
+  quarter of the word.
+*/
+check("a word that breaks more than one pattern says which",
+  /This word also breaks/.test(stemBody));
+
+// The entry for one word, which is where a learner meets this without looking
+// for it: the same explanation, beside the table it is about.
+await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
+const entryBody = (await page.textContent("body")) ?? "";
+check("the entry says where that word breaks the pattern",
+  /Where this word breaks the pattern/.test(entryBody));
+check("and prints the other form only because it is also right",
+  /is right too, and is what the ending gives you/.test(entryBody));
+
+await page.goto(`${B}/review/exceptions`, { waitUntil: "networkidle" });
+const roundBody = (await page.textContent("body")) ?? "";
+const met = await page.locator("h1.sr-only, h1").first().innerText();
+check("the round has a heading of its own", met.trim().length > 0, met.trim());
+/*
+  The first rung teaches and grades nothing, which is the rule the review card
+  learned the expensive way: a form somebody has just been shown cannot be
+  recalled, only met.
+*/
+check("the round opens by showing the form rather than asking for it",
+  /This one is not what the ending would give you/.test(roundBody)
+  && (await page.locator("#answer").count()) === 0);
 
 // ─── Dictation ────────────────────────────────────────────────────────────────
 

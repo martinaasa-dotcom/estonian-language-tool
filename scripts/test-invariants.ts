@@ -11695,6 +11695,100 @@ check("a verdict is painted once, in the tint and the ink", () => {
   }
 });
 
+/*
+  THE EXCEPTION AREA IS A READING OF THE DICTIONARY, NOT A LIST SOMEBODY TYPED.
+
+  `/grammar/exceptions` says which words the ending rule does not reach, and the
+  obvious way to build that page is a table of words. It is also the one way
+  this app may not build it: a hand-written list of Estonian forms is this app
+  writing Estonian, and a misspelling in it would ship in silence and then be
+  drilled (ADR-005). `lib/estonian/exceptions.ts` states the pattern per slot
+  and reports the words whose stored form disagrees, so the whole area is
+  derived from `Lexeme` and `Form` on every request and there is nothing to go
+  stale, which is ADR-014's rule about progress in a different room.
+
+  Three things hold it up, and each was made to fail before it was trusted.
+*/
+check("the exceptions are read off the dictionary and never written down", () => {
+  const rules = code("lib/estonian/exceptions.ts");
+  // Pure, like every other module in lib/estonian: the rules are a comparison
+  // between two strings the dictionary already holds.
+  assert.doesNotMatch(rules, /from "@\/lib\/db"|prisma/i, "lib/estonian/exceptions.ts reached for the database");
+
+  // Nothing is stored. A column would be a second source of truth for a fact
+  // that is a string comparison away, and it would be wrong the moment somebody
+  // corrected an entry by hand.
+  const schema = read("prisma/schema.prisma");
+  assert.doesNotMatch(
+    schema, /\bmodel\s+\w*Exception\w*\b|\bexceptionKind\b/,
+    "the schema grew a column for something derived from the forms beside it",
+  );
+
+  // Every screen that names one reads the module rather than its own list.
+  const namers = [...APP, ...COMPONENTS].filter(
+    (file) => /\bExceptionKind\b|\bKIND_NOTES\b|\bexceptionsFor\(|\bexceptionGroups?\(/.test(code(file)),
+  );
+  assert.ok(namers.length >= 4, `only ${namers.length} screens name an exception; the area has been renamed`);
+  for (const file of namers) {
+    assert.match(
+      code(file),
+      /from "@\/lib\/estonian\/exceptions"|from "@\/lib\/progress\/exceptions"|from "@\/lib\/games\/exceptions"|from "@\/components\/WordExceptions"/,
+      `${file} names an exception without reading the module that finds them`,
+    );
+  }
+});
+
+/*
+  AND NO SCREEN PRINTS THE FORM THE PATTERN WOULD HAVE GIVEN, UNLESS IT IS ALSO
+  A WORD.
+
+  Showing the rule's answer beside the real one is the obvious way to teach an
+  exception and it is right exactly once: both illatives are Estonian, a course
+  teaches them as a pair, and `caseAnswer` accepts either. Everywhere else the
+  rule's answer is a form nobody says, and printing one with a line through it
+  is this app writing Estonian and hoping nobody memorised it.
+
+  `ruleFormIsAlsoRight` is the guard and this is what stops it being optional,
+  in the shape the readiness card's evidence tier is asserted in: anchored on
+  the member access rather than on the word, because a file that mentions the
+  rule in a comment and prints the form anyway satisfies anything looser.
+*/
+check("a rule's own form is printed only where it is also right", () => {
+  const readers = [...APP, ...COMPONENTS, ...LIB].filter((file) => /\.ruleForm\b/.test(code(file)));
+  assert.ok(readers.length >= 2, "nothing reads a rule form any more; the guard has been renamed");
+  for (const file of readers) {
+    assert.match(
+      code(file),
+      /\.ruleFormIsAlsoRight\b/,
+      `${file} prints what the pattern would have given without asking whether it is a word`,
+    );
+  }
+});
+
+/*
+  AND THE ROUND NEVER ASKS FOR A FORM SPELLED LIKE THE WORD IN THE QUESTION.
+
+  The short illative is spelled like a principal part for 1,937 of the 2,700
+  words that have one, because that is what the case does, so `Euroopa` goes to
+  `Euroopa`. Showing that is the point of the reference page and asking it is a
+  card printing its own answer, which the scheduler then reads as a recall.
+  `drillable` is the rule, `npm run audit:questions` is the backstop that found
+  it, and this is what keeps the round asking.
+*/
+check("the exceptions round asks nothing whose answer is the word in the question", () => {
+  const round = code("lib/games/exceptions.ts");
+  assert.match(round, /export function drillable\(/, "drillable has gone from the round builder");
+  assert.match(
+    round, /pool\.filter\(drillable\)/,
+    "the round builder stopped filtering its pool through drillable",
+  );
+  // The audit builds the same tasks and asks the same question of them.
+  assert.match(
+    code("scripts/audit-questions.ts"), /drillable\(/,
+    "audit:questions stopped covering the exceptions round",
+  );
+});
+
 /**
  * A WORD IS FAVOURITED BY ONE BUTTON, AND THE TOGGLE HAS ONE CALLER.
  *
