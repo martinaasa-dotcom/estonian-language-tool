@@ -30,6 +30,7 @@
     "audit:verbs": "tsx scripts/audit-verbs.ts",
     "audit:senses": "tsx scripts/audit-senses.ts",
     "audit:cases": "tsx scripts/audit-cases.ts",
+    "audit:exceptions": "tsx scripts/audit-exceptions.ts",
     "test:mobile": "node scripts/test-mobile.mjs",
     "test:containment": "node scripts/test-containment.mjs",
     "wordlist": "tsx scripts/build-wordlist.ts",

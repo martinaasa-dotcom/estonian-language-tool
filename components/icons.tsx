@@ -5,7 +5,7 @@ import {
   Hourglass, House, Landmark, Languages, Layers, Library, Link, Map, MessageCircleQuestion,
   MessageSquareWarning, MessagesSquare, Mic, Moon, Mountain, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
   ScrollText, Settings, ShoppingBag, SlidersHorizontal, Sparkles, Stamp, Stethoscope, Sun,
-  Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap, type LucideIcon,
+  Sunrise, Swords, Target, Trees, TrendingUp, TriangleAlert, Trophy, Users, Utensils, WifiOff, Zap, type LucideIcon,
 } from "lucide-react";
 
 /**
@@ -24,7 +24,7 @@ export const ICONS: Record<string, LucideIcon> = {
   Hourglass, House, Landmark, Languages, Layers, Library, Link, Map, MessageCircleQuestion,
   MessageSquareWarning, MessagesSquare, Mic, Moon, Mountain, Palette, PenLine, Plane, Plus, Puzzle, Repeat, Scale, School, ScissorsLineDashed,
   ScrollText, Settings, ShoppingBag, SlidersHorizontal, Sparkles, Stamp, Stethoscope, Sun,
-  Sunrise, Swords, Target, Trees, TrendingUp, Trophy, Users, Utensils, WifiOff, Zap,
+  Sunrise, Swords, Target, Trees, TrendingUp, TriangleAlert, Trophy, Users, Utensils, WifiOff, Zap,
 };
 
 export function icon(name: string): LucideIcon {

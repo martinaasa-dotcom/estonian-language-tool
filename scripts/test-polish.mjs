@@ -30,7 +30,15 @@ for (const [query, lemma, why] of [
 ]) {
   await page.goto(`${B}/dictionary?q=${encodeURIComponent(query)}`, { waitUntil: "networkidle" });
   const heading = await page.locator('h2[lang="et"]').innerText().catch(() => "");
-  const note = await page.getByText(/ is the /).innerText().catch(() => "");
+  /*
+    The note's own element, rather than a page-wide search for " is the ".
+
+    That phrase is not an anchor: the entry grew a panel saying which patterns
+    the word breaks, one line of which reads "this is the one to learn first",
+    and two matches put Playwright's strict mode into a throw. The suite caught
+    it as "no explanation shown", which is the failure naming the wrong cause.
+  */
+  const note = await page.locator("[data-matched-as]").innerText().catch(() => "");
   check(`"${query}" resolves to ${lemma} and says why`,
     heading === lemma && why.test(note), note || "no explanation shown");
 }
