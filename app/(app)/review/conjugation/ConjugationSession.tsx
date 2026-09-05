@@ -5,7 +5,7 @@ import { Check, Repeat, X } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { addToDeck, gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Stat } from "@/components/ui";
+import { Chip, KeyCap, Stat } from "@/components/ui";
 import { EstonianInput } from "@/components/EstonianInput";
 import { DiacriticBar } from "@/components/DiacriticBar";
 import { Speak } from "@/components/Speak";
@@ -15,7 +15,7 @@ import { useFeedbackSound } from "@/components/AudioPrefs";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { VERB_GROUP_LABELS } from "@/lib/estonian/morph";
 import { VERDICT_CLASS, VERDICT_INK, verdictOfCheck } from "@/lib/ux/verdict";
-import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { ADVANCE_KEY_LABEL, isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export type Tense = "present" | "conditional";
 
@@ -291,7 +291,7 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
         <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
           {!revealed ? (
             <Button variant="primary" onClick={check}>
-              Check the table <kbd className="ml-1">↵</kbd>
+              Check the table <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
             </Button>
           ) : (
             <>
@@ -302,7 +302,7 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" onClick={next} autoFocus>
-                  Next <kbd className="ml-1">↵</kbd>
+                  Next <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
                 </Button>
                 {!question.inDeck && (
                   <Button

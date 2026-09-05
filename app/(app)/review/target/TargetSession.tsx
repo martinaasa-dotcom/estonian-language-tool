@@ -5,7 +5,7 @@ import { Crosshair, Timer, Trophy } from "lucide-react";
 import { plainAskLine } from "@/lib/estonian/plainAsk";
 import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Page, StatTile } from "@/components/ui";
+import { Chip, KeyCap, Page, StatTile } from "@/components/ui";
 import { useFeedbackSound } from "@/components/AudioPrefs";
 import type { TargetQuestion } from "@/lib/progress/target";
 import { OPTION_CLASS, optionState } from "@/lib/ux/verdict";
@@ -215,7 +215,7 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
               onClick={() => answer(i)}
               className={`choice-btn ${answered ? OPTION_CLASS[optionState(isAnswer, chose)] : ""} flex min-h-[3.75rem] items-center gap-3 rounded-[var(--r-lg)] border px-4 text-left`}
             >
-              <kbd className="rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">{i + 1}</kbd>
+              <KeyCap>{i + 1}</KeyCap>
               <span
                 lang={question.kind === "case" ? "et" : "en"}
                 className="flex-1 text-lg font-semibold"

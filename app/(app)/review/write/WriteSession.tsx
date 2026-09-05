@@ -6,7 +6,7 @@ import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { DiacriticBar } from "@/components/DiacriticBar";
-import { Chip, Stat } from "@/components/ui";
+import { Chip, KeyCap, Stat } from "@/components/ui";
 import { StarWord } from "@/components/StarWord";
 import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
 import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
@@ -275,7 +275,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             >
               {busy
                 ? <><Loader2 size={15} className="animate-spin" aria-hidden /> Marking…</>
-                : <>Check it <kbd className="ml-1">⌘↵</kbd></>}
+                : <>Check it <KeyCap className="ml-1">⌘ Enter</KeyCap></>}
             </Button>
           ) : (
             <Button variant="primary" className="w-full py-3" onClick={next} autoFocus>

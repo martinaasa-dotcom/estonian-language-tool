@@ -5,13 +5,13 @@ import { Check, Scale, X } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { addToDeck, gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Stat } from "@/components/ui";
+import { Chip, KeyCap, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { StarWord } from "@/components/StarWord";
 import { CASES } from "@/lib/estonian/cases";
 import { OPTION_CLASS, VERDICT_INK, optionState } from "@/lib/ux/verdict";
 import type { CaseKey } from "@/lib/estonian/types";
-import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { ADVANCE_KEY_LABEL, isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export interface GovernmentQuestion {
   /** The card this question practices, when the verb is already in the deck. */
@@ -206,7 +206,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                 >
                   {/* One character at 60%, which measured 4.12:1 against a
                       bar of 4.5 on the unrevealed option alone. */}
-                  <kbd className="tnum text-2xs">{i + 1}</kbd>
+                  <KeyCap>{i + 1}</KeyCap>
                   <span className="min-w-0">
                     {/* The question leads because the dictionary records
                         government as the question a verb answers, and because
@@ -264,7 +264,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
 
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" onClick={next} autoFocus>
-                Next <kbd className="ml-1">↵</kbd>
+                Next <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
               </Button>
               {!question.inDeck && (
                 <Button

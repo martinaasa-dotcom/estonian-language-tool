@@ -5156,6 +5156,22 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   of its own. Enter with a modifier is still how a textarea submits and the answer field's own
   `onEnter` is the field's, so the invariant is drawn on a bare comparison against either key in a
   session file.
+- **And the button names one of the two, drawn one way, everywhere.** The rule above settles which
+  keys work; it said nothing about what the button claims, and the claims had drifted twice over.
+  A first meeting offered "Got it, ask me later" with `Space` on the cap and the card after it
+  offered "Got it, next" with `Enter`, for one gesture that had taken both keys all along, and the
+  footer under both said Space. Two names for one gesture on two consecutive screens reads as two
+  gestures, so a learner either reaches for the mouse or finds out by pressing. The cap came in
+  four shapes as well: a filled one for `Space` and the grade keys, a bare `<kbd>`, which no
+  stylesheet here paints, so `↵` and `u` were drawn as small monospace text rather than as keys, and
+  a bordered one on each of the two reference lists. `ADVANCE_KEY_LABEL` in `lib/ux/advanceKey.ts`
+  is the name and `KeyCap` in `components/ui.tsx` is the drawing, with `outline` for a list set on
+  the page rather than on a control. **Enter rather than Space**, because Space is a letter inside
+  a text box: `isAdvanceKey` takes it only outside one, so a typed card promising it would be lying
+  on the shape where a shortcut is worth most, and Enter is the half with no exception. Space still
+  works everywhere it worked before, and the settings sheet and the shortcut dialog are where both
+  are written down, because those are references rather than buttons. `⌘ Enter`, which is the
+  textarea submit, and `⌫` are different gestures and keep their own names, spelled the same way.
 - **A shortcut works wherever the control it presses is drawn, and "drawn" is one question with one
   name.** A new card in review leads with its answer, because a card you have never seen cannot be
   recalled, only met, so `askFor` returns `intro` and the rating buttons arrive with it. `revealed`

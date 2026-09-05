@@ -437,3 +437,40 @@ export function CardLink({ href, children, icon, className = "" }: {
     </PrefetchLink>
   );
 }
+
+/**
+ * A KEY IS DRAWN ONE WAY, AND THERE WERE FOUR.
+ *
+ * A shortcut hint on a button was written out at each call site, and the
+ * copies had drifted into four different objects: a filled cap for `Space`
+ * and the grade keys, a bare `<kbd>` for `↵` and `u`, which no stylesheet
+ * here paints at all so the browser draws it as small monospace text, a
+ * bordered cap in the command palette, and another bordered one on the
+ * settings sheet. Three of those sit inside a button, so the same hint on
+ * two consecutive screens was two different shapes, and the bare one did not
+ * read as a key at all.
+ *
+ * One cap, everywhere: the fill is `--key-cap`, which is drawn to sit on the
+ * gradient of the primary button and on a card alike. `outline` is the one
+ * variant, for the two reference lists that are set on the page rather than
+ * on a control, where a filled cap would be the loudest thing in a table.
+ *
+ * What goes inside is a key as a keyboard prints it: `Enter`, `Space`, `1`,
+ * `⌘K`. `lib/ux/advanceKey.ts` owns the name of the key that moves forward,
+ * so no screen picks it for itself.
+ */
+export function KeyCap({ children, variant = "filled", className = "" }: {
+  children: ReactNode;
+  variant?: "filled" | "outline";
+  className?: string;
+}) {
+  const outline = variant === "outline";
+  return (
+    <kbd
+      className={`tnum inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-semibold ${outline ? "border" : "key-cap"} ${className}`}
+      style={outline ? { borderColor: "var(--rule)", color: "var(--ink-2)" } : undefined}
+    >
+      {children}
+    </kbd>
+  );
+}

@@ -8,7 +8,7 @@ import { Button, ButtonLink } from "@/components/Button";
 import { DiacriticBar } from "@/components/DiacriticBar";
 import { SpeakPair } from "@/components/Speak";
 import { useFeedbackSound } from "@/components/AudioPrefs";
-import { Chip, Meter, Stat } from "@/components/ui";
+import { Chip, KeyCap, Meter, Stat } from "@/components/ui";
 import { useOffline } from "@/components/OfflineProvider";
 import { StarWord } from "@/components/StarWord";
 import { enqueueGrade } from "@/lib/offline/db";
@@ -18,7 +18,7 @@ import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import { englishName } from "@/lib/games/flash";
 import { caseByKey } from "@/lib/estonian/cases";
 import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
-import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { ADVANCE_KEY_LABEL, isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /** A task, plus where the word stands, which is the thing the round is moving. */
 export interface FlashPrompt extends FlashTask {
@@ -270,11 +270,11 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
               disabled={typed.trim().length === 0}
               onClick={() => void check()}
             >
-              Check it <kbd className="ml-1">{shape === "build" ? "⌘↵" : "↵"}</kbd>
+              Check it <KeyCap className="ml-1">{shape === "build" ? "⌘ Enter" : ADVANCE_KEY_LABEL}</KeyCap>
             </Button>
           ) : (
             <Button variant="primary" className="w-full py-3" onClick={next} autoFocus>
-              Next <kbd className="ml-1">↵</kbd>
+              Next <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
             </Button>
           )}
         </div>

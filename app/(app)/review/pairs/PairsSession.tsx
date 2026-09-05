@@ -5,13 +5,13 @@ import { Check, Ear, Loader2, Volume2, X } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Stat } from "@/components/ui";
+import { Chip, KeyCap, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { playClip } from "@/lib/audio/clip";
 import { useAudioPrefs } from "@/components/AudioPrefs";
 import { VOICES } from "@/lib/audio/voice";
 import { OPTION_CLASS, VERDICT_INK, optionState } from "@/lib/ux/verdict";
-import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { ADVANCE_KEY_LABEL, isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export interface PairQuestion {
   /** The form that is actually played. */
@@ -235,7 +235,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           <p className="text-sm" style={{ color: "var(--ink-3)" }}>
             {/* "Play again" is a lie before anything has played, which is
                 every arrival on a browser that blocks autoplay. */}
-            {needsPress ? "Tap to hear it" : "Play again"} <kbd>R</kbd> · or hear it{" "}
+            {needsPress ? "Tap to hear it" : "Play again"} <KeyCap>R</KeyCap> · or hear it{" "}
             <span className="inline-flex items-center align-middle">
               <Speak text={question.heard} slow voice={voice} label="Hear it slowly" />
             </span>{" "}
@@ -271,7 +271,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
                       character, which axe declines to rule on, and it measured
                       1.62 to 4.12; the gloss under the word measured 1.90 to
                       3.85 once the tone above it was corrected. */}
-                  <kbd className="tnum text-2xs">{i + 1}</kbd>
+                  <KeyCap>{i + 1}</KeyCap>
                   <span className="min-w-0">
                     <span lang="et" className="block text-[19px] font-semibold">{option.value}</span>
                     <span className="block text-[12.5px]">
@@ -304,7 +304,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
             </div>
             <div className="mt-4">
               <Button variant="primary" onClick={next} autoFocus>
-                Next <kbd className="ml-1">↵</kbd>
+                Next <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
               </Button>
             </div>
           </div>
