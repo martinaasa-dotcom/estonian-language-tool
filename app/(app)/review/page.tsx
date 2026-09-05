@@ -93,7 +93,10 @@ export default async function ReviewPage({
     const drill = unit
       ? await prisma.card.findMany({
           where: { ownerId, suspended: false, lexeme: { lemma: { in: [...unit.lemmas] } } },
-          orderBy: [{ due: "asc" }, { lapses: "desc" }],
+          // The id last, for the reason the due read below gives: a word's
+          // cards share a `due` and usually a `lapses` too, so the cut is the
+          // plan's choice without it.
+          orderBy: [{ due: "asc" }, { lapses: "desc" }, { id: "asc" }],
           take: 40,
           include,
         })
@@ -131,7 +134,7 @@ export default async function ReviewPage({
     const drill = lexemeIds.length
       ? await prisma.card.findMany({
           where: { ownerId, suspended: false, lexemeId: { in: lexemeIds } },
-          orderBy: [{ due: "asc" }, { lapses: "desc" }],
+          orderBy: [{ due: "asc" }, { lapses: "desc" }, { id: "asc" }],
           take: 60,
           include,
         })
@@ -182,7 +185,15 @@ export default async function ReviewPage({
         */
         NOT: { cardType: LADDER_CARD_TYPE, state: 1 },
       },
-      orderBy: { due: "asc" },
+      /*
+        The id settles a tie, which `lib/progress/learn.ts` already does on the
+        same table for the reason given there: a word's cards are written in
+        one insert and share a `due` to the millisecond, so date alone leaves
+        the cut to the query plan and which cards a learner is asked can differ
+        between two loads of one deck. Free, since the sort was happening
+        anyway, and the same move `bySubstance` makes in lib/dict/search.ts.
+      */
+      orderBy: [{ due: "asc" }, { id: "asc" }],
       take: MAX_SESSION,
       include,
     }),
@@ -193,7 +204,9 @@ export default async function ReviewPage({
     // first sight of a verb.
     prisma.card.findMany({
       where: { ownerId, suspended: false, state: 0, ...pastTheLadder(ownerId) },
-      orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }],
+      // And the id here too: a word's cards tie on both of these, which is the
+      // very thing the comment above says they do.
+      orderBy: [{ createdAt: "asc" }, { lexemeId: "asc" }, { id: "asc" }],
       take: NEW_CANDIDATES,
       include,
     }),

@@ -102,6 +102,17 @@ export const ACTION_LIMITS = {
    */
   finishScene: { perMinute: 6 },
   /**
+   * Opening one, which is a different act and needed its own.
+   *
+   * It shared `finishScene`'s six, so somebody reading down the situations
+   * list and opening a few of them spent the allowance that writes the run
+   * and the grades at the end of the one they stayed in: the refusal landed
+   * on the finish, which is the press that costs a learner something. Opening
+   * is a draw, a count and one insert, so it is cheaper than finishing and
+   * gets more of them; still nowhere near a loop.
+   */
+  beginScene: { perMinute: 20 },
+  /**
    * The help button, which is the same rebuild without the writing.
    *
    * It is a button on a screen somebody is sitting in front of, so it is

@@ -978,7 +978,9 @@ export async function recordSonad(day: string, guesses: unknown) {
  */
 export async function beginScene(sceneId: unknown, difficulty: unknown) {
   const ownerId = await requireUserId();
-  const busy = throttleAction(ownerId, "finishScene");
+  // Its own allowance, not the one finishing a conversation needs: see
+  // `lib/security/actionLimits.ts`.
+  const busy = throttleAction(ownerId, "beginScene");
   if (busy) return busy;
 
   const scene = sceneById(text(sceneId).slice(0, 64));

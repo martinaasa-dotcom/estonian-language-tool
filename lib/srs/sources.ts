@@ -6,10 +6,12 @@
  * almanac card. It was a label nobody looked at, so nothing noticed that two
  * of its values had come to mean the same thing.
  *
- * `addUnitsToDeck` defaults its source to `DICTIONARY`, and so does the button
- * on a dictionary entry. So a word a learner went and looked up because they
- * were curious, and every word of a course unit they added in one press, were
- * filed identically. That is the column answering "which table did this come
+ * `addUnitsToDeck` defaulted its source to `DICTIONARY`, as the button on a
+ * dictionary entry still does. So a word a learner went and looked up because
+ * they were curious, and every word of a course unit they added in one press,
+ * were filed identically. It defaults to `COURSE` now, which is what the
+ * column was widened for; the sentence is kept in the past tense rather than
+ * deleted because it is the reason the column has more than two values. That is the column answering "which table did this come
  * out of" when the question worth asking is "whose idea was this word".
  *
  * The distinction matters because of what the review queue does with a new
