@@ -11320,6 +11320,39 @@ check("a learner who says they are lost is handed the word, never the question a
     "the repair phrase is decided on a share of the words again, so a learner using Estonian from "
     + "another unit is told they were incomprehensible",
   );
+  /*
+    AND WHETHER THE LEARNER WAS UNDERSTOOD IS A WIDER QUESTION THAN WHAT THIS
+    SCENE MAY SAY. The closed list is the units the scene declares and it
+    stays that for the gate and for retrieval, which is §6; the marker asks
+    the course as well, or a bus window that does not declare the shopping
+    unit answers "I did not catch that" to somebody who said "with cash".
+  */
+  assert.match(
+    turn, /Boolean\(context\.known\?\.\(word\)\)/,
+    "the marker no longer asks what the course can account for, so a real word from another unit "
+    + "is read as nothing anybody could make out",
+  );
+  assert.match(
+    code("lib/progress/scene.ts"), /courseForms\(\)/,
+    "the scene context no longer resolves what the course can account for",
+  );
+  /*
+    And the gate is not widened with it. A model composing inside the course
+    rather than inside the scene's own units is a line the learner has not
+    been taught to read, which is the one thing the closed list is for.
+  */
+  const gate = code("lib/progress/scene.ts").match(/gate: \{[^}]*\}/)?.[0] ?? "";
+  assert.doesNotMatch(gate, /known|courseForms/, "the gate is vouching against the course, not against the scene's own list");
+  /*
+    And a real word is never read as a slip of the pen for another: `valutab`
+    is the third person of a verb the course teaches, and reading it as a
+    typo for `valuta` told a learner the word they got right is said some
+    other way.
+  */
+  assert.match(
+    turn, /if \(vouched\(said\)\) continue;/,
+    "a word the course knows can be read as a typo of another, so the review corrects a word that was right",
+  );
 });
 
 check("nothing but the dictionary can advance a scene", () => {

@@ -211,7 +211,13 @@ const DOCTOR: SceneSpec = {
       they: "They ask what brings you in.",
       move: "ask",
       topic: ["valu", "haigus", "tervis", "haige", "palavik"],
-      needs: [{ kind: "lemma", oneOf: ["valu", "haigus", "haige", "palavik", "väsinud"] }],
+      /*
+        `valutama` beside `valu`, because "my head hurts" is how anybody
+        answers this and the noun alone refused it. §29 of the design doc
+        found the same shape across the course: it teaches the nouns of a
+        situation and not the verbs that do things with them.
+      */
+      needs: [{ kind: "lemma", oneOf: ["valu", "valutama", "haigus", "haige", "palavik", "väsinud"] }],
       required: true,
       patience: 3,
       shape: "sentence",

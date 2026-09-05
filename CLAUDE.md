@@ -4331,6 +4331,23 @@ down. **And the review counts turns that answered something**, not turns whose w
 or somebody who met no beat reads "19 of your 21 turns were understood" over six things left undone.
 `docs/21-situations.md` §40.
 
+**Whether the learner was understood is a wider question than what the scene may say.** The closed
+word list is the units a scene declares, and it was also deciding whether a *turn* was Estonian at
+all: a bus window that does not declare the shopping unit read `sularahaga` as nothing anybody could
+make out and answered "I did not catch that", to somebody who had said "with cash" in a word the
+course teaches. The marker asks `courseForms`, a fact about the shared dictionary cached beside the
+others, one read a minute per instance; the gate and retrieval keep the scene's own list, asserted,
+because a model composing inside the whole course writes lines the learner has not been taught to
+read. The course rather than the dictionary, 1,400 entries against 6,110, because those are the
+words somebody could have been taught. **A real word is never read as a slip of the pen for
+another**: `valutab` is the third person of a verb the course teaches and was read as a typo of
+`valuta`, so the review told a learner the word they got right is said some other way. **A wrong
+number is a thing anybody can read**, so digits with no letters are a turn aimed elsewhere rather
+than one nobody could make out. And **a beat takes the verb of its own question**, since "say what
+is wrong with you" refused `valutama`, which is §29's finding about the whole course showing up in
+one beat. `npm run probe:turns` is the instrument: sixty sentences a real person would type, and the
+`unrecognised` lines are the ones to hunt. `docs/21-situations.md` §41.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5453,7 +5470,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `LOST`, `isLost`, `offerFor`, `caughtSomething`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `LOST`, `isLost`, `offerFor`, `caughtSomething`, `courseForms`, `isEstonian`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
@@ -5487,6 +5504,7 @@ npm run scenes:import    # read it back, gated word by word through the dictiona
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
 npm run measure:scenes   # how much of a conversation the dictionary can already carry
 npm run play:scenes      # every scene played keyless as a sloppy or curious learner; read the transcripts (--scene, --style)
+npm run probe:turns      # what the marker makes of sentences a real person would type; hunt the !! lines
 npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds (three runs so far; read the ranked list)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running

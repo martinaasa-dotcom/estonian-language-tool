@@ -31,6 +31,7 @@ import type { TurnContext } from "@/lib/scenes/turn";
 import { timeWords, type RoleCard } from "@/lib/scenes/props";
 import type { BeatSpec, SceneSpec } from "@/lib/scenes/types";
 import { isPhrase } from "@/lib/dict/pos";
+import { courseForms } from "@/lib/dict/facts";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { planRun, RECENCY_WINDOW, type Recency, type SceneRun as SceneRunPlan } from "@/lib/scenes/run";
 import { randomUUID } from "node:crypto";
@@ -101,8 +102,19 @@ export type Row = DictEntry & { readonly id: string; readonly government: string
 export async function sceneContext(sceneId: string): Promise<SceneContext | null> {
   const scene = sceneById(sceneId);
   if (!scene) return null;
-  const rows = await readEntries([...sceneLemmas(scene)]);
-  return contextFromRows(scene, rows);
+  const [rows, known] = await Promise.all([
+    readEntries([...sceneLemmas(scene)]),
+    /*
+      What the *course* can account for, for deciding whether the learner was
+      understood. A fact about the shared dictionary rather than about this
+      scene, so it is cached there and read once a minute per instance
+      (`courseForms`). The scene's own list stays what the other side may
+      say, which is the whole of §6.
+    */
+    courseForms(),
+  ]);
+  const context = contextFromRows(scene, rows);
+  return { ...context, marker: { ...context.marker, known: (word: string) => known.has(word) } };
 }
 
 /** Every lemma a scene may reach: its units, its beats' topics, its props, and the way out. */

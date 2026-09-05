@@ -197,6 +197,30 @@ describe("reading a turn", () => {
     expect(seen.reading).toBe("offtarget");
   });
 
+  /*
+    The scene's list is what the other side may *say*; whether the learner was
+    understood is a wider question. A bus window that does not declare the
+    shopping unit read `sularahaga` as nothing anybody could make out and
+    answered "I did not catch that", to somebody who had said "with cash"
+    perfectly, in a word this course teaches.
+  */
+  it("counts a word only the course knows as Estonian, so it is aimed elsewhere and not unreadable", () => {
+    const wider = context({ known: (word) => word === "sularahaga" });
+    expect(readTurn("sularahaga", beat(), wider).reading).toBe("offtarget");
+    // And without the wider list it is what it was, which is what a thin caller gets.
+    expect(readTurn("sularahaga", beat(), context()).reading).toBe("unrecognised");
+  });
+
+  /*
+    A wrong number is a thing anybody can read. A clerk hearing the wrong time
+    says "no, half past ten", not "I did not catch that".
+  */
+  it("reads a wrong number as aimed elsewhere rather than as unreadable", () => {
+    const asks = beat({ needs: [{ kind: "datum", slot: "since" }] });
+    expect(readTurn("08:30", asks, context()).reading).toBe("offtarget");
+    expect(readTurn("!!!", asks, context()).reading).toBe("unrecognised");
+  });
+
   it("keeps the repair phrase for a turn it recognised nothing in", () => {
     expect(readTurn("blorp xyzzy qwerty", beat(), context()).reading).toBe("unrecognised");
   });
@@ -541,6 +565,21 @@ describe("a turn that is nearly right", () => {
     for is a word, not a mangled other one. `tuba` is in the list, so it is
     never read as a botched `tube`.
   */
+  /*
+    `valutab` is the third person of a verb the course teaches and was read as
+    a slip of the pen for `valuta`, so the review told a learner that the word
+    they had got right is said some other way. A real word is a word.
+  */
+  it("never reads a word the course knows as a slip of the pen for another", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["valu"] }] });
+    const wider = context({ known: (word) => word === "valutab" });
+    expect(readTurn("minu pea valutab", asks, wider).slips).toEqual([]);
+    // A dropped diacritic is still the keyboard rather than a word, and is still read.
+    const folded = context({ known: () => false });
+    expect(readTurn("Mul on valu korvas", beat({ needs: [{ kind: "case", lemma: "kõrv", grammCase: "INESSIVE" }] }), folded).slips)
+      .toEqual([{ kind: "spelling", said: "korvas", form: "kõrvas", lemma: "kõrv" }]);
+  });
+
   it("never reads a word the list vouches for as a mangled form of another", () => {
     const asks = beat({ needs: [{ kind: "lemma", oneOf: ["kõrv"] }] });
     const seen = readTurn("kõrvad", asks, ctx);

@@ -180,6 +180,19 @@ export interface TurnContext {
   /** The line the other side just said, for the echo rule. */
   readonly previous: string;
   /**
+   * Whether the *course* can account for a spelling, which is a different
+   * question from whether this scene may say it.
+   *
+   * The lexicon is the scene's own units, and that is right for what the
+   * other side says and wrong for whether the learner was understood: a bus
+   * window that does not declare the shopping unit read `sularahaga` as
+   * nothing anybody could make out and answered "I did not catch that", to
+   * somebody who had said "with cash" perfectly, in a word this course
+   * teaches. Absent on a caller that has not resolved one, and then the
+   * scene's own list answers, which is what it did before.
+   */
+  readonly known?: (word: string) => boolean;
+  /**
    * Whether a word is a finite verb the scene knows, for the shape rule.
    * `Pea valutab.` is two words and a sentence, and `looksLikeSentence` alone
    * wants three: it was written for the writing exercise, to refuse a bare
@@ -269,10 +282,7 @@ export function readTurn(
     word the scene knows, typed on a keyboard with no õ, and counting it as
     unknown is what tipped a clear turn into "I did not catch that".
   */
-  const marked = spoken.map((word) => ({
-    word,
-    vouched: context.lexicon.forms.has(word) || context.lexicon.folded.has(fold(word)),
-  }));
+  const marked = spoken.map((word) => ({ word, vouched: isEstonian(word, context) }));
 
   const found = beat.needs.map((need) => satisfies(need, text, spoken, context));
   const met = found.map((hit) => hit !== null);
@@ -314,7 +324,17 @@ export function readTurn(
     value and got one: `14:30` on its own is how people answer "what time",
     `words()` returns letters, and the datum rule above already found it.
   */
-  if (spoken.length === 0) return shape(missing.length === 0 ? "complete" : "unrecognised");
+  if (spoken.length === 0) {
+    if (missing.length === 0) return shape("complete");
+    /*
+      `14:30` on its own is how people answer "what time", and the datum rule
+      has already found it where it is the right one. Where it is the wrong
+      one it is still something anybody can read, so it is a turn aimed
+      elsewhere rather than one nobody could make out: a clerk hearing the
+      wrong time says "no, half past ten", not "I did not catch that".
+    */
+    return shape(/\d/.test(text) ? "offtarget" : "unrecognised");
+  }
   if (isEnglish(spoken, marked)) return shape("english");
   /*
     Not on a beat whose answer *is* the other side's line. `Tere!` is answered
@@ -421,6 +441,7 @@ function satisfies(
   const nearly = (forms: ReadonlySet<string> | undefined): { said: string; form: string } | null => {
     if (forms === undefined) return null;
     for (const said of spoken) {
+      if (vouched(said)) continue;
       const form = nearlySpelled(said, forms);
       if (form) return { said, form };
     }
@@ -443,8 +464,15 @@ function satisfies(
     Asked last, and only of words the scene's whole list cannot vouch for,
     which is what keeps a real word from being read as a mangled other one.
   */
+  /*
+    A REAL WORD IS NEVER READ AS A MANGLED FORM OF ANOTHER, and exactly
+    rather than folded: `valutab` is the third person of a verb the course
+    teaches and was read as a slip of the pen for `valuta`, so the review
+    told a learner that the word they had got right is said some other way.
+    Folded would refuse `korvas`, which is a keyboard rather than a word.
+  */
   const vouched = (word: string) =>
-    context.lexicon.forms.has(word) || context.lexicon.folded.has(fold(word));
+    context.lexicon.forms.has(word) || Boolean(context.known?.(word));
   const inflected = (forms: ReadonlySet<string> | undefined): { said: string; form: string } | null => {
     if (forms === undefined) return null;
     for (const said of spoken) {
@@ -648,6 +676,16 @@ function isLost(spoken: readonly string[], context: TurnContext): boolean {
     const negated = context.lexicon.persons.get(lemma)?.get("IndPrPs_");
     return negated !== undefined && said.has(negated);
   });
+}
+
+/**
+ * Whether the app can account for a spelling at all: this scene's own list,
+ * the same list with the diacritics folded away, or the course's.
+ */
+function isEstonian(word: string, context: TurnContext): boolean {
+  return context.lexicon.forms.has(word)
+    || context.lexicon.folded.has(fold(word))
+    || Boolean(context.known?.(word));
 }
 
 /** Two English function words and nothing the scene's list could vouch for. */

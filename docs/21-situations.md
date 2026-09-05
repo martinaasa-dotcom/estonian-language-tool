@@ -2392,3 +2392,46 @@ worth saying and is not what "understood" means to whoever is reading it. The le
 beat took something from; where none did, it says what happened and points at the way in, which is
 what somebody who got nowhere needs rather than a figure. The unmet goals are two and a count rather
 than six sentences run together, since the objectives are listed with ticks a few lines above.
+
+
+## 41. The twelfth pass: what the marker makes of what people actually type
+
+`play-scene.ts` drives whole conversations with a generated learner, which finds what the other side
+*says*. `npm run probe:turns` asks the other half: given a turn a real person would write, is it
+understood. Sixty-odd sentences across five scenes, at the beat each belongs to, with the wrong word
+order, the missing verb, the English word in the middle and the spelling with no diacritics. The line
+to hunt is a turn read as `unrecognised`, because that is what the other side answers with "I did not
+catch that", and reading those found four things.
+
+**Whether the learner was understood is a wider question than what this scene may say.** The closed
+word list is the units the scene declares. That is right for what the other side says, and it was
+also deciding whether a *turn* was Estonian at all: a bus window that does not declare the shopping
+unit read `sularahaga` as nothing anybody could make out and answered "I did not catch that", to
+somebody who had said "with cash" perfectly, in a word this course teaches. The marker now asks the
+whole course through `courseForms`, a fact about the shared dictionary cached beside the others: one
+read a minute per instance, shared by every learner in every scene. The gate and retrieval are
+untouched and asserted, because a model composing inside the course rather than inside the scene's
+own units would write lines the learner has not been taught to read.
+
+The course rather than the whole dictionary, which is 6,110 entries against 1,400: these are the
+words a learner could have been taught, the set is bounded and meaningful, and the memory is a
+fifth. What is left outside it is a place name, and `tartusse` at a ticket window is the one honest
+`unrecognised` in the whole probe.
+
+**A real word is never read as a slip of the pen for another.** `valutab` is the third person of a
+verb the course teaches and was read as a typo of `valuta`, which is the abessive of `valu`: the beat
+was met, which is right, and the review then told a learner that the word they had got right is said
+some other way. That guard existed on the stem rule and not on the typo rule. Exactly rather than
+folded, because `korvas` is a keyboard rather than a word and has to stay readable.
+
+**A wrong number is a thing anybody can read.** A turn with no letters in it went straight to
+`unrecognised`, so answering "what time" with `08:30` when the card said 10:30 was met with "I did
+not catch that". A clerk hearing the wrong time says "no, half past ten".
+
+**And the course teaches the nouns of a situation and not the verbs that do things with them**, which
+§29 found across the whole syllabus and which shows up here as a beat that refuses the commonest
+answer to its own question: "say what is wrong with you" took `valu` and not `valutama`, so
+`minu pea valutab` met the beat only by being read as a typo. It takes both now.
+
+What is left, and it is the right silence: a word neither the scene nor the course knows is answered
+with "I did not catch that", which is what a person says about a word they have never heard.

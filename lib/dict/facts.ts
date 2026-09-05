@@ -1,4 +1,5 @@
 import { singleFlight } from "@/lib/cache/singleFlight";
+import { SYLLABUS } from "@/lib/collections/syllabus";
 import { prisma } from "@/lib/db";
 import { unitIntroducing } from "@/lib/collections/syllabus";
 import { bandOf, glossOption, type GlossOption } from "@/lib/questions/distractors";
@@ -178,6 +179,46 @@ export async function gradedLemmas(): Promise<{ lemma: string; cefr: string | nu
  */
 export async function dictionaryLemmas(): Promise<Set<string>> {
   return (await dictionary()).lemmas;
+}
+
+/**
+ * EVERY SPELLING THE COURSE CAN ACCOUNT FOR, FOR DECIDING WHETHER SOMEBODY
+ * WAS UNDERSTOOD.
+ *
+ * A scene's closed word list is the units that scene declares, which is right
+ * for what the other side may *say*: a line reaching outside it is a line the
+ * learner has not been taught to read (`docs/21-situations.md` §6). It is the
+ * wrong list for deciding whether the learner was understood. A conversation
+ * at a bus window that does not declare the shopping unit read `sularahaga`
+ * as a word nobody could make out and answered "I did not catch that", to
+ * somebody who had said "with cash" perfectly, in a word this course teaches.
+ *
+ * So comprehension is measured against the whole course. Here rather than in
+ * the scene's own query because it is a fact about the shared dictionary and
+ * about nobody in particular: one read a minute per instance, shared by every
+ * learner in every scene, which is what this module is for.
+ *
+ * The course rather than the whole dictionary, which is 6,110 entries against
+ * 1,400: these are the words a learner could have been taught, the set is
+ * bounded and meaningful, and the memory is a fifth. A word outside it is
+ * rare enough that "I did not catch that" is the honest answer.
+ */
+export async function courseForms(): Promise<ReadonlySet<string>> {
+  return remember("courseForms", FACTS_TTL_MS, async () => {
+    const lemmas = [...new Set(SYLLABUS.flatMap((unit) => unit.lemmas))];
+    const rows = await prisma.form.findMany({
+      where: { lexeme: { lemma: { in: lemmas } } },
+      select: { value: true },
+    });
+    const out = new Set<string>();
+    for (const lemma of lemmas) for (const word of lemma.toLowerCase().split(/[^\p{L}\p{M}]+/u)) {
+      if (word) out.add(word);
+    }
+    for (const row of rows) for (const word of row.value.toLowerCase().split(/[^\p{L}\p{M}]+/u)) {
+      if (word) out.add(word);
+    }
+    return out;
+  });
 }
 
 /**
