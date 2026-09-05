@@ -40,3 +40,21 @@ export function isAdvanceKey(e: KeyLike): boolean {
   if (e.key === " ") return !inEditable(e.target);
   return false;
 }
+
+/**
+ * ONE KEY IS NAMED ON THE BUTTON, AND IT IS THE ONE THAT ALWAYS WORKS.
+ *
+ * The reading above takes both keys, and the buttons did not agree about
+ * which one to say: the first meeting of a word offered "Got it, ask me
+ * later" with Space on the cap, the card after it offered "Got it, next"
+ * with Enter, and the footer under both said Space. Two names for one
+ * gesture on two consecutive screens reads as two gestures, so a learner
+ * either reaches for the mouse or finds out by pressing.
+ *
+ * Enter is the name, because Enter is the half with no exception: Space is a
+ * letter inside a text box, so a typed card that promised it would be lying
+ * on the one shape where it matters most. Space still works everywhere
+ * `isAdvanceKey` is asked, and the shortcut sheet is where both are written
+ * down, because that is a reference rather than a button.
+ */
+export const ADVANCE_KEY_LABEL = "Enter";

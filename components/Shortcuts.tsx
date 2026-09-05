@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Keyboard, X } from "lucide-react";
+import { KeyCap } from "@/components/ui";
 
 /** The event the command palette fires to open this without a keyboard. */
 export const SHORTCUTS_EVENT = "kodukeel:shortcuts";
@@ -35,7 +36,7 @@ const GROUPS: Group[] = [
     title: "Reviewing",
     hint: "the daily loop, and the case drills",
     keys: [
-      { press: ["Space", "Enter"], does: "Show the answer, or move on once you have read it" },
+      { press: ["Enter", "Space"], does: "Show the answer, or move on once you have read it" },
       { press: ["Enter"], does: "Check what you typed, then grade it" },
       { press: ["1"], does: "Pick the first answer, and 2 to 4 for the rest" },
       { press: ["1", "2"], does: "On a card you flip: I did not know it, I knew it" },
@@ -48,14 +49,14 @@ const GROUPS: Group[] = [
     keys: [
       { press: ["1"], does: "Pick the first option" },
       { press: ["2"], does: "…the second, and so on" },
-      { press: ["Space", "Enter"], does: "Continue once you have answered" },
+      { press: ["Enter", "Space"], does: "Continue once you have answered" },
     ],
   },
   {
     title: "Case Sprint",
     hint: "the 60-second round",
     keys: [
-      { press: ["Space", "Enter"], does: "Flip the card, then count it as right" },
+      { press: ["Enter", "Space"], does: "Flip the card, then count it as right" },
       { press: ["⌫"], does: "Count it as missed and move on" },
     ],
   },
@@ -141,13 +142,7 @@ export function Shortcuts() {
                   <li key={`${group.title}-${row.press.join("+")}-${row.does}`} className="flex items-baseline gap-3">
                     <span className="flex shrink-0 gap-1">
                       {row.press.map((key) => (
-                        <kbd
-                          key={key}
-                          className="rounded-[var(--r-sm)] px-1.5 py-0.5 text-2xs font-semibold"
-                          style={{ background: "var(--raised)", color: "var(--ink-2)" }}
-                        >
-                          {key}
-                        </kbd>
+                        <KeyCap key={key} variant="outline">{key}</KeyCap>
                       ))}
                     </span>
                     <span className="text-xs" style={{ color: "var(--ink-2)" }}>{row.does}</span>

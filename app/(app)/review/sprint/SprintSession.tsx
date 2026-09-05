@@ -5,12 +5,12 @@ import { Timer, Trophy, X } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { gradeCard, recordSprintScore } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
-import { Chip, Empty, Page, StatTile } from "@/components/ui";
+import { Chip, Empty, KeyCap, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import { StarWord } from "@/components/StarWord";
 import { VERDICT_CLASS } from "@/lib/ux/verdict";
-import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { ADVANCE_KEY_LABEL, isAdvanceKey } from "@/lib/ux/advanceKey";
 import { roundLength } from "@/lib/ux/roundClock";
 
 export interface SprintCard {
@@ -141,7 +141,7 @@ export function SprintSession({
           </h1>
           <p className="mx-auto mt-2 max-w-[44ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
             {cards.length} cards loaded. Flip and answer as fast as you can for{" "}
-            {roundLength(seconds)}. Space to flip, Enter for correct, Backspace for missed.
+            {roundLength(seconds)}. {ADVANCE_KEY_LABEL} to flip, again for correct, Backspace for missed.
           </p>
           <p
             className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold"
@@ -267,7 +267,7 @@ export function SprintSession({
           {!revealed ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               Show answer
-              <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs key-cap">Space</kbd>
+              <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
             </Button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -277,7 +277,7 @@ export function SprintSession({
                 onClick={() => void answer(1)}
                 className={`${VERDICT_CLASS.wrong} press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
               >
-                Missed it <kbd className="ml-1">⌫</kbd>
+                Missed it <KeyCap className="ml-1">⌫</KeyCap>
               </button>
               <button
                 type="button"
@@ -285,7 +285,7 @@ export function SprintSession({
                 onClick={() => void answer(3)}
                 className={`${VERDICT_CLASS.right} press rounded-[var(--r)] px-3 py-3 text-base font-bold transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
               >
-                Got it <kbd className="ml-1">Enter</kbd>
+                Got it <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
               </button>
             </div>
           )}

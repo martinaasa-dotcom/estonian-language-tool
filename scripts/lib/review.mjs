@@ -136,7 +136,7 @@ export function gradeButtons(page) {
     A self-grade carries `aria-label="Got it, next in 10 min"`, the
     acknowledgment a miss leaves behind reads "Got it, next Enter" because
     its key cap is inside it, and the first-meeting button, which writes
-    nothing at all, is "Got it, ask me later Space". Anchoring on `$` matched
+    nothing at all, is "Got it, ask me later Enter". Anchoring on `$` matched
     none of the three and the suite waived four checks a run saying the deck
     had nothing due. The lookahead is what keeps the meeting out.
   */

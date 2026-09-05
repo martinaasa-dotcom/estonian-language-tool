@@ -3595,7 +3595,7 @@ check("nothing a person reads is smaller than the scale allows", () => {
       for (const match of line.matchAll(tiny)) {
         const size = Number(match[1]);
         if (size >= FLOOR) continue;
-        if (/label-xs|uppercase|tracking-|<kbd/.test(line)) continue;
+        if (/label-xs|uppercase|tracking-|<kbd|KeyCap/.test(line)) continue;
         offenders.push(`${file}:${i + 1}: ${size}px`);
       }
     }
@@ -12831,6 +12831,51 @@ check("every round reads the key that moves forward through isAdvanceKey", () =>
   assert.match(helper, /"Enter"/);
   assert.match(helper, /" "/);
   assert.match(helper, /TEXTAREA/, "Space inside a text box is a letter, and the helper has to know that");
+});
+
+/*
+  ONE KEY IS DRAWN ONE WAY, AND ONE NAME IS PRINTED ON IT.
+
+  The rule above is about which keys work. This is about what the button says
+  they are, which had drifted twice over. The first meeting of a word offered
+  "Got it, ask me later" with a Space cap on it and the card after it offered
+  "Got it, next" with an Enter cap, for one gesture that took both keys the
+  whole time; and the cap itself came in four shapes, one of them a bare
+  `<kbd>`, which no stylesheet here paints, so it did not read as a key at all.
+
+  So `KeyCap` in `components/ui.tsx` is the one drawing, and
+  `ADVANCE_KEY_LABEL` is the one name. Enter rather than Space, because Space
+  is a letter inside a text box and a typed card promising it would be lying.
+  The two reference lists, the settings sheet and the shortcut dialog, are
+  where both keys are written down: they are set on the page rather than on a
+  control, and they are exempt by name.
+*/
+check("a key hint is one component and the advance key has one name", () => {
+  const SHEETS = ["app/(app)/settings/page.tsx", "components/Shortcuts.tsx"];
+  let caps = 0;
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (file === "components/ui.tsx") continue;
+    const source = code(file);
+    source.split("\n").forEach((line, i) => {
+      if (/<kbd\b/.test(line)) {
+        assert.fail(`${file}:${i + 1} draws its own <kbd>. Use <KeyCap> from components/ui.tsx.`);
+      }
+      const cap = /<KeyCap[^>]*>\s*(Enter|Space|↵|⏎)\s*</.exec(line);
+      if (cap && !SHEETS.includes(file)) {
+        assert.fail(
+          `${file}:${i + 1} names the advance key itself (${cap[1]}). Read ADVANCE_KEY_LABEL from lib/ux/advanceKey.ts.`,
+        );
+      }
+      if (/<KeyCap\b/.test(line)) caps += 1;
+    });
+  }
+  assert.ok(caps >= 25, `only ${caps} key caps found; the sweep has stopped seeing them`);
+  assert.match(
+    code("lib/ux/advanceKey.ts"),
+    /ADVANCE_KEY_LABEL = "Enter"/,
+    "the name on the button is the key that works everywhere, which is Enter",
+  );
+  assert.match(code("components/ui.tsx"), /export function KeyCap/);
 });
 
 console.log(

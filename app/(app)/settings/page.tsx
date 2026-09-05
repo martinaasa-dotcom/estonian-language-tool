@@ -12,7 +12,7 @@ import { participationFrom, researchExportConfigured } from "@/lib/research/part
 import { goalsFor, latestFor } from "@/lib/progress/assessment";
 import { levelLabel } from "@/components/assessment/PlanPanel";
 import { courseLevelFor } from "@/lib/progress/level";
-import { Card, Chip, Page, SectionTitle, Stack } from "@/components/ui";
+import { Card, Chip, KeyCap, Page, SectionTitle, Stack } from "@/components/ui";
 import { DailyGoalPanel } from "./DailyGoalPanel";
 import { LevelPanel } from "./LevelPanel";
 import { EkilexSetupGuide } from "./EkilexSetupGuide";
@@ -59,8 +59,11 @@ export const maxDuration = 60;
 
 const SHORTCUTS: [string, string][] = [
   ["⌘K / Ctrl-K", "Jump to any screen, or look a word up"],
-  ["Space", "Show the answer"],
-  ["Enter", "Check a typed answer, then grade it"],
+  /* Enter is the key every button in the app names, and Space does the same
+     thing wherever you are not typing into a box. Both are written down here
+     because this is a reference; a button says one of them (`ADVANCE_KEY_LABEL`). */
+  ["Enter", "Show the answer, check what you typed, then carry on"],
+  ["Space", "The same, wherever you are not typing"],
   ["1-4", "Again · Hard · Good · Easy"],
   ["u", "Undo the last grade"],
   ["1-4 (listening, choice)", "Pick an option"],
@@ -478,12 +481,7 @@ export default async function SettingsPage() {
                     {SHORTCUTS.map(([keys, what]) => (
                       <div key={keys} className="flex items-baseline gap-3">
                         <dt>
-                          <kbd
-                            className="rounded-md border px-1.5 py-0.5 text-2xs"
-                            style={{ borderColor: "var(--rule)", color: "var(--ink-2)" }}
-                          >
-                            {keys}
-                          </kbd>
+                          <KeyCap variant="outline">{keys}</KeyCap>
                         </dt>
                         <dd className="text-xs" style={{ color: "var(--ink-3)" }}>{what}</dd>
                       </div>

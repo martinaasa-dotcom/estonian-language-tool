@@ -10,7 +10,7 @@ import { SpeakPair } from "@/components/Speak";
 import { useFeedbackSound } from "@/components/AudioPrefs";
 import { useOffline } from "@/components/OfflineProvider";
 import { enqueueGrade } from "@/lib/offline/db";
-import { Chip, Stat } from "@/components/ui";
+import { Chip, KeyCap, Stat } from "@/components/ui";
 import { StarWord } from "@/components/StarWord";
 import { markForm, type FlashMark } from "@/lib/games/flash";
 import { departureLine, rungLine, type ExceptionTask } from "@/lib/games/exceptions";
@@ -18,7 +18,7 @@ import { grammarTopic } from "@/lib/estonian/grammar";
 import { AlsoRight } from "@/components/WordExceptions";
 import { plainAskLine } from "@/lib/estonian/plainAsk";
 import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
-import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { ADVANCE_KEY_LABEL, isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /**
  * THE ROUND: MEET IT, TYPE IT, USE IT.
@@ -233,7 +233,7 @@ export function ExceptionsSession({ tasks: initialTasks }: { tasks: ExceptionTas
         <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }}>
           {meeting ? (
             <Button variant="primary" className="w-full py-3" onClick={next} autoFocus>
-              Got it <kbd className="ml-1">↵</kbd>
+              Got it <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
             </Button>
           ) : !mark ? (
             <Button
@@ -242,11 +242,11 @@ export function ExceptionsSession({ tasks: initialTasks }: { tasks: ExceptionTas
               disabled={typed.trim().length === 0}
               onClick={() => void check()}
             >
-              Check it <kbd className="ml-1">↵</kbd>
+              Check it <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
             </Button>
           ) : (
             <Button variant="primary" className="w-full py-3" onClick={next} autoFocus>
-              Next <kbd className="ml-1">↵</kbd>
+              Next <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
             </Button>
           )}
         </div>

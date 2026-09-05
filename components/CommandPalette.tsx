@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import { PRACTICE_MODES } from "@/lib/ux/modes";
 import { SECTIONS } from "@/lib/ux/nav";
 import { SHORTCUTS_EVENT } from "@/components/Shortcuts";
+import { KeyCap } from "@/components/ui";
 
 interface Command {
   id: string;
@@ -232,9 +233,7 @@ export function CommandPalette() {
             className="w-full bg-transparent text-base"
             style={{ color: "var(--ink)" }}
           />
-          <kbd className="rounded-md border px-1.5 py-0.5 text-2xs" style={{ borderColor: "var(--rule)", color: "var(--ink-3)" }}>
-            esc
-          </kbd>
+          <KeyCap variant="outline">Esc</KeyCap>
         </div>
         <ul className="scroll-host max-h-[52vh] py-1">
           {rows.map(({ command: c, index: i, heading }) => (

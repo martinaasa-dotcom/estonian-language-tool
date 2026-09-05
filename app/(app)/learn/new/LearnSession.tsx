@@ -6,7 +6,7 @@ import { BookOpen, Check, Sparkles, X } from "lucide-react";
 import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
-import { Chip, Empty, Meter, Page, StatTile } from "@/components/ui";
+import { Chip, Empty, KeyCap, Meter, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import { StarWord } from "@/components/StarWord";
@@ -25,7 +25,7 @@ import type { LearnScheduling, LearnWord } from "@/lib/progress/learn";
 import { grade, type RatingValue } from "@/lib/srs/scheduler";
 import { requeue } from "@/lib/srs/queue";
 import { OPTION_CLASS, VERDICT_CLASS, VERDICT_PAUSE_MS, optionState } from "@/lib/ux/verdict";
-import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { ADVANCE_KEY_LABEL, isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /**
  * THE LEARN LADDER, DRIVEN.
@@ -700,9 +700,7 @@ export function LearnSession({
               {phase === "ask" && (
                 <Button variant="primary" onClick={answerGap} disabled={busy}>
                   Check
-                  <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
-                    Enter
-                  </kbd>
+                  <KeyCap className="ml-1">{ADVANCE_KEY_LABEL}</KeyCap>
                 </Button>
               )}
             </>
