@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Footprints } from "lucide-react";
 import { recordEncounter } from "@/app/actions";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
+import { Button } from "@/components/Button";
 import { Card, SectionTitle } from "@/components/ui";
 import {
   isConversation, OUTCOMES, OUTCOME_LABEL, sceneForErrand,
@@ -139,6 +140,30 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
           : `${conversations} in the last ${days} days. `}
         <Link href="/progress" className="underline">Progress keeps the count</Link>.
       </p>
+      {/*
+        THE ONE THING WORTH KEEPING FROM A CONVERSATION IS THE WORD YOU DID
+        NOT HAVE, and the card had nowhere to put it. It goes to the
+        dictionary search, which is where a word gets looked up, added to the
+        deck or reported as missing, and it is stored nowhere on the way:
+        /privacy says the answer and the day are kept and nothing else, and
+        that stays true.
+      */}
+      <form action="/dictionary" method="get" className="mt-3 flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="out-there-word" className="label-xs mb-1 block" style={{ color: "var(--ink-3)" }}>
+            A word you did not have?
+          </label>
+          <input
+            id="out-there-word"
+            name="q"
+            lang="et"
+            autoComplete="off"
+            className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+          />
+        </div>
+        <Button type="submit" size="sm">Look it up</Button>
+      </form>
     </Card>
   );
 }

@@ -60,7 +60,7 @@ type Phase = "briefing" | "talking" | "debrief";
 
 interface Opened {
   runId: string;
-  card: { you: string; props: { slot: string; card: string; given: readonly string[] }[] };
+  card: { you: string; props: { slot: string; card: string; given: readonly string[]; returned?: true }[] };
   persona: string;
   composed: boolean;
 }
@@ -398,6 +398,12 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                 {prop.given.length > 0 && (
                   <span className="block font-medium" style={{ color: "var(--ink)" }}>
                     {prop.given.join(" · ")}
+                  </span>
+                )}
+                {/* The word came back because it was missing last time. Said, so the card reads as remembering rather than repeating. */}
+                {prop.returned && (
+                  <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
+                    You reached for this one in a conversation recently and did not have it.
                   </span>
                 )}
               </li>

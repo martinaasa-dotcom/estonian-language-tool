@@ -23,9 +23,11 @@ outside it, which is the one number no learning app reports and the one that mat
 
 ## 2. What is built
 
-**Situations** (`lib/scenes/`, `/situations`). Seven scenes: the corner shop, a café counter and
-a bus ticket window at A1, a health centre, an office counter and asking the way at A2, a landlord
-on the phone at B1. Each is a machine authored in English that
+**Situations** (`lib/scenes/`, `/situations`). Fourteen scenes: the corner shop, a café counter,
+a bus ticket window and the neighbor on the stairs at A1; a health centre, a pharmacy, an office
+counter, a restaurant table, a shop rung before you go, asking the way and the first evening of a
+language course at A2; a landlord on the phone, a job interview and taking something back to a
+shop at B1. Each is a machine authored in English that
 knows the shape of an encounter and holds not one word of Estonian. The other side speaks in a
 sentence a lexicographer recorded where one fits the beat, and otherwise in a line composed inside
 the scene's own closed word list and checked four ways before anybody sees it: the shape, every

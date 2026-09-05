@@ -1,3 +1,5 @@
+import { modeAt } from "./modes";
+import { DESTINATIONS } from "./nav";
 import { WEEKDAY_LONG, type Weekday } from "./schedule";
 
 /**
@@ -26,7 +28,11 @@ import { WEEKDAY_LONG, type Weekday } from "./schedule";
  *
  * The `href` is a mode's own, resolved through `lib/ux/modes.ts`, so a round
  * renamed there is renamed here and an invariant fails on an href this table
- * names and that table does not have.
+ * names and that table does not have. One row is not a round: Situations is a
+ * place in `lib/ux/nav.ts` rather than a mode, and it is on the table because
+ * every other day was a recall or a speed round and the thing the purpose doc
+ * leads with, a conversation with somebody who wants something from you, was
+ * on no day of the week. `featuredTitle` resolves either.
  *
  * `why` carries more weight than it looks like it does, because Today's card
  * draws a title and this line and no subtitle. So when Ristsõna was renamed out
@@ -53,11 +59,22 @@ export const WEEK_GAMES: readonly FeaturedGame[] = [
   { href: "/quest", why: "Two minutes on whatever went wrong this week." },
   { href: "/sonad", why: "A new word every Monday morning, and every other one." },
   { href: "/review/emoji", why: "No English on the board. The picture is the meaning." },
-  { href: "/review/target", why: "Four forms of one word. Only the ending will get you through." },
+  { href: "/situations", why: "Midweek, a conversation. Somebody wants something from you." },
   { href: "/review/match", why: "Pairs against the clock. There is a personal best to beat." },
   { href: "/review/sprint", why: "Sixty seconds of cases. Friday does not need a long one." },
   { href: "/crossword", why: "The crossword, for the day there is time for a long one." },
 ];
+
+/**
+ * What today's row is called, off the table that owns the name.
+ *
+ * A mode's title where the href is a mode, and a destination's label where
+ * it is a place, so this table describes nothing itself and a rename in
+ * either source reaches the card on Today.
+ */
+export function featuredTitle(href: string): string | undefined {
+  return modeAt(href)?.title ?? DESTINATIONS.find((d) => d.href === href)?.label;
+}
 
 /** Today's. */
 export function gameOn(weekday: Weekday): FeaturedGame {

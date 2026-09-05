@@ -50,6 +50,15 @@ export interface Reason {
    * rather than a copy in each screen, which is where two of them drift.
    */
   situation?: string;
+  /**
+   * The first conversation to rehearse, as a scene id from
+   * `lib/scenes/catalogue.ts`, where the reason names one. First run used to
+   * turn a reason into a level and a number of hours and nothing else, so
+   * somebody who ticked "I live in Estonia" was handed a deck and no door:
+   * the shop is what living here starts with, and the counter is what a
+   * residence permit starts with. `goals.test.ts` checks each id is a scene.
+   */
+  scene?: string;
 }
 
 export const REASONS: readonly Reason[] = [
@@ -62,6 +71,7 @@ export const REASONS: readonly Reason[] = [
     // Errands, forms, the bus: real and shallow, and easy to live beside without using.
     exposure: { low: 1, high: 3 },
     situation: "live in Estonia",
+    scene: "poodi-piima",
   },
   {
     id: "citizenship",
@@ -71,6 +81,7 @@ export const REASONS: readonly Reason[] = [
     implies: "B1",
     // A goal, not a situation. It puts no Estonian in anybody's week by itself.
     exposure: { low: 0, high: 0 },
+    scene: "ametiasutus",
   },
   {
     id: "work",
@@ -81,6 +92,7 @@ export const REASONS: readonly Reason[] = [
     // Meetings and colleagues at full speed are the most exposure a week can hold.
     exposure: { low: 3, high: 8 },
     situation: "work in Estonian",
+    scene: "ametiasutus",
   },
   {
     id: "study",
@@ -91,6 +103,7 @@ export const REASONS: readonly Reason[] = [
     // Class plus homework. A course with a syllabus is guided learning hours by definition.
     exposure: { low: 2, high: 5 },
     situation: "are on a course",
+    scene: "kohvikus",
   },
   {
     id: "family",
@@ -101,6 +114,7 @@ export const REASONS: readonly Reason[] = [
     // The people at home, if the home runs in Estonian. Many couples default to English.
     exposure: { low: 2, high: 8 },
     situation: "have Estonian at home",
+    scene: "poodi-piima",
   },
   {
     id: "roots",
@@ -111,6 +125,7 @@ export const REASONS: readonly Reason[] = [
     // Visits and relatives. Occasional, so the range barely leaves zero.
     exposure: { low: 0, high: 1 },
     situation: "have family who speak it",
+    scene: "kohvikus",
   },
   {
     id: "travel",
@@ -120,6 +135,7 @@ export const REASONS: readonly Reason[] = [
     implies: "A2",
     // Nothing until the trip, and a trip is not a week.
     exposure: { low: 0, high: 0 },
+    scene: "bussipilet",
   },
   {
     id: "curiosity",
@@ -134,6 +150,16 @@ export const REASONS: readonly Reason[] = [
 
 export function reasonById(id: string | null | undefined): Reason | undefined {
   return REASONS.find((r) => r.id === id);
+}
+
+/**
+ * The first conversation for a set of reasons: the first chosen reason, in
+ * the table's own order, that names a scene. The order is the argument, and
+ * it puts living here ahead of everything, because the shop is where anybody
+ * who lives here starts.
+ */
+export function firstSceneFor(reasonIds: readonly string[]): string | undefined {
+  return REASONS.find((r) => reasonIds.includes(r.id) && r.scene !== undefined)?.scene;
 }
 
 /**

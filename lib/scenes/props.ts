@@ -130,6 +130,14 @@ export interface DrawnProp {
    * shortfall: the alternative is a card that comes out empty.
    */
   readonly repeated?: true;
+  /**
+   * Set when the word was drawn because the learner reached for it in a
+   * recent scene and did not have it. `SceneGap` is where that is written
+   * and this is the one place it is read back into a conversation, which is
+   * the design's own promise (`docs/21-situations.md` §19): a word you could
+   * not say last week comes back in the next scene's props.
+   */
+  readonly returned?: true;
 }
 
 /** The card as a whole: what you are doing here, and the facts you were given. */
@@ -153,15 +161,23 @@ export function drawProp(
   spec: PropSpec,
   random: () => number,
   avoid: ReadonlySet<string> = new Set(),
+  prefer: ReadonlySet<string> = new Set(),
 ): DrawnProp {
   switch (spec.kind) {
-    case "word":
+    case "word": {
+      const lemma = pick(spec.oneOf, random, avoid, prefer);
+      return {
+        slot: spec.slot, card: spec.says, literal: [], lemmas: [lemma], value: lemma,
+        ...worn(lemma, avoid),
+        ...(prefer.has(lemma) ? { returned: true as const } : {}),
+      };
+    }
     case "weekday": {
       const lemma = pick(spec.oneOf, random, avoid);
       return {
         slot: spec.slot, card: spec.says, literal: [], lemmas: [lemma], value: lemma,
         ...worn(lemma, avoid),
-        ...(spec.kind === "weekday" && spec.theirs ? { theirs: true as const } : {}),
+        ...(spec.theirs ? { theirs: true as const } : {}),
       };
     }
     case "time": {
@@ -203,6 +219,7 @@ export function drawCard(
   specs: readonly PropSpec[],
   random: () => number,
   avoid: ReadonlySet<string> = new Set(),
+  prefer: ReadonlySet<string> = new Set(),
 ): RoleCard {
   const props: DrawnProp[] = [];
   for (const spec of specs) {
@@ -215,7 +232,7 @@ export function drawCard(
       ? props.find((p) => p.slot === spec.differentFrom)?.value
       : undefined;
     const shun = other ? new Set([...avoid, other]) : avoid;
-    props.push(drawProp(spec, random, shun));
+    props.push(drawProp(spec, random, shun, prefer));
   }
   return { you, props };
 }
@@ -236,9 +253,20 @@ function worn(value: string, avoid: ReadonlySet<string>): { repeated?: true } {
   return avoid.has(value) ? { repeated: true } : {};
 }
 
-function pick(from: readonly string[], random: () => number, avoid: ReadonlySet<string>): string {
+function pick(
+  from: readonly string[],
+  random: () => number,
+  avoid: ReadonlySet<string>,
+  prefer: ReadonlySet<string> = new Set(),
+): string {
   const fresh = from.filter((value) => !avoid.has(value));
-  const pool = fresh.length > 0 ? fresh : from;
+  /*
+    A word the learner could not say recently comes first, and only among
+    the fresh ones: the recency promise still holds, so a gap met in this
+    scene's own last run waits a run before it comes back.
+  */
+  const wanted = fresh.filter((value) => prefer.has(value));
+  const pool = wanted.length > 0 ? wanted : fresh.length > 0 ? fresh : from;
   return pool[Math.floor(random() * pool.length)] ?? pool[0] ?? "";
 }
 

@@ -138,9 +138,9 @@ question about yesterday is asked from the first morning rather than from the fi
 is about the learner's own day and not about the deck, and the count it collects is the baseline a
 pilot compares the end of term against.
 
-**And eighteen errands is thin for the days the answer is no.** Thirteen are A1 and five A2, none
-above, and the pool is filtered to the units a deck has started: four on a starter deck, thirteen
-with A1 finished, eighteen for ever after. The walk is `dayIndex`, so the repeat interval is the
+**And twenty-four errands is thin for the days the answer is no.** Thirteen are A1, nine A2 and
+two B1, and the pool is filtered to the units a deck has started: four on a starter deck, thirteen
+with A1 finished, twenty-four for ever after. The walk is `dayIndex`, so the repeat interval is the
 pool size exactly. That is survivable while the errand appears on a minority of days and it is not
 a table to build a screen out of that shows several days at once. What it needs before it grows is
 somebody who knows how an Estonian counter actually works, in the shape `docs/20-contributed-sentences.md`
@@ -4206,8 +4206,22 @@ and the same refusals the drafter applies, is marked `authored`, and is `reviewe
 native speaker reads it. Two of the checks were corrected on the way, since the government check
 was refusing `Kust sa tuled?` and `See aeg ei sobi enam`, which are what people say.
 The other side repeats the learner's own word back before moving on, off `Evidence.matched`, and
-every line is spoken in the persona's voice. Seven scenes, and all seven play keyless from the
+every line is spoken in the persona's voice. Fourteen scenes, and all fourteen play keyless from the
 first line to the debrief. `docs/21-situations.md` §32 has the table and what it does not fix.
+
+**Seven more were written for the situations the purpose is measured on, and the bank is what
+made them a day's work rather than a project.** Forty-five of the course's claims are live
+exchanges and seven had a rehearsal. A pharmacy, a restaurant table, a shop rung before you go, the
+neighbor on the stairs, the first evening of a language course, a job interview and taking
+something back to a shop are scenes now, each testing a unit that already made the claim, each
+naming only words its declared units teach, each with an errand for the day after. `bank.test.ts`
+holds every beat and every admitted curveball of every scene to a line, so a scene arrives with its
+lines or fails, and the 137 lines those seven and the two curveballs needed were typed in a session
+through `npm run check:lines`, marked `authored` and `reviewed: false`, like the 53 before them. The
+two curveballs are `contradiction`, which was in the catalog and admitted by no scene, and
+`misheard`, admitted by one: both are admitted where the beat shape supports them now, and a
+curveball nobody admits is dead data. What the seven cannot do is what none of the fourteen can: a
+native speaker has read none of the 296 lines, and that is the next thing the module needs.
 
 **An offer names a day, and a yes is an answer.** The landlord asked `Kas küte on katki?`, heard
 "Millal teil on aeg?", and said `Jah. Kell 14:00?`: a yes to a question with no yes in it, then a
