@@ -272,7 +272,22 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   paragraphs above are about a number arrived at by adding two branches
   together, which is a different thing and still the trap.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 460 });
+/*
+  And 574, for the phone sweep. 114 more: every route at 390 wide in each of
+  the two themes, which is 112, plus the More sheet once per theme, which is
+  the one surface no URL reaches. Counted off the list the way /funding's nine
+  and /trust's eighteen were, and then confirmed against a real run rather than
+  left as arithmetic: 620 checks reached with the four graded-review checks
+  waived on this database, which is the same slack the floor has always sat
+  under.
+
+  It costs the suite about two minutes forty of wall clock on top of the three
+  it took, measured at 5m30 end to end for the whole file, because a phone pass
+  is very nearly a second copy of the desktop one. That is the price of the
+  claim on /accessibility, and it is worth it: a phone is where most of this
+  app is read.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 574 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.
@@ -425,6 +440,84 @@ for (const route of ROUTES) {
     violations.length === 0, violations.slice(0, 2).join("; "));
 }
 await dark.close();
+
+/*
+  AND THE SAME SWEEP ON A PHONE, WHICH IS DIFFERENT MARKUP RATHER THAN THE SAME
+  MARKUP NARROWER.
+
+  This ran at 1280 and nowhere else for the whole of its life, and
+  `/accessibility` said so out loud in its own list of what does not conform:
+  the phone layout was measured for targets, overflow and containment and never
+  by axe. That is a gap in the sweep rather than a gap in the app, and the two
+  read identically from the outside until somebody looks.
+
+  What a phone actually renders here is not the desktop screen reflowed. The
+  rail is `hidden md:flex` and the bar is `md:hidden`, so at 1280 the phone bar
+  is `display: none` and axe skips it entirely, and at 390 the rail is. So the
+  bar, its five cells, and the sheet behind its More button are markup this
+  suite had never once looked at: a nav, a dialog, four sections of links and a
+  close button, on every signed-in screen in the app. Several other rules swap
+  markup at the same breakpoint rather than only stacking it.
+
+  390 is the width, which is the middle of the three `test-mobile.mjs` measures
+  and the one it uses for every state it has to drive rather than only measure.
+  Two suites disagreeing about what a phone is would be two answers to one
+  question; the other two widths are a question about layout, which is that
+  suite's, rather than about markup, which is this one's.
+
+  Both themes, for the reason the desktop dark pass gives: light and dark are
+  two palettes, and at this width the words in the bar sit on a surface that
+  does not exist at 1280.
+
+  What it found on the run that introduced it: nothing. Every route is clean at
+  390 in both themes, and so is the More sheet. That is worth writing down
+  rather than leaving as an absence, because it is the difference between a
+  sweep that has looked and one that has not, and it is what lets the statement
+  narrow its own claim to the states a sweep cannot reach.
+*/
+const PHONE = { width: 390, height: 844 };
+
+for (const theme of ["light", "dark"]) {
+  const phone = await browser.newPage({ viewport: PHONE });
+  if (theme === "dark") await chooseDark(phone);
+  for (const route of ROUTES) {
+    await open(phone, route, 200);
+    const violations = await axeViolations(phone);
+    check(`${route}: axe finds nothing on a phone in ${theme}`,
+      violations.length === 0, violations.slice(0, 2).join("; "));
+  }
+
+  /*
+    And the one surface that exists at this width and at no other. The rail
+    puts every destination on the screen; the bar has five cells and puts the
+    rest behind More, so the sheet is a modal dialog holding four labelled
+    sections and a close button which nothing has ever swept. It is opened
+    here rather than left to a route, because no URL reaches it.
+
+    `/progress` rather than `/`, and that is a correction rather than a taste.
+    `/` redirects to first run until somebody has been through it, and first
+    run is chromeless: no rail, no bar, no More button. So the first version of
+    this waived the check with a reason that named the breakpoint, on a
+    database where the breakpoint was fine and the shell simply was not there.
+    A waiver that misstates its cause sends whoever reads it into the wrong
+    file, which is the fault `lib/review.mjs` has a header about.
+  */
+  await open(phone, "/progress", 200);
+  const more = phone.getByRole("button", { name: "More" });
+  if (await more.count()) {
+    await more.first().click();
+    await phone.waitForSelector("[role='dialog']", { timeout: 3000 }).catch(() => {});
+    await phone.waitForTimeout(300);
+    const violations = await axeViolations(phone);
+    check(`the phone sheet behind More, in ${theme}: axe finds nothing`,
+      violations.length === 0, violations.slice(0, 2).join("; "));
+  } else {
+    absent(1, `the phone sheet in ${theme}: /progress drew no bar at 390 wide, so the ` +
+      "More button was not there to press. Either that route redirected somewhere " +
+      "chromeless, which first run does, or the breakpoint moved");
+  }
+  await phone.close();
+}
 
 /*
   THE STATE A ROUTE DOES NOT ARRIVE IN, AND WHY ONE IS ENOUGH TO MATTER.

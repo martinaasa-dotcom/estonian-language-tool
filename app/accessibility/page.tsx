@@ -30,11 +30,21 @@ const REPO = "https://github.com/martinaasa-dotcom/kodukeel/blob/main";
  * `scripts/test-mobile.mjs` and `scripts/test-containment.mjs`, all four of
  * which run in CI on every change, and it names what those cannot see. The
  * gaps below were read off the code rather than copied from a template: the
- * mock examination really does close a part when its clock goes, the listening
- * rounds really do withhold the text because the text is the answer, and axe
- * really is only swept at one viewport width. When one of them is fixed it
- * moves out of that list and into the paragraph above it, which is what
- * happened to the two practice clocks.
+ * mock examination really does close a part when its clock goes, and the
+ * listening rounds really do withhold the text because the text is the answer.
+ * When one of them is fixed it moves out of that list and into the paragraph
+ * above it, which is what happened to the two practice clocks and then to the
+ * viewport width.
+ *
+ * THE WIDTH IS THE ONE THAT MOVED, AND WHAT IT MAY NOW CLAIM IS EXACTLY WHAT
+ * RUNS. This list said axe was swept at 1280 and nowhere else, which was true.
+ * `scripts/a11y-check.mjs` sweeps 390 as well now, in both themes, plus the
+ * sheet behind the phone bar's More button, which is a dialog no URL reaches
+ * and which the desktop sweep never saw because the bar is `display: none`
+ * above the breakpoint. So the claim here is two widths, one either side of the
+ * breakpoint that swaps the navigation, and not "every width": the other three
+ * that `test-mobile.mjs` drives are measured for targets and layout rather than
+ * swept by axe, and the sentence below says so rather than rounding up.
  *
  * "Partially conformant" is the honest status and the only one worth writing.
  * A full conformance claim from a project that has never put this in front of
@@ -94,7 +104,11 @@ export default function AccessibilityPage() {
             loads every page the app has, not a chosen sample, and runs axe over each one,
             including its best-practice rules. It runs the whole sweep again in the dark
             theme, because light and dark are two palettes and a colour that clears the bar in
-            one says nothing about the other. It counts a one-character run of text as text,
+            one says nothing about the other. It runs it twice more at 390 pixels wide, which
+            is a phone, because a phone here is different markup rather than the same markup
+            narrower: the navigation rail is not drawn at all and a bar with a sheet behind it
+            is drawn instead. That sheet is opened and swept too, since no address reaches it.
+            It counts a one-character run of text as text,
             which is how a tick measured at 2.52 against a bar of 4.5 was found. Beyond axe it
             asserts exactly one main landmark and one heading per screen, a page title that is
             not the landing page&rsquo;s, and Estonian marked so a screen reader does not read
@@ -195,10 +209,12 @@ export default function AccessibilityPage() {
             cannot record has no way through that round.
           </li>
           <li>
-            <strong>axe is swept at one viewport width.</strong> The sweep runs at 1280. The
-            phone layout is measured for targets, overflow and containment, and is not swept
-            by axe, so a fault in markup that only exists on a narrow screen would be found by
-            a person rather than by the build.
+            <strong>axe is swept at two widths, not at every width.</strong> It runs at 1280
+            and at 390, which is either side of the one breakpoint that swaps the navigation,
+            so the phone bar and the sheet behind it are covered now. The widths between them,
+            360, 430 and 768, are measured for targets, overflow and containment and are not
+            swept by axe. A fault in markup that appears at one of those and at neither of
+            these would be found by a person rather than by the build.
           </li>
           <li>
             <strong>Screens behind data are less covered.</strong> The automated sweep sees
@@ -215,8 +231,9 @@ export default function AccessibilityPage() {
         <P>
           Where a limitation above is one of ours rather than one the exercise requires, it is
           something to fix rather than something to explain away. The practice clocks were the
-          first of those and are adjustable now; the examination clock is the one that stays,
-          for the reason beside it.
+          first of those and are adjustable now, and the phone sweep was the second: it used
+          to be on this list and it runs in the build. The examination clock is the one that
+          stays, for the reason beside it.
         </P>
       </S>
 
