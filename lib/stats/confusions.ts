@@ -81,6 +81,16 @@ export function confusions(reviews: readonly ConfusionPoint[], min = MIN_CONFUSI
 
   return [...tally.values()]
     .filter((c) => c.times >= min)
-    .sort((a, b) => b.times - a.times || a.pair[0].localeCompare(b.pair[0]))
+    /*
+      Both halves of the pair, because one is not a total order. Two pairs with
+      the same count sharing a first slot compared equal, `sort` is stable, and
+      the order it was handed came from the review rows: the database deciding
+      which confusion a learner is told about first, and a list that can differ
+      between two identical requests.
+    */
+    .sort((a, b) =>
+      b.times - a.times
+      || a.pair[0].localeCompare(b.pair[0])
+      || a.pair[1].localeCompare(b.pair[1]))
     .map((c) => ({ pair: c.pair, times: c.times }));
 }

@@ -87,6 +87,28 @@ describe("buildWorksheet", () => {
     expect(buildWorksheet([verb]).gaps[0]?.answer).toBe("algab");
   });
 
+  it("takes a later sentence rather than gap the word printed beside the blank", () => {
+    /*
+      The sheet prints the lemma in brackets after the blank, so a gap whose
+      answer is the lemma is answered by copying the bracket. The first sentence
+      here is the nominative, which is what a lexicographer usually writes.
+    */
+    const both = word({
+      examples: [
+        { et: "Ilus tuba on siin ja seal.", en: null, source: "EKILEX" },
+        { et: "Ta istub toas ja loeb raamatut.", en: null, source: "EKILEX" },
+      ],
+    });
+    expect(buildWorksheet([both]).gaps[0]?.answer).toBe("toas");
+  });
+
+  it("sets no gap at all where every sentence would gap the lemma", () => {
+    const nominativeOnly = word({
+      examples: [{ et: "Ilus tuba on siin ja seal.", en: null, source: "EKILEX" }],
+    });
+    expect(buildWorksheet([nominativeOnly]).gaps).toEqual([]);
+  });
+
   it("hides nothing when no form of the word stands in the sentence", () => {
     const elsewhere = word({
       examples: [{ et: "Ta istub siin ja loeb raamatut.", en: null, source: "EKILEX" }],

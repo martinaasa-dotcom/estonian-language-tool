@@ -102,9 +102,31 @@ export async function enqueueGrade(grade: PendingGrade): Promise<void> {
 
 export async function readOutbox(): Promise<PendingGrade[]> {
   const rows = await run<unknown[]>(OUTBOX, "readonly", (s) => s.getAll(), []);
-  // A row that fails validation is dropped rather than sent: the server would
-  // reject it anyway, and a permanently un-replayable entry would wedge the queue.
-  return rows.filter(isValidPending);
+  const usable = rows.filter(isValidPending);
+  if (usable.length === rows.length) return usable;
+
+  /*
+    A ROW THAT CANNOT BE SENT IS DELETED, NOT SKIPPED.
+
+    This said it dropped an unsendable row and it filtered one, which are not
+    the same thing while `outboxSize` counts the store. So one corrupted entry
+    left the badge reading "1 grade pending" for ever: the drain read past it,
+    found nothing to send, and stopped, the thirty-second retry did the same,
+    and signing out warned every time about a grade that could never land.
+    `replayGrades` settles an unreplayable id for exactly this reason and never
+    saw one, because it was filtered out one layer below.
+
+    The id is the only thing needed to delete it and is the one field checked
+    before anything else, so a row too broken to name is left alone rather than
+    guessed at: it is a row nothing can do anything with, and deleting by a
+    guessed key would reach a grade somebody is owed.
+  */
+  const unsendable = rows
+    .filter((row) => !isValidPending(row))
+    .map((row) => (row as { id?: unknown })?.id)
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
+  if (unsendable.length > 0) await dropFromOutbox(unsendable);
+  return usable;
 }
 
 export async function dropFromOutbox(ids: string[]): Promise<void> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { CloudOff, RefreshCw } from "lucide-react";
 import { replayGrades } from "@/app/actions";
 import { dropFromOutbox, outboxSize, readOutbox } from "@/lib/offline/db";
@@ -46,10 +46,27 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     void outboxSize().then(setPending);
   }, []);
 
+  /*
+    THE GUARD IS A REF BECAUSE THE HANDLER IS REGISTERED ONCE.
+
+    `sync` was memoised on `[syncing]` and captured by an effect with no
+    dependencies, so the copy wired to `online`, `visibilitychange` and the
+    thirty-second interval kept the `syncing === false` it was born with. Two
+    passes could overlap, read the same rows, and both miss the "already
+    replayed" check on the server; `prisma.review.create` is given the id the
+    client generated, so the second one raises a unique violation and fails the
+    whole batch, which the learner reads as having gone offline. A ref is the
+    same guard read at the moment it is asked rather than at the moment the
+    handler was made. The state stays for the banner's spinner, which is a
+    render and wants the render's value.
+  */
+  const syncingRef = useRef(false);
+
   const sync = useCallback(async () => {
-    if (syncing) return;
+    if (syncingRef.current) return;
     // Cheap guard so the retry interval costs nothing in the normal case.
     if ((await outboxSize()) === 0) { setPending(0); return; }
+    syncingRef.current = true;
     setSyncing(true);
     try {
       // Drain in batches until the queue is empty or a batch fails to land.
@@ -94,10 +111,11 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       // durable, so this simply happens again on the next `online` event.
       setOnline(false);
     } finally {
+      syncingRef.current = false;
       setSyncing(false);
       refresh();
     }
-  }, [syncing, refresh]);
+  }, [refresh]);
 
   useEffect(() => {
     setOnline(navigator.onLine);

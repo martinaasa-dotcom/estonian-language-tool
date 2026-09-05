@@ -106,14 +106,20 @@ describe("stickingPoints", () => {
     expect(stickingNote(stickingPoints(cards, [])[0]!)).toMatch(/One more card for this word is stuck too/);
   });
 
-  it("copes with a card that has lapses but no reviews in the window", () => {
-    // The log is trimmed to six months on the page; the card's own lapse count
-    // is not. Assuming full recall for a card with no rows would be a lie, but
-    // so would reporting 0% — it reports what the log has and says how many.
+  it("names no percentage for a card with lapses but no reviews in the window", () => {
+    /*
+      The log is trimmed to six months on the page; the card's own lapse count
+      is not. This used to fall back to 100 and the row read "Learned and
+      forgotten again, 100% recalled over 0 reviews", which is a divide by
+      nothing printed as a fact about the learner, and its own comment argued
+      that reporting 0% would be a lie while 100% was not. Neither is known.
+    */
     const points = stickingPoints([card({ lapses: 5 })], []);
     expect(points[0]?.reviews).toBe(0);
-    expect(points[0]?.accuracy).toBe(100);
+    expect(points[0]?.accuracy).toBe(null);
     expect(points[0]?.reason).toBe("lapses");
+    expect(stickingNote(points[0]!)).not.toMatch(/%/);
+    expect(stickingNote(points[0]!)).toMatch(/not seen lately/);
   });
 
   it("returns nothing for an empty deck", () => {

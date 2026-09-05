@@ -36,8 +36,18 @@ export interface StickingPoint extends StickingInput {
   /** Reviews in the log for this card. */
   reviews: number;
   recalled: number;
-  /** Percent recalled, 0–100. */
-  accuracy: number;
+  /**
+   * Percent recalled over the reviews in hand, or null where there are none.
+   *
+   * NULL IS A STATE RATHER THAN A ZERO. The lapse rule reads `card.lapses`,
+   * which is lifetime FSRS state, and the reviews are counted over whatever
+   * window the caller read, so a card lapsed a year ago and untouched since is
+   * flagged with nothing in the window to judge it by. This used to fall back
+   * to 100 and the row read "Learned and forgotten again, 100% recalled over 0
+   * reviews", which is a divide by nothing and a window mismatch printed as a
+   * fact about the learner.
+   */
+  accuracy: number | null;
   /** Which rule flagged it — the view says this out loud rather than scoring. */
   reason: "lapses" | "accuracy";
   /** Other stuck cards for the same word, which this row stands in for. */
@@ -86,10 +96,11 @@ export function stickingPoints(
     if (card.reps < MIN_REPS) continue;
 
     const tally = counts.get(card.id) ?? { reviews: 0, recalled: 0 };
-    const accuracy = tally.reviews > 0 ? Math.round((tally.recalled / tally.reviews) * 100) : 100;
+    const accuracy = tally.reviews > 0 ? Math.round((tally.recalled / tally.reviews) * 100) : null;
 
     const byLapses = card.lapses >= LAPSE_THRESHOLD;
-    const byAccuracy = tally.reviews >= MIN_REVIEWS_FOR_ACCURACY && accuracy <= POOR_ACCURACY;
+    const byAccuracy = accuracy !== null
+      && tally.reviews >= MIN_REVIEWS_FOR_ACCURACY && accuracy <= POOR_ACCURACY;
     if (!byLapses && !byAccuracy) continue;
 
     out.push({
@@ -106,7 +117,9 @@ export function stickingPoints(
   // breaks the last tie so the list does not reshuffle between page loads.
   out.sort((a, b) =>
     b.lapses - a.lapses ||
-    a.accuracy - b.accuracy ||
+    // A card with nothing in the window sorts as though it had been recalled
+    // every time, which is the cautious end: it is here on its lapses alone.
+    (a.accuracy ?? 100) - (b.accuracy ?? 100) ||
     b.reviews - a.reviews ||
     a.id.localeCompare(b.id));
 
@@ -137,6 +150,11 @@ export function stickingNote(point: StickingPoint): string {
     : point.siblings === 1 ? " One more card for this word is stuck too."
     : ` ${point.siblings} more cards for this word are stuck too.`;
 
+  if (point.accuracy === null) {
+    // Flagged on its lapse count, which outlives the window the reviews were
+    // read over. Saying nothing about the percentage is the honest half.
+    return `Learned and forgotten again, and not seen lately.${also}`;
+  }
   if (point.reason === "lapses") {
     return `Learned and forgotten again, ${point.accuracy}% recalled over ${point.reviews} reviews.${also}`;
   }

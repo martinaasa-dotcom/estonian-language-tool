@@ -100,7 +100,7 @@ export function StickingPoints({ points }: { points: StickingPoint[] }) {
                 <span className="text-xs" style={{ color: "var(--ink-3)" }}>
                   {TYPE_LABEL[point.cardType] ?? point.cardType}
                 </span>
-                {point.reason === "lapses"
+                {point.reason === "lapses" || point.accuracy === null
                   ? <Chip tone="again">{point.lapses} lapses</Chip>
                   : <Chip tone="hard">{point.accuracy}%</Chip>}
               </p>
