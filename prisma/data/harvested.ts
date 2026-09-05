@@ -12,7 +12,7 @@
  * first time a word is viewed — storing it here would be a second source of
  * truth that goes stale.
  *
- * 1448 words, harvested 2026-09-05.
+ * 1449 words, harvested 2026-09-05.
  */
 
 export interface HarvestedWord {
@@ -12702,6 +12702,18 @@ export const HARVESTED: readonly HarvestedWord[] = [
     note: "ühtlaselt, äkiliste muutusteta, jõnksudeta kulgev, mitte järsk",
     semanticTypes: ["omadus_füüs"],
     rus: ["плавный", "ровный"], ukr: [],
+  },
+  {
+    lemma: "sularaha", gloss: "cash", pos: "NOUN", cefr: "B1",
+    ekilexWordId: 237109,
+    ekilexPos: ["s"],
+    parts: { NOM_SG: "sularaha", GEN_SG: "sularaha", PART_SG: "sularaha" },
+    extraForms: [],
+    government: null,
+    usages: ["Maksta saab nii sularahas kui ka kaardiga.", "Maksta saab nii sularahas kui ka pangakaardiga."],
+    note: "raha paberraha ja müntidena",
+    semanticTypes: ["ese_raha"],
+    rus: ["наличные", "наличные деньги"], ukr: ["готівка", "готові гроші"],
   },
   {
     lemma: "sulgema", gloss: "to close", pos: "VERB", cefr: "A2",

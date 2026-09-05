@@ -468,6 +468,7 @@ export const A1 = [
       ["pood", "shop"],
       ["turg", "market"],
       ["raha", "money"],
+      ["sularaha", "cash"],
       ["hind", "price"],
       ["pilet", "ticket"],
       ["ostma", "to buy"],
