@@ -76,6 +76,19 @@ describe("what a conversation writes into the review log", () => {
     expect(grades[0]?.rating).toBe(2);
   });
 
+  it("grades Again where the other side handed the word over unasked", () => {
+    /*
+      Saying "I do not understand" and being given the word is help, exactly
+      as pressing the button is, so the scheduler may not stretch an interval
+      on a word it had just supplied.
+    */
+    const grades = gradesFor(SCENE, play([
+      { reading: "lost", met: [false] },
+      { reading: "complete", met: [true] },
+    ]));
+    expect(grades[0]?.rating).toBe(1);
+  });
+
   it("grades Again where the app had to supply the word", () => {
     const grades = gradesFor(SCENE, play([{ reading: "complete", met: [true], helped: true }]));
     expect(grades[0]?.rating).toBe(1);

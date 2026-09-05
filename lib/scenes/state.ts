@@ -35,7 +35,9 @@ export type Response =
   /** Answer the English, in character. Helpful or brisk, per the persona. */
   | "english"
   /** The offer was turned down, and they make another. Once per beat. */
-  | "counter";
+  | "counter"
+  /** They said they are not following, so the other side offers the word. */
+  | "help";
 
 /** One turn of the conversation, as the transcript holds it. */
 export interface TurnRecord {
@@ -181,8 +183,19 @@ export function advance(
   */
   const previous = state.turns[state.turns.length - 1];
   const waitedAlready = previous?.beatId === beat.id
-    && (previous.reading === "fragment" || previous.reading === "echo");
+    && (previous.reading === "fragment" || previous.reading === "echo" || previous.reading === "lost");
   const taken = evidence.reading === "fragment" && waitedAlready && evidence.missing.length === 0;
+
+  /*
+    SAYING YOU ARE LOST COSTS NOTHING THE FIRST TIME, for the reason a look
+    and a wait does: it is a person taking part rather than failing, and the
+    other side answers it by handing over the word. It costs a try after
+    that, so a scene cannot be held for ever by one phrase, which is the
+    rule the fuzz harness proved was needed for the fragment.
+  */
+  if (evidence.reading === "lost" && !waitedAlready) {
+    return { state: { ...state, turns }, response: "help" };
+  }
 
   if (advances(evidence.reading) || taken) {
     return {
@@ -389,7 +402,7 @@ export function advanceHurdle(
 
   const previous = state.turns[state.turns.length - 1];
   const waitedAlready = previous?.beatId === `hurdle:${hurdle.id}`
-    && (previous.reading === "fragment" || previous.reading === "echo");
+    && (previous.reading === "fragment" || previous.reading === "echo" || previous.reading === "lost");
   const taken = evidence.reading === "fragment" && waitedAlready && evidence.missing.length === 0;
 
   if (advances(evidence.reading) || taken) {
@@ -400,6 +413,9 @@ export function advanceHurdle(
       },
       response: "answer",
     };
+  }
+  if (evidence.reading === "lost" && !waitedAlready) {
+    return { state: { ...state, turns }, response: "help" };
   }
   if ((evidence.reading === "fragment" || evidence.reading === "echo") && !waitedAlready) {
     return { state: { ...state, turns }, response: evidence.reading === "echo" ? "repeat" : "wait" };

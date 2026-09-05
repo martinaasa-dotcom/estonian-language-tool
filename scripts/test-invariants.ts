@@ -11242,6 +11242,52 @@ check("a scene understands any ending on a stem it knows", () => {
   );
 });
 
+check("a learner who says they are lost is handed the word, never the question again", () => {
+  /*
+    The moment somebody decides whether they are stupid or simply learning.
+    A learner who writes "I do not understand" and is answered with the same
+    question a third time has been told by a machine that the problem is
+    them. `LOST` is how they say it, in the course's own words; `readTurn`
+    reads it before the fragment and after everything the beat could have
+    been met by; `advance` charges nothing the first time, the way a look and
+    a wait charges nothing; `replyFor` hands over the beat's own word; and
+    `gradesFor` counts it as help, because the app supplied the word.
+  */
+  const turn = code("lib/scenes/turn.ts");
+  assert.match(turn, /\| "lost"/, "the marker no longer reads a learner saying they are not following");
+  assert.match(
+    turn, /!wantsNo && isLost\(spoken, context\)/,
+    "the lost reading no longer stands down on a beat that wanted a no, where ei is the answer",
+  );
+  assert.match(
+    code("lib/scenes/catalogue.ts"), /export const LOST = \{/,
+    "the words a learner says when lost are no longer a table beside the reactions",
+  );
+  assert.match(
+    code("lib/scenes/state.ts"), /evidence\.reading === "lost" && !waitedAlready/,
+    "saying you are lost costs a try the first time, which charges somebody for asking",
+  );
+  assert.match(
+    code("lib/scenes/reply.ts"), /response === "help"/,
+    "replyFor no longer hands over a word when the learner says they are not following",
+  );
+  assert.match(
+    code("lib/scenes/grades.ts"), /turn\.helped \|\| turn\.reading === "lost"/,
+    "a word the other side handed over is graded as though the learner produced it",
+  );
+  /*
+    And the shrug is not the answer to somebody who has not answered yet. A
+    question asked while the floor is still theirs is a learner who is
+    confused, and the human move is to ask again rather than to say "I do
+    not know" at them (§39).
+  */
+  assert.match(
+    code("app/api/scene/route.ts"),
+    /wantsAside = Boolean\(askedNow\) && \(response === "answer" \|\| response === "counter"\)/,
+    "the scene route answers a question from a turn that missed the beat, which shrugs at somebody who is lost",
+  );
+});
+
 check("nothing but the dictionary can advance a scene", () => {
   const turn = code("lib/scenes/turn.ts");
   const state = code("lib/scenes/state.ts");

@@ -26,6 +26,7 @@
  * Pure: no React, no Next, no Prisma, no network, no clock.
  */
 import { looksLikeSentence } from "@/lib/estonian/writing";
+import { LOST } from "./catalogue";
 import { fold } from "@/lib/estonian/fold";
 import type { CaseKey } from "@/lib/estonian/types";
 import { words, type Lexicon } from "./lexicon";
@@ -52,6 +53,11 @@ export type TurnReading =
   | "echo"
   /** One word where a person would have said a sentence. A look, and a wait. */
   | "fragment"
+  /**
+   * They said they are not following. Answered with the word they need, and
+   * never with the same question a third time.
+   */
+  | "lost"
   /**
    * A no, on a beat that has something else to offer. Not a miss and not the
    * beat met: the other side counters, once, and only a second no is the
@@ -323,6 +329,25 @@ export function readTurn(
     };
   }
   /*
+    THEY SAID THEY ARE NOT FOLLOWING, AND THAT IS NOT A FAILED TURN.
+
+    It is the moment somebody decides whether they are stupid or simply
+    learning, and answering it with the same question again is a machine
+    telling them the problem is them. Read before the fragment, because
+    `Ma ei saa aru` is a sentence and `ei tea` is two words, and after
+    everything the beat could have been met by, since a turn that answered
+    the question is an answer whatever else is in it.
+
+    Not on a beat that wanted a no: there `ei` is the answer, and reading
+    the answer as a cry for help would be the opposite of understanding it.
+  */
+  const wantsNo = beat.needs.some((need) =>
+    need.kind === "negation" || (need.kind === "anyOf" && need.of.some((o) => o.kind === "negation")));
+  if (missing.length === beat.needs.length && !wantsNo && isLost(spoken, context)) {
+    return shape("lost");
+  }
+
+  /*
     A fragment is Estonian the scene knows, cut short. Two words it cannot
     vouch for at all are not a short answer, they are a turn nobody could
     read, and answering `xyzzy blorp` with "Jah?" as though the rest of the
@@ -586,6 +611,33 @@ function personSlip(
   const form = context.lexicon.persons.get(lemma)?.get(person) ?? null;
   if (form === hit) return {};
   return { slip: { kind: "person", said: hit, form, lemma } };
+}
+
+/**
+ * Whether the turn says "I am not following".
+ *
+ * Two rules, both against the course's own words (`LOST`). A phrase is
+ * matched whole, because a phrase is not a bag of words and `ma` on its own
+ * says nothing; a verb is matched **negated**, the negator beside the form
+ * the rule gives after `ei`, so `ei tea` and `ei saa aru` are caught and
+ * `ma tean` is not.
+ *
+ * What it deliberately over-reaches on is `ei saa` without `aru`, which is
+ * "I cannot" rather than "I do not understand". Both are a learner in
+ * trouble on a beat where nothing else was met, and the cost of reading one
+ * as the other is that they are offered the word they needed anyway.
+ */
+function isLost(spoken: readonly string[], context: TurnContext): boolean {
+  const said = new Set(spoken);
+  for (const phrase of LOST.phrases) {
+    const parts = words(phrase);
+    if (parts.length > 0 && parts.every((word) => said.has(word))) return true;
+  }
+  if (!spoken.some((word) => context.negators.has(word))) return false;
+  return LOST.verbs.some((lemma) => {
+    const negated = context.lexicon.persons.get(lemma)?.get("IndPrPs_");
+    return negated !== undefined && said.has(negated);
+  });
 }
 
 /** Two English function words and nothing the scene's list could vouch for. */

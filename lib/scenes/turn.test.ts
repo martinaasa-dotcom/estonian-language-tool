@@ -382,6 +382,47 @@ describe("carrying one turn on to the next beat", () => {
 
 
 /**
+ * The moment somebody decides whether they are stupid or simply learning.
+ * A learner who says they are not following is answered with the word they
+ * need, never with the same question a third time.
+ */
+describe("a learner who says they are not following", () => {
+  const verbs: DictEntry[] = [
+    { lemma: "teadma", pos: "VERB", cefr: "A1", parts: { INF_MA: "teadma", INF_DA: "teada", PRES_1SG: "tean", PAST_1SG: "teadsin" }, usages: [] },
+    { lemma: "saama", pos: "VERB", cefr: "A1", parts: { INF_MA: "saama", INF_DA: "saada", PRES_1SG: "saan", PAST_1SG: "sain" }, usages: [] },
+    { lemma: "Ma ei saa aru", pos: "PHRASE", cefr: "A1", parts: {}, usages: [] },
+  ];
+  const ctx = context({ lexicon: buildLexicon([...ENTRIES, ...verbs]) });
+
+  it("is read as lost, off the course's own phrase", () => {
+    expect(readTurn("Ma ei saa aru", beat(), ctx).reading).toBe("lost");
+  });
+
+  it("is read as lost off the negator beside a verb the course teaches", () => {
+    for (const said of ["ma ei tea", "ma ei saa aru", "Ei tea."]) {
+      expect(readTurn(said, beat(), ctx).reading, said).toBe("lost");
+    }
+  });
+
+  it("is not read off the verb without the negator, since that is an answer", () => {
+    expect(readTurn("ma tean", beat(), ctx).reading).not.toBe("lost");
+  });
+
+  it("is never read on a beat that wanted a no, where ei is the answer", () => {
+    const refusing = beat({ needs: [{ kind: "negation" }], shape: "word" });
+    expect(readTurn("ma ei tea", refusing, ctx).reading).toBe("complete");
+  });
+
+  it("is never read on a turn that answered the question, whatever else is in it", () => {
+    expect(readTurn("Mul on valu, aga ma ei tea", beat(), ctx).reading).toBe("complete");
+  });
+
+  it("advances nothing, because saying you are lost is not an answer", () => {
+    expect(advances(readTurn("ma ei tea", beat(), ctx).reading)).toBe(false);
+  });
+});
+
+/**
  * Being understood is not the same as being correct, and the marker reads
  * the first (`lib/scenes/nearly.ts`). Each shape of nearly-right is met, is
  * written down as a slip, and is recast off the dictionary and nothing else.

@@ -25,6 +25,7 @@ import { sceneLine } from "../lib/scenes/line";
 import { PERSONAS } from "../lib/scenes/personas";
 import { answerBeatId } from "../lib/scenes/scripted";
 import { reviewOf } from "../lib/scenes/review";
+import { offerFor } from "../lib/scenes/grades";
 import { caseKeyFor, words } from "../lib/scenes/lexicon";
 import { leafNeeds, type BeatSpec } from "../lib/scenes/types";
 import { propBySlot } from "../lib/scenes/props";
@@ -33,7 +34,7 @@ import { shippedDictionary } from "./lib/dictionary";
 
 const arg = (name: string) => { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? process.argv[i + 1] : undefined; };
 const only = arg("scene");
-const style = (arg("style") ?? "curious") as "clean" | "sloppy" | "curious";
+const style = (arg("style") ?? "curious") as "clean" | "sloppy" | "curious" | "lost";
 const difficulty = (arg("difficulty") ?? "textbook") as "textbook" | "good" | "ordinary" | "bad";
 
 const rows: Row[] = shippedDictionary().map((e) => ({
@@ -42,7 +43,13 @@ const rows: Row[] = shippedDictionary().map((e) => ({
 }));
 
 /** What an imperfect learner says for a beat, off its own requirements. */
+const LOST = [
+  "ma ei tea", "vabandust, mida?", "ma õpin eesti keelt", "ma ei saa aru",
+  "kas te räägite inglise keelt?", "üks moment palun", "oota", "hmm",
+];
+
 function learnerTurn(beat: BeatSpec, card: StoredDraw["card"], lexicon: ReturnType<typeof contextFromRows>["lexicon"], n: number): string {
+  if (style === "lost") return LOST[n % LOST.length]!;
   const parts: string[] = [];
   for (const { need } of leafNeeds(beat.needs)) {
     if (need.kind === "lemma") {
@@ -100,7 +107,7 @@ async function play(sceneId: string) {
     const spokenFor = standing ?? speaking ?? (answered?.move === "close" ? answered : undefined);
 
     const askedNow = last?.asked ?? null;
-    const wantsAside = Boolean(askedNow) && ["answer", "narrow", "counter", "moveOn"].includes(response);
+    const wantsAside = Boolean(askedNow) && ["answer", "counter"].includes(response);
     const fresh = (id: string | undefined) => (id ? context.scripted.get(id) ?? [] : []).filter((t) => !used.has(t));
     const asking = {
       asked: askedNow, spoken: words(last?.said ?? ""), answered, card, lexicon: context.lexicon,
@@ -124,7 +131,8 @@ async function play(sceneId: string) {
       reading: last?.reading ?? null, line, heard, card, translates: persona.translates,
       acknowledges: persona.acknowledges, echo: last?.matched?.[0] ?? null,
       recast: Boolean(last?.slips?.some((s) => s.form && s.form === last?.matched?.[0])),
-      aside, met: state.done.length,
+      aside, offer: response === "help" && answered ? offerFor(answered) : null,
+      met: state.done.length,
       hurdle: standing ? { beat: standing, line: standing === spokenFor ? line : null, said: hurdleSpec(state)?.said } : null,
     });
     if (last) {

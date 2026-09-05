@@ -112,6 +112,29 @@ export const REACTIONS = {
  * than typed. `ei tea` is `ei` and the negative of `teadma`, which is the
  * stored first person with its ending taken off.
  */
+/**
+ * How a learner says they are not following, so the other side can help
+ * rather than ask the same thing again.
+ *
+ * The single most important thing to recognise in this module, because it is
+ * the moment somebody decides whether they are stupid or simply learning.
+ * A learner who writes "I do not understand" and is answered with the same
+ * question a third time has been told by a machine that the problem is them.
+ * A person offers the word.
+ *
+ * Lemmas and a course phrase, so nothing here is Estonian this file wrote,
+ * and all of them are taught by units every scene declares: the phrase by
+ * `tervitused`, `saama` by `pohiverbid`, `teadma` by `iga-paev`. The verbs
+ * are read *negated*, which is `ei` beside the form `derivedVerbForms` gives
+ * after it, so `ei tea` and `ei saa aru` are caught and `ma tean` is not.
+ */
+export const LOST = {
+  /** Matched whole: every word of it in the turn. A phrase is not a bag of words. */
+  phrases: ["Ma ei saa aru"],
+  /** The negator beside a form of one of these. */
+  verbs: ["teadma", "saama"],
+} as const;
+
 export const ASIDES = {
   /** `Hästi, aitäh.` */
   howAreYou: [{ lemma: "hästi" }, { lemma: "aitäh" }],

@@ -95,6 +95,13 @@ export interface ReplyInput {
    * person, and "Ei tea. Hästi. Kus teil valutab?" is a machine.
    */
   readonly aside?: SpokenLine | null;
+  /**
+   * The word to hand over where the learner said they were not following:
+   * a lemma off the beat's own requirements, the way the help button picks
+   * one. Null where the beat wants a value off the card and there is no
+   * word to point at.
+   */
+  readonly offer?: string | null;
   /** How many beats have been met, which is what rotates the acknowledgment. */
   readonly met: number;
   /**
@@ -249,6 +256,35 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   if (response === "wait") return [reaction(REACTIONS.waiting[0], "?")];
 
   /*
+    THEY SAID THEY ARE NOT FOLLOWING, SO THE WORD IS HANDED OVER.
+
+    A learner who writes "I do not understand" and is answered with the same
+    question a third time has been told by a machine that the problem is
+    them. A person says the word they are waiting for, and then asks again in
+    the same breath. `offer` is the beat's own word off its requirements, the
+    way `sceneHelp` picks one, so nothing is chosen here and nothing is
+    written: it is a lemma the dictionary spells and the course teaches.
+
+    Where the beat wants a value off the card rather than a word there is
+    nothing to hand over, and the question said again is the whole answer,
+    which is still the right thing: it is what a person does when there is no
+    word to point at.
+  */
+  if (response === "help") {
+    const word = input.offer;
+    const offered = word ? { ...reaction(word, "?"), provenance: "offered" as const } : null;
+    if (offered) out.push(offered);
+    /*
+      And the question again, unless the word *was* the question: a greeting
+      beat's word and its line are the same, and nobody says `Tere!` twice in
+      one breath.
+    */
+    if (heard && heard !== offered?.text) out.push({ text: heard, provenance: "again" });
+    else if (!heard && beat) out.push(stage(stageFor(beat, card)));
+    return out;
+  }
+
+  /*
     THE REPAIR PHRASE IS SAID ABOUT A TURN NOBODY COULD READ, AND ABOUT NOTHING
     ELSE. `reading` rather than `response`, because the response is what the
     state machine did and the reading is what the marker found, and only the
@@ -328,7 +364,7 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     the word is one every scene teaches. The move follows it, so the
     conversation is steered on rather than stopped and annotated.
   */
-  if (response === "moveOn") {
+  if (response === "moveOn" && !aside) {
     const choices = REACTIONS.acknowledge;
     out.push(reaction(choices[input.met % choices.length] ?? choices[0], "."));
   }
@@ -407,7 +443,14 @@ export function stageFor(beat: BeatSpec, card: RoleCard | null): string {
  * asked, which is the difference between "Jah." and "Jah?".
  */
 export function reaction(lemma: string, mark: "." | "?"): SpokenLine {
-  const text = lemma.charAt(0).toUpperCase() + lemma.slice(1) + mark;
+  /*
+    A phrase carries its own mark. `Tere!` offered as a word came out
+    `Tere!?`, which is nothing anybody writes: the course spells its phrases
+    with the punctuation they are said with, and adding a second one is this
+    module editing the dictionary's own entry.
+  */
+  const said = /[.!?]$/.test(lemma) ? lemma : lemma + mark;
+  const text = said.charAt(0).toUpperCase() + said.slice(1);
   return { text, provenance: "attested", from: lemma, reaction: true };
 }
 

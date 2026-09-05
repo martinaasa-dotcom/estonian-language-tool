@@ -258,6 +258,28 @@ describe("a one-word answer said twice", () => {
   });
 });
 
+describe("saying you are not following", () => {
+  it("costs nothing the first time, and the other side offers the word", () => {
+    const start = startScene(SCENE);
+    const { state, response } = advance(SCENE, start, evidence("lost", [false]), "ma ei tea");
+    expect(response).toBe("help");
+    expect(state.patience, "asking for help cost a try").toBe(2);
+    expect(state.beat).toBe(0);
+  });
+
+  it("costs a try the second time in a row, so a scene cannot be held for ever by one phrase", () => {
+    let state = startScene(SCENE);
+    let response;
+    ({ state, response } = advance(SCENE, state, evidence("lost", [false]), "ma ei tea"));
+    ({ state, response } = advance(SCENE, state, evidence("lost", [false]), "ma ei tea"));
+    expect(response).not.toBe("help");
+    for (let i = 0; i < 30 && !isOver(SCENE, state); i += 1) {
+      ({ state } = advance(SCENE, state, evidence("lost", [false]), "ma ei tea"));
+    }
+    expect(isOver(SCENE, state)).toBe(true);
+  });
+});
+
 describe("a curveball echoed at", () => {
   it("is asked again once, and the second echo in a row spends a try", () => {
     const raised = { ...startScene(SCENE), beat: 1, hurdle: { id: "missing-document" as const, beat: 1, tries: 0 } };

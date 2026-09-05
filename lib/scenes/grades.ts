@@ -32,7 +32,7 @@
  */
 import type { CaseKey } from "@/lib/estonian/types";
 import type { SceneState } from "./state";
-import { leafNeeds, type SceneSpec } from "./types";
+import { leafNeeds, type BeatSpec, type SceneSpec } from "./types";
 
 /** One row this run earned. `rating` is the scheduler's own vocabulary. */
 export interface SceneGrade {
@@ -70,7 +70,13 @@ export function gradesFor(scene: SceneSpec, state: SceneState): SceneGrade[] {
 
     const turns = state.turns.filter((turn) => turn.beatId === beat.id);
     if (turns.length === 0) continue;
-    const helped = turns.some((turn) => turn.helped);
+    /*
+      The app supplied the word either way: because the learner pressed the
+      button, or because they said they were not following and the other side
+      handed it over (`offerFor`). Both are help and both grade `Again`, or
+      the scheduler would stretch an interval on a word it had just been told.
+    */
+    const helped = turns.some((turn) => turn.helped || turn.reading === "lost");
 
     /*
       The attempts that count are the ones that were turns. A fragment and an
@@ -154,6 +160,24 @@ export function stalledWords(scene: SceneSpec, state: SceneState): string[] {
     }
   }
   return [...out];
+}
+
+/**
+ * The one word to hand over when the learner says they are not following.
+ *
+ * The beat's own, off its requirements rather than off its topic, because
+ * the topic is what the other side's line is about and the requirement is
+ * what the learner is being asked for. Beside `stalledWords` because it is
+ * the same question asked of one beat instead of every unmet one, and a
+ * second rule about "which word does this beat want" is how the two would
+ * come apart.
+ */
+export function offerFor(beat: BeatSpec): string | null {
+  for (const { need } of leafNeeds(beat.needs)) {
+    if (need.kind === "lemma") return need.oneOf[0] ?? null;
+    if (need.kind === "case") return need.lemma;
+  }
+  return null;
 }
 
 /**

@@ -4301,6 +4301,20 @@ reaches the shared log**: `SceneGrade.reachedCase` travels to `gradeCard`'s `rea
 pair somebody mixes up at a counter is counted beside the pair they mix up on a card, which is the
 whole argument for a conversation writing to the log at all. `docs/21-situations.md` §38.
 
+**A learner who says they are not following is handed the word, never the question a third time.**
+That is the moment somebody decides whether they are stupid or simply learning, and it was answered
+by repeating the question and then giving up. `LOST` is how a learner says it in the course's own
+words, the phrase `tervitused` teaches matched whole and the negator beside a form of `teadma` or
+`saama`; `readTurn` reads it after everything the beat could have been met by and never on a beat
+that wanted a no. It **costs nothing the first time**, the way a look and a wait does, and a try
+after that so one phrase cannot hold a scene for ever. The other side hands over the beat's own word
+(`offerFor`, beside `stalledWords`) and asks again in the same breath, and it is graded as help,
+`Again`, because the app supplied the word. **And the shrug is not said at somebody who has not
+answered yet**: a question asked while the floor is still theirs is a learner who is confused, so
+the aside is for a turn that landed and `narrow` asks again, which is what stopped "do you speak
+English?" being answered with "I do not know". `npm run play:scenes --style lost` is the transcript
+all of that came off. `docs/21-situations.md` §39.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5423,7 +5437,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `LOST`, `isLost`, `offerFor`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.

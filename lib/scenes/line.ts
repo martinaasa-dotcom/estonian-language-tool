@@ -57,6 +57,12 @@ export type Provenance =
    * (`lib/scenes/nearly.ts`), never composed. Set only by `replyFor`.
    */
   | "recast"
+  /**
+   * A word handed over because the learner said they were not following.
+   * The course's own lemma, as the dictionary spells it, offered rather
+   * than asked for (`lib/scenes/reply.ts`).
+   */
+  | "offered"
   /** Said in English on purpose: the other side switched, and the learner is practising not to. */
   | "english"
   /**

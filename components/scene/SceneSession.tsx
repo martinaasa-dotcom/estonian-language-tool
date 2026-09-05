@@ -44,7 +44,7 @@ import { practises } from "@/lib/scenes/practises";
  * debrief handles it without a word of reproach.
  */
 
-type Provenance = "attested" | "scripted" | "composed" | "fallback" | "again" | "recast" | "english" | "unspoken";
+type Provenance = "attested" | "scripted" | "composed" | "fallback" | "again" | "recast" | "offered" | "english" | "unspoken";
 
 interface Line {
   readonly text: string;
@@ -650,6 +650,12 @@ const PROVENANCE: Record<Provenance, string> = {
     and what happened to it; "said again" would claim they had said it.
   */
   recast: "Your word, the way they say it",
+  /*
+    Handed over because the learner said they were not following. The label
+    says whose word it is and that it was given rather than asked for, since
+    "from the course" would read as the other side making a move.
+  */
+  offered: "The word you were reaching for",
   english: "They said it in English",
   /*
     The sixth is not a line they said, it is what they did, and the label has

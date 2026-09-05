@@ -2303,3 +2303,49 @@ Worked example, off the shop scene played as a sloppy learner:
 What it still cannot do: say why somebody reached for a case that is neither the plain word, nor the
 stem, nor the last question's, nor the other half of a question-word pair. That is most of the
 remaining silence, and it is the right silence: the alternative is a screen inventing a reason.
+
+
+## 39. The tenth pass: the learner says they are lost, and is handed the word
+
+`npm run play:scenes` grew a fourth learner, `lost`: somebody who answers every beat with "I do not
+know", "sorry, what?", "do you speak English?" and "I am learning Estonian". Reading that transcript
+is the fastest way to find every place this module makes somebody feel stupid, and it found three.
+
+**A learner who says they are not following is answered with the word.** It was answered with the
+same question again, twice, and then given up on. That is the moment somebody decides whether they
+are stupid or simply learning, and a machine repeating itself has told them the problem is them. A
+person says the word you are waiting for. `LOST` is how a learner says it, in the course's own
+words: the phrase `tervitused` teaches, matched whole because a phrase is not a bag of words, and
+the negator beside a form of `teadma` or `saama`, which is the same shape `ASIDES.unknown` is built
+from. `readTurn` reads it after everything the beat could have been met by, so a turn that answered
+the question is an answer whatever else is in it, and never on a beat that wanted a no, where `ei`
+is the answer.
+
+It **costs nothing the first time**, for the reason a look and a wait costs nothing: asking for help
+is taking part rather than failing. It costs a try after that, so a scene cannot be held for ever by
+one phrase, which is the rule the fuzz harness proved was needed for the fragment. The other side
+hands over the beat's own word off its requirements (`offerFor`, beside `stalledWords` because it is
+the same question asked of one beat), and then asks again in the same breath: `Valu?` then the
+question. Where the beat wants a value off the card there is no word to point at, and the question
+again is the whole answer. And where the word *is* the line, on a greeting, it is said once rather
+than twice.
+
+It is **graded as help**, `Again`, exactly as pressing the button is, because the app supplied the
+word and the scheduler may not stretch an interval on a word it had just been told.
+
+**And the shrug is not said at somebody who has not answered yet.** §36 put an answer in front of the
+move for a learner who said their piece and asked something extra, which is what `okei, otse, ja kuhu
+siis?` is. It read every question the same way, so the `lost` transcript had "do you speak English?"
+answered with `Ei tea.` and "sorry, what?" answered the same way. Neither is a person. A question
+asked while the floor is still theirs is a learner who is confused, and the human move is to ask
+again, which is what `narrow` already does. The aside is now for a turn that landed.
+
+**Two smaller things in the same transcript.** `Ei tea.` was followed by `Hästi.` when patience ran
+out on the same turn: two reactions contradicting each other, "I don't know" and then "fine". Letting
+it go says nothing where the question was already answered. And offering `Tere!` as a word produced
+`Tere!?`, because the mark was appended blindly: the course spells its phrases with the punctuation
+they are said with, and adding a second one is this module editing the dictionary's own entry.
+
+What it still cannot do: tell a learner *which* of the beat's words they need where the beat wants a
+value off their own card, since the answer is already in front of them. Repeating the question is the
+honest move there, and it is what a person does when there is nothing to point at.

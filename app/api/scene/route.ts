@@ -11,6 +11,7 @@ import { sceneLine, type SpokenLine } from "@/lib/scenes/line";
 import { cardInPlay, counterBeat, datumLine, replyFor, stageFor, wantsFreshLine } from "@/lib/scenes/reply";
 import { asideFor, asideOwed, shrug } from "@/lib/scenes/aside";
 import { answerBeatId } from "@/lib/scenes/scripted";
+import { offerFor } from "@/lib/scenes/grades";
 import { passes, runGate } from "@/lib/scenes/gate";
 import { words } from "@/lib/scenes/lexicon";
 import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "@/lib/scenes/state";
@@ -163,9 +164,20 @@ export async function POST(request: Request) {
     know, which is what a person says. Never on a turn nobody understood,
     since then the repair phrase is the whole reaction.
   */
+  /*
+    A QUESTION IS ANSWERED WHERE THE TURN LANDED, AND NOT WHERE IT MISSED.
+
+    §36 put an answer in front of the move for a learner who said their piece
+    and asked something extra, which is what `okei, otse, ja kuhu siis?` is.
+    It read every question the same way, so a learner who missed the beat and
+    asked something got `Ei tea.` and then the question again: "do you speak
+    English?" answered with "I don't know", and "sorry, what?" answered the
+    same way. Neither is a person. When the floor is still theirs and the
+    learner has not answered yet, the human move is to ask again, which is
+    what `narrow` already does.
+  */
   const askedNow = last?.asked ?? null;
-  const wantsAside = Boolean(askedNow)
-    && (response === "answer" || response === "narrow" || response === "counter" || response === "moveOn");
+  const wantsAside = Boolean(askedNow) && (response === "answer" || response === "counter");
   const fresh = (id: string | undefined) =>
     (id ? context.scripted.get(id) ?? [] : []).filter((text) => !used.has(text));
   const asking = {
@@ -246,6 +258,12 @@ export async function POST(request: Request) {
     */
     recast: Boolean(last?.slips?.some((slip) => slip.form && slip.form === last?.matched?.[0])),
     aside,
+    /*
+      The word to hand over where the turn said they were not following. The
+      beat they were answering, not the one coming next: they are stuck on
+      the question they were asked.
+    */
+    offer: response === "help" && answered ? offerFor(answered) : null,
     met: state.done.length,
   });
   const answer = (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>
