@@ -67,6 +67,19 @@ const RICH_WORDS = 5;
  */
 const DEMO_SLOTS = ["INESSIVE", SLOW_SLOT, "IndPrSg3"] as const;
 const SLOW_HISTORY = [3, 3, 4, 3, 3, 3];
+/**
+ * THE VERB THE FLASH ROUND HAS TO REACH IS THE HARDEST WORD IN THE DECK.
+ *
+ * `test-flash.mjs` asserts that a verb form is recorded as itself, which it can
+ * only see if the round asks a verb, and the round asks the ten hardest words
+ * with ties broken by lemma. Whether a verb fell inside those ten was luck: the
+ * first was `elama` at position ten, one place out, after two nouns lost their
+ * comitative cards to the sentence rule and slotted in ahead of it. A suite
+ * covered by luck is a suite that fails the day the dictionary shifts under it,
+ * so the verb this fixture names for its conjugation slot is given a history
+ * that makes it `struggling`, which sorts first, and the round opens on it.
+ */
+const STRUGGLE_HISTORY = [3, 1, 3, 1, 3, 1];
 const SLOT_MS: Record<string, number> = {
   TRANSLATIVE: 9_400,
   ILLATIVE: 5_100,
@@ -215,6 +228,7 @@ async function main() {
     }
     rich.set(found.id, found);
   }
+  const struggling = [...rich.values()].find((lex) => lex.pos === "VERB")?.id ?? null;
   for (const lex of caseCapable) {
     if (rich.size >= RICH_WORDS) break;
     rich.set(lex.id, lex);
@@ -249,7 +263,11 @@ async function main() {
       // Eight weeks of history rather than two, so the heatmap, the forecast and
       // the accuracy trend on /progress all have something real to draw.
       let s = emptyScheduling(new Date(Date.now() - 56 * 86400000));
-      const history = c.targetCase === SLOW_SLOT ? SLOW_HISTORY : HISTORIES[i % HISTORIES.length]!;
+      const history = c.targetCase === SLOW_SLOT
+        ? SLOW_HISTORY
+        : lex.id === struggling
+          ? STRUGGLE_HISTORY
+          : HISTORIES[i % HISTORIES.length]!;
       const reviews: { rating: number; at: Date; stateBefore: number }[] = [];
       history.forEach((r, n) => {
         const daysAgo = Math.max(0, 54 - n * 6 - (i % 5));
