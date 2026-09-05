@@ -131,13 +131,20 @@ export function reviewOf(_scene: SceneSpec, state: SceneState): SceneReview {
   ];
 
   return {
-    lead: lead({ turns: turns.length, landed: landed.length, read: read.length, slips: slips.length, notes: notes.length }),
+    lead: lead({
+      turns: turns.length,
+      landed: landed.length,
+      read: read.length,
+      slips: slips.length,
+      spellings: slips.filter((s) => s.kind === "spelling").length,
+      notes: notes.length,
+    }),
     notes,
   };
 }
 
 function lead(n: {
-  turns: number; landed: number; read: number; slips: number; notes: number;
+  turns: number; landed: number; read: number; slips: number; spellings: number; notes: number;
 }): string {
   if (n.turns === 0) return "Nothing was said this time, which is a fine way to find out what a scene is like.";
 
@@ -148,11 +155,13 @@ function lead(n: {
     button rather than a figure.
   */
   if (n.landed === 0) {
-    const seen = n.read > 0
-      ? "Your Estonian was read every time; none of it was the thing that was being asked for. "
-      : "";
+    const seen = n.read === n.turns
+      ? "Your Estonian was read every time. None of it was what was being asked for. "
+      : n.read > 0
+        ? `${n.read} of your ${n.turns} turns were read as Estonian, and none of them was what was asked for. `
+        : "";
     return `${seen}Nothing landed this time. The word button hands you one of the beat's own words, `
-      + "and saying you have not followed gets it handed over too.";
+      + "and telling them you have not followed gets it handed over too.";
   }
 
   const all = n.landed === n.turns;
@@ -166,8 +175,21 @@ function lead(n: {
       ? `${opener} Nothing needed putting right, which is rarer than it sounds.`
       : opener;
   }
-  const ending = n.slips === 1 ? "One ending or spelling was off" : `${n.slips} endings or spellings were off`;
-  return `${opener} ${ending}, and not one of them stopped the conversation.`;
+  /*
+    ENDING OR SPELLING, WHICHEVER IT ACTUALLY WAS. The line said "ending or
+    spelling" whatever the run held, which is the app hedging about something
+    it knows: a dropped diacritic is a keyboard and a wrong case is a gap, and
+    a learner who made one of them should not be told it might have been the
+    other.
+  */
+  const [one, several] = n.spellings === n.slips
+    ? ["spelling", "spellings"]
+    : n.spellings === 0
+      ? ["ending", "endings"]
+      : ["ending or spelling", "endings and spellings"];
+  return n.slips === 1
+    ? `${opener} One ${one} was off, and it did not stop the conversation.`
+    : `${opener} ${n.slips} ${several} were off, and not one of them stopped the conversation.`;
 }
 
 /**
@@ -208,7 +230,7 @@ function caseNotes(_slips: readonly Slip[], state: SceneState): ReviewNote[] {
         term: spec ? `${spec.et} ${MIDDOT} ${spec.question}` : undefined,
         body: [
           many
-            ? `You reached for a different ending here, ${rows.length} times.`
+            ? `You reached for a different ending ${rows.length} times.`
             : "You reached for a different ending here.",
           clause ? `This is the one to use ${clause}.` : "",
         ].filter(Boolean).join(" "),

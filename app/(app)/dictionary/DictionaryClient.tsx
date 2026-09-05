@@ -714,7 +714,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
                     in small italics is the exact layout CLAUDE.md names as the
                     fault it was written to stop.
                   */}
-                  <span lang="et" className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)" }}>{et}</span>
+                  <span lang="et" className="label-xs mt-1.5 block" style={{ color: "var(--ink-3)", textTransform: "none" }}>{et}</span>
                   <span className="mt-0.5 block text-2xs italic" style={{ color: "var(--ink-3)" }}>{label}</span>
                 </div>
               );

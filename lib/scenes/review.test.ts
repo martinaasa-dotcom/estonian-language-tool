@@ -53,6 +53,30 @@ describe("the review of a conversation", () => {
     expect(review.lead).toMatch(/word button/);
   });
 
+  /*
+    ONE, NOT "ONE OF THEM". And the line names what was actually off rather
+    than hedging "ending or spelling" over a run that held only one of the two.
+  */
+  it("agrees with itself about one slip, and names which kind it was", () => {
+    const one = reviewOf(SCENE, state([turn({ slips: [CASE_SLIP] })])).lead;
+    expect(one).toContain("One ending was off, and it did not stop the conversation.");
+    const spelling: Slip = { kind: "spelling", said: "korvas", form: "kõrvas", lemma: "kõrv" };
+    expect(reviewOf(SCENE, state([turn({ slips: [spelling] })])).lead).toContain("One spelling was off");
+    expect(reviewOf(SCENE, state([turn({ slips: [CASE_SLIP, spelling] })])).lead)
+      .toContain("2 endings and spellings were off, and not one of them");
+  });
+
+  /*
+    "Read every time" was printed whenever a single turn was Estonian, so a run
+    where one of five was read said something true of a run nobody had.
+  */
+  it("does not say every time about some of the time", () => {
+    const off = turn({ reading: "offtarget", met: [false] });
+    const lead = reviewOf(SCENE, state([off, turn({ reading: "unrecognised", met: [false] })], [])).lead;
+    expect(lead).not.toMatch(/every time/);
+    expect(lead).toContain("1 of your 2 turns were read as Estonian");
+  });
+
   it("still says their Estonian was read, where it was", () => {
     const review = reviewOf(SCENE, state([turn({ reading: "offtarget", met: [false] })], []));
     expect(review.lead).toMatch(/read every time/);

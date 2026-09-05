@@ -265,7 +265,7 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
               ) : (
                 <>
                   {pair.question && (
-                    <span lang="et" className="label-xs" style={{ color: "var(--ink-3)" }}>
+                    <span lang="et" className="label-xs" style={{ color: "var(--ink-3)", textTransform: "none" }}>
                       {pair.question}
                     </span>
                   )}

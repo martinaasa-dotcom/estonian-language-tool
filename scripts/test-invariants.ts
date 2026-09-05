@@ -11572,6 +11572,56 @@ check("a question the scene did not anticipate is answered before the move", () 
   assert.match(scripted, /export function answerBeatId\(/, "the bank has nowhere to hold a question-beat's answer");
 });
 
+check("no Estonian word is set in a class that shouts it", () => {
+  /*
+    `label-xs` is 10.5px bold with wide tracking and `text-transform:
+    uppercase`, which is right over a section of English and wrong over a word
+    of Estonian: CLAUDE.md names this fault twice, once where a group heading
+    printed the ending `-sse` as `-SSE`, which no Estonian word ends in, and
+    once where a dictionary entry shouted a case name over the English in
+    italics under it. `Chip` already carries the remedy as a prop and calls it
+    `caseSensitive`; what it did not have was anything stopping the next raw
+    span doing it again, and the next raw span did, three times.
+
+    A SWEEP RATHER THAN A LIST, because a fourth one looks exactly like the
+    three. What it reads is the opening tag itself: an element that declares
+    `lang="et"` and carries an uppercasing class has to ask for its own case
+    back, either with `textTransform: "none"` or through `Chip`'s prop.
+  */
+  /*
+    ONE LETTER IS NOT A WORD, and a word game draws its board and its keys one
+    letter to a cell: `SONAD_LETTERS` is what those hold, an uppercase O with a
+    tilde is still that letter, and a tile of lower-case letters is not what
+    anybody has ever played. Named rather than pattern-matched, because what
+    makes it safe is the content and the sweep reads the opening tag; and the
+    name is checked for staleness below, so it cannot become a parking space.
+  */
+  const ONE_LETTER_AT_A_TIME = "app/(app)/sonad/SonadSession.tsx";
+  const shouted: string[] = [];
+  for (const file of [...APP, ...COMPONENTS].filter((f) => f.endsWith(".tsx") && f !== ONE_LETTER_AT_A_TIME)) {
+    const src = code(file);
+    for (const tag of src.match(/<[A-Za-z][^<>]*?>/gs) ?? []) {
+      if (!/lang="et"/.test(tag)) continue;
+      if (!/label-xs|uppercase/.test(tag)) continue;
+      if (/textTransform:\s*"none"|caseSensitive/.test(tag)) continue;
+      shouted.push(`${file}: ${tag.replace(/\s+/g, " ").slice(0, 90)}`);
+    }
+  }
+  assert.deepEqual(
+    shouted, [],
+    "an Estonian word is set in an uppercasing class, so it reaches the screen shouted and misspelled. "
+    + 'Add textTransform: "none", or use a class that does not transform.\n' + shouted.join("\n"),
+  );
+  assert.match(
+    code(ONE_LETTER_AT_A_TIME), /lang="et"[\s\S]{0,400}?uppercase/,
+    `${ONE_LETTER_AT_A_TIME} no longer sets an Estonian letter in caps, so the exemption above is a parking space`,
+  );
+  assert.match(
+    code("components/ui.tsx"), /textTransform: caseSensitive \? "none" : undefined/,
+    "Chip lost the prop that keeps a form like `b : \u2205` as it was written",
+  );
+});
+
 check("a scene reviews itself in English, and the review teaches nothing it made up", () => {
   /*
     The debrief said what happened and never the thing a teacher says after a
