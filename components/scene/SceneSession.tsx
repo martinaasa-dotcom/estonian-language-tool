@@ -733,8 +733,16 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                     className="rounded-2xl px-4 py-3 text-sm"
                     style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
                   >
+                    {/*
+                      One word in the eyebrow, because `label-xs` uppercases:
+                      the whole label set in capitals is a shouted sentence
+                      over a panel that exists to be reassuring. The sentence
+                      itself is read to a screen reader instead, where the
+                      panel's colour and position say nothing.
+                    */}
                     <span className="label-xs block" style={{ color: "var(--accent-deep)" }}>
-                      {PROVENANCE.coach}
+                      Hint
+                      <span className="sr-only"> ({PROVENANCE.coach})</span>
                     </span>
                     {line.text}
                   </p>
