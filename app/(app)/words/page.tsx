@@ -5,6 +5,7 @@ import { ButtonLink } from "@/components/Button";
 import { Card, Empty, Page, SectionTitle, Stack, StatTile } from "@/components/ui";
 import { STATE_LABELS } from "@/lib/srs/scheduler";
 import { Diagnosis } from "@/components/Diagnosis";
+import { DrillLink } from "@/components/DrillLink";
 import { MasteryLists } from "@/components/MasteryLists";
 import { masteryCounts, masteryFor } from "@/lib/progress/mastery";
 import { WordsTable, type CardRow } from "./WordsTable";
@@ -116,6 +117,16 @@ export default async function WordsPage() {
           </Card>
 
           <MasteryLists words={mastery} counts={masteryCounts(mastery)} />
+
+          {/*
+            The slice of this deck that the review queue is slowest to reach.
+            Unseen cards are introduced oldest first, so a word added out of
+            curiosity waits behind the course backlog, which on a deck built by
+            adding a level in first run is a year long. This is the one press
+            that asks about them, and it belongs on the page about the deck
+            rather than on a practice menu, which is what `within` says.
+          */}
+          <DrillLink href="/review/lookups" />
 
           <Diagnosis ownerId={ownerId} />
 
