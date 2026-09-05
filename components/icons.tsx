@@ -1,5 +1,5 @@
 import {
-  Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, CalendarDays, CalendarRange, Camera,
+  Award, BookCheck, BookmarkCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, CalendarDays, CalendarRange, Camera,
   ChartNoAxesColumn, CheckCheck, CircleHelp, ClipboardCheck,
   CircleDot, Clock, Compass, Ear, Eye, Flame, Footprints, GraduationCap, Grid2x2, Grid3x3, Hand, Headphones, Heart, HeartPulse,
   Hourglass, House, Landmark, Languages, Layers, Library, Link, Map, MessageCircleQuestion,
@@ -18,7 +18,7 @@ import {
  * string means, and the fallback keeps a typo from crashing a page.
  */
 export const ICONS: Record<string, LucideIcon> = {
-  Award, BookCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, CalendarDays, CalendarRange, Camera,
+  Award, BookCheck, BookmarkCheck, BookOpen, BrainCircuit, Briefcase, CalendarCheck, CalendarDays, CalendarRange, Camera,
   ChartNoAxesColumn, CheckCheck, CircleHelp, ClipboardCheck,
   CircleDot, Clock, Compass, Ear, Eye, Flame, Footprints, GraduationCap, Grid2x2, Grid3x3, Hand, Headphones, Heart, HeartPulse,
   Hourglass, House, Landmark, Languages, Layers, Library, Link, Map, MessageCircleQuestion,

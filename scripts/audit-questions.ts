@@ -53,7 +53,7 @@ import { buildPaper as buildPlacement, type WordRow } from "../lib/assessment/it
 import { heardIndex, meaningsHeard } from "../lib/assessment/heard";
 import { differentMeaning } from "../lib/questions/distractors";
 import { EXAM_LEVELS } from "../lib/exam/spec";
-import { clueFrom } from "../lib/progress/crossword";
+import { clueClashes, clueFrom, clueKey } from "../lib/games/clue";
 import { mentions } from "../lib/estonian/cloze";
 import { SCENES } from "../lib/collections/scenes";
 import { emojiFor } from "../lib/collections/emoji";
@@ -113,7 +113,13 @@ const REACHES: Record<string, number> = {
     Measured, not estimated: 13,919. Then 9,711 when the conjugation card
     learned the same rule: 4,747 over a stem became 539 in a sentence.
   */
-  deck: 9_711, exam: 2_500, crossword: 5_295, scene: 1_409, target: 4_658,
+  /*
+    5,295 until a clue had to have one answer. Naming the kind of word costs
+    nothing, and refusing a clue another entry answers just as well took 1,304
+    of them out: `kena` and `ilus` are both "beautiful", and whichever the grid
+    wanted the other was a right answer marked wrong. See `lib/games/clue.ts`.
+  */
+  deck: 9_711, exam: 2_500, crossword: 3_991, scene: 1_409, target: 4_658,
   // 627 while a `heard` item was skipped outright; the listening items are
   // asked the "also right" question now and counted.
   check: 740,
@@ -332,8 +338,18 @@ for (const e of entries) {
 
 /* ── The crossword ───────────────────────────────────────────────────────── */
 timed("crossword", () => {
+/*
+  The clash rule reads the whole dictionary rather than one entry, which is
+  what the grid does: a clue with two answers is refused on both sides, so an
+  audit asking the entries one at a time would report clues the game does not
+  set. See `lib/games/clue.ts`.
+*/
+const clashes = clueClashes(entries.map((e) => ({
+  lemma: e.lemma, pos: e.pos, translation: e.translation ?? "",
+})));
 for (const e of entries) {
-  const clue = clueFrom(e.translation ?? "", e.lemma);
+  if (clashes.has(clueKey(e.lemma, e.pos))) continue;
+  const clue = clueFrom(e.translation ?? "", e.lemma, e.pos);
   if (clue) ask(`crossword ${e.lemma}`, clue, e.lemma);
 }
 });

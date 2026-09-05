@@ -78,17 +78,18 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   a typo and from a genuinely wrong word, and each verdict suggests a grade you can override. New
   words are introduced with their answer rather than guessed at, and multiple choice covers
   recognition. `u` undoes the last grade without touching the review log.
-- **21 ways to practise, over one deck.** Six rounds against the clock (a 60-second Case
+- **22 ways to practise, over one deck.** Six rounds against the clock (a 60-second Case
   Sprint, Match, Sentences, Listening, Dictation and Speaking), two passes over the words you are
   working on (flash cards over the whole deck, and the hundred commonest words of each kind,
   counted over film and television subtitles rather than chosen by anybody), five games (a picture
   board with no English on it, a picture to write one Estonian sentence about, Sõnad, a six-letter
   word a day in six guesses, Ristsõna, a crossword with English clues and Estonian answers, and
   Target for endings before the timer runs out), a two-minute daily quest aimed at whatever is going
-  worst, and seven drills that sit on the page naming the thing they drill: a sentence you write in
+  worst, and eight drills that sit on the page naming the thing they drill: a sentence you write in
   a named case, verb government, long against short, your own pasted Estonian, the conjugation
-  table, the words the endings cannot reach, and the cards you keep failing. Everything writes to
-  the same review log, so a game still moves the schedule forward.
+  table, the words the endings cannot reach, the cards you keep failing, and the words you looked
+  up yourself rather than met in a unit, which the queue is otherwise slowest to reach. Everything
+  writes to the same review log, so a game still moves the schedule forward.
 - **Where the endings stop.** Three forms memorised and eleven worked out is most of the language
   and not all of it: `tuba` goes to `tuppa`, not `toasse`, and its stem is `toa`, which no rule
   predicts. The exception area is every word in the dictionary whose stored form disagrees with the

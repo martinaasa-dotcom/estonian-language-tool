@@ -1475,6 +1475,56 @@ meets one they can read through rather than a wall of names, and the block names
 from, since these are somebody else's words. It lives on the dictionary landing beside the row it
 grew out of, rendered from the same hourly cache and stored nowhere; asserted.
 
+**And the sentence a word is taught with is read the same way, which is the fifth door onto one
+rule.** A first meeting shows an attested sentence with the form marked in it, and Ekilex records no
+English against a usage on a reader key, so for most words that screen was one glossed word inside
+six that were not: the line whose whole claim is a word behaving was a line a beginner could read a
+seventh of. It was reported that way, with the ask Speakly answers, that the words around the new
+one are underlined and can be looked at without leaving the card.
+
+`lib/dict/glossed.ts` is that, and it decides nothing: `matchEstonianForm` decides, at the same
+`VOUCHED_SCORE` a photographed page has to clear (ADR-021), so a word is underlined because the
+dictionary recognises that exact spelling, a stored form, or a regular case of the genitive stem. A
+word it will not vouch for is printed plain, exactly as a headline's names are, because leaving it
+out would be editing an attested sentence and guessing at it would be worse. What opens is the
+dictionary's own headword, the form it recognised and the dictionary's own gloss, never a reading of
+this sentence, so `kohvi` opens as `kohv`, coffee, and says which form that was. Nothing is
+generated, nothing is stored, and no module under it can reach a provider.
+
+**The panel sits under the sentence rather than over the word**, and everything else follows from
+that. A popover hung off an inline word inside a 360px card is what `test-containment.mjs` exists to
+catch, it covers the sentence it is explaining, and it has to be dismissed before the next word can
+be read. A panel below is the width of the card at every size, so a pointer can run along the line
+and watch it change. **So a pointer leaving a word clears nothing**: hovering picks a word, tapping
+picks a word, focusing picks a word, and it stays until another is picked or it is closed. Clearing
+on leave would put the controls inside it out of a mouse's reach, and those are the half a learner
+presses; and a click **opens rather than toggles**, since a mouse arriving on a word has already
+opened it and a toggle would shut the panel of the word the pointer is sitting on. The taught word is marked and never offered a panel, since its meaning is printed
+two lines above. **The word buttons carry no `hover:` class**, because an inline style beats a class
+`:hover` and the hover state here *is* the open state.
+
+**A word kept from a sentence is a press and it says where it came from.** `SENTENCE` is a card
+source of its own beside `SCAN` and `ALMANAC`: somebody reading a line and hitting a word they do
+not have is a different thing from looking one up, and `Card.source` is a closed list for the reason
+its own comment gives. Recognition and production, which is what every one-word add in this app
+offers, and it does not revalidate the route, because what is behind it is a review session holding
+its own queue.
+
+**The whole sentence in English is the other answer and is deliberately not the same one.** Word by
+word costs nothing, works with no key and works offline; a translation of the line is a paid call to
+a model, in the one direction ADR-005 permits, so it is asked for rather than spent on every word
+anybody meets. `translateExample` already existed for the dictionary entry and already stores what
+comes back, so the second learner to meet the word reads it for free, and it is tagged where it
+lands. A deployment with no provider is offered nothing at all rather than offered it and refused,
+which is `canTranslate` and is read on the server beside the sentence rather than threaded down as
+a prop.
+
+**One query per session, not one per card.** The lookup is batched across every first meeting in a
+review session or a learn batch, for the reason every other batched read here gives: a loop of
+queries is a round trip each and a hosted database is in another region. `WORD_BUDGET` is stated so
+a caller that grows cannot quietly turn this into the widest query on the page, and a sentence past
+it comes back unglossed, which is exactly what every sentence looked like before this existed.
+
 **Which words are worth learning first is a question about the language, not about the syllabus, so
 it is answered by counting.** The course teaches in themes and the dictionary holds six thousand
 words, and neither tells somebody in their first week where to start. `scripts/build-frequency.ts`
@@ -1889,6 +1939,38 @@ Estonian is written at all.
 **English clues and Estonian answers, one direction only, because that is the direction that
 teaches.** You know what you mean and you are looking for the word, which is where a learner is
 every time they open their mouth. The other way round is a reading exercise with extra steps.
+
+**A clue has one answer, or it is not set.** A learner read `3 down: human`, typed `inimene`, which
+is what a human is, watched it fill the seven squares, and was marked wrong: the grid wanted
+`inimlik`, the adjective. Nothing about that clue was false. `inimlik` is glossed "human" and
+`inimene` "human being", two entries with two parts of speech, so no check this app had could see
+that one English word was standing over both. Every other screen answers this by *widening*, which
+is what `acceptedAnswers` does for a word with two right spellings, and a grid cannot: a square
+takes one string, crossing other words, so a clue with two honest answers is a trick rather than a
+question and the clue has to narrow instead. `lib/games/clue.ts` is both halves of that and holds
+no English of its own; every rule in it refuses a clue or labels one.
+
+**The clue says what kind of word it wants**, because English does not mark a part of speech and
+Estonian derivation does: "human" is a noun and an adjective in English and is two words here, and
+so are "clean", "light" and "empty". `human · adjective` is `inimlik` and nothing else, and it costs
+one word of the line. It is the hint a production card has carried since the deck was built, on the
+one screen that had never printed it. **And no other entry answers it**, which is the half naming
+the kind cannot reach: 92 clue lines in the shipped dictionary are the same line over the same part
+of speech, `kena` and `ilus` are both "beautiful", and whichever of them the grid wants the other
+is a right answer marked wrong. Both sides are refused, since which of two synonyms a grid ought to
+have is not a question the dictionary can answer.
+
+**Read over the whole dictionary rather than the day's band, which is the half that would have
+caught the report.** `inimene` is graded A1 and the grid was B1, so the rival was never in the pool
+and a clash read off `crosswordPool` would have passed on the very clue this exists for. A learner
+knows words outside their own band, which is what a band is. And **a sense set rather than a
+string**, because a clue is a list: "a friend" and "a friend, a mate" are two different lines and
+everything the shorter one says is true of both entries. Comparing the strings refuses 319 of the
+2,290 words the pool can draw on and comparing the sets refuses 665, which is 29% and the reason it
+was measured rather than reasoned about. What it costs is a word the compiler was never going to
+reach: 271 words are left at A1 and 511 at B1 against a grid that wants seven, and a full
+seven-word grid still compiles on every day of a year at every level. `npm run audit:questions`
+asks 3,991 crossword clues where it asked 5,295.
 
 **A criss-cross rather than a dense grid, and that is a fact about the dictionary.** A five-by-five
 where every row and column is a word needs a search over words with the right letter in the right
@@ -5050,8 +5132,9 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
-`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `exceptionsFor`,
-`KIND_NOTES`, `drillable`, `markForm`, `exceptionIndex`. Most of them now
+`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
+`glossSentences`, `GlossedSentence`, `exceptionsFor`, `KIND_NOTES`, `drillable`,
+`markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
