@@ -92,7 +92,47 @@ export type Requirement =
   /** A form of the pronoun the scene's register expects. */
   | { readonly kind: "register" }
   /** Small talk. Never fails, and exists so a beat can be colour. */
-  | { readonly kind: "any" };
+  | { readonly kind: "any" }
+  /**
+   * Any one of these. The other kinds are joined with "and", which is right
+   * for a beat that wants a word and a case of it, and wrong for the one
+   * question a conversation asks most: "does that suit you?" A learner answers
+   * an offered time with the time, with `sobib`, with `jah`, or with `ei`, and
+   * every one of those is the beat done. The first version of the landlord's
+   * offer took the time alone, so `Sobib` was read as real Estonian off the
+   * point, asked again, and the landlord ran out of patience over an answer
+   * that was the right one. `leafNeeds` is how a reader that wants the words
+   * or the cases behind a beat sees through this one.
+   */
+  | { readonly kind: "anyOf"; readonly of: readonly LeafRequirement[] };
+
+/** A requirement that is not itself a choice between requirements. */
+export type LeafRequirement = Exclude<Requirement, { kind: "anyOf" }>;
+
+/**
+ * A beat's requirements with every `anyOf` opened, each leaf carrying the
+ * index of the requirement it belongs to in `needs`, which is what a
+ * `TurnRecord.met` row is indexed by. The readers that want to know which
+ * words or cases a beat is about (the grades, the drills, the tile, the
+ * catalogue test) read this rather than `needs`, so a choice is one
+ * requirement to the marker and each of its options to everybody else.
+ */
+export function leafNeeds(
+  needs: readonly Requirement[],
+): { readonly need: LeafRequirement; readonly index: number }[] {
+  return needs.flatMap((need, index) =>
+    need.kind === "anyOf" ? need.of.map((leaf) => ({ need: leaf, index })) : [{ need, index }],
+  );
+}
+
+/**
+ * One piece of a line said off the card. A lemma is printed as the dictionary
+ * spells it; a slot is printed as the value the card dealt, or, where a case
+ * is named, as the dictionary's form of the drawn word in that case.
+ */
+export type SaysPart =
+  | { readonly lemma: string }
+  | { readonly slot: string; readonly grammCase?: CaseKey };
 
 export interface BeatSpec {
   readonly id: string;
@@ -140,16 +180,39 @@ export interface BeatSpec {
    */
   readonly lines?: readonly string[];
   /**
-   * A line made of one course word and a value off the card, for a beat whose
+   * A line made of course words and values off the card, for a beat whose
    * line has to name what this run dealt: `Kell 13:30?` offers the time on
-   * the learner's own card. The word is a lemma the scene's units teach, the
-   * value is the datum the card already prints, and the mark is the move, so
-   * it is the same licence a reaction takes (`REACTIONS`) with a datum beside
-   * it and nothing is inflected or invented. It is what lets a keyless
+   * the learner's own card, and `Teisipäeval kell 13:30?` offers a day with
+   * it. Each part is a lemma the scene's units teach, as the dictionary spells
+   * it, or a slot the card deals, printed as its value or as the dictionary's
+   * own form of the drawn word in a named case. The mark is the move. Nothing
+   * is inflected here and nothing is invented: a case form is read off the
+   * same table every case card reads, and a part the dictionary cannot supply
+   * withholds the whole line (`datumLine`). It is what lets a keyless
    * deployment offer an appointment in Estonian rather than in a stage
-   * direction.
+   * direction, and offer a *day* rather than a bare clock time, which a
+   * learner reported as the landlord agreeing to nothing in particular.
    */
-  readonly says?: { readonly lemma: string; readonly slot: string };
+  readonly says?: readonly SaysPart[];
+  /**
+   * What they say when the learner turns the offer down: a second offer.
+   *
+   * A person who hears "ei sobi" does not take it as the end of the
+   * conversation, they try another day. So a beat that can be declined says
+   * what the other side does instead, from their side, and how, as parts off
+   * the card the way `says` is: the second day and the second time are
+   * props of their own, drawn to differ from the first. The marker reads a
+   * no on such a beat as `declined` rather than as the beat met, the machine
+   * makes the counter once, and a second no is the learner saying it will
+   * not do, which the goal allows. `replaces` names which of the card's
+   * values the counter stands in for, so a later beat that reads the time
+   * back (`Kell 10:30.`) reads the one that was actually accepted.
+   */
+  readonly counter?: {
+    readonly they: string;
+    readonly says?: readonly SaysPart[];
+    readonly replaces: readonly (readonly [from: string, to: string])[];
+  };
   /** What counts as the learner's turn being complete. */
   readonly needs: readonly Requirement[];
   /** Required beats are the objectives; optional ones are the colour. */

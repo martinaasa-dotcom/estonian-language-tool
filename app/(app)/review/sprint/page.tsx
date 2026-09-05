@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { starredAmong } from "@/lib/progress/stars";
 import { SprintSession, type SprintCard } from "./SprintSession";
 import { shuffle } from "@/lib/random/shuffle";
 import { numberSetting, readSetting, SETTING_KEYS } from "@/lib/settings/store";
@@ -48,11 +49,18 @@ export default async function SprintPage() {
 
   // Shuffled so the same session doesn't always open on the same word.
   const shuffled = shuffle(cards);
+  // Which of the pool are already favourites, in one read rather than one per
+  // card, so the star in the corner is drawn in the state it is actually in.
+  const starred = await starredAmong(
+    ownerId, shuffled.map((c) => c.lexemeId).filter((id): id is string => !!id),
+  );
   const sprintCards: SprintCard[] = shuffled.map((c) => ({
     id: c.id,
     front: c.front,
     back: c.back,
     lemma: c.lexeme?.lemma ?? null,
+    lexemeId: c.lexemeId,
+    starred: !!c.lexemeId && starred.has(c.lexemeId),
     cardType: c.cardType,
   }));
 

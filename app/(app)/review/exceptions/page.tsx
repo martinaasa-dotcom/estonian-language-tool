@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { courseLevelFor } from "@/lib/progress/level";
 import { isAround } from "@/lib/collections/levels";
 import { exceptionIndex } from "@/lib/dict/facts";
+import { starredAmong } from "@/lib/progress/stars";
 import { EXCEPTION_KINDS } from "@/lib/estonian/exceptions";
 import { exceptionRound, pickWords, type ExceptionWord } from "@/lib/games/exceptions";
 import { formIndex } from "@/lib/games/flash";
@@ -71,6 +72,8 @@ export default async function ExceptionsRoundPage({
     );
   }
 
+  const starred = await starredAmong(ownerId, near.map((row) => row.id));
+
   const cards = await prisma.card.findMany({
     where: { ownerId, lexemeId: { in: near.map((row) => row.id) } },
     select: { id: true, lexemeId: true, cardType: true, targetCase: true },
@@ -102,6 +105,7 @@ export default async function ExceptionsRoundPage({
     lexemeId: row.id, lemma: row.lemma, translation: row.translation, pos: row.pos,
     exception,
     cardId: cardFor(cards, row.id, exception.slot),
+    starred: starred.has(row.id),
     index: {} as Record<string, readonly string[]>,
     forms: [] as { formType: string; value: string; morphCode?: string | null }[],
     sentences: [] as string[],

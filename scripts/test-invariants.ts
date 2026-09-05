@@ -6149,11 +6149,44 @@ check("a truncated query in the progress layer ends on the primary key", () => {
       const top = /\n    orderBy:\s*(\[[\s\S]*?\]|\{[\s\S]*?\}),/.exec(block)
         ?? /orderBy:\s*(\[[\s\S]*?\]|\{[^{}]*\}),/.exec(block);
       assert.ok(top, `${where} takes a slice of an unordered query, so which rows it gets is Postgres's choice`);
-      assert.match(
-        top[1]!.replace(/\s+/g, " "),
-        /\{ id: "(asc|desc)" \} *\]$|^\{ id: "(asc|desc)" \}$/,
-        `${where} orders on ${top[1]!.replace(/\s+/g, " ")} and then cuts. None of those keys is unique, ` +
-        "so two tied rows are ordered by whatever the plan did that day. End it on { id: \"asc\" }.",
+      const order = top[1]!.replace(/\s+/g, " ");
+      /*
+        THE LAST KEY HAS TO IDENTIFY A ROW, WHICH IS NOT ALWAYS SPELLED `id`.
+
+        Every model this rule was written over has an `id`, so it asked for that
+        word and said what it meant in the failure message. `StarredWord` is the
+        first one read here that has none: its primary key is `(ownerId,
+        lexemeId)`, the owner is pinned in the `where` of every read of it, and
+        `lexemeId` is therefore exactly as total a tie-break as an `id` would
+        be. Demanding a column the table does not have is a check firing on
+        honest code, which is how a check stops being read.
+
+        So the schema is what says which columns identify a row, rather than a
+        word typed here: the field marked `@id`, or the components of an
+        `@@id([...])`. Nothing loosens for a model that has an `id`, because for
+        those the answer is the same single column it always was.
+      */
+      const model = /prisma\.([A-Za-z]+)\.findMany/.exec(src.slice(Math.max(0, found.index - 80), found.index + found[0].length));
+      const named = model?.[1];
+      const declared = named
+        ? new RegExp(`model ${named[0]!.toUpperCase()}${named.slice(1)} \\{[\\s\\S]*?\\n\\}`).exec(SCHEMA)?.[0]
+        : undefined;
+      const identifies = declared
+        ? [
+          ...[...declared.matchAll(/^\s*(\w+)\s+\S+.*@id\b/gm)].map((m) => m[1]!),
+          ...(/@@id\(\[([^\]]+)\]\)/.exec(declared)?.[1] ?? "").split(",")
+            .map((k) => k.trim()).filter(Boolean),
+        ]
+        : ["id"];
+      assert.ok(
+        identifies.length > 0,
+        `${where} reads a model whose primary key this check could not find in the schema`,
+      );
+      assert.ok(
+        identifies.some((key) => new RegExp(`\\{ ${key}: "(asc|desc)" \\} *\\]$|^\\{ ${key}: "(asc|desc)" \\}$`).test(order)),
+        `${where} orders on ${order} and then cuts. None of those keys is unique, ` +
+        `so two tied rows are ordered by whatever the plan did that day. End it on `
+        + `${identifies.map((k) => `{ ${k}: "asc" }`).join(" or ")}.`,
       );
     }
   }
@@ -11629,6 +11662,98 @@ check("the exceptions round asks nothing whose answer is the word in the questio
     code("scripts/audit-questions.ts"), /drillable\(/,
     "audit:questions stopped covering the exceptions round",
   );
+});
+
+/**
+ * A WORD IS FAVOURITED BY ONE BUTTON, AND THE TOGGLE HAS ONE CALLER.
+ *
+ * Starring a word existed for the life of this app and lived on one screen,
+ * the dictionary entry, which is the screen a learner is least often on: the
+ * word worth keeping turns up on a review card, in the middle of a round. It
+ * is on every card that teaches one now, which is nine sessions, and nine
+ * copies of a toggle is nine answers to what a favourite looks like, what it
+ * does when the write fails, and which state it is drawn in when the queue
+ * moves to the next word. That last one is not hypothetical: the state has to
+ * be reset by the word rather than by a key at each call site, and a copy is
+ * exactly where that gets forgotten.
+ *
+ * So `toggleStar` is reachable from one component, asserted on the *import*
+ * because that is what makes a second copy impossible rather than merely
+ * unlikely, and `app/actions.ts` is where it is declared.
+ */
+check("a word is favourited by one button, and the toggle has one caller", () => {
+  const callers = ALL.filter((file) => /\btoggleStar\b/.test(code(file)));
+  assert.deepEqual(
+    callers.sort(),
+    [join("app", "actions.ts"), join("components", "StarWord.tsx")].sort(),
+    `${callers.join(", ")} reach toggleStar. It has one caller, components/StarWord.tsx, `
+    + "so every screen draws the same button and resets it on the same rule.",
+  );
+});
+
+/**
+ * AND EVERY SCREEN THAT PUTS A WORD UP TO LEARN DRAWS IT.
+ *
+ * The ask was "anywhere there is a word for the user to memorise", and the
+ * shape of that fault is silence: a round added later simply has no star, and
+ * nothing looks wrong, because a missing button looks exactly like a button
+ * nobody has pressed. So the rounds are read off the filesystem rather than
+ * from a list here, and a session that draws no star has to say why.
+ *
+ * Anchored on the element rather than the import, which is the mistake this
+ * repository has made five times: a file can import a component and render
+ * nothing, and the check that only looks for the import passes on a screen no
+ * learner can reach the button from.
+ *
+ * The exemptions are the rounds whose subject is not one word. A board of
+ * tiles has no corner to put a star in and no single word it would be about,
+ * and a round whose subject is a sentence is not a round about a word.
+ */
+check("every round that puts one word up carries the favourite button", () => {
+  const exempt: Record<string, string> = {
+    [join("app", "(app)", "review", "match", "MatchSession.tsx")]:
+      "a board of pairs: several words at once, and no card to put a corner on",
+    [join("app", "(app)", "review", "pairs", "PairsSession.tsx")]:
+      "the same, a board rather than a card",
+    [join("app", "(app)", "review", "emoji", "EmojiSession.tsx")]:
+      "a matching board of pictures and forms, several words at once",
+    [join("app", "(app)", "review", "target", "TargetSession.tsx")]:
+      "four forms of one word to aim at, and a clock: the round is a gesture",
+    [join("app", "(app)", "review", "describe", "DescribeSession.tsx")]:
+      "a picture and three words, only one of which is named",
+    [join("app", "(app)", "review", "cloze", "ClozeSession.tsx")]:
+      "the subject is a sentence with a hole in it rather than a word",
+    [join("app", "(app)", "review", "sentences", "SentenceSession.tsx")]:
+      "the subject is the sentence, which is what the round asks about",
+    [join("app", "(app)", "learn", "checkpoint", "[level]", "CheckpointSession.tsx")]:
+      "a measurement rather than a round: it withholds every answer until the "
+      + "end on purpose, and its questions carry no entry to keep",
+  };
+
+  const sessions = APP.filter(
+    (file) => /Session\.tsx$/.test(file)
+      && (file.includes(join("app", "(app)", "review")) || file.includes(join("app", "(app)", "learn"))),
+  );
+  assert.ok(sessions.length >= 12, `only ${sessions.length} rounds found, so this check stopped looking`);
+
+  for (const file of sessions) {
+    const body = code(file);
+    if (file in exempt) {
+      assert.doesNotMatch(
+        body, /<StarWord\b/,
+        `${file} draws the favourite button now, so drop its exemption`,
+      );
+      continue;
+    }
+    assert.match(
+      body, /<StarWord\b/,
+      `${file} puts a word up to learn and offers no way to keep it. Draw <StarWord> in the `
+      + "card's corner, or say here why this round has no one word to be about.",
+    );
+  }
+  for (const file of Object.keys(exempt)) {
+    assert.ok(sessions.includes(file), `${file} is exempted and is no longer a round`);
+  }
 });
 
 console.log(

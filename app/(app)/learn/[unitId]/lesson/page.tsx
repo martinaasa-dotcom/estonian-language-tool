@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { unitById } from "@/lib/collections/syllabus";
 import { planLesson, splitIntoLessons, type LessonWord } from "@/lib/collections/lesson";
+import { starredAmong } from "@/lib/progress/stars";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { isPrincipalFormType } from "@/lib/estonian/types";
@@ -90,13 +91,14 @@ export default async function LessonPage({
   const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
   const pool = await prisma.lexeme.findMany({
     where: { cefr: unit.level, lemma: { notIn: [...unit.lemmas] } },
-    select: { lemma: true, translation: true, pos: true, semanticTypes: true },
+    select: { id: true, lemma: true, translation: true, pos: true, semanticTypes: true },
     orderBy: { lemma: "asc" },
     skip: atLevel > DISTRACTOR_POOL ? poolSeed % (atLevel - DISTRACTOR_POOL) : 0,
     take: DISTRACTOR_POOL,
   });
 
   const toWord = (row: (typeof rows)[number]): LessonWord => ({
+    lexemeId: row.id,
     lemma: row.lemma,
     gloss: row.translation,
     equivalent: equivalentIn(row, glossLanguage)
@@ -140,6 +142,7 @@ export default async function LessonPage({
     unit,
     words: chosen,
     distractors: pool.map((p) => ({
+      lexemeId: p.id,
       lemma: p.lemma, gloss: p.translation, pos: p.pos, semanticTypes: p.semanticTypes,
       examples: [], parts: {}, government: null,
     })),
@@ -148,11 +151,20 @@ export default async function LessonPage({
     seed: hash(`${unit.id}:${index}`),
   });
 
+  /*
+    Which of this lesson's words are already favourites. A set handed to the
+    session rather than a field on the step, because `LessonStep` is built by a
+    pure planner and which words one learner has kept is not a fact about the
+    lesson.
+  */
+  const starred = await starredAmong(ownerId, chosen.map((w) => w.lexemeId));
+
   return (
     <LessonSession
       unitId={unit.id}
       unitTitle={unit.title}
       initialSteps={steps}
+      starred={[...starred]}
       part={index + 1}
       parts={lessons.length}
     />

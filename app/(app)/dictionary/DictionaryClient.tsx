@@ -5,7 +5,7 @@ import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Camera, Check, Plus, ScissorsLineDashed, Search, Star, TrendingUp } from "lucide-react";
-import { addToDeck, toggleStar } from "@/app/actions";
+import { addToDeck } from "@/app/actions";
 import { Button } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Speak, SpeakPair } from "@/components/Speak";
@@ -23,6 +23,7 @@ import { DerivedVerbForms, WordForms } from "./Forms";
 import type { SearchHit } from "@/lib/dict/search";
 import { AddWord, type WordDraft } from "./AddWord";
 import { Et } from "@/components/Et";
+import { StarWord } from "@/components/StarWord";
 import { SuggestFix } from "@/components/SuggestFix";
 import { AI_TAG, NO_VALUE } from "@/lib/copy/values";
 import type { Suggestions } from "@/lib/dict/suggest";
@@ -208,6 +209,15 @@ export function DictionaryClient({
         <div>
           <p className="label-xs mb-2 flex items-center gap-1.5" style={{ color: "var(--ink-3)" }}>
             <Star size={12} aria-hidden /> Starred
+            {/* A few of them here and all of them there. This row is capped and
+                the page it points at is where the list lives. */}
+            <Link
+              href="/words/mastery"
+              className="font-semibold underline underline-offset-2"
+              style={{ color: "var(--accent-deep)" }}
+            >
+              See all
+            </Link>
           </p>
           <ul className="flex flex-wrap gap-2">
             {starred.map((s) => (
@@ -580,7 +590,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <StarButton id={entry.id} starred={entry.starred} />
+          <StarWord lexemeId={entry.id} starred={entry.starred} label={entry.lemma} />
           <AddWord
             key={entry.id}
             edit={{
@@ -858,26 +868,6 @@ function EntryProblem({ entry }: { entry: EntryView }) {
         label="Suggest a correction"
       />
     </div>
-  );
-}
-
-function StarButton({ id, starred }: { id: string; starred: boolean }) {
-  const [on, setOn] = useState(starred);
-  const [pending, start] = useTransition();
-  return (
-    <Button
-      variant="ghost"
-      aria-pressed={on}
-      aria-label={on ? "Remove this word from your starred list" : "Star this word"}
-      disabled={pending}
-      onClick={() => start(async () => {
-        const result = await toggleStar(id);
-        if (result.ok) setOn(result.starred);
-      })}
-      style={{ color: on ? "var(--hard-ink)" : undefined }}
-    >
-      <Star size={16} aria-hidden fill={on ? "currentColor" : "none"} />
-    </Button>
   );
 }
 

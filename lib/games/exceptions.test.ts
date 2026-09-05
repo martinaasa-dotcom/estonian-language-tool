@@ -36,6 +36,7 @@ const tubaIndex = { tuppa: ["ILLATIVE"], toa: ["GENITIVE"], tuba: ["NOMINATIVE",
 const word = (over: Partial<ExceptionWord> = {}): ExceptionWord => ({
   lexemeId: "lex-1", lemma: "tuba", translation: "room", pos: "NOUN",
   exception: illative, cardId: "card-1", index: tubaIndex, forms: tubaForms, sentences: [],
+  starred: false,
   ...over,
 });
 

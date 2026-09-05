@@ -33,7 +33,9 @@ export type Response =
   /** They let it go and move on, out of patience rather than out of agreement. */
   | "moveOn"
   /** Answer the English, in character. Helpful or brisk, per the persona. */
-  | "english";
+  | "english"
+  /** The offer was turned down, and they make another. Once per beat. */
+  | "counter";
 
 /** One turn of the conversation, as the transcript holds it. */
 export interface TurnRecord {
@@ -84,6 +86,12 @@ export interface SceneState {
   readonly patience: number;
   /** Beat ids met, in the order they were met. */
   readonly done: readonly string[];
+  /**
+   * Beats whose first offer was turned down and countered, so the second no
+   * ends it and every later line reads the second offer's values
+   * (`cardInPlay`). Absent on a state written before counters existed.
+   */
+  readonly countered?: readonly string[];
   /** Every turn, for the debrief and for the server to re-mark. */
   readonly turns: readonly TurnRecord[];
   /** Set when the learner leaves. Leaving is a real option (§13). */
@@ -99,6 +107,7 @@ export function startScene(scene: SceneSpec): SceneState {
     beat: 0,
     patience: first ? first.patience : 0,
     done: [],
+    countered: [],
     turns: [],
     walkedOut: false,
   };
@@ -151,6 +160,26 @@ export function advance(
   }];
 
   if (advances(evidence.reading)) {
+    return {
+      state: { ...state, ...moveOn(scene, state.beat), done: [...state.done, beat.id], turns },
+      response: "answer",
+    };
+  }
+
+  /*
+    A NO GETS A SECOND OFFER, AND A SECOND NO IS AN ANSWER. Somebody who
+    hears "ei sobi" tries another day rather than saying goodbye, so the
+    first refusal on a beat with a counter costs nothing and the other side
+    offers again; the beat waits, and every later line reads the second
+    offer's values. The second refusal is the learner saying it will not
+    do, which is what the beat's goal allows, so it is met and the scene
+    moves on. A beat with no counter never produces this reading.
+  */
+  if (evidence.reading === "declined") {
+    const countered = state.countered ?? [];
+    if (beat.counter && !countered.includes(beat.id)) {
+      return { state: { ...state, turns, countered: [...countered, beat.id] }, response: "counter" };
+    }
     return {
       state: { ...state, ...moveOn(scene, state.beat), done: [...state.done, beat.id], turns },
       response: "answer",

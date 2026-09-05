@@ -242,8 +242,11 @@ export const SECTIONS: NavSection[] = [
           you are already on is worth more than a row you have to go and find.
         */
         href: "/words/mastery", label: "Word mastery",
-        blurb: "Mastered, almost there, and what needs work", icon: "Trophy", tone: "mint",
-        keywords: "mastered known struggling almost progress words list stuck weak",
+        blurb: "Your favourites, and what is mastered or needs work", icon: "Trophy", tone: "mint",
+        // The starred words are on this page too, and a learner looking for
+        // them types "favourites" rather than "mastery".
+        keywords: "mastered known struggling almost progress words list stuck weak "
+          + "favourites favorites starred star saved bookmarks kept",
       },
       {
         /*

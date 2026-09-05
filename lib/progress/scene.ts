@@ -524,7 +524,13 @@ async function glossesFor(run: SceneRunPlan): Promise<Map<string, string>> {
 function briefingOf(run: SceneRunPlan, glosses: ReadonlyMap<string, string>): Briefing {
   return {
     you: run.card.you,
-    props: run.card.props.map((prop) => ({
+    /*
+      The other side's facts are drawn and stored and never printed: the day
+      a landlord will offer is on the draw so a reload offers the same day,
+      and off the card because a card that says what the other person is
+      about to propose is a script rather than a role.
+    */
+    props: run.card.props.filter((prop) => !prop.theirs).map((prop) => ({
       slot: prop.slot,
       card: prop.card,
       /*
@@ -568,9 +574,24 @@ export async function beginRun(input: {
   const recent = await recencyFor(input.ownerId, scene.id);
   const run = planRun(scene, seed, input.level, input.difficulty, recent);
 
+  /*
+    The card is stored with the English of every drawn word beside it, off the
+    dictionary's own gloss, so a stage direction that names the other side's
+    day can say "Tuesday" inside an English sentence rather than the lemma
+    (`stageFor`). Read once here rather than on every turn, because the draw
+    is what a reload and the debrief read back.
+  */
+  const glosses = await glossesFor(run);
+  const card: RoleCard = {
+    ...run.card,
+    props: run.card.props.map((prop) => {
+      const english = prop.lemmas[0] ? glosses.get(prop.lemmas[0]) : undefined;
+      return english ? { ...prop, english } : prop;
+    }),
+  };
   const draw: StoredDraw = {
     persona: run.persona.id,
-    card: run.card,
+    card,
     curveballs: run.curveballs.map((c) => ({ id: c.id, at: c.at })),
   };
 
@@ -586,7 +607,7 @@ export async function beginRun(input: {
     select: { id: true },
   });
 
-  return { runId: created.id, seed, run, briefing: briefingOf(run, await glossesFor(run)) };
+  return { runId: created.id, seed, run, briefing: briefingOf(run, glosses) };
 }
 
 /**

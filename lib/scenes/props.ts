@@ -55,10 +55,37 @@ export type PropSpec =
       /** The case a beat will ask this word in, if one does. */
       readonly grammCase?: CaseKey;
     }
-  /** A time of day, on the hour or the half hour, inside a window. */
-  | { readonly kind: "time"; readonly slot: string; readonly from: number; readonly to: number }
-  /** A weekday, as one of the course's own weekday lemmas. */
-  | { readonly kind: "weekday"; readonly slot: string; readonly oneOf: readonly string[]; readonly says: string }
+  /**
+   * A time of day, on the hour or the half hour, inside a window.
+   * `differentFrom` names an earlier slot whose value this one may not
+   * repeat, so a second offer is a second time.
+   */
+  | {
+      readonly kind: "time";
+      readonly slot: string;
+      readonly from: number;
+      readonly to: number;
+      readonly differentFrom?: string;
+    }
+  /**
+   * A weekday, as one of the course's own weekday lemmas.
+   *
+   * `theirs` marks a fact that is the other side's rather than the learner's:
+   * the day a landlord offers is drawn per run and stored with the card, so
+   * a reload offers the same day and the debrief can say which, but it is
+   * not printed on the role card, because a card telling you what the other
+   * person is about to say is a script and not a role. The learner may still
+   * say it back, so its spellings are in the marker's data like any other.
+   */
+  | {
+      readonly kind: "weekday";
+      readonly slot: string;
+      readonly oneOf: readonly string[];
+      readonly says: string;
+      readonly theirs?: true;
+      /** An earlier slot this one may not repeat: the second day offered is another day. */
+      readonly differentFrom?: string;
+    }
   /** A plain number: a floor, a room, an amount. */
   | { readonly kind: "number"; readonly slot: string; readonly min: number; readonly max: number; readonly says: string }
   /** A fictional reference, which is the only kind of code this module ever holds. */
@@ -85,6 +112,15 @@ export interface DrawnProp {
   readonly lemmas: readonly string[];
   /** What was drawn, for the recency rule in §5. */
   readonly value: string;
+  /** The other side's fact, drawn and stored but never printed on the card. */
+  readonly theirs?: true;
+  /**
+   * The English of a drawn lemma, for a stage direction that names it: "They
+   * offer Tuesday at 14:00" rather than the lemma inside an English sentence.
+   * Filled by the caller from the dictionary's own gloss, since this module
+   * holds no dictionary; absent on a value that prints itself.
+   */
+  readonly english?: string;
   /**
    * Set when every candidate was in `avoid` and one was drawn regardless.
    *
@@ -125,6 +161,7 @@ export function drawProp(
       return {
         slot: spec.slot, card: spec.says, literal: [], lemmas: [lemma], value: lemma,
         ...worn(lemma, avoid),
+        ...(spec.kind === "weekday" && spec.theirs ? { theirs: true as const } : {}),
       };
     }
     case "time": {
@@ -167,7 +204,20 @@ export function drawCard(
   random: () => number,
   avoid: ReadonlySet<string> = new Set(),
 ): RoleCard {
-  return { you, props: specs.map((spec) => drawProp(spec, random, avoid)) };
+  const props: DrawnProp[] = [];
+  for (const spec of specs) {
+    /*
+      A slot drawn to differ from an earlier one adds that one's value to
+      what it avoids. `pick` prefers a fresh candidate, so the two differ
+      wherever the pool has two, and a pool of one repeats rather than fails.
+    */
+    const other = "differentFrom" in spec && spec.differentFrom
+      ? props.find((p) => p.slot === spec.differentFrom)?.value
+      : undefined;
+    const shun = other ? new Set([...avoid, other]) : avoid;
+    props.push(drawProp(spec, random, shun));
+  }
+  return { you, props };
 }
 
 /** The slot a beat's `datum` requirement names, as the marker wants it. */

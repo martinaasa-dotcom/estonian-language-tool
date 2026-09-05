@@ -28,7 +28,7 @@
  */
 import type { CaseKey } from "@/lib/estonian/types";
 import type { SceneState } from "./state";
-import type { SceneSpec } from "./types";
+import { leafNeeds, type SceneSpec } from "./types";
 
 /** One row this run earned. `rating` is the scheduler's own vocabulary. */
 export interface SceneGrade {
@@ -72,7 +72,7 @@ export function gradesFor(scene: SceneSpec, state: SceneState): SceneGrade[] {
 
     const rating = helped ? 1 : attempts <= 1 ? 3 : 2;
 
-    for (const [index, need] of beat.needs.entries()) {
+    for (const { need, index } of leafNeeds(beat.needs)) {
       /*
         Only where the beat named a word. `question`, `negation`, `register`,
         `datum` and `any` are all things a learner did and none of them is a
@@ -128,7 +128,7 @@ export function stalledWords(scene: SceneSpec, state: SceneState): string[] {
       stalled are two different things the learner could not say, and a total
       would let the first one eat the second.
     */
-    for (const need of beat.needs) {
+    for (const { need } of leafNeeds(beat.needs)) {
       if (need.kind === "lemma") for (const lemma of need.oneOf.slice(0, PER_BEAT)) out.add(lemma);
       if (need.kind === "case") out.add(need.lemma);
     }

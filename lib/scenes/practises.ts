@@ -11,14 +11,14 @@
  * Pure: no React, no Next, no Prisma.
  */
 import { CASES } from "@/lib/estonian/cases";
-import type { SceneSpec } from "./types";
+import { leafNeeds, type SceneSpec } from "./types";
 
 export function practises(scene: SceneSpec): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
   const add = (label: string) => { if (!seen.has(label)) { seen.add(label); out.push(label); } };
   for (const beat of scene.beats) {
-    for (const need of beat.needs) {
+    for (const { need } of leafNeeds(beat.needs)) {
       if (need.kind === "case") {
         const spec = CASES.find((c) => c.key === need.grammCase);
         if (spec) add(spec.et);

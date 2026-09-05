@@ -69,11 +69,22 @@ export interface ExceptionWord {
   readonly forms: readonly { formType: string; value: string; morphCode?: string | null }[];
   /** Sentences a lexicographer wrote that hold the wanted form. */
   readonly sentences: readonly string[];
+  /** Whether the learner has favourited this word. See `ExceptionTask`. */
+  readonly starred: boolean;
 }
 
 export interface ExceptionTask {
   /** Stable per word, slot and rung, so a round can be deduplicated. */
   readonly id: string;
+  /**
+   * Whether this learner has favourited the word.
+   *
+   * Every round that puts one word up draws the star (`components/StarWord.tsx`),
+   * because the word worth keeping is noticed mid-round rather than in the
+   * dictionary. Read per round by `starredAmong`, never here: this module has
+   * no database.
+   */
+  readonly starred: boolean;
   readonly rung: ExceptionRung;
   readonly lexemeId: string;
   readonly cardId: string | null;
@@ -172,6 +183,7 @@ export function tasksFor(word: ExceptionWord): ExceptionTask[] {
     answers.some((answer) => mentions(word.translation, answer)) ? null : word.translation;
 
   const base = {
+    starred: word.starred,
     lexemeId: word.lexemeId,
     cardId: word.cardId,
     lemma: word.lemma,

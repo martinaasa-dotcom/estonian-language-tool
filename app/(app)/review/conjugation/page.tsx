@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { starredAmong } from "@/lib/progress/stars";
 import { courseLevelFor } from "@/lib/progress/level";
 import { bandsAround } from "@/lib/collections/levels";
 import { conjugatedForms, type VerbExampleForm } from "@/lib/progress/verbExamples";
@@ -109,7 +110,7 @@ export default async function ConjugationPage() {
   // The conditional is a B1 point. Below that a round is the present only.
   const conditionalToo = level !== "A1" && level !== "A2";
 
-  const questions: ConjugationQuestion[] = [];
+  const questions: Omit<ConjugationQuestion, "starred">[] = [];
   for (const verb of ordered) {
     if (questions.length >= ROUND) break;
     const forms = conjugatedForms(verb.lemma, verb.forms);
@@ -131,7 +132,18 @@ export default async function ConjugationPage() {
     );
   }
 
-  return <ConjugationSession questions={questions} />;
+  /*
+    Which of the round's verbs are already favourites, in one read rather than
+    one per question. After the round is picked rather than before it, because
+    the pool this draws from is up to a few hundred verbs and the round is ten.
+  */
+  const starred = await starredAmong(ownerId, questions.map((q) => q.lexemeId));
+
+  return (
+    <ConjugationSession
+      questions={questions.map((q) => ({ ...q, starred: starred.has(q.lexemeId) }))}
+    />
+  );
 }
 
 function questionFor(
@@ -139,7 +151,7 @@ function questionFor(
   forms: readonly VerbExampleForm[],
   tense: Tense,
   cardId: string | null,
-): ConjugationQuestion | null {
+): Omit<ConjugationQuestion, "starred"> | null {
   const given = forms.find((f) => f.code === GIVEN[tense]);
   if (!given) return null;
   const blanks = PERSONS[tense].flatMap(({ person, code }) => {

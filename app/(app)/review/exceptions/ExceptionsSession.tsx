@@ -11,6 +11,7 @@ import { useFeedbackSound } from "@/components/AudioPrefs";
 import { useOffline } from "@/components/OfflineProvider";
 import { enqueueGrade } from "@/lib/offline/db";
 import { Chip, Stat } from "@/components/ui";
+import { StarWord } from "@/components/StarWord";
 import { markForm, type FlashMark } from "@/lib/games/flash";
 import { departureLine, rungLine, type ExceptionTask } from "@/lib/games/exceptions";
 import { plainAskLine } from "@/lib/estonian/plainAsk";
@@ -181,6 +182,11 @@ export function ExceptionsSession({ tasks: initialTasks }: { tasks: ExceptionTas
         >
           <Chip tone="accent">{rungLine(task)}</Chip>
           {task.note && <Chip tone="hard" caseSensitive>{task.note}</Chip>}
+          {/* The corner of the card, which is where somebody looks for this
+              the moment a word turns out to be worth keeping. */}
+          <div className="ml-auto">
+            <StarWord lexemeId={task.lexemeId} starred={task.starred} label={task.lemma} />
+          </div>
         </div>
 
         <div className="px-6 py-8">
