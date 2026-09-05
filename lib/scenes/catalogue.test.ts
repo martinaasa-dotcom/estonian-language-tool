@@ -17,16 +17,19 @@
  * `syllabus.test.ts` fails when the harvest did not honour it.
  */
 import { describe, expect, it } from "vitest";
-import { FALLBACK_PHRASE, SCENES, sceneById } from "./catalogue";
+import { FALLBACK_PHRASE, REACTIONS, SCENES, sceneById } from "./catalogue";
+import { HARVESTED } from "@/prisma/data/harvested";
 import { curveballById } from "./curveballs";
 import { LEFT_OUTCOME, QUESTION_SHAPE } from "./types";
 import { unitById } from "@/lib/collections/syllabus";
+import { TIME_LEMMAS } from "./props";
 
 /** Every lemma a scene names, from its beats' topics and its requirements. */
 function lemmasOf(scene: (typeof SCENES)[number]): string[] {
   const out: string[] = [];
   for (const beat of scene.beats) {
     out.push(...beat.topic);
+    if (beat.says) out.push(beat.says.lemma);
     for (const need of beat.needs) {
       if (need.kind === "lemma") out.push(...need.oneOf);
       if (need.kind === "case") out.push(need.lemma);
@@ -65,7 +68,9 @@ describe("the scene catalogue", () => {
       for (const id of scene.units) {
         for (const lemma of unitById(id)?.lemmas ?? []) taught.add(lemma);
       }
-      const strangers = [...new Set(lemmasOf(scene))].filter((lemma) => !taught.has(lemma));
+      // The reactions are said in every scene, so every scene has to teach them.
+      const named = [...lemmasOf(scene), ...REACTIONS.acknowledge, ...REACTIONS.waiting, ...TIME_LEMMAS];
+      const strangers = [...new Set(named)].filter((lemma) => !taught.has(lemma));
       expect(strangers, `${scene.id} names words none of its units teach`).toEqual([]);
     }
   });
@@ -93,6 +98,59 @@ describe("the scene catalogue", () => {
         expect(beat.topic.length, `${scene.id}/${beat.id} is about nothing`).toBeGreaterThan(0);
         expect(beat.needs.length, `${scene.id}/${beat.id} asks for nothing`).toBeGreaterThan(0);
         expect(beat.patience).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  /*
+    WHAT THE OTHER SIDE DOES IS WRITTEN FROM THEIR SIDE, IN ENGLISH. `they` is
+    the stage direction printed where no Estonian line could be built, the
+    translation a helpful persona offers, and what a model is told it is doing
+    when it writes the line, so it has to be a sentence and it has to be about
+    them: a beat whose `they` reads like its `goal` has been written from the
+    learner's side twice.
+  */
+  it("says what the other side does on every beat, from their side", () => {
+    for (const scene of SCENES) {
+      for (const beat of scene.beats) {
+        expect(beat.they, `${scene.id}/${beat.id} has no stage direction`).toMatch(/^[A-Z].*\.$/);
+        expect(beat.they, `${scene.id}/${beat.id} repeats its goal`).not.toBe(beat.goal);
+        expect(beat.they, `${scene.id}/${beat.id} is written from the learner's side`).not.toMatch(/^Say /);
+        expect(beat.they, `${scene.id}/${beat.id} carries an Estonian letter`).not.toMatch(/[õäöüšž]/i);
+      }
+    }
+  });
+
+  /*
+    A PINNED LINE IS A LEXICOGRAPHER'S SENTENCE, CHOSEN AND NEVER WRITTEN.
+    Choosing is allowed (ADR-005 lets an attested sentence be hidden from or
+    reordered, and picking one out is less than either); writing is not, and
+    the difference is checkable: the text has to be a usage the harvest
+    brought back under one of the beat's own topic words.
+  */
+  it("says a value off the card only through a slot the card deals", () => {
+    for (const scene of SCENES) {
+      const slots = new Set(scene.props.map((prop) => prop.slot));
+      for (const beat of scene.beats) {
+        if (!beat.says) continue;
+        expect(slots.has(beat.says.slot), `${scene.id}/${beat.id} says a slot the card never deals`).toBe(true);
+      }
+    }
+  });
+
+  it("pins only recorded usages of its own topic words", () => {
+    const usages = new Map<string, Set<string>>();
+    for (const word of HARVESTED) {
+      const seen = usages.get(word.lemma) ?? new Set<string>();
+      for (const usage of word.usages) seen.add(usage);
+      usages.set(word.lemma, seen);
+    }
+    for (const scene of SCENES) {
+      for (const beat of scene.beats) {
+        for (const line of beat.lines ?? []) {
+          const under = beat.topic.some((lemma) => usages.get(lemma)?.has(line));
+          expect(under, `${scene.id}/${beat.id} pins "${line}", which no topic word's entry records`).toBe(true);
+        }
       }
     }
   });

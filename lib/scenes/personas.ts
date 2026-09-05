@@ -40,6 +40,15 @@ export interface PersonaSpec {
   readonly speed: number;
   /** Curveballs this one makes likelier. Never ones the scene does not admit. */
   readonly leans: readonly CurveballId[];
+  /**
+   * Whether they put the question into English when the learner writes
+   * English (§8). The helpful ones do; the brisk one and the one on the form
+   * repeat it in Estonian and wait. It is the persona's answer to English and
+   * never a mark against it.
+   */
+  readonly translates: boolean;
+  /** Whether they say "hästi" before the next question. The brisk one does not. */
+  readonly acknowledges: boolean;
 }
 
 /**
@@ -60,6 +69,8 @@ export const PERSONAS: readonly PersonaSpec[] = [
     voice: "kylli",
     speed: 1.1,
     leans: ["faster", "queue", "english"],
+    translates: false,
+    acknowledges: false,
   },
   {
     id: "thorough",
@@ -68,6 +79,8 @@ export const PERSONAS: readonly PersonaSpec[] = [
     voice: "mari",
     speed: 0.95,
     leans: ["missing-document", "wrong-price", "small-talk"],
+    translates: true,
+    acknowledges: true,
   },
   {
     id: "new",
@@ -76,6 +89,8 @@ export const PERSONAS: readonly PersonaSpec[] = [
     voice: "indrek",
     speed: 1,
     leans: ["not-possible", "contradiction", "interrupted"],
+    translates: true,
+    acknowledges: true,
   },
   {
     id: "by-the-book",
@@ -84,6 +99,8 @@ export const PERSONAS: readonly PersonaSpec[] = [
     voice: "peeter",
     speed: 1,
     leans: ["their-order", "place-instruction", "other-register"],
+    translates: false,
+    acknowledges: true,
   },
 ];
 

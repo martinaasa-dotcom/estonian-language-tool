@@ -27,8 +27,7 @@
 import { passes, runGate, type Check, type GateContext } from "./gate";
 import { fits, type Line } from "./retrieval";
 import { words, type Lexicon } from "./lexicon";
-import type { TurnReading } from "./turn";
-import type { BeatSpec, MoveKind } from "./types";
+import type { BeatSpec } from "./types";
 
 /** Where a line came from. Printed beside it, every time (ADR-025). */
 export type Provenance =
@@ -42,33 +41,29 @@ export type Provenance =
   | "scripted"
   /** A model wrote it inside the closed word list and it passed all four checks. */
   | "composed"
-  /** They did not catch what was said, so they ask again. Always in character. */
+  /**
+   * The repair phrase: they did not catch what was said. Said only as a
+   * reaction to a turn `readTurn` could not read (`lib/scenes/reply.ts`), and
+   * where `sceneLine` returns it, it means the ladder had nothing and the
+   * caller decides what that means for the learner.
+   */
   | "fallback"
+  /** The line the learner already heard, said once more, because they did not answer it. */
+  | "again"
   /**
    * Nothing could be built for a move the other side has to make, so what the
-   * screen gets is a line of English saying what they did.
+   * screen gets is a line of English saying what they did: the beat's own
+   * `they`, with the card's values filled in by `stageFor`.
    *
-   * THE FOURTH RUNG EXISTS BECAUSE THE THIRD WAS DOING TWO JOBS AND LYING
-   * ABOUT ONE OF THEM. `fallback` is `Ma ei saa aru`, "I do not understand",
-   * and it is the right move exactly once: when the learner was not
-   * understood. It was also what came out when the learner was understood
-   * perfectly, the scene advanced, and the ladder had nothing to build the
-   * *next* line with. A learner reported that from the first two turns of a
-   * scene: they were greeted with `Tere!`, told to greet back, wrote `Tere`,
-   * had the objective ticked, and were answered with "I do not understand".
-   *
-   * Measured over the catalogue: six of the eight `ask` beats have no
-   * recorded question anywhere in their topic words, because a lexicographer
-   * writes a usage to illustrate a word rather than to ask about one, and six
-   * of the thirteen other beats have no usage at all. So on a deployment with
-   * no key, or one whose allowance has gone, over half of every conversation
-   * was somebody claiming not to have understood a turn that was fine.
-   *
-   * What replaces it is the truth and it is *not in character*: the other side
-   * made their move, and we could not put it into Estonian. The learner still
-   * has the objective, which was already on the screen in English, so the
-   * conversation carries on rather than stalling on a repair move that repairs
-   * nothing. English is the one language this project may write (ADR-005).
+   * THIS RUNG EXISTS BECAUSE THE FALLBACK WAS DOING TWO JOBS AND LYING ABOUT
+   * ONE OF THEM. `fallback` is `Ma ei saa aru`, and it is the right move
+   * exactly once: when the learner was not understood. It was also what came
+   * out when the learner was understood perfectly, the scene advanced, and the
+   * ladder had nothing to build the *next* line with. A learner reported that
+   * from the first two turns of a scene: greeted with `Tere!`, told to greet
+   * back, wrote `Tere`, had the objective ticked, and was answered with "I do
+   * not understand". English is the one language this project may write
+   * (ADR-005), and "the receptionist asks where it hurts" is at least true.
    */
   | "unspoken";
 
@@ -82,6 +77,12 @@ export interface SpokenLine {
   readonly from?: string;
   /** Which checks withheld a composed line, for the debrief and the report button. */
   readonly withheld?: readonly Check[];
+  /**
+   * A reaction to the learner's turn rather than the other side's move, so
+   * the screen knows it is not the line the learner is now answering.
+   * `lib/scenes/reply.ts` is the only thing that sets it.
+   */
+  readonly reaction?: true;
 }
 
 /** What the caller has to supply for one turn. */
@@ -128,71 +129,19 @@ export interface LineRequest {
 }
 
 /**
- * The fallback, which is a move rather than an error.
+ * The ladder's "nothing", carrying the repair phrase.
  *
  * Composition can fail twice and there is still a person standing there
- * waiting. What the learner sees is somebody who missed what they said, which
- * is the truest thing that can happen in a conversation. The text is the
- * caller's, because it is Estonian and this file may not write any: the route
- * resolves it from the course's own phrases the way every other line here is
- * resolved.
+ * waiting. Whether what they then say is "I did not catch that" or a line of
+ * English about what they did is decided by `replyFor` off how the learner's
+ * turn was read, never here: this function knows which rung answered and
+ * nothing about the turn before it, and deciding on that alone is how the
+ * repair phrase came to be printed at people who had been understood. The
+ * text is the caller's, because it is Estonian and this file may not write
+ * any.
  */
 export function fallbackLine(text: string, withheld: readonly Check[] = []): SpokenLine {
   return { text, provenance: "fallback", ...(withheld.length > 0 ? { withheld } : {}) };
-}
-
-/**
- * WHAT THE OTHER SIDE DID, IN ENGLISH, WHEN NOTHING COULD BE SAID IN ESTONIAN.
- *
- * One line per move rather than per beat, because the move is the act and the
- * beat's own `goal` is already on the screen saying what the learner has to do
- * about it. Two sentences would be the objective printed twice.
- *
- * Deliberately about the act and not about the app. "They ask you about it" is
- * what happened; "the model could not answer" is a fact about a deployment,
- * and the session already says that once, above the conversation, where it
- * belongs. A line inside the log saying it again on every turn would be an
- * error message wearing a costume.
- */
-const MOVE_STAGE: Record<MoveKind, string> = {
-  greet: "They say hello and wait.",
-  ask: "They ask you about it.",
-  offer: "They offer you something.",
-  confirm: "They read it back to check.",
-  instruct: "They tell you what happens next.",
-  refuse: "They say that will not work.",
-  correct: "They put you right.",
-  close: "They say goodbye.",
-};
-
-/**
- * The way out, and which of the two it is depends on the learner rather than
- * on the rung.
- *
- * `sceneLine` knows which rung answered and nothing about the turn that came
- * before it, which is why the repair move used to be printed at people who had
- * done nothing wrong. This is the one function that decides between the two,
- * and it takes the reading rather than a boolean so it cannot be called
- * without the caller having marked the turn.
- *
- * `null` is the opening line, where there is no turn to have misread. A scene
- * that opens with nothing to say has not failed to understand anybody.
- */
-export function wayOut(input: {
-  readonly beat: BeatSpec;
-  /** How the learner's last turn was read, or null on the opening line. */
-  readonly reading: TurnReading | null;
-  /** The repair phrase, resolved from the course by the caller. Estonian. */
-  readonly fallback: string;
-  readonly withheld?: readonly Check[];
-}): SpokenLine {
-  const misheard = input.reading === "unrecognised" || input.reading === "offtarget";
-  if (misheard) return fallbackLine(input.fallback, input.withheld ?? []);
-  return {
-    text: MOVE_STAGE[input.beat.move],
-    provenance: "unspoken",
-    ...(input.withheld && input.withheld.length > 0 ? { withheld: input.withheld } : {}),
-  };
 }
 
 /**

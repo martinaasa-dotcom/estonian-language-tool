@@ -98,6 +98,24 @@ export interface BeatSpec {
   readonly id: string;
   /** What the learner has to get done here. English, and shown to them. */
   readonly goal: string;
+  /**
+   * What the other side does on this beat, in English, from their side.
+   *
+   * "The receptionist asks what brings you in." It is the other half of
+   * `goal`, which is written from the learner's side, and it is read three
+   * ways: it is what the screen prints when no Estonian line could be built
+   * for the beat, it is the translation a helpful persona offers when the
+   * learner writes English, and it is what a model is told it is doing when it
+   * drafts or composes the line. The first version of the drafter was handed
+   * `goal` instead, so a landlord asked to say "since when" was told that what
+   * he was doing was "say since when", and drafted a line asking the tenant
+   * when they planned to do the repairs.
+   *
+   * May carry `{slot}` for a value off the card, filled by `stageFor`, since
+   * a line offering a time has to offer the time this run dealt. English is
+   * the one language this file may write (ADR-005).
+   */
+  readonly they: string;
   readonly move: MoveKind;
   /**
    * What the other side's line is about, as lemmas.
@@ -107,6 +125,31 @@ export interface BeatSpec {
    * the scene's declared units.
    */
   readonly topic: readonly string[];
+  /**
+   * Recorded usages chosen for this beat, by their text.
+   *
+   * A usage is about a word rather than about a beat (`poolsFor` in
+   * `lib/progress/scene.ts` has the measurements), so the attested rung no
+   * longer takes every usage under a topic word. A person may still pick one
+   * out where it happens to be exactly the line: `Kuhu sa lähed?` is recorded
+   * under `kuhu` and is what a friend on the phone asks. Naming a sentence a
+   * lexicographer wrote is choosing, not writing (ADR-005): the catalogue
+   * test fails on a line that is not a usage of one of the beat's own topic
+   * words in the shipped dictionary, and the context builder drops one the
+   * live dictionary no longer holds rather than trusting the text here.
+   */
+  readonly lines?: readonly string[];
+  /**
+   * A line made of one course word and a value off the card, for a beat whose
+   * line has to name what this run dealt: `Kell 13:30?` offers the time on
+   * the learner's own card. The word is a lemma the scene's units teach, the
+   * value is the datum the card already prints, and the mark is the move, so
+   * it is the same licence a reaction takes (`REACTIONS`) with a datum beside
+   * it and nothing is inflected or invented. It is what lets a keyless
+   * deployment offer an appointment in Estonian rather than in a stage
+   * direction.
+   */
+  readonly says?: { readonly lemma: string; readonly slot: string };
   /** What counts as the learner's turn being complete. */
   readonly needs: readonly Requirement[];
   /** Required beats are the objectives; optional ones are the colour. */

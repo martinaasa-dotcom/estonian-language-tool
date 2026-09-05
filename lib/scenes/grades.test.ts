@@ -10,17 +10,17 @@ const SCENE: SceneSpec = {
   role: "You are somebody, and it is not you.", props: [], curveballs: [],
   beats: [
     {
-      id: "reason", goal: "Say what is wrong.", move: "ask", topic: ["valu"],
+      id: "reason", goal: "Say what is wrong.", they: "They say something.", move: "ask", topic: ["valu"],
       needs: [{ kind: "lemma", oneOf: ["valu", "haigus"] }],
       required: true, patience: 3, shape: "word",
     },
     {
-      id: "where", goal: "Say where.", move: "ask", topic: ["pea"],
+      id: "where", goal: "Say where.", they: "They say something.", move: "ask", topic: ["pea"],
       needs: [{ kind: "case", lemma: "pea", grammCase: "INESSIVE" }],
       required: true, patience: 3, shape: "word",
     },
     {
-      id: "close", goal: "Say goodbye.", move: "close", topic: ["Head aega!"],
+      id: "close", goal: "Say goodbye.", they: "They say something.", move: "close", topic: ["Head aega!"],
       needs: [{ kind: "question" }],
       required: true, patience: 2, shape: "word",
     },

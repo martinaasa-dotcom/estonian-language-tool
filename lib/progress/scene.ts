@@ -28,7 +28,7 @@ import type { GateContext, GovernedWord } from "@/lib/scenes/gate";
 import { buildLexicon, type DictEntry, type Lexicon } from "@/lib/scenes/lexicon";
 import { topicForms, type Line } from "@/lib/scenes/retrieval";
 import type { TurnContext } from "@/lib/scenes/turn";
-import type { RoleCard } from "@/lib/scenes/props";
+import { timeWords, type RoleCard } from "@/lib/scenes/props";
 import type { BeatSpec, SceneSpec } from "@/lib/scenes/types";
 import { isPhrase } from "@/lib/dict/pos";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
@@ -36,8 +36,7 @@ import { planRun, RECENCY_WINDOW, type Recency, type SceneRun as SceneRunPlan } 
 import { randomUUID } from "node:crypto";
 import { BUDGETS, type Difficulty } from "@/lib/scenes/curveballs";
 import {
-  advance, currentBeat, objectivesOf, outcomeOf, startScene, walkOut,
-  type Objectives, type Response, type SceneState, type TurnRecord,
+  advance, currentBeat, objectivesOf, outcomeOf, startScene, walkOut, type Objectives, type Response, type SceneState, type TurnRecord, advanceHurdle, hurdleBeat, raiseHurdle, type HurdleRecord,
 } from "@/lib/scenes/state";
 import { gradesFor, stalledWords, type SceneGrade } from "@/lib/scenes/grades";
 import { readTurn } from "@/lib/scenes/turn";
@@ -113,11 +112,13 @@ export async function sceneContext(sceneId: string): Promise<SceneContext | null
   const rows = await readEntries([...lemmas]);
   const lexicon = buildLexicon(rows);
 
+  const hasFiniteVerb = finiteVerbs(rows);
   const marker = {
     lexicon,
     questionWords: formsOfUnit(rows, QUESTION_UNIT),
     negators: formsOfLemmas(rows, [NEGATOR]),
     registerForms: formsOfLemmas(rows, [REGISTER_PRONOUN[scene.register]]),
+    hasFiniteVerb,
   };
 
   const wrongRegister = formsOfLemmas(
@@ -132,7 +133,7 @@ export async function sceneContext(sceneId: string): Promise<SceneContext | null
     pool: poolsFor(scene, rows),
     topic: new Map(scene.beats.map((beat) => [beat.id, topicForms(beat, lexicon)])),
     scripted: new Map(scene.beats.map((beat) => [beat.id, scriptedFor(scene, beat)])),
-    hasFiniteVerb: finiteVerbs(rows),
+    hasFiniteVerb,
     fallback: rows.find((row) => row.lemma === FALLBACK_PHRASE)?.lemma ?? FALLBACK_PHRASE,
   };
 }
@@ -145,6 +146,8 @@ export function dataFor(card: RoleCard, lexicon: Lexicon): Map<string, ReadonlyS
     for (const lemma of prop.lemmas) {
       for (const form of lexicon.byLemma.get(lemma) ?? []) accepted.add(form);
     }
+    // A time said in words: `üksteist`, or `pool kaksteist` as one spelling.
+    for (const spelled of timeWords(prop.value)) accepted.add(spelled);
     out.set(prop.slot, accepted);
   }
   return out;
@@ -292,13 +295,28 @@ function finiteVerbs(rows: readonly Row[]): (word: string) => boolean {
 }
 
 /**
- * The recorded sentences that could fill each beat.
+ * The recorded lines that could fill each beat, and it is the phrases alone.
  *
- * A usage of one of the beat's own topic words, which is what makes a line
- * about this beat rather than merely readable. `sceneLine` then asks `fits`
- * whether each one is the right shape, is a clause somebody said, and is
- * readable inside the scene's list, in that order because each is cheaper than
- * the next.
+ * A USAGE IS ABOUT A WORD, NOT ABOUT A BEAT. The first version of this put
+ * every recorded sentence under a beat's topic words into its pool, on the
+ * argument that a sentence a lexicographer wrote outranks anything a model
+ * writes. It does, as Estonian. As a *line* it was absurd, and it was measured
+ * rather than reasoned about: offline over the four scenes, the beat asking
+ * where you are now was filled by `Olla või mitte olla?`, the one asking what
+ * you want by `Mis kell on?`, and the receptionist offered an appointment with
+ * `Aeg ei peatu.` and confirmed it with `Aastas on 365 päeva.` A usage
+ * illustrates a word doing its job in some sentence, and a beat wants a
+ * sentence doing a job in this conversation, and those meet only by luck. A
+ * learner reported the result as every situation feeling strange, and every
+ * one of those lines had been printed under a chip calling it a recorded
+ * sentence, which was true and beside the point.
+ *
+ * So the attested rung fills the beats whose line *is* a phrase the course
+ * teaches. Ekilex records a usage against a word, and it holds none for
+ * `Tere!` or `Head aega!` because those already are the sentence (`isPhrase`);
+ * the lemma itself is the line, which is the dictionary speaking. Every other
+ * beat is the scripted bank's and the composer's, both of which were told what
+ * the beat is for (ADR-025 amendment 2, `docs/21-situations.md` §32).
  */
 function poolsFor(scene: SceneSpec, rows: readonly Row[]): Map<string, Line[]> {
   const byLemma = new Map(rows.map((row) => [row.lemma, row]));
@@ -308,29 +326,14 @@ function poolsFor(scene: SceneSpec, rows: readonly Row[]): Map<string, Line[]> {
     for (const lemma of beat.topic) {
       const row = byLemma.get(lemma);
       if (!row) continue;
-      /*
-        A PHRASE IS ITS OWN SENTENCE, so it is a line rather than a word with
-        no lines. Ekilex records a usage against a *word*, to show it doing its
-        job in a sentence, and it holds none for `Tere!` or `Kuidas läheb?`
-        because those already are the sentence: the whole A1 greetings unit is
-        twenty entries with no usage between them, which is a fact about what a
-        phrase is rather than a gap in the dictionary (`isPhrase`).
-
-        Nothing had noticed, because it only shows on the beat that has nothing
-        else. Keyless, every scene in this app opened with the fallback: the
-        receptionist said "I do not understand" before the learner had said a
-        word, which is not a conversation, it is the ladder falling all the way
-        through on the one beat every scene starts with.
-
-        It is retrieval and not composition. The lemma is a headword a
-        lexicographer wrote down, and putting it on screen is the dictionary
-        speaking, which is exactly what the attested rung is.
-      */
-      if (isPhrase(row.pos) && row.usages.length === 0) {
+      if (isPhrase(row.pos)) {
         lines.push({ text: row.lemma, lemma: row.lemma, cefr: row.cefr });
         continue;
       }
-      for (const text of row.usages) lines.push({ text, lemma: row.lemma, cefr: row.cefr });
+      // A usage a person picked out for this beat, and only where the entry still holds it.
+      for (const text of row.usages) {
+        if (beat.lines?.includes(text)) lines.push({ text, lemma: row.lemma, cefr: row.cefr });
+      }
     }
     out.set(beat.id, lines);
   }
@@ -387,7 +390,10 @@ function readDrawn(transcript: string): Drawn {
     const props = Array.isArray(card?.props)
       ? card.props.map((p) => p?.value).filter(isText)
       : [];
-    const curveballs = Array.isArray(parsed.curveballs) ? parsed.curveballs.filter(isText) : [];
+    const curveballs = Array.isArray(parsed.curveballs)
+      ? parsed.curveballs.flatMap((c: unknown) =>
+          isText(c) ? [c] : isText((c as { id?: unknown })?.id) ? [(c as { id: string }).id] : [])
+      : [];
     return { persona, props, curveballs };
   } catch {
     /*
@@ -407,18 +413,30 @@ export interface SentTurn {
   readonly said: string;
   /** Whether the help button supplied a word for this beat before the turn. */
   readonly helped: boolean;
+  /**
+   * The Estonian line the learner was answering, as the screen showed it.
+   *
+   * What the echo rule compares against, and what the other side says again
+   * when the turn was not understood. The client's word, since the server
+   * holds no state between turns; a client that lies about it changes only
+   * whether its own parroting is noticed, which advances nothing either way.
+   */
+  readonly heard?: string;
 }
 
 /** What the transcript holds about the draw, so a run can be marked long after it. */
 export interface StoredDraw {
   readonly persona: string;
   readonly card: RoleCard;
-  readonly curveballs: readonly string[];
+  /** Which curveballs, and at which beat. A row written before the beat was kept holds none in play. */
+  readonly curveballs: readonly { id: string; at: number }[];
 }
 
 export interface FinishedRun {
   readonly runId: string;
   readonly objectives: Objectives;
+  /** What went wrong on the way, and whether it was dealt with. */
+  readonly hurdles: readonly HurdleRecord[];
   readonly outcome: { id: string; says: string } | null;
   readonly turns: readonly TurnRecord[];
   readonly grades: readonly SceneGrade[];
@@ -553,7 +571,7 @@ export async function beginRun(input: {
   const draw: StoredDraw = {
     persona: run.persona.id,
     card: run.card,
-    curveballs: run.curveballs.map((c) => c.id),
+    curveballs: run.curveballs.map((c) => ({ id: c.id, at: c.at })),
   };
 
   const created = await prisma.sceneRun.create({
@@ -626,7 +644,7 @@ export async function finishRun(input: {
     where: { id: row.id },
     data: {
       transcript: JSON.stringify({ ...(draw ?? {}), turns: state.turns }),
-      outcome: JSON.stringify({ ...objectives, outcome: outcome?.id ?? null }),
+      outcome: JSON.stringify({ ...objectives, hurdles: state.hurdles, outcome: outcome?.id ?? null }),
       endedAt: new Date(),
     },
   });
@@ -670,6 +688,7 @@ export async function finishRun(input: {
   return {
     runId: row.id,
     objectives,
+    hurdles: state.hurdles,
     outcome: outcome ? { id: outcome.id, says: outcome.says } : null,
     turns: state.turns,
     grades,
@@ -727,20 +746,109 @@ export function replay(
     ? dataFor(draw.card, context.lexicon)
     : new Map<string, ReadonlySet<string>>();
 
-  let state = startScene(context.scene);
+  const drawn = draw?.curveballs ?? [];
+  const closeAt = context.scene.beats.findIndex((b) => b.move === "close");
+  const closeBeat = context.scene.beats[closeAt];
+
+  let state = raiseHurdle(context.scene, startScene(context.scene), drawn);
   let response: Response = "answer";
   let previous = "";
   for (const sent of turns.slice(0, MAX_TURNS)) {
     const beat = currentBeat(context.scene, state);
     if (!beat) break;
     const said = String(sent.said ?? "").slice(0, MAX_TURN_CHARS);
-    const evidence = readTurn(said, beat, { ...context.marker, data, previous });
+    const heardNow = String(sent.heard ?? previous).slice(0, MAX_TURN_CHARS);
+    const marker = { ...context.marker, data, previous: heardNow };
+
+    /*
+      A CURVEBALL STANDS IN FRONT OF THE BEAT. While one is up, the turn is
+      read against what the curveball asks for and the beat waits; the turn
+      that clears it is then read against the beat as well, because "Mul ei
+      ole, aga siin on avaldus" has done both.
+    */
+    const standing = state.hurdle ? hurdleBeat(state.hurdle) : null;
+    if (standing) {
+      const evidence = readTurn(said, standing, marker);
+      const beatToo = readTurn(said, beat, marker);
+      /*
+        A learner who ignores what went wrong and answers the question anyway
+        has done what most people do at a counter. The beat is met, and the
+        curveball is written down as let go rather than dealt with: "they sped
+        up and you carried on" is true and is worth reading afterwards.
+      */
+      const ignored = evidence.reading !== "complete" && beatToo.reading === "complete";
+      ({ state, response } = ignored
+        ? letGo(state)
+        : advanceHurdle(context.scene, state, evidence, said, heardNow));
+      previous = heardNow;
+      if (response !== "answer") continue;
+      if (beatToo.reading !== "complete") continue;
+      ({ state, response } = advance(context.scene, state, beatToo, said, Boolean(sent.helped), heardNow));
+      state = raiseHurdle(context.scene, state, drawn);
+      continue;
+    }
+
+    /*
+      A FAREWELL ENDS THE CONVERSATION, WHEREVER IT COMES. Somebody who says
+      goodbye in the middle of a scene has left it, and reading `Head aega!`
+      as a one-word answer to "where does it hurt" got them "Jah?" and a wait.
+      What they did not get done is what the debrief is for.
+    */
+    if (closeBeat && beat.move !== "close") {
+      const bye = readTurn(said, closeBeat, marker);
+      const here = readTurn(said, beat, marker);
+      if (bye.reading === "complete" && here.reading !== "complete") {
+        state = { ...state, beat: closeAt, patience: closeBeat.patience, hurdle: null };
+        ({ state, response } = advance(context.scene, state, bye, said, false, heardNow));
+        previous = heardNow;
+        continue;
+      }
+    }
+    /*
+      THE ECHO RULE COMPARES AGAINST THE OTHER SIDE'S LINE. For a while it was
+      handed the learner's own previous turn, so a learner repeating themselves
+      was read as parroting and a learner handing the question straight back
+      was not, which is the rule backwards. What they heard travels with the
+      turn, because the server keeps nothing between turns.
+    */
+    const heard = heardNow;
+    const evidence = readTurn(said, beat, marker);
     ({ state, response } = advance(
-      context.scene, state, evidence, said, Boolean(sent.helped),
+      context.scene, state, evidence, said, Boolean(sent.helped), heard,
     ));
-    previous = said;
+    /*
+      ONE TURN CAN ANSWER MORE THAN ONE BEAT. "Tere, ma lähen poodi" greets and
+      says where you are going, and a friend who heard it does not then ask
+      where you are going. So a turn that landed is read against the next beat
+      too, and again while it keeps landing, each beat recorded as met by the
+      same turn. The scene stays the same shape; only a person who said two
+      things at once is not made to say the second one twice.
+    */
+    while (response === "answer" || response === "moveOn") {
+      state = raiseHurdle(context.scene, state, drawn);
+      if (state.hurdle || response === "moveOn") break;
+      const next = currentBeat(context.scene, state);
+      if (!next) break;
+      const more = readTurn(said, next, marker);
+      if (more.reading !== "complete") break;
+      ({ state, response } = advance(context.scene, state, more, said, false, heard));
+    }
+    previous = heard;
   }
   return { state, response };
+}
+
+/** The hurdle stood down because the learner answered the beat past it. */
+function letGo(state: SceneState): { state: SceneState; response: Response } {
+  const hurdle = state.hurdle!;
+  return {
+    state: {
+      ...state,
+      hurdle: null,
+      hurdles: [...state.hurdles, { id: hurdle.id, beat: hurdle.beat, met: false }],
+    },
+    response: "answer",
+  };
 }
 
 /** The draw a run was dealt, or null where the row predates the shape. */
@@ -748,10 +856,22 @@ export function readDraw(transcript: string): StoredDraw | null {
   try {
     const parsed = JSON.parse(transcript) as Partial<StoredDraw>;
     if (!parsed.card || !Array.isArray(parsed.card.props)) return null;
+    /*
+      A run written before the beat was stored holds ids alone, and those are
+      read as nothing in play rather than as a curveball at beat zero: the
+      draw was made, it was never played, and inventing a position for it now
+      would change a conversation that is already half over.
+    */
+    const curveballs = Array.isArray(parsed.curveballs)
+      ? parsed.curveballs.flatMap((c: unknown) => {
+          const one = (c ?? {}) as { id?: unknown; at?: unknown };
+          return typeof one.id === "string" && typeof one.at === "number" ? [{ id: one.id, at: one.at }] : [];
+        })
+      : [];
     return {
       persona: typeof parsed.persona === "string" ? parsed.persona : "",
       card: parsed.card,
-      curveballs: Array.isArray(parsed.curveballs) ? parsed.curveballs.filter(isText) : [],
+      curveballs,
     };
   } catch {
     return null;

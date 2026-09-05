@@ -60,6 +60,15 @@ export function scriptable(scene: SceneSpec, beat: BeatSpec): boolean {
   const perRun = new Set(
     scene.props.filter((prop) => DRAWN_PER_RUN.has(prop.kind)).map((prop) => prop.slot),
   );
+  /*
+    Two ways a beat's line has to be about this run: it waits on a per-run
+    datum, or its own stage direction names one. The second was found in the
+    bank rather than reasoned out: the doctor's `confirm` beat needs nothing
+    off the card, so it was scriptable, and what a model drafted for "they
+    read the time back" was `Kas see on neljapäev?`, a weekday nobody had been
+    dealt, said with a chip under it calling it checked word by word.
+  */
+  if (/\{\w+\}/.test(beat.they)) return false;
   return !beat.needs.some((need) => need.kind === "datum" && perRun.has(need.slot));
 }
 

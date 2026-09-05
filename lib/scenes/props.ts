@@ -210,3 +210,32 @@ function digits(random: () => number, count: number): string {
   for (let i = 0; i < count; i += 1) out += Math.floor(random() * 10);
   return out;
 }
+
+/**
+ * The number words a time is said with, as lemma requests against `arvud`.
+ *
+ * `kell üksteist` for 11:00 and `pool kaksteist` for 11:30, which is what a
+ * person says and what a card printing `11:30` should accept. Estonian tells
+ * the time on a twelve-hour clock in speech, so 13:00 is `üks`. Lemmas rather
+ * than forms, every one of them a word the numbers unit teaches, so a
+ * misspelling here fails the catalogue test rather than reaching a marker; the
+ * half hour is two lemmas that have to appear together, which `dataFor` joins
+ * with a space and the marker looks for in the text.
+ */
+const HOUR_WORDS = [
+  "kaksteist", "üks", "kaks", "kolm", "neli", "viis", "kuus", "seitse", "kaheksa", "üheksa", "kümme", "üksteist",
+] as const;
+const HALF = "pool";
+
+export function timeWords(value: string): string[] {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) return [];
+  const hour = Number(match[1]) % 12;
+  const word = HOUR_WORDS[hour];
+  if (!word) return [];
+  if (match[2] === "30") return [`${HALF} ${HOUR_WORDS[(hour + 1) % 12]}`];
+  return [word];
+}
+
+/** Every lemma `timeWords` can name, for the test that checks they are taught. */
+export const TIME_LEMMAS: readonly string[] = [...HOUR_WORDS, HALF];

@@ -173,7 +173,7 @@ const chips = await page.getByRole("log").innerText();
   reporting its own regex.
 */
 const provenance =
-  /Recorded sentence|Written for this turn|They did not catch that|No Estonian line for this one/i
+  /From the course|Written for this scene|Written for this turn|They did not catch that|Said again|In English, because/i
     .test(chips);
 /*
   EVERY STATE, because the ladder's claim is that whichever rung answered says
@@ -194,9 +194,9 @@ check("and the line says which rung it came from (ADR-025)", provenance,
   this is checked where an Estonian line is on screen, which the greeting
   always is, because `Tere!` is its own sentence and the dictionary answers it.
 */
-const spoken = await page.getByText(/Recorded sentence|Written for this turn/i).count();
+const spoken = await page.getByText(/From the course|Written for this scene|Written for this turn/i).count();
 check("with a way to report a line somebody said",
-  spoken === 0 || (await page.getByRole("button", { name: /Report this line/i }).count()) > 0);
+  spoken === 0 || (await page.getByRole("button", { name: /^Report/i }).count()) > 0);
 
 /*
   Every line the desk said, with the rung it came from, over the whole
@@ -209,10 +209,16 @@ check("with a way to report a line somebody said",
 const heard = [];
 async function listen() {
   heard.length = 0;
-  for (const turn of await page.getByRole("log").locator("> div").all()) {
-    const text = await turn.locator("p").innerText().catch(() => "");
-    const chip = await turn.locator("[class*=chip], span, div").allInnerTexts().catch(() => []);
-    heard.push({ text, chip: chip.join(" ") });
+  /*
+    One entry per bubble rather than per turn, because a reply is a reaction
+    and then a move (lib/scenes/reply.ts) and the two carry their own labels.
+    The label is the paragraph after the bubble; a learner's own bubble has
+    none, so it lands here with an empty one and matches no rung.
+  */
+  for (const bubble of await page.getByRole("log").locator("p[lang=et]").all()) {
+    const text = await bubble.innerText().catch(() => "");
+    const chip = await bubble.locator("xpath=../following-sibling::p[1]").innerText().catch(() => "");
+    heard.push({ text, chip });
   }
 }
 
@@ -263,7 +269,7 @@ check("leaving ends in a debrief rather than a reproach", /What you got done/i.t
 check("which says what happened, in one line", /You left the desk|came back|That is a thing people do/i.test(debrief));
 check("counts what you got done rather than scoring it", /\d+ of \d+ things you came in to get done/.test(debrief));
 check("and prints no percentage anywhere", !/\d+\s*%/.test(debrief));
-check("shows what you actually said", /What you said/i.test(debrief) && debrief.includes("Tere!"));
+check("shows what was said, both sides", /What was said/i.test(debrief) && debrief.includes("Tere!"));
 check("names the words the conversation needed", /Words this conversation needed/i.test(debrief));
 check("and offers to keep one", (await page.getByRole("button", { name: /Add it to my deck/i }).count()) > 0);
 /*

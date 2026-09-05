@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  advance, currentBeat, isOver, objectivesOf, outcomeOf, startScene, walkOut,
+  HURDLE_TRIES, advance, advanceHurdle, currentBeat, hurdleBeat, isOver, objectivesOf, outcomeOf,
+  raiseHurdle, startScene, walkOut, type Response, type SceneState,
 } from "./state";
 import type { Evidence, TurnReading } from "./turn";
 import type { SceneSpec } from "./types";
@@ -22,16 +23,16 @@ const SCENE: SceneSpec = {
   role: "You are somebody, and it is not you.", props: [], curveballs: [],
   beats: [
     {
-      id: "greet", goal: "Greet back.", move: "greet", topic: ["Tere!"],
+      id: "greet", goal: "Greet back.", they: "They say something.", move: "greet", topic: ["Tere!"],
       needs: [{ kind: "any" }], required: true, patience: 2, shape: "word",
     },
     {
-      id: "reason", goal: "Say what is wrong.", move: "ask", topic: ["valu"],
+      id: "reason", goal: "Say what is wrong.", they: "They say something.", move: "ask", topic: ["valu"],
       needs: [{ kind: "lemma", oneOf: ["valu"] }], required: true, patience: 2,
       shape: "sentence",
     },
     {
-      id: "chat", goal: "Anything.", move: "ask", topic: ["ilm"],
+      id: "chat", goal: "Anything.", they: "They say something.", move: "ask", topic: ["ilm"],
       needs: [{ kind: "any" }], required: false, patience: 1, shape: "word",
     },
   ],
@@ -154,5 +155,58 @@ describe("the scene machine", () => {
     }
     expect(isOver(SCENE, state)).toBe(true);
     expect(currentBeat(SCENE, state)).toBeUndefined();
+  });
+});
+
+describe("a curveball in the way", () => {
+  const drawn = [{ id: "missing-document", at: 1 }];
+
+  it("is raised when the conversation reaches its beat, and not before", () => {
+    const start = raiseHurdle(SCENE, startScene(SCENE), drawn);
+    expect(start.hurdle).toBeNull();
+    const { state } = advance(SCENE, start, evidence("complete"), "Tere!");
+    const raised = raiseHurdle(SCENE, state, drawn);
+    expect(raised.hurdle?.id).toBe("missing-document");
+    expect(currentBeat(SCENE, raised)?.id, "the beat waits behind it").toBe("reason");
+  });
+
+  it("is a beat the marker can read: its way out is the goal and its needs are the curveball's", () => {
+    const beat = hurdleBeat({ id: "missing-document", beat: 1, tries: 0 })!;
+    expect(beat.goal).toBe("Say you do not have it.");
+    expect(beat.needs).toEqual([{ kind: "negation" }]);
+    expect(beat.they).toMatch(/not given/);
+  });
+
+  it("stands down once dealt with, and is written down as met", () => {
+    const raised = { ...startScene(SCENE), beat: 1, hurdle: { id: "missing-document" as const, beat: 1, tries: 0 } };
+    const { state, response } = advanceHurdle(SCENE, raised, evidence("complete"), "Mul ei ole.");
+    expect(response).toBe("answer");
+    expect(state.hurdle).toBeNull();
+    expect(state.hurdles).toEqual([{ id: "missing-document", beat: 1, met: true }]);
+    expect(currentBeat(SCENE, state)?.id, "the beat is still to be answered").toBe("reason");
+  });
+
+  it("is let go after its tries, written down as not met, and costs the beat nothing", () => {
+    let state: SceneState = { ...startScene(SCENE), beat: 1, patience: 2, hurdle: { id: "missing-document", beat: 1, tries: 0 } };
+    let response: Response | undefined;
+    for (let i = 0; i < HURDLE_TRIES; i += 1) {
+      ({ state, response } = advanceHurdle(SCENE, state, evidence("offtarget", [false]), "Mul on valu."));
+    }
+    expect(response).toBe("moveOn");
+    expect(state.hurdle).toBeNull();
+    expect(state.hurdles).toEqual([{ id: "missing-document", beat: 1, met: false }]);
+    expect(state.patience).toBe(2);
+  });
+
+  it("is never raised twice on one beat", () => {
+    const once = { ...startScene(SCENE), beat: 1, hurdles: [{ id: "missing-document" as const, beat: 1, met: false }] };
+    expect(raiseHurdle(SCENE, once, drawn).hurdle).toBeNull();
+  });
+
+  it("a silent one takes a try off the beat and asks for nothing", () => {
+    const state = raiseHurdle(SCENE, { ...startScene(SCENE), beat: 1, patience: 2 }, [{ id: "queue", at: 1 }]);
+    expect(state.hurdle).toBeNull();
+    expect(state.patience).toBe(1);
+    expect(state.hurdles[0]?.met).toBe(true);
   });
 });

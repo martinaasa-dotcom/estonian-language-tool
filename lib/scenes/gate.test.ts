@@ -55,7 +55,7 @@ function context(over: Partial<GateContext> = {}): GateContext {
 
 function beat(over: Partial<BeatSpec> = {}): BeatSpec {
   return {
-    id: "reason", goal: "Ask what is wrong.", move: "ask",
+    id: "reason", goal: "Ask what is wrong.", they: "They say something.", move: "ask",
     topic: ["valu"], needs: [{ kind: "any" }],
     required: true, patience: 2, shape: "sentence",
     ...over,

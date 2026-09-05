@@ -7,9 +7,10 @@ import { reportError } from "@/lib/observability/report";
 import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
 import { MAX_TURNS, MAX_TURN_CHARS, readDraw, replay, sceneContext } from "@/lib/progress/scene";
 import { sceneById } from "@/lib/scenes/catalogue";
-import { sceneLine, wayOut, type SpokenLine } from "@/lib/scenes/line";
-import { currentBeat, isOver } from "@/lib/scenes/state";
-import { personaById } from "@/lib/scenes/personas";
+import { sceneLine, type SpokenLine } from "@/lib/scenes/line";
+import { datumLine, replyFor, stageFor, wantsFreshLine } from "@/lib/scenes/reply";
+import { currentBeat, hurdleBeat, isOver } from "@/lib/scenes/state";
+import { personaById, type PersonaSpec } from "@/lib/scenes/personas";
 import { DEFAULT_VOICE } from "@/lib/audio/voice";
 import { MAX_WORDS } from "@/lib/scenes/retrieval";
 
@@ -101,7 +102,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "That scene could not be built." }, { status: 400 });
   }
 
-  const voice = personaVoice(row!.transcript);
+  const persona = personaOf(row!.transcript);
+  const voice = persona?.voice ?? DEFAULT_VOICE;
 
   /*
     MARKED HERE, BY THE SAME FUNCTION THAT MARKS IT AT THE END.
@@ -120,12 +122,22 @@ export async function POST(request: Request) {
           beatId: String(one.beatId ?? "").slice(0, 64),
           said: String(one.said ?? "").slice(0, MAX_TURN_CHARS),
           helped: one.helped === true,
+          heard: String(one.heard ?? "").slice(0, MAX_TURN_CHARS),
         };
       })
     : [];
 
-  const { state, response } = replay(context, readDraw(row!.transcript), turns);
-  const beat = currentBeat(scene, state);
+  const draw = readDraw(row!.transcript);
+  const { state, response } = replay(context, draw, turns);
+  const current = currentBeat(scene, state);
+  /*
+    A curveball in the way is what the other side says next and what the
+    learner is asked for, and the beat waits behind it (`raiseHurdle`).
+  */
+  const standing = state.hurdle ? hurdleBeat(state.hurdle) : null;
+  const last = state.turns[state.turns.length - 1] ?? null;
+  const answered = last ? scene.beats.find((b) => b.id === last.beatId) ?? null : null;
+  const heard = last?.heard ?? null;
 
   /*
     WHERE THE CONVERSATION IS, AND EVERY BRANCH RETURNS IT. Three of the four
@@ -138,8 +150,8 @@ export async function POST(request: Request) {
   const progress = {
     voice,
     response,
-    beatId: beat?.id ?? null,
-    goal: beat?.goal ?? null,
+    beatId: current?.id ?? null,
+    goal: standing?.goal ?? current?.goal ?? null,
     done: state.done,
     over: isOver(scene, state),
     /*
@@ -149,8 +161,40 @@ export async function POST(request: Request) {
     reading: state.turns[state.turns.length - 1]?.reading ?? null,
   };
 
-  // Nothing more to say: the conversation is over and the debrief is next.
-  if (!beat) return Response.json({ ...progress, text: null }, { headers: NO_STORE });
+  /*
+    THE REPLY IS A REACTION AND THEN A MOVE (`lib/scenes/reply.ts`), and this
+    route's job is to hand `replyFor` the one thing it cannot work out for
+    itself: what Estonian the ladder could build for the next move. It walks
+    the ladder only where a fresh line is wanted at all. A turn nobody
+    understood is answered with the line the learner already heard, said
+    again, so a booking for a fresh one would be a booking for a line that is
+    not wanted (§16).
+  */
+  const reply = (line: SpokenLine | null) => replyFor({
+    beat: current,
+    hurdle: standing ? { beat: standing, line: standing === spokenFor ? line : null } : null,
+    answered: turns.length > 0 ? answered : null,
+    response: turns.length > 0 ? response : null,
+    reading: progress.reading,
+    line,
+    heard,
+    card: draw?.card ?? null,
+    translates: persona?.translates ?? false,
+    acknowledges: persona?.acknowledges ?? true,
+    met: state.done.length,
+  });
+  const answer = (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>
+    Response.json({ ...progress, lines, ...extra }, { headers: NO_STORE });
+
+  /*
+    Which beat the ladder is asked for: the hurdle where one stands, and once
+    the scene is over, the farewell, since somebody who said goodbye first is
+    still owed one back.
+  */
+  const spokenFor = standing ?? current ?? (answered?.move === "close" ? answered : undefined);
+  if (!spokenFor) return answer(reply(null));
+  if (!wantsFreshLine(turns.length > 0 ? response : null, heard)) return answer(reply(null));
+  const beat = spokenFor;
 
   const used = new Set(
     Array.isArray(body.used) ? body.used.filter((v): v is string => typeof v === "string") : [],
@@ -174,43 +218,18 @@ export async function POST(request: Request) {
   };
 
   /*
-    THE ATTESTED RUNG COSTS NOTHING, SO IT IS TRIED BEFORE THE LEDGER IS ASKED.
-    Booking a call for a line the dictionary already had would ration a learner
-    over a request nobody made, which is what `releaseReservation` exists to
-    undo one layer down. Here it is cheaper not to make it.
-  */
-  /*
-    THE REPAIR MOVE IS FOR A TURN THAT WAS NOT UNDERSTOOD AND FOR NOTHING ELSE.
-
-    `sceneLine` knows which rung answered and nothing about the turn before it,
-    so its way out was `Ma ei saa aru` whatever had just happened. A learner
-    reported what that looks like from the outside: greeted with `Tere!`, told
-    to greet back, wrote `Tere`, watched the objective tick, and was answered
-    with "I do not understand". The scene had advanced perfectly and the ladder
-    simply had nothing to build the *next* line with, which is a fact about
-    this deployment rather than about them.
-
-    `wayOut` is the one place that decides between the two, and it takes the
-    reading this route has already marked, so the decision cannot be made
-    without having marked the turn. See `lib/scenes/line.ts`.
-  */
-  const spoken = (line: SpokenLine): SpokenLine =>
-    line.provenance !== "fallback"
-      ? line
-      : wayOut({ beat, reading: progress.reading, fallback: context.fallback, withheld: line.withheld });
-
-  /*
-    Two rungs cost a comparison and are tried together here: a recorded
-    sentence, then a line drafted in advance and gated then (ADR-025
+    Two rungs cost a comparison and are tried together here: a phrase the
+    course teaches, then a line drafted in advance and gated then (ADR-025
     amendment 1). Either answers without a booking, which is what lets a
     keyless deployment hold a conversation on a beat retrieval cannot fill.
-    Only the way out goes through `wayOut` below.
+    Booking a call for a line the dictionary already had would ration a
+    learner over a request nobody made.
   */
   const cheap = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
-  if (cheap.provenance !== "fallback") {
-    return Response.json({ ...progress, ...cheap }, { headers: NO_STORE });
-  }
-  const attested = cheap;
+  if (cheap.provenance !== "fallback") return answer(reply(cheap));
+  // A line the beat can say out of one course word and the card's own value: `Kell 13:30?`.
+  const dealt = datumLine(beat, draw?.card ?? null);
+  if (dealt) return answer(reply(dealt));
 
   /*
     THE BOOKING IS PER TURN, because a call is what the ledger counts. Booking
@@ -232,10 +251,7 @@ export async function POST(request: Request) {
       difference between them is a sentence, and it is the ledger's own, since
       only the ledger knows which of the three limits was reached.
     */
-    return Response.json(
-      { ...progress, ...spoken(attested), composed: false, note: decision?.message ?? null },
-      { headers: NO_STORE },
-    );
+    return answer(reply(cheap), { composed: false, note: decision?.message ?? null });
   }
 
   const line = await sceneLine({
@@ -246,7 +262,7 @@ export async function POST(request: Request) {
     compose: (avoid) => compose(chain, {
       ownerId,
       move: beat.move,
-      goal: beat.goal,
+      they: stageFor(beat, draw?.card ?? null),
       register: scene.register,
       words: [...context.lexicon.byLemma.keys()],
       said,
@@ -265,17 +281,16 @@ export async function POST(request: Request) {
     after(() => releaseReservation(decision.reservation!));
   }
 
-  return Response.json({ ...progress, ...spoken(line) }, { headers: NO_STORE });
+  return answer(reply(line));
 }
 
 /** Who is behind the desk, off the run's own row rather than out of a request. */
-function personaVoice(transcript: string): string {
+function personaOf(transcript: string): PersonaSpec | undefined {
   try {
     const parsed = JSON.parse(transcript) as { persona?: unknown };
-    const persona = typeof parsed.persona === "string" ? personaById(parsed.persona) : undefined;
-    return persona?.voice ?? DEFAULT_VOICE;
+    return typeof parsed.persona === "string" ? personaById(parsed.persona) : undefined;
   } catch {
-    return DEFAULT_VOICE;
+    return undefined;
   }
 }
 
@@ -293,7 +308,8 @@ async function compose(
   input: {
     ownerId: string;
     move: string;
-    goal: string;
+    /** What they are doing, in English, from their side: the beat's `they`. */
+    they: string;
     register: string;
     words: readonly string[];
     said: readonly string[];
@@ -311,7 +327,7 @@ async function compose(
 
   const live = [
     `Your move: ${input.move}.`,
-    `The learner has been asked to: ${input.goal}`,
+    `What you are doing, in English: ${input.they}`,
     `Address them as "${input.register}".`,
     input.avoid.length > 0
       ? `Your last attempt used words that are not allowed here: ${input.avoid.join(", ")}.`

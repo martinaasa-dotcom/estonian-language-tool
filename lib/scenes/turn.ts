@@ -93,6 +93,15 @@ export interface TurnContext {
   readonly data: ReadonlyMap<string, ReadonlySet<string>>;
   /** The line the other side just said, for the echo rule. */
   readonly previous: string;
+  /**
+   * Whether a word is a finite verb the scene knows, for the shape rule.
+   * `Pea valutab.` is two words and a sentence, and `looksLikeSentence` alone
+   * wants three: it was written for the writing exercise, to refuse a bare
+   * form before a call is spent, and it read a subject with its verb as a
+   * fragment here. The same function retrieval uses to tell a clause from a
+   * label under a headword.
+   */
+  readonly hasFiniteVerb: (word: string) => boolean;
 }
 
 /**
@@ -169,8 +178,28 @@ export function readTurn(
 
   if (spoken.length === 0) return shape("unrecognised");
   if (isEnglish(spoken, marked)) return shape("english");
-  if (isEcho(spoken, context.previous)) return shape("echo");
-  if (beat.shape === "sentence" && !looksLikeSentence(text)) return shape("fragment");
+  /*
+    Not on a beat whose answer *is* the other side's line. `Tere!` is answered
+    with `Tere!` and `Head aega!` with `Head aega!`, and reading either as
+    parroting told a learner who had said goodbye perfectly that they had not
+    been understood. Found the day the echo rule was first handed the other
+    side's line rather than the learner's own previous turn, which is what it
+    had been comparing against all along.
+  */
+  const phraseBeat = beat.move === "greet" || beat.move === "close";
+  if (!phraseBeat && isEcho(spoken, context.previous)) return shape("echo");
+  /*
+    A fragment is Estonian the scene knows, cut short. Two words it cannot
+    vouch for at all are not a short answer, they are a turn nobody could
+    read, and answering `xyzzy blorp` with "Jah?" as though the rest of the
+    sentence were coming is the look-and-wait printed at the wrong person.
+  */
+  const anyVouched = marked.some((w) => w.vouched);
+  const sentence = looksLikeSentence(text)
+    || (spoken.length >= 2 && spoken.some((word) => context.hasFiniteVerb(word)))
+    // `Kui kaua?` is a whole question, and a question is a whole turn.
+    || text.trim().endsWith("?");
+  if (beat.shape === "sentence" && anyVouched && !sentence) return shape("fragment");
 
   if (missing.length === 0) return shape("complete");
   if (missing.length < beat.needs.length) return shape("incomplete");
@@ -196,8 +225,21 @@ function satisfies(
       return need.oneOf.some((lemma) => has(context.lexicon.byLemma.get(lemma)));
     case "case":
       return has(context.lexicon.byCase.get(caseKeyFor(need.lemma, need.grammCase)));
-    case "datum":
-      return has(context.data.get(need.slot));
+    /*
+      A time is digits, and `words()` returns letters, so `11:30` never reached
+      `spoken` and the offer beat could not be met by writing the time on the
+      card: it was measured in a browser as three tries and the receptionist
+      giving up. A spelling with a digit in it is looked for in the text itself;
+      a spelling made of words, `pool kaksteist` among them, the same way, and
+      a single word through the forms as before.
+    */
+    case "datum": {
+      const accepted = context.data.get(need.slot);
+      if (!accepted) return false;
+      if (has(accepted)) return true;
+      const lower = text.toLowerCase().replace(/\s+/g, " ");
+      return [...accepted].some((value) => (/\d|\s/.test(value)) && lower.includes(value));
+    }
     /*
       A question mark or a question word, and the mark counts on its own,
       because `Homme?` is a question anybody asks and has no question word in

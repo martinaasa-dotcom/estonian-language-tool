@@ -17,6 +17,7 @@
  * Pure: no React, no Next, no Prisma, no network, no clock.
  */
 import { advances, type Evidence, type TurnReading } from "./turn";
+import { curveballById, type CurveballId, type CurveballSpec } from "./curveballs";
 import type { BeatSpec, SceneSpec } from "./types";
 
 /** What the other side does about the turn just read. */
@@ -39,6 +40,8 @@ export interface TurnRecord {
   readonly beatId: string;
   /** What the learner wrote. Fiction about a role card, never about them (§3). */
   readonly said: string;
+  /** The line they were answering, so the debrief can show both sides. Absent on a row written before it was kept. */
+  readonly heard?: string;
   readonly reading: TurnReading;
   /** Which of the beat's requirements this turn met. */
   readonly met: readonly boolean[];
@@ -46,8 +49,33 @@ export interface TurnRecord {
   readonly helped: boolean;
 }
 
+/**
+ * A curveball in play: what went wrong on this beat, and what the learner has
+ * done about it so far. The beat itself waits behind it.
+ */
+export interface Hurdle {
+  readonly id: CurveballId;
+  readonly beat: number;
+  readonly tries: number;
+}
+
+/** A curveball that has been and gone, for the debrief. */
+export interface HurdleRecord {
+  readonly id: CurveballId;
+  readonly beat: number;
+  /** Whether the learner dealt with it, or the other side let it go. */
+  readonly met: boolean;
+}
+
+/** How many tries a hurdle stands for before they let it go. */
+export const HURDLE_TRIES = 2;
+
 export interface SceneState {
   readonly sceneId: string;
+  /** The curveball standing in front of the current beat, if one is. */
+  readonly hurdle: Hurdle | null;
+  /** Every curveball this run has raised, met or not. */
+  readonly hurdles: readonly HurdleRecord[];
   /** Where in `beats` we are. Past the end means the scene is over. */
   readonly beat: number;
   /** Tries left on this beat before the other side moves on. */
@@ -64,6 +92,8 @@ export function startScene(scene: SceneSpec): SceneState {
   const first = scene.beats[0];
   return {
     sceneId: scene.id,
+    hurdle: null,
+    hurdles: [],
     beat: 0,
     patience: first ? first.patience : 0,
     done: [],
@@ -103,6 +133,7 @@ export function advance(
   evidence: Evidence,
   said: string,
   helped = false,
+  heard = "",
 ): { readonly state: SceneState; readonly response: Response } {
   const beat = currentBeat(scene, state);
   if (!beat || state.walkedOut) return { state, response: "answer" };
@@ -113,6 +144,7 @@ export function advance(
     reading: evidence.reading,
     met: evidence.met,
     helped,
+    ...(heard ? { heard } : {}),
   }];
 
   if (advances(evidence.reading)) {
@@ -199,4 +231,116 @@ export function outcomeOf(scene: SceneSpec, state: SceneState) {
   if (state.walkedOut) return scene.outcomes.find((o) => o.id === "left") ?? null;
   const done = new Set(state.done);
   return scene.outcomes.find((o) => o.when.every((id) => done.has(id))) ?? null;
+}
+
+/**
+ * THE CURVEBALLS ARE PLAYED, WHICH FOR A WHILE THEY WERE NOT.
+ *
+ * `planRun` drew them, `beginRun` wrote them down and `recencyFor` read them
+ * back so the next run would not repeat one, and no turn of any conversation
+ * was ever changed by one: the difficulty dial promised "one thing catches you
+ * out" and nothing did. A curveball is a hurdle now. When the conversation
+ * reaches the beat it was drawn at, the other side does what the curveball
+ * says and the beat waits behind it: the learner's next turns are read against
+ * the curveball's own `needs` (§9), and once one lands, or `HURDLE_TRIES` have
+ * not, the beat is asked as it would have been. A silent curveball changes
+ * the beat's patience and asks for nothing, which is what "a queue forms
+ * behind you" is.
+ *
+ * Raised by the replay before a turn is read, off the run's stored draw, so
+ * the state machine stays pure and the draw stays the server's.
+ */
+export function raiseHurdle(
+  scene: SceneSpec,
+  state: SceneState,
+  drawn: readonly { id: string; at: number }[],
+): SceneState {
+  if (state.hurdle || state.walkedOut || state.beat >= scene.beats.length) return state;
+  const here = drawn.find((d) => d.at === state.beat);
+  if (!here) return state;
+  const spec = curveballById(here.id as CurveballId);
+  if (!spec || state.hurdles.some((h) => h.beat === state.beat)) return state;
+  if (spec.silent) {
+    return {
+      ...state,
+      patience: Math.max(1, state.patience - 1),
+      hurdles: [...state.hurdles, { id: spec.id, beat: state.beat, met: true }],
+    };
+  }
+  return { ...state, hurdle: { id: spec.id, beat: state.beat, tries: 0 } };
+}
+
+/** The curveball standing in the way, as a beat the marker and the ladder can read. */
+export function hurdleBeat(hurdle: Hurdle): BeatSpec | null {
+  const spec = curveballById(hurdle.id);
+  if (!spec) return null;
+  return {
+    id: `hurdle:${spec.id}`,
+    goal: spec.out,
+    they: spec.says,
+    move: spec.move ?? "ask",
+    topic: [],
+    needs: spec.needs,
+    required: false,
+    patience: HURDLE_TRIES,
+    shape: "word",
+  };
+}
+
+export function hurdleSpec(state: SceneState): CurveballSpec | null {
+  return state.hurdle ? curveballById(state.hurdle.id) ?? null : null;
+}
+
+/**
+ * The learner's turn, read against the hurdle rather than the beat.
+ *
+ * Met, and the beat is asked next; not met, and they try again until the other
+ * side lets it go. Letting it go is written down as not met, because a
+ * curveball the learner did not deal with is exactly what the debrief exists
+ * to say. A fragment or an echo costs no try, for the reason it costs the beat
+ * none.
+ */
+export function advanceHurdle(
+  scene: SceneSpec,
+  state: SceneState,
+  evidence: Evidence,
+  said: string,
+  heard = "",
+): { readonly state: SceneState; readonly response: Response } {
+  const hurdle = state.hurdle;
+  const beat = currentBeat(scene, state);
+  if (!hurdle || !beat) return { state, response: "answer" };
+
+  const turns = [...state.turns, {
+    beatId: `hurdle:${hurdle.id}`,
+    said,
+    reading: evidence.reading,
+    met: evidence.met,
+    helped: false,
+    ...(heard ? { heard } : {}),
+  }];
+
+  if (advances(evidence.reading)) {
+    return {
+      state: {
+        ...state, turns, hurdle: null,
+        hurdles: [...state.hurdles, { id: hurdle.id, beat: hurdle.beat, met: true }],
+      },
+      response: "answer",
+    };
+  }
+  if (evidence.reading === "fragment" || evidence.reading === "echo") {
+    return { state: { ...state, turns }, response: evidence.reading === "echo" ? "repeat" : "wait" };
+  }
+  const tries = hurdle.tries + 1;
+  if (tries >= HURDLE_TRIES) {
+    return {
+      state: {
+        ...state, turns, hurdle: null,
+        hurdles: [...state.hurdles, { id: hurdle.id, beat: hurdle.beat, met: false }],
+      },
+      response: "moveOn",
+    };
+  }
+  return { state: { ...state, turns, hurdle: { ...hurdle, tries } }, response: responseFor(evidence.reading) };
 }

@@ -317,7 +317,8 @@ export async function compose(
 ): Promise<Composed | null> {
   const user = [
     `You are the ${scene.place}. The learner is a member of the public and you address them as "${scene.register}".`,
-    `Your move now: ${beat.move}. In English, what you are doing is: ${beat.goal}`,
+    `Your move now: ${beat.move}. In English, what you are doing is: ${beat.they}`,
+    `The learner is then expected to: ${beat.goal}`,
     `The line must be about: ${beat.topic.filter((t) => !withhold.includes(t)).join(", ")}`,
     withhold.length > 0
       ? `Do not use ${withhold.join(" or ")} in any form. Ask so that the learner has to be the one to say it.`
