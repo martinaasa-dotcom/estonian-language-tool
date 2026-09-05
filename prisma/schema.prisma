@@ -187,7 +187,13 @@ model Card {
   /// the answer in two pieces. `slotOfCard` reads it, so the mastery counter and the
   /// readiness reading see eight facets of a verb where they saw one.
   slot       String?
-  source     String  @default("MANUAL") // MANUAL | DICTIONARY | TUTOR | IMPORT | SCAN | ALMANAC | SCENE
+  /// Whose idea this word was. `lib/srs/sources.ts` is the closed list and the
+  /// reading: COURSE, FREQUENCY and SCENE are material this app chose, and
+  /// LOOKUP, MANUAL, TUTOR, IMPORT, SCAN and ALMANAC are words the learner went
+  /// and got. DICTIONARY is neither and is claimed by nothing, because it was
+  /// written both by a unit add and by the button on a dictionary entry and
+  /// there is no way to tell those apart after the fact.
+  source     String  @default("MANUAL")
   suspended  Boolean @default(false)
 
   // FSRS state (ts-fsrs) — ADR-003
