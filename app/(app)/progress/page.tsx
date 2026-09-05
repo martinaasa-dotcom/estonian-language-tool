@@ -170,6 +170,14 @@ export default async function ProgressPage() {
   }
 
   const busiest = Math.max(1, ...forecast.map((f) => f.count));
+  // Read off the same rows the bars are drawn from, so the sentence under the
+  // chart and the chart cannot disagree about what is coming.
+  const forecastTotal = forecast.reduce((n, f) => n + f.count, 0);
+  const peak = forecast.find((f) => f.count === busiest);
+  const busiestDay =
+    peak === undefined ? "nothing due yet"
+      : peak.offset === 0 ? `${busiest} of them due now`
+        : `busiest in ${peak.offset} day${peak.offset === 1 ? "" : "s"} at ${busiest}`;
   const trendPeak = Math.max(1, ...trend.map((d) => d.reviews));
   const pathKnown = units.reduce((s, u) => s + u.known, 0);
   const pathTotal = units.reduce((s, u) => s + u.available, 0);
@@ -216,11 +224,21 @@ export default async function ProgressPage() {
             </span>
           </Ring>
           <div className="min-w-0 flex-1">
-            <p lang="et" className="text-lg font-semibold" style={{ color: "var(--ink)" }}>
-              {summary.level.title}
+            {/*
+              The Estonian name and what it means are one fact about the level,
+              so they are one line: the gloss set under the title in small grey
+              read as a caption about the card rather than as the translation of
+              the word above it, which is the whole reason the name is Estonian.
+              Same shape as the badges below, and the same shape the grammar
+              pages take with a case: the Estonian leads, the English follows it
+              as the cross-reference it is.
+            */}
+            <p className="text-lg font-semibold" style={{ color: "var(--ink)" }}>
+              <span lang="et">{summary.level.title}</span>
+              <span className="font-normal" style={{ color: "var(--ink-2)" }}> · {summary.level.gloss}</span>
             </p>
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-              {summary.level.gloss} · {summary.level.totalXp} XP total · {summary.level.remaining} to level {summary.level.level + 1}
+              {summary.level.totalXp} XP total · {summary.level.remaining} to level {summary.level.level + 1}
             </p>
             <div className="mt-2 max-w-sm">
               <Meter pct={summary.level.pct} label="Level progress" />
@@ -363,14 +381,23 @@ export default async function ProgressPage() {
           <section>
             <SectionTitle hint={`next ${FORECAST_DAYS} days · overdue counted as today`}>What&rsquo;s coming</SectionTitle>
             <Card>
+              {/*
+                A day with nothing due draws the rule rather than a bar. It used
+                to floor every bar at 2px, so a day holding one card and a day
+                holding none were the same mark, and a fortnight that is mostly
+                empty read as a chart that had failed to load. The only thing
+                saying how many was a `title`, which is a hover, on a page
+                measured at 360px: the numbers are under the chart in words.
+              */}
               <div className="flex h-28 items-end gap-1.5">
                 {forecast.map((f) => (
                   <div key={f.day} className="flex flex-1 flex-col items-center gap-1">
                     <span
                       className="w-full rounded-t-[2px]"
                       style={{
-                        height: `${Math.max(2, (f.count / busiest) * 88)}px`,
-                        background: f.offset === 0 ? "var(--accent)" : "var(--accent-soft)",
+                        height: f.count === 0 ? "1px" : `${Math.max(3, (f.count / busiest) * 88)}px`,
+                        background: f.count === 0 ? "var(--rule)"
+                          : f.offset === 0 ? "var(--accent)" : "var(--accent-soft)",
                       }}
                       title={`${f.day}: ${f.count} card${f.count === 1 ? "" : "s"} due`}
                     />
@@ -380,11 +407,11 @@ export default async function ProgressPage() {
                   </div>
                 ))}
               </div>
-              {dueDates.length === 0 && (
-                <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                  This fills in as you review more cards.
-                </p>
-              )}
+              <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
+                {dueDates.length === 0
+                  ? "This fills in as you review more cards."
+                  : `${forecastTotal} card${forecastTotal === 1 ? "" : "s"} over the fortnight, ${busiestDay}`}
+              </p>
             </Card>
           </section>
 
