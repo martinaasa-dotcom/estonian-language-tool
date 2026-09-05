@@ -1,4 +1,4 @@
-import { cachedClip, rememberClip } from "./clipCache";
+import { cachedBlob, cachedClip, rememberClip } from "./clipCache";
 import { CLEAN, type Condition } from "./conditions";
 import { needsMixer, playThrough } from "./mixer";
 import { stretch } from "./stretch";
@@ -117,11 +117,26 @@ export function rateFor(request: ClipRequest): number {
   return NORMAL_RATE;
 }
 
-/** The object URL for a clip as the service sent it, from the page cache or the network. */
-export async function fetchClip(request: ClipRequest): Promise<string> {
+/** A clip in hand: the url an element plays and the bytes behind it. */
+export interface HeldClip {
+  readonly url: string;
+  readonly blob: Blob;
+}
+
+/**
+ * The clip as the service sent it, from the page cache or the network.
+ *
+ * Both halves are returned because a `blob:` url cannot be fetched under the
+ * page's Content Security Policy (`connect-src 'self'`): the bytes for the
+ * stretch and for the mixer's decoder have to come from the blob itself. The
+ * first browser suite to run this caught it as a page error, which is what
+ * that check exists for.
+ */
+export async function fetchClip(request: ClipRequest): Promise<HeldClip> {
   const key = clipKey(request);
-  const held = cachedClip(key);
-  if (held) return held;
+  const url = cachedClip(key);
+  const blob = url ? cachedBlob(key) : null;
+  if (url && blob) return { url, blob };
   const res = await fetch("/api/tts", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -131,34 +146,31 @@ export async function fetchClip(request: ClipRequest): Promise<string> {
     }),
   });
   if (!res.ok) throw new Error(String(res.status));
-  return rememberClip(key, await res.blob());
+  const fetched = await res.blob();
+  return { url: rememberClip(key, fetched), blob: cachedBlob(key) ?? fetched };
 }
 
 /**
- * The object URL for a clip at `rate`, stretched here and remembered beside
- * the original, so a replay and a prefetch cost no work at all. A clip this
- * cannot read, which the route only ever sends when it could not read it
- * either, plays as it came rather than not at all.
+ * The clip at `rate`, stretched here and remembered beside the original, so
+ * a replay and a prefetch cost no work at all. A clip this cannot read, which
+ * the route only ever sends when it could not read it either, plays as it
+ * came rather than not at all.
  */
-export async function stretchedClip(request: ClipRequest, rate: number): Promise<string> {
+export async function stretchedClip(request: ClipRequest, rate: number): Promise<HeldClip> {
   const source = await fetchClip(request);
   if (rate === 1) return source;
   const key = `${clipKey(request)}|r${rate}`;
-  const held = cachedClip(key);
-  if (held) return held;
-  let bytes: Uint8Array;
-  try {
-    bytes = new Uint8Array(await (await fetch(source)).arrayBuffer());
-  } catch {
-    return source;
-  }
+  const url = cachedClip(key);
+  const blob = url ? cachedBlob(key) : null;
+  if (url && blob) return { url, blob };
   let out: Uint8Array;
   try {
-    out = encodeWav16(stretch(decodeWav(bytes), rate));
+    out = encodeWav16(stretch(decodeWav(new Uint8Array(await source.blob.arrayBuffer())), rate));
   } catch {
     return source;
   }
-  return rememberClip(key, new Blob([out.buffer as ArrayBuffer], { type: "audio/wav" }));
+  const made = new Blob([out.buffer as ArrayBuffer], { type: "audio/wav" });
+  return { url: rememberClip(key, made), blob: cachedBlob(key) ?? made };
 }
 
 /**
@@ -201,16 +213,16 @@ export async function playClip(
   request: ClipRequest,
   { unasked = false }: { unasked?: boolean } = {},
 ): Promise<PlayOutcome> {
-  const url = await stretchedClip(request, rateFor(request));
+  const clip = await stretchedClip(request, rateFor(request));
   // The rate is already in the clip; the room is the mixer's job. A slow
   // play is heard in a quiet room, because it was asked for by somebody who
   // wants to hear the word and not the café.
   const condition = request.slow ? CLEAN : (request.condition ?? CLEAN);
-  if (needsMixer(condition)) return playThrough(url, condition, { unasked });
+  if (needsMixer(condition)) return playThrough(await clip.blob.arrayBuffer(), condition, { unasked });
   // The element rather than a buffer source for the plain case, on purpose:
   // an element plays through a phone's silent switch and a Web Audio graph
   // does not, and a learner who pressed the speaker asked to hear it.
-  const audio = new Audio(url);
+  const audio = new Audio(clip.url);
   try {
     await audio.play();
   } catch (error) {

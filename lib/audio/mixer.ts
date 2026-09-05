@@ -58,14 +58,16 @@ export function needsMixer(condition: Condition): boolean {
 }
 
 /**
- * Plays the clip at `url` under `condition`, resolving when it has finished.
+ * Plays the clip whose WAV bytes these are under `condition`, resolving when
+ * it has finished. Bytes rather than a url, because a `blob:` url cannot be
+ * fetched under the page's `connect-src 'self'`, and the caller holds the blob.
  *
  * `unasked` is the autoplay case: a context the browser will not run yet
  * answers `blocked` rather than throwing, and anything else that goes wrong
  * throws, which is the one outcome a caller has to act on.
  */
 export async function playThrough(
-  url: string,
+  bytes: ArrayBuffer,
   condition: Condition,
   { unasked = false }: { unasked?: boolean } = {},
 ): Promise<PlayOutcome> {
@@ -85,8 +87,8 @@ export async function playThrough(
     }
   }
 
-  const bytes = await (await fetch(url)).arrayBuffer();
-  const buffer = await ctx.decodeAudioData(bytes);
+  // `decodeAudioData` detaches the buffer it is given, so it gets a copy.
+  const buffer = await ctx.decodeAudioData(bytes.slice(0));
   const offset = Math.min(buffer.duration * condition.skip, Math.max(0, buffer.duration - 0.4));
   const remaining = buffer.duration - offset;
   const at = ctx.currentTime + 0.02;
