@@ -157,7 +157,19 @@ export function caseAccuracy(
       total: v.total,
       accuracy: Math.round((v.ok / v.total) * 100),
     }))
-    .sort((a, b) => a.accuracy - b.accuracy || b.total - a.total);
+    /*
+      And it ends on the case, because the two keys above are not a total order
+      and `[0]` of this list is the case Today names and the daily quest drills.
+      The tally is a `Map`, so two cases matching on accuracy and on count came
+      back in the order they first appeared in the review rows: which case a
+      learner is sent to practise decided by which one they happened to answer
+      first, months ago, and unexplainable to them. Arbitrary and stated beats
+      arbitrary and silent.
+    */
+    .sort((a, b) =>
+      a.accuracy - b.accuracy
+      || b.total - a.total
+      || a.grammCase.localeCompare(b.grammCase));
 }
 
 /** The busiest hour of the day, for the "you study best at…" line. Null when thin. */
