@@ -9,8 +9,9 @@ import { resolveProviders } from "@/lib/tutor/provider";
 import { priceFor } from "@/lib/usage/pricing";
 import { DEFAULT_LIMITS } from "@/lib/usage/quota";
 import { SERVICES } from "@/lib/funding/model";
+import { CONTINUITY, floorUsd, retrenchment } from "@/lib/funding/sustainability";
 import {
-  COMPUTE, DEVTOOLS, DOMAIN, EMAIL, ERRORS, FX, MEASURED, MEASURED_ON,
+  COMPUTE, DEFAULT_SHAPE, DEVTOOLS, DOMAIN, EMAIL, ERRORS, FX, MEASURED, MEASURED_ON,
   PRICES_CHECKED, SPEECH_MARKET, SUPABASE, VERCEL,
 } from "@/lib/funding/facts";
 
@@ -82,6 +83,16 @@ export default function FundingPage() {
   */
   const switchedOn = (key: string | undefined): boolean =>
     key === undefined ? true : Boolean(process.env[key]?.trim());
+
+  /*
+    The retrenchment ladder is priced at the same default size the cost
+    explorer opens on, so the first figure in that section is the same number
+    the explorer shows above it. A reader who changes the explorer is asking a
+    different question, and this section is deliberately not tied to it: what
+    it costs to keep alive is one number, not a slider.
+  */
+  const ladder = retrenchment(DEFAULT_SHAPE);
+  const floor = floorUsd(DEFAULT_SHAPE);
 
   return (
     <Legal title="Funding" updated="2 September 2026">
@@ -350,6 +361,61 @@ export default function FundingPage() {
           size worth funding the decent thing is to support the work rather than only to
           use it: a contribution, a corrected entry sent back, or paying for the compute
           somebody else is currently absorbing.
+        </P>
+      </S>
+
+      <S title="What happens when the money stops">
+        <P>
+          The question a grant is scored on, and the one a cost page usually leaves out.
+          The figures below are the same bill as above with things switched off, in the
+          order somebody would actually switch them off: the tooling that writes the
+          software first, because a reader opening the app tomorrow does not notice it,
+          and the server and the database last, because without those there is nothing.
+        </P>
+        {ladder.map((step) => (
+          <P key={step.stage.id}>
+            <strong>{step.stage.name}, ${step.usd.toFixed(0)} a month.</strong>{" "}
+            {step.stage.why}
+            {step.lost.length > 0 ? (
+              <>
+                {" "}What goes: {step.lost.map((l) => `${l.name}. ${l.cost}`).join(" ")}
+              </>
+            ) : null}
+          </P>
+        ))}
+        <P>
+          The fall is gradual because most of what this app is made of was never bought.
+          The dictionary is Ekilex, the speech is TartuNLP, the English is Wiktionary, and
+          all three are public institutions that decided this work should be available. The
+          scheduler, the course, the exams, the games and the grammar run on a server and a
+          database and nothing else. What money buys is the tutor, the polish, and somebody
+          to work on it.
+        </P>
+        <P>
+          So the honest claim is not that this becomes profitable. It is that at{" "}
+          ${floor.toFixed(0)} a month it can be kept alive by one person who has not been
+          paid, and that it keeps teaching Estonian the whole way down.
+        </P>
+      </S>
+
+      <S title="What survives even that">
+        <P>
+          Six things, and every one of them is a file somebody can open rather than an
+          intention somebody has stated.
+        </P>
+        {CONTINUITY.map((item) => (
+          <P key={item.id}>
+            {item.claim}{" "}
+            <span style={{ color: "var(--ink-3)" }}>({item.checkableAt})</span>
+          </P>
+        ))}
+        <P>
+          Which is the answer to the question under the question. A funder is not really
+          asking whether the lights stay on. They are asking whether the money buys
+          something that outlives the project, and for a language this size the thing worth
+          buying is a corrected dictionary, a course built out of attested sources, and the
+          code to run both, all of it published under a licence that lets somebody else
+          pick it up.
         </P>
       </S>
 

@@ -21,9 +21,18 @@
  * `lib/usage/`, which reserves a call inside the same transaction that reads
  * the counters and is therefore the same number whichever instance answers.
  * This limiter is in front of that to keep an obvious loop from making a
- * hundred database round trips on its way to being refused, and to cap the
- * routes the ledger does not price at all: speech, the share card, the export
- * and the restore.
+ * hundred database round trips on its way to being refused.
+ *
+ * AND THE FOUR ROUTES THE LEDGER DOES NOT PRICE NO LONGER RELY ON IT ALONE.
+ * Speech, the share card, the export and the restore used to have this Map and
+ * nothing else, which made the honest description of their limit "however many
+ * instances happen to be warm". That is the first question a buyer's engineer
+ * asks and the right one to ask. `lib/usage/sharedLimit.ts` counts those in a
+ * row every instance can see, and calls straight through to this function
+ * first, so a caller who is already over is still refused for free and the
+ * loop this was written for still costs no round trip. What lives here is the
+ * cheap verdict and the two pure pieces at the bottom that both limiters have
+ * to agree on.
  *
  * THE LIST ABOVE USED TO SAY "THREE OF THEM" AND NAME THREE, and it was five
  * by then. That is how `/api/write` went without one: it is `/api/exam/write`
@@ -33,6 +42,8 @@
  * `lib/usage/ledger.ts` makes about itself, so an invariant reads the routes
  * rather than this paragraph.
  */
+
+import { createHash } from "node:crypto";
 
 type Bucket = { count: number; resetAt: number };
 
@@ -111,6 +122,48 @@ export function checkRateLimit(key: string, limit: number, windowMs: number): Ra
 export function resetRateLimitForTests() {
   buckets.clear();
   lastSweep = 0;
+}
+
+/*
+  THE TWO PURE PIECES THE SHARED COUNTER IS BUILT OUT OF.
+
+  `lib/usage/sharedLimit.ts` is the half that talks to Postgres, and it lives
+  over there because this directory is asserted free of Prisma. What can be
+  decided without a database is decided here, next to the in-memory limiter it
+  has to agree with: two modules disagreeing about where a window starts would
+  give one answer in memory and another in the table, and the disagreement
+  would only show up as a limit that behaves differently on a warm instance.
+*/
+
+/**
+ * The start of the window a moment falls in, floored to the window's own
+ * length so that every instance computes the same one for the same moment.
+ *
+ * A fixed window rather than a sliding one, which is the same choice the Map
+ * above makes, and it has the same known edge: a caller can spend a full
+ * allowance at the end of one window and another at the start of the next.
+ * That is a factor of two on a limit set with an order of magnitude of room in
+ * it, and the alternative is keeping every timestamp rather than a count.
+ */
+export function windowStartMs(now: number, windowMs: number): number {
+  return Math.floor(now / windowMs) * windowMs;
+}
+
+/**
+ * What the shared table stores instead of the key.
+ *
+ * The key is `tts:o:<uuid>`, so it carries an owner id, and a table of those
+ * is a record of who was awake and when that nothing needs and nobody asked
+ * for. A digest tells two callers apart, which is the whole job, and cannot be
+ * read back into a person.
+ *
+ * Unsalted on purpose. A salt defends against somebody who has the table and
+ * wants to confirm a guess, and anybody who has this table has the rows it was
+ * derived from; what a salt would cost is that the same caller hashes
+ * differently on two instances, which is the one property this needs.
+ */
+export function bucketDigest(key: string): string {
+  return createHash("sha256").update(key).digest("hex");
 }
 
 /**

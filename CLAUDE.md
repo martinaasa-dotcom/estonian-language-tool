@@ -620,6 +620,35 @@ the single boolean environment read, every variable `services.ts` names being on
 reads, and the page staying outside the sign-in gate, like `/privacy` and `/terms` and for the same
 reason.
 
+**And the question a grant is actually scored on is what happens when the money stops.** The page
+answered what it costs and where every figure came from, which is what a funder asks first, and not
+what becomes of the thing they paid for once they stop paying for it. A project that can only answer
+"it stops" is asking for a subscription rather than a grant, and one that answers "it will be
+self-sustaining" without arithmetic is guessing at somebody else's expense.
+
+`lib/funding/sustainability.ts` is the arithmetic and it reads the same registry as everything else,
+because there is still one list. A stage names **service ids** rather than describing them, the bill
+is recomputed by the same `billFor` that draws the cost explorer, and what is lost at each step is
+quoted from the service's own `whenItIsGone`, which was written for the infrastructure section and
+is exactly the raw material for this one. **Recomputed rather than subtracted**, since a stage can
+change the shape as well as the list and the model line prices its own absence.
+
+**The order is what a reader does not notice first**, not cheapest first: the tooling that writes the
+software, then the reporting only the operator reads, then the tutor, and the server and the database
+last because without those there is nothing. What is `given` is never dropped, since dropping it
+saves nought while telling a learner their dictionary has gone. The claim the ladder supports is not
+that this becomes profitable. It is that the floor is low, because most of what this app is made of
+was never bought: the dictionary is Ekilex, the speech is TartuNLP, the English is Wiktionary, and
+the scheduler, the course, the exams and the grammar run on a server and a database and nothing else.
+
+**And what survives even that is six files somebody can open**, not six intentions somebody has
+stated. MIT code, no proprietary service in the middle, a dictionary a script rebuilds from scratch,
+an export every learner can take with them, pages that keep opening with no network, and nothing a
+learner is taught coming from a model, so it keeps teaching with every AI key removed. `CONTINUITY`
+carries the path for each and the ladder is asserted: every stage names a real service, each step is
+cheaper than the one above, the first figure is the bill the cost page shows, and the floor keeps
+both the things nobody can switch off.
+
 **A coverage number is a measurement of whatever is wrong, and usually that is not what you were
 measuring.** `npm run eval:scene` is Phase 0's second half and it asks the one question the
 Situations design rests on: what share of composed lines does the gate withhold, against a stated
@@ -3291,6 +3320,37 @@ defense for spending: it is per-instance and a burst spread across cold starts m
 every time, so the thing that actually bounds cost is the Postgres ledger, which is the same
 number whichever instance answers.
 
+**And four routes had no ledger behind them, so "however many instances are warm" was the whole of
+their limit.** The paragraph above is right that the ledger is what bounds spending, and it does not
+price everything: `/api/tts` calls a free service the University of Tartu runs and writes a WAV into
+storage nothing prunes, `/api/share` renders an image per call, `/api/export` reads every table an
+account owns, and `/api/restore` parses a file the caller chose the size of. For those the Map was
+the only thing there was. A learner never notices that and it is the first question a buyer's
+engineer asks, correctly.
+
+`lib/usage/sharedLimit.ts` counts those four in a row every instance can see. **One statement and no
+lock**, which is the difference from the ledger next door: `authoriseCall` takes an advisory lock
+because it reads four aggregates and then decides, and check-then-act across ten tabs is what that
+lock exists to stop, whereas here the count returned by
+`INSERT ... ON CONFLICT DO UPDATE SET count = count + 1 RETURNING count` *is* the decision.
+**The Map stays in front**: the shared check calls `checkRateLimit` first and refuses on its own
+verdict, so the retry loop this was all written for still costs no round trip. It lives in
+`lib/usage/` rather than `lib/security/`, which is asserted free of Prisma; what stays there is the
+cheap verdict and the two pure pieces both limiters have to agree on, `windowStartMs` and
+`bucketDigest`, because two modules disagreeing about where a window starts would give one answer in
+memory and another in the table.
+
+**The row holds a digest, not the key.** The key is `tts:o:<uuid>`, so a table of those is a record
+of who was awake and when, kept for no reason anybody could state. A digest tells two callers apart,
+which is the whole job, and cannot be read back into a person, so there is nothing in `RateLimit`
+for the export or the erasure to carry. **A database that cannot answer degrades to the Map** rather
+than failing open or closed: closed would turn a bad minute at Postgres into a total outage of four
+routes on an app whose every page reads the same database, open would drop the control exactly when
+somebody has put the database under load, and the Map is the behaviour this app shipped with and was
+already willing to stand behind. The invariant reads the routes rather than this paragraph, and both
+limiters satisfy "has a cap at all" while only the shared one satisfies "is counted where every
+instance sees it".
+
 **A policy page states this deployment, or states that nobody filled it in.** Kodukeel is
 software somebody installs, so the controller is whoever runs the copy, and "ask whoever runs
 this installation" is honest but not an answer: there is no way to find out who that is.
@@ -3305,6 +3365,64 @@ in Estonia. Estonia sets the age of consent at 13, not 16. A recipient a deploym
 with one variable is generated like the rest: `ERROR_WEBHOOK_URL` puts an error-reporting endpoint
 on the list, named by host and never by path, because a webhook path is a common place to keep a
 token and that page is public.
+
+**And the mechanism was right, and the page said nobody had been named, for months.** Everything
+in the paragraph above was true, documented, unit tested and rendered by both policy pages, and
+`kodukeel.ee` told every reader that its operator had not filled their name in. Setting four
+variables in a dashboard is a step outside the repository, so it is a step that does not happen,
+and it had been asked for repeatedly. A control that is correct in the abstract and blank in
+production is the shape of compliance that fails an audit, and this one failed one.
+
+So **the installations this project publishes name their operator in the repository**, in
+`KNOWN_DEPLOYMENTS`, keyed on the canonical host in `NEXT_PUBLIC_SITE_URL`, which is the variable
+`lib/auth/canonical.ts` already treats as the one true origin: a deployment cannot be canonical for
+sign-in and anonymous for its policy pages. That is not a placeholder and not a default, and the
+difference is the key. It answers for the host it names and no other, so a fork serving from its own
+domain gets exactly the unset state it had before, which is the honest answer for them and stops
+them publishing a Tallinn company as the controller of their school's data. Environment variables
+still win, and they win **all three or none**: filling the gaps in a half-set environment field by
+field would let a fork that set its own name and forgot its address publish its name over somebody
+else's street, naming a controller that does not exist. `OPERATOR_VAT_ID` joined the optional pair,
+because the Information Society Services Act asks a registered provider for it and the funding page
+quotes prices net of tax. Asserted in both directions.
+
+**The machine the code runs on is a recipient, and it was the one the list could not see.**
+`resolveRecipients` was built by asking the code which services it was configured to call, and the
+host is not one of those, so the one party touching every single request on the page was the one
+never named on it: the pages rendered, the answers posted, and a request log with an address in it.
+It is named only where somebody else owns the machine (`VERCEL`, which the platform sets itself),
+because self-hosted the operator at the top of the page *is* the host and listing them as a
+recipient of their own data is noise. Named by company rather than by region: `vercel.json` pins the
+functions beside the database so a European deployment is answered in Europe, and that is not the
+question Article 44 asks.
+
+**The age is stated once, where somebody is about to sign up, and never as a tick.** Estonia sets
+the age at which somebody can agree to a service like this for themselves at 13, `/privacy` has
+named that number since it was written, `/class` tells a teacher about it, and the one screen where
+it is worth reading did not mention it. It is a sentence under the sign-in buttons and a condition
+in `/terms`. Deliberately **not** a checkbox: a tick nobody can check verifies nothing, adds a step
+to the screen that should have none, and would make the honest parts of the same page harder to
+believe, which is the argument the research opt-out already makes about a consent box at the door.
+Stating the rule is the whole of what this app is in a position to do, and a teacher signing a class
+up is the reader it is actually for.
+
+**The governance is written down where a reviewer reads it, not only where a compiler does.** Most
+of what a grant reviewer or an enterprise buyer needs was already true and lived in code comments,
+which is nowhere they will look. `docs/24-dpia.md` is the Article 35 assessment with a risk register
+whose every mitigation cites the file it lives in, `docs/25-data-retention.md` the schedule,
+`docs/26-subprocessors.md` the register, `docs/27-security.md` the threat model and control review,
+`docs/28-incident-response.md` the plan with the Article 33 clock on it, `docs/29-controls.md` a
+control map, `docs/23-impact.md` what may honestly be claimed about usage, `docs/30-pilots.md` what
+a pilot is, and `SECURITY.md` where to send a vulnerability. `/trust` and `/accessibility` are the
+public faces of the same thing.
+
+**Every one of those says what has not been done, in the same breath as what has.** There is no SOC
+2 report, no ISO 27001 certificate and no external penetration test, the control map is a
+self-assessment, the accessibility claim is partial conformance with the gaps named, and there is no
+reference customer to point at. A reviewer who catches one overclaim discards the whole document, so
+the honesty is not a courtesy, it is the only thing that makes the rest of it worth reading. Never
+add a claim to these that is not checkable against the repository, and when something becomes true,
+move it.
 
 **Two sources, two licenses, and the page has to say which is which.** Ekilex was credited in four
 places and Wiktionary in none, while Wiktionary supplies the English gloss for most of the
@@ -4359,6 +4477,24 @@ task are one `Task` row under two names and which one somebody reaches for is no
 **Local mode is a deployment shape, not a switch.** With no Supabase keys the app runs as a single
 local learner; with them, every route is gated. It keys off the absence of configuration only. Never add a flag that can disable auth on a deployment that has it. (ADR-013.)
 
+**A company's own sign-in is a third door onto the same corridor, never a fourth button.** A
+workplace with a real training budget will not put its people through another account, so
+`SSO_DOMAINS` names the email domains a deployment has configured an identity provider for, and the
+box that was already on the screen decides: type a work address on a listed domain and you go to
+the provider you already use, type anything else and you get the mailed link as before. The label
+and the hint change as the address is typed, so the reader is told what the box will do before they
+press it. Parsed exactly like `ALLOWED_EMAIL_DOMAINS`, whole domain off the **last** `@`, so
+`kool.ee` does not admit `evilkool.ee`.
+
+Two things about it are worth knowing before touching it. `signInWithSSO` returns `{ data: { url } }`
+and **does not navigate**, unlike `signInWithOAuth`, so the caller has to `window.location.assign`
+it and has to say something when there is no url, or the button reads as broken. And the callback
+route needed **no change at all**: SAML comes back through the same PKCE `?code=` shape Google does,
+so the verifier cookie check, the exchange and `isAllowedEmail` all already covered it, which is
+what keeps the allowlist checked in exactly one place. `lib/auth/sso.ts` is pure and holds the
+policy; the provider itself is configured in the Supabase dashboard, which is where a SAML attribute
+mapping has to populate `full_name` or every colleague's name falls back to their email local part.
+
 **Who is signed in is worked out, not asked for, and never without a deadline.** `getUser()` hands
 the access token to Supabase and asks whether it is still good, which is a network call, and this
 app was making three of them one after another on every signed-in page load: the middleware's gate,
@@ -4760,6 +4896,25 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   is never asked, and reading a missing answer as "off" would take away the only way they have of
   writing õ. `scripts/test-mobile.mjs` measures all of it in a browser, which is the only place the
   pointer half of the rule is real.
+- **A timed round is adjusted before it starts, never turned off, and the examination is not one
+  of them.** The Case Sprint ran to sixty seconds and the daily quest to two minutes, both typed
+  into the session and unchangeable, which is WCAG 2.2.1 failed twice: somebody who reads slowly,
+  who hears a card read out before answering it, or who types with one hand is not playing a
+  faster version of that round, they are shut out of it, and the app's own accessibility statement
+  named the sprint as a failure rather than a trade. The criterion offers three ways out and the
+  one taken is **adjusting the limit before it is met**. Turning the clock off removes the round,
+  since a burst of volume against a stopwatch is the whole of what both of these are, and an
+  extension offered at the moment the time runs out interrupts the round it is rescuing.
+  `lib/ux/roundClock.ts` is the one table and it holds a **multiplier rather than a number of
+  seconds**, because the two rounds have different bases for good reasons and one setting has to
+  serve both: what a learner is choosing is their own pace, which is the same fact about them
+  whichever round they open. It reaches ten times the standard, which is the figure the criterion
+  itself names, and the unit test says so in those words. The value is resolved on the server and
+  handed to each session as a number of seconds, since a client component has no settings to read
+  and a round that fetched its own length would start before it knew it. **The mock examination
+  keeps its clock**, and that limitation stays on the statement with its reasoning: the paper is
+  imitating a timed state examination and untimed practice of a timed paper measures something
+  else (`docs/16-exam.md`).
 
 ## Model configuration
 
@@ -5342,7 +5497,10 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
 `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
-`drillable`, `markForm`, `exceptionIndex`, `isAdvanceKey`, `buttonRuns`. Most of them now
+`drillable`, `markForm`, `exceptionIndex`, `isAdvanceKey`, `buttonRuns`, `readSsoPolicy`,
+`ssoDomainFor`, `checkSharedRateLimit`, `bucketDigest`, `windowStartMs`, `KNOWN_DEPLOYMENTS`,
+`IDENTIFIED_DEPLOYMENTS`, `currentIdentity`, `retrenchment`, `CONTINUITY`, `summariseImpact`,
+`gatherImpact`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -5372,6 +5530,7 @@ npm run build:frequency  # recount the commonest words (cached corpus, --refresh
 npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
+npm run report:impact    # people, study, retention and conversations outside the app, as text for a funder
 npm run measure:scenes   # how much of a conversation the dictionary can already carry
 npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds (three runs so far; read the ranked list)
 npm run demo             # two months of sample history, for looking at the charts

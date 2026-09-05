@@ -482,6 +482,33 @@ magic-link email template to point at
 `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email`. `app/auth/callback/route.ts`
 already answers that shape; nothing in the app needs changing.
 
+**Enterprise sign-in, for a company running a pilot.** A workplace with its own identity provider
+usually cannot use either of the two doors above: a Google account is somebody else's, and a mailed
+link is a message their security team would rather nobody clicked. Supabase speaks SAML 2.0, so
+their people sign in where they sign in every morning, and this app's half of it is one variable.
+
+1. **Supabase dashboard** → **Authentication → Providers → SAML 2.0**: turn it on. Adding the
+   customer's provider needs the **service role key** and either their metadata URL or their
+   metadata XML, which their IT will have. That key stays in your terminal or their dashboard and
+   is never set on this app.
+2. Ask them to map **`full_name`** in the SAML attribute mapping. Without it a name falls back to
+   the local part of the address, so a class roster reads `m.aasa` where it should read a person.
+3. **Authentication → URL Configuration → Redirect URLs**: add `https://<your-app>/auth/callback`,
+   the same one address the other two ways in land on.
+4. Set `SSO_DOMAINS` to the email domains that provider answers for, comma separated
+   (`SSO_DOMAINS="firma.ee, firma.com"`). Usually set `ALLOWED_EMAIL_DOMAINS` to the same list, so
+   the deployment is theirs and their people go straight to their own login.
+
+There is no third button on the sign-in screen. Somebody types their work address into the same box
+the mailed link uses, and a domain named in `SSO_DOMAINS` goes to the provider while anything else
+gets a link. A button offering single sign-on to everybody would refuse most of the people who
+pressed it. The domain is matched whole from the last `@`, so `kool.ee` never hands
+`evilkool.ee` to somebody else's provider, and `lib/auth/sso.ts` is the pure module that decides it.
+
+Nothing changes in `app/auth/callback/route.ts`. SAML comes back through the same PKCE `code` shape
+Google does, so the verifier cookie check, the allowlist and the narrowed `next=` are all read in
+the one place they always were.
+
 ## The way it looks
 
 A signed-out visitor lands on **/welcome**, a single-page tour with a working flashcard, a live
@@ -525,6 +552,31 @@ statistics**, and out means their rows are never read rather than subtracted aft
 
 Read `docs/19-research-export.md` before sending a file to anybody. It says what the tables can and
 cannot support, which is the half that makes the rest of it worth having.
+
+## If you are assessing this rather than running it
+
+For a funder, a school, a company or anybody else deciding whether to put this in front of people.
+Every one of these is written to be checked against the code rather than read for comfort, and each
+says what has not been done in the same breath as what has.
+
+| | |
+| --- | --- |
+| `docs/24-dpia.md` | The data protection impact assessment. The inventory model by model, and fifteen risks, each with the mitigation and the file it lives in. |
+| `docs/25-data-retention.md` | The retention schedule. Honest about the categories kept until the learner deletes their account. |
+| `docs/26-subprocessors.md` | The recipient register, describing the same list `lib/legal/recipients.ts` generates from the deployment's own configuration. |
+| `docs/27-security.md` | The threat model and control review, with a section for the weaknesses it found. |
+| `docs/28-incident-response.md` | The plan, with the Article 33 clock and runbooks for the incidents this app can actually have. |
+| `docs/29-controls.md` | A control map against ISO 27001 and SOC 2. A self assessment, and it says so first. |
+| `docs/23-impact.md` | What may honestly be claimed about usage, and the floors that stop a small number being reported at all. |
+| `docs/30-pilots.md` | What a pilot is, what it costs, and what is not ready. |
+| `SECURITY.md` | Where to send a vulnerability. |
+| `/trust` and `/accessibility` | The same material, on the running app. |
+| `/funding` | What it costs to run, where every figure came from, and what happens when the money stops. |
+
+Three things you will not find, because they do not exist yet and claiming them would be the first
+thing a careful reader caught: a SOC 2 report, an ISO 27001 certificate, and an external penetration
+test. There is also no reference customer to name. `docs/30-pilots.md` says so at the top rather than
+at the bottom.
 
 ## Commands
 

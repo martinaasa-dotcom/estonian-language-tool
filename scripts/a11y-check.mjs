@@ -179,6 +179,13 @@ const ROUTES = [
     written for.
   */
   "/grammar/exceptions", "/grammar/exceptions/stem", "/review/exceptions",
+  /*
+    And the two pages a buyer or a reviewer is sent to. `/accessibility` says
+    in as many words that this sweep loads every page the app has, so a route
+    it does not walk makes that page wrong about itself, which is the one
+    claim on it that has to be checkable.
+  */
+  "/trust", "/accessibility",
 ];
 
 const browser = await launchChromium();
@@ -257,7 +264,15 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
   the merged tree is neither sum. Measured at 447 on the merged tree against a
   production build, and the floor keeps the same five under it.
 */
-const { check, absent, done } = suite("Accessibility", { floor: 442 });
+/*
+  And 460, for `/trust` and `/accessibility`. Counted off the list rather than
+  measured on a run, which is what /funding's nine above did and is safe for
+  the same reason: the per-route loop makes eight checks with no branch in it
+  and the dark sweep makes a ninth, so two routes is eighteen exactly. The
+  paragraphs above are about a number arrived at by adding two branches
+  together, which is a different thing and still the trap.
+*/
+const { check, absent, done } = suite("Accessibility", { floor: 460 });
 
 /*
   OPENING A ROUTE, INCLUDING THE PART THAT IS NOT THE NETWORK.

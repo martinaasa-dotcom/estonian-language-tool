@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { createClient } from "@/lib/supabase/client";
+import { ssoDomainFor } from "@/lib/auth/sso";
 
 /**
- * Two ways in, and the second one exists because the first excludes people.
+ * Three ways in, and the second and third exist because the first excludes people.
  *
  * Google was the only door here, which is fine for a class that already has
  * school accounts and is a wall for everybody else: somebody with no Google
@@ -21,6 +22,19 @@ import { createClient } from "@/lib/supabase/client";
  * go out hides it with `EMAIL_SIGN_IN="off"`. The reasoning for that being
  * the way round it is lives on the page that reads the switch.
  *
+ * THE THIRD WAY IS THE SAME BOX, NOT A THIRD BUTTON. A company running a
+ * pilot signs in through its own provider, and the one thing this screen
+ * needs to know is whether the address somebody typed belongs to it. So the
+ * form takes a work address like any other and `ssoDomainFor` decides where
+ * it goes: to the identity provider where the domain is one the deployment
+ * configured, and to the mailed link otherwise. A button labelled "single
+ * sign-on" beside the other two would be a door that refuses most of the
+ * people who press it, and the domains are read on the server so this
+ * component never reaches for the environment.
+ *
+ * `signInWithSSO` hands back a URL and does not follow it, which is the one
+ * place it differs from the two calls above, so the redirect is ours to make.
+ *
  * THE LINK HAS TO BE OPENED IN THIS BROWSER, and the screen says so rather
  * than letting somebody find out. `signInWithOtp` mints a PKCE verifier and
  * leaves it in a cookie here, so a link forwarded to a phone arrives at a
@@ -28,12 +42,24 @@ import { createClient } from "@/lib/supabase/client";
  * the flow rather than a bug, and the one sentence explaining it is cheaper
  * than the dead end it prevents.
  */
-export function SignInForm({ emailLink }: { emailLink: boolean }) {
-  const [pending, setPending] = useState<"google" | "email" | null>(null);
+export function SignInForm({
+  emailLink,
+  ssoDomains = [],
+}: {
+  emailLink: boolean;
+  /** Domains this deployment has an identity provider for. Empty means none. */
+  ssoDomains?: readonly string[];
+}) {
+  const [pending, setPending] = useState<"google" | "email" | "sso" | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** The address we mailed, which is also the flag that we mailed anything. */
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [email, setEmail] = useState("");
+
+  const ssoPolicy = useMemo(() => ({ domains: [...ssoDomains] }), [ssoDomains]);
+  const sso = ssoDomains.length > 0;
+  /** The provider this address would go to, recomputed as they type. */
+  const ssoDomain = sso ? ssoDomainFor(email, ssoPolicy) : null;
 
   /** Where the provider sends somebody back to, carrying the page they wanted. */
   function callbackUrl(): string {
@@ -56,10 +82,45 @@ export function SignInForm({ emailLink }: { emailLink: boolean }) {
     }
   }
 
-  async function emailALink(event: React.FormEvent) {
+  /**
+   * Hand somebody over to their company's provider.
+   *
+   * Unlike the other two, this call returns a URL and stays where it is, so
+   * nothing happens unless we go. A response with neither a URL nor an error
+   * is the one case that would otherwise look like a button that did nothing,
+   * and it gets a sentence of its own.
+   */
+  async function signInWithSso(domain: string) {
+    setPending("sso");
+    setError(null);
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signInWithSSO({
+      domain,
+      options: { redirectTo: callbackUrl() },
+    });
+    if (error) {
+      setError(`${error.message}. If this keeps happening, ${domain} may not be set up for single sign-on here yet.`);
+      setPending(null);
+      return;
+    }
+    if (!data?.url) {
+      setError(`We could not reach the sign-in page for ${domain}. Try again, and tell whoever set this up if it keeps happening.`);
+      setPending(null);
+      return;
+    }
+    window.location.assign(data.url);
+  }
+
+  async function continueWithEmail(event: React.FormEvent) {
     event.preventDefault();
     const address = email.trim();
     if (!address) return;
+    const domain = ssoDomainFor(address, ssoPolicy);
+    if (domain) return signInWithSso(domain);
+    if (!emailLink) {
+      setError("That address is not one this copy signs in through a company provider. Use Google above, or ask whoever set this up.");
+      return;
+    }
     setPending("email");
     setError(null);
     const supabase = createClient();
@@ -117,7 +178,7 @@ export function SignInForm({ emailLink }: { emailLink: boolean }) {
         {pending === "google" ? "Redirecting…" : "Continue with Google"}
       </Button>
 
-      {emailLink && (
+      {(emailLink || sso) && (
         <>
           <div className="flex items-center gap-3" aria-hidden>
             <span className="h-px flex-1" style={{ background: "var(--rule-soft)" }} />
@@ -125,9 +186,9 @@ export function SignInForm({ emailLink }: { emailLink: boolean }) {
             <span className="h-px flex-1" style={{ background: "var(--rule-soft)" }} />
           </div>
 
-          <form onSubmit={emailALink} className="text-left">
+          <form onSubmit={continueWithEmail} className="text-left">
             <label htmlFor="sign-in-email" className="label-xs mb-2 block" style={{ color: "var(--ink-3)" }}>
-              Your email address
+              {sso ? "Your email or work address" : "Your email address"}
             </label>
             <input
               id="sign-in-email"
@@ -147,10 +208,30 @@ export function SignInForm({ emailLink }: { emailLink: boolean }) {
               disabled={pending !== null || email.trim() === ""}
               className="mt-3 w-full"
             >
-              {pending === "email" ? "Sending…" : "Email me a link"}
+              {pending === "email" ? "Sending…" : null}
+              {pending === "sso" ? "Taking you there…" : null}
+              {pending === null
+                ? ssoDomain
+                  ? "Continue with your work account"
+                  : emailLink
+                    ? "Email me a link"
+                    : "Continue"
+                : null}
             </Button>
+            {/*
+              The hint says what the box will do with what is in it, and it
+              changes once the address says which. Two sentences describing
+              both doors at once is the reader working out which half is
+              about them.
+            */}
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              No password to make up or forget. Open the link in this browser.
+              {ssoDomain
+                ? `We will send you to the ${ssoDomain} sign-in you already use.`
+                : emailLink
+                  ? sso
+                    ? "No password to make up or forget. A work address goes to your company sign-in, and anything else gets a link to open in this browser."
+                    : "No password to make up or forget. Open the link in this browser."
+                  : "Use the work address your company signs in with."}
             </p>
           </form>
         </>

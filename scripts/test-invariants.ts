@@ -24,6 +24,7 @@ import { resolvePos } from "../lib/dict/pos";
 import { wordNote } from "../lib/estonian/dictation";
 import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
+import { IDENTIFIED_DEPLOYMENTS, resolveOperator } from "../lib/legal/operator";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
 import { plainAsk } from "../lib/estonian/plainAsk";
@@ -1985,6 +1986,12 @@ check("every response carries a policy", () => {
 });
 
 check("the routes that spend somebody else's quota are capped", () => {
+  /*
+    EITHER LIMITER COUNTS, because there are two and they are one control.
+    `checkSharedRateLimit` calls `checkRateLimit` first and refuses on its own
+    verdict before it reaches Postgres, so a route on the shared counter has
+    the in-memory cap as well. What this asks is that a route has a cap at all.
+  */
   for (const route of [
     "app/api/tutor/route.ts",
     "app/api/tts/route.ts",
@@ -1992,8 +1999,81 @@ check("the routes that spend somebody else's quota are capped", () => {
     "app/api/export/route.ts",
     "app/api/scan/route.ts",
   ]) {
-    assert.match(read(route), /checkRateLimit/, `${route} has no cap on it`);
+    assert.match(
+      code(route),
+      /check(Shared)?RateLimit/,
+      `${route} has no cap on it`,
+    );
   }
+});
+
+check("the routes the spend ledger does not price are capped where every instance sees it", () => {
+  /*
+    `UsageEvent` is the real bound on anything that costs money, and it is the
+    same number whichever instance answers because it is a row. These four are
+    not priced by it at all: speech calls a free service the University of
+    Tartu runs and writes a file nothing prunes, the share card renders an
+    image per call, the export reads every table an account owns, and the
+    restore parses a file the caller chose the size of.
+
+    For those, the in-memory Map used to be the whole story, which made the
+    honest description of their limit "however many instances happen to be
+    warm". A learner never notices that and a buyer's engineer asks about it
+    first.
+  */
+  for (const route of [
+    "app/api/tts/route.ts",
+    "app/api/share/route.tsx",
+    "app/api/export/route.ts",
+    "app/api/restore/route.ts",
+  ]) {
+    assert.match(
+      code(route),
+      /checkSharedRateLimit/,
+      `${route} counts its limit in one instance's memory, and nothing else caps it`,
+    );
+  }
+
+  /*
+    And the shared counter stays out of `lib/security/`, which is asserted free
+    of Prisma. The pure halves both limiters have to agree on live there; the
+    row lives beside the ledger, which is the other deployment-wide counter.
+  */
+  const shared = code("lib/usage/sharedLimit.ts");
+  assert.match(shared, /checkRateLimit/, "the shared counter stopped asking memory first");
+  assert.match(shared, /bucketDigest/, "the shared counter writes the key rather than a digest");
+  assert.doesNotMatch(
+    code("lib/security/rateLimit.ts"),
+    /@\/lib\/db|from "@prisma/,
+    "lib/security reached for the database",
+  );
+});
+
+check("a deployment this project publishes names who is answerable for it", () => {
+  /*
+    THE FAULT THIS EXISTS FOR WAS NOT A MISSING MECHANISM.
+
+    `lib/legal/operator.ts` was written, documented, unit tested and rendered
+    by both policy pages, and kodukeel.ee told its readers for months that
+    nobody had been named, because setting four variables in a dashboard is a
+    step outside the repository and so a step that did not happen. A control
+    that is correct in the abstract and blank in production is the shape of
+    compliance that fails an audit.
+  */
+  for (const host of IDENTIFIED_DEPLOYMENTS) {
+    const operator = resolveOperator({ NEXT_PUBLIC_SITE_URL: `https://${host}` });
+    assert.equal(operator.identified, true, `${host} names no operator`);
+    assert.ok(operator.name && operator.address && operator.email, `${host} is half named`);
+  }
+
+  // And it answers for those hosts only. A fork on its own domain gets the
+  // unset state, which is the honest answer for them, rather than publishing
+  // somebody else's registered address as their own controller.
+  assert.equal(
+    resolveOperator({ NEXT_PUBLIC_SITE_URL: "https://someone-elses-fork.example" }).identified,
+    false,
+    "the operator table answers for a host it does not name",
+  );
 });
 
 check("a cap is charged to the learner, never to their address alone", () => {
@@ -6914,8 +6994,16 @@ check("a route that spends something is throttled", () => {
              would be met by a person tapping twice and by nobody else, which
              is the same argument `lib/security/actionLimits.ts` makes about
              grading a card.
+    health   is `SELECT 1` under a two second deadline and a four field JSON
+             body, which is cheaper than the read `reminder` is exempted for
+             and reads nothing of anybody's. A ceiling would also be the wrong
+             instrument twice over: the callers are uptime monitors rather than
+             learners, so there is no owner to bucket on, and unattributed
+             requests share one bucket by design (`lib/security/rateLimit.ts`),
+             which would have every monitor in the world spending one
+             allowance and answering 429 about an application that is up.
   */
-  const exempt = new Set(["metrics", "reminder", "research"]);
+  const exempt = new Set(["metrics", "reminder", "research", "health"]);
 
   for (const file of routes) {
     const name = file.split(/[\\/]/).slice(-2, -1)[0] ?? file;
@@ -6923,7 +7011,7 @@ check("a route that spends something is throttled", () => {
     const source = code(file);
     assert.match(
       source,
-      /checkRateLimit\(/,
+      /check(Shared)?RateLimit\(/,
       `${file} does per-call expensive work with no ceiling in front of it`,
     );
     /*

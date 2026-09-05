@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { inspectBackup, restoreBackup } from "@/app/actions";
 import { requireUserId } from "@/lib/auth/session";
-import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
+import { bucketForOwner, rateLimited } from "@/lib/security/rateLimit";
+import { checkSharedRateLimit } from "@/lib/usage/sharedLimit";
 import { reportError } from "@/lib/observability/report";
 
 /**
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     and it is the only thing standing in front of the parse.
   */
   const ownerId = await requireUserId();
-  const limit = checkRateLimit(`restore:${bucketForOwner(ownerId)}`, 12, 60_000);
+  const limit = await checkSharedRateLimit(`restore:${bucketForOwner(ownerId)}`, 12, 60_000);
   if (!limit.ok) {
     return rateLimited(limit, "That file is still being read. Nothing has changed.");
   }

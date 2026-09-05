@@ -27,7 +27,8 @@ export default function TermsPage() {
         {operator.identified ? (
           <P>
             This installation of Kodukeel is provided by <strong>{operator.name}</strong>
-            {operator.registryCode ? `, registry code ${operator.registryCode}` : ""}, at{" "}
+            {operator.registryCode ? `, registry code ${operator.registryCode}` : ""}
+            {operator.vatId ? `, VAT number ${operator.vatId}` : ""}, at{" "}
             {operator.address}. Reach them directly at{" "}
             <a href={`mailto:${operator.email}`} className="underline underline-offset-2">
               {operator.email}
@@ -91,6 +92,13 @@ export default function TermsPage() {
           Do not write scripts to hammer the dictionary, the speech service or the tutor
           with requests. Ekilex and TartuNLP are free academic services, and this whole
           project depends on nobody abusing them.
+        </P>
+        <P>
+          Be 13 or older, or have a parent agree first. Estonia sets the age at which
+          somebody can agree to a service like this for themselves at 13, which is the
+          youngest any country in the Union sets it. Nothing here checks, and saying so is
+          more use than a box that anybody can tick: if you are a teacher signing a class
+          up, that agreement is the one thing worth getting before you send the link.
         </P>
       </S>
 

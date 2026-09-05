@@ -47,6 +47,7 @@ import { kindFrom } from "@/lib/ux/schedule";
 import { participationValue } from "@/lib/research/participation";
 import { glossLanguageFrom } from "@/lib/collections/glossLanguage";
 import { serialiseTodayOrder, todayOrderFrom } from "@/lib/ux/todayOrder";
+import { roundPaceFrom } from "@/lib/ux/roundClock";
 import {
   availableCardTypes, CARD_TYPES, generateCards, type CardType, type LexemeForCards,
 } from "@/lib/srs/cards";
@@ -1349,6 +1350,22 @@ export async function setTodayOrder(value: string) {
   revalidatePath("/");
   revalidatePath("/settings");
   return { ok: true as const, order };
+}
+
+/**
+ * How long a timed round runs.
+ *
+ * Normalized through the one reader on the way in, so a request cannot store a
+ * pace no round knows. Revalidated across the layout because the two rounds
+ * that read it are pages of their own and a learner who has just changed this
+ * is usually on their way to one of them.
+ */
+export async function setRoundPace(value: string) {
+  const ownerId = await requireUserId();
+  const normalised = roundPaceFrom(text(value));
+  await writeSetting(ownerId, SETTING_KEYS.roundPace, normalised);
+  revalidatePath("/", "layout");
+  return { ok: true as const, value: normalised };
 }
 
 export async function setFeedbackSounds(value: string) {

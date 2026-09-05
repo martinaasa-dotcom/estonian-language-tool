@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  bucketDigest,
   bucketForOwner,
   bucketForRequest,
   checkRateLimit,
@@ -7,6 +8,7 @@ import {
   trustsProxyHeaders,
   rateLimited,
   resetRateLimitForTests,
+  windowStartMs,
 } from "@/lib/security/rateLimit";
 
 beforeEach(() => resetRateLimitForTests());
@@ -234,5 +236,44 @@ describe("when the bucket map is full", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("the pieces the shared counter is built out of", () => {
+  it("floors a moment to its own window, so every instance agrees", () => {
+    const minute = 60_000;
+    const at = Date.parse("2026-09-05T12:34:56.789Z");
+    expect(windowStartMs(at, minute)).toBe(Date.parse("2026-09-05T12:34:00Z"));
+
+    // Two instances asking about two moments inside one minute get one window.
+    expect(windowStartMs(at, minute)).toBe(
+      windowStartMs(Date.parse("2026-09-05T12:34:01Z"), minute),
+    );
+    // And the next second over is the next window, not a rounding of this one.
+    expect(windowStartMs(Date.parse("2026-09-05T12:35:00Z"), minute)).toBe(
+      Date.parse("2026-09-05T12:35:00Z"),
+    );
+  });
+
+  it("floors an hour window to the hour, because the export uses one", () => {
+    expect(windowStartMs(Date.parse("2026-09-05T12:34:56Z"), 3_600_000))
+      .toBe(Date.parse("2026-09-05T12:00:00Z"));
+  });
+
+  it("tells two callers apart without writing down who they are", () => {
+    const mine = bucketDigest("tts:o:8f14e45f-ea8b-4d1e-9b3a-2c5d7e0a1b42");
+    const yours = bucketDigest("tts:o:1c3d5e79-1234-4abc-8def-9876543210fe");
+
+    expect(mine).not.toBe(yours);
+    expect(mine).toBe(bucketDigest("tts:o:8f14e45f-ea8b-4d1e-9b3a-2c5d7e0a1b42"));
+    expect(mine).toMatch(/^[0-9a-f]{64}$/);
+
+    // The point of the digest: the id is not in the row.
+    expect(mine).not.toContain("8f14e45f");
+  });
+
+  it("keeps one caller's two endpoints in two buckets", () => {
+    const owner = "o:8f14e45f-ea8b-4d1e-9b3a-2c5d7e0a1b42";
+    expect(bucketDigest(`tts:${owner}`)).not.toBe(bucketDigest(`export:${owner}`));
   });
 });

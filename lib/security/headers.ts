@@ -26,6 +26,27 @@ export const STATIC_SECURITY_HEADERS: { key: string; value: string }[] = [
   */
   { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
   /*
+    THE OTHER HALF OF THE FRAMING RULE, AND THE ONE THAT WAS MISSING.
+
+    `X-Frame-Options` above stops a whole page being put in somebody's frame.
+    It says nothing about a single response being pulled into another origin's
+    document by an ordinary tag, and two responses here are worth the header:
+    the share card, which is a picture of somebody's name and their streak, and
+    the export, which is everything they have ever written.
+
+    `same-origin` rather than `same-site`, because there is one origin: the
+    canonical redirect in `lib/auth/canonical.ts` exists precisely to make sure
+    of that, so there is no sibling subdomain that needs to be let in.
+
+    Deliberately NOT `Cross-Origin-Embedder-Policy: require-corp`. That one is
+    about what this page may pull in rather than who may pull this page in, and
+    turning it on would refuse every response from Supabase, TartuNLP and the
+    fonts unless each of them sent a CORP header back, which is not ours to
+    set. It buys cross-origin isolation, which this app has no use for: nothing
+    here touches SharedArrayBuffer or a high-resolution timer.
+  */
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  /*
     The microphone is `self`, not `()`: speaking practice records the learner
     reading a word back (components/Recorder.tsx). Denying it here would
     switch that feature off with no error anybody could act on.

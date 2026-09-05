@@ -3,8 +3,10 @@ import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
+import { HISTORY_DAYS, gatherImpact, learnerDays } from "@/lib/progress/impact";
+import { MAX_LEARNER_SHARE, MIN_LEARNERS, MIN_REVIEWS } from "@/lib/research/corpus";
 import {
-  MILESTONES, MIN_COHORT, activitySummary, cohortRetention, type LearnerActivity,
+  MILESTONES, MIN_COHORT, activitySummary, cohortRetention,
 } from "@/lib/stats/retention";
 
 /**
@@ -20,6 +22,15 @@ import {
  * word anyone searched, no answer anyone gave, and cohorts below MIN_COHORT
  * report their size but not their rates, because "one of two people came back"
  * is a fact about a person rather than a statistic.
+ *
+ * The impact block is the same rows read for a different reader. Retention,
+ * study time and the conversations people report having outside the app are
+ * what a grant application asks for, and `lib/research/impact.ts` puts them
+ * under the disclosure floors the research export already uses, so a figure
+ * small enough to be about a person is absent rather than small. That block
+ * honors the research opt-out and the rest of this route does not, which is the
+ * difference between a figure an operator reads about their own deployment and
+ * a figure that leaves the building. `docs/23-impact.md` is how to quote it.
  *
  * A route rather than a page, so none of it can be pulled into a client bundle,
  * and behind a token so it is not a public description of how the product is
@@ -44,45 +55,20 @@ function authorised(request: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
-const DAY_MS = 86_400_000;
-
 export async function GET(request: NextRequest) {
   if (!process.env.METRICS_TOKEN || !authorised(request)) {
     return new NextResponse("Not found", { status: 404 });
   }
 
   const now = new Date();
-  // A year and a bit of history: enough for a D30 curve with room to see a
-  // trend, and bounded so this stays one indexed range scan.
-  const since = new Date(now.getTime() - 400 * DAY_MS);
+  const since = new Date(now.getTime() - HISTORY_DAYS * 86_400_000);
 
   /*
-    One row per learner per day they reviewed. Grouping in Postgres rather than
-    streaming every review into Node keeps this proportional to active days
-    rather than to the size of the log, and it never materializes an individual
-    review here.
+    The operator's own block reads everybody, because it is this deployment
+    looking at itself. The impact block is the one meant to be quoted outside,
+    so it honors the research opt-out and reads the list first.
   */
-  const rows = await prisma.$queryRaw<{ ownerId: string; day: string }[]>`
-    SELECT DISTINCT "ownerId",
-           TO_CHAR("reviewedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day
-    FROM "Review"
-    WHERE "reviewedAt" >= ${since}
-    ORDER BY "ownerId", day
-  `;
-
-  const byOwner = new Map<string, string[]>();
-  for (const row of rows) {
-    const days = byOwner.get(row.ownerId);
-    if (days) days.push(row.day);
-    else byOwner.set(row.ownerId, [row.day]);
-  }
-
-  const learners: LearnerActivity[] = [];
-  for (const days of byOwner.values()) {
-    const firstDay = days[0];
-    if (!firstDay) continue;
-    learners.push({ firstDay, activeDays: days });
-  }
+  const learners = await learnerDays(since, []);
 
   const [words, cards] = await Promise.all([
     prisma.lexeme.count(),
@@ -90,6 +76,8 @@ export async function GET(request: NextRequest) {
     // new and is not relearning. Derived, never stored (ADR-014).
     prisma.card.count({ where: { state: 2 } }),
   ]);
+
+  const impact = await gatherImpact(now, learners);
 
   return NextResponse.json(
     {
@@ -108,6 +96,15 @@ export async function GET(request: NextRequest) {
       activity: activitySummary(learners, now),
       cohorts: cohortRetention(learners, now),
       dictionary: { words, cardsKnown: cards },
+      impact: {
+        ...impact,
+        note:
+          `Every figure here rests on at least ${MIN_LEARNERS} people and at least ` +
+          `${MIN_REVIEWS} records, with no one person supplying more than ` +
+          `${Math.round(MAX_LEARNER_SHARE * 100)}% of it. A figure below that is a word ` +
+          "saying why, never a number. Head counts are bands. Anyone can leave their own " +
+          "rows out of this in Settings, and those rows are not read rather than subtracted.",
+      },
     },
     { headers: { "cache-control": "no-store" } },
   );

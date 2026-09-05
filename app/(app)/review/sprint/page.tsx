@@ -3,7 +3,8 @@ import { requireUserId } from "@/lib/auth/session";
 import { starredAmong } from "@/lib/progress/stars";
 import { SprintSession, type SprintCard } from "./SprintSession";
 import { shuffle } from "@/lib/random/shuffle";
-import { numberSetting, readSetting, SETTING_KEYS } from "@/lib/settings/store";
+import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
+import { roundPaceFrom, secondsFor } from "@/lib/ux/roundClock";
 
 export const metadata = { title: "Case Sprint" };
 
@@ -11,8 +12,11 @@ export const dynamic = "force-dynamic";
 
 const POOL_SIZE = 40;
 
+/** The round as it was written. A learner can stretch it in Settings. */
+const BASE_DURATION_S = 60;
+
 /**
- * A 60-second speed round — the Duolingo/Speakly "timed practice" idea, adapted to
+ * A sixty second speed round by default, the "timed practice" idea, adapted to
  * cards already in the deck rather than inventing new content. Weak (high-lapse)
  * and overdue cards are favored, since fast repetition on exactly those is where
  * a timer earns its keep.
@@ -64,9 +68,20 @@ export default async function SprintPage() {
     cardType: c.cardType,
   }));
 
-  // Through the store, not straight at the table: the key lives there, and so
-  // does the one settings read this request has already made.
-  const best = numberSetting(await readSetting(ownerId, SETTING_KEYS.sprintBest), 0);
+  // Through the store, not straight at the table: the keys live there, and so
+  // does the one settings read this request has already made. Both in one
+  // call, because two reads of one map is two round trips for nothing.
+  const settings = await readSettings(ownerId, [
+    SETTING_KEYS.sprintBest, SETTING_KEYS.roundPace,
+  ]);
+  const best = numberSetting(settings[SETTING_KEYS.sprintBest], 0);
+  /*
+    How long the clock runs, resolved on the server and handed down as a
+    number of seconds. The session is a client component and has no business
+    reading a setting for itself; see lib/ux/roundClock.ts for why this is a
+    pace over the round's own base rather than a stored number of seconds.
+  */
+  const seconds = secondsFor(BASE_DURATION_S, roundPaceFrom(settings[SETTING_KEYS.roundPace]));
 
-  return <SprintSession cards={sprintCards} best={best} />;
+  return <SprintSession cards={sprintCards} best={best} seconds={seconds} />;
 }
