@@ -22,7 +22,7 @@ import { toneInk } from "@/components/ui";
 import { oneEntryPerLemma } from "@/lib/dict/search";
 
 export const metadata: Metadata = {
-  title: { absolute: "Kodukeel. Ready for the real thing" },
+  title: { absolute: "Kodukeel. Estonian that finally sticks" },
   description:
     "Kodukeel means home language. Practice that sticks, a conversation to rehearse with somebody who has an agenda of their own, and one small thing to say out loud today, for anybody making a home in Estonia.",
 };
@@ -34,7 +34,7 @@ export default async function WelcomePage() {
   const { words, stats } = await loadDemo();
 
   return (
-    <div className="relative overflow-x-hidden" style={{ background: "var(--ground)" }}>
+    <div className="landing relative overflow-x-hidden" style={{ background: "var(--ground)" }}>
       {/*
         Pastel light behind the whole page, drifting. Each blob has its own
         period so the three never move together, and a blob is a blurred
@@ -72,7 +72,7 @@ export default async function WelcomePage() {
         where to start. The comparison is one of the questions now rather than a
         section of its own, which is where the person asking it looks.
       */}
-      <main className="relative">
+      <main className="landing-flow relative">
         <Hero stats={stats} />
         <Cases words={words} />
         <Features />
@@ -209,22 +209,15 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
     "Counts the conversations you have, not the days you open it",
   ];
   /*
-    Centred in the window rather than stacked from the top of it. The height
-    and the reason are in `.hero-screen`; what belongs here is that the top
-    padding is a floor and not the spacing. On a screen tall enough it never
-    applies, because `justify-center` has already put the air above and below
-    the column; on a short laptop or a phone held sideways the column outgrows
-    the box and it is what keeps the headline off the nav.
-
-    There is no bottom padding at all, and that is the balance rather than an
-    omission. The air under the last line is the peek band and the next
-    section's own top padding, which is 56px of page rhythm the hero does not
-    get to spend twice: with a `pb` to match the `pt` the gap under the claims
-    came out 72px wider than the one over the headline at every size, which is
-    a column that reads as dropped rather than placed.
+    As tall as what is in it, and one section gap from the next beat. The
+    height rule this used to carry, the window less the nav less a peek, is
+    gone with the 230px of nothing it left under the claims; `.landing-flow`
+    in `app/globals.css` has the argument. The top padding is the only thing
+    between the nav pill and the headline, and it grows with the window the
+    way the three gaps inside the column do.
   */
   return (
-    <section id="top" className="hero-screen mx-auto flex max-w-3xl flex-col items-center justify-center px-5 pb-0 pt-8 text-center md:px-8 md:pt-10">
+    <section id="top" className="hero-open mx-auto flex max-w-3xl flex-col items-center px-5 text-center md:px-8">
       {/*
         No badge over the headline. It read "for everyone who bounced off
         Estonian once already", which is the same sentiment as the heading one
@@ -249,11 +242,11 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         className="hero-display font-bold leading-[1.02] tracking-[-0.02em]"
         style={{ color: "var(--ink)" }}
       >
-        <span className="word-in" style={{ "--w": "60ms" } as React.CSSProperties}>Ready</span>{" "}
-        <span className="word-in" style={{ "--w": "160ms" } as React.CSSProperties}>for</span>{" "}
-        <span className="word-in" style={{ "--w": "220ms" } as React.CSSProperties}>the</span>
+        <span className="word-in" style={{ "--w": "60ms" } as React.CSSProperties}>Estonian</span>{" "}
+        <span className="word-in" style={{ "--w": "160ms" } as React.CSSProperties}>that</span>
         <br />
-        <span className="word-in grad-text grad-sweep" style={{ "--w": "380ms" } as React.CSSProperties}>real thing</span>.
+        <span className="word-in" style={{ "--w": "220ms" } as React.CSSProperties}>finally</span>{" "}
+        <span className="word-in grad-text grad-sweep" style={{ "--w": "380ms" } as React.CSSProperties}>sticks</span>.
       </h1>
 
       <p
@@ -285,13 +278,25 @@ function Hero({ stats }: { stats: { words: number; forms: number } }) {
         </ButtonLink>
       </div>
 
+      {/*
+        Balanced rather than wrapped, because four claims of four lengths
+        wrap three and one at every desktop width, and a line with one item
+        on it under a line with three reads as something fell off. A grid was
+        the first answer and sized each column to its longest claim, which
+        put the longest one back on two lines. `text-wrap: balance` breaks
+        the four into two lines of about the same width, whatever the widths
+        are, and the list stays a list. Below `sm` the column is too narrow
+        for two on a line, so each claim takes a centred line of its own
+        rather than breaking inside itself with the tick left hanging.
+      */}
       <ul
-        className="fade-up hero-claims flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs"
+        className="fade-up hero-claims mx-auto text-xs sm:[text-wrap:balance]"
         style={{ color: "var(--ink-3)", animationDelay: "640ms" }}
       >
         {claims.map((t) => (
-          <li key={t} className="flex items-center gap-1.5">
-            <Check size={14} aria-hidden style={{ color: "var(--mint-ink)" }} /> {t}
+          <li key={t} className="my-1 flex items-start justify-center gap-1.5 sm:mx-2.5 sm:inline-flex sm:items-center sm:align-middle">
+            <Check size={14} aria-hidden className="mt-0.5 sm:mt-0" style={{ color: "var(--mint-ink)" }} />
+            <span className="max-w-[30ch] text-left sm:max-w-none">{t}</span>
           </li>
         ))}
       </ul>
@@ -317,7 +322,7 @@ function Cases({ words }: { words: DemoWord[] }) {
   if (derivable.length === 0) return null;
 
   return (
-    <section id="cases" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <section id="cases" className="mx-auto w-full max-w-6xl scroll-mt-24 px-5 md:px-8">
       <Reveal>
         {/*
           The heading is one line where there is room for one.
@@ -507,7 +512,7 @@ function Features() {
     two, then a gap where the sixth would go.
   */
   return (
-    <section id="features" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <section id="features" className="mx-auto w-full max-w-6xl scroll-mt-24 px-5 md:px-8">
       <Reveal>
         {/*
           THE HEADING NAMES THE THREE THINGS UNDER IT.
@@ -975,11 +980,23 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
 
 function Questions() {
   return (
-    <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-5 py-14 md:px-8 md:py-20">
+    <section id="faq" className="mx-auto w-full max-w-4xl scroll-mt-24 px-5 md:px-8">
       <Reveal>
-        <h2 className="text-center text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-          The questions people ask
-        </h2>
+        {/*
+          The same head as the two sections above it, eyebrow, heading, one
+          line, because a heading standing alone over a list read as a
+          different page starting. Sky, since that hue is reference material
+          and this is the reference part of the page.
+        */}
+        <div className="mx-auto max-w-[52ch] text-center">
+          <p className="label-xs" style={{ color: "var(--sky-ink)" }}>Questions</p>
+          <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
+            The questions people ask
+          </h2>
+          <p className="mx-auto mt-5 max-w-[52ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
+            Short answers, and how this compares with the other apps is at the end.
+          </p>
+        </div>
       </Reveal>
       <div className="mt-10 flex flex-col gap-3 md:mt-14">
         {FAQS.map(([q, a]) => (
@@ -1016,7 +1033,7 @@ function Questions() {
  */
 function FinalCta() {
   return (
-    <section id="start" className="px-5 pb-16 pt-14 md:px-8 md:pb-24 md:pt-20">
+    <section id="start" className="w-full px-5 md:px-8">
       <Reveal>
         <div
           className="relative mx-auto max-w-5xl overflow-hidden rounded-[var(--r-xl)] px-6 py-9 text-center md:px-16 md:py-12"
@@ -1124,7 +1141,7 @@ const SOURCES = [
 
 function Footer() {
   return (
-    <footer className="relative px-5 pb-14 md:px-8 md:pb-20">
+    <footer className="landing-foot relative px-5 pb-14 md:px-8 md:pb-20">
       <div className="mx-auto max-w-6xl border-t pt-12 md:pt-16" style={{ borderColor: "var(--rule)" }}>
         <div className="grid gap-10 md:grid-cols-[1.1fr_1.5fr_auto] md:gap-14">
           <div>

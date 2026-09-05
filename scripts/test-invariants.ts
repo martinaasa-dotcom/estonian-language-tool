@@ -1802,6 +1802,42 @@ check("the forged-request gate runs before anything else looks at the request", 
   );
 });
 
+check("a request on the wrong host is sent home before anything reads it", () => {
+  /*
+    Google sign-in starts on the origin the learner is on and comes back to
+    the project's Site URL wherever that origin is not on Supabase's list, so
+    a deployment answering on two names had sign-ins finishing on the one
+    that never started them, with no verifier to finish them with. With
+    `NEXT_PUBLIC_SITE_URL` set there is one origin, and the redirect has to
+    be the first thing the middleware does: after the forged-request gate it
+    would refuse a legitimate mutation for arriving on the wrong name, and
+    after the auth branch a signed-out visitor would be sent to sign in on
+    the host the sign-in cannot complete on. The callback is the other half:
+    a code arriving with no verifier cookie is told apart from a spent link
+    before the exchange is attempted, because the two need different
+    sentences and the same failure reads as either.
+  */
+  const middleware = code("middleware.ts");
+  const redirect = middleware.indexOf("canonicalRedirect(");
+  const gate = middleware.indexOf("isSameOriginMutation(request)");
+  assert.ok(redirect > 0, "the middleware no longer sends a request on the wrong host home");
+  assert.ok(redirect < gate, "the canonical redirect runs after the forged-request gate");
+  assert.match(middleware, /NextResponse\.redirect\(home, 308\)/, "the canonical redirect is not permanent");
+
+  const canonical = code("lib/auth/canonical.ts");
+  assert.match(canonical, /VERCEL_ENV !== "production"/, "a Vercel preview is being sent to production");
+  assert.match(canonical, /isLoopback\(/, "a developer's own machine is being sent to production");
+
+  const callback = code("app/auth/callback/route.ts");
+  const verifier = callback.indexOf("-code-verifier");
+  const exchange = callback.indexOf("exchangeCodeForSession(");
+  assert.ok(verifier > 0, "the callback no longer looks for the verifier cookie");
+  assert.ok(verifier < exchange, "the verifier check runs after the exchange it exists to explain");
+  assert.match(callback, /sign-in\?bounced=1/, "a bounced sign-in is no longer told apart from a spent link");
+  const signIn = code("app/(chromeless)/sign-in/page.tsx");
+  assert.match(signIn, /params\.bounced/, "the sign-in page no longer reads the bounced refusal");
+});
+
 check("every response carries a policy", () => {
   /*
     A Content Security Policy that only covers the happy path is a policy with
@@ -2624,6 +2660,45 @@ check("Today draws at most TODAY_CARDS under the hero, and every card goes throu
     loose, [],
     `Today draws ${loose.join(", ")} outside the capped list, so the page can grow past ${"TODAY_CARDS"} again`,
   );
+});
+
+/*
+  AND THE ORDER IS THE LEARNER'S, READ THROUGH ONE MODULE, WITH THE CAP STILL
+  APPLIED AFTER IT.
+
+  A home page's reading order is a fact about the reader, so Settings lets
+  them set it. Three things have to stay true for that to be safe. Today has to
+  deal through `orderTodayCards`, so a card cannot be added to the page
+  outside the order the learner set; the cap has to be applied to what comes
+  out of it, so an order can never grow a seventh box; and the key has to be
+  declared once, in the settings store, like the goal keys, so a typo in a
+  page cannot store an order nobody reads.
+*/
+check("Today deals its cards in the learner's order, under the same cap", () => {
+  const today = code("app/(app)/page.tsx");
+  assert.match(
+    today, /orderTodayCards\(/,
+    "Today no longer deals through orderTodayCards, so the order in Settings changes nothing",
+  );
+  assert.match(
+    today, /todayOrderFrom\(settings\[SETTING_KEYS\.todayOrder\]\)/,
+    "Today reads the order from somewhere other than the settings row the panel writes",
+  );
+  // The cap on the deal, not on the candidates: an order must not grow the page.
+  assert.match(
+    today, /orderTodayCards\([\s\S]*?\)\.slice\(0, TODAY_CARDS\)/,
+    "the cap is no longer applied to what orderTodayCards returns",
+  );
+
+  const panel = code("app/(app)/settings/TodayOrderPanel.tsx");
+  assert.match(panel, /setTodayOrder\(/, "the Settings panel no longer writes the order");
+  assert.match(panel, /TODAY_CARDS/, "the panel stopped saying which rows fall past the cut");
+
+  assert.match(read("lib/settings/store.ts"), /todayOrder:/, "todayOrder is not declared in the settings store");
+  for (const file of ALL) {
+    if (file === "lib/settings/store.ts") continue;
+    assert.doesNotMatch(read(file), /["']todayOrder["']/, `${file} writes the todayOrder key as a literal`);
+  }
 });
 
 /*

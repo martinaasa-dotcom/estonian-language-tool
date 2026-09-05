@@ -23,9 +23,9 @@ const PROMISES = [
  *
  * `/auth/callback` sends somebody to `?denied=1` when their address is not on
  * this deployment's allowlist, to `?switched=1` when a mailed link arrived on
- * a browser that was already signed in, and to `?error=1` when an exchange
- * failed or a
- * mailed link had already been used. Both landed on an ordinary sign-in
+ * a browser that was already signed in, to `?bounced=1` when Google sent them
+ * back to a host that never started the sign-in, and to `?error=1` when an
+ * exchange failed or a mailed link had already been used. Both landed on an ordinary sign-in
  * screen that said nothing at all, so the one person who needed telling why
  * they could not get in was shown the button that had just refused them.
  * Every other dead end in this app says what happened; this one now does too,
@@ -65,6 +65,14 @@ export default async function SignInPage({ searchParams }: {
     session that was here and sends them back to this screen instead.
   */
   const switched = params.switched !== undefined;
+  /*
+    The code arrived in a browser holding no verifier for it: a mailed link
+    opened on another device, or Google sending somebody back to a different
+    address from the one they started on. The second is a dashboard setting
+    rather than anything the learner did, which is why the sentence says
+    what to add and, where there is one, who to tell. `lib/auth/canonical.ts` says how a deployment stops it.
+  */
+  const bounced = params.bounced !== undefined;
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12">
@@ -113,7 +121,19 @@ export default async function SignInPage({ searchParams }: {
               </Note>
             </div>
           )}
-          {failed && !denied && !switched && (
+          {bounced && (
+            <div className="mt-6 text-left">
+              <Note tone="hard">
+                This browser has nothing to finish that sign-in with. Either the link was opened
+                somewhere other than where it was asked for, or you were sent back to a different
+                address from the one you started on. Try again from here.
+                {operator.email
+                  ? <> If it keeps happening, tell {operator.email}: this address needs adding to the sign-in settings.</>
+                  : <> If it keeps happening, whoever runs this copy needs to add this address to the sign-in settings.</>}
+              </Note>
+            </div>
+          )}
+          {failed && !denied && !switched && !bounced && (
             <div className="mt-6 text-left">
               <Note tone="hard">
                 That sign-in did not go through. A mailed link works once and lasts an hour, so if

@@ -461,34 +461,33 @@ check("every landing letter keeps its slant with the motion turned off",
   unslanted.length === 0, unslanted.join(" "));
 
 /*
-  THE HERO'S ARITHMETIC AGAINST THE NAV IT IS SUBTRACTING.
+  THE HERO'S ARITHMETIC AGAINST THE NAV IT IS UNDER, AND ONE GAP DOWN THE PAGE.
 
-  `.hero-screen` is `100svh` less `--landing-nav` less `--hero-peek`, and the
-  first of those is a typed constant standing in for something drawn on screen,
-  which is the shape that drifts: raise the nav's padding or put a taller
-  control in the pill and the hero is that much too long, so the peek it leaves
-  under itself closes up and the page reads as ending at the fold again. The
+  `--landing-nav` on `.hero-open` is a typed constant standing in for something
+  drawn on screen, which is the shape that drifts: raise the nav's padding or
+  put a taller control in the pill and the headline is that much nearer it. The
   nav is the same height at every width this app is drawn at, because the pill
   is sized by the button in it rather than by anything that reflows, so one
   measurement is the whole check. A pixel of slack for a fractional layout.
 
-  And the peek is checked by what it is for rather than by its number: the
-  section under the hero has to have started by the fold, and its heading has
-  to still be arriving at it. A hero that ends exactly at the bottom of the
-  window is a page that looks like it has nothing after it, which is the fault
-  this band exists to prevent, and a band wide enough to fit that whole section
-  in is the opposite fault, two openings competing on one screen.
+  The hero used to fill the window less a peek band and this checked the band:
+  the next section started above the fold and its heading was still arriving
+  at it. That rule left 230px of nothing under the claims on a 900px window
+  while every other pair of sections stood 160 apart, so the page has one
+  distance now and this checks the distance. Every consecutive pair of beats
+  in `main`, and the footer after the close, stand exactly `--section-gap`
+  apart, measured from the bottom of one to the top of the next, so a section
+  that grows a padding of its own or a wrapper that adds a margin fails here
+  rather than reading as a page that breathes unevenly.
 */
 const heroFit = [];
 /*
   The last two are the boundary of the display step, one pixel apart, because a
   rule taken on two axes is a rule with a corner and the corner is where it is
   wrong. 88px of headline over a 19px paragraph needs both the width for its
-  longest line and the height for the column: measured, 740 leaves 64px over
-  the headline and 739 has to fall back or the hero takes its own peek band
-  under the fold. Asserting the size at 1000x740 and 1000x739 is asserting that
-  the height half of the condition is really there, which a check at one
-  comfortable desktop size cannot see.
+  longest line and the height for the column. Asserting the size at 1000x740
+  and 1000x739 is asserting that the height half of the condition is really
+  there, which a check at one comfortable desktop size cannot see.
 */
 for (const [width, height, display] of [
   [390, 844, "52px"], [768, 1024, "88px"], [1024, 600, "68px"], [1280, 800, "88px"],
@@ -498,21 +497,23 @@ for (const [width, height, display] of [
   await p.goto(`${B}/welcome`, { waitUntil: "networkidle", timeout: 60000 });
   await p.waitForTimeout(200);
   const seen = await p.evaluate(() => {
-    const bottom = (el) => Math.round(el.getBoundingClientRect().bottom);
-    const top = (el) => Math.round(el.getBoundingClientRect().top);
+    const bottom = (el) => el.getBoundingClientRect().bottom;
+    const top = (el) => el.getBoundingClientRect().top;
     const nav = document.querySelector("header nav");
-    const cases = document.querySelector("#cases");
-    const hero = document.querySelector(".hero-screen");
+    const hero = document.querySelector(".hero-open");
     const h1 = hero.querySelector("h1");
     const declared = getComputedStyle(hero).getPropertyValue("--landing-nav");
+    const gap = parseFloat(getComputedStyle(document.querySelector(".landing")).getPropertyValue("--section-gap")) * 16;
+    const beats = [...document.querySelectorAll("main > section"), document.querySelector("footer")];
+    const gaps = [];
+    for (let i = 1; i < beats.length; i++) gaps.push({ id: beats[i].id || "footer", gap: Math.round(top(beats[i]) - bottom(beats[i - 1])) });
     return {
-      navBottom: bottom(nav),
+      navBottom: Math.round(bottom(nav)),
       declared: Math.round(parseFloat(declared)),
-      casesTop: top(cases),
-      headingTop: top(cases.querySelector("h2")),
       display: getComputedStyle(h1).fontSize,
-      headlineTop: top(h1),
-      fold: window.innerHeight,
+      headlineTop: Math.round(top(h1)),
+      gap: Math.round(gap),
+      gaps,
     };
   });
   const at = `${width}x${height}`;
@@ -525,11 +526,13 @@ for (const [width, height, display] of [
   if (Math.abs(seen.navBottom - seen.declared) > 1) {
     heroFit.push(`${at} nav is ${seen.navBottom}px, --landing-nav says ${seen.declared}px`);
   }
-  if (seen.casesTop >= seen.fold) heroFit.push(`${at} nothing of the next section shows above the fold`);
-  if (seen.headingTop <= seen.fold - 120) heroFit.push(`${at} the next section's heading is ${seen.fold - seen.headingTop}px above the fold, which is a second opening rather than a peek`);
+  if (seen.gaps.length < 4) heroFit.push(`${at} only ${seen.gaps.length} gaps measured, so a beat is missing`);
+  for (const g of seen.gaps) {
+    if (Math.abs(g.gap - seen.gap) > 1) heroFit.push(`${at} the gap above #${g.id} is ${g.gap}px against a page rhythm of ${seen.gap}px`);
+  }
 }
 
-check("the hero fills the window and leaves the next section starting in it",
+check("the hero sits under the nav and every beat of the page stands one gap from the next",
   heroFit.length === 0, heroFit.join(" | "));
 
 console.log(`\n  ${sizes.size} type steps · ${weights.size} weights · ${radii.size} radii · ${contrast.length} contrast failures`);

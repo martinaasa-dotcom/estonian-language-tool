@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     page and nothing else worth naming.
   */
   title: {
-    default: "Kodukeel. Ready for the real thing",
+    default: "Kodukeel. Estonian that finally sticks",
     template: "%s · Kodukeel",
   },
   description:
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   applicationName: "Kodukeel",
   appleWebApp: { capable: true, title: "Kodukeel", statusBarStyle: "default" },
   openGraph: {
-    title: "Kodukeel. Ready for the real thing",
+    title: "Kodukeel. Estonian that finally sticks",
     description:
       "Practice that sticks, a conversation to rehearse, and one thing to say to a real person today. Real forms from Ekilex, never from a model.",
     type: "website",
