@@ -48,7 +48,7 @@ import { writeFileSync } from "node:fs";
 import { runGate, passes } from "../lib/scenes/gate";
 import { SCENES, FALLBACK_PHRASE } from "../lib/scenes/catalogue";
 import { BANK } from "../lib/scenes/bank";
-import { scriptable, type ScriptedLine } from "../lib/scenes/scripted";
+import { beatById, sceneBeats, scriptable, type ScriptedLine } from "../lib/scenes/scripted";
 import { words } from "../lib/scenes/lexicon";
 import {
   ANSWERED, REFUSALS, answerForms, chain, compose, keylessContext, lacksFiniteVerb,
@@ -95,7 +95,7 @@ async function main() {
     if (row.reviewed) return true;
     if (refresh) return false;
     const scene = SCENES.find((s) => s.id === row.scene);
-    const beat = scene?.beats.find((b) => b.id === row.beat);
+    const beat = scene ? beatById(scene, row.beat) : undefined;
     const context = scene && contexts.get(scene.id);
     if (!scene || !beat || !context || !scriptable(scene, beat)) { dropped++; note("dropped: no such beat"); return false; }
     const verdict = runGate(row.text, beat, context.gate);
@@ -109,7 +109,7 @@ async function main() {
   for (const scene of SCENES) {
     if (onlyScene && scene.id !== onlyScene) continue;
     const { lemmas, gate, lexicon } = contexts.get(scene.id)!;
-    for (const beat of scene.beats) {
+    for (const beat of sceneBeats(scene)) {
       if (!scriptable(scene, beat)) { skipped++; continue; }
       const have = () => kept.filter((row) => row.scene === scene.id && row.beat === beat.id).length;
       // The lemmas the beat asks the learner for, which the line may not say.
@@ -169,8 +169,11 @@ function render(rows: readonly ScriptedLine[]): string {
     "   pull request that added it. The one field a person edits is `reviewed`,",
     "   which a native speaker sets to true after reading the row, and which the",
     "   chip on screen reads. Regenerate with `npm run draft:lines`; the script",
-    "   keeps rows that are already here and only drafts what is missing.",
-    "   (lib/scenes/scripted.ts is what reads this; ADR-025 amendment 1.) */",
+    "   keeps rows that are already here and only drafts what is missing. A row",
+    "   whose model is `authored` was typed in a session rather than drafted, and",
+    "   went through the same checks on its way in; a beat named `hurdle:<id>` is",
+    "   a curveball's line (lib/scenes/scripted.ts is what reads this; ADR-025",
+    "   amendment 1.) */",
     'import type { ScriptedLine } from "./scripted";',
     "",
     "export const BANK: readonly ScriptedLine[] = [",

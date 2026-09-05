@@ -65,6 +65,13 @@ export interface CurveballSpec {
    * composed.
    */
   readonly move?: MoveKind;
+  /**
+   * What they say, in English, where the curveball *is* a switch to English.
+   * The one line in the module said in English on purpose, drawn as a bubble
+   * and labelled as such, because the whole point is that the other side
+   * gave up on Estonian and the learner is practising not to.
+   */
+  readonly said?: string;
 }
 
 /**
@@ -118,6 +125,7 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
     id: "english",
     cost: 3,
     says: "They switch to English.",
+    said: "Sorry, let me switch to English. What was that?",
     out: "Keep going in Estonian, and they come back.",
     needs: [{ kind: "register" }],
   },
@@ -163,7 +171,6 @@ export const CURVEBALLS: readonly CurveballSpec[] = [
   },
   {
     id: "other-register",
-    move: "ask",
     cost: 1,
     says: "They use the other pronoun for you.",
     out: "Match them, or do not. Both are things people do.",

@@ -214,3 +214,27 @@ describe("a line off the card", () => {
     expect(datumLine({ ...offers, says: { lemma: "kell", slot: "floor" } }, CARD)).toBeNull();
   });
 });
+
+describe("a curveball in the way", () => {
+  const hurdle: BeatSpec = {
+    ...ASK, id: "hurdle:missing-document", goal: "Say you do not have it.",
+    they: "They ask for something you were not given.", needs: [{ kind: "negation" }],
+  };
+
+  it("is what they say instead of the beat, in Estonian where a line was built", () => {
+    const line: SpokenLine = { text: "Kas teil on dokument kaasas?", provenance: "scripted" };
+    const lines = replyFor(input({ answered: ASK, hurdle: { beat: hurdle, line } }));
+    expect(lines.at(-1)).toEqual(line);
+    expect(texts(lines)).not.toContain(FRESH.text);
+  });
+
+  it("and in English as a stage direction where none was", () => {
+    const lines = replyFor(input({ answered: ASK, hurdle: { beat: hurdle, line: null } }));
+    expect(lines.at(-1)).toMatchObject({ provenance: "unspoken", text: "They ask for something you were not given." });
+  });
+
+  it("is said in English, as a line, where the curveball is the switch to English", () => {
+    const lines = replyFor(input({ answered: ASK, hurdle: { beat: hurdle, line: null, said: "Sorry, what was that?" } }));
+    expect(lines.at(-1)).toEqual({ text: "Sorry, what was that?", provenance: "english" });
+  });
+});

@@ -39,6 +39,8 @@ export interface GovernedWord {
 export interface GateContext {
   /** The scene's closed word list. Vouching is against this, not the dictionary. */
   readonly lexicon: Lexicon;
+  /** Every form of the course's question words, which stand in for a governed complement. */
+  readonly questionWords?: ReadonlySet<string>;
   /** Forms of the pronoun this scene's register forbids. */
   readonly wrongRegister: ReadonlySet<string>;
   /** The governed words the scene can see. */
@@ -130,8 +132,28 @@ export function governmentSuspect(tokens: readonly string[], context: GateContex
   const word = context.governed.find((g) => lower.some((t) => g.forms.has(t)));
   if (!word) return false;
 
-  const nominals = lower.filter((t) => context.caseOf.has(t) && !word.forms.has(t));
-  if (nominals.length === 0) return false;
+  /*
+    A QUESTION WORD IS THE COMPLEMENT. `Kust sa tuled?` holds a governed verb
+    and one nominal, the subject, and the case the verb governs is carried by
+    `kust`; a check that wanted a noun in the elative beside it withheld the
+    sentence a lexicographer recorded for `kuhu`, and every short question a
+    friend on the phone asks. The question words are the course's own
+    (`kusisonad`), handed in by the caller.
+  */
+  const questions = context.questionWords;
+  if (questions && lower.some((t) => questions.has(t))) return false;
 
-  return !nominals.some((t) => [...(context.caseOf.get(t) ?? [])].some((c) => word.cases.has(c)));
+  /*
+    AND A SUBJECT IS NOT A COMPLEMENT. The check was written to catch a noun in
+    the wrong case after a verb, and it was firing on `See aeg ei sobi enam`,
+    where the only nominals are the subject in the nominative and the verb's
+    complement is simply not said. A nominal that can be read as a nominative
+    is left out of the count, so the check asks its own question: is there a
+    noun here in an oblique case the verb does not govern.
+  */
+  const nominals = lower.filter((t) => context.caseOf.has(t) && !word.forms.has(t));
+  const governed = nominals.some((t) => [...(context.caseOf.get(t) ?? [])].some((c) => word.cases.has(c)));
+  if (governed) return false;
+  const oblique = nominals.filter((t) => !context.caseOf.get(t)?.has("NOMINATIVE"));
+  return oblique.length > 0;
 }

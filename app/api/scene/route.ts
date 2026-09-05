@@ -9,7 +9,7 @@ import { MAX_TURNS, MAX_TURN_CHARS, readDraw, replay, sceneContext } from "@/lib
 import { sceneById } from "@/lib/scenes/catalogue";
 import { sceneLine, type SpokenLine } from "@/lib/scenes/line";
 import { datumLine, replyFor, stageFor, wantsFreshLine } from "@/lib/scenes/reply";
-import { currentBeat, hurdleBeat, isOver } from "@/lib/scenes/state";
+import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "@/lib/scenes/state";
 import { personaById, type PersonaSpec } from "@/lib/scenes/personas";
 import { DEFAULT_VOICE } from "@/lib/audio/voice";
 import { MAX_WORDS } from "@/lib/scenes/retrieval";
@@ -172,7 +172,9 @@ export async function POST(request: Request) {
   */
   const reply = (line: SpokenLine | null) => replyFor({
     beat: current,
-    hurdle: standing ? { beat: standing, line: standing === spokenFor ? line : null } : null,
+    hurdle: standing
+      ? { beat: standing, line: standing === spokenFor ? line : null, said: hurdleSpec(state)?.said }
+      : null,
     answered: turns.length > 0 ? answered : null,
     response: turns.length > 0 ? response : null,
     reading: progress.reading,

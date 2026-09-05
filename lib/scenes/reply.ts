@@ -65,7 +65,12 @@ export interface ReplyInput {
    * instead of the beat's move, and the learner's goal on screen is its way
    * out. Null where nothing is in the way.
    */
-  readonly hurdle: { readonly beat: BeatSpec; readonly line: SpokenLine | null } | null;
+  readonly hurdle: {
+    readonly beat: BeatSpec;
+    readonly line: SpokenLine | null;
+    /** The curveball's own English line, where it is one (they switched to English). */
+    readonly said?: string;
+  } | null;
   /** How many beats have been met, which is what rotates the acknowledgement. */
   readonly met: number;
   /**
@@ -166,6 +171,7 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   */
   if (input.hurdle) {
     if (sayAgainWanted(response, heard)) out.push({ text: heard!, provenance: "again" });
+    else if (input.hurdle.said) out.push({ text: input.hurdle.said, provenance: "english" });
     else if (input.hurdle.line && input.hurdle.line.provenance !== "fallback") out.push(input.hurdle.line);
     else out.push(stage(stageFor(input.hurdle.beat, card)));
     if (response === "english" && input.translates) out.push(stage(stageFor(input.hurdle.beat, card)));

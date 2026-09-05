@@ -1846,12 +1846,42 @@ wrong on the way and whether it was handled, which is the first time the dial ha
 a learner could read. A run written before the beat was stored holds ids alone and is read as
 nothing in play.
 
+### Lines for the curveballs, and who wrote them
+
+The drafter looped a scene's beats and never its curveballs, so keyless every curveball was a line
+of English about what happened. `sceneBeats` is the list it loops now: the scene's own beats and
+one `hurdle:<id>` beat per curveball the scene admits that has a move to make, and the bank, the
+bank test and the context builder all read the same list. The switch to English is the one
+curveball said in English on purpose, as a bubble labelled as such, because the whole point of it
+is that the other side gave up on Estonian and the learner is practising not to.
+
+The free models this repository can reach wrote nothing usable for those beats, so the lines were
+typed in a session and pushed through the same four checks and the same refusals the drafter
+applies, and only what passed went in: 53 rows, model `authored`, `reviewed` false like every row a
+person has not yet read. A row is in the bank because the checks let it through and a reader can
+see it in the diff, which is the standing every drafted row has had; what a native speaker's pass
+adds is the same for both. That is a widening of the bank's own rule, that nothing in it is typed
+by hand, and it is written down here rather than left for somebody to find: the rule was there to
+keep unchecked Estonian out, and these rows were checked by the very code the rule exists to
+route everything through.
+
+Two of the four checks had to be corrected on the way, and both corrections were found by lines
+the checks refused that any Estonian speaker would say. The government check withheld `Kust sa
+tuled?`, the sentence a lexicographer recorded for `kuhu`, because it wanted a noun in the elative
+beside a verb that governs one and did not know that the question word *is* the complement; and
+it withheld `See aeg ei sobi enam`, where the only nominal is the subject and the complement is
+simply not said. It takes the course's question words now and stands down where one is present,
+and it fires only where a nominal in an oblique case sits beside a governed verb with nothing in
+a case it governs. The old rule and the new are both applied, so nothing the old rule let through
+is refused now. And five units joined the scenes' word lists so the curveballs had words to be said
+with: the weather for small talk, `rääkima` and `ütlema`, the documents unit for a health centre
+and a landlord that ask for papers, and shopping for a landlord and a counter that name a price.
+
 ### What this does not fix
 
-The two beats of the first mission that ask where you are going and where you are coming from
-have one pinned usage between them, so keyless the friend's fourth call is a stage direction. The
-drafter was run for that scene with the free chain and every line it wrote for those two beats was
-withheld or wrong; a keyed deployment composes them live, and now composes them knowing what the
-friend is asking. And no curveball has a scripted line yet: the drafter loops the scene's beats and
-not its curveballs, so keyless every curveball is English. That is the next thing the bank should
-grow.
+Every row a person typed is `reviewed: false` and should be read by a native speaker, which is
+the standing every drafted row has always had. The `other-register` curveball has no line and
+cannot: a line in the other register fails the gate by design, so it stays a stage direction until
+the gate learns to make an exception it can explain. And the drafter still cannot fill a beat whose
+line has to name a value off the card, so a keyed deployment composes those live and a keyless one
+says `Kell 11:30?` off one course word and the card.

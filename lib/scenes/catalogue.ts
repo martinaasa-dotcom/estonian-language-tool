@@ -51,6 +51,13 @@ import type { SceneSpec } from "./types";
 const COMMON = [
   "tervitused", "kusisonad", "asesonad", "aeg", "arvud", "korraldused", "pohiverbid",
   "sidesonad", "vastused", "maaramine", "millal", "kohasonad", "kus-ja-kuhu",
+  /*
+    Two more once the curveballs were played rather than drawn. `ilm` is the
+    weather, which is what small talk is about in every scene; `iga-paev`
+    carries `rääkima` and `ütlema`, which is how anybody asks somebody to
+    speak slower or says what they heard. Both A1.
+  */
+  "ilm", "iga-paev",
 ] as const;
 
 /**
@@ -116,7 +123,7 @@ const DOCTOR: SceneSpec = {
     this has been going on, which is a past tense. `omadussonad` because saying
     what is wrong with you is a sentence with an adjective in it.
   */
-  units: [...COMMON, "keha-ja-tervis", "inimesed", "plaanid", "minevik", "omadussonad"],
+  units: [...COMMON, "keha-ja-tervis", "inimesed", "plaanid", "minevik", "omadussonad", "linn-ja-teenused"],
   register: "teie",
   /*
     THE LEARNER NEVER PLAYS THEMSELVES (§3), and at a health centre that is a
@@ -262,7 +269,7 @@ const LANDLORD: SceneSpec = {
     the beat that agrees a time and `minevik` for the one that says since when,
     the same two the health centre needs, and `omadussonad` for the same reason.
   */
-  units: [...COMMON, "eluase", "kodu", "kodutood", "plaanid", "minevik", "omadussonad"],
+  units: [...COMMON, "eluase", "kodu", "kodutood", "plaanid", "minevik", "omadussonad", "linn-ja-teenused", "ostmine"],
   register: "teie",
   role: "You rent a flat. Something in it stopped working earlier this week and you are ringing the person you rent from.",
   props: [
@@ -402,7 +409,7 @@ const COUNTER: SceneSpec = {
     `minevik`: nothing at this counter happened in the past, which is what says
     these three are declared per scene rather than added to `COMMON`.
   */
-  units: [...COMMON, "linn-ja-teenused", "suhtlemine", "plaanid", "omadussonad"],
+  units: [...COMMON, "linn-ja-teenused", "suhtlemine", "plaanid", "omadussonad", "inimesed", "minevik", "ostmine"],
   register: "teie",
   role: "You have a form to hand in. You were given a reference for it and you are at the desk that takes them.",
   props: [
@@ -543,7 +550,7 @@ const SHOP: SceneSpec = {
   place: "Your kitchen, then the corner shop, with a friend on the phone",
   level: "A1",
   tests: "ostmine",
-  units: [...COMMON, "ostmine", "sook-ja-jook", "pohiverbid", "iga-paev", "kus-ja-kuhu"],
+  units: [...COMMON, "ostmine", "sook-ja-jook", "pohiverbid", "kodu", "kus-ja-kuhu", "omadussonad"],
   register: "sina",
   role: "You are at home and there is no milk. You are going to the corner shop for some, and a friend keeps ringing to ask where you have got to.",
   props: [],

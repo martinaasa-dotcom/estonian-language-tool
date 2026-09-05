@@ -1,4 +1,6 @@
 import { BANK } from "./bank";
+import { curveballById } from "./curveballs";
+import { hurdleBeat } from "./state";
 import type { BeatSpec, SceneSpec } from "./types";
 
 /**
@@ -81,4 +83,26 @@ export function scriptedFor(scene: SceneSpec, beat: BeatSpec): readonly string[]
 /** Whether a native speaker has read a given line. */
 export function isReviewed(text: string): boolean {
   return BANK.some((row) => row.text === text && row.reviewed);
+}
+
+/**
+ * Every beat a scene can carry a line for: its own, and one per curveball it
+ * admits that has a move to make. A curveball's beat is `hurdle:<id>`, which
+ * is what `raiseHurdle` asks the ladder for, so a line drafted for it here is
+ * the line the other side says when it happens. The drafter, the bank test
+ * and the context builder all read this rather than `scene.beats`, or the
+ * curveballs would be the one part of a conversation nobody could write for.
+ */
+export function sceneBeats(scene: SceneSpec): BeatSpec[] {
+  const hurdles = scene.curveballs.flatMap((id) => {
+    const spec = curveballById(id);
+    if (!spec || !spec.move) return [];
+    const beat = hurdleBeat({ id, beat: 0, tries: 0 });
+    return beat ? [beat] : [];
+  });
+  return [...scene.beats, ...hurdles];
+}
+
+export function beatById(scene: SceneSpec, id: string): BeatSpec | undefined {
+  return sceneBeats(scene).find((beat) => beat.id === id);
 }

@@ -41,7 +41,7 @@ import { SceneDebrief, type Debrief } from "./SceneDebrief";
  * debrief handles it without a word of reproach.
  */
 
-type Provenance = "attested" | "scripted" | "composed" | "fallback" | "again" | "unspoken";
+type Provenance = "attested" | "scripted" | "composed" | "fallback" | "again" | "english" | "unspoken";
 
 interface Line {
   readonly text: string;
@@ -85,8 +85,10 @@ const DIFFICULTIES: { id: Difficulty; label: string; blurb: string }[] = [
   { id: "bad", label: "Hard", blurb: "As bad as a Tuesday at a busy desk." },
 ];
 
-/** Whether a line is Estonian the other side said, as opposed to a stage direction. */
-const spokenEstonian = (line: Line) => line.provenance !== "unspoken";
+/** Whether a line is Estonian the other side said, as opposed to a stage direction or their English. */
+const spokenEstonian = (line: Line) => line.provenance !== "unspoken" && line.provenance !== "english";
+/** Whether a line was said at all, in either language. */
+const spoken = (line: Line) => line.provenance !== "unspoken";
 
 /**
  * The line the learner is now answering: the other side's last move, which is
@@ -102,7 +104,7 @@ function moveIn(lines: readonly Line[]): string | null {
       question is over and repeating it would be repeating the wrong one,
       which is what happened when a stage direction stood between two beats.
     */
-    return spokenEstonian(line) ? line.text : "";
+    return spoken(line) ? line.text : "";
   }
   return null;
 }
@@ -441,9 +443,11 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
           ) : (
             <div key={index} className="flex flex-col items-start gap-1.5">
               {turn.lines.map((line, at) => (
-                spokenEstonian(line) ? (
+                spoken(line) ? (
                   <div key={at} className="max-w-full">
-                    <Card className="inline-block max-w-full"><p lang="et">{line.text}</p></Card>
+                    <Card className="inline-block max-w-full">
+                      <p lang={spokenEstonian(line) ? "et" : "en"}>{line.text}</p>
+                    </Card>
                     {/*
                       Where the line came from, in words rather than a chip
                       shouting in capitals under every bubble (ADR-025), and
@@ -452,7 +456,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                     */}
                     <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs" style={{ color: "var(--ink-3)" }}>
                       <span>{PROVENANCE[line.provenance]}</span>
-                      {line.provenance !== "again" && (
+                      {line.provenance !== "again" && spokenEstonian(line) && (
                         <SuggestFix
                           category="WRONG_CONTENT"
                           trigger={`Situations · ${scene.id} · ${line.text}`}
@@ -544,6 +548,7 @@ const PROVENANCE: Record<Provenance, string> = {
   composed: "Written for this turn",
   fallback: "They did not catch that",
   again: "Said again",
+  english: "They said it in English",
   /*
     The sixth is not a line they said, it is what they did, and the label has
     to say so or the sentence reads as Estonian rendered in English. It is

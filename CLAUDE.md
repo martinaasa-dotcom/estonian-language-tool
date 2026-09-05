@@ -3790,8 +3790,13 @@ a model drafted the landlord asking the tenant when they planned to do the repai
 rows left the bank. And the curveballs are played: `raiseHurdle` stands one in front of its beat
 when the conversation reaches it, the learner's turns are read against the curveball's own needs
 until one lands or the other side lets it go, and the debrief says which. Before that the
-difficulty dial drew them, stored them and changed nothing. `docs/21-situations.md` §32 has the
-table and what it does not fix.
+difficulty dial drew them, stored them and changed nothing. The curveballs have lines in the bank
+too, under `hurdle:<id>` beats, and 53 of the rows there were typed in a session rather than
+drafted, because the free models wrote nothing usable: every one went through the same four checks
+and the same refusals the drafter applies, is marked `authored`, and is `reviewed: false` until a
+native speaker reads it. Two of the checks were corrected on the way, since the government check
+was refusing `Kust sa tuled?` and `See aeg ei sobi enam`, which are what people say.
+`docs/21-situations.md` §32 has the table and what it does not fix.
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among

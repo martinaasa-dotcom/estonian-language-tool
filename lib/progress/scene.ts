@@ -23,7 +23,7 @@ import { parseGovernment } from "@/lib/estonian/government";
 import { derivedVerbForms } from "@/lib/estonian/conjugate";
 import type { CaseKey } from "@/lib/estonian/types";
 import { FALLBACK_PHRASE, sceneById } from "@/lib/scenes/catalogue";
-import { scriptedFor } from "@/lib/scenes/scripted";
+import { sceneBeats, scriptedFor } from "@/lib/scenes/scripted";
 import type { GateContext, GovernedWord } from "@/lib/scenes/gate";
 import { buildLexicon, type DictEntry, type Lexicon } from "@/lib/scenes/lexicon";
 import { topicForms, type Line } from "@/lib/scenes/retrieval";
@@ -132,7 +132,7 @@ export async function sceneContext(sceneId: string): Promise<SceneContext | null
     marker,
     pool: poolsFor(scene, rows),
     topic: new Map(scene.beats.map((beat) => [beat.id, topicForms(beat, lexicon)])),
-    scripted: new Map(scene.beats.map((beat) => [beat.id, scriptedFor(scene, beat)])),
+    scripted: new Map(sceneBeats(scene).map((beat) => [beat.id, scriptedFor(scene, beat)])),
     hasFiniteVerb,
     fallback: rows.find((row) => row.lemma === FALLBACK_PHRASE)?.lemma ?? FALLBACK_PHRASE,
   };

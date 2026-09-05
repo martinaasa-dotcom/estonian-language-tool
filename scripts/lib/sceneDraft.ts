@@ -218,8 +218,15 @@ export function lacksFiniteVerb(text: string, beat: BeatSpec): boolean {
 }
 
 /** The gate's context for one scene, built from the shipped dictionary rather than a database. */
+const QUESTION_WORDS: ReadonlySet<string> = new Set(
+  (unitById("kusisonad")?.lemmas ?? []).flatMap((lemma) => {
+    const entry = POOL.find((e) => e.lemma === lemma);
+    return entry ? formsOf(entry) : [lemma];
+  }),
+);
+
 export function gateContext(lexicon: Lexicon, wrongRegister: ReadonlySet<string>): GateContext {
-  return { lexicon, wrongRegister, governed: GOVERNED, caseOf: CASE_OF };
+  return { lexicon, wrongRegister, governed: GOVERNED, caseOf: CASE_OF, questionWords: QUESTION_WORDS };
 }
 
 /**

@@ -50,6 +50,8 @@ export type Provenance =
   | "fallback"
   /** The line the learner already heard, said once more, because they did not answer it. */
   | "again"
+  /** Said in English on purpose: the other side switched, and the learner is practising not to. */
+  | "english"
   /**
    * Nothing could be built for a move the other side has to make, so what the
    * screen gets is a line of English saying what they did: the beat's own
