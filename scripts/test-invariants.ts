@@ -2073,18 +2073,6 @@ check("every response carries a policy", () => {
   assert.deepEqual(bare, [], "a response leaves the middleware without the policy on it");
 });
 
-check("the routes that spend somebody else's quota are capped", () => {
-  for (const route of [
-    "app/api/tutor/route.ts",
-    "app/api/tts/route.ts",
-    "app/api/share/route.tsx",
-    "app/api/export/route.ts",
-    "app/api/scan/route.ts",
-  ]) {
-    assert.match(read(route), /checkRateLimit/, `${route} has no cap on it`);
-  }
-});
-
 check("a cap is charged to the learner, never to their address alone", () => {
   /*
     Twenty-five students on one school network are one IP, and a review

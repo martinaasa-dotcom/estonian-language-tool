@@ -276,6 +276,16 @@ export async function workplaceRoster(
         repository keeps finding. The last review is here for the same reason:
         somebody who stopped thirteen months ago has a real last-seen date and
         the window would report them as never having reviewed at all.
+
+        IT NARROWS THAT GAP RATHER THAN CLOSING IT, WHICH IS WORTH SAYING.
+        `evidenceFrom` reads two things, the count and how many skills have been
+        measured, and the second is built from the windowed reviews above. So
+        somebody whose whole history is older than the window still lands on
+        "thin" here whatever their lifetime count, and their own hub may say
+        more. That is the honest answer rather than a fault to route around: a
+        band is a claim about what somebody can do now, and there is nothing
+        recent to make it out of. What the all-time count buys is that an
+        ordinary gap of a few weeks does not knock somebody down a tier.
       */
       prisma.review.groupBy({
         by: ["ownerId"],
