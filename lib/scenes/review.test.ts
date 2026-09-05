@@ -65,10 +65,37 @@ describe("the review of a conversation", () => {
     expect(review.notes[1]?.id).toBe("case:ELATIVE");
   });
 
+  /*
+    The thing a teacher standing beside you says, marked as the guess it is.
+    Derived from the transcript rather than invented: the case they reached
+    for is recorded at marking time and the case the question before wanted
+    is in the turn order.
+  */
+  it("guesses why, off the case they reached for", () => {
+    const slip: Slip = { ...CASE_SLIP, said: "peal", reached: "ADESSIVE" };
+    const note = reviewOf(SCENE, state([turn({ slips: [slip] })])).notes[0];
+    expect(note?.hunch?.sure).toBe("likely");
+    expect(note?.hunch?.says).toContain("kus?");
+  });
+
+  it("reads the case the question before wanted as the likeliest reason", () => {
+    const first: Slip = { kind: "case", said: "peast", form: "peas", lemma: "pea", grammCase: "ELATIVE" };
+    const second: Slip = { ...CASE_SLIP, said: "peast", reached: "ELATIVE" };
+    const review = reviewOf(SCENE, state([turn({ slips: [first] }), turn({ slips: [second] })]));
+    const note = review.notes.find((n) => n.id === "case:INESSIVE");
+    expect(note?.hunch?.says).toContain("the question before");
+  });
+
+  it("guesses nothing where the spelling names no case", () => {
+    const note = reviewOf(SCENE, state([turn({ slips: [CASE_SLIP] })])).notes[0];
+    expect(note?.hunch).toBeUndefined();
+  });
+
   it("states the one rule that gets five forms for the price of one", () => {
     const slip: Slip = { kind: "person", said: "tulema", form: "tulen", lemma: "tulema" };
     const note = reviewOf(SCENE, state([turn({ slips: [slip] })])).notes.find((n) => n.id === "person");
     expect(note?.body).toContain("first");
+    expect(note?.hunch?.says).toContain("dictionary lists a verb");
     expect(note?.evidence).toEqual([{ said: "tulema", form: "tulen" }]);
   });
 
@@ -101,6 +128,16 @@ describe("the review of a conversation", () => {
     for (const note of review.notes) {
       expect(note.body, note.id).not.toMatch(/[õäöüšž]/i);
     }
+  });
+
+  /*
+    A hunch names cases, and the names are Estonian read off `CASES` rather
+    than typed. What it may never do is state a guess as a finding.
+  */
+  it("marks a hunch as a guess and never as a finding", () => {
+    const slip: Slip = { ...CASE_SLIP, said: "peal", reached: "ADESSIVE" };
+    const note = reviewOf(SCENE, state([turn({ slips: [slip] })])).notes[0];
+    expect(["likely", "possible"]).toContain(note?.hunch?.sure);
   });
 
   it("says something kind and true about a run where nothing was said", () => {

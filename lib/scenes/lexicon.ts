@@ -29,6 +29,8 @@ import { buildCaseTable, stemsFrom } from "@/lib/estonian/derive";
 import { derivedVerbForms, type DerivedVerbCode } from "@/lib/estonian/conjugate";
 import { ESTONIAN_WORD } from "@/lib/estonian/cloze";
 import { fold } from "@/lib/estonian/fold";
+import { CASES } from "@/lib/estonian/cases";
+import type { CaseKey } from "@/lib/estonian/types";
 
 /** One dictionary entry, as this module needs to see it. */
 export interface DictEntry {
@@ -160,6 +162,27 @@ export interface Lexicon {
    * rule does not reach, and then the slip is understood and not recast.
    */
   readonly persons: ReadonlyMap<string, ReadonlyMap<DerivedVerbCode, string>>;
+}
+
+/**
+ * WHICH CASE A LEARNER REACHED FOR, WHERE EXACTLY ONE CASE SPELLS IT THAT WAY.
+ *
+ * `whichCase` over the whole dictionary and this over one scene's own table
+ * are the same rule, and it is deliberately the strict one: `tuba` is its own
+ * nimetav and its own osastav, so naming either would be a guess, while
+ * `toale` is only ever the alaleütlev and naming it is the whole of what the
+ * review can say about why the wrong ending came out. A spelling more than
+ * one case claims is answered with null and the review says less.
+ */
+export function caseOfForm(lexicon: Lexicon, lemma: string, form: string): CaseKey | null {
+  const said = form.toLowerCase();
+  let found: CaseKey | null = null;
+  for (const spec of CASES) {
+    if (!lexicon.byCase.get(caseKeyFor(lemma, spec.key))?.has(said)) continue;
+    if (found) return null;
+    found = spec.key;
+  }
+  return found;
 }
 
 /** The key `byCase` is read with. One place, so a caller cannot spell it wrong. */

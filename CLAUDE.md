@@ -4285,6 +4285,22 @@ which is `lib/estonian/grammar.ts`'s standing pointed at a conversation and asse
 and it **never marks**: a count of things achieved is the debrief's and a claim about somebody's
 Estonian is the mock exam's alone. `docs/21-situations.md` §37.
 
+**And why the wrong ending came out is a guess that says it is one.** The review could name the case
+and not the reason, which is the next thing a teacher says. Half of it is derivable: `caseOfForm`
+names the case the learner reached for under `whichCase`'s strict rule, exactly one or nothing, and
+`lib/scenes/diagnose.ts` reads three reasons off the run. Carried over from the last question, which
+leads because it is a fact about this conversation and the one somebody recognises about themselves;
+the pair that answers one question word, read off `CASES` with what each means off `CASE_NOTES`; the
+plain word, so the word arrived and the ending did not; and the stem, which is `possible` where the
+others are `likely`. **A hunch carries how sure it is** and both tiers are worded as guesses, because
+a wrong confident diagnosis teaches a learner a reason for a mistake they did not make in a voice
+they cannot argue with. One at most, none where nothing fits, and no Estonian typed: it deliberately
+does not read the inside and outside trios, since `place.ts` owns which set a *word* takes and a
+second reader is a second rule, which the invariant caught in the first draft. **The confusion
+reaches the shared log**: `SceneGrade.reachedCase` travels to `gradeCard`'s `reachedSlot`, so the
+pair somebody mixes up at a counter is counted beside the pair they mix up on a card, which is the
+whole argument for a conversation writing to the log at all. `docs/21-situations.md` §38.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5407,7 +5423,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.

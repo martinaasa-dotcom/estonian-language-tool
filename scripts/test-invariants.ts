@@ -11167,6 +11167,42 @@ check("a scene reviews itself in English, and the review teaches nothing it made
   */
   assert.doesNotMatch(review, /percent|%`|toFixed/, "lib/scenes/review.ts is scoring a conversation");
 
+  /*
+    AND WHY IT HAPPENED IS A GUESS THAT SAYS SO. Three of the reasons a
+    learner reaches for the wrong case leave evidence in the run, and the
+    honest thing to do with evidence that is strong and not conclusive is to
+    print it marked rather than to say nothing. A hunch that lost its tier
+    would be this app telling somebody the reason for a mistake they did not
+    make, in a voice they have no way to argue with.
+  */
+  const diagnose = code("lib/scenes/diagnose.ts");
+  assert.match(diagnose, /export function diagnose\(/, "lib/scenes/diagnose.ts lost diagnose");
+  assert.match(
+    diagnose, /sure: "likely" \| "possible"/,
+    "a hunch no longer carries how sure it is, so a guess reads as a finding",
+  );
+  assert.match(
+    diagnose, /asked\.asksWhere === due\.asksWhere/,
+    "the pair that answers one question word is no longer read off CASES, so it is a list somebody typed",
+  );
+  assert.doesNotMatch(
+    diagnose, /[\u00f5\u00e4\u00f6\u00fc\u0161\u017e]/i,
+    "lib/scenes/diagnose.ts is writing Estonian. The case names are read off CASES (ADR-005).",
+  );
+  assert.match(
+    code("components/scene/SceneDebrief.tsx"), /note\.hunch\.sure === "likely" \? "Most likely"/,
+    "the debrief prints a hunch without saying it is one",
+  );
+  /*
+    And the pair somebody mixes up at a counter is counted beside the pair
+    they mix up on a card, which is the argument for a scene writing to the
+    shared log at all.
+  */
+  assert.match(
+    code("app/actions.ts"), /grade\.grammCase \?\? undefined, grade\.reachedCase \?\? undefined/,
+    "a scene's grades no longer carry the case that came back instead, so the confusion is lost",
+  );
+
   const debrief = code("components/scene/SceneDebrief.tsx");
   assert.match(debrief, /review\.lead/, "the debrief no longer prints the review's lead");
   assert.match(debrief, /review\.notes\.map/, "the debrief no longer prints the review's notes");

@@ -29,7 +29,7 @@ import { looksLikeSentence } from "@/lib/estonian/writing";
 import { fold } from "@/lib/estonian/fold";
 import type { CaseKey } from "@/lib/estonian/types";
 import { words, type Lexicon } from "./lexicon";
-import { caseKeyFor } from "./lexicon";
+import { caseKeyFor, caseOfForm } from "./lexicon";
 import { foldedOnly, nearlyInflected, nearlySpelled, personAsked } from "./nearly";
 import type { BeatSpec, Requirement } from "./types";
 
@@ -80,7 +80,16 @@ export interface Slip {
   readonly said: string;
   readonly form: string | null;
   readonly lemma: string;
+  /** The case the beat wanted, on a case slip. */
   readonly grammCase?: CaseKey;
+  /**
+   * The case the learner actually reached for, where exactly one case of
+   * this word is spelled that way (`caseOfForm`). Absent where the spelling
+   * is shared, or invented, and then the review says which case was wanted
+   * and nothing about why. It is what `diagnose` reads, and what the review
+   * log files as the confusion it is.
+   */
+  readonly reached?: CaseKey;
 }
 
 /**
@@ -453,13 +462,17 @@ function satisfies(
         where the learner needs one about the case.
       */
       const otherForm = exact(forms);
-      const cased = (said: string) => ({
-        word: said,
-        slip: {
-          kind: "case" as const, said, form: context.lexicon.caseForm.get(key) ?? null,
-          lemma: need.lemma, grammCase: need.grammCase,
-        },
-      });
+      const cased = (said: string) => {
+        const reached = caseOfForm(context.lexicon, need.lemma, said);
+        return {
+          word: said,
+          slip: {
+            kind: "case" as const, said, form: context.lexicon.caseForm.get(key) ?? null,
+            lemma: need.lemma, grammCase: need.grammCase,
+            ...(reached && reached !== need.grammCase ? { reached } : {}),
+          },
+        };
+      };
       if (otherForm) return cased(otherForm);
       const near = folded(accepted);
       if (near) {
@@ -494,13 +507,17 @@ function satisfies(
       for (const lemma of lemmas) {
         const key = caseKeyFor(lemma, need.grammCase!);
         const forms = context.lexicon.byLemma.get(lemma);
-        const cased = (said: string) => ({
-          word: said,
-          slip: {
-            kind: "case" as const, said, form: context.lexicon.caseForm.get(key) ?? null,
-            lemma, grammCase: need.grammCase!,
-          },
-        });
+        const cased = (said: string) => {
+          const reached = caseOfForm(context.lexicon, lemma, said);
+          return {
+            word: said,
+            slip: {
+              kind: "case" as const, said, form: context.lexicon.caseForm.get(key) ?? null,
+              lemma, grammCase: need.grammCase!,
+              ...(reached && reached !== need.grammCase ? { reached } : {}),
+            },
+          };
+        };
         const inCase = exact(context.lexicon.byCase.get(key));
         if (inCase) return { word: inCase };
         // A real form of the word before a slip of the pen, for the reason the `case` branch gives.

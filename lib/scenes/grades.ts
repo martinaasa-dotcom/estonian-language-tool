@@ -39,6 +39,14 @@ export interface SceneGrade {
   readonly lemma: string;
   /** Set where the beat asked for a case, so the weak-case charts see it. */
   readonly grammCase: CaseKey | null;
+  /**
+   * The case that came back instead, where exactly one case spells it that
+   * way. `Review.reachedSlot` is the column it lands in, so the pair somebody
+   * mixes up at a counter is counted beside the pair they mix up on a card
+   * (`lib/stats/confusions.ts`), which is the whole argument for a scene
+   * writing to the shared log at all.
+   */
+  readonly reachedCase: CaseKey | null;
   /** 1 Again, 2 Hard, 3 Good. Never 4. */
   readonly rating: 1 | 2 | 3;
   /** Which beat earned it, so the debrief can say where. */
@@ -83,17 +91,24 @@ export function gradesFor(scene: SceneSpec, state: SceneState): SceneGrade[] {
         `datum` and `any` are all things a learner did and none of them is a
         word they hold a card for, so there is nothing to schedule.
       */
+      const reachedCase = turns
+        .flatMap((turn) => turn.slips ?? [])
+        .find((slip) => slip.kind === "case" && slip.grammCase && slip.reached)?.reached ?? null;
+
       if (need.kind === "lemma") {
         // One requirement, one row: `oneOf` is a choice and the turn does not
         // say which was taken, so a row per candidate would credit words
         // nobody used. The first is the beat's own head word.
         const lemma = need.oneOf[0];
         if (lemma && turns.some((turn) => turn.met[index])) {
-          out.push({ lemma, grammCase: null, rating, beatId: beat.id });
+          out.push({ lemma, grammCase: null, reachedCase: null, rating, beatId: beat.id });
         }
       }
       if (need.kind === "case" && turns.some((turn) => turn.met[index])) {
-        out.push({ lemma: need.lemma, grammCase: need.grammCase, rating, beatId: beat.id });
+        out.push({
+          lemma: need.lemma, grammCase: need.grammCase, rating, beatId: beat.id,
+          reachedCase: reachedCase === need.grammCase ? null : reachedCase,
+        });
       }
     }
   }

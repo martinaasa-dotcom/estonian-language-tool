@@ -2240,3 +2240,66 @@ What it does not do: it cannot say why a learner reached for the case they reach
 the thing a teacher standing there would say. Every note is derived from a row in the transcript,
 so a clean run produces the one note that says so, and nothing here is ever invented about
 somebody's Estonian.
+
+
+## 38. The ninth pass: why the wrong ending came out, said as a guess
+
+§37 left one thing flagged: the review can say which case was wanted and what that case is for, and
+not *why you reached for the one you did*, which is the next thing a teacher standing beside you
+says. That was written down as not derivable from a transcript. It is half derivable, and the honest
+thing to do with evidence that is strong and not conclusive is to print it marked rather than to say
+nothing.
+
+**The case they reached for is recoverable, under the rule `whichCase` already uses.** A slip
+carries `said`, and `caseOfForm` asks the scene's own case table which case of that word is spelled
+that way. Exactly one, or nothing: `toale` is only ever the alaleütlev and naming it teaches
+something, while `haigla` is its own nimetav, omastav and osastav and naming any of them would be a
+guess. Measured on the shipped scenes, the strict rule stays silent about a fifth of the slips,
+which is the right number to be silent about.
+
+**Three reasons leave evidence, and `lib/scenes/diagnose.ts` reads them in this order:**
+
+| Hunch | Evidence | Sure |
+|---|---|---|
+| carried over from the last question | the case they used is the one the beat before wanted, and the transcript has the order | likely |
+| the pair that answers one question word | `kus?` is answered by the seesütlev and the alalütlev, read off `CASES`, with what each means read off `CASE_NOTES` | likely |
+| the plain word | the case they used is the nimetav, so the word arrived and the ending did not | likely |
+| the stem | the case they used is the omastav or the osastav, the two every other ending is built on | possible |
+
+Carry-over leads because it is a fact about this conversation rather than a pattern about learners,
+and because it is the one somebody recognises about themselves. It is read **in turn order rather
+than keyed on the word**, which is how it was written first and is wrong the moment a learner slips
+on the same spelling twice: the reading is about the moment it happened, and two turns are two
+moments.
+
+**A hunch carries how sure it is, in two tiers, and both are worded as guesses.** That is the device
+the readiness rungs and the exam confidence already use, which is that a claim carries its evidence
+rather than being caveated in prose somewhere else on the page. `likely` prints as "Most likely" and
+`possible` as "It may be". A number would be arithmetic nobody performed. The guard that matters is
+that a wrong confident diagnosis is worse than none: it teaches a learner a reason for a mistake
+they did not make, in a voice they have no way to argue with, so the tier is asserted and the copy
+never says "you forgot" or "you confused".
+
+**One hunch at most, and none where nothing fits.** Two guesses side by side is a screen admitting it
+does not know, which is what silence is for. `diagnose` holds no Estonian: the case names come off
+`CASES` and the meanings off `CASE_NOTES`, and it deliberately does **not** import the inside and
+outside trios from `place.ts`, because that module owns which set a *word* takes and a second reader
+of it would be a second rule about that, which this app has been wrong about in eight places before.
+The invariant that forbids the second reader is what caught the first draft.
+
+**And the confusion reaches the shared log.** `SceneGrade.reachedCase` travels to `gradeCard`'s
+`reachedSlot`, which is checked against the closed list rather than trusted, so the pair somebody
+mixes up at a counter is counted in `lib/stats/confusions.ts` beside the pair they mix up on a card.
+That is the whole argument for a conversation writing to the review log at all, and until now the
+scene was the one round that could see a confusion and not report it.
+
+Worked example, off the shop scene played as a sloppy learner:
+
+> **seesütlev · kelles? milles? kus?** This came out as another form. It is the ending for *in*.
+> *Most likely:* That is the word as the dictionary lists it, so the word had arrived and the ending
+> had not. It is the right half to have first.
+> `pood` is said `poes`
+
+What it still cannot do: say why somebody reached for a case that is neither the plain word, nor the
+stem, nor the last question's, nor the other half of a question-word pair. That is most of the
+remaining silence, and it is the right silence: the alternative is a screen inventing a reason.

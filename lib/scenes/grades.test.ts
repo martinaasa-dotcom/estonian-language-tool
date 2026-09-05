@@ -50,7 +50,7 @@ describe("what a conversation writes into the review log", () => {
   it("grades a word the beat asked for, Good on the first attempt", () => {
     const grades = gradesFor(SCENE, play([{ reading: "complete", met: [true] }]));
     expect(grades).toEqual([
-      { lemma: "valu", grammCase: null, rating: 3, beatId: "reason" },
+      { lemma: "valu", grammCase: null, reachedCase: null, rating: 3, beatId: "reason" },
     ]);
   });
 
@@ -101,8 +101,27 @@ describe("what a conversation writes into the review log", () => {
     ({ state } = advance(SCENE, state, evidence("complete", [true]), "x"));
     const grades = gradesFor(SCENE, state);
     expect(grades).toContainEqual({
-      lemma: "pea", grammCase: "INESSIVE", rating: 3, beatId: "where",
+      lemma: "pea", grammCase: "INESSIVE", reachedCase: null, rating: 3, beatId: "where",
     });
+  });
+
+  /*
+    And the case that came back instead travels with it, so the pair somebody
+    mixes up at a counter is counted beside the pair they mix up on a card.
+  */
+  it("carries the case that came back instead, where exactly one case spells it", () => {
+    const slip = { kind: "case" as const, said: "peast", form: "peas", lemma: "pea", grammCase: "INESSIVE" as const, reached: "ELATIVE" as const };
+    let state = startScene(SCENE);
+    ({ state } = advance(SCENE, state, evidence("complete", [true]), "x"));
+    ({ state } = advance(SCENE, state, evidence("complete", [true], [slip]), "x"));
+    const grades = gradesFor(SCENE, state);
+    expect(grades.find((g) => g.lemma === "pea")?.reachedCase).toBe("ELATIVE");
+    // Never the case that was asked for: that is a right answer wearing a confusion's clothes.
+    const same = { ...slip, reached: "INESSIVE" as const };
+    let other = startScene(SCENE);
+    ({ state: other } = advance(SCENE, other, evidence("complete", [true]), "x"));
+    ({ state: other } = advance(SCENE, other, evidence("complete", [true], [same]), "x"));
+    expect(gradesFor(SCENE, other).find((g) => g.lemma === "pea")?.reachedCase).toBeNull();
   });
 
   it("writes nothing for a beat that asked for no word", () => {

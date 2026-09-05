@@ -154,6 +154,21 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
               <li key={note.id}>
                 <p className="text-sm font-medium">{note.heading}</p>
                 <p className="text-sm" style={{ color: "var(--ink-2)" }}>{note.body}</p>
+                {/*
+                  Why it most likely happened, marked as the guess it is.
+                  Quieter than the note it sits under, and worded as a guess
+                  in both tiers, because a wrong confident diagnosis teaches
+                  a learner a reason for a mistake they did not make and they
+                  have no way to tell (`lib/scenes/diagnose.ts`).
+                */}
+                {note.hunch && (
+                  <p className="mt-1 text-sm" style={{ color: "var(--ink-3)" }}>
+                    <span className="font-medium">
+                      {note.hunch.sure === "likely" ? "Most likely" : "It may be"}:
+                    </span>{" "}
+                    {note.hunch.says}
+                  </p>
+                )}
                 {note.evidence.length > 0 && (
                   <ul className="mt-1 flex flex-col gap-0.5 text-sm">
                     {note.evidence.map((one) => (

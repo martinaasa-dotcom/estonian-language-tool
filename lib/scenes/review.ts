@@ -32,6 +32,7 @@ import { caseByKey } from "@/lib/estonian/cases";
 import { CASE_NOTES } from "@/lib/estonian/grammar";
 import type { CaseKey } from "@/lib/estonian/types";
 import type { SceneState } from "./state";
+import { diagnose, diagnosePerson, type Hunch } from "./diagnose";
 import type { Slip } from "./turn";
 import type { SceneSpec } from "./types";
 
@@ -48,6 +49,13 @@ export interface ReviewNote {
    * this module's.
    */
   readonly evidence: readonly { readonly said: string; readonly form: string | null }[];
+  /**
+   * Why it most likely happened, where the run carries enough to guess and
+   * the guess is worth having (`lib/scenes/diagnose.ts`). Absent rather than
+   * padded: a screen that says "why" about everything is a screen nobody
+   * believes about anything.
+   */
+  readonly hunch?: Hunch;
 }
 
 export interface SceneReview {
@@ -79,7 +87,7 @@ export function reviewOf(scene: SceneSpec, state: SceneState): SceneReview {
   const slips = turns.flatMap((t) => t.slips ?? []);
 
   const notes = [
-    ...caseNotes(slips),
+    ...caseNotes(slips, state),
     ...personNote(slips),
     ...formNote(slips),
     ...spellingNote(slips),
@@ -115,11 +123,10 @@ function lead(turns: number, understood: number, slips: number, notes: number): 
  * the grammar reference prints for it and is therefore the same explanation
  * they will meet if they follow the link.
  */
-function caseNotes(slips: readonly Slip[]): ReviewNote[] {
-  const byCase = new Map<CaseKey, Slip[]>();
-  for (const slip of slips) {
-    if (slip.kind !== "case" || !slip.grammCase) continue;
-    byCase.set(slip.grammCase, [...(byCase.get(slip.grammCase) ?? []), slip]);
+function caseNotes(_slips: readonly Slip[], state: SceneState): ReviewNote[] {
+  const byCase = new Map<CaseKey, Slipped[]>();
+  for (const row of caseSlips(state)) {
+    byCase.set(row.slip.grammCase!, [...(byCase.get(row.slip.grammCase!) ?? []), row]);
   }
   return [...byCase.entries()]
     .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
@@ -137,9 +144,53 @@ function caseNotes(slips: readonly Slip[]): ReviewNote[] {
           note ? `It is the ending for ${note.plain}.` : "",
           note?.englishHook ?? note?.watchOut ?? "",
         ].filter(Boolean).join(" "),
-        evidence: rows.slice(0, EVIDENCE_SHOWN).map((s) => ({ said: s.said, form: s.form })),
+        evidence: rows.slice(0, EVIDENCE_SHOWN).map((r) => ({ said: r.slip.said, form: r.slip.form })),
+        ...hunchFor(key, rows),
       };
     });
+}
+
+/** One case slip, with the case the question before it wanted. */
+interface Slipped {
+  readonly slip: Slip;
+  readonly before: CaseKey | null;
+}
+
+/**
+ * Every case slip in the order it happened, each carrying what the question
+ * before it wanted.
+ *
+ * **In turn order rather than keyed on the word**, which is the version this
+ * was written as first and is wrong the moment a learner slips on the same
+ * spelling twice: the carry-over reading is about the moment it happened,
+ * and two turns are two moments. A slip on the first turn has nothing before
+ * it and carries null, which `diagnose` reads as no evidence rather than
+ * as a no.
+ */
+function caseSlips(state: SceneState): Slipped[] {
+  const out: Slipped[] = [];
+  let previous: CaseKey | null = null;
+  for (const turn of state.turns) {
+    for (const slip of turn.slips ?? []) {
+      if (slip.kind === "case" && slip.grammCase) out.push({ slip, before: previous });
+    }
+    const asked = (turn.slips ?? []).find((s) => s.kind === "case")?.grammCase;
+    if (asked) previous = asked;
+  }
+  return out;
+}
+
+/**
+ * The hunch for a case, off the first slip that carries one. The first rather
+ * than the commonest, because a reason is about the moment it happened and
+ * the transcript has that moment.
+ */
+function hunchFor(wanted: CaseKey, rows: readonly Slipped[]): { hunch?: Hunch } {
+  for (const row of rows) {
+    const hunch = diagnose(wanted, row.slip.reached, { grammCase: row.before });
+    if (hunch) return { hunch };
+  }
+  return {};
 }
 
 /**
@@ -162,6 +213,7 @@ function personNote(slips: readonly Slip[]): ReviewNote[] {
       + "Estonian builds all six persons off the first: take the -n off it and add the ending for who is doing it. "
       + "It was clear either way, and it is the one rule that gets you five forms for the price of one.",
     evidence: rows.slice(0, EVIDENCE_SHOWN).map((s) => ({ said: s.said, form: s.form })),
+    hunch: diagnosePerson(),
   }];
 }
 

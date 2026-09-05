@@ -147,6 +147,7 @@ async function play(sceneId: string) {
       console.log(`   REVIEW: ${review.lead}`);
       for (const note of review.notes) {
         console.log(`     - ${note.heading}: ${note.body}`);
+        if (note.hunch) console.log(`       (${note.hunch.sure}) ${note.hunch.says}`);
         for (const one of note.evidence) console.log(`         ${one.said} > ${one.form ?? "(as it stood)"}`);
       }
       break;
