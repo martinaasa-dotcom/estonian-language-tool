@@ -782,7 +782,6 @@ export function LearnSession({
             </>
           ) : rung === "meet" ? (
             <>
-              <Button variant="primary" size="lg" onClick={met} disabled={busy}>Got it</Button>
               {/*
                 THE ONE BUTTON HERE THAT IS A CLAIM RATHER THAN AN ANSWER.
 
@@ -799,6 +798,10 @@ export function LearnSession({
               >
                 I already know this one
               </Button>
+              {/* The primary action sits on the right of the pair, where the
+                  sprint already puts "Got it" and where a thumb and a reading
+                  eye both end up. The claim is the quieter button beside it. */}
+              <Button variant="primary" size="lg" onClick={met} disabled={busy}>Got it</Button>
             </>
           ) : null}
         </div>
