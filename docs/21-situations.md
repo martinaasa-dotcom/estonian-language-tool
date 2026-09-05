@@ -1899,6 +1899,20 @@ Three more things, each driven in a browser before it was kept.
   on a per-run value, which took "Mis kell?" away from the ticket seller, and what actually cannot
   be drafted is a line that *names* the value, which the stage direction says with a slot.
 
+### Keyless coverage is asserted, and a person can add a line
+
+"All seven play keyless from the first line to the debrief" is a property now rather than a
+sentence in this file: `bank.test.ts` walks every beat of every scene, and every curveball a
+scene admits that has a move to make, and fails on one with no line that is not a phrase beat the
+dictionary answers or a beat said off the card. It found two beats this section had missed on its
+first run, the landlord refusing and the clerk pointing at the queue, which is the argument for it.
+`npm run check:lines lines.json` is how a person adds a line: a list of `[scene, beat, text]`
+goes through the four checks against the scene's own word list and the drafter's refusals, and
+the verdict names which words the scene cannot vouch for. A line that passes goes into the bank by
+hand as `authored`, and the suite checks it again on every run. The tile for each scene reads what
+it practises off its beats, in the words a class uses, and how the last run ended off the runs
+(ADR-014), so the list is a place somebody comes back to rather than a menu.
+
 ### What this does not fix
 
 Every row a person typed is `reviewed: false` and should be read by a native speaker, which is

@@ -888,3 +888,42 @@ export function readDraw(transcript: string): StoredDraw | null {
 export const MAX_TURNS = 60;
 export const MAX_TURN_CHARS = 300;
 const MAX_GAPS = 40;
+
+/** What a learner has made of each scene so far, for the tile that offers it. */
+export interface SceneHistory {
+  readonly plays: number;
+  /** The `says` of the last run's outcome, or null where it ended in nothing. */
+  readonly last: string | null;
+  readonly lastAt: Date | null;
+}
+
+/**
+ * Derived from the runs rather than counted (ADR-014): one read of the
+ * finished runs, newest first, folded into a count and a last outcome per
+ * scene. Ordered and cut, ending on `id`, because `endedAt` is not unique.
+ */
+export async function sceneHistoryFor(ownerId: string): Promise<ReadonlyMap<string, SceneHistory>> {
+  const rows = await prisma.sceneRun.findMany({
+    where: { ownerId, endedAt: { not: null } },
+    select: { sceneId: true, outcome: true, endedAt: true },
+    orderBy: [{ endedAt: "desc" }, { id: "desc" }],
+    take: 300,
+  });
+  const out = new Map<string, SceneHistory>();
+  for (const row of rows) {
+    const scene = sceneById(row.sceneId);
+    const had = out.get(row.sceneId);
+    if (had) { out.set(row.sceneId, { ...had, plays: had.plays + 1 }); continue; }
+    let last: string | null = null;
+    try {
+      const parsed = JSON.parse(row.outcome ?? "{}") as { outcome?: unknown };
+      if (typeof parsed.outcome === "string") {
+        last = scene?.outcomes.find((o) => o.id === parsed.outcome)?.says ?? null;
+      }
+    } catch {
+      last = null;
+    }
+    out.set(row.sceneId, { plays: 1, last, lastAt: row.endedAt });
+  }
+  return out;
+}

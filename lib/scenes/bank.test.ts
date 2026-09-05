@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BANK } from "./bank";
 import { SCENES, FALLBACK_PHRASE, sceneById } from "./catalogue";
+import { isPhrase } from "@/lib/dict/pos";
+import { POOL } from "../../scripts/lib/sceneDraft";
 import { passes, runGate } from "./gate";
 import { words } from "./lexicon";
 import { beatById, scriptable, scriptedFor, sceneBeats } from "./scripted";
@@ -103,5 +105,28 @@ describe("the scripted bank", () => {
     // And one that does not is scriptable, whether or not anything was drafted yet.
     const shop = sceneById("poodi-piima")!;
     expect(scriptable(shop, shop.beats[1]!)).toBe(true);
+  });
+
+  /*
+    EVERY SCENE PLAYS KEYLESS FROM THE FIRST LINE TO THE DEBRIEF, and this is
+    what makes that a property rather than a claim: every beat that can carry
+    a line has one, or is a phrase beat the dictionary answers, or names a
+    value off the card and is said by `datumLine`. Every curveball a scene
+    admits that has a move to make has a line for that scene. A scene added
+    without its lines fails here rather than greeting a learner in English.
+  */
+  it("holds a line for every beat and every curveball of every scene, so keyless is whole", () => {
+    const phrases = new Set(POOL.filter((e) => isPhrase(e.pos)).map((e) => e.lemma));
+    for (const scene of SCENES) {
+      for (const beat of sceneBeats(scene)) {
+        const phraseBeat = beat.topic.some((lemma) => phrases.has(lemma));
+        if (phraseBeat || beat.says) continue;
+        if (!scriptable(scene, beat)) continue;
+        expect(
+          scriptedFor(scene, beat).length,
+          `${scene.id}/${beat.id} has no line, so keyless it is English`,
+        ).toBeGreaterThan(0);
+      }
+    }
   });
 });

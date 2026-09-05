@@ -13,6 +13,7 @@ import type { SceneSpec } from "@/lib/scenes/types";
 import type { Difficulty } from "@/lib/scenes/curveballs";
 import { BUDGETS } from "@/lib/scenes/curveballs";
 import { SceneDebrief, type Debrief } from "./SceneDebrief";
+import { practises } from "@/lib/scenes/practises";
 
 /**
  * One conversation, from the desk to the debrief.
@@ -321,6 +322,10 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         <Card className="flex flex-col gap-2">
           <h2 className="font-medium">{scene.place}</h2>
           <p className="text-sm" style={{ color: "var(--ink-2)" }}>{scene.role}</p>
+          <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+            You will need {practises(scene).join(", ")}. They speak first, you answer, and the card
+            below the conversation says what to get done.
+          </p>
         </Card>
 
         {/*
