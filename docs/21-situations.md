@@ -425,6 +425,16 @@ the type, so a fifth screen cannot reintroduce the fault by not knowing about th
   translates the question, the brisk one repeats it in Estonian. It is counted in the debrief and it
   is never scolded. Reaching for English under pressure is the thing being practised against.
 
+### Understood before correct (amendment, §35)
+
+Each of the readings above is decided against the dictionary's exact spelling, and that turned out
+to be the wrong instrument for a conversation: a learner is understood far more often than they are
+correct, and the gap between the two is most of what makes speaking feel possible. So a requirement
+is met by the word *nearly* as well: a diacritic folded away, one letter out on a word of five or
+more, the right word in the wrong case, or the ma-infinitive straight after a subject pronoun. Each
+is the beat met, with a `Slip` written down beside it, and the other side says the word back the way
+they say it. §35 is the argument and the boundaries.
+
 ### What counts as a turn
 
 Two holes are worth closing before somebody finds them.
@@ -1993,7 +2003,444 @@ then `Ei` ends on `Hästi.` and the farewell with the beat met. What it does not
 counter and not a negotiation, since a third offer is a branch and the machine is a line, and every
 line the bank holds is still `reviewed: false`.
 
-## 34. The fifth pass: the loop closes, and there are fourteen scenes
+
+## 34. The fifth pass: a turn is credited with two beats on two words, not on one mark
+
+`replay` reads a turn that landed against the next beat too, and the argument for it is sound and
+still stands: "Tere, ma lähen poodi" greets and says where you are going, and a friend who heard it
+does not then ask where you are going. What that rule never had is a test of whether the turn had
+said two things. A requirement can be met by something that is not a word. `{ kind: "question" }` is
+satisfied by a question mark anywhere in the text, deliberately, because `Homme?` is a question
+anybody asks and has no question word in it; `{ kind: "any" }` is satisfied by anything at all. So a
+turn ending in `?` walked past every question-shaped beat downstream of the one it answered, in
+silence, on the strength of its own punctuation. Five beats in the catalogue are reachable that way.
+
+A learner found it on the street corner. They were told `Minge otse edasi.`, wrote `okei, otse, ja
+kuhu siis?`, and were answered `Head aega!`. Every step was the machine doing what it was told:
+`otse` met the directions beat, the question mark then met `far`, whose goal is to ask whether it is
+near, the scene arrived at the farewell two beats later, and the ladder said goodbye to somebody who
+had just asked where to go next. Their own question was never taken, and the objective on screen
+jumped from saying the directions back to saying thank you without ever asking for anything in
+between.
+
+**So a second beat is credited to the same turn only where the turn met it with a word the beats
+already credited to that turn did not use.** `addsEvidence` in `lib/scenes/turn.ts` is the rule and
+`Evidence.satisfiedBy` is what it weighs: every word a requirement was met by, unfiltered. That is a
+second list beside `matched` rather than the same one, because `matched` is narrowed to what is
+worth saying back and that is a different question: `maksta` out of `Ma tahan maksta` is not
+something a waiter repeats and it is still the word that met the beat, so a cascade reading
+`matched` would refuse every sentence-shaped beat with a lemma requirement. A word rather than a
+requirement, because that is what "they said two things" means and because a mark cannot be said
+twice. Not already spent, because `poodi` meeting two beats is one thing said, not two, and the
+spent set travels down the cascade rather than being compared only against the beat before.
+
+The hurdle path takes the same guard, since "Mul ei ole, aga siin on avaldus" clears the curveball
+and answers the beat behind it on two different words, and a turn that cleared a curveball with a
+question mark alone has done one thing.
+
+What it costs is a beat whose only requirement is a question or an `any` being met in the same
+breath as the beat before it, which is exactly the case it exists to refuse: the learner asks it as
+its own turn, and the other side answers with the beat's own line. A beat that wants a question
+*and* something else still cascades on the something else, so `Tere, kus on pank?` greets and asks.
+
+What it does not fix: the other side still cannot answer a question the scene did not anticipate.
+`okei, otse, ja kuhu siis?` now gets `Otse.` and the next beat's line rather than a farewell, which
+is a street-corner exchange and is not an answer to what was asked. Answering an arbitrary question
+means a model deciding what happens next, which is the one thing §18 rules out; what is available
+instead is more beats and more pinned lines per beat, which is a catalogue change rather than a
+machine one.
+
+
+## 35. The sixth pass: understood before correct
+
+A learner played the scenes and reported them as robotic and fake, and the concrete example they gave
+is the whole of the diagnosis: `ma tulema koju`. That is not Estonian and every Estonian who hears it
+knows the person is coming home. The marker held every turn to the dictionary's exact spelling, so a
+dropped õ, a slipped letter, `pood` where `poodi` was due and `tulema` where `tulen` was due each read
+as a turn nobody could follow, and the other side said "I did not catch that" to somebody who had
+been perfectly clear. A learner who meets that three times stops talking, which is the opposite of
+what this module is for (§18, and `docs/22-real-life.md`).
+
+**A person understands first and corrects, if at all, in passing.** That is the rule now, and
+`lib/scenes/nearly.ts` is where "close enough" is defined, once. Four shapes of nearly-right are read
+as the word, understood, with the slip written down:
+
+| Slip | Example | Recast |
+|---|---|---|
+| spelling, a diacritic folded away | `korvas` for `kõrvas` | the dictionary's spelling |
+| spelling, one letter out on a word of five or more | `valusod` for `valusid` | the form it was one edit from |
+| case, the right word in the wrong case | `pood` where `poodi` was due | `Lexicon.caseForm`, the same table every case card reads |
+| person, the ma-infinitive straight after a subject pronoun | `ma tulema` for `ma tulen` | the derived present, off the stored first person |
+
+**Every recast is the dictionary's and nothing is written.** The case form is read off the same
+table `datumLine` reads for an offered day; the person is `derivedVerbForms`, which `npm run
+audit:verbs` checked against Ekilex over 797 verbs (ADR-005 amendment 1). A slip the dictionary
+cannot recast, `olema` after a pronoun for one, is understood and not recast, which is what a person
+does with a verb they cannot put right in passing. `nearly.ts` holds a pronoun table as keys and no
+form, asserted.
+
+**What is deliberately not tolerated** is as much of the design as what is. Two letters out, because
+at that distance `kool` is `kohv` and the marker would be guessing rather than understanding. A typo
+on a word under five letters, because `pea`, `käsi` and `tee` are one edit from each other. A wrong
+*word*, which is what `offtarget` already is. And the da-infinitive, because `ma tahan minna` is
+right. A slip is a right thought in a slightly wrong shape, and that is the whole of what it may be.
+
+**It reaches the screen three ways and none of them is a mark.** The other side says the word back
+put right, `Poodi.` and then the next question, which is the one correction a conversation makes
+without stopping and is labeled on screen as the learner's word the way they say it, never as "said
+again". Under the learner's own bubble the quiet ink says "Understood. Here it is *poodi*." The
+debrief has a section headed by the count of turns that were understood anyway, and the forms under
+it for when there is a minute. And the review log sees it as a `Hard` on that word, and on that case
+where the slip was a case: the learner *had* the word and was understood, so it is not `Again`, and
+the form was not produced, so it is not `Good`, and the case they could not produce at a counter
+lands beside the case they could not produce on a card.
+
+**Two smaller things came with it, both in the same direction.** A folded spelling counts as vouched
+in the share that tells real Estonian aimed elsewhere from a turn nobody could read, so a clear
+sentence with no õ in it is answered with a narrower question rather than with the repair phrase.
+And a one-word answer said twice on a sentence-shaped beat is taken the second time where it meets
+the beat: a person waits once, and a receptionist told `pea` twice does not ask a third time. A turn
+read as `narrow` also takes up the part that landed before the re-ask, `Poodi.` and then the
+question, where it used to ask the whole question again as though nothing had been said.
+
+**Measured against the fixture marker:** `Ma lähen tuba` on the illative beat is met with a case
+slip and `tuppa` recast; `Mul on valu korvas` on the inessive beat is met with a spelling slip;
+`ma tulema koju` is met with `tulen` recast and `ta tulema koju` with `tuleb`; `ma tahan tulla`
+carries no slip; `valo` and `valosdi` are still misses. What it does not do: it cannot tell a learner
+which word they meant when they used a wrong one, and it cannot answer a question the scene did not
+anticipate (§34). Both are what the help button and more beats are for.
+
+
+## 36. The seventh pass: a question is answered before the move, and a waiting beat waits
+
+§34 stopped a learner's question ticking off a beat it never addressed, and left the question itself
+unanswered: `okei, otse, ja kuhu siis?` got `Otse.` and the next line, which is a street-corner
+exchange and is not an answer. The person reporting it put the standard plainly: a normal person is
+caught off guard by a question and still has a human reaction to it. Silence is the one thing nobody
+does with a question.
+
+**`lib/scenes/aside.ts` is what the other side can say about a question they did not expect**, a
+ladder like the one for a beat's own line, cheapest and surest first, and every rung is Estonian the
+dictionary already vouches for:
+
+| Rung | Answers | Example |
+|---|---|---|
+| the beat's own answer | a question the beat asked the learner for | "is it near?" gets `Jah, see on lähedal.` off `answer:far` |
+| how are you | `kuidas` beside a form of `minema` | `Hästi, aitäh.`, two course words as parts |
+| a fact off the card | `millal`, or `kell` in the turn | `Teisipäeval kell 14:30.`, the day in the adessive off the case table |
+| more about it | a place question, `mis` or a bare `?` after directions, an offer or a refusal | `Otse edasi ja siis vasakule, see on lähedal.`, the beat's next banked line |
+| a model | anything else, on a keyed deployment | one line inside the list, gated as a `confirm`, on the turn's one booking |
+| don't know | anything else | `Ei tea.`, `ei` and the derived negative of `teadma` |
+
+`readTurn` writes down that a question was asked and with which word (`Evidence.asked`);
+`replyFor` says the aside first and stacks no echo and no `hästi` on it, since "Ei tea. Hästi. Kus
+teil valutab?" is a machine and "Ei tea. Kus teil valutab?" is a person; and the route asks
+`asideFor` before it walks the ladder for the move, and gives the turn's one model booking to the
+question rather than to a fresh phrasing of a move the bank usually has anyway. Never on a turn
+nobody understood, where the repair phrase is the whole reaction.
+
+**Where the beat itself asked for the question, the answer is the beat's own, or the next move.**
+"Ask whether it is near" is met by a question, and a question is owed an answer: the bank holds it
+under `answer:<beat>` (`answerBeatId`, a pseudo-beat `sceneBeats` adds for every beat that wants a
+question, so the drafter and the bank test see it), and `asideFor` says it as the reaction. Where the
+bank holds none, the next move is the answer, which is how "where is the station?" is answered by the
+directions and not by a shrug: `asideOwed` is false there, and no model is asked either.
+
+**And a beat that waits, waits.** `far`'s stage direction is "They wait in case you have another
+question" and its banked lines were `Jah, see on lähedal.`, said as the beat's opening move, before
+anybody had asked whether it was near, and then never said when they did. `BeatSpec.awaits` is the
+fix: the other side opens the beat with nothing but the stage direction, the ladder is not walked
+for an opening line, and what the bank holds for the beat lives under its answer id. `far` is the
+one such beat so far; `answer:wait` and `answer:confirm` at the counter and `answer:refuse` at the
+landlord's carry answers of their own, typed in this pass, gated, `reviewed: false`.
+
+**Three beats learned the case a person says the word in.** The ticket window asked "where to?" and
+took `jaam` in any form, so the echo was `Jaam.`; nobody says that. A `datum` requirement can carry
+a `grammCase` now, read through the case table exactly as a `case` requirement is, so `jaam` is the
+word understood in the wrong case and `Jaama.` is said back; "how will you pay?" takes `kaardiga`
+and says `Kaardiga.` to `kaart`; and the café's order is the partitive, `Teed.` to `tee`. Each is a
+`Hard` on that case in the review log, which is the point: the comitative you could not produce at
+a window lands beside the comitative you could not produce on a card.
+
+**`scripts/play-scene.ts` is the instrument**, and it is why this pass found the waiting beat at
+all. It builds every scene from the shipped dictionary with no database (`contextFromRows`), plays
+it keyless through the route's own ladder as a generated learner in one of three styles, `clean`,
+`sloppy` and `curious`, and prints the conversation with every reading, slip and question beside
+it. Reading the seven transcripts is how the asides were shaped, and it is what to run before
+touching the marker or the reply again.
+
+What it does not do: the shrug is the same two words whoever is behind the desk, and a friend on
+the phone saying `Ei tea.` to "and where then?" is a stranger's shrug in a friend's mouth. A
+persona-flavoured off-guard reaction is a table of parts away and was left for a native speaker's
+pass, since "what a friend says when you ask them something odd" is not a thing this app should
+guess at.
+
+
+## 37. The eighth pass: any ending, no dead ends, and a review at the end
+
+Three things a learner asked for after playing the scenes, and each is a rule the module was
+missing rather than a scene that needed rewriting.
+
+### Any ending on a stem it knows
+
+§35 tolerated four shapes of nearly-right, and the fourth of them, the wrong case, only reached a
+form the dictionary happens to hold. `ma tahan minna haiglat` is not one of those: the partitive
+where the sisseütlev was due is a form of the word, and `haiglasi` is not a form of anything. Both
+are perfectly clear to anybody who hears them, and both were misses.
+
+**`nearlyInflected` is the rule and it is the thing a person actually does, which is hear the stem
+and stop caring about the ending.** A word the scene's whole list cannot vouch for, sharing four
+or more opening characters with a form of the word the beat is about, and at least half its own
+length, is that word. Measured on the street-corner scene against the shipped dictionary:
+`haiglat`, `haiglale`, `haiglaks`, `haiglasi` and `haigla` are all understood and all recast to
+`haiglasse`, while `kooli` and `blorp` are still misses.
+
+**The guard is the whole of why it is safe: a word the list can vouch for is never read as a
+mangled other one.** `kohvik` is a word the café scene teaches, so it is never read as a botched
+`kohv`, and neither is any other real word a learner reached for by mistake. What is left is a
+spelling nobody in Estonian uses, which is exactly where the stem is all the evidence there is and
+all a listener would need. Four characters rather than three because `tea`, `tee` and `tea-` open
+several different words; half the typed length because a long word sharing four letters with a
+short one shares an accident.
+
+**And in a slot that wants a case, a wrong ending is a case rather than a slip of the pen.**
+`kõrvat` is one letter from `kõrvas`, and reading it as a typo files a case under spelling and
+sends the learner to the letter bar over a grammar point. Only a folded diacritic is read as
+spelling there (`foldedOnly`), which is the one slip that is unambiguous; the lemma branch keeps
+the wider rule, since there any form counts and a wrong ending is not a category.
+
+### No dead ends in English
+
+Running out of patience printed `They let it go, and move on.` in the middle of the conversation,
+three times in a row on a learner who was stuck, which is the loudest "you are talking to a
+machine" the transcripts had left. A person who decides not to press a point says a word and
+carries on, and the word is one every scene teaches. It is an acknowledgment now, in Estonian, and
+the move follows it, so the conversation is steered on rather than stopped and annotated.
+
+### A review at the end
+
+The debrief said what happened and what got done, and never the thing a teacher says after a
+role-play, which is the reason anybody does one. `lib/scenes/review.ts` is that, and it is
+**deliberately after the conversation rather than inside it**, because a correction mid-turn is
+what stops people talking.
+
+It leads on being understood: "Every one of your seven turns was understood. Two endings were off,
+and not one of them stopped the conversation." That sentence and "you made two mistakes" describe
+the same run, and only one of them gets somebody to open the next scene. Under it, a note per case
+that came out as something else, commonest first, named the way a class names it
+(`seesütlev · kelles? milles? kus?`), with the line `CASE_NOTES` already prints for that case on
+the grammar reference, and the learner's own words beside the ones the other side used. Then the
+verb rule that is worth having, the invented endings, the spellings, what was left undone, and
+turns taken in English, counted and never scolded.
+
+**It holds no Estonian at all**, which is `lib/estonian/grammar.ts`'s standing pointed at a
+conversation and is asserted the same way: the case names are read off `CASES`, the explanations
+are `CASE_NOTES`, and every Estonian character on the screen arrives through `evidence`, which is
+either a form the learner typed or the dictionary's own recast. **And it never marks**: no score,
+no percentage, no ranking. A count of things achieved is the debrief's and a claim about somebody's
+Estonian is the mock exam's alone (ADR-022).
+
+What it does not do: it cannot say why a learner reached for the case they reached for, which is
+the thing a teacher standing there would say. Every note is derived from a row in the transcript,
+so a clean run produces the one note that says so, and nothing here is ever invented about
+somebody's Estonian.
+
+
+## 38. The ninth pass: why the wrong ending came out, said as a guess
+
+§37 left one thing flagged: the review can say which case was wanted and what that case is for, and
+not *why you reached for the one you did*, which is the next thing a teacher standing beside you
+says. That was written down as not derivable from a transcript. It is half derivable, and the honest
+thing to do with evidence that is strong and not conclusive is to print it marked rather than to say
+nothing.
+
+**The case they reached for is recoverable, under the rule `whichCase` already uses.** A slip
+carries `said`, and `caseOfForm` asks the scene's own case table which case of that word is spelled
+that way. Exactly one, or nothing: `toale` is only ever the alaleütlev and naming it teaches
+something, while `haigla` is its own nimetav, omastav and osastav and naming any of them would be a
+guess. Measured on the shipped scenes, the strict rule stays silent about a fifth of the slips,
+which is the right number to be silent about.
+
+**Three reasons leave evidence, and `lib/scenes/diagnose.ts` reads them in this order:**
+
+| Hunch | Evidence | Sure |
+|---|---|---|
+| carried over from the last question | the case they used is the one the beat before wanted, and the transcript has the order | likely |
+| the pair that answers one question word | `kus?` is answered by the seesütlev and the alalütlev, read off `CASES`, with what each means read off `CASE_NOTES` | likely |
+| the plain word | the case they used is the nimetav, so the word arrived and the ending did not | likely |
+| the stem | the case they used is the omastav or the osastav, the two every other ending is built on | possible |
+
+Carry-over leads because it is a fact about this conversation rather than a pattern about learners,
+and because it is the one somebody recognises about themselves. It is read **in turn order rather
+than keyed on the word**, which is how it was written first and is wrong the moment a learner slips
+on the same spelling twice: the reading is about the moment it happened, and two turns are two
+moments.
+
+**A hunch carries how sure it is, in two tiers, and both are worded as guesses.** That is the device
+the readiness rungs and the exam confidence already use, which is that a claim carries its evidence
+rather than being caveated in prose somewhere else on the page. `likely` prints as "Most likely" and
+`possible` as "It may be". A number would be arithmetic nobody performed. The guard that matters is
+that a wrong confident diagnosis is worse than none: it teaches a learner a reason for a mistake
+they did not make, in a voice they have no way to argue with, so the tier is asserted and the copy
+never says "you forgot" or "you confused".
+
+**One hunch at most, and none where nothing fits.** Two guesses side by side is a screen admitting it
+does not know, which is what silence is for. `diagnose` holds no Estonian: the case names come off
+`CASES` and the meanings off `CASE_NOTES`, and it deliberately does **not** import the inside and
+outside trios from `place.ts`, because that module owns which set a *word* takes and a second reader
+of it would be a second rule about that, which this app has been wrong about in eight places before.
+The invariant that forbids the second reader is what caught the first draft.
+
+**And the confusion reaches the shared log.** `SceneGrade.reachedCase` travels to `gradeCard`'s
+`reachedSlot`, which is checked against the closed list rather than trusted, so the pair somebody
+mixes up at a counter is counted in `lib/stats/confusions.ts` beside the pair they mix up on a card.
+That is the whole argument for a conversation writing to the review log at all, and until now the
+scene was the one round that could see a confusion and not report it.
+
+Worked example, off the shop scene played as a sloppy learner:
+
+> **seesütlev · kelles? milles? kus?** This came out as another form. It is the ending for *in*.
+> *Most likely:* That is the word as the dictionary lists it, so the word had arrived and the ending
+> had not. It is the right half to have first.
+> `pood` is said `poes`
+
+What it still cannot do: say why somebody reached for a case that is neither the plain word, nor the
+stem, nor the last question's, nor the other half of a question-word pair. That is most of the
+remaining silence, and it is the right silence: the alternative is a screen inventing a reason.
+
+
+## 39. The tenth pass: the learner says they are lost, and is handed the word
+
+`npm run play:scenes` grew a fourth learner, `lost`: somebody who answers every beat with "I do not
+know", "sorry, what?", "do you speak English?" and "I am learning Estonian". Reading that transcript
+is the fastest way to find every place this module makes somebody feel stupid, and it found three.
+
+**A learner who says they are not following is answered with the word.** It was answered with the
+same question again, twice, and then given up on. That is the moment somebody decides whether they
+are stupid or simply learning, and a machine repeating itself has told them the problem is them. A
+person says the word you are waiting for. `LOST` is how a learner says it, in the course's own
+words: the phrase `tervitused` teaches, matched whole because a phrase is not a bag of words, and
+the negator beside a form of `teadma` or `saama`, which is the same shape `ASIDES.unknown` is built
+from. `readTurn` reads it after everything the beat could have been met by, so a turn that answered
+the question is an answer whatever else is in it, and never on a beat that wanted a no, where `ei`
+is the answer.
+
+It **costs nothing the first time**, for the reason a look and a wait costs nothing: asking for help
+is taking part rather than failing. It costs a try after that, so a scene cannot be held for ever by
+one phrase, which is the rule the fuzz harness proved was needed for the fragment. The other side
+hands over the beat's own word off its requirements (`offerFor`, beside `stalledWords` because it is
+the same question asked of one beat), and then asks again in the same breath: `Valu?` then the
+question. Where the beat wants a value off the card there is no word to point at, and the question
+again is the whole answer. And where the word *is* the line, on a greeting, it is said once rather
+than twice.
+
+It is **graded as help**, `Again`, exactly as pressing the button is, because the app supplied the
+word and the scheduler may not stretch an interval on a word it had just been told.
+
+**And the shrug is not said at somebody who has not answered yet.** §36 put an answer in front of the
+move for a learner who said their piece and asked something extra, which is what `okei, otse, ja kuhu
+siis?` is. It read every question the same way, so the `lost` transcript had "do you speak English?"
+answered with `Ei tea.` and "sorry, what?" answered the same way. Neither is a person. A question
+asked while the floor is still theirs is a learner who is confused, and the human move is to ask
+again, which is what `narrow` already does. The aside is now for a turn that landed.
+
+**Two smaller things in the same transcript.** `Ei tea.` was followed by `Hästi.` when patience ran
+out on the same turn: two reactions contradicting each other, "I don't know" and then "fine". Letting
+it go says nothing where the question was already answered. And offering `Tere!` as a word produced
+`Tere!?`, because the mark was appended blindly: the course spells its phrases with the punctuation
+they are said with, and adding a second one is this module editing the dictionary's own entry.
+
+What it still cannot do: tell a learner *which* of the beat's words they need where the beat wants a
+value off their own card, since the answer is already in front of them. Repeating the question is the
+honest move there, and it is what a person does when there is nothing to point at.
+
+
+## 40. The eleventh pass: the hint agrees with the card, and one word you know is not nothing
+
+Five more, all off the `lost` and `curious` transcripts.
+
+**A card may not deal a word the scene will not take.** The landlord's card drew a problem from six
+words and the beat that asks what has gone wrong accepted a different six. Two of the draws, a third
+of runs, dealt a card whose word the beat refused: the learner reads that the window is broken, says
+so correctly, and is treated as having said nothing. That is the worst thing this module can do to
+somebody, and it was a fact about one catalogue entry rather than about any rule, which is what makes
+it worth a test rather than a fix. `catalogue.test.ts` walks every `word` and `weekday` prop against
+every beat's own requirements and fails on a value no beat accepts. One scene, two words.
+
+**And the word the other side hands over agrees with that card.** §39 offered the beat's first
+acceptable word, so a learner whose card said the door was broken was told to say the heating was.
+Worse than no hint, because they follow it: they are marked as having met the beat and have practised
+saying something that was not true of their own run. `offerFor` takes the card and prefers the word
+it dealt.
+
+**One word the scene recognised is not "I did not catch that".** The split between a narrower re-ask
+and the repair phrase was half the words vouched. The two things it decides between are "ask about
+the word I caught" and "tell them they were incomprehensible", and nobody who caught a word of a
+sentence says the second. It matters because the scene's list is the units the scene declares rather
+than the whole course: a learner reaching for a real word from a unit this scene does not name had
+most of their sentence counted against them and was told they were not understood for using Estonian
+they had been taught somewhere else. The repair phrase is now for a turn the scene recognised nothing
+in, which is what a person means by it.
+
+**The learner's own word put right survives an answer to their question.** A turn can do both:
+`mahl, ja kuhu siis?` orders juice in the wrong case and asks something, and the aside displaced the
+recast, so the word was never said back. `Mahla. Ei tea.` is a person taking the order back and then
+answering; the other way round is a person answering and forgetting what was ordered. What still
+stands down under an aside is the *generic* acknowledgment, since "Ei tea. Hästi." is two reactions
+contradicting each other.
+
+**And the review does not tell somebody who answered nothing that they were understood.** It counted
+every turn that was not the repair phrase, so a learner who met no beat at all read "19 of your 21
+turns were understood" over a list of six things left undone. Their Estonian *was* read, which is
+worth saying and is not what "understood" means to whoever is reading it. The lead counts turns the
+beat took something from; where none did, it says what happened and points at the way in, which is
+what somebody who got nowhere needs rather than a figure. The unmet goals are two and a count rather
+than six sentences run together, since the objectives are listed with ticks a few lines above.
+
+
+## 41. The twelfth pass: what the marker makes of what people actually type
+
+`play-scene.ts` drives whole conversations with a generated learner, which finds what the other side
+*says*. `npm run probe:turns` asks the other half: given a turn a real person would write, is it
+understood. Sixty-odd sentences across five scenes, at the beat each belongs to, with the wrong word
+order, the missing verb, the English word in the middle and the spelling with no diacritics. The line
+to hunt is a turn read as `unrecognised`, because that is what the other side answers with "I did not
+catch that", and reading those found four things.
+
+**Whether the learner was understood is a wider question than what this scene may say.** The closed
+word list is the units the scene declares. That is right for what the other side says, and it was
+also deciding whether a *turn* was Estonian at all: a bus window that does not declare the shopping
+unit read `sularahaga` as nothing anybody could make out and answered "I did not catch that", to
+somebody who had said "with cash" perfectly, in a word this course teaches. The marker now asks the
+whole course through `courseForms`, a fact about the shared dictionary cached beside the others: one
+read a minute per instance, shared by every learner in every scene. The gate and retrieval are
+untouched and asserted, because a model composing inside the course rather than inside the scene's
+own units would write lines the learner has not been taught to read.
+
+The course rather than the whole dictionary, which is 6,110 entries against 1,400: these are the
+words a learner could have been taught, the set is bounded and meaningful, and the memory is a
+fifth. What is left outside it is a place name, and `tartusse` at a ticket window is the one honest
+`unrecognised` in the whole probe.
+
+**A real word is never read as a slip of the pen for another.** `valutab` is the third person of a
+verb the course teaches and was read as a typo of `valuta`, which is the abessive of `valu`: the beat
+was met, which is right, and the review then told a learner that the word they had got right is said
+some other way. That guard existed on the stem rule and not on the typo rule. Exactly rather than
+folded, because `korvas` is a keyboard rather than a word and has to stay readable.
+
+**A wrong number is a thing anybody can read.** A turn with no letters in it went straight to
+`unrecognised`, so answering "what time" with `08:30` when the card said 10:30 was met with "I did
+not catch that". A clerk hearing the wrong time says "no, half past ten".
+
+**And the course teaches the nouns of a situation and not the verbs that do things with them**, which
+§29 found across the whole syllabus and which shows up here as a beat that refuses the commonest
+answer to its own question: "say what is wrong with you" took `valu` and not `valutama`, so
+`minu pea valutab` met the beat only by being read as a typo. It takes both now.
+
+What is left, and it is the right silence: a word neither the scene nor the course knows is answered
+with "I did not catch that", which is what a person says about a word they have never heard.
+
+## 42. The thirteenth pass: the loop closes, and there are fourteen scenes
 
 **What was wrong.** The purpose doc says the app rehearses the conversation, sets one small thing
 to say to a real person and counts the conversations had outside. All three existed and none

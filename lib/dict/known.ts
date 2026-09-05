@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { fold } from "@/lib/estonian/fold";
+import { isKnownForm, lemmasOfForm } from "./forms";
 
 /**
  * IS THAT AN ESTONIAN WORD?
@@ -12,9 +13,10 @@ import { fold } from "@/lib/estonian/fold";
  * same site.
  *
  * `KnownWord` is 154,995 headwords built in thirty-two requests
- * (`scripts/build-wordlist.ts`) and it knows only that they exist. That is
- * enough to tell those three cases apart, which is the whole of what this
- * module is for:
+ * (`scripts/build-wordlist.ts`) and it knows only that they exist; the forms
+ * list beside it (`lib/dict/forms.ts`) knows every spelling of every one of
+ * them and which headword each belongs to. Between them they tell those three
+ * cases apart, which is the whole of what this module is for:
  *
  *   - **A real word the dictionary lacks.** Say so, and fetch it. The live
  *     lookup already existed and already worked; nothing told the screen it was
@@ -26,7 +28,8 @@ import { fold } from "@/lib/estonian/fold";
  *     answer.
  *
  * Folded on both sides, so a learner who cannot type õ is still told their
- * word exists.
+ * word exists. The spelling suggestion stays over the headwords, because a
+ * suggestion is a link to an entry and a headword is what an entry is called.
  */
 
 /** How far a suggestion may be from what was typed. Two is a typo; three is a different word. */
@@ -44,16 +47,24 @@ const SUGGESTIONS = 3;
  */
 const CANDIDATES = 800;
 
-/** Whether Ekilex holds this word at all. Exact, folded. */
+/**
+ * Whether the spelling is an Estonian word at all, and which headwords it is
+ * a form of. Exact, folded.
+ *
+ * Over the forms list rather than `KnownWord`, because the question arrives
+ * in a form: somebody who met `põhjas` on a sign types `põhjas`, and a list of
+ * headwords says no to the seesütlev of one of the commonest nouns in the
+ * language. The headwords lead where the spelling is one, so `põhi` answers
+ * with `põhi` and `põhjas` answers with `põhi` and `põhjama`, which is what the
+ * screen and the live lookup both need: the entry to open, or to fetch.
+ */
+export async function knownAs(query: string): Promise<string[]> {
+  return lemmasOfForm(query);
+}
+
+/** Whether Ekilex holds this spelling at all, as a headword or as a form of one. */
 export async function isKnownWord(query: string): Promise<boolean> {
-  const folded = fold(query.trim());
-  if (!folded) return false;
-  const rows = await prisma.$queryRaw<{ lemma: string }[]>`
-    SELECT lemma FROM "KnownWord"
-    WHERE translate(lower(lemma), 'õäöüšž', 'oaousz') = ${folded}
-    LIMIT 1
-  `;
-  return rows.length > 0;
+  return isKnownForm(query);
 }
 
 /**

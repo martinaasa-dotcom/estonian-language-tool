@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { SCENES, sceneById } from "@/lib/scenes/catalogue";
 import { planRun } from "@/lib/scenes/run";
-import { beatNow, beginRun, dataFor, finishRun, recencyFor, sceneContext } from "./scene";
+import { beatNow, beginRun, dataFor, finishRun, readDraw, recencyFor, replay, sceneContext } from "./scene";
 
 /**
  * A scene against the real dictionary, because most of what could go wrong here
@@ -169,6 +169,38 @@ describe("a scene against the dictionary", () => {
     const outcome = JSON.parse(stored!.outcome) as { met: string[] };
     expect(outcome.met).toEqual(finished!.objectives.met);
     void context;
+  });
+
+  /*
+    THE TRANSCRIPT THAT PRODUCED THE RULE. Told `Minge otse edasi.`, the
+    learner wrote `okei, otse, ja kuhu siis?`: `otse` met the directions beat,
+    the question mark then met "ask whether it is near" on nothing but its own
+    punctuation, and the street corner said `Head aega!` to somebody who had
+    just asked where to go next. One turn may still answer two beats; what it
+    may not do is answer the second one with a mark the first one already
+    made (`addsEvidence`).
+  */
+  it("does not credit a later beat to a turn's own question mark", async () => {
+    const scene = sceneById("tee-kusimine")!;
+    const opened = await beginRun({
+      ownerId: OWNER, sceneId: scene.id, level: "A2", difficulty: "textbook",
+    });
+    const place = opened!.run.card.props.find((p) => p.slot === "place")!;
+    const context = await sceneContext(scene.id);
+    const row = await prisma.sceneRun.findUnique({ where: { id: opened!.runId } });
+    const draw = readDraw(row!.transcript);
+
+    const { state } = replay(context!, draw, [
+      { beatId: "greet", said: "Tere!", helped: false, heard: "" },
+      { beatId: "where", said: `Vabandust, kus on ${place.value}?`, helped: false, heard: "" },
+      { beatId: "way", said: "okei, otse, ja kuhu siis?", helped: false, heard: "" },
+    ]);
+
+    expect(state.done, "the directions beat was not read").toContain("way");
+    expect(state.done, "the question mark ticked off a beat nobody was asked")
+      .not.toContain("far");
+    // The conversation is standing on "far", not two beats past it at the farewell.
+    expect(scene.beats[state.beat]?.id, "the scene walked past its own beats").toBe("far");
   });
 
   it("refuses to credit a beat the learner never met", async () => {

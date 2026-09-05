@@ -239,7 +239,7 @@ function Row({ row, onDone }: { row: QueueRow; onDone: (message: string) => void
                     id={`note-${row.id}`}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+                    className="field w-full text-sm"
                     style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
                   />
                 </div>

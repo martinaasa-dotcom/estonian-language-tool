@@ -19,11 +19,13 @@ import type { DayKey } from "@/lib/time/day";
  * `bandsAround` like every other screen that chooses a word for somebody, which
  * also means the pool follows a learner up: 215 answers at A1, 477 at B1.
  *
- * THE GUESSES ARE THE WHOLE LANGUAGE. `KnownWord` holds the 154,995 headwords
- * the Ekilex enumeration brought back, and 7,134 of them are six letters long.
- * Telling somebody that an ordinary Estonian word is not a word is the one
- * thing a game like this must never do, and the built dictionary alone would
- * do it several times a round.
+ * THE GUESSES ARE THE WHOLE LANGUAGE, IN EVERY FORM. `KnownWord` held the
+ * 154,995 headwords the Ekilex enumeration brought back, 7,134 of them six
+ * letters long, and a learner typed `põhjas`, the seesütlev of `põhi`, and was
+ * told it was not a word. Telling somebody that an ordinary Estonian word is
+ * not a word is the one thing a game like this must never do, and a headword
+ * list does it to every case of every noun. The guesses are the forms list
+ * now (`lib/dict/forms.ts`), 60,812 spellings at six letters.
  *
  * THE DAY DECIDES, NOT A RANDOM NUMBER, so the board survives a reload and two
  * people at the same level talking about it are talking about one word. The

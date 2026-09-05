@@ -1,4 +1,5 @@
 import { singleFlight } from "@/lib/cache/singleFlight";
+import { SYLLABUS } from "@/lib/collections/syllabus";
 import { prisma } from "@/lib/db";
 import { unitIntroducing } from "@/lib/collections/syllabus";
 import { bandOf, glossOption, type GlossOption } from "@/lib/questions/distractors";
@@ -12,6 +13,7 @@ import { PRINCIPAL_FORM_TYPES } from "@/lib/estonian/types";
 import { exceptionsFor, type WordException } from "@/lib/estonian/exceptions";
 import { borrowSentences } from "@/lib/dict/borrow";
 import { parseExamples, type Example } from "@/lib/dict/examples";
+import { formsOfLength } from "@/lib/dict/forms";
 
 /**
  * FACTS ABOUT THE SHARED DICTIONARY, READ ONCE RATHER THAN ONCE PER LEARNER.
@@ -181,6 +183,46 @@ export async function dictionaryLemmas(): Promise<Set<string>> {
 }
 
 /**
+ * EVERY SPELLING THE COURSE CAN ACCOUNT FOR, FOR DECIDING WHETHER SOMEBODY
+ * WAS UNDERSTOOD.
+ *
+ * A scene's closed word list is the units that scene declares, which is right
+ * for what the other side may *say*: a line reaching outside it is a line the
+ * learner has not been taught to read (`docs/21-situations.md` §6). It is the
+ * wrong list for deciding whether the learner was understood. A conversation
+ * at a bus window that does not declare the shopping unit read `sularahaga`
+ * as a word nobody could make out and answered "I did not catch that", to
+ * somebody who had said "with cash" perfectly, in a word this course teaches.
+ *
+ * So comprehension is measured against the whole course. Here rather than in
+ * the scene's own query because it is a fact about the shared dictionary and
+ * about nobody in particular: one read a minute per instance, shared by every
+ * learner in every scene, which is what this module is for.
+ *
+ * The course rather than the whole dictionary, which is 6,110 entries against
+ * 1,400: these are the words a learner could have been taught, the set is
+ * bounded and meaningful, and the memory is a fifth. A word outside it is
+ * rare enough that "I did not catch that" is the honest answer.
+ */
+export async function courseForms(): Promise<ReadonlySet<string>> {
+  return remember("courseForms", FACTS_TTL_MS, async () => {
+    const lemmas = [...new Set(SYLLABUS.flatMap((unit) => unit.lemmas))];
+    const rows = await prisma.form.findMany({
+      where: { lexeme: { lemma: { in: lemmas } } },
+      select: { value: true },
+    });
+    const out = new Set<string>();
+    for (const lemma of lemmas) for (const word of lemma.toLowerCase().split(/[^\p{L}\p{M}]+/u)) {
+      if (word) out.add(word);
+    }
+    for (const row of rows) for (const word of row.value.toLowerCase().split(/[^\p{L}\p{M}]+/u)) {
+      if (word) out.add(word);
+    }
+    return out;
+  });
+}
+
+/**
  * How many entries the dictionary holds.
  *
  * Read off the rows above rather than as a `count(*)`, which on the badge
@@ -321,35 +363,34 @@ export function heardMeanings(): Promise<HeardIndex> {
  * are graded dictionary entries, because an answer has to be a word the app can
  * teach and link to afterwards; the *guesses* are the whole language, because
  * telling somebody that a perfectly ordinary Estonian word is not a word is the
- * one thing a game like this must never do. `KnownWord` is the 154,995
- * headwords the Ekilex enumeration brought back, which is what that table was
- * built for: it knows only which words exist, which is exactly enough.
+ * one thing a game like this must never do. They were `KnownWord`, the 154,995
+ * headwords the Ekilex enumeration brought back, and a headword list refuses
+ * `põhjas`, which is the seesütlev of `põhi` and was refused to a learner as
+ * not a word. So they are the forms list now (`lib/dict/forms.ts`): every
+ * spelling of every headword, from Ekilex's own inflection tables and from
+ * Vabamorf with guessing off, 60,812 of them at six letters where the headwords
+ * were 7,134.
  *
  * Read whole and handed to the browser, so a guess is checked without a round
  * trip. The alternative is a server call inside the one gesture the game is
  * made of, and it would take the board offline as well.
  *
  * MEASURED RATHER THAN ARGUED ABOUT, because the obvious objection is the
- * size: at six letters the list is 7,134 words, and the whole page comes to
- * 143 KB of text that the server compresses to **36 KB**, which is a small
+ * size: at six letters the headword list was 143 KB that compressed to 36 KB,
+ * and the forms list is 430 KB that compresses to about 150 KB, which is a
  * photograph, once a day. Front-coding the shared prefixes was the first idea
- * and gzip is already doing it: 143 down to 36 is a factor of four on a sorted
- * list. Serving it from a separately cacheable route would save the repeat
- * visits and costs a loading state on the one screen that must never wait, so
- * it is written down here rather than done.
+ * and gzip is already doing it. Serving it from a separately cacheable route
+ * would save the repeat visits and costs a loading state on the one screen
+ * that must never wait, so it is written down here rather than done.
  *
  * Cached across requests like everything else in this file, since which words
- * exist is not a fact about the person playing.
+ * exist is not a fact about the person playing. It is a file read rather than
+ * a query, for the reason `lib/dict/forms.ts` gives about the whole list.
  */
 export function guessableWords(length: number): Promise<string[]> {
   return remember(`guessable:${length}`, FACTS_TTL_MS, async () => {
-    const rows = await prisma.$queryRaw<{ lemma: string }[]>`
-      SELECT lemma FROM "KnownWord"
-      WHERE char_length(lemma) = ${length}
-        AND lemma ~ ${"^[a-zäöüõšž]+$"}
-      ORDER BY lemma
-    `;
-    return rows.map((r) => r.lemma);
+    const forms = await formsOfLength(length);
+    return forms.filter((f) => /^[a-zäöüõšž]+$/.test(f));
   });
 }
 

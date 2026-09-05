@@ -1136,6 +1136,13 @@ const SOURCES = [
     licence: "CC BY-SA 4.0",
   },
   {
+    name: "Vabamorf",
+    href: "https://github.com/Filosoft/vabamorf",
+    by: "Filosoft",
+    gives: "every spelling of every word, with Ekilex",
+    licence: "LGPL",
+  },
+  {
     name: "TartuNLP",
     href: "https://tartunlp.ai",
     by: "University of Tartu",

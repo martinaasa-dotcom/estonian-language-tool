@@ -74,7 +74,7 @@ export function ScanActions({ scanId, title, pending }: {
           maxLength={80}
           aria-label="Page name"
           autoFocus
-          className="w-full rounded-[var(--r-lg)] border px-4 py-3 text-base"
+          className="field-lg w-full text-base"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
         <div className="flex gap-2">

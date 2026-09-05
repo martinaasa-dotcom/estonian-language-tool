@@ -233,6 +233,56 @@ list of Estonian words. Inserted and never updated, outside `--only-if-empty`'s 
 reason `ensureSearchIndexes` is, because a deployment seeded before this has a full dictionary and
 an empty word list.
 
+**And knowing a word exists is not the same as knowing the spelling in front of you.** `KnownWord`
+holds headwords, and nobody meets Estonian in its headwords: a learner typed `põhjas` into Sõnad,
+which is the seesütlev of `põhi`, and the game told them it was not a word. A headword list does
+that to every case of every noun and every person of every verb, and no amount of adding headwords
+fixes it, because the shape of the question is wrong.
+
+`prisma/data/forms/` is the forms list and `scripts/build-forms.ts` builds it from three sources,
+each openly licensed and each credited in `LICENSE`, on sign-in, in the landing footer and on
+/terms: the Ekilex enumeration this repository already had, Ekilex's own inflection tables for
+160,000 words as published in `KristjanPikhof/Estonian-Wordlist-Enriched-Ekilex` (CC BY 4.0 for the
+Institute's data, CC BY-SA 4.0 for the repository, so the share-alike reaches the built list the way
+Wiktionary's already does), and Vabamorf, Filosoft's open-source analyser and synthesiser (LGPL),
+run over the union with **guessing off on both sides**. That last is the whole of what makes the
+third source safe: `analyze(guess=False)` answers only for a headword the lexicon holds and
+`synthesize(guess=False)` produces a form only from the set of endings the lexicon assigned that
+word, so nothing in the file is a rule applied to a spelling nobody has ever classified. 5,755,280 spellings over 6,044,103
+form-headword pairs; at six letters, which is the length Sõnad plays, 60,812 where the headwords
+gave 7,134.
+
+**It is an accept list, and that is a stronger claim than "not a dictionary".** It holds a spelling
+and the headwords it belongs to, and no gloss, no level, no case label and no sentence, so there is
+nothing in it that could become a card answer, an exam answer, a marking target or a scanned word
+the app vouches for. That is what keeps ADR-005 whole with a synthesiser in the build: on the accept
+side a wrong form costs a non-word being let through on a word game, and on the answer side the same
+form would be drilled. `lib/srs`, `lib/exam`, `lib/assessment`, `lib/scan`, `lib/tutor`, the
+scanner's resolver, the dictionary search and the upsert may not import `lib/dict/forms.ts`, and
+that is asserted rather than described. **Never widen it into the dictionary.** A form the app is
+going to teach still comes from Ekilex or from a rule over a stored stem, exactly as before.
+
+**Files rather than rows, and both halves of that were measured.** The 6,044,103 pairs in Postgres,
+keyed and with the folded index the search would need, are **789 MB**: 333 MB of table and 456 MB of
+index, measured with `pg_total_relation_size` after a `\copy` into a local cluster. That is more than
+the whole rest of this database for a question whose answer never changes and which two screens ask,
+and it is the number the instance ladder on `/funding` is priced against. It is gzipped shards keyed on a form's folded first
+three letters, 3,857 files and 15 MB, read one at a time and indexed by folded spelling on the way
+in. Two letters was tried first and is the wrong depth: 552 files, a median shard of 322 bytes and
+`ka` at 698 KB, which took 449ms to read, decompress and index on the dictionary's own miss path,
+which is exactly where somebody is waiting. Three gives a median of 291 bytes, a worst case of
+170 KB, and a cold lookup of 37 to 99 ms against nothing at all once the shard is held. `outputFileTracingIncludes` is what carries the files onto a deployment, since a bundler
+traces what a module imports rather than what it opens, and without it a hosted Sõnad refuses every
+guess in silence.
+
+**The dictionary asks it before it asks Ekilex, which is the half a learner notices.** A search that
+misses used to go straight to the live lookup with whatever was typed, so `põhjas` was asked of
+Ekilex as a headword, found nothing there either, and came back as "nothing found" about the
+seesütlev of a word the dictionary has a full entry for. The forms list names the headwords first,
+the local search is retried on each, and only then is Ekilex asked, for the word rather than for the
+form. The screen says which word the spelling belongs to. The spelling suggestion stays over the
+headwords, because a suggestion is a link to an entry and an entry is named by its headword.
+
 **The built-in dictionary is built, not typed.** `scripts/expand-seed.ts` produces
 `prisma/data/expanded.json` from two sources with a strict division of labor: every Estonian
 form and every example sentence comes from Ekilex, every English gloss from Wiktionary, and the
@@ -4080,6 +4130,23 @@ still pane is the observer's job, so an ordinary re-render is two comparisons an
 same observer answers "does this surface have a box" for nothing, which takes that question off
 the render path too. Measured after: 11 to 15 reads, and one `getClientRects` rather than eleven.
 
+**A text box is one shape and the keys under it stand one distance off, and neither was true.** A
+learner said the row of Estonian letters felt glued to the box above it and the screen felt
+claustrophobic. It was 8px, typed by hand on ten screens and 12px on the eleventh, and 8px is the
+rhythm between rows in a list, not the air under a row of 36px circles. `--field-gap` is the one
+distance, 14px, which is the field's own inner padding, and `.under-field` on the wrapper is how a
+caller asks for it: on the wrapper rather than the bar, because the bar also stands beside a button
+on the add-a-word form and under a crossword clue, where there is no field edge to stand off from.
+The boxes themselves came in nine shapes, five paddings on three radii, so the caret sat a different
+distance in on every screen that asked for a word and the add-a-word form's own fields did not
+match each other. `.field` and `.field-lg` in `app/globals.css` are the two, a form's field and the
+answer box a round leads with, and every input and textarea in the tree wears one; the invariant
+reads the tags themselves, with a lookbehind for the `=>` inside an `onChange`, because the first
+version read to the first `>` and found no fields at all while passing. The crossword's cells and
+the deck's filter pill are exempt by name. And the card a round is played on had three insets, the
+header at 20, the body at 24 and the footer at 16, so "Check it" started eight pixels left of the box
+it checked; every seam is `px-6` now, read off the rounds rather than off a list of them.
+
 **Space is what says two things are separate, and it was saying five different things.** Pages
 stacked their top-level sections at gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote
 them, so moving from Progress to Practice changed how tightly the app breathed for no reason a
@@ -4309,6 +4376,153 @@ such a beat as `declined` before it reads the `sobi` in it, the machine offers a
 second day and time drawn to differ from the first, a second no meets the beat, and `cardInPlay`
 is what every later line reads so a time read back is the one that was accepted.
 `docs/21-situations.md` §33 is the transcript and what it does not fix.
+
+**A turn is credited with a second beat on a second word, never on its own punctuation.** `replay`
+reads a turn that landed against the next beat too, because "Tere, ma lähen poodi" greets and says
+where you are going and a friend who heard it does not then ask where you are going. That rule had
+no test of whether the turn had said two things, and a requirement can be met by something that is
+not a word: `{ kind: "question" }` is satisfied by a question mark anywhere in the text, which is
+right on its own beat because `Homme?` is a question with no question word in it, and `{ kind: "any"
+}` by anything at all. So any turn ending in `?` walked past every question-shaped beat downstream
+of the one it answered, in silence. Told `Minge otse edasi.`, a learner wrote `okei, otse, ja kuhu
+siis?` and was answered `Head aega!`: `otse` met the directions beat, the mark met "ask whether it
+is near", and the street corner said goodbye to somebody who had just asked where to go next.
+
+`addsEvidence` is the rule and it weighs `Evidence.satisfiedBy`, which is every word a requirement
+was met by, unfiltered. **A second list beside `matched` rather than the same one**, because
+`matched` is narrowed to what is worth saying back and that is a different question: `maksta` out of
+`Ma tahan maksta` is not a thing a waiter repeats and is still the word that met the beat, so a
+cascade reading it would refuse every sentence-shaped beat with a lemma requirement. A word rather
+than a requirement, because that is what "they said two things" means and a mark cannot be said
+twice; not one already spent, because `poodi` meeting two beats is one thing said, and the spent set
+travels down the cascade rather than being compared only against the beat before. The hurdle path
+takes the same guard. What is left is that the other side still cannot answer a question the scene
+did not anticipate, which is more beats rather than a change to the machine (§34).
+
+**A scene understands before it marks, because that is what the person on the other side does.**
+`ma tulema koju` is not Estonian and every Estonian who hears it knows the person is coming home.
+The marker held every turn to the dictionary's exact spelling and a learner reported the scenes as
+robotic, which they were: a dropped õ, a slipped letter, `pood` where `poodi` was due and `tulema`
+where `tulen` was due each read as a turn nobody could follow, and the other side said "I did not
+catch that" to somebody who had been perfectly clear. `lib/scenes/nearly.ts` is the one definition of
+close enough: a diacritic folded away, one letter out on a word of five or more, the right word in
+the wrong case, and the ma-infinitive straight after a subject pronoun. Each is the beat met, with a
+`Slip` written down beside it, and **the recast is the dictionary's**: `Lexicon.caseForm` for a
+case, the derived present for a person, and a slip the dictionary cannot recast is understood and
+not recast. Two letters out, a typo on a short word, a wrong word and the da-infinitive are
+deliberately not slips, and `nearly.ts` says why for each. The other side says the word back put
+right (`recast`, labeled as the learner's word the way they say it), the screen says "Understood"
+under the learner's own bubble, the debrief leads with the count of turns understood anyway, and the
+grades read a slip as `Hard`, never `Good` and never `Again`, on the case where it was one.
+`docs/21-situations.md` §35.
+
+**And a question the scene did not anticipate is answered before the move, because silence is the
+one thing nobody does with a question.** `lib/scenes/aside.ts` is what the other side can say about
+one, a ladder like the beat's own and every rung the dictionary's: the beat's banked answer where the
+beat asked for the question (`answer:<beat>`, a pseudo-beat `sceneBeats` adds), `Hästi, aitäh.` to
+"how are you", the day and the time off the card to "when", more of what they just said after
+directions or an offer, one gated line from a model on the turn's one booking, and `Ei tea.` from
+`ei` and the derived negative of `teadma`. `Evidence.asked` says a question was asked, `replyFor`
+says the aside first and stacks nothing on it, and where the beat asked for the question and holds
+no banked answer the next move is the answer and no shrug is said. **A beat that waits, waits**:
+`BeatSpec.awaits` opens with the stage direction alone and its bank lines are its answers, because
+the street corner was saying "Jah, see on lähedal" before anybody asked and goodbye after they did.
+A `datum` can name a case, so "where to?" says `Jaama.` back to `jaam`. `scripts/play-scene.ts`
+plays every scene keyless against the shipped dictionary as a sloppy or a curious learner and
+prints the conversation; run it before touching the marker or the reply. `docs/21-situations.md`
+§36.
+
+**And any ending on a stem it knows is the word, because that is what hearing somebody works
+like.** §35 tolerated the wrong case only where the dictionary held the form. `ma tahan minna
+haiglat` is the partitive where the sisseütlev was due and `haiglasi` is a form of nothing, and
+both are perfectly clear to anybody who hears them. `nearlyInflected` reads a word the scene's
+whole list cannot vouch for, sharing four or more opening characters with a form of the word the
+beat is about and at least half its own length, as that word: measured on the street corner,
+`haiglat`, `haiglale`, `haiglaks`, `haiglasi` and `haigla` are all understood and recast to
+`haiglasse`, while `kooli` and `blorp` are still misses. **The guard is that a word the list can
+vouch for is never read as a mangled other one**, so `kohvik` is never a botched `kohv`. And in a
+slot that wants a case, a wrong ending is a case rather than a slip of the pen: only a folded
+diacritic reads as spelling there (`foldedOnly`), or the review sends somebody to the letter bar
+over a grammar point.
+
+**Running out of patience is said in Estonian, not in a stage direction.** `They let it go, and
+move on.` printed in the middle of the conversation, three times running on a learner who was
+stuck, which is the loudest machine tell the transcripts had left. It is an acknowledgment every
+scene teaches, and the move follows it.
+
+**And a conversation reviews itself afterwards, which is the reason anybody does a role-play.**
+`lib/scenes/review.ts` leads on being understood, because "every one of your seven turns was
+understood" and "you made two mistakes" describe one run and only one of them gets somebody to
+open the next scene. Under it a note per case that came out as something else, commonest first,
+named the way a class names it and carrying the line `CASE_NOTES` prints on the grammar
+reference, with the learner's own words beside the dictionary's. It holds **no Estonian at all**,
+which is `lib/estonian/grammar.ts`'s standing pointed at a conversation and asserted the same way,
+and it **never marks**: a count of things achieved is the debrief's and a claim about somebody's
+Estonian is the mock exam's alone. `docs/21-situations.md` §37.
+
+**And why the wrong ending came out is a guess that says it is one.** The review could name the case
+and not the reason, which is the next thing a teacher says. Half of it is derivable: `caseOfForm`
+names the case the learner reached for under `whichCase`'s strict rule, exactly one or nothing, and
+`lib/scenes/diagnose.ts` reads three reasons off the run. Carried over from the last question, which
+leads because it is a fact about this conversation and the one somebody recognises about themselves;
+the pair that answers one question word, read off `CASES` with what each means off `CASE_NOTES`; the
+plain word, so the word arrived and the ending did not; and the stem, which is `possible` where the
+others are `likely`. **A hunch carries how sure it is** and both tiers are worded as guesses, because
+a wrong confident diagnosis teaches a learner a reason for a mistake they did not make in a voice
+they cannot argue with. One at most, none where nothing fits, and no Estonian typed: it deliberately
+does not read the inside and outside trios, since `place.ts` owns which set a *word* takes and a
+second reader is a second rule, which the invariant caught in the first draft. **The confusion
+reaches the shared log**: `SceneGrade.reachedCase` travels to `gradeCard`'s `reachedSlot`, so the
+pair somebody mixes up at a counter is counted beside the pair they mix up on a card, which is the
+whole argument for a conversation writing to the log at all. `docs/21-situations.md` §38.
+
+**A learner who says they are not following is handed the word, never the question a third time.**
+That is the moment somebody decides whether they are stupid or simply learning, and it was answered
+by repeating the question and then giving up. `LOST` is how a learner says it in the course's own
+words, the phrase `tervitused` teaches matched whole and the negator beside a form of `teadma` or
+`saama`; `readTurn` reads it after everything the beat could have been met by and never on a beat
+that wanted a no. It **costs nothing the first time**, the way a look and a wait does, and a try
+after that so one phrase cannot hold a scene for ever. The other side hands over the beat's own word
+(`offerFor`, beside `stalledWords`) and asks again in the same breath, and it is graded as help,
+`Again`, because the app supplied the word. **And the shrug is not said at somebody who has not
+answered yet**: a question asked while the floor is still theirs is a learner who is confused, so
+the aside is for a turn that landed and `narrow` asks again, which is what stopped "do you speak
+English?" being answered with "I do not know". `npm run play:scenes --style lost` is the transcript
+all of that came off. `docs/21-situations.md` §39.
+
+**A card may not deal a word the scene will not take, and the hint agrees with the card.** The
+landlord's card drew a problem from six words and the beat accepted a different six, so a third of
+runs dealt a card whose word the beat refused: the learner reads that the window is broken, says so,
+and is treated as having said nothing. `catalogue.test.ts` walks every prop's values against every
+beat's requirements. And `offerFor` takes the card, since offering the beat's first word told
+somebody whose card said the door was broken to say the heating was, which is worse than no hint
+because they follow it. **One word the scene recognised is not "I did not catch that"**: the split
+was half the words vouched, and the two things it decides between are "ask about the word I caught"
+and "tell them they were incomprehensible". The scene's list is the units it declares rather than the
+whole course, so a learner reaching for a real word from elsewhere was told they were not understood
+for using Estonian they had been taught. **The recast survives an aside**, because `Mahla. Ei tea.`
+is a person taking the order back and then answering, and only the generic acknowledgment stands
+down. **And the review counts turns that answered something**, not turns whose words were recognised,
+or somebody who met no beat reads "19 of your 21 turns were understood" over six things left undone.
+`docs/21-situations.md` §40.
+
+**Whether the learner was understood is a wider question than what the scene may say.** The closed
+word list is the units a scene declares, and it was also deciding whether a *turn* was Estonian at
+all: a bus window that does not declare the shopping unit read `sularahaga` as nothing anybody could
+make out and answered "I did not catch that", to somebody who had said "with cash" in a word the
+course teaches. The marker asks `courseForms`, a fact about the shared dictionary cached beside the
+others, one read a minute per instance; the gate and retrieval keep the scene's own list, asserted,
+because a model composing inside the whole course writes lines the learner has not been taught to
+read. The course rather than the dictionary, 1,400 entries against 6,110, because those are the
+words somebody could have been taught. **A real word is never read as a slip of the pen for
+another**: `valutab` is the third person of a verb the course teaches and was read as a typo of
+`valuta`, so the review told a learner the word they got right is said some other way. **A wrong
+number is a thing anybody can read**, so digits with no letters are a turn aimed elsewhere rather
+than one nobody could make out. And **a beat takes the verb of its own question**, since "say what
+is wrong with you" refused `valutama`, which is §29's finding about the whole course showing up in
+one beat. `npm run probe:turns` is the instrument: sixty sentences a real person would type, and the
+`unrecognised` lines are the ones to hunt. `docs/21-situations.md` §41.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5449,7 +5663,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `LOST`, `isLost`, `offerFor`, `caughtSomething`, `courseForms`, `isEstonian`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`, `isAdvanceKey`, `buttonRuns`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
@@ -5481,7 +5695,10 @@ npm run build:frequency  # recount the commonest words (cached corpus, --refresh
 npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
+npm run forms            # rebuild the forms list: every spelling of every word, from Ekilex and Vabamorf (cached, needs python3 with estnltk)
 npm run measure:scenes   # how much of a conversation the dictionary can already carry
+npm run play:scenes      # every scene played keyless as a sloppy or curious learner; read the transcripts (--scene, --style)
+npm run probe:turns      # what the marker makes of sentences a real person would type; hunt the !! lines
 npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds (three runs so far; read the ranked list)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running

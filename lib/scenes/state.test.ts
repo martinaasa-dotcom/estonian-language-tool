@@ -49,6 +49,9 @@ function evidence(reading: TurnReading, met: readonly boolean[] = [true]): Evide
     missing: met.flatMap((ok, i) => (ok ? [] : [i])),
     words: [],
     matched: [],
+    satisfiedBy: [],
+    slips: [],
+    asked: null,
   };
 }
 
@@ -225,6 +228,53 @@ describe("waiting", () => {
     let state = second.state;
     for (let i = 0; i < 20 && !isOver(SCENE, state); i += 1) {
       state = advance(SCENE, state, evidence("fragment", [false]), "valu").state;
+    }
+    expect(isOver(SCENE, state)).toBe(true);
+  });
+});
+
+describe("a one-word answer said twice", () => {
+  it("is taken the second time where it meets the beat, because a person waits once", () => {
+    /*
+      Asked what is wrong, a learner who says `pea`, is looked at, and says
+      `pea` again has answered, and any receptionist takes it. The second
+      fragment used to spend a try like a miss and the third ran the beat
+      out, over an answer that was the right one.
+    */
+    const start = advance(SCENE, startScene(SCENE), evidence("complete"), "Tere!").state;
+    const first = advance(SCENE, start, evidence("fragment", [true]), "valu");
+    expect(first.response).toBe("wait");
+    const second = advance(SCENE, first.state, evidence("fragment", [true]), "valu");
+    expect(second.response).toBe("answer");
+    expect(second.state.done).toContain("reason");
+  });
+
+  it("is still a miss the second time where it does not meet the beat", () => {
+    const start = advance(SCENE, startScene(SCENE), evidence("complete"), "Tere!").state;
+    const first = advance(SCENE, start, evidence("fragment", [false]), "ilm");
+    const second = advance(SCENE, first.state, evidence("fragment", [false]), "ilm");
+    expect(second.response).not.toBe("answer");
+    expect(second.state.done).not.toContain("reason");
+  });
+});
+
+describe("saying you are not following", () => {
+  it("costs nothing the first time, and the other side offers the word", () => {
+    const start = startScene(SCENE);
+    const { state, response } = advance(SCENE, start, evidence("lost", [false]), "ma ei tea");
+    expect(response).toBe("help");
+    expect(state.patience, "asking for help cost a try").toBe(2);
+    expect(state.beat).toBe(0);
+  });
+
+  it("costs a try the second time in a row, so a scene cannot be held for ever by one phrase", () => {
+    let state = startScene(SCENE);
+    let response;
+    ({ state, response } = advance(SCENE, state, evidence("lost", [false]), "ma ei tea"));
+    ({ state, response } = advance(SCENE, state, evidence("lost", [false]), "ma ei tea"));
+    expect(response).not.toBe("help");
+    for (let i = 0; i < 30 && !isOver(SCENE, state); i += 1) {
+      ({ state } = advance(SCENE, state, evidence("lost", [false]), "ma ei tea"));
     }
     expect(isOver(SCENE, state)).toBe(true);
   });

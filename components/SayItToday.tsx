@@ -188,8 +188,7 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
             name="q"
             lang="et"
             autoComplete="off"
-            className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
+            className="field w-full text-sm"
           />
         </div>
         <Button type="submit" size="sm">Look it up</Button>

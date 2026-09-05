@@ -31,6 +31,7 @@ import type { TurnContext } from "@/lib/scenes/turn";
 import { timeWords, type RoleCard } from "@/lib/scenes/props";
 import type { BeatSpec, SceneSpec } from "@/lib/scenes/types";
 import { isPhrase } from "@/lib/dict/pos";
+import { courseForms } from "@/lib/dict/facts";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { planRun, RECENCY_WINDOW, type Recency, type SceneRun as SceneRunPlan } from "@/lib/scenes/run";
 import { randomUUID } from "node:crypto";
@@ -39,7 +40,8 @@ import {
   advance, currentBeat, objectivesOf, outcomeOf, startScene, walkOut, type Objectives, type Response, type SceneState, type TurnRecord, advanceHurdle, hurdleBeat, raiseHurdle, type HurdleRecord,
 } from "@/lib/scenes/state";
 import { gradesFor, stalledWords, type SceneGrade } from "@/lib/scenes/grades";
-import { readTurn } from "@/lib/scenes/turn";
+import { reviewOf, type SceneReview } from "@/lib/scenes/review";
+import { addsEvidence, readTurn } from "@/lib/scenes/turn";
 
 /**
  * The units that supply the machinery every scene's marker needs.
@@ -86,7 +88,7 @@ export interface SceneContext {
 }
 
 /** One entry as this module needs it: `DictEntry`, its id, and its government. */
-type Row = DictEntry & { readonly id: string; readonly government: string | null };
+export type Row = DictEntry & { readonly id: string; readonly government: string | null };
 
 /**
  * Builds the context for one scene.
@@ -100,7 +102,23 @@ type Row = DictEntry & { readonly id: string; readonly government: string | null
 export async function sceneContext(sceneId: string): Promise<SceneContext | null> {
   const scene = sceneById(sceneId);
   if (!scene) return null;
+  const [rows, known] = await Promise.all([
+    readEntries([...sceneLemmas(scene)]),
+    /*
+      What the *course* can account for, for deciding whether the learner was
+      understood. A fact about the shared dictionary rather than about this
+      scene, so it is cached there and read once a minute per instance
+      (`courseForms`). The scene's own list stays what the other side may
+      say, which is the whole of §6.
+    */
+    courseForms(),
+  ]);
+  const context = contextFromRows(scene, rows);
+  return { ...context, marker: { ...context.marker, known: (word: string) => known.has(word) } };
+}
 
+/** Every lemma a scene may reach: its units, its beats' topics, its props, and the way out. */
+export function sceneLemmas(scene: SceneSpec): Set<string> {
   const lemmas = new Set<string>();
   for (const unit of scene.units) for (const lemma of unitById(unit)?.lemmas ?? []) lemmas.add(lemma);
   for (const beat of scene.beats) for (const word of beat.topic) lemmas.add(word);
@@ -108,8 +126,15 @@ export async function sceneContext(sceneId: string): Promise<SceneContext | null
     if (prop.kind === "word" || prop.kind === "weekday") for (const w of prop.oneOf) lemmas.add(w);
   }
   lemmas.add(FALLBACK_PHRASE);
+  return lemmas;
+}
 
-  const rows = await readEntries([...lemmas]);
+/**
+ * The context, from rows already in hand. Pure, so a script can play a scene
+ * against the shipped dictionary with no database (`scripts/play-scene.ts`),
+ * which is how the conversations are read for whether they sound like anybody.
+ */
+export function contextFromRows(scene: SceneSpec, rows: readonly Row[]): SceneContext {
   const lexicon = buildLexicon(rows);
 
   const hasFiniteVerb = finiteVerbs(rows);
@@ -460,6 +485,8 @@ export interface FinishedRun {
   readonly outcome: { id: string; says: string } | null;
   readonly turns: readonly TurnRecord[];
   readonly grades: readonly SceneGrade[];
+  /** What to do differently, in English, derived from the transcript. */
+  readonly review: SceneReview;
   /** Words the run needed and the learner did not have, for the debrief. */
   /**
    * Words the run needed and the learner did not have, for the debrief.
@@ -695,6 +722,7 @@ export async function finishRun(input: {
   const objectives = objectivesOf(scene, state);
   const outcome = outcomeOf(scene, state);
   const grades = gradesFor(scene, state);
+  const review = reviewOf(scene, state);
 
   await prisma.sceneRun.update({
     where: { id: row.id },
@@ -748,6 +776,7 @@ export async function finishRun(input: {
     outcome: outcome ? { id: outcome.id, says: outcome.says } : null,
     turns: state.turns,
     grades,
+    review,
     gaps: wanted.map((lemma) => ({ lemma, lexemeId: byLemma.get(lemma) ?? null })),
   };
 }
@@ -801,6 +830,9 @@ export function replay(
   const data = draw
     ? dataFor(draw.card, context.lexicon)
     : new Map<string, ReadonlySet<string>>();
+  const dataLemmas = new Map<string, readonly string[]>(
+    (draw?.card.props ?? []).map((prop) => [prop.slot, prop.lemmas]),
+  );
 
   const drawn = draw?.curveballs ?? [];
   const closeAt = context.scene.beats.findIndex((b) => b.move === "close");
@@ -814,7 +846,7 @@ export function replay(
     if (!beat) break;
     const said = String(sent.said ?? "").slice(0, MAX_TURN_CHARS);
     const heardNow = String(sent.heard ?? previous).slice(0, MAX_TURN_CHARS);
-    const marker = { ...context.marker, data, previous: heardNow };
+    const marker = { ...context.marker, data, dataLemmas, previous: heardNow };
 
     /*
       A CURVEBALL STANDS IN FRONT OF THE BEAT. While one is up, the turn is
@@ -839,6 +871,12 @@ export function replay(
       previous = heardNow;
       if (response !== "answer") continue;
       if (beatToo.reading !== "complete") continue;
+      /*
+        The turn cleared the curveball and answered the beat behind it, which
+        is only true where it met the beat with a word the curveball did not
+        already use. Otherwise it did one thing, and the beat is asked.
+      */
+      if (!ignored && !addsEvidence(beatToo, new Set(evidence.satisfiedBy))) continue;
       ({ state, response } = advance(context.scene, state, beatToo, said, Boolean(sent.helped), heardNow));
       state = raiseHurdle(context.scene, state, drawn);
       continue;
@@ -879,7 +917,18 @@ export function replay(
       too, and again while it keeps landing, each beat recorded as met by the
       same turn. The scene stays the same shape; only a person who said two
       things at once is not made to say the second one twice.
+
+      AND SAYING TWO THINGS MEANS TWO WORDS, WHICH IS WHAT `addsEvidence`
+      WEIGHS. A requirement can be met by something that is not a word, so
+      without that test a turn carrying a question mark walked past every
+      question-shaped beat after the one it answered: `okei, otse, ja kuhu
+      siis?` met the directions beat on `otse`, met "ask whether it is near"
+      on its own punctuation, and the other side said `Head aega!` to
+      somebody who had just asked where to go next. The words this turn has
+      already spent travel down the cascade, so one word cannot buy two
+      beats either.
     */
+    const spent = new Set(evidence.satisfiedBy);
     while (response === "answer" || response === "moveOn") {
       state = raiseHurdle(context.scene, state, drawn);
       if (state.hurdle || response === "moveOn") break;
@@ -887,6 +936,8 @@ export function replay(
       if (!next) break;
       const more = readTurn(said, next, marker);
       if (more.reading !== "complete") break;
+      if (!addsEvidence(more, spent)) break;
+      for (const word of more.satisfiedBy) spent.add(word);
       ({ state, response } = advance(context.scene, state, more, said, false, heard));
     }
     previous = heard;

@@ -344,7 +344,7 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               onChange={(e) => setName(e.target.value)}
               maxLength={32}
               placeholder="Your name or a nickname"
-              className="mt-2 w-full rounded-[var(--r-lg)] border px-5 py-3.5 text-md"
+              className="field-lg mt-2 w-full text-md"
               style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
             />
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>

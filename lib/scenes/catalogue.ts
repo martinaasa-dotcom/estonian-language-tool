@@ -22,7 +22,7 @@
  * seventeenth pass added for the words between the words: greetings, question
  * words, pronouns, and the clock. A conversation is mostly those.
  */
-import type { SceneSpec } from "./types";
+import type { SaysPart, SceneSpec } from "./types";
 
 /** Greetings, question words, pronouns, time and number. Every scene needs them. */
 /*
@@ -100,6 +100,48 @@ export const REACTIONS = {
   waiting: ["jah"],
 } as const;
 
+/**
+ * What the other side says about a question the scene did not anticipate,
+ * before going on with their own move (`lib/scenes/aside.ts`).
+ *
+ * A person caught off guard still answers: "how are you" gets "fine,
+ * thanks", and a question they have no answer to gets "don't know", said
+ * the way a stranger on a street corner says it. Both are parts, in the
+ * shape a beat's `says` takes, so every word is a lemma one of the common
+ * units teaches and the one verb form is read off the derived table rather
+ * than typed. `ei tea` is `ei` and the negative of `teadma`, which is the
+ * stored first person with its ending taken off.
+ */
+/**
+ * How a learner says they are not following, so the other side can help
+ * rather than ask the same thing again.
+ *
+ * The single most important thing to recognise in this module, because it is
+ * the moment somebody decides whether they are stupid or simply learning.
+ * A learner who writes "I do not understand" and is answered with the same
+ * question a third time has been told by a machine that the problem is them.
+ * A person offers the word.
+ *
+ * Lemmas and a course phrase, so nothing here is Estonian this file wrote,
+ * and all of them are taught by units every scene declares: the phrase by
+ * `tervitused`, `saama` by `pohiverbid`, `teadma` by `iga-paev`. The verbs
+ * are read *negated*, which is `ei` beside the form `derivedVerbForms` gives
+ * after it, so `ei tea` and `ei saa aru` are caught and `ma tean` is not.
+ */
+export const LOST = {
+  /** Matched whole: every word of it in the turn. A phrase is not a bag of words. */
+  phrases: ["Ma ei saa aru"],
+  /** The negator beside a form of one of these. */
+  verbs: ["teadma", "saama"],
+} as const;
+
+export const ASIDES = {
+  /** `Hästi, aitäh.` */
+  howAreYou: [{ lemma: "hästi" }, { lemma: "aitäh" }],
+  /** `Ei tea.` */
+  unknown: [{ lemma: "ei" }, { lemma: "teadma", verb: "IndPrPs_" }],
+} as const satisfies Record<string, readonly SaysPart[]>;
+
 /** The closing phrases, which are the same wherever you are leaving. */
 const FAREWELLS = ["Head aega!", "Nägemist!", "Aitäh!"] as const;
 
@@ -176,7 +218,13 @@ const DOCTOR: SceneSpec = {
       they: "They ask what brings you in.",
       move: "ask",
       topic: ["valu", "haigus", "tervis", "haige", "palavik"],
-      needs: [{ kind: "lemma", oneOf: ["valu", "haigus", "haige", "palavik", "väsinud"] }],
+      /*
+        `valutama` beside `valu`, because "my head hurts" is how anybody
+        answers this and the noun alone refused it. §29 of the design doc
+        found the same shape across the course: it teaches the nouns of a
+        situation and not the verbs that do things with them.
+      */
+      needs: [{ kind: "lemma", oneOf: ["valu", "valutama", "haigus", "haige", "palavik", "väsinud"] }],
       required: true,
       patience: 3,
       shape: "sentence",
@@ -361,7 +409,15 @@ const LANDLORD: SceneSpec = {
       they: "They ask what has gone wrong.",
       move: "ask",
       topic: ["küte", "elekter", "remont", "lekkima", "mööbel"],
-      needs: [{ kind: "lemma", oneOf: ["küte", "elekter", "remont", "lekkima", "mööbel", "ruum"] }],
+      /*
+        Every word the card can deal, and the two the beat is about beside
+        them. `aken` and `uks` were dealt and refused, so a third of runs
+        handed somebody a card whose problem the landlord would not hear.
+      */
+      needs: [{
+        kind: "lemma",
+        oneOf: ["küte", "elekter", "remont", "mööbel", "aken", "uks", "lekkima", "ruum"],
+      }],
       required: true,
       patience: 3,
       shape: "sentence",
@@ -767,7 +823,7 @@ const CAFE: SceneSpec = {
       they: "They ask what you would like.",
       move: "ask",
       topic: ["kohv", "tee", "jook", "soovima", "tellima"],
-      needs: [{ kind: "datum", slot: "drink" }],
+      needs: [{ kind: "datum", slot: "drink", grammCase: "PARTITIVE" }],
       required: true,
       patience: 3,
       shape: "word",
@@ -875,6 +931,7 @@ const DIRECTIONS: SceneSpec = {
       goal: "Ask whether it is near.",
       they: "They wait in case you have another question.",
       move: "confirm",
+      awaits: true,
       topic: ["lähedal", "kõndima", "minut"],
       needs: [{ kind: "question" }],
       required: false,
@@ -947,7 +1004,7 @@ const TICKET: SceneSpec = {
       they: "They ask where you are going.",
       move: "ask",
       topic: ["kuhu", "sõitma", "buss"],
-      needs: [{ kind: "datum", slot: "to" }],
+      needs: [{ kind: "datum", slot: "to", grammCase: "ILLATIVE" }],
       required: true,
       patience: 3,
       shape: "word",
@@ -969,7 +1026,19 @@ const TICKET: SceneSpec = {
       they: "They ask whether you are paying by card.",
       move: "ask",
       topic: ["maksma", "kaart", "raha"],
-      needs: [{ kind: "lemma", oneOf: ["kaart", "raha", "jah", "ei", "maksma"] }],
+      needs: [{
+        kind: "anyOf",
+        of: [
+          /*
+            "By card" is `kaardiga`, and `kaart` on its own is the word in
+            the wrong case: understood, and said back as a person at a
+            window says it. A yes or a no is the beat met as it was.
+          */
+          { kind: "case", lemma: "kaart", grammCase: "COMITATIVE" },
+          { kind: "case", lemma: "raha", grammCase: "COMITATIVE" },
+          { kind: "lemma", oneOf: ["jah", "ei", "maksma"] },
+        ],
+      }],
       required: true,
       patience: 2,
       shape: "word",

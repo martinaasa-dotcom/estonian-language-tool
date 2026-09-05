@@ -16,15 +16,21 @@
  * the eleven regular cases and both illatives are in, and `derivedVerbForms`
  * for a verb, which `npm run audit:verbs` checked against Ekilex over 797 verbs.
  *
- * Deliberately not folded. `matchEstonianForm` folds diacritics because a
- * learner types `koik` for `kõik`; an attested sentence is spelled correctly,
- * so folding here would only let a wrong spelling read as known.
+ * `forms` is deliberately not folded. `matchEstonianForm` folds diacritics
+ * because a learner types `koik` for `kõik`; an attested sentence is spelled
+ * correctly, so folding *retrieval* would only let a wrong spelling read as
+ * known. The learner's own turn is the other case, and `folded` is the same
+ * set read for it: a person hearing `koik` understands `kõik`, and the marker
+ * does too, noting the spelling (`lib/scenes/nearly.ts`).
  *
  * Pure: takes entries, returns sets. No React, no Next, no Prisma.
  */
 import { buildCaseTable, stemsFrom } from "@/lib/estonian/derive";
-import { derivedVerbForms } from "@/lib/estonian/conjugate";
+import { derivedVerbForms, type DerivedVerbCode } from "@/lib/estonian/conjugate";
 import { ESTONIAN_WORD } from "@/lib/estonian/cloze";
+import { fold } from "@/lib/estonian/fold";
+import { CASES } from "@/lib/estonian/cases";
+import type { CaseKey } from "@/lib/estonian/types";
 
 /** One dictionary entry, as this module needs to see it. */
 export interface DictEntry {
@@ -127,6 +133,56 @@ export interface Lexicon {
    * singular, and a case the table has no form for is simply absent.
    */
   readonly caseForm: ReadonlyMap<string, string>;
+  /**
+   * Every form with its diacritics folded away, to the spelling the
+   * dictionary holds.
+   *
+   * The marker's half of the answer the file header gives about folding.
+   * Retrieval may not fold, because an attested sentence is spelled correctly
+   * and folding would only let a wrong spelling read as known; a *learner's*
+   * turn is typed on a keyboard that often has no õ, and a person hearing
+   * `koik` says nothing about the vowel. So `readTurn` reads a folded match
+   * as the word, understood, with the spelling noted (`Slip`). Where two
+   * forms fold to one spelling the first entry keeps it, which costs a
+   * recast and never a reading.
+   */
+  readonly folded: ReadonlyMap<string, string>;
+  /**
+   * A verb's ma-infinitive, by lemma, so the marker can tell `ma tulema`
+   * from `ma tulen`: the first is the dictionary form where a person was
+   * due, and a friend who hears it understands and says `tulen` back. The
+   * da-infinitive is not here, because `ma tahan minna` is right.
+   */
+  readonly infinitives: ReadonlyMap<string, ReadonlySet<string>>;
+  /**
+   * A verb's derived forms, by lemma and morph code, off `derivedVerbForms`
+   * and so off the stored first person and nothing else (ADR-005 amendment
+   * 1). What the recast of `ma tulema` is read from, and what an aside's
+   * `ei tea` is read from (`lib/scenes/aside.ts`). Absent for a verb the
+   * rule does not reach, and then the slip is understood and not recast.
+   */
+  readonly persons: ReadonlyMap<string, ReadonlyMap<DerivedVerbCode, string>>;
+}
+
+/**
+ * WHICH CASE A LEARNER REACHED FOR, WHERE EXACTLY ONE CASE SPELLS IT THAT WAY.
+ *
+ * `whichCase` over the whole dictionary and this over one scene's own table
+ * are the same rule, and it is deliberately the strict one: `tuba` is its own
+ * nimetav and its own osastav, so naming either would be a guess, while
+ * `toale` is only ever the alaleütlev and naming it is the whole of what the
+ * review can say about why the wrong ending came out. A spelling more than
+ * one case claims is answered with null and the review says less.
+ */
+export function caseOfForm(lexicon: Lexicon, lemma: string, form: string): CaseKey | null {
+  const said = form.toLowerCase();
+  let found: CaseKey | null = null;
+  for (const spec of CASES) {
+    if (!lexicon.byCase.get(caseKeyFor(lemma, spec.key))?.has(said)) continue;
+    if (found) return null;
+    found = spec.key;
+  }
+  return found;
 }
 
 /** The key `byCase` is read with. One place, so a caller cannot spell it wrong. */
@@ -140,15 +196,31 @@ export function buildLexicon(entries: readonly DictEntry[]): Lexicon {
   const byLemma = new Map<string, Set<string>>();
   const byCase = new Map<string, Set<string>>();
   const caseForm = new Map<string, string>();
+  const folded = new Map<string, string>();
+  const infinitives = new Map<string, ReadonlySet<string>>();
+  const persons = new Map<string, ReadonlyMap<DerivedVerbCode, string>>();
   for (const entry of entries) {
     const own = byLemma.get(entry.lemma) ?? new Set<string>();
     for (const form of formsOf(entry)) {
       forms.add(form);
       own.add(form);
+      const flat = fold(form);
+      if (!folded.has(flat)) folded.set(flat, form);
     }
     byLemma.set(entry.lemma, own);
 
-    if (entry.pos === "VERB" || !entry.parts.GEN_SG) continue;
+    if (entry.pos === "VERB") {
+      const inf = new Set<string>();
+      if (entry.parts.INF_MA) for (const w of words(entry.parts.INF_MA)) inf.add(w);
+      if (inf.size > 0) infinitives.set(entry.lemma, inf);
+      const table = new Map<DerivedVerbCode, string>();
+      for (const form of derivedVerbForms({ lemma: entry.lemma, pres1sg: entry.parts.PRES_1SG })) {
+        table.set(form.morphCode, form.value);
+      }
+      if (table.size > 0) persons.set(entry.lemma, table);
+      continue;
+    }
+    if (!entry.parts.GEN_SG) continue;
     for (const row of caseTableOf(entry)) {
       const key = caseKeyFor(entry.lemma, row.spec.key);
       const seen = byCase.get(key) ?? new Set<string>();
@@ -159,7 +231,7 @@ export function buildLexicon(entries: readonly DictEntry[]): Lexicon {
       if (row.singular && !caseForm.has(key)) caseForm.set(key, row.singular);
     }
   }
-  return { forms, byLemma, byCase, caseForm };
+  return { forms, byLemma, byCase, caseForm, folded, infinitives, persons };
 }
 
 /** The eleven derivable cases of one nominal, attested forms leading. */
@@ -192,6 +264,11 @@ function caseTableOf(entry: DictEntry) {
  */
 export function withExtras(lexicon: Lexicon, extras: Iterable<string>): Lexicon {
   const forms = new Set(lexicon.forms);
-  for (const word of extras) forms.add(word.toLowerCase());
-  return { forms, byLemma: lexicon.byLemma, byCase: lexicon.byCase, caseForm: lexicon.caseForm };
+  const folded = new Map(lexicon.folded);
+  for (const word of extras) {
+    const lower = word.toLowerCase();
+    forms.add(lower);
+    if (!folded.has(fold(lower))) folded.set(fold(lower), lower);
+  }
+  return { ...lexicon, forms, folded };
 }

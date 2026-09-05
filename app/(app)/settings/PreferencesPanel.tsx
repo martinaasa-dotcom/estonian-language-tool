@@ -153,7 +153,7 @@ export function ClassNamePanel({ currentName }: { currentName: string }) {
           maxLength={32}
           onChange={(e) => setName(e.target.value)}
           placeholder="Whatever your class calls you"
-          className="min-w-0 flex-1 rounded-[var(--r)] border px-3.5 py-2.5 text-base"
+          className="field min-w-0 flex-1 text-base"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
         <Button

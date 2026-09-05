@@ -152,6 +152,74 @@ describe("a turn that was understood and missed the point", () => {
   });
 });
 
+describe("a word understood with a slip", () => {
+  it("is said back put right, and labeled as the learner's word rather than as said again", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, echo: "poodi", recast: true }));
+    expect(lines[0]).toEqual({ text: "Poodi.", provenance: "recast", reaction: true });
+    expect(lines[1]).toEqual(FRESH);
+  });
+
+  it("is said back as the learner's own where nothing slipped", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, echo: "poodi" }));
+    expect(lines[0]?.provenance).toBe("again");
+  });
+
+  it("is taken up before a narrower re-ask, so the part that landed is not ignored", () => {
+    const other: SpokenLine = { text: "Aga millal?", provenance: "scripted" };
+    const lines = replyFor(input({
+      answered: ASK, beat: ASK, response: "narrow", reading: "incomplete", echo: "poodi", recast: true, line: other,
+    }));
+    expect(texts(lines)).toEqual(["Poodi.", "Aga millal?"]);
+    expect(lines[0]?.provenance).toBe("recast");
+  });
+
+  it("does not add an acknowledgment to a re-ask, since nothing has been settled yet", () => {
+    const other: SpokenLine = { text: "Aga millal?", provenance: "scripted" };
+    const lines = replyFor(input({
+      answered: ASK, beat: ASK, response: "narrow", reading: "incomplete", line: other,
+    }));
+    expect(lines).toEqual([other]);
+  });
+});
+
+describe("a question the scene did not anticipate", () => {
+  const aside: SpokenLine = { text: "Otse edasi ja siis vasakule.", provenance: "scripted" };
+
+  it("is answered first, and stands in for the echo and the hästi", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, echo: "pea", aside }));
+    expect(texts(lines)).toEqual(["Otse edasi ja siis vasakule.", FRESH.text]);
+    expect(lines[0]?.reaction).toBe(true);
+  });
+
+  it("is answered before a narrower re-ask too", () => {
+    const other: SpokenLine = { text: "Kus teil valutab?", provenance: "scripted" };
+    const lines = replyFor(input({ answered: ASK, beat: ASK, response: "narrow", reading: "incomplete", aside, line: other }));
+    expect(texts(lines)).toEqual([aside.text, other.text]);
+  });
+
+  /*
+    A turn can do both: `mahl, ja kuhu siis?` orders in the wrong case and
+    asks a question. Taking the order back comes first; answering the
+    question comes after. The other way round is a person answering and
+    forgetting what was ordered.
+  */
+  it("comes after the learner's own word put right, and not instead of it", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, echo: "mahla", recast: true, aside }));
+    expect(texts(lines)).toEqual(["Mahla.", aside.text, FRESH.text]);
+  });
+
+  it("still stands in for the plain acknowledgment, which would contradict it", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, aside }));
+    expect(texts(lines)).toEqual([aside.text, FRESH.text]);
+  });
+
+  it("is not answered on a turn nobody understood, where the repair phrase is the whole reaction", () => {
+    const lines = replyFor(input({ answered: ASK, beat: ASK, response: "repeat", reading: "unrecognised", aside, line: NOTHING }));
+    expect(texts(lines)).not.toContain(aside.text);
+    expect(texts(lines)).toContain(FALLBACK_PHRASE);
+  });
+});
+
 describe("one word where a sentence was due", () => {
   it("gets a look and a wait: one word with a question mark, and no new question", () => {
     const lines = replyFor(input({ answered: ASK, beat: ASK, response: "wait", reading: "fragment" }));
@@ -179,12 +247,73 @@ describe("a turn in English", () => {
   });
 });
 
+describe("a learner who said they were not following", () => {
+  it("is handed the word, and then asked again in the same breath", () => {
+    const lines = replyFor(input({
+      answered: ASK, beat: ASK, response: "help", reading: "lost", heard: "Kus teil valutab?", offer: "pea",
+    }));
+    expect(texts(lines)).toEqual(["Pea?", "Kus teil valutab?"]);
+    expect(lines[0]?.provenance).toBe("offered");
+  });
+
+  it("is asked again where the beat has no word to point at", () => {
+    const lines = replyFor(input({
+      answered: ASK, beat: ASK, response: "help", reading: "lost", heard: "Kus teil valutab?", offer: null,
+    }));
+    expect(texts(lines)).toEqual(["Kus teil valutab?"]);
+  });
+
+  it("is not told the same word twice where the word is the line", () => {
+    const lines = replyFor(input({
+      answered: GREET, beat: GREET, response: "help", reading: "lost", heard: "Tere!", offer: "Tere!",
+    }));
+    expect(texts(lines)).toEqual(["Tere!"]);
+  });
+
+  it("is never told they were not understood, because they said so themselves", () => {
+    const lines = replyFor(input({
+      answered: ASK, beat: ASK, response: "help", reading: "lost", heard: "Kus teil valutab?", offer: "pea", line: NOTHING,
+    }));
+    expect(texts(lines)).not.toContain(FALLBACK_PHRASE);
+  });
+});
+
+describe("a word the course spells with its own punctuation", () => {
+  it("keeps it, rather than being given a second mark", () => {
+    expect(reaction("Tere!", "?").text).toBe("Tere!");
+    expect(reaction("hästi", ".").text).toBe("Hästi.");
+  });
+});
+
 describe("running out of patience", () => {
-  it("says so in English and moves to the next beat's line, with no acknowledgment", () => {
+  /*
+    A person who decides not to press a point says a word and carries on.
+    This used to print a line of English in the middle of the conversation,
+    three times running on a learner who was stuck, which is the loudest
+    "you are talking to a machine" left in the transcripts.
+  */
+  it("lets it go in Estonian and moves to the next beat's line", () => {
     const lines = replyFor(input({ answered: ASK, beat: OFFER, response: "moveOn", reading: "offtarget", line: FRESH }));
-    expect(lines[0]?.provenance).toBe("unspoken");
+    expect(lines[0]?.provenance).toBe("attested");
+    expect(lines[0]?.reaction).toBe(true);
+    expect(REACTIONS.acknowledge).toContain(lines[0]!.text.toLowerCase().replace(".", ""));
     expect(lines[1]).toEqual(FRESH);
-    expect(lines.some((l) => l.reaction)).toBe(false);
+  });
+
+  it("does not also say a word where the question was answered first", () => {
+    const aside: SpokenLine = { text: "Ei tea.", provenance: "attested" };
+    const lines = replyFor(input({
+      answered: ASK, beat: OFFER, response: "moveOn", reading: "offtarget", line: FRESH, aside,
+    }));
+    // "I don't know. Fine." is two reactions contradicting each other.
+    expect(texts(lines)).toEqual(["Ei tea.", FRESH.text]);
+  });
+
+  it("does not also acknowledge the turn, since letting it go is the reaction", () => {
+    const lines = replyFor(input({
+      answered: ASK, beat: OFFER, response: "moveOn", reading: "offtarget", line: FRESH, echo: "pea",
+    }));
+    expect(lines).toHaveLength(2);
   });
 });
 
@@ -241,6 +370,7 @@ describe("a line off the card", () => {
   const lexicon: Lexicon = {
     forms: new Set(), byLemma: new Map(), byCase: new Map(),
     caseForm: new Map([[caseKeyFor("teisipäev", "ADESSIVE"), "teisipäeval"]]),
+    folded: new Map(), infinitives: new Map(), persons: new Map(),
   };
   const dated: BeatSpec = {
     ...OFFER,
