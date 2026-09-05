@@ -40,6 +40,17 @@ import { classifyGradation } from "./gradation";
  * read off `CASES` rather than typed, because an ending spelled twice is two
  * endings waiting to disagree.
  *
+ * AND THE COPY IS HELD TO THE SAME RULE, WHICH IT WAS NOT. `KIND_NOTES` named
+ * three verbs by their first person and one of the three was wrong: the
+ * everyday verb for must governs the *other* infinitive, which is the one
+ * thing `TOPIC_NOTES.infinitives` puts under "watch out". Nothing re-checked
+ * them, because the header above was about the rules and the notes are copy,
+ * so the fault shipped and was then taught to everybody who met the kind. The
+ * notes name endings and nothing else now: a governing verb is described by
+ * meaning and named once on the page `KindNote.topic` points at, and
+ * `exceptions.test.ts` fails on a note carrying a stored first person out of
+ * the shipped dictionary, which is what would have caught it.
+ *
  * SILENCE IS NOT EVIDENCE, which is the rule `lib/srs/retire.ts` was corrected
  * for. A word the dictionary holds no form for is unknown, never regular: every
  * test below runs only where the stored form is actually there, so a thin entry
@@ -433,6 +444,21 @@ export interface KindNote {
   readonly title: string;
   /** What the pattern would have you do, and what these words do instead. */
   readonly what: string;
+  /**
+   * The grammar topic that says when a learner actually needs this form, or
+   * null where there is no page about it.
+   *
+   * A learner drove this round and reported that it was not clear why they
+   * were being shown `vihata`: the round says what the form departs from and
+   * said nothing about what the form is *for*, which for the `da`-infinitive
+   * is the whole point of it. That fact belongs on one page rather than in a
+   * sentence per exception kind, and `lib/estonian/grammar.ts` already has it
+   * (`infinitives`, `imperative`, `present-tense`), so the kind names the
+   * topic and the screens link to it. `exceptions.test.ts` checks every id
+   * against `grammarTopic`, because a dead link here is a dead end on the one
+   * screen this area exists to stop being one.
+   */
+  readonly topic: string | null;
 }
 
 export const KIND_NOTES: Record<ExceptionKind, KindNote> = {
@@ -440,66 +466,108 @@ export const KIND_NOTES: Record<ExceptionKind, KindNote> = {
     family: "STEM",
     title: "The stem changes",
     what: "The genitive is usually the word with an ending added. In these it is not: a consonant grades, a vowel drops out of the middle, or the stem is another word again. Every other case in the singular is built on it, so this is the one to learn first.",
+    topic: "gradation",
   },
   PART_SG: {
     family: "SINGULAR",
     title: "The partitive goes its own way",
-    what: "The partitive is usually the genitive stem with t or d on it, or the plain word. In these it goes back to the strong grade the genitive lost, or takes an ending nothing predicts.",
+    what: "The partitive is usually the genitive stem with t or d on it, or the plain word. In these it goes back to the strong grade the genitive lost, or takes an ending nothing predicts, so it is held in your head rather than worked out.",
+    topic: "object",
   },
   SHORT_ILLATIVE: {
     family: "SINGULAR",
     title: "Two ways into it",
-    what: "The ending sse is always right and always understood. Half the words in the dictionary also have a short form, and the short one is what you will hear in a shop. Both are accepted here.",
+    /*
+      BOTH FORMS ARE NAMED, BECAUSE THE FIRST VERSION OF THIS NAMED NEITHER.
+
+      It read "half the words in the dictionary also have a short form, and the
+      short one is what you will hear in a shop", which is true, is about the
+      dictionary rather than about the word on the screen, and was reported by
+      somebody using it as telling them a shorter form exists and never saying
+      what it is. Both spellings were on the card the whole time and nothing
+      said which was which, so the sentence read as a riddle. The screens label
+      the pair now (`AlsoRight`), and this says what the two are for.
+    */
+    what: "This word has two ways in. The long one is the stem with sse on it and is always right. The short one is what you will hear said, and no rule reaches it. Both are named here, and both are accepted.",
+    topic: null,
   },
   PLURAL_STEM: {
     family: "PLURAL",
     title: "The plural is built on another stem",
     what: "The whole plural sits on the genitive plural, and in these words that is not the singular stem with an ending on it. Get this one and every plural case follows.",
+    topic: null,
   },
   PART_PL: {
     family: "PLURAL",
     title: "The partitive plural is a word to learn",
     what: "Most partitive plurals are one of the two stems with a vowel and id or sid. These are not, so this is a form to hold in your head rather than work out.",
+    topic: null,
   },
   NOM_PL: {
     family: "PLURAL",
     title: "The plural is another word",
-    what: "The plural is the genitive plus d for nearly every word in the language. Here it is not.",
+    what: "The plural is the genitive plus d for nearly every word in the language. Here it is not, so the plural is a second word to learn beside the singular.",
+    topic: null,
   },
   NO_PLURAL: {
     family: "PLURAL",
     title: "No plural",
     what: "Nobody counts these, so there is no plural to learn. The dictionary records none and neither should you.",
+    topic: null,
   },
   PRESENT_STEM: {
     family: "VERB",
     title: "The present runs on another stem",
     what: "Every person, the negative, the conditional and the imperative are built on the I form. In these verbs that form is not the ma-infinitive with an ending, so getting it wrong gets the whole present wrong at once.",
+    topic: "present-tense",
   },
   PAST_STEM: {
     family: "VERB",
     title: "The past is another word",
     what: "The simple past is usually the ma-stem with sin on it. These verbs take a different vowel or a different stem entirely, and they are the commonest verbs in the language.",
+    topic: "imperfect",
   },
   PAST_3SG: {
     family: "VERB",
     title: "He, she and it in the past",
     what: "There is no rule that turns the I form of the past into the she form: some drop the ending and some add a vowel. This is the one slot in the verb nothing predicts, for any verb.",
+    topic: "imperfect",
   },
   DA_INFINITIVE: {
     family: "VERB",
     title: "The da-infinitive",
-    what: "The form after tahan, saan and pean. It is usually the ma-stem with da on it, and in these verbs the stem grades or changes underneath it.",
+    /*
+      THE VERBS THAT TAKE IT ARE DESCRIBED, NOT NAMED, AND THAT IS THE FIX.
+
+      This read "the form after tahan, saan and pean", and the last of those
+      three is wrong: the everyday verb for must takes the *other* infinitive,
+      which is exactly what `TOPIC_NOTES.infinitives` warns about under
+      "watch out". Three Estonian words were typed into this table, nothing
+      ever re-checked them, and one of them taught the opposite of the truth
+      to everybody who met the kind. That is the failure this whole module's
+      header is about, one directory in from where it was looking: a list of
+      Estonian somebody typed ships in silence and is then drilled.
+
+      So the governing verbs are given by meaning here and named, once, on the
+      page `topic` points at, where `lib/estonian/grammar.ts` already had them
+      right and holds no Estonian either. `exceptions.test.ts` checks these
+      notes against the dictionary's own stored first persons, so the next verb
+      typed in fails rather than ships.
+    */
+    what: "The form you need after wanting, being able and knowing how. It is usually the ma-stem with da on it. In these verbs it is not: the word changes underneath the ending, so this one is memorised rather than worked out.",
+    topic: "infinitives",
   },
   TUD_PARTICIPLE: {
     family: "VERB",
     title: "The tud form",
-    what: "What the perfect and the passive are built on. Usually the ma-stem with tud or dud, and in these the stem moves first.",
+    what: "What the perfect and the passive are built on. Usually the ma-stem with tud or dud, and in these the stem moves first, so the whole form is one to learn.",
+    topic: "past-participle",
   },
   IMPERATIVE_PL: {
     family: "VERB",
     title: "Telling somebody politely",
     what: "The form every counter and every official will use on you. It is not built on the present stem, so a verb whose present grades takes the other grade here.",
+    topic: "imperative",
   },
 };
 

@@ -90,17 +90,42 @@ export function ExceptionNote({ exception: ex }: { exception: WordException }) {
         {note.what}
       </p>
 
-      {/*
-        The other form, where there genuinely is one. Both illatives are
-        Estonian, a course teaches them as a pair, and the marker takes either,
-        so hiding one is the fault this whole area exists to name, pointed the
-        other way.
-      */}
-      {ex.ruleFormIsAlsoRight && ex.ruleForm && (
-        <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-          <span lang="et">{ex.ruleForm}</span> is right too, and is what the ending gives you.
-        </p>
-      )}
+      <AlsoRight
+        short={ex.forms[0] ?? null}
+        long={ex.ruleFormIsAlsoRight ? ex.ruleForm : null}
+        className="mt-2 text-xs"
+      />
     </div>
+  );
+}
+
+/**
+ * THE OTHER FORM, NAMED, WHERE THERE GENUINELY IS ONE.
+ *
+ * Both illatives are Estonian, a course teaches them as a pair, and the marker
+ * takes either, so hiding one is the fault this whole area exists to name,
+ * pointed the other way. What the first version did instead was print the pair
+ * and label neither: the card showed `tingimusse` and `tingimusesse` under a
+ * sentence saying half the words in the dictionary have a short form, and a
+ * learner reported, correctly, that it never said which of the two that was.
+ * A form on the screen with nothing saying what it is is the same dead end as
+ * a form that is missing.
+ *
+ * One drawing rather than one per screen, for the reason `StarWord` gives about
+ * itself: the round and the dictionary entry disagreeing about which illative
+ * is the short one is worse than either answer on its own. It takes the two
+ * spellings rather than a `WordException`, because the round holds a task
+ * rather than an exception and a second copy of this paragraph is where the two
+ * screens would start saying different things.
+ */
+export function AlsoRight(
+  { short, long, className }: { short: string | null; long: string | null; className?: string },
+) {
+  if (!short || !long) return null;
+  return (
+    <p className={className} style={{ color: "var(--ink-3)" }}>
+      <span lang="et">{short}</span> is the short one, and{" "}
+      <span lang="et">{long}</span> is the long one the ending gives you. Both are right.
+    </p>
   );
 }

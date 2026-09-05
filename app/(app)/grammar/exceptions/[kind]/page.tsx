@@ -5,6 +5,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { courseLevelFor } from "@/lib/progress/level";
 import { exceptionGroup } from "@/lib/progress/exceptions";
 import { EXCEPTION_KINDS, FAMILY_TITLES, KIND_NOTES } from "@/lib/estonian/exceptions";
+import { grammarTopic } from "@/lib/estonian/grammar";
 import { ExceptionNote } from "@/components/WordExceptions";
 import { DrillLink } from "@/components/DrillLink";
 import { Card, Chip, Empty, Page, SectionTitle, Stack } from "@/components/ui";
@@ -50,6 +51,7 @@ export default async function ExceptionKindPage({ params }: { params: Promise<{ 
   if (!group) notFound();
 
   const note = KIND_NOTES[group.kind];
+  const topic = note.topic ? grammarTopic(note.topic) : undefined;
 
   return (
     <Page
@@ -64,6 +66,28 @@ export default async function ExceptionKindPage({ params }: { params: Promise<{ 
             dictionary. Every one was found by comparing the pattern with the form a lexicographer
             wrote down, so this list follows the dictionary rather than a list somebody typed.
           </p>
+          {/*
+            AND WHERE THE FORM IS ACTUALLY USED, WHICH IS A DIFFERENT QUESTION.
+
+            This page says which words break a pattern. What sentence anybody
+            puts the form in is a page of its own, and a learner who reaches
+            the `da`-infinitive here without it has learned a spelling. The
+            kind names the topic and `lib/estonian/grammar.ts` says it once,
+            rather than this page saying it again in its own words.
+          */}
+          {topic && (
+            <p className="mt-3 text-sm" style={{ color: "var(--ink-2)" }}>
+              More on this:{" "}
+              <Link
+                href={`/grammar/topic/${note.topic}`}
+                className="font-semibold underline underline-offset-2"
+                style={{ color: "var(--accent-deep)" }}
+              >
+                {topic.title}
+              </Link>
+              . {topic.summary}
+            </p>
+          )}
         </Card>
 
         {group.entries.length === 0 ? (

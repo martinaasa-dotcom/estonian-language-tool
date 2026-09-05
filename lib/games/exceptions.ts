@@ -104,6 +104,17 @@ export interface ExceptionTask {
   readonly slot: string;
   /** What the slot is called, Estonian name first, as everywhere. */
   readonly label: string;
+  /**
+   * The grammar topic that says when this form is needed, where there is one.
+   *
+   * A learner reported that the round did not make it clear why they were
+   * being shown `vihata`, and they were right: the screen said what the form
+   * departs from and nothing about what the form is *for*, which for the
+   * `da`-infinitive is the only reason anybody learns it. That fact lives on
+   * one page rather than in a sentence per word, so the kind names it and the
+   * screen links to it. `KIND_NOTES` is where the mapping is.
+   */
+  readonly topic: string | null;
   /** Every spelling that counts as right, the one to print first. */
   readonly accepted: readonly string[];
   /** The alternation, where the dictionary shows one. */
@@ -191,6 +202,7 @@ export function tasksFor(word: ExceptionWord): ExceptionTask[] {
     kind: ex.kind,
     slot: ex.slot,
     label: askLabel(ex),
+    topic: KIND_NOTES[ex.kind].topic,
     accepted: ex.forms,
     note: ex.note,
     alsoRight: ex.ruleFormIsAlsoRight ? ex.ruleForm : null,

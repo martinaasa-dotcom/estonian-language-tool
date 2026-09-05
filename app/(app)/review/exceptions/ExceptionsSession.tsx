@@ -14,6 +14,8 @@ import { Chip, Stat } from "@/components/ui";
 import { StarWord } from "@/components/StarWord";
 import { markForm, type FlashMark } from "@/lib/games/flash";
 import { departureLine, rungLine, type ExceptionTask } from "@/lib/games/exceptions";
+import { grammarTopic } from "@/lib/estonian/grammar";
+import { AlsoRight } from "@/components/WordExceptions";
 import { plainAskLine } from "@/lib/estonian/plainAsk";
 import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
 
@@ -181,7 +183,17 @@ export function ExceptionsSession({ tasks: initialTasks }: { tasks: ExceptionTas
           style={{ borderColor: "var(--rule-soft)" }}
         >
           <Chip tone="accent">{rungLine(task)}</Chip>
-          {task.note && <Chip tone="hard" caseSensitive>{task.note}</Chip>}
+          {/*
+            AND NOT THE ALTERNATION CHIP.
+
+            `k : ∅` beside `vihkama` is true, is the same fact the dictionary
+            entry carries, and was reported by somebody driving this round as
+            not telling them anything: a learner mid-round is not reading a
+            reference, and on the two rungs that ask for a form it sat above
+            the box as a hint at the very letters the answer turns on. The
+            entry keeps it (`ExceptionNote`), where a chip beside a word is
+            what somebody came for.
+          */}
           {/* The corner of the card, which is where somebody looks for this
               the moment a word turns out to be worth keeping. */}
           <div className="ml-auto">
@@ -284,12 +296,57 @@ function Meeting({ task }: { task: ExceptionTask }) {
         <span>{departureLine(task)}</span>
       </p>
 
-      {task.alsoRight && (
-        <p className="mt-3 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
-          <span lang="et">{task.alsoRight}</span> is right too, and is what the ending gives you.
-        </p>
-      )}
+      {/*
+        Both spellings named, rather than a pair with a paragraph about the
+        dictionary under it. `AlsoRight` is the one drawing of that sentence,
+        shared with the entry, so the round and the dictionary cannot disagree
+        about which of `tuppa` and `toasse` is the short one.
+      */}
+      <AlsoRight
+        short={task.accepted[0] ?? null}
+        long={task.alsoRight}
+        className="mt-3 text-[13.5px]"
+      />
+
+      <MoreOnThis task={task} className="mt-4 text-[13.5px]" />
     </div>
+  );
+}
+
+/**
+ * WHAT THE FORM IS FOR, WHICH IS THE QUESTION THE ROUND WAS NOT ANSWERING.
+ *
+ * A learner drove this and said it was not clear why they were being shown
+ * `vihata`. Everything on the screen was about where the form departs from the
+ * pattern, and nothing was about the sentence anybody would ever put it in: the
+ * `da`-infinitive is the form after wanting and being able, and a round that
+ * teaches the spelling without that has taught a string.
+ *
+ * The line is "more on this" rather than "where you need it", because the same
+ * link has to be honest for the stem, whose page is about why the stem moves
+ * rather than about a sentence to put it in. The topic's own title carries the
+ * rest, which is what stops this being a second description of the page.
+ *
+ * A LINK RATHER THAN A PARAGRAPH, because which verbs govern which infinitive
+ * is a page's worth of fact and `lib/estonian/grammar.ts` already holds it,
+ * correctly and with no Estonian typed into it. Saying it again here is the
+ * second copy that goes wrong, which is exactly how this kind came to claim the
+ * everyday verb for must takes the `da` form when it takes the other one.
+ */
+function MoreOnThis({ task, className }: { task: ExceptionTask; className?: string }) {
+  const topic = task.topic ? grammarTopic(task.topic) : undefined;
+  if (!topic) return null;
+  return (
+    <p className={className} style={{ color: "var(--ink-3)" }}>
+      More on this:{" "}
+      <Link
+        href={`/grammar/topic/${task.topic}`}
+        className="font-semibold underline underline-offset-2"
+        style={{ color: "var(--accent-deep)" }}
+      >
+        {topic.title}
+      </Link>
+    </p>
   );
 }
 
@@ -398,6 +455,8 @@ function Feedback({ task, mark }: { task: ExceptionTask; mark: FlashMark }) {
           The other words that do this
         </Link>
       </p>
+
+      <MoreOnThis task={task} className="mt-1.5 text-[12.5px]" />
     </div>
   );
 }
