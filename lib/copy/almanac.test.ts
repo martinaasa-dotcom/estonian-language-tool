@@ -123,6 +123,34 @@ describe("the almanac's own copy", () => {
     }
   });
 
+  it("never says that an Estonian name means something", () => {
+    /*
+      The fault this check was written for shipped, and a learner reported it:
+      the card printed the word for a sauna under "The Estonian name for
+      Saturday means bath day". That is true of the Old Norse the name was
+      borrowed from and false of the Estonian, where nothing in the day's name
+      says it, and the person best placed to notice is exactly the person the
+      card is for.
+
+      "Means" is the whole of what went wrong, because it tells a learner the
+      letters in front of them carry that sense. A note may say what a name is
+      built out of, which they can check in the spelling, or where it was
+      borrowed from, which is history. It may not hand them a meaning: this
+      file holds no Estonian and reads no dictionary, so it has nothing to
+      check one against.
+    */
+    const claimsAMeaning = /\bestonian\b[^.]*\bmeans?\b/i;
+    for (const occasion of allOccasions()) {
+      expect(claimsAMeaning.test(occasion.note), occasion.key).toBe(false);
+    }
+    // Made to fail on the real sentence rather than on a hypothetical one.
+    expect(claimsAMeaning.test("The Estonian name for Saturday means bath day.")).toBe(true);
+    // And not on the two shapes that are allowed, or the rule is a ban on the
+    // whole layer rather than on the one claim it cannot back.
+    expect(claimsAMeaning.test("Estonian numbers four of its weekdays.")).toBe(false);
+    expect(claimsAMeaning.test("Estonian borrowed the name from Old Norse.")).toBe(false);
+  });
+
   it("gives every occasion a distinct key and something to ask for", () => {
     const keys = allOccasions().map((o) => o.key);
     expect(new Set(keys).size).toBe(keys.length);

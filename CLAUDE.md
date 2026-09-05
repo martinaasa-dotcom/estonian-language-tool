@@ -3375,6 +3375,31 @@ one that matters: every gloss the table can ask for is one the shipped dictionar
 a dead gloss fails silently and for ever and the card quietly stops being about the date. Five were
 dead when the table was first written.
 
+**And a reason nobody can check is not the only kind that costs.** A reason that a learner *can*
+check and finds false costs more, because it is a lesson about Estonian and they are here to be
+taught Estonian. The card printed `saun` under "The Estonian name for Saturday means bath day",
+which is true of the Old Norse the name was borrowed from and false of the Estonian: no part of the
+day's name says any such thing, and the one reader placed to notice is somebody a fortnight into a
+course who has just learned the seven weekdays. The little connection is the whole reason the panel
+exists, so the standard on it is the standard the rest of the app holds to about Estonian rather
+than a softer one for the copy round the edges.
+
+Three rules came out of the pass that followed, each of them a way that sentence went wrong. **A
+note is about the day, never about the word beside it**, since which of an occasion's glosses the
+dictionary answers with is the dictionary's choice and can differ between two deployments. **No
+note says an Estonian name *means* something**, asserted in `almanac.test.ts` on the sentence that
+shipped: "means" tells a learner the letters in front of them carry that sense, and half the names
+worth writing about here are loans where they do not. What may be said is what a name is built out
+of, which they can check in the spelling, or where it was borrowed from and from which language,
+which is a claim about history. And **a claim with a number in it is checked before it is written**,
+which is how the same pass found World Animal Day saying there are more elk here than people in
+Tartu, out by a factor of nine, and World Book Day resting on a books-per-head ranking the sources
+disagree about. Four more went with them: Friday was said to be where the counting of the weekdays
+stops, and it stops at Thursday; Halloween was put two weeks after a masked night that is ten days
+after it; Midsummer Day promised a day off tomorrow on the second of the two holidays; and the
+solstice card called the twenty-first the shortest day of the year, which it is most years and not
+all of them.
+
 **A word it has already shown you is not a word of the day.** Not in the deck, not starred, not in
 the review log, and the log is checked separately because `Review` deliberately has no relation to
 `Card` and outlives one. "Met" is measured at the start of the learner's day rather than now, which

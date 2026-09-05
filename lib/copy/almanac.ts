@@ -33,8 +33,9 @@
        arithmetic exists.
     3. The shape of the number. The twelfth is a dozen, the seventh is a week,
        the fifth is a hand.
-    4. The weekday, where Estonian has something to say about it. Three of the
-       seven are named rather than numbered, and each name is a small story.
+    4. The weekday, where Estonian has something to say about it. Four of the
+       seven are counted, and what is worth saying about the other three is
+       different for each of them.
     5. The month, which always answers. This is the floor: every day of the
        year reaches it, so nothing can fall through to nothing.
 
@@ -42,6 +43,44 @@
   the ninth of the month would mean writing one that is not true, and a page
   that tells you something charming every single day has taught you to skim it
   by the end of the first week.
+
+  A CHARMING NOTE THAT IS WRONG COSTS MORE THAN A DULL ONE THAT IS RIGHT, AND
+  THE FIRST ONE TO SHIP WAS ABOUT SATURDAY. The card printed the word for a
+  sauna under a sentence saying the Estonian name for Saturday means bath day.
+  That is true of the Old Norse the name was borrowed from and it is not true
+  of the Estonian, where no part of the day's name says anything of the sort,
+  and the one reader who can see it is the learner the card is for: somebody a
+  fortnight into a course who has just learned the seven weekdays. The little
+  connection is the whole reason this panel exists, so the standard has to be
+  the same standard the rest of the app holds to about Estonian rather than a
+  softer one for the copy round the edges.
+
+  So, three rules for a note, each of them a way the Saturday one went wrong.
+
+  A NOTE IS ABOUT THE DAY, NEVER ABOUT THE WORD BESIDE IT. Which of an
+  occasion's glosses the dictionary answers with is the dictionary's choice and
+  can differ between two deployments, so a note that explains the word on the
+  card is making a promise this file cannot keep. Say what today is and let the
+  word arrive next to it.
+
+  NO NOTE SAYS THAT AN ESTONIAN NAME MEANS SOMETHING. "Means" is the word that
+  did the damage, because to a learner it says the letters in front of them
+  carry that sense, and half the names worth writing about here are loans where
+  they do not. What may be said instead is what a name is BUILT OUT OF, which a
+  learner can see for themselves in the spelling (Sunday is built out of the
+  word for holy, and it is), or where a name was BORROWED FROM, naming the
+  language it came from, which is a claim about history rather than about what
+  an Estonian word contains. This file holds no Estonian and reads no
+  dictionary, so it has nothing to check a meaning against; `wordOfDay.ts` is
+  the half with Ekilex and Wiktionary behind it. Asserted in `almanac.test.ts`,
+  on the sentence that shipped.
+
+  A CLAIM WITH A NUMBER IN IT IS CHECKED BEFORE IT IS WRITTEN. The same pass
+  found World Animal Day saying there were more elk here than people in Tartu,
+  which is out by a factor of nine (about eleven thousand elk against ninety
+  odd thousand people), and World Book Day resting on a books-per-head ranking
+  the sources disagree about. Both say something true about the same day now.
+  Prefer a fact that is hard to be wrong about to one that is impressive.
 
   Pure: a day key in, English out. No React, no Prisma, no clock of its own.
 */
@@ -116,7 +155,7 @@ const NAMED: Record<string, Occasion> = {
   "03-20": {
     key: "happiness",
     name: "Day of Happiness",
-    note: "The United Nations put the Day of Happiness on the spring equinox, which is fair enough this far north.",
+    note: "The United Nations put the Day of Happiness on the twentieth of March, which is about when the light comes back this far north.",
     glosses: ["joy", "happiness", "spring"],
   },
   "04-01": {
@@ -128,7 +167,7 @@ const NAMED: Record<string, Occasion> = {
   "04-23": {
     key: "book-day",
     name: "World Book Day",
-    note: "World Book Day. Estonia publishes more books per head than almost anywhere.",
+    note: "World Book Day. The oldest printed Estonian anybody has is a catechism from 1535, and only fragments of it survive.",
     glosses: ["book", "story", "read"],
   },
   "05-01": {
@@ -158,7 +197,7 @@ const NAMED: Record<string, Occasion> = {
   "06-24": {
     key: "midsummer",
     name: "Midsummer Day",
-    note: "Midsummer. Half the country is at a bonfire by a lake tonight and nobody is at work tomorrow.",
+    note: "Midsummer Day, and the second holiday in a row. The fires were lit last night and half the country is still out by the lake.",
     glosses: ["midsummer", "fire", "summer"],
   },
   "08-08": {
@@ -176,7 +215,7 @@ const NAMED: Record<string, Occasion> = {
   "09-01": {
     key: "knowledge-day",
     name: "Knowledge Day",
-    note: "The first of September, and every school in the country goes back at once, flowers and all.",
+    note: "The first of September is Knowledge Day, and the school year opens with flowers for the teacher.",
     glosses: ["school", "flower", "pupil"],
   },
   "10-01": {
@@ -188,7 +227,7 @@ const NAMED: Record<string, Occasion> = {
   "10-04": {
     key: "animal-day",
     name: "World Animal Day",
-    note: "World Animal Day. There are more elk here than there are people in Tartu.",
+    note: "World Animal Day. Wolves, lynx, bears and elk all live in the forests here, and the forest starts where the town stops.",
     glosses: ["animal", "moose", "bear"],
   },
   "10-16": {
@@ -200,7 +239,7 @@ const NAMED: Record<string, Occasion> = {
   "10-31": {
     key: "halloween",
     name: "Halloween",
-    note: "Halloween, which arrived here recently and lands two weeks after a much older masked night.",
+    note: "Halloween, which arrived here recently and lands ten days before a much older masked night.",
     glosses: ["pumpkin", "dark", "mask"],
   },
   "11-02": {
@@ -223,8 +262,8 @@ const NAMED: Record<string, Occasion> = {
   },
   "12-21": {
     key: "solstice",
-    name: "Winter solstice",
-    note: "The shortest day of the year. It gets lighter from here, which takes some believing.",
+    name: "Midwinter",
+    note: "The shortest days of the year are about now. It gets lighter from here, which takes some believing.",
     glosses: ["dark", "night", "light"],
   },
   "12-24": {
@@ -408,7 +447,7 @@ const BY_NUMBER: Record<number, Occasion> = {
   30: {
     key: "day-30",
     name: "The thirtieth",
-    note: "Thirty days is roughly one turn of the moon, which is where the word month comes from.",
+    note: "Thirty days is roughly one turn of the moon, and Estonian uses one word for the moon and for a month.",
     glosses: ["moon", "sky"],
   },
   31: {
@@ -422,10 +461,18 @@ const BY_NUMBER: Record<number, Occasion> = {
 /* ── 4. The weekday, where there is something to say ─────────────────────── */
 
 /**
- * Estonian numbers four of its weekdays and names three, and the three names
- * are each a small story. Those are the ones in here. Tuesday and Thursday are
- * the fourth and the second day counted, which is a fact about arithmetic
- * rather than about Estonia, so they fall through.
+ * Estonian numbers four of its weekdays and borrows or builds the other three.
+ *
+ * Monday is the first day counted, Tuesday the second, Wednesday the third and
+ * Thursday the fourth, so Tuesday and Thursday are arithmetic and nothing else
+ * and they fall through. Of the three that are not counted, only Sunday's name
+ * is transparent to somebody who speaks Estonian: it is built out of the word
+ * for holy. Friday and Saturday are old loans, so what is true about them is
+ * where the name came from rather than what it says, and the note has to be
+ * written that way round. See the correctness rule in this file's header: the
+ * card printed the word for a sauna beside a sentence saying the Estonian for
+ * Saturday means bath day, and a learner who knows the day's name could see
+ * that no part of it says any such thing.
  *
  * Keyed by `Date.getUTCDay()`, so Sunday is 0.
  */
@@ -433,31 +480,31 @@ const BY_WEEKDAY: Record<number, Occasion> = {
   0: {
     key: "sunday",
     name: "Sunday",
-    note: "Estonian calls Sunday the holy day, and it is one of only three weekdays it bothers to name rather than number.",
+    note: "Estonian numbers four of its weekdays. Sunday is not one of them: its name is built out of the word for holy.",
     glosses: ["holy", "rest", "quiet"],
   },
   1: {
     key: "monday",
     name: "Monday",
-    note: "Estonian counts most of its weekdays, and Monday is where it starts counting.",
+    note: "Estonian counts four of its weekdays, and Monday is the first one it counts.",
     glosses: ["first", "morning", "beginning"],
   },
   3: {
     key: "wednesday",
     name: "Wednesday",
-    note: "Wednesday is the third day by its Estonian name and the middle of the week by everything else.",
+    note: "Wednesday is the third day counted in Estonian, and the middle of the week by everything else.",
     glosses: ["middle", "week"],
   },
   5: {
     key: "friday",
     name: "Friday",
-    note: "Friday is where Estonian stops counting its weekdays. The two after it are bath day and holy day.",
+    note: "Estonian counts its weekdays as far as Thursday and then stops. Friday has a borrowed name, and for most people the evening starts early.",
     glosses: ["free", "evening", "joy"],
   },
   6: {
     key: "saturday",
     name: "Saturday",
-    note: "The Estonian name for Saturday means bath day, and a great many houses still keep to that.",
+    note: "Saturday is sauna evening in a great many houses here, and the day's name came from Old Norse, where it meant washing day.",
     glosses: ["sauna", "bath", "steam"],
   },
 };
