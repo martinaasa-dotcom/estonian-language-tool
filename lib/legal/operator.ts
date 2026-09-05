@@ -87,14 +87,35 @@ export interface Operator {
  * Environment variables still win, so an operator who sets them is never
  * overruled by a table in someone else's source tree.
  */
+const UPTHINK: Omit<Operator, "identified" | "source"> = {
+  name: "Upthink Solutions OÜ",
+  address: "Aiandi tn 8/2-28, Mustamäe linnaosa, 12915 Tallinn, Harju maakond, Estonia",
+  email: "privacy@upthink.ee",
+  registryCode: "16683946",
+  vatId: "EE102590654",
+};
+
 const KNOWN_DEPLOYMENTS: Readonly<Record<string, Omit<Operator, "identified" | "source">>> = {
-  "kodukeel.ee": {
-    name: "Upthink Solutions OÜ",
-    address: "Aiandi tn 8/2-28, Mustamäe linnaosa, 12915 Tallinn, Harju maakond, Estonia",
-    email: "privacy@upthink.ee",
-    registryCode: "16683946",
-    vatId: "EE102590654",
-  },
+  "kodukeel.ee": UPTHINK,
+  /*
+    BOTH ADDRESSES, BECAUSE A VERCEL PROJECT ANSWERS ON TWO AND THIS TABLE IS
+    ASKED ABOUT WHICHEVER ONE THE DEPLOYMENT NAMES ITSELF BY.
+
+    `lib/auth/canonical.ts` exists precisely because a Vercel deployment serves
+    its custom domain and its `*.vercel.app` address at once, and sign-in
+    cannot survive the difference. The same is true one layer over: the
+    platform's own `VERCEL_PROJECT_PRODUCTION_URL` names whichever of the two
+    the project has as its production domain, and a table holding only the
+    custom one would answer nothing on a project that had not been given one
+    yet. Naming a controller is not a thing to leave resting on a DNS setting.
+
+    Not a wildcard, and that is what keeps it safe. `kodukeel.vercel.app` is a
+    subdomain this project holds, exactly as it holds the custom domain;
+    anybody else's deployment answers on their own name and gets the unset
+    state. A rule matching `*.vercel.app` would hand this company's registered
+    address to every preview anybody ever deploys.
+  */
+  "kodukeel.vercel.app": UPTHINK,
 };
 
 /**

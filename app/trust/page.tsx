@@ -211,6 +211,16 @@ export default function TrustPage() {
           server-only value, the invariant suite asserts the rules this project set itself,
           and the browser suites drive the real app. All of it runs on every change.
         </P>
+        <P>
+          One of those suites is worth naming, because it is the only one that asks these
+          questions of a server rather than of the source. It sends the forged requests, reads
+          back every security header, checks that what is behind a token stays behind it, and
+          reads what the health endpoint is willing to say. It found something on its first
+          run: a request carrying an address the app could not parse was being treated as a
+          request carrying none, and those had different answers. That is the shape of thing it
+          is for. It is a test written by the people who wrote the code, so it cannot tell you
+          the design is right, and it is not the outside look this section says is missing.
+        </P>
       </S>
 
       <S title="Availability">

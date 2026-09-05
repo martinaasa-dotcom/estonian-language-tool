@@ -200,7 +200,7 @@ already accepted, then Wiktionary, then Anu, then an honest blank for you to fil
 where it came from, and you can always overwrite it.
 
 It does carry Russian and Ukrainian, though, in the same response as the forms, and the course
-harvest keeps them: 1,400 of the 1,404 course words have a Russian equivalent and 1,198 a
+harvest keeps them: 1,433 of the 1,437 course words have a Russian equivalent and 1,231 a
 Ukrainian one, written by the same lexicographers. Pick a language in Settings and it is printed
 beside the English on the entry and on the first meeting with a word in review. The English stays,
 because it is the one gloss every entry has and the Wiktionary-derived words have no other.
@@ -569,6 +569,7 @@ says what has not been done in the same breath as what has.
 | `docs/29-controls.md` | A control map against ISO 27001 and SOC 2. A self assessment, and it says so first. |
 | `docs/23-impact.md` | What may honestly be claimed about usage, and the floors that stop a small number being reported at all. |
 | `docs/30-pilots.md` | What a pilot is, what it costs, and what is not ready. |
+| `docs/31-grant-case.md` | The case a funding application would be adapted from, every figure named with the file or the command behind it, and a list of what it cannot claim. |
 | `SECURITY.md` | Where to send a vulnerability. |
 | `/trust` and `/accessibility` | The same material, on the running app. |
 | `/funding` | What it costs to run, where every figure came from, and what happens when the money stops. |

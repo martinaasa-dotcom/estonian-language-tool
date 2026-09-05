@@ -373,6 +373,16 @@ exactly one origin for the verifier cookie, the session cookie and the callback 
 by clearing the chains with `overrides` in `package.json` and a minor vitest upgrade, rather than by
 moving the bar, and the workflow says in writing that the number is not to be lowered.
 
+Two things sat beside that and were missing. Nothing **updated** anything: knowing about an advisory
+and having it patched are different states, and on a project with one maintainer they drift apart
+quietly. `.github/dependabot.yml` is the fix, weekly and grouped, with security updates arriving on
+their own so they are not buried in a batch of type definitions. And nothing asked about the
+**licence**. `npm audit` has no opinion on one, and it is the supply chain question nobody thinks to
+ask until the answer is already in the tree: this project's code is MIT and its data carries
+Wiktionary's CC BY-SA 4.0. The `dependencies` job in `ci.yml` reviews the dependency diff of a pull
+request and refuses a copyleft code dependency arriving through a transitive bump, which is the
+point at which that is still cheap to fix.
+
 ## 5. Controls inventory
 
 | Area | Control | Where |
@@ -573,5 +583,26 @@ account's own data either way. The fix would be to mint fresh ids on restore and
 references, and that would break the property the design rests on: `Review` carries `cardId` as a
 plain column with no foreign key precisely so history survives a deck being rebuilt, and re-iding
 cards on restore would sever every review from the card it was about. Left as it is on purpose.
+
+**An `Origin` header that was present and unreadable was allowed. Fixed.** Found by
+`scripts/test-security.mjs`, which is new and is the reason it exists: `test-invariants.ts` reads the
+source and can tell you the middleware mentions `isSameOriginMutation`, and only a request to a
+running server can tell you what that function actually answers. `Origin:
+http://localhost:3000.evil.example` does not parse, because `3000.evil.example` is not a port, and
+`hostname()` returns null for a header it cannot read exactly as it does for one that is not there.
+Those fell into the same branch, and the branch for "not there" is allow, on the reasoning that a
+caller with no Origin is not a browser and has no ambient cookie to forge with. A caller that sent
+the header is something that thinks it is a browser. It is refused now, and no legitimate request
+loses: browsers do not send malformed origins, and the one odd value they genuinely do send, the
+literal `null` from a sandboxed frame, parses to the hostname `null` and is compared like any other
+name, which is what already refused it.
+
+**The same gate compares host names and not whole origins, and that is deliberate.** Scheme and port
+are ignored, so `https://kodukeel.ee` and `http://kodukeel.ee:8443` count as the same origin here.
+What it costs is an attacker who already controls another port or the plaintext scheme on this exact
+hostname, which on a host with HSTS preloaded is not a position anybody reaches from outside. What
+it buys is a deployment behind a reverse proxy, which sees `Host: localhost:3000` on a request whose
+`Origin` is the public address: comparing whole origins would refuse every mutation on it. Recorded
+here rather than left to be rediscovered.
 
 If you find something not on this list, `SECURITY.md` says where to send it.

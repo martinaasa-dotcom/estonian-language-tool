@@ -32,6 +32,54 @@ env:
   NEXT_TELEMETRY_DISABLED: "1"
 
 jobs:
+  # ── The licence half of the supply chain ────────────────────────────────────
+  #
+  # NOT A SECOND AUDIT. The `audit` job below already runs `npm audit` twice on
+  # every commit and gates both at `high`, and its own comment is emphatic that
+  # the number got there by chains being cleared rather than by the bar being
+  # moved. Adding another advisory check here would be that job again with a
+  # narrower view, and the first draft of this one was exactly that before
+  # somebody read what was already in the file.
+  #
+  # What is genuinely not asked anywhere else is the licence. `npm audit` has
+  # no opinion on it, and it is the supply chain question nobody thinks to ask
+  # until the answer is already in the tree: this project's code is MIT, its
+  # data carries Wiktionary's CC BY-SA 4.0, and `LICENSE` says so. A copyleft
+  # *code* dependency arriving through a transitive bump is what would quietly
+  # make that file wrong, and the point at which that is cheap to fix is the
+  # pull request that introduces it.
+  #
+  # Reviewing the diff rather than the tree is also what makes the severity
+  # gate here worth having beside the other one: this fails on something *this
+  # branch* introduces, which is a fault its author can act on, where a fresh
+  # advisory on an untouched package is not.
+  #
+  # First-party and needs no secret, which keeps true the claim above that
+  # nothing here maps one into a job. Pull requests only, because there is no
+  # base to compare a push against.
+  dependencies:
+    name: Nothing vulnerable or copyleft came in with this change
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/dependency-review-action@v4
+        with:
+          # High and above. Moderate advisories on a build-time dependency are
+          # the bulk of what this would otherwise report, and blocking a
+          # learner-facing fix on one is the trade this gets wrong in the
+          # direction nobody notices.
+          fail-on-severity: high
+          # A licence that would make the app unshippable is the other supply
+          # chain question worth failing on, and it is the one nobody thinks to
+          # ask until it is in the tree. The data this project is built on is
+          # already share-alike (Wiktionary, CC BY-SA 4.0) and the code is MIT;
+          # a copyleft *code* dependency is what would change what the licence
+          # file can say.
+          deny-licenses: AGPL-3.0, AGPL-3.0-only, AGPL-3.0-or-later, SSPL-1.0
+
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
@@ -345,6 +393,16 @@ jobs:
       # spaces in a gloss fell.
       - run: node scripts/test-containment.mjs
       - run: node scripts/test-design.mjs
+      # The security controls, asked of the running server rather than read off
+      # the source. `test-invariants.ts` can tell you the middleware mentions
+      # `isSameOriginMutation`; only this can tell you a forged POST is actually
+      # refused, which depends on branch order, on which paths the matcher
+      # covers, and on what the platform does to a response on the way out. It
+      # found one: an `Origin` header that was present and unparseable was being
+      # read as no origin at all, which is the reading reserved for a caller
+      # that is not a browser. Not a penetration test, and `docs/27-security.md`
+      # is careful to say so.
+      - run: node scripts/test-security.mjs
       - run: node scripts/e2e.mjs
       - run: node scripts/test-modes.mjs
       - run: node scripts/test-teaching.mjs

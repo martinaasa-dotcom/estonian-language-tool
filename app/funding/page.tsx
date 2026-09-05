@@ -45,11 +45,20 @@ export const dynamic = "force-dynamic";
  * this repository, quoted off a vendor's price list with the date it was read,
  * or named as an assumption the reader can change. The interactive part is not
  * decoration: a total somebody can move is a total they can check, and the
- * three least flattering findings on the page (that the floor is about
- * forty-six dollars before anybody arrives, that speech is the fastest-growing
- * line once anybody puts a figure on it, and that what is given to this app
- * outgrows what it pays for) are all things the model surfaced rather than
- * things anybody chose to admit.
+ * three least flattering findings on the page (that the bill is about three
+ * hundred dollars a month before a single learner arrives, that speech is the
+ * fastest-growing line once anybody puts a figure on it, and that what is
+ * given to this app outgrows what it pays for) are all things the model
+ * surfaced rather than things anybody chose to admit.
+ *
+ * THAT FIRST FIGURE READ "ABOUT FORTY-SIX DOLLARS" UNTIL A GRANT CASE WAS
+ * WRITTEN OFF THIS PAGE AND THE NUMBERS WERE RUN AGAIN. `billFor` at one
+ * learner is 301.07, which is what CLAUDE.md has said all along. Forty-six is
+ * close to what the retrenchment ladder now calls Lights on, 45, which is the
+ * bill with nobody paid, no tooling and the tutor switched off. Those are two
+ * different questions and the comment had quietly answered the wrong one: a
+ * page whose whole argument is that its numbers are checkable cannot carry a
+ * stale one in its own header.
  */
 export default function FundingPage() {
   const operator = resolveOperator();

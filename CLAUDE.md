@@ -3166,6 +3166,42 @@ including the refusals; the static headers are in `next.config.ts` so they cover
 matcher skips. `Permissions-Policy` keeps `microphone=(self)` on purpose: speaking practice
 records, and denying it would switch that off with no error anybody could act on.
 
+**"Carrying neither" and "carrying one I cannot read" are different requests, and the gate gave them
+the same answer.** `hostname()` returns null for a header that is absent and for one that will not
+parse, and both fell into the allow branch above, whose whole justification is that a caller with no
+`Origin` is not a browser. A caller that sent the header is something that thinks it is one.
+`Origin: http://localhost:3000.evil.example` does not parse, because `3000.evil.example` is not a
+port, and it was answered as though nothing had been sent. Refusing it costs nothing real: no
+browser sends a malformed origin, and the one odd value they genuinely do send, the literal `null`
+from a sandboxed frame or a `data:` URL, parses to the hostname `null` and is compared like any
+other name, which is what already refused it.
+
+**And the gate compares names rather than whole origins, which is a decision rather than an
+oversight.** Scheme and port are dropped, so `https://kodukeel.ee` and `http://kodukeel.ee:8443`
+count as one origin. What that costs is an attacker who already controls another port or the
+plaintext scheme on this exact hostname, which on a host with HSTS preloaded is not a position
+reachable from outside; what it buys is a deployment behind a reverse proxy, which sees
+`Host: localhost:3000` on a request whose `Origin` is the public address, and would have every
+mutation on it refused by a stricter comparison. Written down in `docs/27-security.md` as a residual
+rather than left for somebody to rediscover and tighten.
+
+**A source check can tell you the middleware mentions the gate. Only a request can tell you the gate
+refuses.** That is the whole argument for `scripts/test-security.mjs`, and the fault above is what
+it found on its first run. Whether a forged POST is actually refused depends on the order the
+middleware runs its branches, on which paths the matcher covers and on what the platform does to a
+response on the way out, and every one of those has been wrong here before: the CSP had to move into
+the middleware because the static headers miss the files the matcher skips, and the gate had to move
+above the auth branch because a redirect keeps the method and the body.
+
+It asks over HTTP rather than through a browser, because none of it needs a DOM. It **detects which
+mode it is looking at** rather than assuming, since a hosted deployment refuses most of these routes
+before they reach their own code and a local one answers them, and it waives what the mode cannot
+reach with the reason on screen. And it is **not a penetration test and may never be called one** in
+anything a reader outside this project sees: it is a regression suite over controls written by the
+same people who wrote the controls, so it cannot find the class of fault where the model itself is
+wrong. What it catches is a header quietly dropped, a route added with no cap, a refusal that stops
+refusing.
+
 **The error state is a screen, so something has to render it.** `app/error.tsx` is one of the four
 states every view owes a reader and it was the only one nothing ever put on a screen: an invariant
 read its source for the failure copy and the report button, which is a different question from
@@ -5596,7 +5632,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `drillable`, `markForm`, `exceptionIndex`, `isAdvanceKey`, `buttonRuns`, `readSsoPolicy`,
 `ssoDomainFor`, `checkSharedRateLimit`, `bucketDigest`, `windowStartMs`, `KNOWN_DEPLOYMENTS`,
 `IDENTIFIED_DEPLOYMENTS`, `currentIdentity`, `retrenchment`, `CONTINUITY`, `summariseImpact`,
-`gatherImpact`. Most of them now
+`gatherImpact`, `isSameOriginMutation`, `checkSharedRateLimit`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -5636,6 +5672,8 @@ npm run test:browser     # the newer browser suites: routes, modes, offline, sca
                          # (test-first-day runs first and needs an empty deck: reseed before it)
 npm run test:mobile      # the phone, measured; needs the server running
 npm run test:containment # text and icons inside their boxes, measured; needs the server running
+# scripts/test-security.mjs is in test:browser: the headers, the forged request, the caps
+#   and what the health endpoint will say, asked of a running server rather than of the source
 ```
 
 With no Supabase keys the app runs as a single local learner (ADR-013), which is what makes the

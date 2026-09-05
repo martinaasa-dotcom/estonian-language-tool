@@ -164,3 +164,28 @@ describe("who is answerable for a deployment", () => {
     expect(SUPERVISORY_AUTHORITY.address).toMatch(/Tallinn/);
   });
 });
+
+describe("both addresses a Vercel project answers on", () => {
+  it("names the operator on the vercel.app address too", () => {
+    /*
+      The repository's own homepage field said kodukeel.vercel.app while the
+      README said kodukeel.ee, and the platform's variable names whichever the
+      project has as its production domain. A table holding one of the two
+      leaves the fix resting on a DNS setting.
+    */
+    for (const host of ["kodukeel.ee", "kodukeel.vercel.app"]) {
+      const operator = resolveOperator({ NEXT_PUBLIC_SITE_URL: `https://${host}` });
+      expect(operator.identified, host).toBe(true);
+      expect(operator.name).toBe("Upthink Solutions OÜ");
+    }
+  });
+
+  it("is not a wildcard over vercel.app", () => {
+    // Otherwise every preview anybody deploys publishes this company's
+    // registered address as the controller of their learners' data.
+    for (const host of ["someone-else.vercel.app", "kodukeel-fork.vercel.app", "vercel.app"]) {
+      expect(resolveOperator({ NEXT_PUBLIC_SITE_URL: `https://${host}` }).identified, host)
+        .toBe(false);
+    }
+  });
+});

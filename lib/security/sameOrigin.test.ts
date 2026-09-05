@@ -88,3 +88,35 @@ describe("a request with no browser behind it", () => {
     expect(isSameOriginMutation(req({ origin: "", host: "kodukeel.app" }))).toBe(true);
   });
 });
+
+describe("an Origin that is there and will not parse", () => {
+  /*
+    Found by scripts/test-security.mjs against a running server, which is the
+    kind of fault a source check cannot see: the header is present, so this is
+    something claiming to be a browser, and the value is unreadable. That was
+    being answered as though no header had been sent, which is the reading
+    reserved for "not a browser at all".
+  */
+  it("is refused rather than read as no origin", () => {
+    // `3000.evil.example` is not a port, so the URL parser gives up on it.
+    expect(isSameOriginMutation(
+      req({ origin: "http://localhost:3000.evil.example", host: "localhost:3000" }),
+    )).toBe(false);
+
+    for (const origin of ["http://", "::::", "https://[", "%%%"]) {
+      expect(isSameOriginMutation(req({ origin, host: "kodukeel.ee" })), origin).toBe(false);
+    }
+  });
+
+  it("still lets through a request that sent no Origin at all", () => {
+    // Not a browser, so no ambient cookie to forge with. Refusing it would
+    // break every server-to-server caller for nothing.
+    expect(isSameOriginMutation(req({ host: "kodukeel.ee" }))).toBe(true);
+    expect(isSameOriginMutation(req({ origin: "   ", host: "kodukeel.ee" }))).toBe(true);
+  });
+
+  it("still refuses the literal null a sandboxed frame sends", () => {
+    // This one parses, to the hostname "null", and is compared like any other.
+    expect(isSameOriginMutation(req({ origin: "null", host: "kodukeel.ee" }))).toBe(false);
+  });
+});
