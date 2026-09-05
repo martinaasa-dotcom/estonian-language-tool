@@ -10,6 +10,7 @@ import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import { sentenceMatches, sentenceTiles } from "@/lib/estonian/cloze";
 import { OPTION_CLASS, VERDICT_CLASS } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export interface SentenceTask {
   /** The card this counts against — every mode grades through the same log. */
@@ -125,6 +126,18 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
 
   const next = () => setIndex((i) => i + 1);
 
+  /* Once the sentence is marked, Enter or Space is "next", as on every other
+     round. The tiles are buttons, so before the mark a Space on a focused tile
+     is the browser pressing that tile and is left to it. */
+  useEffect(() => {
+    if (!checked) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (isAdvanceKey(e)) { e.preventDefault(); next(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [checked]);
+
   if (initialTasks.length === 0) {
     return (
       <Page title="Sentences" lead="Put real Estonian sentences back in order.">
@@ -158,9 +171,9 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
           <StatTile value={`${minutes}m`} label="Time" tone="sky" />
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/review/sentences" variant="primary" size="lg">Another round</ButtonLink>
           <ButtonLink href="/practice" size="lg">Other modes</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
+          <ButtonLink href="/review/sentences" variant="primary" size="lg">Another round</ButtonLink>
         </div>
       </div>
     );

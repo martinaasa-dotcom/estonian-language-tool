@@ -4659,6 +4659,23 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   to be added to the allowlist in `middleware.ts` as well.
 - Every interactive element is keyboard-reachable with a visible focus ring, and under a coarse
   pointer every one of them clears 44px.
+- **The primary button is the last one in its row.** "Got it", "Save", "Drill it", "Back to Today":
+  where a screen ends in two or three buttons side by side, the one painted in the accent sits on
+  the right, where a thumb and a reading eye both end up, and the quieter choices sit to its left,
+  weakest first. The learn ladder's first meeting led with "Got it" and put "I already know this
+  one" after it, the sprint had the same pair the other way round, and thirty-odd finish screens
+  each decided for themselves. A column is not a row: a `flex-col` stack or a `w-full` button reads
+  top to bottom, and there the primary leads. Asserted over every run of `Button` siblings in the
+  tree, wrappers and comments included, with a floor on how many rows it has to find.
+- **Enter and Space are one key on a card, and `lib/ux/advanceKey.ts` is the reading of it.**
+  Whatever the button says, "Got it", "Next", "Carry on", it means "I have read this, move on",
+  and a learner reaches for whichever of the two big keys their hand is nearest. Half the rounds
+  took Enter alone and half took either, and two took nothing at all after the mark, so the same
+  gesture worked on one screen and did nothing on the next. `isAdvanceKey` is Enter anywhere and
+  Space outside a text box, where it is a letter, and every round asks it rather than naming a key
+  of its own. Enter with a modifier is still how a textarea submits and the answer field's own
+  `onEnter` is the field's, so the invariant is drawn on a bare comparison against either key in a
+  session file.
 - **A shortcut works wherever the control it presses is drawn, and "drawn" is one question with one
   name.** A new card in review leads with its answer, because a card you have never seen cannot be
   recalled, only met, so `askFor` returns `intro` and the rating buttons arrive with it. `revealed`
@@ -5342,7 +5359,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
 `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
-`drillable`, `markForm`, `exceptionIndex`. Most of them now
+`drillable`, `markForm`, `exceptionIndex`, `isAdvanceKey`, `buttonRuns`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

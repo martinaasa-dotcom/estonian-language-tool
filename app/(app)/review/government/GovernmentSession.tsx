@@ -11,6 +11,7 @@ import { StarWord } from "@/components/StarWord";
 import { CASES } from "@/lib/estonian/cases";
 import { OPTION_CLASS, VERDICT_INK, optionState } from "@/lib/ux/verdict";
 import type { CaseKey } from "@/lib/estonian/types";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export interface GovernmentQuestion {
   /** The card this question practices, when the verb is already in the deck. */
@@ -82,7 +83,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (finished || !question) return;
-      if (revealed && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); next(); return; }
+      if (revealed && isAdvanceKey(e)) { e.preventDefault(); next(); return; }
       if (revealed) return;
       const n = Number(e.key);
       const option = question.options[n - 1];
@@ -113,8 +114,8 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
           <ButtonLink href="/review/government">Another round</ButtonLink>
+          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
         </div>
       </div>
     );

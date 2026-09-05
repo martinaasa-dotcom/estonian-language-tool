@@ -10,6 +10,7 @@ import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import { StarWord } from "@/components/StarWord";
 import { VERDICT_CLASS } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export interface SprintCard {
   id: string;
@@ -92,7 +93,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (phase !== "running") return;
-      if (e.key === " " || e.key === "Enter") {
+      if (isAdvanceKey(e)) {
         e.preventDefault();
         if (!revealed) setRevealed(true);
         else void answer(3);
@@ -169,8 +170,8 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           <StatTile value={attempted} label="Attempted" tone="sky" />
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/review/sprint" variant="primary" size="lg">Sprint again</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
+          <ButtonLink href="/review/sprint" variant="primary" size="lg">Sprint again</ButtonLink>
         </div>
       </div>
     );

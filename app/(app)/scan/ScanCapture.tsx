@@ -202,12 +202,12 @@ export function ScanCapture() {
                 may not be best-effort. The destination is `force-dynamic` and
                 renders fresh on arrival.
               */}
-              <Button variant="primary" onClick={() => window.location.assign(`/scan/${saved.id}`)}>
-                Open the page
-              </Button>
               <Button variant="secondary" onClick={reset}>
                 <Camera size={15} aria-hidden />
                 Scan another
+              </Button>
+              <Button variant="primary" onClick={() => window.location.assign(`/scan/${saved.id}`)}>
+                Open the page
               </Button>
             </div>
           </div>
@@ -291,13 +291,8 @@ export function ScanCapture() {
         {error && <Note tone="again">{error}</Note>}
 
         <Card className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="primary"
-            onClick={() => save(true)}
-            disabled={phase === "saving" || kept.length === 0}
-          >
-            {phase === "saving" ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Sparkles size={15} aria-hidden />}
-            Make {kept.length} flashcard{kept.length === 1 ? "" : "s"}
+          <Button variant="ghost" onClick={reset} disabled={phase === "saving"}>
+            Start again
           </Button>
           <Button
             variant="secondary"
@@ -306,8 +301,13 @@ export function ScanCapture() {
           >
             Just save the page
           </Button>
-          <Button variant="ghost" onClick={reset} disabled={phase === "saving"}>
-            Start again
+          <Button
+            variant="primary"
+            onClick={() => save(true)}
+            disabled={phase === "saving" || kept.length === 0}
+          >
+            {phase === "saving" ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Sparkles size={15} aria-hidden />}
+            Make {kept.length} flashcard{kept.length === 1 ? "" : "s"}
           </Button>
         </Card>
       </div>

@@ -18,6 +18,7 @@ import { grammarTopic } from "@/lib/estonian/grammar";
 import { AlsoRight } from "@/components/WordExceptions";
 import { plainAskLine } from "@/lib/estonian/plainAsk";
 import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /**
  * THE ROUND: MEET IT, TYPE IT, USE IT.
@@ -109,8 +110,8 @@ export function ExceptionsSession({ tasks: initialTasks }: { tasks: ExceptionTas
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (mark || meeting) { if (isAdvanceKey(e)) { e.preventDefault(); next(); } return; }
       if (e.key !== "Enter") return;
-      if (mark || meeting) { e.preventDefault(); next(); return; }
       e.preventDefault();
       void check();
     };
@@ -141,8 +142,8 @@ export function ExceptionsSession({ tasks: initialTasks }: { tasks: ExceptionTas
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/grammar/exceptions" variant="primary">See the whole list</ButtonLink>
           <ButtonLink href="/review/exceptions">Another round</ButtonLink>
+          <ButtonLink href="/grammar/exceptions" variant="primary">See the whole list</ButtonLink>
         </div>
       </div>
     );

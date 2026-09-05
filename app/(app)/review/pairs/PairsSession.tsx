@@ -11,6 +11,7 @@ import { playClip } from "@/lib/audio/clip";
 import { useAudioPrefs } from "@/components/AudioPrefs";
 import { VOICES } from "@/lib/audio/voice";
 import { OPTION_CLASS, VERDICT_INK, optionState } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export interface PairQuestion {
   /** The form that is actually played. */
@@ -124,7 +125,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
     const onKey = (e: KeyboardEvent) => {
       if (finished || !question) return;
       if (e.key === "r" || e.key === "R") { e.preventDefault(); void play(question.heard); return; }
-      if (revealed && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); next(); return; }
+      if (revealed && isAdvanceKey(e)) { e.preventDefault(); next(); return; }
       if (revealed) return;
       const option = question.options[Number(e.key) - 1];
       if (option) { e.preventDefault(); choose(option.value); }
@@ -172,8 +173,8 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
           <ButtonLink href="/review/pairs">Another round</ButtonLink>
+          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
         </div>
       </div>
     );

@@ -359,10 +359,10 @@ export function SuggestFix({
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
+        <Button variant="ghost" onClick={() => setOpen(false)}>Not now</Button>
         <Button variant="primary" onClick={send} disabled={pending}>
           {pending ? "Sending…" : "Send it"}
         </Button>
-        <Button variant="ghost" onClick={() => setOpen(false)}>Not now</Button>
       </div>
     </div>
   );

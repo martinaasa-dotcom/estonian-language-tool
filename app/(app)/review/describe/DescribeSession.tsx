@@ -183,8 +183,8 @@ export function DescribeSession({ prompts: initialPrompts, aiAvailable }: {
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
           <ButtonLink href="/review/describe">Another round</ButtonLink>
+          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
         </div>
       </div>
     );

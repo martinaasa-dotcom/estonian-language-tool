@@ -11985,6 +11985,141 @@ check("a round's header, body and footer share one inset", () => {
   assert.ok(seams >= 20, `only ${seams} seams found, so this check stopped looking`);
 });
 
+/*
+  THE PRIMARY BUTTON IS THE LAST ONE IN ITS ROW.
+
+  "Got it", "Save", "Drill it", "Back to Today": where a screen ends in two or
+  three buttons side by side, the one painted in the accent sits on the right,
+  where a thumb and a reading eye both end up, and the quieter choices sit to
+  its left, weakest first. The learn ladder's first meeting led with "Got it"
+  and put "I already know this one" after it, the sprint had the same pair the
+  other way round, and thirty-odd finish screens each decided for themselves.
+  A column is not a row: a `flex-col` stack or a `w-full` button reads top to
+  bottom, and there the primary leads.
+
+  What is walked is a run of `<Button>` / `<ButtonLink>` siblings with nothing
+  but whitespace, a comment or a `{cond && (...)}` wrapper between them.
+*/
+function buttonRuns(source: string): { at: number; variants: string[]; container: string }[] {
+  const open = /<(Button|ButtonLink)\b/g;
+  const elementEnd = (pos: number): { end: number; attrs: string } => {
+    const m = open.exec(source.slice(pos)) as RegExpExecArray;
+    const name = m[1] as string;
+    let i = pos + m[0].length;
+    let depth = 0;
+    for (; i < source.length; i += 1) {
+      const c = source[i];
+      if (c === "{") depth += 1;
+      else if (c === "}") depth -= 1;
+      else if (c === ">" && depth === 0) break;
+    }
+    const attrs = source.slice(pos + m[0].length, i);
+    if (attrs.trimEnd().endsWith("/")) return { end: i + 1, attrs };
+    const close = source.indexOf(`</${name}>`, i);
+    return { end: close + name.length + 3, attrs };
+  };
+  const item = (start: number, end: number): { start: number; end: number } => {
+    const before = source.slice(0, start);
+    const after = source.slice(end);
+    const wrap = /\{[^{}]*?(&&|\?)\s*\(?\s*$/.exec(before);
+    const tail = /^\s*\)?\s*\}/.exec(after);
+    if (wrap && tail && (wrap[0].match(/\(/g) ?? []).length === (tail[0].match(/\)/g) ?? []).length) {
+      return { start: wrap.index, end: end + tail[0].length };
+    }
+    return { start, end };
+  };
+  const out: { at: number; variants: string[]; container: string }[] = [];
+  let pos = 0;
+  for (;;) {
+    open.lastIndex = 0;
+    const m = open.exec(source.slice(pos));
+    if (!m) break;
+    const first = pos + m.index;
+    open.lastIndex = 0;
+    const e = elementEnd(first);
+    const span = item(first, e.end);
+    const attrs = [e.attrs];
+    let cur = span.end;
+    for (;;) {
+      const gap = /^(\s|\{\/\*[\s\S]*?\*\/\})*/.exec(source.slice(cur)) as RegExpExecArray;
+      const next = cur + gap[0].length;
+      open.lastIndex = 0;
+      if (!open.exec(source.slice(next, next + 12)) || source.slice(next, next + 1) !== "<") break;
+      open.lastIndex = 0;
+      const e2 = elementEnd(next);
+      const span2 = item(next, e2.end);
+      if (span2.start < cur) break;
+      attrs.push(e2.attrs);
+      cur = span2.end;
+    }
+    pos = cur;
+    if (attrs.length < 2) continue;
+    const containerAt = Math.max(
+      source.lastIndexOf("<div", span.start), source.lastIndexOf("<form", span.start),
+      source.lastIndexOf("<footer", span.start), source.lastIndexOf("<Card", span.start),
+    );
+    const container = containerAt < 0 ? "" : source.slice(containerAt, source.indexOf(">", containerAt));
+    out.push({
+      at: span.start,
+      variants: attrs.map((a) => (/variant="(\w+)"/.exec(a)?.[1] ?? "secondary") + (/\bw-full\b/.test(a) ? " w-full" : "")),
+      container,
+    });
+  }
+  return out;
+}
+
+check("the primary button is the last one in its row", () => {
+  let rows = 0;
+  for (const file of [...APP, ...COMPONENTS]) {
+    if (/\.(test|itest)\.tsx?$/.test(file)) continue;
+    const source = code(file);
+    for (const run of buttonRuns(source)) {
+      const primaries = run.variants.filter((v) => v.startsWith("primary"));
+      if (primaries.length !== 1) continue;
+      if (/flex-col/.test(run.container) || run.variants.some((v) => v.endsWith("w-full"))) continue;
+      rows += 1;
+      const line = source.slice(0, run.at).split("\n").length;
+      assert.ok(
+        run.variants[run.variants.length - 1]?.startsWith("primary"),
+        `${file}:${line} draws a primary button to the left of ${run.variants.slice(run.variants.indexOf("primary") + 1).join(", ")}. `
+        + "The primary action sits on the right of its row; move it last.",
+      );
+    }
+  }
+  assert.ok(rows >= 30, `only ${rows} button rows found; the sweep has stopped seeing them`);
+});
+
+/*
+  ENTER AND SPACE ARE ONE KEY ON A CARD, AND ONE MODULE SAYS SO.
+
+  `lib/ux/advanceKey.ts` is the reading of "the key that moves forward": Enter
+  anywhere, Space outside a text box. A round that names either key itself is a
+  round where the same gesture works on one screen and not the next, which is
+  the state this was written out of. Enter with a modifier is still how a
+  textarea submits, and the answer field's own `onEnter` is the field's, so the
+  rule is drawn on a bare comparison against either key in a session file.
+*/
+check("every round reads the key that moves forward through isAdvanceKey", () => {
+  const rounds = [...SESSION_FILES(), "components/Shortcuts.tsx"].filter((f) => !/Sonad|Crossword/.test(f));
+  const bare = /\bkey\s*(===|!==)\s*("Enter"|" ")/;
+  let readers = 0;
+  for (const file of rounds) {
+    const source = code(file);
+    if (/isAdvanceKey\(/.test(source)) readers += 1;
+    source.split("\n").forEach((line, i) => {
+      if (!bare.test(line)) return;
+      if (/metaKey|ctrlKey/.test(line)) return;
+      if (/isAdvanceKey/.test(source) && /!==\s*"Enter"/.test(line) && /check/i.test(source)) return;
+      assert.fail(`${file}:${i + 1} compares against Enter or Space by hand. Read isAdvanceKey() from lib/ux/advanceKey.ts.`);
+    });
+  }
+  assert.ok(readers >= 12, `only ${readers} rounds read isAdvanceKey; the sweep has stopped seeing them`);
+  const helper = code("lib/ux/advanceKey.ts");
+  assert.match(helper, /"Enter"/);
+  assert.match(helper, /" "/);
+  assert.match(helper, /TEXTAREA/, "Space inside a text box is a letter, and the helper has to know that");
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`
