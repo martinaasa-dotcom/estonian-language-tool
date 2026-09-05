@@ -32,54 +32,6 @@ env:
   NEXT_TELEMETRY_DISABLED: "1"
 
 jobs:
-  # ── The licence half of the supply chain ────────────────────────────────────
-  #
-  # NOT A SECOND AUDIT. The `audit` job below already runs `npm audit` twice on
-  # every commit and gates both at `high`, and its own comment is emphatic that
-  # the number got there by chains being cleared rather than by the bar being
-  # moved. Adding another advisory check here would be that job again with a
-  # narrower view, and the first draft of this one was exactly that before
-  # somebody read what was already in the file.
-  #
-  # What is genuinely not asked anywhere else is the licence. `npm audit` has
-  # no opinion on it, and it is the supply chain question nobody thinks to ask
-  # until the answer is already in the tree: this project's code is MIT, its
-  # data carries Wiktionary's CC BY-SA 4.0, and `LICENSE` says so. A copyleft
-  # *code* dependency arriving through a transitive bump is what would quietly
-  # make that file wrong, and the point at which that is cheap to fix is the
-  # pull request that introduces it.
-  #
-  # Reviewing the diff rather than the tree is also what makes the severity
-  # gate here worth having beside the other one: this fails on something *this
-  # branch* introduces, which is a fault its author can act on, where a fresh
-  # advisory on an untouched package is not.
-  #
-  # First-party and needs no secret, which keeps true the claim above that
-  # nothing here maps one into a job. Pull requests only, because there is no
-  # base to compare a push against.
-  dependencies:
-    name: Nothing vulnerable or copyleft came in with this change
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-        with: { persist-credentials: false }
-      - uses: actions/dependency-review-action@v4
-        with:
-          # High and above. Moderate advisories on a build-time dependency are
-          # the bulk of what this would otherwise report, and blocking a
-          # learner-facing fix on one is the trade this gets wrong in the
-          # direction nobody notices.
-          fail-on-severity: high
-          # A licence that would make the app unshippable is the other supply
-          # chain question worth failing on, and it is the one nobody thinks to
-          # ask until it is in the tree. The data this project is built on is
-          # already share-alike (Wiktionary, CC BY-SA 4.0) and the code is MIT;
-          # a copyleft *code* dependency is what would change what the licence
-          # file can say.
-          deny-licenses: AGPL-3.0, AGPL-3.0-only, AGPL-3.0-or-later, SSPL-1.0
-
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
@@ -632,3 +584,19 @@ jobs:
       # a number.
       - run: npm audit --omit=dev --audit-level=high
       - run: npm audit --audit-level=high
+      # THE OTHER SUPPLY CHAIN QUESTION, WHICH `npm audit` HAS NO OPINION ON.
+      #
+      # A licence is the thing nobody thinks to check until the answer is
+      # already in the tree and shipped. This project's code is MIT and its
+      # built dictionary carries Wiktionary's CC BY-SA 4.0, and `LICENSE` says
+      # exactly that; a strong copyleft *code* dependency arriving through a
+      # transitive bump would quietly make that file wrong.
+      #
+      # `actions/dependency-review-action` was the obvious answer, went in, and
+      # failed on every pull request: "Dependency review is not supported on
+      # this repository. Please ensure that Dependency graph is enabled." That
+      # is a setting in a dashboard, and a check whose precondition is a step
+      # outside the repository is a check that does not run. The script asks
+      # the same question with nothing to switch on, walks the whole production
+      # tree rather than a diff, and a clone can run it.
+      - run: node scripts/check-licences.mjs

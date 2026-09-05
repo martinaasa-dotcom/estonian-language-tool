@@ -379,9 +379,17 @@ quietly. `.github/dependabot.yml` is the fix, weekly and grouped, with security 
 their own so they are not buried in a batch of type definitions. And nothing asked about the
 **licence**. `npm audit` has no opinion on one, and it is the supply chain question nobody thinks to
 ask until the answer is already in the tree: this project's code is MIT and its data carries
-Wiktionary's CC BY-SA 4.0. The `dependencies` job in `ci.yml` reviews the dependency diff of a pull
-request and refuses a copyleft code dependency arriving through a transitive bump, which is the
-point at which that is still cheap to fix.
+Wiktionary's CC BY-SA 4.0. `scripts/check-licences.mjs` walks the production tree on every commit
+and fails on a strong copyleft code dependency, which would quietly make `LICENSE` wrong.
+
+It is worth saying how that check got there, because the first version of it did not run at all.
+`actions/dependency-review-action` was the obvious answer and it failed on every pull request:
+dependency review needs the Dependency graph switched on for the repository, and it is not.
+A check whose precondition is a setting in somebody's dashboard is a check that does not run, which
+is the same fault as an operator identity that lives in four dashboard variables. The script has
+nothing to switch on, walks the whole production tree rather than a diff, and a clone can run it.
+It was made to fail once, against a planted `AGPL-3.0-or-later` on an installed package, before
+being trusted.
 
 ## 5. Controls inventory
 
