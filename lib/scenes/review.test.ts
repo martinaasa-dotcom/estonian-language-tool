@@ -53,16 +53,45 @@ describe("the review of a conversation", () => {
     expect(review.lead).toMatch(/word button/);
   });
 
+  /*
+    ONE, NOT "ONE OF THEM". And the line names what was actually off rather
+    than hedging "ending or spelling" over a run that held only one of the two.
+  */
+  it("agrees with itself about one slip, and names which kind it was", () => {
+    const one = reviewOf(SCENE, state([turn({ slips: [CASE_SLIP] })])).lead;
+    expect(one).toContain("One ending was off, and it did not stop the conversation.");
+    const spelling: Slip = { kind: "spelling", said: "korvas", form: "kõrvas", lemma: "kõrv" };
+    expect(reviewOf(SCENE, state([turn({ slips: [spelling] })])).lead).toContain("One spelling was off");
+    expect(reviewOf(SCENE, state([turn({ slips: [CASE_SLIP, spelling] })])).lead)
+      .toContain("2 endings and spellings were off, and not one of them");
+  });
+
+  /*
+    "Read every time" was printed whenever a single turn was Estonian, so a run
+    where one of five was read said something true of a run nobody had.
+  */
+  it("does not say every time about some of the time", () => {
+    const off = turn({ reading: "offtarget", met: [false] });
+    const lead = reviewOf(SCENE, state([off, turn({ reading: "unrecognised", met: [false] })], [])).lead;
+    expect(lead).not.toMatch(/every time/);
+    expect(lead).toContain("1 of your 2 turns were read as Estonian");
+  });
+
   it("still says their Estonian was read, where it was", () => {
     const review = reviewOf(SCENE, state([turn({ reading: "offtarget", met: [false] })], []));
     expect(review.lead).toMatch(/read every time/);
   });
 
-  it("names two unmet goals and counts the rest, rather than running six together", () => {
-    const note = reviewOf(SCENE, state([turn()], [])).notes.find((n) => n.id === "missed");
-    expect(note?.body).toContain("Say what is wrong.");
-    // The fixture has two required beats, so nothing is left over to count.
-    expect(note?.body).not.toMatch(/And \d+ more/);
+  /*
+    The unmet goals are ticked off in the debrief's own list and the first of
+    them is the "one thing to work on" with the drill beside it, so a note here
+    was the same sentence a third time. A learner reported the screen as
+    unreadable and that was the loudest part of why.
+  */
+  it("does not say what was left undone a third time", () => {
+    const review = reviewOf(SCENE, state([turn()], []));
+    expect(review.notes.some((n) => n.id === "missed")).toBe(false);
+    expect(review.notes.every((n) => !n.body.includes("Say what is wrong."))).toBe(true);
   });
 
   it("counts turns the other side acted on, and not the ones it waited through", () => {
@@ -74,13 +103,42 @@ describe("the review of a conversation", () => {
     expect(reviewOf(SCENE, state([turn(), turn()])).notes).toEqual([]);
   });
 
-  it("names the case that came out as something else, the way a class names it", () => {
+  /*
+    The heading is what the ending is for, in words somebody has before they
+    have met a grammar book, and the name a class uses is the cross-reference
+    under it (`lib/estonian/plainAsk.ts`). Leading with the name is what made
+    a real learner report this screen as unreadable.
+  */
+  it("says what the ending is for before it says what it is called", () => {
     const review = reviewOf(SCENE, state([turn({ slips: [CASE_SLIP] })]));
     const note = review.notes.find((n) => n.id === "case:INESSIVE");
-    expect(note?.heading).toContain("seesütlev");
-    // And the question it is taught by, which is what a learner will hear.
-    expect(note?.heading).toContain("kus?");
+    expect(note?.heading).toBe("The ending for \u201cin\u201d");
+    expect(note?.heading).not.toMatch(/[õäöüšž]/i);
+    // The class's own name and question are still there, one line down.
+    expect(note?.term).toContain("seesütlev");
+    expect(note?.term).toContain("kus?");
     expect(note?.evidence).toEqual([{ said: "pea", form: "peas" }]);
+  });
+
+  /*
+    And it says what the ending is for once. The body used to join `plain` and
+    `englishHook`, which for the illative are "into" and "into.", so the screen
+    read "It is the ending for into. into."
+  */
+  it("does not say the same thing twice about one ending", () => {
+    const slip: Slip = { kind: "case", said: "kool", form: "kooli", lemma: "kool", grammCase: "ILLATIVE" };
+    const note = reviewOf(SCENE, state([turn({ slips: [slip] })])).notes[0];
+    expect(note?.body).toBe("You reached for a different ending here. This is the one to use when something goes into it.");
+  });
+
+  /*
+    A principal part is not an ending, and which cases those are is read off
+    `CASES.suffix` rather than branched on a key here.
+  */
+  it("does not call the plain form an ending", () => {
+    const slip: Slip = { kind: "case", said: "kooli", form: "kool", lemma: "kool", grammCase: "NOMINATIVE" };
+    const note = reviewOf(SCENE, state([turn({ slips: [slip] })])).notes[0];
+    expect(note?.heading).toBe("The form for \u201cthe plain word\u201d");
   });
 
   it("ranks the case somebody got wrong most often first", () => {
@@ -126,11 +184,6 @@ describe("the review of a conversation", () => {
     expect(note?.evidence).toEqual([{ said: "tulema", form: "tulen" }]);
   });
 
-  it("names what was left undone, in the beat's own words", () => {
-    const note = reviewOf(SCENE, state([turn()], ["reason"])).notes.find((n) => n.id === "missed");
-    expect(note?.body).toContain("Say where it hurts.");
-  });
-
   it("counts a turn in English without a word against it", () => {
     const note = reviewOf(SCENE, state([turn({ reading: "english" })])).notes.find((n) => n.id === "english");
     expect(note?.heading).toBe("One turn in English");
@@ -151,7 +204,7 @@ describe("the review of a conversation", () => {
       { kind: "spelling", said: "korvas", form: "kõrvas", lemma: "kõrv" },
     ];
     const review = reviewOf(SCENE, state([turn({ slips })]));
-    expect(review.notes.length).toBeGreaterThan(3);
+    expect(review.notes.length).toBe(4);
     for (const note of review.notes) {
       expect(note.body, note.id).not.toMatch(/[õäöüšž]/i);
     }
@@ -170,6 +223,6 @@ describe("the review of a conversation", () => {
   it("says something kind and true about a run where nothing was said", () => {
     const review = reviewOf(SCENE, state([], []));
     expect(review.lead).toMatch(/Nothing was said/);
-    expect(review.notes.some((n) => n.id === "missed")).toBe(true);
+    expect(review.notes).toEqual([]);
   });
 });

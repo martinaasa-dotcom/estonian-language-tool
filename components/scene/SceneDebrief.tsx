@@ -173,38 +173,65 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
             {review.notes.map((note) => (
               <li key={note.id}>
                 <p className="text-sm font-medium">{note.heading}</p>
-                <p className="text-sm" style={{ color: "var(--ink-2)" }}>{note.body}</p>
                 {/*
-                  Why it most likely happened, marked as the guess it is.
-                  Quieter than the note it sits under, and worded as a guess
-                  in both tiers, because a wrong confident diagnosis teaches
-                  a learner a reason for a mistake they did not make and they
-                  have no way to tell (`lib/scenes/diagnose.ts`).
+                  The name a class uses, under the plain heading rather than
+                  instead of it. A learner sitting a course needs the case's
+                  own name and its question word to follow their teacher, and
+                  needs to know what the ending is for before either of them
+                  means anything (`lib/estonian/plainAsk.ts`).
+
+                  `text-xs` AND NOT `label-xs`, WHICH UPPERCASES. A case name
+                  set in the label class reaches the screen shouted, which is
+                  the fault CLAUDE.md names twice over: an ending printed as
+                  "-SSE" is not how any Estonian word is spelled. It is also
+                  the longest cross-reference on this screen, so a tracked
+                  bold marker would be the hardest thing to read on a note
+                  about having been confused.
                 */}
-                {note.hunch && (
-                  <p className="mt-1 text-sm" style={{ color: "var(--ink-3)" }}>
-                    <span className="font-medium">
-                      {note.hunch.sure === "likely" ? "Most likely" : "It may be"}:
-                    </span>{" "}
-                    {note.hunch.says}
-                  </p>
+                {note.term && (
+                  <p className="text-xs" lang="et" style={{ color: "var(--ink-3)" }}>{note.term}</p>
                 )}
+                <p className="mt-1 text-sm" style={{ color: "var(--ink-2)" }}>{note.body}</p>
+                {/*
+                  THE LEARNER'S OWN WORDS BEFORE THE GUESS AT WHY, because the
+                  example is what makes the sentence above it mean anything and
+                  the guess is the least certain thing in the note. It read
+                  `ulikool  is said  ulikooli`: three runs of text with no
+                  label on any of them, whose likeliest reading is that the
+                  first word is pronounced like the second. So the screen says
+                  which is which in words, with the two Estonian forms carrying
+                  the weight.
+                */}
                 {note.evidence.length > 0 && (
-                  <ul className="mt-1 flex flex-col gap-0.5 text-sm">
+                  <ul className="mt-1.5 flex flex-col gap-1 text-sm">
                     {note.evidence.map((one) => (
-                      <li key={one.said} className="flex flex-wrap items-baseline gap-x-2">
-                        <span lang="et" style={{ color: "var(--ink-3)" }}>{one.said}</span>
+                      <li key={one.said} style={{ color: "var(--ink-2)" }}>
+                        You wrote <span lang="et" className="font-medium">{one.said}</span>
                         {one.form ? (
                           <>
-                            <span style={{ color: "var(--ink-3)" }}>is said</span>
+                            {". Here it is "}
                             <span lang="et" className="font-medium">{one.form}</span>
+                            {"."}
                           </>
-                        ) : (
-                          <span style={{ color: "var(--ink-3)" }}>was understood as it stood</span>
-                        )}
+                        ) : ", and it was understood as it stood."}
                       </li>
                     ))}
                   </ul>
+                )}
+                {/*
+                  Why it most likely happened, marked as the guess it is and
+                  last, in the quietest ink on the note. Worded as a guess in
+                  both tiers, because a wrong confident diagnosis teaches a
+                  learner a reason for a mistake they did not make and they
+                  have no way to tell (`lib/scenes/diagnose.ts`).
+                */}
+                {note.hunch && (
+                  <p className="mt-1.5 text-sm" style={{ color: "var(--ink-3)" }}>
+                    <span className="font-medium">
+                      {note.hunch.sure === "likely" ? "Most likely" : "Possibly"}:
+                    </span>{" "}
+                    {note.hunch.says}
+                  </p>
                 )}
               </li>
             ))}
@@ -244,7 +271,15 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
       {missed && (
         <section>
           <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>One thing to work on</h3>
-          <p className="mb-2 text-sm" style={{ color: "var(--ink-2)" }}>{missed.goal}</p>
+          {/*
+            The one goal to go back in for, and the whole list of them is
+            ticked off a few sections above. `lib/scenes/review.ts` used to
+            print the unmet goals a third time in between, which is how the
+            same sentence came to be on this screen three times over.
+          */}
+          <p className="mb-2 text-sm" style={{ color: "var(--ink-2)" }}>
+            {missed.goal} The second run of a scene is where most of it sticks.
+          </p>
           {/*
             A link into a drill that already exists rather than advice this
             screen invented, and the drill is read off what the beat needed

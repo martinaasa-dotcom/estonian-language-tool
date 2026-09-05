@@ -37,14 +37,14 @@ describe("why the wrong ending came out", () => {
     expect(hunch?.says).toContain("seesütlev");
     expect(hunch?.says).toContain("alalütlev");
     // And what each of the two means, off the same table the grammar page leads with.
-    expect(hunch?.says).toMatch(/seesütlev is the ending for in/);
-    expect(hunch?.says).toMatch(/alalütlev is the ending for on, at/);
+    expect(hunch?.says).toMatch(/seesütlev means in/);
+    expect(hunch?.says).toMatch(/alalütlev means on, at/);
   });
 
   it("names the same pair the other way round, with the meanings the same way round", () => {
     const hunch = diagnose("ADESSIVE", "INESSIVE", NONE);
-    expect(hunch?.says).toMatch(/alalütlev is the ending for on, at/);
-    expect(hunch?.says).toMatch(/seesütlev is the ending for in/);
+    expect(hunch?.says).toMatch(/alalütlev means on, at/);
+    expect(hunch?.says).toMatch(/seesütlev means in/);
   });
 
   it("covers the other two question words the same way", () => {

@@ -11572,6 +11572,56 @@ check("a question the scene did not anticipate is answered before the move", () 
   assert.match(scripted, /export function answerBeatId\(/, "the bank has nowhere to hold a question-beat's answer");
 });
 
+check("no Estonian word is set in a class that shouts it", () => {
+  /*
+    `label-xs` is 10.5px bold with wide tracking and `text-transform:
+    uppercase`, which is right over a section of English and wrong over a word
+    of Estonian: CLAUDE.md names this fault twice, once where a group heading
+    printed the ending `-sse` as `-SSE`, which no Estonian word ends in, and
+    once where a dictionary entry shouted a case name over the English in
+    italics under it. `Chip` already carries the remedy as a prop and calls it
+    `caseSensitive`; what it did not have was anything stopping the next raw
+    span doing it again, and the next raw span did, three times.
+
+    A SWEEP RATHER THAN A LIST, because a fourth one looks exactly like the
+    three. What it reads is the opening tag itself: an element that declares
+    `lang="et"` and carries an uppercasing class has to ask for its own case
+    back, either with `textTransform: "none"` or through `Chip`'s prop.
+  */
+  /*
+    ONE LETTER IS NOT A WORD, and a word game draws its board and its keys one
+    letter to a cell: `SONAD_LETTERS` is what those hold, an uppercase O with a
+    tilde is still that letter, and a tile of lower-case letters is not what
+    anybody has ever played. Named rather than pattern-matched, because what
+    makes it safe is the content and the sweep reads the opening tag; and the
+    name is checked for staleness below, so it cannot become a parking space.
+  */
+  const ONE_LETTER_AT_A_TIME = "app/(app)/sonad/SonadSession.tsx";
+  const shouted: string[] = [];
+  for (const file of [...APP, ...COMPONENTS].filter((f) => f.endsWith(".tsx") && f !== ONE_LETTER_AT_A_TIME)) {
+    const src = code(file);
+    for (const tag of src.match(/<[A-Za-z][^<>]*?>/gs) ?? []) {
+      if (!/lang="et"/.test(tag)) continue;
+      if (!/label-xs|uppercase/.test(tag)) continue;
+      if (/textTransform:\s*"none"|caseSensitive/.test(tag)) continue;
+      shouted.push(`${file}: ${tag.replace(/\s+/g, " ").slice(0, 90)}`);
+    }
+  }
+  assert.deepEqual(
+    shouted, [],
+    "an Estonian word is set in an uppercasing class, so it reaches the screen shouted and misspelled. "
+    + 'Add textTransform: "none", or use a class that does not transform.\n' + shouted.join("\n"),
+  );
+  assert.match(
+    code(ONE_LETTER_AT_A_TIME), /lang="et"[\s\S]{0,400}?uppercase/,
+    `${ONE_LETTER_AT_A_TIME} no longer sets an Estonian letter in caps, so the exemption above is a parking space`,
+  );
+  assert.match(
+    code("components/ui.tsx"), /textTransform: caseSensitive \? "none" : undefined/,
+    "Chip lost the prop that keeps a form like `b : \u2205` as it was written",
+  );
+});
+
 check("a scene reviews itself in English, and the review teaches nothing it made up", () => {
   /*
     The debrief said what happened and never the thing a teacher says after a
@@ -11637,9 +11687,48 @@ check("a scene reviews itself in English, and the review teaches nothing it made
     "a scene's grades no longer carry the case that came back instead, so the confusion is lost",
   );
 
+  /*
+    AND IT LEADS IN WORDS SOMEBODY HAS. A learner reported this screen as
+    unreadable and the heading was most of why: it read the case's Estonian
+    name and its question word over a note about their own sentence, which is
+    exactly the fault `lib/estonian/plainAsk.ts` was written for one screen
+    over. The name is not gone, it is the cross-reference under it, so the
+    learner sitting a course still gets the word their teacher uses.
+  */
+  assert.match(
+    review, /plainAsk\(/,
+    "the review names an ending without saying what it is for, which is the heading a learner could not read",
+  );
+  assert.match(
+    review, /term: spec \?/,
+    "the review's notes no longer carry the name a class uses, so the Estonian name has gone rather than moved",
+  );
+  /*
+    And it says what was left undone once. It was on this screen three times:
+    ticked off in the objectives, again as a note, and again under "One thing
+    to work on" with the drill beside it.
+  */
+  assert.doesNotMatch(
+    review, /id: "missed"/,
+    "the review is printing the unmet goals again, beside the list that ticks them and the drill that fixes one",
+  );
+
   const debrief = code("components/scene/SceneDebrief.tsx");
   assert.match(debrief, /review\.lead/, "the debrief no longer prints the review's lead");
   assert.match(debrief, /review\.notes\.map/, "the debrief no longer prints the review's notes");
+  assert.match(
+    debrief, /note\.term &&/,
+    "the debrief drops the name a class uses, so a learner in a course cannot match the note to their lesson",
+  );
+  /*
+    And the learner's own word is labelled. `ulikool  is said  ulikooli` was
+    three runs of text with no label on any of them, and the likeliest reading
+    of it is that the first word is pronounced like the second.
+  */
+  assert.match(
+    debrief, /You wrote <span lang="et"/,
+    "the debrief prints the learner's form and the dictionary's with nothing saying which is which",
+  );
   assert.match(
     code("lib/progress/scene.ts"), /reviewOf\(scene, state\)/,
     "finishRun no longer derives the review from the run it just marked",
