@@ -3447,9 +3447,14 @@ was pointed the one way there is nothing to spend, since a letter on a top edge 
 pixels before it is sitting on a word.
 
 The room is **along** the edge. A letter on the top edge can slide most of the width of the card
-without coming a pixel nearer anything it could land on, so õ and ö travel 42 and 49px sideways now,
-ä and ü 56 and 43 up and down their own sides, and what crosses the edge is one to four pixels.
-Measured, at three widths, over twice the frames the suite asks for. The small budget goes on the
+without coming a pixel nearer anything it could land on, so õ and ö travel 38 and 44px sideways now,
+ä and ü 44 and 40 up and down their own sides, and what crosses the edge is one to four pixels.
+Measured, at three widths, over twice the frames the suite asks for. They were 26 to 30 for a while,
+over periods of up to seven seconds, and were measured moving and reported as static: a square
+crossing a hand's width in six seconds is a square nobody sees move unless they are already watching
+it, so the periods came down to under five and a half seconds and the rock and the squash went up.
+And the four hop once, in turn, whenever the word under them changes, told by the explorer through
+one event name both sides read off `lib/ux/letterMotion.ts`, asserted. The small budget goes on the
 rock and the squash instead, and `room` scales those per placement, because a rotated square is
 wider than its side and eight degrees on the tightest of the four costs more than fifteen on the one
 with a gutter under it.

@@ -403,9 +403,14 @@ function Cases({ words }: { words: DemoWord[] }) {
             17px margin there is nothing to spend: the movement was real and
             invisible. A letter on the top edge can slide the better part of
             the card's width without coming a pixel nearer anything it could
-            land on, so õ and ö now travel 26 and 30px sideways, ä and ü the
-            same up and down their own sides, and what crosses the edge is one
-            to three pixels. The rock and the squash are what the small budget
+            land on, so õ and ö now travel 38 and 44px sideways, ä and ü 44
+            and 40 up and down their own sides, and what crosses the edge is
+            one to three pixels. They were 26 to 30 for a while, over periods
+            of up to seven seconds, and were reported as not moving at all:
+            measured moving, and too slow and too short a way to be seen by
+            anybody not already staring at one. The characters got quicker
+            with it (`lib/ux/letterMotion.ts`), and the four hop once, in
+            turn, whenever the word under them changes. The rock and the squash are what the small budget
             buys, and `room` is what scales them per letter: a rotated square
             is wider than its side, so 8deg on the tightest of the four is
             worth more than 15deg on the one with a gutter under it.
@@ -432,22 +437,22 @@ function Cases({ words }: { words: DemoWord[] }) {
           */}
           <LetterTile
             letter="õ" hue="blush" edge="top" character="wander"
-            tilt={-7} travel={{ x: 26, y: 1 }} room={0.5} reach={280}
+            tilt={-7} travel={{ x: 38, y: 1 }} room={0.5} reach={280}
             className="-top-6 left-72 z-20 hidden h-8 w-8 text-base sm:block md:-top-8 md:left-80 md:h-10 md:w-10 md:text-xl"
           />
           <LetterTile
             letter="ä" hue="mint" edge="right" character="hop"
-            tilt={12} travel={{ x: -3, y: -30 }} room={0.75} delay={0.7} reach={280}
+            tilt={12} travel={{ x: -3, y: -44 }} room={0.75} delay={0.7} reach={280}
             className="-right-3 top-24 z-20 hidden h-8 w-8 text-base sm:block md:-right-6 md:top-28 md:h-10 md:w-10 md:text-xl"
           />
           <LetterTile
             letter="ü" hue="sky" edge="left" character="tumble"
-            tilt={-9} travel={{ x: 2, y: -28 }} room={0.6} delay={1.5} reach={280}
+            tilt={-9} travel={{ x: 2, y: -40 }} room={0.6} delay={1.5} reach={280}
             className="-left-3 bottom-24 z-20 hidden h-8 w-8 text-base sm:block md:-left-6 md:bottom-28 md:h-10 md:w-10 md:text-xl"
           />
           <LetterTile
             letter="ö" hue="butter" edge="bottom" character="swing"
-            tilt={15} travel={{ x: -30, y: -3 }} room={0.85} delay={2.2} reach={280}
+            tilt={15} travel={{ x: -44, y: -3 }} room={0.85} delay={2.2} reach={280}
             className="-bottom-5 right-14 z-20 hidden h-8 w-8 text-base sm:block md:-bottom-6 md:right-20 md:h-10 md:w-10 md:text-xl"
           />
 
