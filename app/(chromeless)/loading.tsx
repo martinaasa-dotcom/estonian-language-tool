@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui";
  * a handful of queries deliberately paid for up front, and a blank screen for
  * the length of them is the first thing this app shows anybody.
  *
- * A single centred card rather than the dashboard skeleton next door, because
+ * A single centered card rather than the dashboard skeleton next door, because
  * that is the shape all three of these screens actually are.
  */
 export default function Loading() {

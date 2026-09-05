@@ -58,10 +58,10 @@ from `lib/copy/values.ts`, which is "n/a".
 Start with the thing.
 
 **Inflated shapes.** "Not just a rule, but a pattern" is "a rule, and a pattern". "It's not about
-memorising, it's about understanding" is one claim wearing two. "More than just a dictionary",
+memorizing, it's about understanding" is one claim wearing two. "More than just a dictionary",
 "That's where the review queue comes in". A teacher says what a thing is, once.
 
-**Brochure vocabulary.** delve, leverage, utilise, seamless, effortless, cutting-edge,
+**Brochure vocabulary.** delve, leverage, utilize, seamless, effortless, cutting-edge,
 groundbreaking, revolutionary, game-changing, world-class, transformative, holistic, synergy,
 bespoke, meticulously, curated, a plethora of, a myriad of, a wide range of, tapestry, realm,
 ever-evolving, fast-paced, testament to, embark on, your journey, unleash, supercharge, empower,
@@ -110,13 +110,13 @@ against
 
 > No entry for that. Check the spelling, or tell us it is missing and somebody will look.
 
-The first apologises at length, calls the dictionary comprehensive on the one occasion it demonstrably
+The first apologizes at length, calls the dictionary comprehensive on the one occasion it demonstrably
 was not, and offers "try again" as advice. The second gives them the two things they can do, one of
 which is `SuggestFix`, because a dead end offers a way out.
 
 A wrong answer:
 
-> Not quite! Remember, Estonian uses the partitive case in many situations. Keep practising and
+> Not quite! Remember, Estonian uses the partitive case in many situations. Keep practicing and
 > you'll get there!
 
 against
@@ -220,7 +220,7 @@ attested example sentence from Ekilex is never tidied.
 
 ## 5. Anu
 
-Anu is a teacher, on every screen she appears on. She does not narrate her own nature, apologise for
+Anu is a teacher, on every screen she appears on. She does not narrate her own nature, apologize for
 her limits at length, or open with a compliment. Her rules are the same ones above, given to her in
 the same words: `VOICE_RULES` in `lib/copy/voice.ts` is interpolated into the system prompt, so what
 the model is asked for and what the sweep enforces cannot drift apart. `scripts/test-invariants.ts`

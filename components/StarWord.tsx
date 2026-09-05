@@ -5,7 +5,7 @@ import { Star } from "lucide-react";
 import { toggleStar } from "@/app/actions";
 
 /**
- * FAVOURITE THIS WORD, WHEREVER THE WORD IS.
+ * FAVORITE THIS WORD, WHEREVER THE WORD IS.
  *
  * Asked for directly: a star in the corner of every card that puts a word or a
  * phrase in front of somebody to learn, so the one they want to come back to
@@ -15,7 +15,7 @@ import { toggleStar } from "@/app/actions";
  * on: the words they care about are met on a review card.
  *
  * ONE DRAWING, FOR THE REASON `WeakestCases` IS ONE COMPONENT. A star copied
- * into four sessions is four answers to what a favourite looks like and what
+ * into four sessions is four answers to what a favorite looks like and what
  * it does when the toggle fails, and the copy nobody is looking at is the one
  * that stops saying which state it is in.
  *
@@ -23,7 +23,7 @@ import { toggleStar } from "@/app/actions";
  * (`docs/14-design-system.md` §1). The dictionary's own star was butter, which
  * that table gives to "nearly, timed, a warning that isn't a failure", and on
  * a review card butter is what a near miss is painted: a bookmark wearing the
- * grading scale's colour on the screen that grades is a hue making a claim it
+ * grading scale's color on the screen that grades is a hue making a claim it
  * does not mean.
  *
  * AND THE HUE IS NOT THE ONLY THING SAYING WHICH STATE IT IS IN. The star is
@@ -49,7 +49,7 @@ export function StarWord({
     Every screen this sits on shows one word after another out of one queue,
     and React keeps a component's state while its position in the tree holds
     still: without this, starring a word and pressing Next left the next word
-    drawn as a favourite it is not. A `key` at each call site fixes it and is
+    drawn as a favorite it is not. A `key` at each call site fixes it and is
     the thing a fifth caller forgets, which is the argument this repository
     makes about every rule it moved out of a caller. This is React's own
     pattern for a state that a prop supersedes, and it re-renders immediately
@@ -65,7 +65,7 @@ export function StarWord({
     <button
       type="button"
       aria-pressed={on}
-      aria-label={on ? `Remove ${label} from your favourites` : `Add ${label} to your favourites`}
+      aria-label={on ? `Remove ${label} from your favorites` : `Add ${label} to your favorites`}
       disabled={pending}
       className="tap-tint flex h-9 w-9 items-center justify-center rounded-full"
       style={{ color: on ? "var(--accent-deep)" : "var(--ink-3)" }}

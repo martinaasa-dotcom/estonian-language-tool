@@ -29,7 +29,7 @@ describe("the category table", () => {
     }
   });
 
-  it("recognises its own keys and no others", () => {
+  it("recognizes its own keys and no others", () => {
     expect(isCategory("MISSING_WORD")).toBe(true);
     expect(isCategory("MISSING_WORDS")).toBe(false);
     expect(isStatus("OPEN")).toBe(true);

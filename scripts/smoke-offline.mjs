@@ -12,6 +12,7 @@
  */
 import { launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { retypeMiss } from "./lib/review.mjs";
 
 
 const BASE = baseUrl();
@@ -74,7 +75,7 @@ async function press(locator) {
  *
  * So it no longer returns true for having pressed something. It reads the
  * session's own graded counter before and after, and a shape it does not
- * recognise reports false rather than passing quietly. The shapes:
+ * recognize reports false rather than passing quietly. The shapes:
  *
  *   - a first meeting, which teaches rather than asks and offers one button;
  *   - a flip card, the one shape the app cannot mark, which reveals and then
@@ -114,7 +115,8 @@ async function answerOneCard(depth = 0) {
     // The keyboard rather than a click on the option, because it is what the
     // app itself offers and what test-modes.mjs drives.
     await page.keyboard.press("1");
-    await page.waitForTimeout(900);
+    // A right pick stays on screen for a second before it grades itself.
+    await page.waitForTimeout(1400);
   } else {
     const input = page.locator("main input[type='text'], main input:not([type])").first();
     if (await input.count()) {
@@ -129,15 +131,18 @@ async function answerOneCard(depth = 0) {
 
     A clean hit on a choice or a typed card grades and moves on. A miss keeps
     its screen, because the correction is the one moment in a review worth
-    stopping for, and leaves "Got it, next" as the acknowledgement. This driver
+    stopping for, and leaves "Got it, next" as the acknowledgment. This driver
     types "zzz" on purpose, which is always a miss, so after that change every
     typed card it drove ended on a screen waiting for a press and no grade was
     ever written: the outbox read 0 and the suite reported the app as unable to
     grade offline, which was a fact about the driver.
   */
+  // A typed miss asks to be typed again before it will go anywhere, and a
+  // correct retype grades the miss and moves on by itself.
+  await retypeMiss(page);
   // "Got it, next Enter": the key cap inside the button is part of its name.
   const next = app.getByRole("button", { name: /^Got it, next/ });
-  if (await next.count()) {
+  if ((await next.count()) && (await next.first().isEnabled())) {
     await press(next);
     await page.waitForTimeout(300);
   }

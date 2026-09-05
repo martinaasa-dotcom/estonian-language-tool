@@ -8,6 +8,8 @@ import {
   alsoAcceptedByLemma as sharedAlsoAccepted, sharedPrompts,
 } from "@/lib/collections/senses";
 import { heardIndex, type HeardIndex } from "@/lib/assessment/heard";
+import { PRINCIPAL_FORM_TYPES } from "@/lib/estonian/types";
+import { exceptionsFor, type WordException } from "@/lib/estonian/exceptions";
 import { borrowSentences } from "@/lib/dict/borrow";
 import { parseExamples, type Example } from "@/lib/dict/examples";
 
@@ -39,7 +41,7 @@ import { parseExamples, type Example } from "@/lib/dict/examples";
  * that goes stale the first time somebody adds a seventh and does not know to,
  * and that failure is silent and permanent. A minute is self-healing, needs no
  * call sites to stay in step, and is measured against what it costs: a word
- * added by hand is counted towards a readiness percentage, and towards which
+ * added by hand is counted toward a readiness percentage, and toward which
  * of a unit's words the dictionary can show, up to sixty seconds later than it
  * used to be. Nothing a reader could notice, and nothing that decides anything.
  *
@@ -276,7 +278,7 @@ export function decoyOptions(): Promise<GlossOption[]> {
  * answers is kept: 372 groups out of 6,083 entries, nearly all of them pairs.
  *
  * Keyed `lemma|pos`, which is what `Lexeme` is unique on, because a lemma alone
- * would merge the noun `hall` meaning frost with the adjective meaning grey.
+ * would merge the noun `hall` meaning frost with the adjective meaning gray.
  */
 export function alsoAcceptedByLemma(): Promise<Map<string, string[]>> {
   return remember("also-accepted", FACTS_TTL_MS, async () => {
@@ -391,6 +393,67 @@ export interface CrosswordWord {
   /** Named on the clue, because English does not mark one and Estonian does. */
   pos: string;
   translation: string;
+}
+
+/**
+ * Every graded word that does not follow the pattern, and which pattern it
+ * breaks.
+ *
+ * A fact about the shared dictionary in the strictest sense: whether `tuba`
+ * goes to `tuppa` is the same for every learner and the same on the next
+ * request, and `lib/estonian/exceptions.ts` works it out from stored forms with
+ * no query of its own. Without this the browse page and the drill would each
+ * read the forms of three thousand entries per render.
+ *
+ * GRADED ONLY, which is ADR-024's rule about the suggestion row for its reason:
+ * a word carrying a CEFR band is one the course or the graded seed vouched for,
+ * and the tail of the Wiktionary expansion is where `aberratsioon` lives. An
+ * area whose whole value is being small does not open with a word nobody will
+ * meet.
+ *
+ * The forms are narrowed to the ones the rules read, which is the six principal
+ * parts and the four slots the harvest stores because no rule reaches them. An
+ * enriched entry carries its whole Ekilex paradigm and reading all of it would
+ * be a hundred thousand rows to answer a question about seven.
+ *
+ * Ordered, and ended on the id, for the reason every truncated or ranked read
+ * in this app is: two entries can share a lemma and the planner's own answer to
+ * which comes first is not an answer.
+ */
+export interface ExceptionEntry {
+  id: string;
+  lemma: string;
+  pos: string;
+  cefr: string | null;
+  translation: string;
+  exceptions: readonly WordException[];
+}
+
+/** The slots the rules read that are not principal parts. See `exceptionsFor`. */
+const EXTRA_FORM_TYPES = ["EKILEX:IndIpfSg3", "EKILEX:ImpPrPl2", "EKILEX:SgAdt", "EKILEX:PlN"];
+
+export function exceptionIndex(): Promise<ExceptionEntry[]> {
+  return remember("exceptions", FACTS_TTL_MS, async () => {
+    const rows = await prisma.lexeme.findMany({
+      where: { cefr: { not: null } },
+      select: {
+        id: true, lemma: true, pos: true, cefr: true, translation: true,
+        forms: {
+          where: { formType: { in: [...PRINCIPAL_FORM_TYPES, ...EXTRA_FORM_TYPES] } },
+          select: { formType: true, value: true, morphCode: true },
+          orderBy: [{ formType: "asc" }, { value: "asc" }],
+        },
+      },
+      orderBy: [{ lemma: "asc" }, { id: "asc" }],
+    });
+
+    const out: ExceptionEntry[] = [];
+    for (const row of rows) {
+      const exceptions = exceptionsFor({ lemma: row.lemma, pos: row.pos, forms: row.forms });
+      if (exceptions.length > 0) out.push({ ...row, exceptions });
+    }
+    return out;
+  });
 }
 
 /**

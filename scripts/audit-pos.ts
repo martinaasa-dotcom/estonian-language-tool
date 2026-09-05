@@ -299,7 +299,7 @@ async function main() {
     The corrections are written down as well as applied, because `pos` is half
     of `Lexeme`'s conflict key. A reseed of an already-seeded database matches
     on (lemma, pos), so a corrected entry would miss the row it belongs to and
-    insert a second one beside it: two `kallis` in the dictionary, one labelled
+    insert a second one beside it: two `kallis` in the dictionary, one labeled
     NOUN and one ADJECTIVE. `prisma/expanded.ts` reads this file and repoints
     the existing row instead. Appended rather than replaced, so a database that
     skipped a build still finds the hop it missed.

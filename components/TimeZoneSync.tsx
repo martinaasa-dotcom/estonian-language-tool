@@ -14,7 +14,7 @@ import { setTimeZone } from "@/app/actions";
  *
  * Called only when the stored value actually disagrees with the browser, which
  * is once on a new account and once more if somebody moves or travels. The
- * server rejects anything `Intl` does not recognise, so a stored zone is safe
+ * server rejects anything `Intl` does not recognize, so a stored zone is safe
  * to hand to Postgres.
  */
 export function TimeZoneSync({ stored }: { stored: string | null }) {

@@ -2,7 +2,7 @@
 
 The visual language the app was rebuilt on in 2026-08. It replaces the birch-and-cornflower
 neutral scheme described in `08-ux-ia-a11y.md` §6; everything that document says about
-*behaviour* (the four states, the keyboard model, the diacritic bar) still holds.
+*behavior* (the four states, the keyboard model, the diacritic bar) still holds.
 
 ## 1. Why it looks like this
 
@@ -13,7 +13,7 @@ things follow from that:
 drill you stop opening. So: pastels, round corners, a mascot, and a small physical response to
 every press.
 
-**Colour has to mean something.** Warmth costs nothing until colour stops carrying information.
+**Color has to mean something.** Warmth costs nothing until colour stops carrying information.
 So the palette is disciplined: a mostly-white ground, five hues with fixed meanings, and a wash
 of pastel light behind everything so the ground never reads as grey.
 
@@ -26,7 +26,7 @@ of pastel light behind everything so the ground never reads as grey.
 | Sky | `--sky` / `--easy` | easy, new, reference material |
 | Blush | `--blush` | Anu, the tutor, the one part of the app that talks back |
 
-Grading colours are aliases (`--again` → `--peach`), so the rating scale and the rest of the UI
+Grading colors are aliases (`--again` → `--peach`), so the rating scale and the rest of the UI
 can never drift apart.
 
 Two uses of colour, and only one of them carries meaning:
@@ -34,9 +34,9 @@ Two uses of colour, and only one of them carries meaning:
 - **A chip's hue is a claim.** `again` on a chip says "this is not authoritative", and it is what
   every AI-written translation wears, in the dictionary, in Anu's replies, on the grammar pages
   and in dictation. `hard` says "there is an irregularity here to learn", which is what gradation
-  notes and the memorised principal parts wear. Reach for a hue on a chip only when you mean the
+  notes and the memorized principal parts wear. Reach for a hue on a chip only when you mean the
   thing that hue means.
-- **A tile in a set of tiles is just telling itself apart from its neighbours.** The four figures
+- **A tile in a set of tiles is just telling itself apart from its neighbors.** The four figures
   in a session summary, and the practice modes on Today, cycle the palette so they can be scanned
   apart. XP is blush there because it is the fifth tile, not because Anu is involved.
 
@@ -107,7 +107,7 @@ being clipped to letterforms that have no caps to discolour.
 ### A verdict is painted once
 
 Correct is green and wrong is red, and the table above has said so since the palette was drawn.
-What decides whether a screen honours it is not the table but who reaches for the tokens, and
+What decides whether a screen honors it is not the table but who reaches for the tokens, and
 twenty screens reaching for them by hand produced four verdicts written in the fill, one round
 that never marked the option the learner pressed, and a near miss painted the same peach as a
 blank. `lib/ux/verdict.ts` is the vocabulary and `app/globals.css` is the paint:
@@ -183,7 +183,7 @@ others. A reader does not see half a pixel; they see a page that will not settle
 | `text-5xl` / `6xl` / `7xl` | 52 / 68 / 88 | landing hero |
 
 **The twelfth is the landing hero and nothing else.** 68px was the top of the scale and it was
-too small for the job: filling the window with the hero and centring the
+too small for the job: filling the window with the hero and centering the
 column in it left a 363px block of copy inside an 877px box, which reads as a postage stamp in a
 field rather than as a page with room to breathe. Air is generous around something with the
 weight to deserve it. So the display steps once more, the paragraph under it goes from 17 to 19,
@@ -221,7 +221,7 @@ Four declarations in `app/globals.css`, and between them they are the reason no 
 word sitting on the ground behind a card.
 
 - **`overflow-wrap: anywhere`, inherited from the body.** A word that will not fit breaks.
-  `anywhere` rather than `break-word` because only `anywhere` counts towards min-content, which is
+  `anywhere` rather than `break-word` because only `anywhere` counts toward min-content, which is
   what a flex or grid item's automatic minimum is: with `break-word` one long word is a floor under
   the whole row and the row leaves the card having broken nothing. Estonian is why this is not
   academic. The dictionary holds compounds past twenty characters and the row holding one is three
@@ -272,7 +272,7 @@ Small, physical, and never blocking:
   rolls. No two share a period, so a set of them falls back into step about once an hour.
   **The travel goes along the edge a letter hangs off, not across it.** A letter tucked over the
   top of a card has about four pixels before it is sitting on a word and most of the card's width
-  sideways, so the one that used to wander six pixels towards the card now slides about forty
+  sideways, so the one that used to wander six pixels toward the card now slides about forty
   along it and crosses the edge by one. What the small budget buys instead is the rock and the
   squash, and `room` scales both per placement: a rotated square is wider than its side, so eight
   degrees on the tightest letter costs more than fifteen on the one with a gutter under it.
@@ -285,7 +285,7 @@ Small, physical, and never blocking:
   and each tile hops once, in the order they were placed, as `scale` and `rotate` on the wrapper
   so the wander underneath is never restarted. It is the one thing the four do as a set, and it
   happens only when something on the card happened.
-  **They answer a pointer.** Coming near one slides it towards the cursor along that same free axis
+  **They answer a pointer.** Coming near one slides it toward the cursor along that same free axis
   and settles it further onto the card, which is `leanFor()` and is the same rule as the wander:
   either way along the edge, inward only across it. They stay `pointer-events-none`, so none of it
   reaches a control underneath.
@@ -382,7 +382,7 @@ dimming is exactly how every disabled control here is drawn: the strongest signa
 those screens was the control appearing to switch off. A link may still fade, and a `<button>`
 drawn as underlined text is a link wearing the right element.
 
-`components/brand.tsx` holds **Õ**, the mascot: Estonian's most recognisable letter is already a
+`components/brand.tsx` holds **Õ**, the mascot: Estonian's most recognizable letter is already a
 round face with a squiggle on top, so the mascot is that letter taken literally. It appears in
 the rail, in every empty state, at the end of a session, and on the landing page. It is a
 component rather than an asset so it inherits the theme and can change mood.

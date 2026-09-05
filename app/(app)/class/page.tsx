@@ -50,7 +50,7 @@ export default async function ClassIndexPage() {
   // With no accounts there is exactly one learner, so there is nobody to share a
   // class with. Any class this install already holds is still listed — switching
   // an instance to local mode should not make data vanish — but the create and
-  // join forms would be theatre, so they are replaced by the reason why.
+  // join forms would be theater, so they are replaced by the reason why.
   const shareable = supabaseConfigured();
 
   return (
@@ -158,8 +158,8 @@ export default async function ClassIndexPage() {
           A teacher sees effort and progress: reviews this week, streak, words known, the cases
           the whole class keeps missing, and which case each student personally struggles with
           most, as one percentage across all their reviews. Whoever runs a workplace group sees
-          less than that, not more: a name, whether somebody has been practising, and one of four
-          bands for the paper the group works towards. Never a search, a deck, or a single answer,
+          less than that, not more: a name, whether somebody has been practicing, and one of four
+          bands for the paper the group works toward. Never a search, a deck, or a single answer,
           and never a colleague&rsquo;s weak grammar. Both lines are built into the code itself,
           not just a policy, see{" "}
           <code className="text-xs">lib/classroom/roster.ts</code>.

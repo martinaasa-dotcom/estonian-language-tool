@@ -9,7 +9,7 @@ import type { GradationType } from "./types";
  * written down: `kooli` the genitive and `kooli` the partitive are the same
  * letters in the same order and differ in how long the vowel is held, so a
  * classifier reading principal parts as strings cannot see it, and neither can
- * a learner reading a page. What is spelled is the consonant centre changing,
+ * a learner reading a page. What is spelled is the consonant center changing,
  * which is qualitative gradation, and that is what this returns.
  *
  * The value stays in the type because it is a true category a person editing an
@@ -62,11 +62,11 @@ function isDeclensionTypeNotGradation(nom: string, gen: string): boolean {
     A NOMINATIVE -S THAT SIMPLY GOES IS AN ENDING, NOT A GRADE.
 
     `kapsas : kapsa`, `kuningas : kuninga`, `rahvas : rahva`, `kallis : kalli`:
-    the consonant centre does not move at all, the nominative just carries an
+    the consonant center does not move at all, the nominative just carries an
     -s the other cases do not. EKK calls that lõpuvaheldus and keeps it apart
-    from astmevaheldus, which is a change *inside* the centre. The classifier
-    counted the -s as part of the centre, so it reported `s : ∅` on 121 of the
-    133 words it labelled that way, and the chip on the dictionary entry said
+    from astmevaheldus, which is a change *inside* the center. The classifier
+    counted the -s as part of the center, so it reported `s : ∅` on 121 of the
+    133 words it labeled that way, and the chip on the dictionary entry said
     "Consonant gradation, this is why the stem changes" over a word whose stem
     does not change. `käsi : käe` and `vesi : vee` are the dozen that really
     do alternate, and they are not this shape: their stem loses more than the
@@ -98,7 +98,7 @@ function commonPrefixLength(a: string, b: string): number {
  *
  * This *describes* an alternation between stored, authoritative forms — it never
  * generates one. Estonian gradation is too irregular to predict, which is exactly
- * why the genitive is memorised rather than computed (ADR-005).
+ * why the genitive is memorized rather than computed (ADR-005).
  */
 export function classifyGradation(nomSg: string, genSg: string): GradationResult {
   const nom = nomSg.trim().toLowerCase();
@@ -113,7 +113,7 @@ export function classifyGradation(nomSg: string, genSg: string): GradationResult
   if (isDeclensionTypeNotGradation(nom, gen)) return { type: "NONE", note: undefined };
 
   /*
-    THE NOMINATIVE -S COMES OFF BEFORE THE CENTRES ARE COMPARED.
+    THE NOMINATIVE -S COMES OFF BEFORE THE CENTERS ARE COMPARED.
 
     `hammas : hamba` is mm : mb and `ratas : ratta` is t : tt, which is what a
     class writes on the board. With the -s left on, the skeletons were `hmms`
@@ -123,7 +123,7 @@ export function classifyGradation(nomSg: string, genSg: string): GradationResult
     saabas, varvas, kobras, küngas.
 
     Only where something is left to compare: `uus : uue` peels to `uu`, which
-    has no consonant centre at all, so it keeps the reading it had.
+    has no consonant center at all, so it keeps the reading it had.
   */
   const peeled = nom.slice(0, -1);
   const peelable = nom.endsWith("s") && !gen.endsWith("s") && Boolean(stem(peeled));
@@ -170,7 +170,7 @@ function compareStems(nom: string, gen: string): GradationResult {
       grade pair where the weak one is an absence and the strong one a bare
       consonant, so a match here is the arithmetic finding a stem that simply
       grew a letter: `armas : armsa` loses a vowel rather than weakening a
-      centre, and read this way it reported "∅ : s", which is not a pattern
+      center, and read this way it reported "∅ : s", which is not a pattern
       in the language.
     */
     if (!weak) continue;

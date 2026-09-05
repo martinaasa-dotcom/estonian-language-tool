@@ -161,7 +161,7 @@ function closing(form: string): string {
 /**
  * Compares a typed answer with the stored one.
  *
- * `language` decides how forgiving the normalisation is: an English gloss may
+ * `language` decides how forgiving the normalization is: an English gloss may
  * lose its article, an Estonian form may not lose anything at all.
  */
 export function checkAnswer(

@@ -22,9 +22,11 @@ import { useAudioPrefs } from "./AudioPrefs";
  * takes the button away.
  */
 export function Speak({
-  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children, autoplay, voice: askedVoice, condition,
+  text, slow, label, size = 15, className, style, onUnavailable, onPlay, disabled, children, autoplay, voice: askedVoice, condition, rate,
 }: {
   text: string; slow?: boolean; label?: string;
+  /** A playback rate other than the clip's own, with the pitch held (`LEARNING_RATE`). */
+  rate?: number;
   /**
    * The room and the rate it is heard in, for the rounds that vary them
    * (`lib/audio/conditions.ts`). Absent means clean, which is every other
@@ -92,7 +94,7 @@ export function Speak({
         round paid for it: its own copy of this caught both and told a learner
         their connection was down. `playClip` is the one answer now.
       */
-      const outcome = await playClip({ text, slow, voice, condition }, { unasked });
+      const outcome = await playClip({ text, slow, voice, condition, rate }, { unasked });
       setState("idle");
       if (outcome === "played") onPlay?.();
     } catch {

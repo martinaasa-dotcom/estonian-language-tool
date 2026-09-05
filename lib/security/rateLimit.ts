@@ -15,7 +15,7 @@
  * Swap it for a shared store the day the traffic justifies one.
  *
  * WHAT THIS IS AND IS NOT A BACKSTOP FOR, since it used to be described as
- * though it were the first line of defence for spending. It is not. On
+ * though it were the first line of defense for spending. It is not. On
  * serverless a burst spread across cold starts meets an empty Map every time,
  * so the thing that actually bounds cost is the Postgres ledger in
  * `lib/usage/`, which reserves a call inside the same transaction that reads

@@ -134,7 +134,7 @@ export function ClinicList({ items, aiAvailable }: { items: ClinicItem[]; aiAvai
  * A FAILURE AND A RECALL ARE DIFFERENT SHAPES, NOT JUST DIFFERENT HUES.
  *
  * They were peach and mint squares with a `title` on each, and CLAUDE.md
- * already says what is wrong with that in the dictation drill: a colour may
+ * already says what is wrong with that in the dictation drill: a color may
  * not be the only thing carrying a distinction, and a tooltip is not text.
  * The `aria-hidden` and the `sr-only` line below meant a screen reader was
  * fine; somebody who simply cannot separate those two hues, on a phone where

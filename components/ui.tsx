@@ -6,8 +6,8 @@ import { PrefetchLink } from "@/components/PrefetchLink";
 /**
  * Three soft pastel lights, fixed behind the page content.
  *
- * They are what stops a mostly-white app reading as a spreadsheet: colour is
- * present everywhere at 5% strength, so the colour that appears at full strength
+ * They are what stops a mostly-white app reading as a spreadsheet: color is
+ * present everywhere at 5% strength, so the color that appears at full strength
  * (a due count, a grade button) still means something. Decorative, so aria-hidden.
  */
 export function Wash() {
@@ -56,7 +56,7 @@ export function Page({ title, titleLang, lead, actions, children, eyebrow }: {
 }
 
 /**
- * The text colour for a given hue's tint.
+ * The text color for a given hue's tint.
  *
  * A trap worth naming: every hue has an `-ink` token meaning "text on this
  * hue's 8% tint", but `--accent-ink` was already taken — it is the white that

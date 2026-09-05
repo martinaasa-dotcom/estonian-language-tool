@@ -11,7 +11,7 @@
  * produced from its own knowledge of Estonian morphology, which is the thing the
  * whole project refuses to trust. A comment that breaks the rule is withheld
  * rather than shown with a caveat, because a caveat still puts a wrong form in
- * front of someone who is trying to memorise forms.
+ * front of someone who is trying to memorize forms.
  *
  * Pure, and deliberately conservative about what counts as Estonian: the cost of
  * a false negative (an English word missed) is nothing, while the cost of a
@@ -107,7 +107,7 @@ export function estonianTokens(comment: string): string[] {
  * whatever else it is. `unvouched-word` is the weaker inference `looksInflected`
  * makes, that a word of five letters or more which nothing supplied is more
  * likely an inflected form than an English word the note happened to quote. That
- * inference is deliberately biased towards withholding and it is wrong sometimes:
+ * inference is deliberately biased toward withholding and it is wrong sometimes:
  * `gradeComposition` is handed no glosses and an allowlist of the learner's own
  * text, so Anu quoting "weather" in an otherwise English note lands here. The
  * note is still withheld, which is the safe error. Telling the learner she used

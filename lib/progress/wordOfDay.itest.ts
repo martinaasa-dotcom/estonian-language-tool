@@ -111,7 +111,7 @@ describe("the word of the day and the learner's level", () => {
   });
 
   /**
-   * And the path with no meaning to honour bands outright.
+   * And the path with no meaning to honor bands outright.
    *
    * This is where `keskmine` came from. Two learners on the same morning used
    * to get one word between them, because the pool was every entry with a

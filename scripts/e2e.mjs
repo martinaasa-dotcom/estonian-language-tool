@@ -1,5 +1,6 @@
 import { eventually, launchChromium } from "./lib/browser.mjs";
 import { baseUrl, suite } from "./lib/checks.mjs";
+import { retypeMiss } from "./lib/review.mjs";
 import { ensureLetterBar, requireLetterBar } from "./lib/prefs.mjs";
 
 const B = baseUrl();
@@ -228,14 +229,15 @@ if (shape === "type") {
 }
 // `intro` presses nothing, deliberately: the answer and the ratings are both
 // already on screen, and this is the one shape where the rating keys were
-// unreachable.
-await page.waitForTimeout(900);
+// unreachable. A right pick or a right typed answer stays on screen for a
+// second before it grades itself, so the wait outlasts that.
+await page.waitForTimeout(1400);
 
 // What is on screen now is one of three things: nothing to do because the
 // answer was marked correct and the card has gone; one button, on a miss or on
 // a word being met for the first time, which Enter takes; or the two self-grade
 // buttons of a flip card, where 2 is "Got it".
-const carryOn = (await page.getByRole("button", { name: /Got it/ }).count()) > 0;
+const carryOn = (await page.getByRole("button", { name: /Got it|Check it again/ }).count()) > 0;
 const selfGrade = (await page.getByRole("button", { name: /^Got it$/ }).count()) > 0;
 const alreadyGraded = (await graded()) > gradedBefore;
 check("the answer is reachable from the keyboard", carryOn || selfGrade || alreadyGraded,
@@ -243,7 +245,8 @@ check("the answer is reachable from the keyboard", carryOn || selfGrade || alrea
     : selfGrade ? "self-grade offered"
       : alreadyGraded ? "marked and advanced on its own" : "neither");
 
-if (carryOn) await page.keyboard.press("Enter");
+// A typed miss asks to be typed again first, and a correct retype grades it.
+if (carryOn) { if (!(await retypeMiss(page))) await page.keyboard.press("Enter"); }
 else if (selfGrade) await page.keyboard.press("2");
 /*
   Counted on the session's own graded tally rather than on "N left".

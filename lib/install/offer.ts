@@ -10,7 +10,7 @@
  * The second rule is that the offer waits. A banner on somebody's first minute
  * is asking them to keep a thing they have not decided they want yet, so the
  * count of distinct days the app has been opened on is what unlocks it. Three
- * days in, they came back twice on purpose, and the offer is a favour rather
+ * days in, they came back twice on purpose, and the offer is a favor rather
  * than an interruption.
  *
  * After that, the reminder lives in Settings, where it is available on the day

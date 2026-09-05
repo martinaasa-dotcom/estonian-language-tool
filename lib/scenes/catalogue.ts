@@ -85,7 +85,7 @@ export const FALLBACK_PHRASE = "Ma ei saa aru";
  * filled in by a machine, which is what a learner reported it as. Every entry
  * is a lemma from `vastused` or `maaramine`, both in `COMMON`, so the same
  * rule holds here as for a beat's topic: a word the harvest did not bring back
- * fails the catalogue test rather than reaching a screen. Capitalising one and
+ * fails the catalog test rather than reaching a screen. Capitalizing one and
  * putting a full stop or a question mark after it is presentation and not
  * composition, the way the app already prints `Tere!` as a line; the word is
  * the dictionary's and the mark is the move.
@@ -108,11 +108,11 @@ const HELLOS = ["Tere!", "Tere hommikust!"] as const;
 const DOCTOR: SceneSpec = {
   id: "arsti-aeg",
   title: "Booking a doctor's appointment",
-  place: "The reception desk at a health centre",
+  place: "The reception desk at a health center",
   level: "A2",
   tests: "keha-ja-tervis",
   /*
-    `inimesed` teaches `arst`, and a scene at a health centre whose word list
+    `inimesed` teaches `arst`, and a scene at a health center whose word list
     could not vouch for the word "doctor" is the shape of specification bug
     that only a measurement finds: nothing about the scene looked wrong, and
     the gate withheld every line the model wrote about one.
@@ -126,7 +126,7 @@ const DOCTOR: SceneSpec = {
   units: [...COMMON, "keha-ja-tervis", "inimesed", "plaanid", "minevik", "omadussonad", "linn-ja-teenused"],
   register: "teie",
   /*
-    THE LEARNER NEVER PLAYS THEMSELVES (§3), and at a health centre that is a
+    THE LEARNER NEVER PLAYS THEMSELVES (§3), and at a health center that is a
     legal rule as much as a marking one: a scene where somebody types about
     their own symptoms is a database holding health data about an identified
     person. Everything on this card is fiction, and nothing in a transcript is
@@ -288,7 +288,7 @@ const LANDLORD: SceneSpec = {
     itself, and a scene about something broken in one needs both. `kodutood`
     carries `katki`, which is the word this whole scene is about. `plaanid` for
     the beat that agrees a time and `minevik` for the one that says since when,
-    the same two the health centre needs, and `omadussonad` for the same reason.
+    the same two the health center needs, and `omadussonad` for the same reason.
   */
   units: [...COMMON, "eluase", "kodu", "kodutood", "plaanid", "minevik", "omadussonad", "linn-ja-teenused", "ostmine"],
   register: "teie",
@@ -328,7 +328,7 @@ const LANDLORD: SceneSpec = {
   ],
   /*
     No queue: this one is a telephone call, so the only curveball in the
-    catalogue with no words in it has nowhere to happen. A scene admits what
+    catalog with no words in it has nowhere to happen. A scene admits what
     could actually occur in it, which is the same discipline as declaring the
     units its words come from.
   */

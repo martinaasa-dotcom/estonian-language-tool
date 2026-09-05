@@ -6,7 +6,7 @@ import { RUNG_LABEL, type Rung } from "@/lib/readiness/rungs";
  * (docs/14-design-system.md §1): mint is known, so it is the rung you could
  * lead; butter is nearly, so it is following without answering; peach is
  * missed, so it is being lost. Take part wears the accent, which is the app's
- * own colour and not a verdict, because it is the rung in the middle and the
+ * own color and not a verdict, because it is the rung in the middle and the
  * one most people are on. Not started wears sky, which is "new".
  */
 export const RUNG_CHIP: Record<Rung, "good" | "accent" | "hard" | "again" | "sky"> = {

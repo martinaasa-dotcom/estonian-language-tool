@@ -28,7 +28,7 @@ describe("the drill a failed beat points at", () => {
       Answering a question, using the negator, keeping to `teie` and reading a
       value off the card are things a learner did or did not do, not words they
       hold a card for. A missing link is honest; a link to the wrong drill is a
-      screen saying "go and practise this" about something else.
+      screen saying "go and practice this" about something else.
     */
     expect(drillFor([{ kind: "question" }])).toBeNull();
     expect(drillFor([{ kind: "negation" }])).toBeNull();

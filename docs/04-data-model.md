@@ -24,7 +24,7 @@ comment on every model that needs one; what belongs here is the map and the reas
 | Model | What it holds |
 |---|---|
 | `Lexeme` | A dictionary word. **Shared by every learner**: the built-in set plus the Ekilex cache, not anybody's deck. |
-| `Form` | An inflected form. Principal parts are the unpredictable ones a learner memorises; anything Ekilex retrieved keeps its own slot. |
+| `Form` | An inflected form. Principal parts are the unpredictable ones a learner memorizes; anything Ekilex retrieved keeps its own slot. |
 | `KnownWord` | Every Estonian headword there is, and nothing else about it. Shared reference data, like `Lexeme`: it answers "is this a word" for the search screen and for a word game's guesses. |
 | `StarredWord` | One learner bookmarking a word. Per learner, unlike the word. |
 | `Card` | One thing to answer about one word, in one of seven shapes, with its FSRS scheduling. |
@@ -81,7 +81,7 @@ A form Ekilex retrieved is kept under its own slot, `EKILEX:<morphCode>`, so a r
 derived one fill the same row of a table and an attested one always answers first.
 
 **`Review` is append-only.** No update path, no delete path. It is the one table whose loss cannot
-be recovered by re-fetching from anywhere, and it is the input to future FSRS optimisation.
+be recovered by re-fetching from anywhere, and it is the input to future FSRS optimization.
 
 **Audio is cached and is not a table.** A clip is content-addressed on the text, the voice and the
 speed, so the same word asked for from a dictionary entry and from a flashcard is one file. It lives

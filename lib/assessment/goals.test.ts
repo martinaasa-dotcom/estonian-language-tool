@@ -88,8 +88,8 @@ describe("deadlines", () => {
   });
 });
 
-describe("normalising what came back from the form", () => {
-  it("drops anything it does not recognise rather than storing it", () => {
+describe("normalizing what came back from the form", () => {
+  it("drops anything it does not recognize rather than storing it", () => {
     const goals = normaliseGoals({ reason: "made up", target: "Z9" as never, deadline: "nope", daysPerWeek: 99, note: " hi " });
     expect(goals.reason).toBeNull();
     expect(goals.target).toBeNull();
@@ -98,7 +98,7 @@ describe("normalising what came back from the form", () => {
     expect(goals.note).toBe("hi");
   });
 
-  it("keeps what it does recognise", () => {
+  it("keeps what it does recognize", () => {
     const goals = normaliseGoals({ reason: "work", target: "B2", deadline: "2027-01-01T00:00:00.000Z", daysPerWeek: 4, note: "x" });
     expect(goals).toEqual({
       reason: "work", target: "B2", deadline: "2027-01-01T00:00:00.000Z", daysPerWeek: 4, note: "x",
@@ -197,7 +197,7 @@ describe("more than one reason", () => {
     expect(impliedTarget([])).toBeNull();
   });
 
-  it("normalises a whole set rather than keeping only the first", () => {
+  it("normalizes a whole set rather than keeping only the first", () => {
     expect(normaliseGoals({ reason: "work travel nonsense", daysPerWeek: 5 }).reason).toBe("work travel");
   });
 });

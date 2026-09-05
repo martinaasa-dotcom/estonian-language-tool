@@ -6,7 +6,7 @@
  * the words of one. Both only ever rearrange or hide text that came from
  * Ekilex, which is what makes them safe under ADR-005 — an app that generated
  * its own example sentences would be drilling invented morphology into memory,
- * which is the one failure this codebase is organised to prevent.
+ * which is the one failure this codebase is organized to prevent.
  *
  * Pure and framework-free, like the rest of `lib/estonian/`.
  */

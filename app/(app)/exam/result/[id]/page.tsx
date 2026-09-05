@@ -262,7 +262,7 @@ export default async function ExamResultPage({ params }: { params: Promise<{ id:
                       className="mt-3 inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4"
                       style={{ color: "var(--peach-ink)" }}
                     >
-                      {item.cta ?? "Practise it"} <ArrowRight size={13} aria-hidden />
+                      {item.cta ?? "Practice it"} <ArrowRight size={13} aria-hidden />
                     </Link>
                   )}
                 </Card>

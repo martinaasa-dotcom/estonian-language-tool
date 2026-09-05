@@ -29,7 +29,7 @@ export function Recorder({ onRecorded, targetSeconds }: {
    * The spoken part of the state examination is timed, and "aim for about ninety
    * seconds" printed above a microphone button is not a timing: nobody knows how
    * long they have been talking. The clock counts up rather than down, and going
-   * past the target is not stopped or penalised, because the examiner does not
+   * past the target is not stopped or penalized, because the examiner does not
    * stop you either.
    */
   targetSeconds?: number;

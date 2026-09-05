@@ -11,7 +11,7 @@ import {
 /**
  * Which language a meaning is given in.
  *
- * Each option is labelled in the language it names as well as in English,
+ * Each option is labeled in the language it names as well as in English,
  * because somebody who wants Russian is looking for `русский` rather than
  * reading down a list of English words for languages.
  */

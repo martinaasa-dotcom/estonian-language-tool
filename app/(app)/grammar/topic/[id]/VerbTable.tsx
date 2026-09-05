@@ -20,7 +20,7 @@ const PERSONS: readonly { code: string; label: string }[] = [
 
 const ORIGIN: Record<VerbExampleForm["origin"], { label: string; title: string }> = {
   EKILEX: { label: "Ekilex", title: "As the Institute of the Estonian Language records it" },
-  STORED: { label: "memorised", title: "The stored first person, a principal part" },
+  STORED: { label: "memorized", title: "The stored first person, a principal part" },
   DERIVED: {
     label: "derived",
     title: "The regular ending on the stored first person, checked against Ekilex for every verb here",

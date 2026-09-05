@@ -12,13 +12,13 @@
  * WHERE THE COUNTS COME FROM, AND WHY THIS ONE. `hermitdave/FrequencyWords`
  * publishes word counts over the OpenSubtitles corpus: MIT for the code, and
  * **CC BY-SA 4.0 for the content**, which is attribution plus share-alike and
- * is exactly the licence English Wiktionary already puts on the glosses in the
+ * is exactly the license English Wiktionary already puts on the glosses in the
  * built dictionary. So it may be used commercially, it has to be credited, and
  * what is built on it carries the same terms, which `LICENSE` and /terms
  * already say about `prisma/data/expanded.json` and now say about this too.
  * The University of Tartu's own frequency dictionary is the better corpus and
  * is CC BY-NC: no charge today is not a promise of no charge ever, and a
- * non-commercial clause is the one licence a project cannot walk back out of.
+ * non-commercial clause is the one license a project cannot walk back out of.
  *
  * WHAT SUBTITLES ARE AND ARE NOT. They are dialogue, so this is the frequency
  * of the spoken language: `tere`, `aitäh` and `kurat` rank high and the
@@ -34,7 +34,7 @@
  * for that exact spelling, and what the page shows is the dictionary's own
  * headword. Nothing this script writes is Estonian it chose.
  *
- * TWO RULES DECIDE WHAT A FORM COUNTS TOWARDS, AND BOTH WERE MEASURED RATHER
+ * TWO RULES DECIDE WHAT A FORM COUNTS TOWARD, AND BOTH WERE MEASURED RATHER
  * THAN REASONED OUT.
  *
  * **Exact spelling only, never a folded one.** `matchEstonianForm` accepts a
@@ -55,9 +55,9 @@
  * infinitive. Counting nominals on the headword alone under-counts them all
  * equally, and the page ranks within a class rather than across classes.
  *
- * And a spelling more than one entry can claim counts towards none of them,
+ * And a spelling more than one entry can claim counts toward none of them,
  * which is the same discipline as a comparator that must not return 0: `hall`
- * is a noun meaning frost and an adjective meaning grey, and there is no
+ * is a noun meaning frost and an adjective meaning gray, and there is no
  * honest way to split 30,000 occurrences between them.
  *
  * WHAT IS LEFT OVER, SO NOBODY FIXES IT WITH A THIRD RULE. `meil` ("email")
@@ -179,7 +179,7 @@ function spellings(entry: SeedEntry): string[] {
 }
 
 /**
- * Every spelling the dictionary would recognise, for the coverage report only.
+ * Every spelling the dictionary would recognize, for the coverage report only.
  *
  * This is the wider set `matchEstonianForm` reaches minus the folding, and it
  * answers "how much of the corpus does the dictionary know at all", which is
@@ -280,7 +280,7 @@ async function main() {
   await writeFile(OUT, render(out, summary), "utf8");
   process.stdout.write(
     `corpus rows read ${counts.size}, attributed ${attributed}, dropped as ambiguous ${ambiguous}\n`
-    + `dictionary recognises ${covered} of the ${counts.size} (${Math.round(100 * covered / counts.size)}%), `
+    + `dictionary recognizes ${covered} of the ${counts.size} (${Math.round(100 * covered / counts.size)}%), `
     + `and ${top400} of the commonest 400\n`
     + `wrote ${out.length} words to lib/collections/frequency.ts (${summary})\n`,
   );
@@ -298,7 +298,7 @@ function render(words: { lemma: string; pos: string; group: string }[], summary:
  * over the OpenSubtitles corpus and keeps only what a dictionary entry vouches
  * for by exact spelling, so the order is measured and the words are the
  * dictionary's own. See that script's header for the two rules that decide
- * what a form counts towards, and for the licence, which is CC BY-SA 4.0 and
+ * what a form counts toward, and for the license, which is CC BY-SA 4.0 and
  * is credited in the running app.
  *
  * ${words.length} words (${summary}), most used first within each group.

@@ -39,7 +39,7 @@ import { standingFor } from "./plan";
  * doing something else: a learner who skipped one screen in first run had no
  * confidence figure anywhere on the page they open every morning, which is the
  * one number that answers "how am I doing" in a unit anybody outside this app
- * recognises. `readiness.next` is the level the climb stopped at, which is
+ * recognizes. `readiness.next` is the level the climb stopped at, which is
  * derived from the review log rather than chosen for them, so `chosen` travels
  * with it and the card says which it is. Nothing is invented: a band nobody
  * picked is still a band this learner's own answers put them under.

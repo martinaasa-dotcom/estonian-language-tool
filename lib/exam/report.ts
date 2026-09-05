@@ -20,12 +20,12 @@ import { SKILL_LABEL, type SkillKey } from "./types";
  * Pure: no React, no Prisma, no clock.
  */
 
-/** Where each part is practised, so a finding can hand over a destination. */
+/** Where each part is practiced, so a finding can hand over a destination. */
 const PRACTICE: Record<SkillKey, { href: string; cta: string }> = {
-  writing: { href: "/review/write", cta: "Practise writing" },
-  listening: { href: "/review/dictation", cta: "Practise listening" },
-  reading: { href: "/review/cloze", cta: "Practise reading" },
-  speaking: { href: "/review/speaking", cta: "Practise speaking" },
+  writing: { href: "/review/write", cta: "Practice writing" },
+  listening: { href: "/review/dictation", cta: "Practice listening" },
+  reading: { href: "/review/cloze", cta: "Practice reading" },
+  speaking: { href: "/review/speaking", cta: "Practice speaking" },
 };
 
 export interface ExamReport {

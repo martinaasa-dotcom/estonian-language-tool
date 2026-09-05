@@ -14,7 +14,7 @@ const POOL_SIZE = 40;
 /**
  * A 60-second speed round — the Duolingo/Speakly "timed practice" idea, adapted to
  * cards already in the deck rather than inventing new content. Weak (high-lapse)
- * and overdue cards are favoured, since fast repetition on exactly those is where
+ * and overdue cards are favored, since fast repetition on exactly those is where
  * a timer earns its keep.
  *
  * Always renders SprintSession, even with an empty pool: SprintSession decides
@@ -49,7 +49,7 @@ export default async function SprintPage() {
 
   // Shuffled so the same session doesn't always open on the same word.
   const shuffled = shuffle(cards);
-  // Which of the pool are already favourites, in one read rather than one per
+  // Which of the pool are already favorites, in one read rather than one per
   // card, so the star in the corner is drawn in the state it is actually in.
   const starred = await starredAmong(
     ownerId, shuffled.map((c) => c.lexemeId).filter((id): id is string => !!id),

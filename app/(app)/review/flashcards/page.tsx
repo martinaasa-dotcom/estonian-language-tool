@@ -43,7 +43,7 @@ const ROUND = 10;
  * A word right five times as a meaning is asked for its kaasaütlev instead.
  *
  * WHY IT IS STILL A REVIEW. Every mode grades through the same log (ADR-016),
- * so the scheduler sees what was practised and this is not a side score. What
+ * so the scheduler sees what was practiced and this is not a side score. What
  * is new is that the answer says which form it was about: the round asks for
  * kaasaütlev on a card that may be a recognition card, and without
  * `Review.slot` the log would record the answer as being about a meaning and
@@ -79,7 +79,7 @@ export default async function FlashcardsPage() {
     Hardest first, and then whatever is furthest from being finished.
 
     `MASTERY_ORDER` already says which list is worth reading first and this is
-    the same judgement about which word is worth asking first, read from the
+    the same judgment about which word is worth asking first, read from the
     same table rather than from a second one that would drift from it.
   */
   const candidates = [...unfinished]
@@ -124,7 +124,7 @@ export default async function FlashcardsPage() {
     // a form is shown in use wherever a lexicographer wrote it, not only
     // where one wrote it under this headword. See lib/dict/borrow.ts.
     borrowedSentences(),
-    // Which of the round's words are already favourites, so the star in the
+    // Which of the round's words are already favorites, so the star in the
     // corner of each card is drawn in the state it is actually in.
     starredAmong(ownerId, lexemeIds),
   ]);
@@ -261,7 +261,7 @@ function promptFor(
  * scheduling moves with the answer; otherwise the card that comes closest to
  * being about producing the word. Never a card at random: an answer graded
  * against whichever row the plan returned first would move a schedule nobody
- * practised.
+ * practiced.
  */
 function cardFor(
   cards: { id: string; cardType: string; targetCase: string | null }[],

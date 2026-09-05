@@ -18,7 +18,7 @@
  * One module rather than a `Map` in each caller, for the reason
  * `lib/cache/singleFlight.ts` gives about itself: a second copy of a pattern
  * with a cleanup step in it is where the cleanup step gets dropped. It also
- * happens to be better behaviour, since a word met in Pairs and again in
+ * happens to be better behavior, since a word met in Pairs and again in
  * Review is now one clip rather than two.
  *
  * Bounded and least-recently-used. An unbounded cache with revocation is

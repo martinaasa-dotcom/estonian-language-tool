@@ -4,10 +4,10 @@ import { prisma } from "@/lib/db";
  * THE WORDS A LEARNER HAS STARRED.
  *
  * `StarredWord` has existed since the dictionary did and could only be written
- * from one screen and read on that same screen, so a favourite was a thing you
+ * from one screen and read on that same screen, so a favorite was a thing you
  * could set and then never see again. These are the two reads that put it
  * where it is set from and where it is looked at: `starredAmong` for a session
- * that has to draw the button in the right state, and `favourites` for the
+ * that has to draw the button in the right state, and `favorites` for the
  * list on `/words/mastery`.
  *
  * OWNER-SCOPED, SO IT IS NOT A FACT ABOUT THE DICTIONARY. Nothing here may go
@@ -15,7 +15,7 @@ import { prisma } from "@/lib/db";
  * only what is true for everybody.
  */
 
-/** How many favourites a list shows before it stops being a list. */
+/** How many favorites a list shows before it stops being a list. */
 export const FAVOURITE_LIMIT = 120;
 
 /**
@@ -37,7 +37,7 @@ export async function starredAmong(
   return new Set(rows.map((r) => r.lexemeId));
 }
 
-export interface Favourite {
+export interface Favorite {
   lexemeId: string;
   lemma: string;
   translation: string;
@@ -55,7 +55,7 @@ export interface Favourite {
  * id as well, since two stars written in one press of "add a unit" share a
  * timestamp and a cut at the limit may not be decided by the query plan.
  */
-export async function favourites(ownerId: string): Promise<Favourite[]> {
+export async function favorites(ownerId: string): Promise<Favorite[]> {
   const rows = await prisma.starredWord.findMany({
     where: { ownerId },
     select: {
@@ -78,6 +78,6 @@ export async function favourites(ownerId: string): Promise<Favourite[]> {
 }
 
 /** How many words are starred in total, which the capped list cannot say. */
-export function favouriteCount(ownerId: string): Promise<number> {
+export function favoriteCount(ownerId: string): Promise<number> {
   return prisma.starredWord.count({ where: { ownerId } });
 }

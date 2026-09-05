@@ -11,6 +11,8 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
+import { exceptionsFor } from "@/lib/estonian/exceptions";
+import { WordExceptions } from "@/components/WordExceptions";
 import { caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
@@ -439,6 +441,16 @@ export function DictionaryClient({
           )}
           {matchedAs && (
             <p
+              /*
+                `scripts/test-polish.mjs` used to find this line by searching
+                the page for " is the ", which is a phrase and not an anchor: it
+                matched the moment any other copy on the entry used the same
+                three words, and Playwright's strict mode then returned nothing
+                at all rather than the wrong element. The suite read that as the
+                explanation having gone. This is the same anchor
+                `data-flash-answer` is one route over, and for the same reason.
+              */
+              data-matched-as=""
               className="rounded-[var(--r)] px-4 py-3 text-sm"
               style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
             >
@@ -526,7 +538,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
   // Ekilex hands over every form, so when we have them there is nothing to
   // derive — we show the authoritative forms, including irregular plurals and the
   // parallel forms Estonian genuinely has (raamatutes / raamatuis).
-  // Every form Ekilex labelled, principal parts included: the 1sg present is
+  // Every form Ekilex labeled, principal parts included: the 1sg present is
   // both a principal part *and* the "ma" row of the conjugation table, and
   // leaving it out left a hole in the middle of the table.
   const retrieved = entry.forms.filter((f) => f.morphCode);
@@ -669,7 +681,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
       {entry.forms.length > 0 && (
         <div>
           <h3 className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>
-            Principal parts, the forms you have to memorise
+            Principal parts, the forms you have to memorize
           </h3>
           <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(124px, 1fr))" }}>
             {parts.map(([type, label, et]) => {
@@ -706,6 +718,22 @@ function Entry({ entry, tutorReady, glossLanguage }: {
           </div>
         </div>
       )}
+
+      {/*
+        WHERE THIS WORD BREAKS THE PATTERN, BETWEEN THE PARTS AND THE TABLE.
+
+        The table below is headed "the rest, worked out from the genitive" and
+        prints `tuppa` in the illative row, because `caseAnswer` prefers an
+        attested form over the rule. Both facts are right and the page never put
+        them next to each other, so a learner left with the ending `sse` and a
+        form that does not have it, and no way to know which to reach for
+        tomorrow. The gradation chip in the header is not that: it names an
+        alternation, sits above four surprises and points at none of them.
+
+        Computed from the forms already on the screen (`lib/estonian/exceptions.ts`),
+        so this cannot drift from the table under it.
+      */}
+      <WordExceptions exceptions={exceptionsFor({ lemma: entry.lemma, pos: entry.pos, forms: entry.forms })} />
 
       {retrieved.length > 0 ? (
         <WordForms

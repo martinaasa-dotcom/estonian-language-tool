@@ -60,7 +60,7 @@ export const dynamic = "force-dynamic";
  * `leastPractisedSlot` picks which card of a word to ask, so a word that has
  * been asked for its meaning four times comes back as `millesse? kuhu?`, and
  * `withChoices` opens a word nobody has met yet with its first meeting, both of
- * which are the ordinary behaviour of every round in this directory.
+ * which are the ordinary behavior of every round in this directory.
  */
 export default async function LookupsRoundPage() {
   const ownerId = await requireUserId();

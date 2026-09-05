@@ -74,7 +74,7 @@ describe("stickingPoints", () => {
     expect(stickingPoints([...cards].reverse(), reviews).map((p) => p.id)).toEqual(["a", "b"]);
   });
 
-  it("honours the limit", () => {
+  it("honors the limit", () => {
     const cards = Array.from({ length: 12 }, (_, i) =>
       card({ id: `c${i}`, lemma: `w${i}`, lapses: 5 + i }));
     expect(stickingPoints(cards, [], 4)).toHaveLength(4);

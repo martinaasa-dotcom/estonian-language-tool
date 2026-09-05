@@ -82,8 +82,8 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
       title={classroom.name}
       lead={workplace
         ? (isTeacher
-            ? `Who is practising, and who is on track for ${classroom.targetLevel}.`
-            : `Your group, working towards ${classroom.targetLevel}.`)
+            ? `Who is practicing, and who is on track for ${classroom.targetLevel}.`
+            : `Your group, working toward ${classroom.targetLevel}.`)
         : (isTeacher
             ? "Who is keeping up, and what the class as a whole keeps getting wrong."
             : "How your class is doing this week.")}

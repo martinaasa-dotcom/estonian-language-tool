@@ -111,7 +111,7 @@ export async function Diagnosis({ ownerId }: { ownerId: string }) {
 /*
   The hue fills the bar; the ink variant of it writes the number.
 
-  Mint and peach are indicator colours, sized to be read as a block of fill,
+  Mint and peach are indicator colors, sized to be read as a block of fill,
   and at 13.5px on a card they measured 2.52:1 and 2.97:1, both under the 3:1
   that even large text has to clear. `--good-ink` and `--again-ink` are the
   same meaning at a lightness that can be read, which is what they exist for.

@@ -344,11 +344,11 @@ export const TOPICS: readonly string[] = [
  */
 export const MESSAGES: readonly { scenario: string; cover: readonly string[] }[] = [
   {
-    scenario: "a note to a neighbour who took in a parcel for you",
+    scenario: "a note to a neighbor who took in a parcel for you",
     cover: ["say who you are", "say what you are collecting", "say when you will come"],
   },
   {
-    scenario: "an e-mail cancelling an appointment you cannot keep",
+    scenario: "an e-mail canceling an appointment you cannot keep",
     cover: ["say which appointment", "give a reason", "propose another time"],
   },
   {
@@ -767,7 +767,7 @@ function buildListenChoose(spec: TaskSpec, ctx: BuildContext): ExamTask {
       length of the answer is crossed out on the page before the recording has
       played. Inside that, the nearest are the ones sharing words with what was
       said, because those are the ones that have to be *heard* apart rather
-      than picked out by the one word the learner recognised.
+      than picked out by the one word the learner recognized.
 
       Two sentences that say the same thing are still two different recordings,
       so this asks for a different *text* where the reading comprehension
@@ -827,7 +827,7 @@ function buildListenChoose(spec: TaskSpec, ctx: BuildContext): ExamTask {
     });
   }
 
-  return finish(spec, items, undefined, "recordings with three near neighbours to hide among");
+  return finish(spec, items, undefined, "recordings with three near neighbors to hide among");
 }
 
 /**
@@ -1020,7 +1020,7 @@ function buildSpeak(spec: TaskSpec, ctx: BuildContext, index: number): ExamTask 
 
   /*
     One item, marked out of the task's several marks by the learner themselves.
-    ADR-018: there is no verified Estonian speech recogniser available here, so
+    ADR-018: there is no verified Estonian speech recognizer available here, so
     nothing scores a recording. The exam screen says that where it cannot be
     missed, because a self-marked part sitting silently inside a percentage
     would make the whole percentage a lie.

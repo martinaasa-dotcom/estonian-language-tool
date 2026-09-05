@@ -30,7 +30,7 @@
  * process *is* the learner) and the wrong one on a server, so server code
  * takes a clock. The learner's zone is reported by their browser and stored
  * under `SETTING_KEYS.timeZone`; with none stored the clock falls back to the
- * process, which is exactly the behaviour this file had before.
+ * process, which is exactly the behavior this file had before.
  *
  * Framework-free and pure: `Intl` is the platform, so both the server and the
  * browser can agree on a day key without either one guessing.
@@ -48,7 +48,7 @@ export type DayKey = string;
  */
 export type Zone = string | undefined;
 
-/** Whether `Intl` recognises this as a timezone, so a stored value can be trusted. */
+/** Whether `Intl` recognizes this as a timezone, so a stored value can be trusted. */
 export function isTimeZone(value: unknown): value is string {
   if (typeof value !== "string" || value.length === 0 || value.length > 64) return false;
   try {
@@ -162,7 +162,7 @@ export interface DayClock {
  * An unrecognised zone is treated as absent rather than as an error: this runs
  * on the render path of the busiest page in the app, and a learner whose
  * stored zone stopped existing between two releases of the IANA database
- * should see the previous behaviour, not a 500.
+ * should see the previous behavior, not a 500.
  */
 export function dayClock(zone?: unknown): DayClock {
   const tz = normaliseZone(zone);

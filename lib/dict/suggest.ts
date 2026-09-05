@@ -25,7 +25,7 @@
  *           Always available, so the row is never empty and never short.
  *
  * A source has to fill most of the row on its own or it is passed over. That
- * is the reason there is no top-up: a row labelled "In the news today" whose
+ * is the reason there is no top-up: a row labeled "In the news today" whose
  * last four words came from a random draw would be a caption that is true of
  * two thirds of what is under it, and the honest alternative costs nothing but
  * a slightly shorter row.

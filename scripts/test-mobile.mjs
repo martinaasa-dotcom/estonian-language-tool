@@ -158,7 +158,7 @@ for (const width of PHONES) {
 // controls could be redrawn without this suite having an opinion.
 // `/situations/arsti-aeg` is on it for the reason `/settings` and `/practice`
 // are: it is a screen that asks a question rather than answering one, and its
-// dial is four labelled buttons in a two-column grid at 390 with a start button
+// dial is four labeled buttons in a two-column grid at 390 with a start button
 // under them. The talking screen behind it has the tightest row of controls in
 // the app after the rating keys, and is measured by `test-containment.mjs`,
 // which knows how to press through to it.
@@ -170,7 +170,7 @@ for (const path of [
   const { ctx, page } = await open(390, 844, path);
   const small = await page.evaluate(() =>
     // The same set the floor in globals.css covers, which is what a thumb has
-    // to hit rather than what is spelt `<button>`: a link drawn as a pill or
+    // to hit rather than what is spelled `<button>`: a link drawn as a pill or
     // as a lone icon is a control, and this suite could not see one.
     [...document.querySelectorAll("button, [role=button], a[role=button], a.pill, a[aria-label]")]
       .filter((el) => el.tagName !== "A" || el.classList.contains("pill") || el.querySelector("svg"))

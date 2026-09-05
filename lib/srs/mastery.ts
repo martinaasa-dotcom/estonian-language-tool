@@ -99,7 +99,7 @@ export interface WordReview {
 }
 
 /**
- * The slot one answer counts towards.
+ * The slot one answer counts toward.
  *
  * The column where there is one, and the old reading where there is not, which
  * is what keeps a deck full of history reading the way it always did.
@@ -208,7 +208,7 @@ export const MASTERY_LABEL: Record<Mastery, string> = {
 export const MASTERY_ORDER: readonly Mastery[] = ["struggling", "almost", "learning", "mastered"];
 
 /**
- * ONE CARD PER WORD, IN THE SLOT THE LEARNER HAS PRACTISED LEAST.
+ * ONE CARD PER WORD, IN THE SLOT THE LEARNER HAS PRACTICED LEAST.
  *
  * The half of "asked in a way you have not" that a query cannot express. A word
  * short of `MASTERY_SLOTS` has room in some slot it has not been asked in, and

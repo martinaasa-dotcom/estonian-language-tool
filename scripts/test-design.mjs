@@ -59,7 +59,7 @@ for (const url of PAGES) {
       default `repeat` fills the difference from the tile next door. On the primary
       button that put the pink end of the ramp down the left edge and the blue
       end down the right, one pixel wide, on the two rounded caps where a flat
-      colour shows most. It survived the fix that made the ramp horizontal,
+      color shows most. It survived the fix that made the ramp horizontal,
       because it never had anything to do with the angle.
 
       Stated as the condition rather than as one button: measured smaller than
@@ -186,7 +186,7 @@ noFocus = [...new Set(noFocus)];
   cover-based range needs scrolling that a page sitting at its own end does not
   have: at maximum scroll the final call to action measured opacity 0.51 and the
   three questions above it 0.72, 0.77 and 0.82. Every element in the last
-  screenful was dimmed, permanently, on every visit. It looked like a colour
+  screenful was dimmed, permanently, on every visit. It looked like a color
   choice, which is why nobody filed it.
 */
 let faded = [];
@@ -242,7 +242,7 @@ check("nothing is left half-faded at the bottom of a page", faded.length === 0,
 check("every tab stop shows its focus ring immediately", noFocus.length === 0,
   noFocus.slice(0, 5).join(" | "));
 
-check("no gradient wraps the wrong colour round its own edge", wrapped.size === 0,
+check("no gradient wraps the wrong color round its own edge", wrapped.size === 0,
   [...wrapped].slice(0, 4).join(" | "));
 
 /*

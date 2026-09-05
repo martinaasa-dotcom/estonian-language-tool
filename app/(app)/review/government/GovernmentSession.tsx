@@ -13,7 +13,7 @@ import { OPTION_CLASS, VERDICT_INK, optionState } from "@/lib/ux/verdict";
 import type { CaseKey } from "@/lib/estonian/types";
 
 export interface GovernmentQuestion {
-  /** The card this question practises, when the verb is already in the deck. */
+  /** The card this question practices, when the verb is already in the deck. */
   cardId: string | null;
   lexemeId: string;
   lemma: string;
@@ -29,7 +29,7 @@ export interface GovernmentQuestion {
   gloss: string | null;
   experiencer: boolean;
   inDeck: boolean;
-  /** Whether this word is already one of the learner's favourites. */
+  /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
   options: CaseKey[];
 }

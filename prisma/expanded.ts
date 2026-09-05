@@ -112,7 +112,7 @@ export function readPosCorrections(): PosCorrection[] {
  * correction one learner makes is everybody's, and a reseed walking over it
  * would erase a person's work along with the record of who did it. The `NOT
  * EXISTS` is the conflict key itself: `hall` is a noun meaning "frost" and an
- * adjective meaning "grey", so a deployment holding it twice is right, and an
+ * adjective meaning "gray", so a deployment holding it twice is right, and an
  * update onto an occupied key is an error that would take the whole seed down
  * with it.
  *

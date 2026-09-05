@@ -83,7 +83,7 @@ export interface Condition {
  * difference between `s` and `f` and is exactly what happens on a call. `half`
  * starts two fifths of the way in, which is a sentence caught from the middle
  * of a conversation, and it is last because it is the only one that removes
- * words rather than colouring them. A condition with a room in it keeps a
+ * words rather than coloring them. A condition with a room in it keeps a
  * normal rate, asserted: the mixer plays a decoded buffer, and a buffer
  * source cannot hold the pitch the way an element can.
  */
@@ -104,17 +104,21 @@ export function conditionById(id: string | null | undefined): Condition {
 /**
  * How many times a word has been reviewed before each condition opens.
  *
- * Two clean hearings before anything changes, because the first meeting of a
- * word is a teaching screen and the second is the first real retrieval. After
- * that a new condition every three or so reviews, which on the default goal is
- * a new way of hearing a word about once a week.
+ * A word is heard cleanly, at a normal speed, until it is nearly known. The
+ * first table opened "at speed" on the second review, and a learner who was
+ * still working out where a word ended met it read fast: the room and the
+ * rate are a test of an ear, and an ear is tested on a word it already holds.
+ * Six reviews on the default steps is a word that has come back right across
+ * a fortnight and is on its way out of learning; the harder rooms follow from
+ * there, a few reviews apart, so nothing about the delivery changes before
+ * the word itself has settled.
  */
 export const OPENS_AT: Readonly<Record<ConditionId, number>> = {
   clean: 0,
-  quick: 2,
-  cafe: 4,
-  phone: 7,
-  half: 10,
+  quick: 6,
+  cafe: 9,
+  phone: 12,
+  half: 15,
 };
 
 /** The conditions a word with this many reviews behind it may be heard in. */

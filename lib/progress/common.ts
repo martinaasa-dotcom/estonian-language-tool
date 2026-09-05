@@ -13,7 +13,7 @@ import { oneEntryPerLemma } from "@/lib/dict/search";
  * to the dictionary and to the learner's own deck, which is the whole of the
  * module: two reads and no arithmetic.
  *
- * A word the dictionary does not have is dropped rather than shown greyed out.
+ * A word the dictionary does not have is dropped rather than shown grayed out.
  * That is not a hypothetical: a deployment seeded before the course harvest
  * holds a few hundred words, and a page listing four hundred with three
  * hundred crossed through is a page about this app rather than about Estonian.

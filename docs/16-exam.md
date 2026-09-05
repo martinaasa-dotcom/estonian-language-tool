@@ -134,7 +134,7 @@ mechanically first.
 **The second writing task offers the choice the real one offers**, a story or a personal letter.
 Both are marked identically, on length and on the words the task named, which is the only way this
 app can offer a choice honestly: a mock where picking the letter scored differently would be
-inventing a judgement about somebody's Estonian.
+inventing a judgment about somebody's Estonian.
 
 **An A1 paper exists here and nowhere else.** It is built to the A2 paper's shape, one step easier,
 labelled "not examined" everywhere it appears, and the level card says why. An earlier version of
@@ -143,7 +143,7 @@ C2 course units, on the same argument that dropped them: a level the app cannot 
 for is a promise it should not make. See `docs/13-mvp-status.md` §19.
 
 **Nothing scores pronunciation.** ADR-018 has not moved: there is no verified Estonian speech
-recogniser available to this app, so the spoken part is recorded, played back and marked by the
+recognizer available to this app, so the spoken part is recorded, played back and marked by the
 learner against criteria they can actually hear themselves against. The result says which quarter of
 the score came from that.
 
@@ -159,8 +159,8 @@ questions; it is the conditions, and four of them are reproduced here because th
 practice is worth.
 
 **Each recording plays twice.** It used to play as often as you liked, which is the difference
-between practising listening and sitting a listening test: somebody who gets there on the fifth play
-has learnt nothing about whether they can get there on the second. `LISTEN_PLAYS` is the number, the
+between practicing listening and sitting a listening test: somebody who gets there on the fifth play
+has learned nothing about whether they can get there on the second. `LISTEN_PLAYS` is the number, the
 count is on screen, and a slow play spends one of them so the dictation's two buttons cannot quietly
 hand out four. The count is kept on the question rather than in the button for exactly that reason,
 and it only counts a play that actually happened: a clip that would not load costs nothing and takes
@@ -211,7 +211,7 @@ exactly how a rule like that gets softened.
 
 **The spoken answers are timed.** "Aim for about ninety seconds" over a microphone button is not a
 timing, because nobody knows how long they have been talking. The recorder counts up, and going past
-the target is neither stopped nor penalised, because the examiner does not stop you either.
+the target is neither stopped nor penalized, because the examiner does not stop you either.
 
 **What is still not imitated** is said out loud on the briefing rather than left to be discovered:
 the C1 paper's single-listen task, and the few minutes of conversation with an examiner that the real

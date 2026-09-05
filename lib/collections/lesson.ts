@@ -66,7 +66,7 @@ export interface LessonWord {
    * rather than tested, and somebody who already speaks Russian or Ukrainian
    * reaches the meaning in one step instead of two. A question's options are
    * drawn from a pool of English glosses and stay English, because an option
-   * in a second language would be recognisable as the answer before anybody
+   * in a second language would be recognizable as the answer before anybody
    * read it.
    */
   equivalent?: { text: string; lang: string } | null;
@@ -102,7 +102,7 @@ export interface IntroStep extends StepBase {
 }
 export interface MeetStep extends StepBase {
   kind: "meet";
-  /** The dictionary entry, for the favourite button in the card's corner. */
+  /** The dictionary entry, for the favorite button in the card's corner. */
   lexemeId: string;
   lemma: string;
   gloss: string;
@@ -213,7 +213,7 @@ const BLOCK = 3;
  * New words in one lesson.
  *
  * A 19-word unit is not a lesson, it is an afternoon. Splitting the unit into
- * sittings of six is what lets every word be met, recognised, practised in a
+ * sittings of six is what lets every word be met, recognized, practiced in a
  * sentence *and* produced — the full ladder — instead of a long unit quietly
  * dropping the last rung for its last words because the step budget ran out.
  */
@@ -469,7 +469,7 @@ function interleave(lanes: readonly (readonly LessonStep[])[]): LessonStep[] {
  *
  * This is the constraint that actually matters, and it is weaker than "the order
  * the lanes emitted things in". A word must be met before it is asked about and
- * recognised before it is produced cold — but whether it is heard before or
+ * recognized before it is produced cold — but whether it is heard before or
  * after it is used in a sentence makes no difference to anybody, and forbidding
  * that swap was what left a run of production steps unfixable at the end of a
  * lesson.
@@ -562,7 +562,7 @@ export function splitIntoLessons<T>(words: readonly T[], size = LESSON_WORDS): T
 /**
  * Plans one lesson.
  *
- * Words arrive in blocks of three: each is met, then recognised, then a variety
+ * Words arrive in blocks of three: each is met, then recognized, then a variety
  * step drawn from whatever that block's material supports. Blocks after the
  * first also re-ask a word from an earlier block, harder than it was asked the
  * first time, which is the in-lesson spacing. A production pass over everything
@@ -591,7 +591,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
   for (let i = 0; i < words.length; i += BLOCK) blocks.push(words.slice(i, i + BLOCK));
 
   /**
-   * The ladder a word climbs, one rung per round: met, recognised, practised on
+   * The ladder a word climbs, one rung per round: met, recognized, practiced on
    * its own material, then produced cold. Because each rung is emitted a round
    * later than the last, a word met in round 0 is not typed until round 3 — the
    * spacing happens inside the lesson rather than being left entirely to
@@ -617,7 +617,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
   // The preference order rotates by position in the block. Taking the builders
   // in a fixed order looks reasonable and produces a lesson where every single
   // practice step is a gap-fill, because most words support the first one on the
-  // list; rotating means three consecutive words practise three different ways
+  // list; rotating means three consecutive words practice three different ways
   // whenever the material allows it, and falls back to the same order as before
   // when it does not.
   const builders = [gapStep2, buildStep2, caseStep2, governStep2];
@@ -655,7 +655,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
   }));
 
   // One round per block, plus the rounds the lag needs to drain: the last block
-  // still has to be recognised, practised and produced after it is introduced.
+  // still has to be recognized, practiced and produced after it is introduced.
   const at = (i: number) => blocks[i] ?? [];
   // The lags are what stagger the ladder, and they are chosen so that every
   // round past the first carries at least two *answerable* lanes. An earlier

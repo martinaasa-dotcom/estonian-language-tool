@@ -30,7 +30,15 @@ for (const [query, lemma, why] of [
 ]) {
   await page.goto(`${B}/dictionary?q=${encodeURIComponent(query)}`, { waitUntil: "networkidle" });
   const heading = await page.locator('h2[lang="et"]').innerText().catch(() => "");
-  const note = await page.getByText(/ is the /).innerText().catch(() => "");
+  /*
+    The note's own element, rather than a page-wide search for " is the ".
+
+    That phrase is not an anchor: the entry grew a panel saying which patterns
+    the word breaks, one line of which reads "this is the one to learn first",
+    and two matches put Playwright's strict mode into a throw. The suite caught
+    it as "no explanation shown", which is the failure naming the wrong cause.
+  */
+  const note = await page.locator("[data-matched-as]").innerText().catch(() => "");
   check(`"${query}" resolves to ${lemma} and says why`,
     heading === lemma && why.test(note), note || "no explanation shown");
 }
@@ -60,7 +68,7 @@ check("the drill opens and says what it is",
   (await page.getByText(/drill/i).count()) > 0, href);
 // Derived from the link rather than hard-coded: which case is weakest depends
 // on the review history, so pinning one name here makes the test fail on data
-// rather than on behaviour.
+// rather than on behavior.
 const drilledCase = new URL(href, B).searchParams.get("case")?.toLowerCase() ?? "";
 // The drill's own heading names the case in both languages, so the English
 // name read off the link is still the way to check the drill was filtered.
@@ -89,7 +97,7 @@ check("that link lands on the entry", page.url().includes("/dictionary?q="), pag
   Two entries for one word, and both of them reachable.
 
   A lemma can hold more than one entry, because `@@unique` is on `(lemma, pos)`:
-  `hall` is grey and also frost. The entry page shows one of them, listed the
+  `hall` is gray and also frost. The entry page shows one of them, listed the
   rest under "other matches", and navigated those chips to `?q=<lemma>` — which
   searched the same word, opened the same winner, and left the second entry
   unreachable from anywhere in the app. The chips also read lemma and gloss

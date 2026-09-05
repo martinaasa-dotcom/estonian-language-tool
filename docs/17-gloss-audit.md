@@ -92,7 +92,7 @@ everyday "desert" sits under a later etymology than a `rare` sense meaning a lar
 forest. It also breaks `soldat`, tagged `obsolete` on "soldier", which would have been drilled as
 "jack"; `vats`, `dialectal` on "belly", which became "rumen"; and `raisk`, `dated` on "carrion",
 which landed on a vulgar usage note. The structure of the good case and the bad ones is
-identical, so no rule separates them. Which sense a learner needs is a lexical judgement, and
+identical, so no rule separates them. Which sense a learner needs is a lexical judgment, and
 this pipeline does not get to make it.
 
 `kõrb` is therefore still glossed "a large uninhabited forest" and is wrong. It is left for a
@@ -195,7 +195,7 @@ id, and every card and review still points at it.
 **What was deliberately not changed**, on the same reasoning as §4. `rõõmus` is headed
 `===Noun===` on Wiktionary with `{{et-noun}}` under it and glossed "happy", which is an adjective by
 any reading. Both signals agree and both are wrong, so no rule separates it from a genuine noun,
-and inventing one would be this pipeline making the lexical judgement it does not get to make. The
+and inventing one would be this pipeline making the lexical judgment it does not get to make. The
 course harvest carries the correct `rõõmus` adjective independently, so a learner meets the right
 one. `asjatundja` and `brünett` read as nouns in English and are headed `===Adjective===` on their
 own pages; that is Wiktionary's call and the dictionary is editable.

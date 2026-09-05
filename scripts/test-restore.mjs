@@ -123,7 +123,7 @@ await page.getByLabel("Choose a backup file").setInputFiles({
 // — which, here, fails *after* the delete and so loses the data it was checking.
 const summary = page.getByText(/holds/).first();
 const summarised = await summary.waitFor({ timeout: 30000 }).then(() => true, () => false);
-check("the file is recognised and summarised", summarised);
+check("the file is recognized and summarised", summarised);
 if (!summarised) {
   console.error(`\nThe page never accepted the backup, so the database is still empty.` +
     `\nRestore it yourself from ${safety} via Settings -> Restore.\n`);

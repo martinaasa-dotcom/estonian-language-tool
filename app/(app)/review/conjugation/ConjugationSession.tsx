@@ -19,14 +19,14 @@ import { VERDICT_CLASS, VERDICT_INK, verdictOfCheck } from "@/lib/ux/verdict";
 export type Tense = "present" | "conditional";
 
 export interface ConjugationQuestion {
-  /** The card this question practises, when the verb is already in the deck. */
+  /** The card this question practices, when the verb is already in the deck. */
   cardId: string | null;
   lexemeId: string;
   lemma: string;
   translation: string;
   cefr: string | null;
   inDeck: boolean;
-  /** Whether this verb is already one of the learner's favourites. */
+  /** Whether this verb is already one of the learner's favorites. */
   starred: boolean;
   tense: Tense;
   /** The first person, shown: the principal part the rest hang off. */

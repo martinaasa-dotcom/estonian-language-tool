@@ -451,7 +451,7 @@ export default async function TodayPage() {
                   background: d.done ? "var(--mint)" : "var(--raised)",
                   // `--on-mint`, not `--surface`: white on this fill is
                   // 2.52:1 and the tick is the channel carrying
-                  // "reviewed" without relying on the colour.
+                  // "reviewed" without relying on the color.
                   color: d.done ? "var(--on-mint)" : "var(--ink-3)",
                   /*
                     Today was marked with a 2px outline at a 2px offset, which
@@ -460,7 +460,7 @@ export default async function TodayPage() {
                     move and this one stay, which reads as the page being
                     stuck. It is an inset ring instead: inside the circle,
                     where no focus ring in this app ever sits, and the letter
-                    under it carries the same colour so the mark is not the
+                    under it carries the same color so the mark is not the
                     ring alone.
                   */
                   boxShadow: d.isToday
@@ -569,7 +569,7 @@ export default async function TodayPage() {
   ) : null;
 
   /*
-    A Card like every one of its neighbours. It was a bare `<section>`, so its
+    A Card like every one of its neighbors. It was a bare `<section>`, so its
     heading sat 25px further left than the four above it and its rows read as
     three loose boxes under a heading belonging to nothing. The rows keep their
     own borders, because a quest that is done is drawn as a filled row and

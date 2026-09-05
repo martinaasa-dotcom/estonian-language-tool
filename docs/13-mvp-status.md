@@ -195,7 +195,7 @@ deployment had quietly broken. This pass closes those.
    the word cold; it is recorded as Good, which is generous but not dishonest. Sprint has the same
    shape and always did.
 2. ~~**The leaderboard is a whole-instance board, not per class.**~~ **Removed, 2026-08-31.** It
-   was the right behaviour for one class on one school's copy and the wrong one everywhere else,
+   was the right behavior for one class on one school's copy and the wrong one everywhere else,
    and sign-up here is open, so what it actually drew was a table of strangers. Two faults, and
    only one of them was about privacy. It did not mean anything: past `BOARD_CANDIDATES` the top
    twenty was the top twenty of the first two thousand opted-in learners by owner id, because
@@ -240,8 +240,8 @@ lexicographer wrote (ADR-017).
 
 ### Things this pass refused to do
 
-- **Score pronunciation.** No verified Estonian speech recogniser is available to this app,
-  TartuNLP publish TTS and nothing comparable the other way, and the browser's own recogniser has no
+- **Score pronunciation.** No verified Estonian speech recognizer is available to this app,
+  TartuNLP publish TTS and nothing comparable the other way, and the browser's own recognizer has no
   dependable `et-EE`. A number invented on top of that would be trusted, so speaking compares
   instead of grading (ADR-018).
 - **Write example sentences.** Not by hand, not with the model. Every sentence is attested.
@@ -258,7 +258,7 @@ lexicographer wrote (ADR-017).
 2. **Translations of examples are machine-made.** Tagged `AI`, stored so they are fetched once, and
    overwritable, but they are not a translator's work and the app does not claim otherwise.
 3. **A class is per instance, not per school.** One deployment, many classes; there is no
-   organisation layer, no roles beyond teacher and student, and no way to move a class between
+   organization layer, no roles beyond teacher and student, and no way to move a class between
    instances.
 4. **Classes need sign-in.** In local mode there is one learner, so `/class` explains that rather
    than offering forms that could not work.
@@ -279,7 +279,7 @@ What that meant in practice:
 - The new routes moved into the `(app)` route group, so they get the rail, the mobile bar and the
   wash from the layout rather than each rendering their own chrome.
 - Sentences and Speaking joined the Today page's quick-practice grid and the Practice hub, each
-  with its own hue: six modes, six colours, no two the same.
+  with its own hue: six modes, six colors, no two the same.
 - The screens listed in §7 were restyled onto `components/ui.tsx` (see `14-design-system.md` §9).
 - Two responsive bugs the merge exposed were fixed rather than papered over: the Today hero packed
   three stat tiles and the goal ring onto one row at 390px, and a grid column without `min-w-0`
@@ -330,7 +330,7 @@ exercise simply does not appear when the material for it is missing.
    an empty state that says so.
 3. **Retention needs history.** Below thirty mature reviews the reading refuses to give a number,
    because one bad evening would swing it twenty points.
-4. **The worksheet is one sheet per unit.** No question banks, no randomised variants, no per-class
+4. **The worksheet is one sheet per unit.** No question banks, no randomized variants, no per-class
    sets. It is deterministic on purpose: a class comparing answers has to be comparing the same
    sheet.
 
@@ -383,7 +383,7 @@ nothing said what the app cannot do.
 | **A ladder that stops** | Questions climb the bands, a skill asks at most one band above the first it was not passed at, and nothing above one that came in under half. `lib/assessment/session.ts`, pure, so a test walks a whole sitting without a browser |
 | **A level you can set** | Settings holds the level the app is going on, changeable by hand. Whichever of the measurement and the learner's own answer was stated later is the one it uses, and it decides where the course opens and which band review, practice and the dictionary draw words from |
 | **A profile, not a number** | Per skill levels with the band breakdown, an overall that follows the weakest measured skill, and a stated confidence that names how few questions it came from |
-| **Goals** | Why you are here, the level you want, the date you want it by, and how many days a week you will really practise. Asked at first run, editable in Settings for ever |
+| **Goals** | Why you are here, the level you want, the date you want it by, and how many days a week you will really practice. Asked at first run, editable in Settings for ever |
 | **A timeline with sources** (`lib/assessment/plan.ts`) | Hours between two levels, how many of them the stated daily goal covers, and how many are left to find elsewhere. Ranges, with the published estimates they came from named |
 | **First run, rewritten** | Four steps: name and keyboard, measure or estimate, why and how far with the plan live under it, the deck and the pace |
 
@@ -447,7 +447,7 @@ screen says which.
    from the credits with `placement()` so a stale client cannot invent its own scale.
 2. **The hours table is not measured on this app's learners.** It combines published CEFR guided
    hours with the FSI difficulty scale, both of which are about other people on other courses, and
-   the per-step shape of the surcharge is a stated judgement over them. It is shown as a range with
+   the per-step shape of the surcharge is a stated judgment over them. It is shown as a range with
    its sources named. What is the learner's own is their measured level, the Estonian their week
    already holds, and their pace off the log; the hours a level costs are still the published ones.
 3. **No sentences without an Ekilex key.** The built-in dictionary carries principal parts and no
@@ -551,7 +551,7 @@ the listening part came out completely empty, and the honest shortfall machinery
 half a paper as absent. Honest, and useless, on the install a stranger gets by default.
 
 So a task that cannot be set falls back to one built from what the dictionary always holds: words,
-forms, glosses, and a speech synthesiser that needs no key. Listening becomes single words rather
+forms, glosses, and a speech synthesizer that needs no key. Listening becomes single words rather
 than sentences, which in Estonian is a harder test than it sounds, since hearing `toas` and writing
 `toa` is exactly the failure the exercise exists to catch. Reading becomes meaning and form
 recognition. The word-order task has no fallback and stays honestly empty, because rebuilding a
@@ -805,7 +805,7 @@ and one redirecting URL would take the offline page down with it.
 
 ### Known limitations, stated plainly
 
-1. **C2 is named, not delivered.** Its ten units cover the specialised registers,
+1. **C2 is named, not delivered.** Its ten units cover the specialized registers,
    irony, dialect and nuance a C1 speaker still gets wrong, and the last unit
    says in as many words that C2 is finished by reading, arguing and living in
    the language rather than by finishing units. An app can name the ground. It
@@ -820,7 +820,7 @@ and one redirecting URL would take the offline page down with it.
    can use the partitive.
 4. **Ekilex's own CEFR coding thins out at the top.** 1 078 of the 1 248
    harvested words carry a level from Ekilex; the rest take the level of the unit
-   that introduces them, which is an editorial judgement rather than an
+   that introduces them, which is an editorial judgment rather than an
    authority's, and they cluster at C1 and C2 where Ekilex grades least.
 5. **A topic page is sparser than a case page, deliberately.** A case page shows
    the case on real words because every form on it is read from the dictionary
@@ -922,7 +922,7 @@ and the invariant is what the surviving fix did not come with.
 
 1. **A deployment can still run unnamed.** Nothing refuses to boot without an
    operator, and nothing should: a local single-learner install has no third
-   party to inform, and a hard failure would push somebody towards a fake value.
+   party to inform, and a hard failure would push somebody toward a fake value.
    The pages say the field is empty, which is the strongest honest move.
 2. **Where Supabase hosts a project is not readable from here.** The region is
    chosen when the project is created, so the recipients list says it depends on
@@ -945,7 +945,7 @@ was never once asked with the answer off the screen. `docs/07-srs.md` §2 calls
 recognition "passive vocabulary" and §14 above says options are for cards a
 learner has not met, and the code had quietly widened that to all of them.
 
-Recognising a gloss among four is a much weaker memory than producing it, and
+Recognizing a gloss among four is a much weaker memory than producing it, and
 FSRS does not know which one it just measured: a card graded Good on a pick is
 scheduled as if the word were recalled. The schedule was built on the easier of
 the two memories for the more common direction, which is the one failure mode a
@@ -1097,7 +1097,7 @@ panel are one line of evidence under the buttons, where they are a reason to bel
 above them rather than a section to scroll. Two of those figures were also wrong, and are now read
 from the course itself: it had said "eighteen units, A1 to C1" in three places since the course
 became eighty-three units to C2. Eight feature cards became five, three of them having been saying
-what the hero, the FAQ or each other already said, and one of them ("four ways to practise") having
+what the hero, the FAQ or each other already said, and one of them ("four ways to practice") having
 been wrong since the third practice mode shipped. The comparison grid is folded behind its own
 summary rather than removed, because it is the block that makes every other claim on the page
 checkable.
@@ -1223,7 +1223,7 @@ sends twice.
    an entry by hand, attributed, exactly as before. That is the right tool for a
    typo in front of you, and taking it away would slow down the correction that
    is most likely to be right in order to moderate the one least likely to be.
-   The queue is the channel for a judgement somebody should look at, and the two
+   The queue is the channel for a judgment somebody should look at, and the two
    sit side by side on the entry.
 2. **Let the app decide which reports are duplicates of each other.** Grouping
    is mechanical and blunt: the entry, or the screen and the message with digits
@@ -1453,7 +1453,7 @@ meaning "frost" and an adjective meaning "grey".
 
 `rõõmus` is headed `===Noun===` with `{{et-noun}}` under it and glossed "happy". Both signals agree
 and both are wrong, so no rule separates it from a genuine noun, and writing one would be this
-pipeline making the lexical judgement it does not get to make. It is the `kõrb` case in a new
+pipeline making the lexical judgment it does not get to make. It is the `kõrb` case in a new
 column, and it is left for a person, which the dictionary is editable for. The course harvest
 carries the correct adjective independently, so a learner meets the right one anyway.
 
@@ -1533,7 +1533,7 @@ goes further and changes voice from word to word, naming the speaker after the a
 round read entirely in one voice tests that voice. **A right or wrong
 answer makes a short sound**, two notes up for a hit and one low note for a miss, made with the
 browser's own oscillator so it costs no request and works offline. All three are settings, on by
-default because a missing row has to read as the behaviour everybody had.
+default because a missing row has to read as the behavior everybody had.
 
 **Five faults in the grammar prose.** The past participle was said to decline when used as an
 adjective, and the `nud`- and `tud`-participles are among the few words in the language that do not:
@@ -1737,7 +1737,7 @@ what a learner loses without it, the variable that switches it on, where its pri
 a function that says what it costs at a given size. `model.ts` maps over it; the page, the chart
 and the ladder read it. Adding a tool is one entry.
 
-That started as three lists, which is the fault worth recording: a catalogue in one module,
+That started as three lists, which is the fault worth recording: a catalog in one module,
 hand-written line functions in the cost model, and whatever the page had been told about. Nothing
 fails when a line is missing from a total. It just comes out lower than the truth.
 
@@ -2069,7 +2069,7 @@ statement now.
 
 - 5,299 of 5,363 built entries carry a classification and 5,939 of 6,101 rows do after a seed; the
   rest are phrases and words the Institute types nothing on, which read as unknown and keep the
-  behaviour they had.
+  behavior they had.
 - 2,441 case cards moved from the inside trio to the outside one or were withdrawn; 110 government
   cards, 95 case cards for words with no singular and 81 gap-fills went; the deck the shipped
   dictionary can build is 46,767 cards against 47,130.
@@ -2251,7 +2251,7 @@ the two rungs that cost a comparison before it books a call, and the screen prin
 
 **The first mission is the brief's own worked example**: `poodi-piima`, going to the shop for milk
 with a friend on the phone. `pood` in three local cases and `piim` in the partitive, at A1, in
-`sina`. Fourteen catalogue rules and the gate re-check hold it, and the bank test re-runs every
+`sina`. Fourteen catalog rules and the gate re-check hold it, and the bank test re-runs every
 scripted row through the gate on every run of the suite.
 
 **Two things were extracted rather than copied.** The eval script's chain, prompt and keyless

@@ -146,8 +146,10 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
       return (
         <div className="py-6 text-center">
           <Mascot size={56} mood="cheer" className="mx-auto float" />
-          <p className="mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>That is the check done.</p>
-          {saving && <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>Keeping the result...</p>}
+          <p className="mt-4 text-xl font-bold" style={{ color: "var(--ink)" }}>Level check complete.</p>
+          <p className="mt-2 text-sm" style={{ color: "var(--ink-3)" }}>
+            {saving ? "Calculating your results…" : "Calculating your results… done."}
+          </p>
         </div>
       );
     }

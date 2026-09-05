@@ -26,7 +26,7 @@ import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
 import { previewIntervals, SELF_GRADES, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { requeue } from "@/lib/srs/queue";
-import { OPTION_CLASS, VERDICT_CLASS, optionState, verdictOfCheck, verdictOfRating } from "@/lib/ux/verdict";
+import { OPTION_CLASS, VERDICT_CLASS, VERDICT_PAUSE_MS, optionState, verdictOfCheck, verdictOfRating } from "@/lib/ux/verdict";
 
 export interface ReviewCard {
   id: string;
@@ -39,14 +39,14 @@ export interface ReviewCard {
   slot: string | null;
   lemma: string | null;
   /**
-   * The dictionary entry behind the card, for the favourite button.
+   * The dictionary entry behind the card, for the favorite button.
    *
    * Null on the handful of cards with no entry behind them, which is what the
    * `lemma` above is null on too, and the star is simply not drawn there:
    * there is nothing to keep.
    */
   lexemeId: string | null;
-  /** Whether this word is already one of the learner's favourites. */
+  /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
   isNew: boolean;
   /**
@@ -201,6 +201,7 @@ function MeetWord({ card }: { card: ReviewCard }) {
 
   return (
     <WordIntro
+      key={card.id}
       lemma={lemma}
       gloss={gloss}
       equivalent={card.intro?.equivalent ?? null}
@@ -320,14 +321,14 @@ function askFor(card: ReviewCard, mode: ReviewMode, met: ReadonlySet<string>): A
     those cards into a flip with "Not yet" and "Got it" under it. So the app
     held the answer, could have marked it, and asked the learner to mark it.
 
-    That is not only a weaker question. The judgement goes into `Review`, which
+    That is not only a weaker question. The judgment goes into `Review`, which
     is append-only and is what the weakest-case panel, the mastery counter, the
     readiness rungs and the exam confidence figure are all derived from, so a
     number this app presents as measured was partly self-reported. The
     preference's own copy has always said so: "easier to fool yourself with".
 
-    The preference is still honoured, because "I would rather not type" is a
-    real thing to want and typing on a phone is most of why. It is honoured
+    The preference is still honored, because "I would rather not type" is a
+    real thing to want and typing on a phone is most of why. It is honored
     with four forms of the same word instead (`lib/questions/caseChoices.ts`),
     which is one tap exactly as "Got it" was one tap, and which measures. Where
     a card cannot be given options the honest answer is to ask for it typed
@@ -395,6 +396,20 @@ export function ReviewSession({
   const [typed, setTyped] = useState("");
   const [verdict, setVerdict] = useState<AnswerCheck | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
+  /*
+    A MISS IS TYPED AGAIN BEFORE THE CARD GOES.
+
+    The correction used to sit on the screen over a button reading "Got it",
+    and a learner who pressed it had read the right form and produced
+    nothing. Producing it is the part that sticks, so a typed card marked
+    wrong or nearly right asks for the form once more, against the answer
+    printed above, and only a correct retype lets the card move on. The grade
+    is unchanged: the retype is rehearsal rather than a second answer, and
+    the log records the miss the scheduler needs to see.
+  */
+  const [retyped, setRetyped] = useState("");
+  const [retypeOk, setRetypeOk] = useState(false);
+  const [retypeNote, setRetypeNote] = useState<string | null>(null);
   const [done, setDone] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -494,6 +509,9 @@ export function ReviewSession({
     setTyped("");
     setVerdict(null);
     setChosen(null);
+    setRetyped("");
+    setRetypeOk(false);
+    setRetypeNote(null);
   }, [index]);
 
   /*
@@ -556,6 +574,9 @@ export function ReviewSession({
     setTyped("");
     setVerdict(null);
     setChosen(null);
+    setRetyped("");
+    setRetypeOk(false);
+    setRetypeNote(null);
     shownAt.current = Date.now();
   }, [card, busy, index]);
 
@@ -615,6 +636,9 @@ export function ReviewSession({
       setTyped("");
       setVerdict(null);
       setChosen(null);
+      setRetyped("");
+      setRetypeOk(false);
+      setRetypeNote(null);
       shownAt.current = Date.now();
     } else {
       setIndex((i) => i + 1);
@@ -669,11 +693,28 @@ export function ReviewSession({
     // does. Typing the word correctly and then being asked to confirm that you
     // typed the word correctly is a click on the most common outcome in the
     // app. A miss keeps its screen: that is the one moment worth stopping at,
-    // and the correction needs reading before anything moves.
+    // and the correction needs typing before anything moves.
     if (result.verdict === "correct") {
-      window.setTimeout(() => void submit(result.suggestedRating), 420);
+      window.setTimeout(() => void submit(result.suggestedRating), VERDICT_PAUSE_MS);
     }
   }, [card, typed, verdict, submit, cheer]);
+
+  /** Whether the card is waiting for the miss to be typed again. */
+  const needsRetype = ask === "type" && verdict !== null && verdict.verdict !== "correct" && !retypeOk;
+
+  const checkRetype = useCallback(() => {
+    if (!card || !verdict || retypeOk) return;
+    const language = card.cardType === "RECOGNITION" ? "en" : "et";
+    const again = checkAnswer(retyped, card.back, language);
+    if (again.verdict === "correct") {
+      setRetypeOk(true);
+      setRetypeNote(null);
+      // The pause a right answer gets, then the grade the miss already earned.
+      window.setTimeout(() => void submit(verdict.suggestedRating), VERDICT_PAUSE_MS);
+    } else {
+      setRetypeNote("Not yet. Copy the answer above exactly, letter for letter.");
+    }
+  }, [card, verdict, retyped, retypeOk, submit]);
 
   const pickChoice = useCallback((choice: string) => {
     if (!card || chosen) return;
@@ -685,7 +726,8 @@ export function ReviewSession({
     if (right) {
       // Right answers move on by themselves: multiple choice is the fast mode,
       // and a confirmation click on every correct card halves the throughput.
-      window.setTimeout(() => void submit(3), 420);
+      // Not before the tile has been seen to turn, though (`VERDICT_PAUSE_MS`).
+      window.setTimeout(() => void submit(3), VERDICT_PAUSE_MS);
     }
   }, [card, chosen, submit, cheer]);
 
@@ -724,7 +766,8 @@ export function ReviewSession({
         e.preventDefault();
         if (ask === "intro") { meetDone(); return; }
         if (ask === "type" && !verdict) { checkTyped(); return; }
-        if (ask === "type" && verdict) { void submit(verdict.suggestedRating); return; }
+        // A miss waits for its retype, which the answer box handles itself.
+        if (ask === "type" && verdict) { if (!needsRetype && !retypeOk) void submit(verdict.suggestedRating); return; }
         // A right pick grades itself on a timer; a wrong one waits here.
         if (ask === "choice") { if (chosen && chosen !== card?.back) void submit(1); return; }
         if (!revealed) setRevealed(true);
@@ -753,7 +796,7 @@ export function ReviewSession({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, meetDone, undo, history.length]);
+  }, [answerShown, revealed, submit, finished, ask, verdict, checkTyped, chosen, card, pickChoice, meetDone, undo, history.length, needsRetype, retypeOk]);
 
   if (wasEmptyAtStart) {
     return (
@@ -1014,6 +1057,33 @@ export function ReviewSession({
                   />
                 </div>
               )}
+              {verdict.verdict !== "correct" && (
+                <div className="mt-4 text-left">
+                  {retypeOk ? (
+                    <p className={`pop-in ${VERDICT_CLASS.right} rounded-md px-4 py-2.5 text-sm`}>
+                      Õige! That is the one.
+                    </p>
+                  ) : (
+                    <>
+                      <label htmlFor="retype" className="label-xs mb-2 block" style={{ color: "var(--ink-3)" }}>
+                        Now type it again
+                      </label>
+                      <EstonianInput
+                        id="retype"
+                        value={retyped}
+                        onChange={(v) => { setRetyped(v); setRetypeNote(null); }}
+                        onEnter={checkRetype}
+                        ariaLabel="Type the answer again"
+                        autoFocus
+                        large
+                      />
+                      {retypeNote && (
+                        <p role="alert" className="mt-2 text-xs" style={{ color: "var(--again-ink)" }}>{retypeNote}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -1067,7 +1137,7 @@ export function ReviewSession({
                 <div className="flex flex-col items-center gap-2">
                   <p lang="et" className="text-xl leading-snug md:text-2xl" style={{ color: "var(--ink)" }}>
                     {card.front.split(BLANK)[0]}
-                    <span style={{ color: "var(--accent-deep)", fontWeight: 600 }}>{card.back}</span>
+                    <span data-answer style={{ color: "var(--accent-deep)", fontWeight: 600 }}>{card.back}</span>
                     {card.front.split(BLANK)[1]}
                   </p>
                   <Speak text={card.front.replace(BLANK, card.back)} label="Hear the whole sentence" autoplay />
@@ -1076,6 +1146,7 @@ export function ReviewSession({
                 <div className="flex items-center gap-2">
                   <p
                     lang={backLang}
+                    data-answer
                     className="text-2xl font-bold md:text-3xl"
                     style={{ color: "var(--accent-deep)" }}
                   >
@@ -1144,10 +1215,17 @@ export function ReviewSession({
           ) : ask === "type" && verdict ? (
             /* Marked already. A clean hit takes itself away (see `checkTyped`),
                so what reaches here is a miss, and a miss is the one moment in a
-               review worth slowing down for: the correction is on screen and
-               this button is an acknowledgement, not a grade. */
-            <Button variant="primary" size="lg" className="w-full" onClick={() => void submit(verdict.suggestedRating)} disabled={busy}>
-              Got it, next
+               review worth slowing down for: the correction is on screen, the
+               form has to be typed once more, and this button checks that
+               rather than grading anything. */
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={needsRetype ? checkRetype : () => void submit(verdict.suggestedRating)}
+              disabled={busy || retypeOk}
+            >
+              {needsRetype ? "Check it again" : "Got it, next"}
               <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">
                 Enter
               </kbd>
@@ -1217,7 +1295,7 @@ export function ReviewSession({
           {ask === "intro"
             ? "Space for the next one"
             : ask === "type"
-              ? (verdict ? "Enter to carry on" : "Enter to check")
+              ? (verdict ? (needsRetype ? "Type it again, then Enter" : "Enter to carry on") : "Enter to check")
               : ask === "choice"
                 ? (chosen ? "Enter to carry on" : `1 to ${card?.choices?.length ?? 4} to pick`)
                 : !revealed

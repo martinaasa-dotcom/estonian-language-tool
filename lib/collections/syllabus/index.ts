@@ -186,11 +186,11 @@ const INTRODUCING = (() => {
  * A course is not a thesaurus and for this it is the better of the two: a unit
  * is a dozen words a teacher put in one lesson because they turn up together,
  * which makes them exactly the words a learner has to be able to tell apart.
- * `lib/questions/distractors.ts` reads it to keep "black" among the colours.
+ * `lib/questions/distractors.ts` reads it to keep "black" among the colors.
  *
  * The part of speech is matched where the dictionary and the course agree on
  * one, and ignored otherwise: `hall` is a noun meaning frost in the dictionary
- * and an adjective meaning grey in the course, and it belongs to the colours
+ * and an adjective meaning gray in the course, and it belongs to the colors
  * either way. A word the course does not teach has no unit, which is the
  * honest answer rather than a guess.
  */

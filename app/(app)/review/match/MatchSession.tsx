@@ -31,7 +31,7 @@ interface Tile {
  * exactly the retrieval a vocabulary list never trains.
  *
  * Matches do count as reviews — a pair found first time is a Good, a pair that
- * took a wrong guess is a Hard. Recognising a word among seven others under
+ * took a wrong guess is a Hard. Recognizing a word among seven others under
  * time pressure is genuine recall, and a game whose results vanish is a game
  * nobody plays twice. What it never does is grade something you did not answer:
  * abandoning a round writes nothing.

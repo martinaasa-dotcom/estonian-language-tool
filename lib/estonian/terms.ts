@@ -15,7 +15,7 @@ import { CASES } from "./cases";
  * kept: somebody reading an English reference grammar needs it, and somebody
  * taking a course needs the other one. What changes is which one leads. The
  * Estonian term and the question are the identity; the English name is a
- * cross-reference, and it is labelled as one.
+ * cross-reference, and it is labeled as one.
  *
  * Two things hold this file to being terminology rather than a back door into
  * ADR-005:

@@ -43,6 +43,10 @@
  * `npm run db:seed` loads.
  */
 import { readExpanded } from "./lib/expandedFile";
+import { exceptionsFor } from "../lib/estonian/exceptions";
+import { drillable, tasksFor } from "../lib/games/exceptions";
+import { formIndex } from "../lib/games/flash";
+import { plainAskLine } from "../lib/estonian/plainAsk";
 import { borrowSentences } from "../lib/dict/borrow";
 import { generateCards, availableCardTypes, type LexemeForCards } from "../lib/srs/cards";
 import { buildPaper as buildExam, type PoolWord } from "../lib/exam/paper";
@@ -141,6 +145,11 @@ const REACHES: Record<string, number> = {
   // 45,856 once the round led with the sentence: a gap whose English gloss
   // spells the form is refused rather than asked the plain way.
   flash: 45_856,
+  // The two asked rungs of the exceptions round, over the graded dictionary.
+  // Measured at 4,788, then 4,254 once the gap rung learned `readCase`'s rule:
+  // a sentence has to name the form on its own, and two thirds of the short
+  // illatives in this dictionary are spelled like a principal part.
+  exceptions: 4_200,
 };
 
 /*
@@ -453,6 +462,46 @@ for (const e of entries) {
     `${question.lemma} ${question.question ?? ""}`,
     question.options[question.answer] ?? "",
   );
+}
+});
+
+/* ── The exceptions round ────────────────────────────────────────────────── */
+/*
+  The round that drills the words the ending rule does not reach asks two of
+  its three rungs for a typed form, and the first thing this section found was
+  a real one: the short illative is spelled like a principal part for 1,937 of
+  the 2,700 words that have one, so `Euroopa → Euroopa` was the first task of
+  the first round anybody played. `drillable` is the rule that keeps those on
+  the reference page, where saying so is the point, and out of the round, where
+  the answer would be at the top of its own screen.
+
+  Both asked rungs are built here. The gap carries the sentence rather than the
+  lemma, which is its own question: printing the dictionary form beside a gap
+  that wants a form built on it hands the answer over, and that was 2,468 cards
+  once.
+*/
+timed("exceptions", () => {
+for (const e of entries) {
+  if (!e.cefr) continue;
+  const forms = (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value }));
+  for (const exception of exceptionsFor({ lemma: e.lemma, pos: e.pos, forms })) {
+    const word = {
+      lexemeId: e.lemma, lemma: e.lemma, translation: e.translation, pos: e.pos,
+      // The word's own index, because the gap rung refuses a spelling more
+      // than one slot claims and an empty index would quietly drop the rung.
+      exception, cardId: null, starred: false,
+      index: formIndex({ lemma: e.lemma, pos: e.pos, forms }), forms,
+      sentences: (e.examples ?? []).map((x) => x.et),
+    };
+    if (!drillable(word)) continue;
+    for (const task of tasksFor(word)) {
+      if (task.rung === "meet") continue;
+      const shown = task.rung === "use"
+        ? `${task.gapped ?? ""} ${task.translation ?? ""}`
+        : `${task.lemma} ${task.translation ?? ""} ${task.label} ${plainAskLine(task.slot) ?? ""}`;
+      ask(`exceptions ${task.rung} ${e.lemma} ${task.kind}`, shown, task.accepted.join(" / "));
+    }
+  }
 }
 });
 

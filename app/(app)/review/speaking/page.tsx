@@ -49,7 +49,7 @@ export default async function SpeakingPage() {
     pool = [...pool, ...rest];
   }
 
-  // Which of the round are already favourites, in one read rather than one per
+  // Which of the round are already favorites, in one read rather than one per
   // card, so the star in the corner is drawn in the state it is actually in.
   const starred = await starredAmong(
     ownerId, pool.map((c) => c.lexemeId).filter((id): id is string => !!id),

@@ -30,7 +30,7 @@ import { summariseCohort, type CohortInput, type CohortSummary } from "./cohort"
  * still true of a raw mistake, which is why this stays a rolled-up percentage
  * over a student's own reviews at a case, gated on `MIN_STUDENT_CASE_REVIEWS`
  * so one bad card is never enough to name somebody, and why it is still never
- * an individual answer, a search or a deck. What changed is the judgement
+ * an individual answer, a search or a deck. What changed is the judgment
  * that a teacher who already sees a name, a streak and a word count is not
  * meaningfully better protected by having the one actionable fact, which case
  * to help with, withheld along with it: the aggregate alone told a teacher

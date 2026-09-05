@@ -86,7 +86,7 @@ export interface PosInputs {
  *
  * The order matters in one direction only, and it is the direction that used to
  * be wrong. A heading saying `Verb` while Ekilex reports a nominal is a
- * contradiction this cannot resolve, and resolving it towards the heading would
+ * contradiction this cannot resolve, and resolving it toward the heading would
  * label an entry a verb while its stored principal parts are a noun's, so the
  * heading is dropped and the fallback answers. That is the conservative side:
  * a word wearing the wrong nominal label is wrong metadata, and a word wearing

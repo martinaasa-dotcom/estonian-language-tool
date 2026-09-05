@@ -41,7 +41,7 @@ import { MAX_WORDS } from "@/lib/scenes/retrieval";
  * for the whole run instead. The argument for that was real, that running out
  * of allowance halfway through a conversation is the worst failure available
  * here, and it does not survive the arithmetic: the ledger books a call when it
- * authorises one because two of the three limits count `CALL` rows, so a dozen
+ * authorizes one because two of the three limits count `CALL` rows, so a dozen
  * turns behind one booking is eleven calls the allowance never saw, on the
  * dearest path in the app. What is left of the argument is that the allowance
  * running out mid-scene has to be *survivable*, and it is, because the rung

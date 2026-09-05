@@ -28,7 +28,7 @@
  * Vercel and one for Supabase and picked between them by traffic, which
  * described a deployment nobody actually runs: a free plan pauses when nobody
  * is on it, forbids commercial use, and is not what anybody hosting this for
- * other people is on. Modelling it made the page cheerful and wrong. The paid
+ * other people is on. Modeling it made the page cheerful and wrong. The paid
  * plan is the only plan.
  *
  * Pure: no React, no Next, no Prisma.
@@ -416,7 +416,7 @@ export interface Assumption {
 /**
  * Everything the projection needs that nothing measured.
  *
- * Each one is a judgement, and each one is here so it can be disagreed with
+ * Each one is a judgment, and each one is here so it can be disagreed with
  * rather than discovered. The two that move the total most are the clips a
  * learner fetches and the processor time a request burns, and they are the two
  * with the least behind them, which is worth saying rather than hiding behind

@@ -11,7 +11,7 @@ import { CARD_SOURCES, DEFAULT_SOURCE, isCardSource, isYourOwn, YOUR_OWN_SOURCES
  * course's because a scene names unit ids.
  */
 describe("card sources", () => {
-  it("recognises every source the app writes and nothing else", () => {
+  it("recognizes every source the app writes and nothing else", () => {
     for (const source of CARD_SOURCES) expect(isCardSource(source)).toBe(true);
     expect(isCardSource("SOMETHING_ELSE")).toBe(false);
     expect(isCardSource(42)).toBe(false);

@@ -119,7 +119,7 @@ for (let step = 0; step < 200; step++) {
   /*
     Speaking is rated by the learner and never scored, and there is no recorder
     any more: the microphone bought a permission prompt and a clip in exchange
-    for a rating that was the learner's own judgement either way, so the
+    for a rating that was the learner's own judgment either way, so the
     question is now how confident they would be saying it.
   */
   const selfRating = page.getByRole("button", { name: /Fairly sure/ });
@@ -296,7 +296,7 @@ if (onboarded) {
     "so /start correctly redirects. CI runs this suite before the demo fixture");
   /*
     A learner who has already been through it is sent to Today, which is the
-    documented behaviour rather than a gap in this run: a wizard that reappears
+    documented behavior rather than a gap in this run: a wizard that reappears
     for an established learner is worse than no wizard. It also means this suite
     can be run twice against the same database without lying about the second.
   */
@@ -346,7 +346,7 @@ if (onboarded) {
   /*
     A set rather than a choice of one, so these are toggles rather than radios.
     Somebody living here with an Estonian partner and Estonian meetings at work
-    has three true answers and was being made to pick a favourite, and whichever
+    has three true answers and was being made to pick a favorite, and whichever
     they picked implied the target the plan was then built on.
   */
   await page.getByRole("button", { name: /Citizenship or residence/ }).click();
@@ -359,7 +359,7 @@ if (onboarded) {
     (await page.getByRole("radio", { name: /B2/ }).getAttribute("aria-checked")) === "true");
   check("it asks for a deadline", (await page.getByText(/In six months/).count()) > 0);
   check("and how many days a week are realistic",
-    (await page.getByText(/Days a week you will really practise/i).count()) > 0);
+    (await page.getByText(/Days a week you will really practice/i).count()) > 0);
   check("the plan sits under the answers that build it", /study hours to go/i.test(goalStep));
   check("an estimated level is flagged as estimated on the plan",
     /Take the level check whenever you like/i.test(goalStep));

@@ -481,7 +481,11 @@ export function flashTask(input: {
  * slot is named only where it is the only one spelled that way, because `tuba`
  * is its own nimetav and its own osastav and naming either would be a guess.
  */
-export function formIndex(word: FlashWord): Record<string, string[]> {
+export function formIndex(word: {
+  lemma: string;
+  pos: string;
+  forms: readonly { formType: string; value: string; morphCode?: string | null }[];
+}): Record<string, string[]> {
   const out: Record<string, string[]> = {};
   const claim = (spelling: string | null | undefined, slot: string) => {
     const form = tidyForm(spelling ?? "");
@@ -544,6 +548,35 @@ export function markFlash(task: FlashTask, typed: string): FlashMark {
   }
 
   if (task.shape === "build") return markSentence(task, written);
+  return markForm(task, written);
+}
+
+/**
+ * What a typed form is worth, for any round that asks for one.
+ *
+ * Split out of `markFlash` rather than copied, because the exceptions round
+ * asks the same question about the same words: type this form. A second marker
+ * is where two screens start disagreeing about whether `toast` is a slip or the
+ * wrong case, and that judgment is the whole value of the paragraph below.
+ *
+ * `markFlash` keeps the empty answer and the sentence shape, which are its own.
+ */
+export interface FormAsk {
+  /** Every spelling of the wanted form the dictionary vouches for. */
+  accepted: readonly string[];
+  /** The slot being asked for, in `Review.slot`'s vocabulary. */
+  slot: string;
+  /** What that slot is called, for the line a wrong answer gets. */
+  label: string;
+  /** Every spelling of this word, to the slots that claim it. See `formIndex`. */
+  index: Readonly<Record<string, readonly string[]>>;
+}
+
+export function markForm(task: FormAsk, typed: string): FlashMark {
+  const written = typed.trim();
+  if (!written) {
+    return { right: false, rating: 1, wrote: null, wroteSlot: null, note: "Nothing typed." };
+  }
 
   const check = checkAnswer(written, task.accepted.join(" / "), "et");
   if (check.verdict === "correct") {
@@ -614,7 +647,7 @@ function markSentence(task: FlashTask, sentence: string): FlashMark {
 }
 
 /** Which slot a spelling is, where exactly one slot claims it. */
-function slotOf(task: FlashTask, written: string): string | null {
+function slotOf(task: FormAsk, written: string): string | null {
   const claims = task.index[tidyForm(written)];
   return claims && claims.length === 1 ? claims[0]! : null;
 }

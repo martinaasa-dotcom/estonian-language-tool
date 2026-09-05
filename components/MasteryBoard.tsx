@@ -132,7 +132,7 @@ function Row({ word, tier }: { word: MasteredWord; tier: Mastery }) {
       <div className="mt-2.5">
         <Meter
           pct={Math.round(progress * 100)}
-          label={`${word.lemma} towards mastered`}
+          label={`${word.lemma} toward mastered`}
           tone={`var(--${TONES[tier]}-ink)`}
           height={6}
         />

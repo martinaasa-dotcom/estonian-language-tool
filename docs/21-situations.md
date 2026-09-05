@@ -15,7 +15,7 @@ argument it was.
 `lib/collections/syllabus/` holds 81 units and every one of them carries a `canDo`, which is a claim
 about what the learner will be able to do:
 
-> Greet someone, thank them, apologise, and say you do not understand.
+> Greet someone, thank them, apologize, and say you do not understand.
 >
 > Ask where something is and understand the directions you are given.
 >
@@ -130,10 +130,10 @@ they will happen. The claim is not that they cannot, it is that this is the smal
 can be squeezed into with the tools already in the repository.
 
 There is a bigger tool and it should be named rather than ignored. Estonian has an open source
-morphological analyser, Vabamorf, which `EstNLTK` wraps, and running a composed line through it is a
+morphological analyzer, Vabamorf, which `EstNLTK` wraps, and running a composed line through it is a
 real option. What it would add over vouching is less than it first appears: vouching already
 establishes that every word is a real form of a word this scene is allowed to use, which is most of
-what an analyser reports. What would genuinely help is agreement and government checked across the
+what an analyzer reports. What would genuinely help is agreement and government checked across the
 sentence, and that is a dependency, a service and a body of Estonian-specific code that this app has
 so far managed to avoid entirely. It belongs in the open questions, not in Phase 1, and the
 government check above is the cheap half of it done with what is already here.
@@ -148,7 +148,7 @@ acted on the way a correction is, and the grader gates because it is (ADR-005 am
 Three things narrow what is left, and all three are cheap:
 
 - **Every line carries its provenance on screen.** Attested says so and names the entry. Composed
-  says so too. A learner is never invited to memorise a sentence without being told where it came
+  says so too. A learner is never invited to memorize a sentence without being told where it came
   from, which is the rule the grammar pages already follow for every form they print.
 - **Every line has a report button.** `components/SuggestFix.tsx` mounts on the turn with the turn
   attached, and "this is not how anybody says it" becomes a row in the queue an admin works.
@@ -472,7 +472,7 @@ move by one, rather than four presets that jump.
 | Ordinary day | 4 | Two or three, and one of them is real. |
 | Bad day | 7 | About as bad as a Tuesday at a government counter. |
 
-### The catalogue
+### The catalog
 
 Each entry names its cost, what it changes mechanically, and its **out**: the move that resolves it.
 A curveball with no out is a trap.
@@ -497,7 +497,7 @@ A curveball with no out is a trap.
 Three deserve a note.
 
 **The switch to English is the most real thing in the table.** It is what happens to a foreigner
-speaking Estonian in Tallinn, it is a large part of why people stop practising, and no textbook
+speaking Estonian in Tallinn, it is a large part of why people stop practicing, and no textbook
 rehearses it because a textbook cannot. Here the other side switches, the learner may switch too,
 and holding the line in Estonian brings them back.
 
@@ -554,7 +554,7 @@ So there are two ways to take a turn, and both are honest about what they are:
   one, and it is the mode somebody uses on the walk to an appointment they are dreading. Rehearsal
   does not need a verdict.
 
-Reopening this needs a re-run of `measure-asr.mjs` against a recogniser that clears the bar, and the
+Reopening this needs a re-run of `measure-asr.mjs` against a recognizer that clears the bar, and the
 bar is not "good": a false stall has to be rarer than a real one, or the app tells a learner they
 were wrong when they were right, on the screen where that costs the most.
 
@@ -676,7 +676,7 @@ claiming for 81 units that a learner will be able to do something, and this is w
 **A scene's required beats are that `canDo` taken apart.** "Describe a symptom to a doctor and
 understand the advice you are given" is three beats, and they are the three the scene marks, so the
 claim the course makes and the thing the module checks are one sentence rather than two people's
-readings of it. That is also what keeps the scene catalogue from drifting into a list of situations
+readings of it. That is also what keeps the scene catalog from drifting into a list of situations
 somebody thought sounded useful.
 
 No panel on Today in the first build. `lib/ux/disclosure.ts` decides what a screen leads with, a
@@ -725,7 +725,7 @@ child table rather than a field inside the transcript so that "the words my conv
 needing" is one indexed query instead of a JSON scan over every run.
 
 Both are owner-scoped, so the export coverage invariant in `lib/legal/exportCoverage.ts` fails until
-somebody decides about them, which is the correct behaviour and the reason that check reads the
+somebody decides about them, which is the correct behavior and the reason that check reads the
 schema rather than a list somebody typed. Both belong in the backup and in the erasure. Neither
 belongs in the classroom roll-up (§18).
 
@@ -752,7 +752,7 @@ a value the caller picks even when it is verified.
 What survives is the requirement that a mid-scene refusal be **survivable**, and it is, because the
 rung below the model is a real conversational move rather than an error: the other side did not
 catch that, say it again. So the scene degrades where it runs out rather than stopping, which is the
-same behaviour §16 already promised a keyless deployment.
+same behavior §16 already promised a keyless deployment.
 
 Two rules fall out of the per-turn shape and both are the ledger's own. The attested rung is tried
 **before** the ledger is asked, because a line the dictionary already had costs nothing and booking
@@ -860,7 +860,7 @@ attested line**, turned out to need no instrument at all once the module existed
 not the one anybody was measuring for. §30 is what playing one through found.
 
 **Phase 2.** The rest of the dials, the spoken unmarked mode, the two-way link from the unit pages,
-the full curveball catalogue, class assignment, and the loop that makes this more than practice:
+the full curveball catalog, class assignment, and the loop that makes this more than practice:
 **a word you could not say last week comes back in the next scene's props**. That is spaced
 repetition applied to conversation gaps, `SceneGap` is already the right shape for it, and it is
 Phase 2 rather than Phase 1 because it needs real runs behind it before anybody can tune how hard it
@@ -889,7 +889,7 @@ provenance, and a decision somebody should make on purpose rather than by extens
   mechanical marking and no closed word list. Putting this behind her would trade every guarantee in
   §18 for a chat window.
 - **Speech recognition to advance a turn.** §11. Measured, not assumed.
-- **A model deciding whether the learner was understood.** The judgement a model is least qualified
+- **A model deciding whether the learner was understood.** The judgment a model is least qualified
   to make, with the worst failure mode available: a learner marked wrong for being right, in a
   language they cannot yet argue in.
 - **A score.** Every version of a percentage on a conversation read worse than the outcome sentence
@@ -898,9 +898,9 @@ provenance, and a decision somebody should make on purpose rather than by extens
   infrastructure this app does not have. Worth revisiting once a language house is actually using
   the classroom.
 - **A patience meter.** §7.
-- **Voice to voice.** Needs a recogniser this design has already turned down, and it would put the
+- **Voice to voice.** Needs a recognizer this design has already turned down, and it would put the
   whole conversation behind a microphone prompt on a phone.
-- **A morphological analyser in the gate, for now.** §2 says what Vabamorf would and would not buy.
+- **A morphological analyzer in the gate, for now.** §2 says what Vabamorf would and would not buy.
   The short version is that it overlaps vouching almost entirely, and the part that does not overlap
   is a syntactic check that is a project rather than a check.
 
@@ -911,7 +911,7 @@ it is a rule that drifts:
 
 1. **Every lemma a scene names is a word one of its own declared units teaches.** This replaces
    what was written here first, which was "no scene file contains an Estonian letter", modelled on
-   the tripwire over `lib/estonian/grammar.ts`. Building the catalogue showed that rule to be
+   the tripwire over `lib/estonian/grammar.ts`. Building the catalog showed that rule to be
    incoherent: a scene has to name the words its beats are about, and a check keyed on `õäöüšž`
    would allow `valu` and reject `küte`, which is not a distinction about anything. What replaced it
    is stronger, because a scene can then introduce no vocabulary at all, only point at vocabulary
@@ -991,11 +991,11 @@ When the module ships, this belongs in `docs/03-architecture.md` §6 with the ot
   somebody stops.
 - **Which three scenes first?** The health centre is the strongest candidate, because
   `keha-ja-tervis` already promises at A2 that a learner can describe a symptom to a doctor, and
-  because it is the encounter people are most afraid of. The other two are a judgement about the
+  because it is the encounter people are most afraid of. The other two are a judgment about the
   audience an integration foundation serves, and somebody who works with that audience should make
   it rather than this document.
 - **Does the register dial belong to the scene or the learner?** A scene sets `teie` because a
-  health centre does. Somebody practising for a workplace where everybody says `sina` might want to
+  health centre does. Somebody practicing for a workplace where everybody says `sina` might want to
   override it. The safer answer is that the scene owns it and there are two scenes.
 - **Is a syntactic check worth its dependency?** Vabamorf plus agreement and government rules over a
   whole sentence would close most of what §2 admits is left open. It is also the first
@@ -1068,7 +1068,7 @@ is too strict for the one move that matters most. Matching by move alone gives t
 | A1 | 36 | 36 | 111 |
 | A2 | 51 | 51 | 149 |
 
-Fifty-one readable questions across the whole of A2 is not a pool to build a catalogue on, or one
+Fifty-one readable questions across the whole of A2 is not a pool to build a catalog on, or one
 scene's worth of variety. It is enough to seed a phrase bank by hand and no more. The middle column
 has stopped moving, which is its own small result: the words the corpus needs and the dictionary
 could not vouch for were the missing units and the forms no rule reaches, and both are in now.
@@ -1363,7 +1363,7 @@ place.
 `teravmeelne` and `vaimukas` are not two words with one gloss between them. Ekilex defines
 `teravmeelne` as "vaimukas, nutikas, leidlik" and `vaimukas` as "teravmeelne, ootamatu ja leidlik":
 two different strings, each naming the other word. Where the Institute has nothing to add beyond
-naming the neighbours, its definition **is** a list of synonyms, and comparing the strings read that
+naming the neighbors, its definition **is** a list of synonyms, and comparing the strings read that
 as a disagreement. It sat on the defect list asking somebody to invent a distinction Estonian does
 not draw, which is the one repair worse than leaving a gloss alone.
 
@@ -1449,10 +1449,10 @@ the vocabulary pass and the three faults it exposed against everything before it
 
 ### What the number was actually measuring, four times
 
-The first thing it measured was a bug in the scene catalogue. `arsti-aeg` is set at a health
+The first thing it measured was a bug in the scene catalog. `arsti-aeg` is set at a health
 centre and its word list did not contain `arst`; none of the three scenes contained `olema`, so
 every line built on "Kas teil **on** valu?" was withheld; `uuri-remont` is about something broken
-in a flat and had neither `korter` nor `köök`. Nothing about the catalogue looked wrong. A scene
+in a flat and had neither `korter` nor `köök`. Nothing about the catalog looked wrong. A scene
 that declares too few units produces a gate that withholds correct Estonian, and the rate reads as
 a verdict on the model.
 
@@ -1465,7 +1465,7 @@ teaches the machinery a conversation is made of rather than the subject of one.
 The third was the same fault a third time, after the vocabulary was in. `sobima`, `asuma`,
 `valmis`, `katki`, `alates` and `kaasas` were now taught and were still being withheld, because a
 scene declares units and none of these scenes declared the unit each word had been added to. That
-is the answer being right about where a word belongs and the catalogue not knowing: `kohasonad` and
+is the answer being right about where a word belongs and the catalog not knowing: `kohasonad` and
 `kus-ja-kuhu` joined `COMMON` on the test it already stated, the postpositions and the adverbs of
 place beside `millal`'s adverbs of time, and `plaanid`, `minevik` and `omadussonad` are declared
 per scene against the beat that needs them, which is why the counter takes no `minevik`. Nothing
@@ -1483,7 +1483,7 @@ None of the four would have been found by reading the rate. All four were found 
 ranked list of words the model reached for, which is the same instrument `measure:scenes` used to
 find the missing connectives unit, and which is why this script prints one.
 
-**And there is no principled end to widening a catalogue**, which is worth saying because the
+**And there is no principled end to widening a catalog**, which is worth saying because the
 third fault could be chased for ever. `ütlema` and `probleem` are in the residual of the last run
 and both are taught; declaring one more unit apiece would remove them and expose the next two. The
 test stays what `COMMON` says it is, that a unit teaches the machinery of a conversation or the
@@ -1568,7 +1568,7 @@ Phase 1 should be built with that number written on it, and the first thing to m
 runs is how often a beat falls back to its attested line, which is a figure a learner can feel and
 the rejection rate cannot tell you.
 
-What is banked either way: the government check is settled, the scene catalogue is correct on the
+What is banked either way: the government check is settled, the scene catalog is correct on the
 test `COMMON` states, the fifteen words are in the course, every verb has its polite imperative and
 both participles, a verb with two stems has both of them, and the script that found all of it is in
 the repository with a flag for the two allowlists and a ranked list that names the next gap for
@@ -1632,7 +1632,7 @@ the wrong order, and the four faults are what that cost.
 
 **One design correction fell out of it too.** A scene booked one call for the whole conversation, on
 the argument that running out of allowance halfway through is the worst failure available here. The
-argument is real and the booking was wrong: the ledger writes a call down when it *authorises* one,
+argument is real and the booking was wrong: the ledger writes a call down when it *authorizes* one,
 because two of its three limits count `CALL` rows, so a dozen composed turns behind one booking is
 eleven calls the allowance never saw, on the dearest path in the app. Each composed turn books its
 own now and hands it back where nothing was composed. What survives of the original argument is that
@@ -1727,14 +1727,14 @@ was measured offline over the four scenes, and this is what it filled the beats 
 Every one of those passed the funnel in `retrieval.ts`: on topic, the right shape, a sentence
 somebody said, every word readable. Every one was printed under a chip calling it a recorded
 sentence, which was true. A usage illustrates a word doing its job in some sentence; a beat wants a
-sentence doing a job in this conversation; and the two meet by luck, which over the catalogue they
+sentence doing a job in this conversation; and the two meet by luck, which over the catalog they
 did exactly once, on `Kuhu sa lähed?`.
 
 So the attested rung fills the beats whose line *is* a phrase the course teaches. `Tere!` and
 `Head aega!` are their own sentence (`isPhrase`), and the lemma is the line. Everywhere else the
 line is the scripted bank's or the composer's, and both are now told what the beat is for. A person
 may still pick a usage out where it happens to be the line: `BeatSpec.lines` names one by its text,
-the catalogue test fails on a text that is not a usage of one of the beat's own topic words in the
+the catalog test fails on a text that is not a usage of one of the beat's own topic words in the
 harvest, and the context builder drops one the live dictionary no longer holds. `Kuhu sa lähed?` is
 pinned that way. Choosing a lexicographer's sentence is less than hiding a word from one, which
 ADR-005 already allows.
@@ -1783,7 +1783,7 @@ list:
 
 Every Estonian word in a reaction is a lemma in `REACTIONS` or the repair phrase, and both are
 requests against `vastused`, `maaramine` and `tervitused`, which every scene declares, so the
-catalogue test that checks a beat's words checks these too. Capitalising a lemma and putting a
+catalog test that checks a beat's words checks these too. Capitalizing a lemma and putting a
 full stop or a question mark after it is presentation, the way `Tere!` is printed as a line, and
 not composition: the word is the dictionary's and the mark is the move. What the route sends is a
 list of lines, each with its provenance; the screen draws a reaction and a move as two bubbles in
@@ -1853,7 +1853,7 @@ of English about what happened. `sceneBeats` is the list it loops now: the scene
 one `hurdle:<id>` beat per curveball the scene admits that has a move to make, and the bank, the
 bank test and the context builder all read the same list. The switch to English is the one
 curveball said in English on purpose, as a bubble labelled as such, because the whole point of it
-is that the other side gave up on Estonian and the learner is practising not to.
+is that the other side gave up on Estonian and the learner is practicing not to.
 
 The free models this repository can reach wrote nothing usable for those beats, so the lines were
 typed in a session and pushed through the same four checks and the same refusals the drafter
@@ -1947,8 +1947,8 @@ Four changes, each the smallest thing that makes that transcript flow.
 first option met and repeats back the word that met it, so an offered time is answered with the
 time, with `sobib`, with `jah`, or with `ei`, and every one of those is the beat done. It is one
 requirement to the marker and each of its options to everybody else: `leafNeeds` opens it for the
-grades, the drills, the tile and the catalogue test, carrying the index a `TurnRecord.met` row is
-keyed by. Both offers in the catalogue take it, the doctor's and the landlord's.
+grades, the drills, the tile and the catalog test, carrying the index a `TurnRecord.met` row is
+keyed by. Both offers in the catalog take it, the doctor's and the landlord's.
 
 **A line off the card is made of parts, and one of them can be a case.** `says` is a list: a
 lemma as the dictionary spells it, a slot as the card dealt it, or a slot in a named case, read off

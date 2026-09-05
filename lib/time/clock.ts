@@ -4,7 +4,7 @@
   Two reasons, and the second is the one that decided it.
 
   Estonia writes the time this way, and so does every other country whose
-  language this app teaches its learners to read. A learner practising for a
+  language this app teaches its learners to read. A learner practicing for a
   class in Tartu should not be told when they study in a format their timetable
   never uses.
 

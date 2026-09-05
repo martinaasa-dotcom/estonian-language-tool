@@ -13,10 +13,10 @@ import { LEVELS, type Level } from "@/lib/collections/syllabus/types";
  *
  * WHY THERE IS NO ARTWORK. The picture game was approved as cartoon drawings,
  * and nothing in this project can draw one: a model that generates an image is
- * a licence question nobody here can answer, a file per scene to ship, and
+ * a license question nobody here can answer, a file per scene to ship, and
  * sixty of them before a round stops repeating. The things in a scene are
  * emoji, which is the argument `/review/emoji` already made and won. They are
- * characters drawn by the reader's own font, so nothing ships, no licence is
+ * characters drawn by the reader's own font, so nothing ships, no license is
  * carried, and every one of them is already joined to a dictionary headword by
  * `scripts/build-emoji.ts` against Unicode's own data file.
  *
@@ -97,7 +97,7 @@ export const SCENES: readonly Scene[] = [
   { id: "flowers", situation: "Flowers", lemmas: ["roos", "tulp", "korv"] },
   { id: "a-holiday", situation: "On holiday", lemmas: ["hotell", "fotoaparaat", "kirik"] },
   { id: "washing", situation: "Washing", lemmas: ["seep", "hambahari", "peegel"] },
-  { id: "strong-flavours", situation: "Strong flavours", lemmas: ["küüslauk", "sidrun", "ananass"] },
+  { id: "strong-flavours", situation: "Strong flavors", lemmas: ["küüslauk", "sidrun", "ananass"] },
   { id: "small-animals", situation: "Small animals", lemmas: ["hiir", "rott", "konn"] },
   { id: "an-emergency", situation: "An emergency", lemmas: ["tulekahju", "politseinik", "kiirabi"] },
   { id: "at-the-bank", situation: "At the bank", lemmas: ["pank", "prillid", "lips"] },

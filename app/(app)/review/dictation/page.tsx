@@ -63,7 +63,7 @@ export default async function DictationPage() {
     }
   }
 
-  // Which of the words are already favourites, in one read rather than one per
+  // Which of the words are already favorites, in one read rather than one per
   // task, so the star drawn after an answer is in the state it is actually in.
   const starred = await starredAmong(ownerId, [...byLexeme.keys()]);
 

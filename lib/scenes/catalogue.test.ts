@@ -2,8 +2,8 @@
  * What a scene file is allowed to say.
  *
  * `docs/21-situations.md` §21 named this as invariant 1 and named it wrongly:
- * "no file under the catalogue contains an Estonian letter", modelled on the
- * tripwire over `lib/estonian/grammar.ts`. Building the catalogue is what
+ * "no file under the catalog contains an Estonian letter", modeled on the
+ * tripwire over `lib/estonian/grammar.ts`. Building the catalog is what
  * showed the rule was incoherent, because a scene has to name the words its
  * beats are about, and a check keyed on `õäöüšž` would allow `valu` and reject
  * `küte`, which is not a distinction about anything.
@@ -11,10 +11,10 @@
  * What holds instead is stronger and is what is asserted here: every lemma a
  * scene names is a word one of its own declared units already teaches. A scene
  * cannot introduce vocabulary at all, only point at vocabulary the Ekilex
- * harvest already brought back, so a typo in this catalogue fails here rather
+ * harvest already brought back, so a typo in this catalog fails here rather
  * than becoming a word the app believes in. That is exactly the standing
  * `lib/collections/syllabus/` has, one layer up: a lemma is a request, and
- * `syllabus.test.ts` fails when the harvest did not honour it.
+ * `syllabus.test.ts` fails when the harvest did not honor it.
  */
 import { describe, expect, it } from "vitest";
 import { FALLBACK_PHRASE, REACTIONS, SCENES, sceneById } from "./catalogue";
@@ -38,7 +38,7 @@ function lemmasOf(scene: (typeof SCENES)[number]): string[] {
   return out;
 }
 
-describe("the scene catalogue", () => {
+describe("the scene catalog", () => {
   it("has scenes", () => {
     expect(SCENES.length).toBeGreaterThan(0);
     expect(sceneById(SCENES[0]!.id)?.title).toBe(SCENES[0]!.title);
@@ -77,7 +77,7 @@ describe("the scene catalogue", () => {
 
   /*
     A scene exists to check one of the course's own claims, so it says which.
-    Without this the catalogue drifts into a list of situations somebody thought
+    Without this the catalog drifts into a list of situations somebody thought
     sounded useful, which is the failure mode that has no test.
   */
   it("tests a unit it draws on", () => {
@@ -261,7 +261,7 @@ describe("the scene catalogue", () => {
     *inside this scene*: a requirement naming a word the scene's units do not
     teach is difficulty a learner cannot answer, which is a bug in a costume.
 
-    Every out in the catalogue today is a question, a negation, a register or
+    Every out in the catalog today is a question, a negation, a register or
     `any`, all of which the units in `COMMON` supply for every scene. That is
     why this check is worth writing now rather than when it first fires: it is
     the entry that names a lemma which would break it, and nobody adding one
@@ -275,7 +275,7 @@ describe("the scene catalogue", () => {
 
       for (const id of scene.curveballs) {
         const ball = curveballById(id);
-        expect(ball, `${scene.id} admits ${id}, which is not in the catalogue`).toBeDefined();
+        expect(ball, `${scene.id} admits ${id}, which is not in the catalog`).toBeDefined();
         for (const { need } of leafNeeds(ball?.needs ?? [])) {
           if (need.kind === "lemma") {
             for (const lemma of need.oneOf) {

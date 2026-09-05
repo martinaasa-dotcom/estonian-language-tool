@@ -33,7 +33,7 @@ export interface ResolvedItem {
   cefr: string | null;
 }
 
-/** True when the dictionary recognised the word. */
+/** True when the dictionary recognized the word. */
 export function isKnown(item: ResolvedItem): boolean {
   return item.lexemeId !== null;
 }

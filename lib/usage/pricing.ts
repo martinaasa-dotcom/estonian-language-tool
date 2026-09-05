@@ -102,7 +102,7 @@ export function estimateCostMicros(
  * A token count for text, when the provider did not report one.
  *
  * Roughly four characters per token for English, but Estonian's long agglutinated
- * words tokenise worse than that, so this divides by three. Over-counting is the
+ * words tokenize worse than that, so this divides by three. Over-counting is the
  * safe direction: it makes the quota bind sooner, never later. Any real count
  * reported by the provider replaces this.
  */

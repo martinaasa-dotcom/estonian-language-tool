@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
  * does, out of a published count over a corpus of film and television
  * subtitles, gated through the dictionary so every word on the page is one the
  * app can teach. `scripts/build-frequency.ts` is the whole of how, including
- * why the source is the one with a share-alike licence rather than the better
+ * why the source is the one with a share-alike license rather than the better
  * corpus with a non-commercial one.
  *
  * The page says which corpus, in the lead, because "the most common words in

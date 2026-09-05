@@ -59,7 +59,7 @@ export default function TermsPage() {
         <P>
           Every Estonian word form here comes from Ekilex, the dictionary database run by the
           Institute of the Estonian Language. None of it is generated. Where a form is shown
-          as derived from a stored genitive stem, it is labelled as derived.
+          as derived from a stored genitive stem, it is labeled as derived.
         </P>
         <P>
           <strong>Anu is a machine, and says so on every screen she speaks from.</strong> You
@@ -98,7 +98,7 @@ export default function TermsPage() {
         <P>
           Your deck, your review history, your tasks and your notes are yours. Export them
           whenever you like from Settings, in a format that restores into any installation.
-          The dictionary is two sources joined, and they carry different licences, so it is
+          The dictionary is two sources joined, and they carry different licenses, so it is
           worth being exact rather than tidy. Every Estonian form and every example sentence
           comes from Ekilex and is licensed <strong>CC BY 4.0</strong> by the Institute of
           the Estonian Language. Every English gloss that was not written for this project

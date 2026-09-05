@@ -62,7 +62,7 @@ export const SETTING_KEYS = {
    * A date is what settles it. Whichever of the two was stated later is the
    * one the app holds, so changing it by hand takes effect immediately and
    * sitting a new check takes it back. A row with no timestamp is older than
-   * any measurement, which is exactly the behaviour every deployment already
+   * any measurement, which is exactly the behavior every deployment already
    * had.
    */
   cefrPlacementAt: "cefrPlacementAt",
@@ -99,7 +99,7 @@ export const SETTING_KEYS = {
    * How Estonian is read aloud: which of the speech service's voices, whether
    * a card reads itself when it appears, and whether an answer makes a sound.
    * The values and their defaults live in lib/audio/voice.ts; a missing row
-   * reads as the behaviour everybody had before the question existed.
+   * reads as the behavior everybody had before the question existed.
    */
   ttsVoice: "ttsVoice",
   autoplayAudio: "autoplayAudio",
@@ -115,7 +115,7 @@ export const SETTING_KEYS = {
    * Which language a meaning is given in beside the English.
    *
    * English is the default and stays the default, because a missing row has to
-   * read as the behaviour everybody had. The values and the reasoning live in
+   * read as the behavior everybody had. The values and the reasoning live in
    * lib/collections/glossLanguage.ts; the equivalents themselves come from
    * Ekilex rather than from anything this app or a model wrote.
    */
@@ -132,7 +132,7 @@ export const SETTING_KEYS = {
    *
    * It exists anyway, because this app is for people whose data is the reason
    * they are careful, and "we aggregated it, trust us" is the sentence they
-   * have heard before. A missing row means counted, which is the behaviour
+   * have heard before. A missing row means counted, which is the behavior
    * everybody already had, and the row is written only by somebody who went to
    * Settings and turned it off. See lib/research/corpus.ts.
    */
@@ -181,7 +181,7 @@ export const DEFAULT_REVIEW_MODE: ReviewMode = "type";
  * see what it just wrote, and `resolveStreakFor` banking a shield followed by
  * `awardBadges` reading the count is exactly that, on the busiest page here.
  * Outside a request React does not memoize at all, so a script, a test and a
- * seed get a fresh map per call and the old behaviour with it.
+ * seed get a fresh map per call and the old behavior with it.
  */
 const settingsScope = cache((): Map<string, Promise<Map<string, string>>> => new Map());
 

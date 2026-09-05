@@ -24,7 +24,7 @@ import { practises } from "@/lib/scenes/practises";
  * what the other person says, and when their patience runs out they say so and
  * move on. What stays on screen is the role card and the objectives, because
  * knowing what you came in to get done is not a hint, it is what somebody
- * walking into a health centre already knows.
+ * walking into a health center already knows.
  *
  * THE SERVER MARKS EVERY TURN. This sends what has been typed and is told what
  * the other side says back; it never decides whether a turn landed. That is
@@ -568,7 +568,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   );
 }
 
-/** Where a line came from, in words, because a colour cannot carry this on its own. */
+/** Where a line came from, in words, because a color cannot carry this on its own. */
 const PROVENANCE: Record<Provenance, string> = {
   attested: "From the course",
   /*

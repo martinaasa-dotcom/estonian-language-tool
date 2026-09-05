@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
  *
  * "You would understand 81 percent of everyday situations" is the number an
  * app can compute from a word count, and it is the wrong question: knowing
- * the words for a health centre is what lets you follow the receptionist,
+ * the words for a health center is what lets you follow the receptionist,
  * not what lets you answer her. So this page reads each of the course's own
  * claims on three rungs, follow, take part, lead, and says which one the
  * review log actually supports, what the evidence is worth, and what stands
@@ -71,7 +71,7 @@ export default async function ReadinessPage() {
               understand most of it. {RUNG_LABEL.takePart} means you could answer, with the words and the endings
               it needs, without a long silence first. {RUNG_LABEL.lead} means you could open it, steer it and recover
               when it goes sideways, which for a live exchange also needs some evidence you can follow speech.
-              Recognising words on cards never clears the second rung on its own.
+              Recognizing words on cards never clears the second rung on its own.
             </p>
           </Card>
         </section>

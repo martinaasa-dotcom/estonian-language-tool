@@ -111,7 +111,7 @@ export default async function ScanSetPage({ params }: { params: Promise<{ scanId
 
         {inDeck > 0 && (
           <section>
-            <SectionTitle>Practise this page</SectionTitle>
+            <SectionTitle>Practice this page</SectionTitle>
             <div className="grid gap-3 sm:grid-cols-3">
               <PractiseTile
                 href={`/review?scan=${scan.id}`}

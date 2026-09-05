@@ -13,7 +13,7 @@ import {
 } from "@/lib/estonian/passage";
 import { VERDICT_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
 
-/** A gap, plus the card it is practising. */
+/** A gap, plus the card it is practicing. */
 type Gap = ClozeItem & { cardId: string | null };
 
 type Phase = "paste" | "drill" | "done";
@@ -64,7 +64,7 @@ export function ClozeSession() {
 
     /*
       ADR-016: every practice mode writes to the same review log, so the
-      scheduler sees what was actually practised rather than treating this as a
+      scheduler sees what was actually practiced rather than treating this as a
       side game with a score of its own. A missing diacritic is a keyboard slip,
       not a memory failure, so it grades Hard rather than Again.
     */

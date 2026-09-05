@@ -23,7 +23,7 @@
  */
 
 /**
- * A gloss split into the senses a lexicographer separated, each normalised.
+ * A gloss split into the senses a lexicographer separated, each normalized.
  *
  * "moose, European elk" is two senses. "to lie" and "lie" are the same sense
  * written twice, because a verb gloss carries its infinitive marker and a noun

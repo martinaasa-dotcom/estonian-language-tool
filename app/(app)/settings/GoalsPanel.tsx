@@ -91,7 +91,7 @@ export function GoalsPanel({ current }: { current: Goals }) {
         })}
       </ChoiceGroup>
 
-      <ChoiceGroup label="Days a week you practise">
+      <ChoiceGroup label="Days a week you practice">
         {[2, 3, 4, 5, 6, 7].map((n) => (
           <ChoiceChip key={n} even selected={days === n} onSelect={() => setDays(n)}>
             {n}

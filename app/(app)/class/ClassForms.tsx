@@ -67,7 +67,7 @@ export function CreateClass() {
         question with no use for the answer.
       */}
       {workplace && (
-        <ChoiceGroup label="Which paper are they working towards?" select="one">
+        <ChoiceGroup label="Which paper are they working toward?" select="one">
           {EXAM_LEVELS.map((band) => (
             <ChoiceChip key={band} selected={level === band} onSelect={() => setLevel(band)} even>
               {band}
@@ -140,7 +140,7 @@ export function JoinClass({ suggestedName }: { suggestedName: string }) {
         with your teacher and classmates. It shares one more thing with your teacher alone: which
         grammar case you personally get wrong most, as one percentage across your own reviews,
         never a specific answer. A workplace group shares less: your name, whether you have been
-        practising, and one of four bands for the paper the group works towards. Not your deck, not
+        practicing, and one of four bands for the paper the group works toward. Not your deck, not
         your searches, not your mistakes one by one. Leaving stops all of it right away.
       </p>
     </div>

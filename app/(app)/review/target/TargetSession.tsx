@@ -32,7 +32,7 @@ const STEP_S = 0.25;
  * this is for is speed on things the learner half knows.
  *
  * Every answer grades through `gradeCard` (ADR-016) so the scheduler sees what
- * was practised: a hit is Good, a miss is Again, and running out of time is
+ * was practiced: a hit is Good, a miss is Again, and running out of time is
  * Again too, because not producing a form inside eight seconds is not knowing
  * it yet.
  */

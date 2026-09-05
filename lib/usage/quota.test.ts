@@ -134,7 +134,7 @@ describe("pricing", () => {
   });
 
   it("over-counts tokens rather than under-counting them", () => {
-    // Estonian agglutination tokenises worse than English, and the safe
+    // Estonian agglutination tokenizes worse than English, and the safe
     // direction for a quota is to bind sooner.
     expect(estimateTokens("kolmekümne")).toBeGreaterThanOrEqual("kolmekümne".length / 4);
   });

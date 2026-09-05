@@ -11,7 +11,7 @@ import { SKILLS, SKILL_LABEL, type SkillKey } from "./types";
  * review log, which is the whole argument for computing it rather than storing
  * one (ADR-014): how many words at the level have stuck, how often recall
  * actually succeeds, which cases are shaky, and which of the four skills the
- * learner has ever practised at all.
+ * learner has ever practiced at all.
  *
  * What the log cannot supply is confidence in its own answer. Somebody who has
  * done forty reviews has a coverage figure, and it means almost nothing. So the
@@ -109,7 +109,7 @@ const PLACEMENT_RANK: Record<string, number> = {
  *
  * Not a score, an expectation. Somebody the check placed at B1 should be around
  * the pass mark on the B1 paper, comfortable on A2, and well short at C1. So the
- * distance between the two levels is what matters, centred on the pass mark and
+ * distance between the two levels is what matters, centered on the pass mark and
  * moving about twenty points a band: at the level, 60; one band above, 40; one
  * below, 80. Clamped, because two bands either way is already "no" or "yes".
  */
@@ -469,7 +469,7 @@ export function assessReadiness(signals: ReadinessSignals): Readiness {
  * "You are 41 percent likely to pass B1" leaves a learner knowing exactly one
  * thing they cannot act on. So every gap below names the thing that is costing
  * marks, says how far off it is, and links to the screen where it can be
- * practised. If a gap cannot be turned into somewhere to go, it does not belong
+ * practiced. If a gap cannot be turned into somewhere to go, it does not belong
  * in this list.
  *
  * The strengths are not decoration either. A learner deciding whether to book a
@@ -487,7 +487,7 @@ export const MIN_CASE_REVIEWS = 6;
 export const WEAK_CASE_PCT = 70;
 export const STRONG_CASE_PCT = 88;
 
-/** Where each part is practised, so a gap can hand over a destination. */
+/** Where each part is practiced, so a gap can hand over a destination. */
 const PRACTICE: Record<SkillKey, { href: string; cta: string }> = {
   writing: { href: "/review/write", cta: "Write a sentence" },
   listening: { href: "/review/dictation", cta: "Take a dictation" },
@@ -566,7 +566,7 @@ function gapsFrom(signals: ReadinessSignals, target: ExamLevel): Feedback[] {
 
   /*
     A skill the app has nothing on is worse than a skill it has bad news about:
-    a zero in any one part fails the paper, and a part nobody has ever practised
+    a zero in any one part fails the paper, and a part nobody has ever practiced
     is the likeliest place to find one.
 
     ONLY ONE PART CAN BE THE WORST. The first version said "this is the part
@@ -598,7 +598,7 @@ function gapsFrom(signals: ReadinessSignals, target: ExamLevel): Feedback[] {
     } else if (evidence.attempts === 0) {
       out.push({
         id: `unpractised-${skill}`,
-        // Not "you have never practised it": a review row carries no note of
+        // Not "you have never practiced it": a review row carries no note of
         // which mode wrote it, so the app genuinely cannot tell a dictation from
         // a flip of the same card. What it can say is that it has nothing.
         title: `Nothing here tells us about your ${SKILL_LABEL[skill].toLowerCase()}`,

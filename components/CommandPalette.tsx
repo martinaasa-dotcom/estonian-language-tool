@@ -90,7 +90,7 @@ function loadUnitCommands(): Promise<Command[]> {
  * ⌘K / Ctrl-K.
  *
  * Two things, in one box: jump to any screen, or look a word up. The second is
- * the one that matters — the app's centre of gravity is the dictionary, and
+ * the one that matters — the app's center of gravity is the dictionary, and
  * getting there should never cost a click, a page load and a focus hunt when
  * you are mid-sentence in your homework.
  *

@@ -32,7 +32,7 @@ export default async function DictionaryPage({
   const ownerId = await requireUserId();
   /*
     `entry` names which of the matches to open, and exists because a lemma can
-    hold more than one: `hall` is grey and also frost, and `@@unique` on
+    hold more than one: `hall` is gray and also frost, and `@@unique` on
     `(lemma, pos)` is what lets both be stored.
 
     Without it the second one was listed under "other matches" and could not be

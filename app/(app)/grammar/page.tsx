@@ -1,5 +1,5 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
-import { Sparkles, Target } from "lucide-react";
+import { Sparkles, Target, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { oneEntryPerLemma } from "@/lib/dict/search";
@@ -53,7 +53,7 @@ export default async function GrammarIndexPage() {
     <Page
       eyebrow="Reference"
       title="Grammar"
-      lead="Fourteen endings. Three you memorise, and eleven you can work out."
+      lead="Fourteen endings. Three you memorize, and eleven you can work out."
     >
       <Stack>
         <Card tone="accent">
@@ -64,7 +64,7 @@ export default async function GrammarIndexPage() {
                 One word, eleven endings
               </p>
               <p className="mt-2 max-w-[60ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-                Three forms of a word are memorised. Every other case is one of those three with an
+                Three forms of a word are memorized. Every other case is one of those three with an
                 ending stuck on, and it is the same ending for every word in the language.
               </p>
               {demo && (
@@ -91,6 +91,38 @@ export default async function GrammarIndexPage() {
             </div>
           </div>
         </Card>
+
+        {/*
+          WHERE THE PATTERN STOPS, LINKED FROM THE PAGE THAT TEACHES IT.
+
+          The card above says three are memorised and eleven follow, which is
+          true and is the most motivating fact a beginner is given. It is also
+          the thing that burns them, because `caseAnswer` prefers an attested
+          form over the rule and prints `tuppa` under a heading that taught
+          `sse`. A learner who is not told where the rule ends has been handed
+          a pattern presented as more reliable than it is.
+        */}
+        <Link
+          href="/grammar/exceptions"
+          className="lift flex items-start gap-4 rounded-[var(--r-lg)] border p-5"
+          style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+        >
+          <span
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+            style={{ background: "var(--butter)", color: "var(--surface)" }}
+          >
+            <TriangleAlert size={19} aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-lg font-bold" style={{ color: "var(--ink)" }}>
+              Where the endings stop
+            </span>
+            <span className="mt-1.5 block text-sm" style={{ color: "var(--ink-2)" }}>
+              Tuppa, not toasse. The stem moves, and then eleven cases move with it. Which words do
+              that, and how to drill them.
+            </span>
+          </span>
+        </Link>
 
         {weakest.length > 0 && (
           <section>
@@ -179,7 +211,7 @@ export default async function GrammarIndexPage() {
                     >
                       <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         {ref.spec.principal ? (
-                          <Chip tone="hard">memorised</Chip>
+                          <Chip tone="hard">memorized</Chip>
                         ) : (
                           <span lang="et" className="text-xl font-bold" style={{ color: "var(--accent-deep)" }}>
                             -{ref.spec.suffix}
@@ -321,7 +353,7 @@ export default async function GrammarIndexPage() {
 }
 
 interface StripRow {
-  /** Everything before the ending, so the ending can be picked out in colour. */
+  /** Everything before the ending, so the ending can be picked out in color. */
   readonly stem: string;
   readonly suffix: string;
   /** What the ending means, from `CASE_NOTES`. */

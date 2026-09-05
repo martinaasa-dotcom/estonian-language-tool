@@ -10,14 +10,14 @@
  * same reason: the app knows what it can drill and does not know what to say.
  *
  * Deliberately small, and it maps a *kind* rather than a beat. A table keyed on
- * beat ids would be one entry per beat per scene, which is a second catalogue
+ * beat ids would be one entry per beat per scene, which is a second catalog
  * that goes stale the first time a scene is edited.
  *
  * `datum`, `question`, `negation`, `register` and `any` are all things a
  * learner did or did not do rather than a word they hold a card for, and no
  * drill in the app rehearses them, so those return nothing and the debrief
  * prints no link. A missing link is honest; a link to the wrong drill is a
- * screen saying "go and practise this" about something else.
+ * screen saying "go and practice this" about something else.
  *
  * Pure: no React, no Next, no Prisma. `lib/ux/modes.ts` is what a mode *is*,
  * and an invariant checks every href here is one of them, because a drill that

@@ -30,7 +30,7 @@ export interface PendingGrade {
    * What the round asked about, where that is narrower than the card.
    *
    * A grade taken offline has to carry it or the flash round loses the one
-   * thing that makes its answers count towards a word's variety, silently and
+   * thing that makes its answers count toward a word's variety, silently and
    * only for the learner who was on a train. Untrusted like everything else
    * here: `writeGrade` checks it against `lib/srs/slots.ts` and falls back to
    * the card's own facet.

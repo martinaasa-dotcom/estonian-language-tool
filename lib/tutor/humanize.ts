@@ -44,7 +44,7 @@ import { TAGGED_LINE } from "@/lib/tutor/markers";
  * Lines that are Estonian by construction, and are never rewritten.
  *
  * Read from `lib/tutor/markers.ts` rather than spelled here, because three
- * modules recognise these lines and a model that is allowed bold writes
+ * modules recognize these lines and a model that is allowed bold writes
  * `**FIX:**` as readily as `FIX:`. A copy here that had not learned that
  * would rewrite a corrected sentence's punctuation while the UI still boxed
  * it, which is the exact fault this module's header is about.
@@ -118,7 +118,7 @@ function openers(text: string): string {
     if (s === before) break;
   }
   // Only recapitalise when an opener was actually removed. Doing it to every
-  // line would capitalise a line that deliberately continues the one above.
+  // line would capitalize a line that deliberately continues the one above.
   return ateLead && s ? s.replace(/^[a-zõäöü]/, (c) => c.toUpperCase()) : s;
 }
 

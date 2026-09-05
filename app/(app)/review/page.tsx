@@ -351,7 +351,7 @@ async function inBandPool(
  * decided by FSRS and may not be reordered by anything: a card comes back when
  * the scheduler says, whatever band it is in, or the schedule is not a
  * schedule. What has never been seen has no schedule yet, and choosing which
- * of those to teach next is exactly the judgement a level is for.
+ * of those to teach next is exactly the judgment a level is for.
  *
  * `aroundFirst` orders and never drops, and a word the learner typed in,
  * pasted or photographed carries no band at all and counts as at level, since

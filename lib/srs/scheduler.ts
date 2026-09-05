@@ -121,7 +121,7 @@ export function emptyScheduling(now = new Date()): SchedulingState {
  * a card in Review measures the prop.
  *
  * The state number is FSRS's own, and reading it as a bare integer at a call
- * site is how a scheduler change becomes a silent behaviour change somewhere
+ * site is how a scheduler change becomes a silent behavior change somewhere
  * that never mentioned the scheduler.
  */
 export function isStillLearning(state: number): boolean {

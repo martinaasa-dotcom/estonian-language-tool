@@ -203,7 +203,7 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
  * Which of two entries for the *same word* the app should lead with.
  *
  * More than one row can hold one lemma, and that is on purpose: `@@unique` is
- * on `(lemma, pos)`, so `hall` is grey and also frost. What was not on purpose
+ * on `(lemma, pos)`, so `hall` is gray and also frost. What was not on purpose
  * is that nothing chose between them. The scores are equal, the old tiebreak
  * compared `lemma` against `lemma` and got 0, neither query behind the search
  * carries an `ORDER BY`, and the entry page renders `hits[0]` and nothing else.
@@ -237,7 +237,7 @@ export async function searchLexemes(query: string, limit = 40): Promise<SearchHi
  * chap". So a learner searching the commonest adjective in the language was
  * handed the noun, every time and by rule, which is worse than the arbitrary
  * answer it replaced. The part-of-speech fix has since made `vana` one entry;
- * `hall` is the same shape and still two, the course teaching grey and the
+ * `hall` is the same shape and still two, the course teaching gray and the
  * expansion holding frost, and a confirmed scan is the same shape again with
  * no forms at all.
  *
@@ -309,7 +309,7 @@ export function oneEntryPerLemma<T extends Substantial & { lemma: string }>(
     const held = best.get(row.lemma);
     if (!held || bySubstance(row, held) < 0) best.set(row.lemma, row);
   }
-  // `wanted` deduplicated too, so the function honours its own name whatever it
+  // `wanted` deduplicated too, so the function honors its own name whatever it
   // is handed. No unit of the syllabus repeats a lemma today, and a helper that
   // is only correct while its callers are is not the helper this exists to be.
   return [...new Set(wanted)]
@@ -319,7 +319,7 @@ export function oneEntryPerLemma<T extends Substantial & { lemma: string }>(
 
 /**
  * The half of the search that knows about Estonian. Pure — no Prisma, no I/O —
- * so the inflected-form behaviour can be tested over fixtures rather than
+ * so the inflected-form behavior can be tested over fixtures rather than
  * against whatever happens to be seeded in a developer's database.
  */
 export function rankCandidates(candidates: Candidate[], query: string, limit = 40): SearchHit[] {
@@ -331,7 +331,7 @@ export function rankCandidates(candidates: Candidate[], query: string, limit = 4
     THE LAST TWO KEYS ARE WHAT MAKE THIS AN ORDER RATHER THAN NEARLY ONE.
 
     Two entries can share a lemma: `Lexeme` is unique on `[lemma, pos]` because
-    `hall` is a noun meaning frost and an adjective meaning grey, and because a
+    `hall` is a noun meaning frost and an adjective meaning gray, and because a
     learner adding `tuba` by hand or off a photograph gets their own row beside
     the seeded one. Both then score 100 for the exact lemma, and
     `localeCompare` of a word with itself is 0, so with those two keys alone
@@ -472,7 +472,7 @@ export interface FormMatch {
  *
  * This is the check that stands between a photograph and a flashcard. A word
  * read off a page by a model is a guess until something the app trusts
- * recognises it, and the dictionary recognising the exact spelling, one of its
+ * recognizes it, and the dictionary recognizing the exact spelling, one of its
  * stored forms, or a regular case of its stem is that something. Anything
  * vaguer is not a match: `tuba` must not quietly become `tubli` because the
  * two share three letters.

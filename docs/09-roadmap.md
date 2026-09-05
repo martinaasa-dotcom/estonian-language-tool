@@ -110,7 +110,7 @@ new words arrive from dictionary/Anu/paste, and everything exports.
 |---|---|
 | Offline: service worker, cached shell, queued writes | Review already works offline; this makes the shell match |
 | Automated local backups + restore, tested | Restore is tested, or it is not a backup |
-| FSRS parameter optimisation from review history | Needs ~1 000 reviews |
+| FSRS parameter optimization from review history | Needs ~1 000 reviews |
 | Performance pass | Search < 100 ms cached; review flip < 16 ms |
 | Full a11y audit against `08` §5 | |
 | Optional: Postgres/Supabase migration path | Only if remote access is wanted (see `12-open-questions.md`) |

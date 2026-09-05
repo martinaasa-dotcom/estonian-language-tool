@@ -84,7 +84,7 @@ describe("buildPassageCloze", () => {
     expect(items.map((i) => i.answer)).toEqual(["toas", "õppima"]);
   });
 
-  it("honours the limit", () => {
+  it("honors the limit", () => {
     const text = Array.from({ length: 30 }, () => "Ma istun praegu toas ja loen.").join(" ");
     expect(buildPassageCloze(text, known, { limit: 5 })).toHaveLength(5);
   });
@@ -122,7 +122,7 @@ describe("isClozeCorrect", () => {
 });
 
 describe("isDiacriticSlip", () => {
-  it("recognises a keyboard problem rather than a knowledge one", () => {
+  it("recognizes a keyboard problem rather than a knowledge one", () => {
     expect(isDiacriticSlip("oppima", "õppima")).toBe(true);
   });
 

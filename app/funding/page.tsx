@@ -31,7 +31,7 @@ export const dynamic = "force-dynamic";
  * wants to know they are not underwriting a company's margin. A university
  * wants to know what happens to the work when the money stops. A company's
  * community budget wants to know the number is real and small. All three are
- * asking "what am I actually paying for", and the honest answer is an itemised
+ * asking "what am I actually paying for", and the honest answer is an itemized
  * list with the arithmetic left in.
  *
  * A learner is a fourth reader and the one this page is most careful with. An
@@ -128,14 +128,14 @@ export default function FundingPage() {
         <P>
           <strong>Nothing anybody bills us for is counted as free.</strong> Every vendor
           here is on the plan a real deployment is on, because a free tier is one that
-          pauses when nobody is on it or forbids commercial use, and modelling one would
+          pauses when nobody is on it or forbids commercial use, and modeling one would
           describe a deployment nobody runs.
         </P>
         <P>
           <strong>What is given is credited, not priced.</strong> Ekilex, Wiktionary and
           TartuNLP are public institutions that decided this work should be available.
           They ask for nothing, and that is a good arrangement rather than a gap in the
-          accounts, so they are named here with what each one gives and the licence it
+          accounts, so they are named here with what each one gives and the license it
           comes under, and they appear in no total. Where buying the same thing is
           possible the panel says what that would come to, because the size of the gift is
           worth seeing. The last line of each card is the one worth reading: every entry
@@ -296,7 +296,7 @@ export default function FundingPage() {
         <P>
           Ekilex, Wiktionary and TartuNLP are not on that list, because they do not charge
           and this page does not pretend otherwise. They are credited above instead, with
-          what each one gives and the licence it comes under. Where buying the same thing
+          what each one gives and the license it comes under. Where buying the same thing
           is possible the panel says what that would come to, so the size of the gift is
           visible, and that figure is in no total here.
         </P>
@@ -329,7 +329,7 @@ export default function FundingPage() {
           app is booked against a shared budget of{" "}
           ${(DEFAULT_LIMITS.dailyMicrosGlobal / 1e6).toFixed(0)} a day, which cannot be
           turned off and is what stops the one line that could run away. Raising it is a
-          knob with a stop on it rather than an open cheque, and at ten thousand learners
+          knob with a stop on it rather than an open check, and at ten thousand learners
           it is already the thing holding that line down.
         </P>
         <P>

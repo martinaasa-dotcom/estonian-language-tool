@@ -8,7 +8,7 @@ import { resetRateLimitForTests } from "./rateLimit";
  * Five Route Handlers had one and none of the forty-odd Server Actions did,
  * which is the wrong way round: every mutation a learner makes in this app is
  * a Server Action. What is checked here is not the numbers, which are a
- * judgement, but the two properties the numbers depend on — that a learner is
+ * judgment, but the two properties the numbers depend on — that a learner is
  * charged to themselves rather than to their network, and that one action
  * running out does not stop the others.
  */

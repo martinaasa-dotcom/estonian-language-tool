@@ -91,7 +91,7 @@ export default async function ListeningPage() {
       been read. One table rather than a copy here, because two rankings of one
       question drift a weight at a time.
     */
-    // Which of the pool are already favourites, in one read rather than one
+    // Which of the pool are already favorites, in one read rather than one
     // per card, so the star drawn after an answer is in the right state.
     const starred = await starredAmong(
       ownerId, cards.map((c) => c.lexemeId).filter((id): id is string => !!id),

@@ -1,5 +1,5 @@
 /**
- * Every way to practise, once.
+ * Every way to practice, once.
  *
  * There were four lists of these. Today carried six tiles with one wording,
  * `/practice` carried eleven modes with another, `components/PracticeModes.tsx`
@@ -78,7 +78,7 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
     /*
       The headline of `/practice`, drawn as its own card above the grid, which
       is why it carries `within` and stays out of `QUICK_MODES`: the six rounds
-      are six coloured tiles and there are six hues, so a seventh would have to
+      are six colored tiles and there are six hues, so a seventh would have to
       share one and read as a duplicate of whichever it borrowed.
 
       `targeted` is the honest group for it too. It is not a round you play for
@@ -141,8 +141,8 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
     within: "/practice",
     blurb:
       "Six circles and an Estonian word behind them, at your level, and a new one every " +
-      "morning. Wrong letters go grey, right ones in the wrong place go amber. Where the " +
-      "word is already in your deck, finishing the round counts towards it.",
+      "morning. Wrong letters go gray, right ones in the wrong place go amber. Where the " +
+      "word is already in your deck, finishing the round counts toward it.",
   },
   {
     /*
@@ -259,6 +259,20 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
     blurb:
       "One verb, the first person given, the other five to type. Every form is checked against " +
       "the dictionary, and the conditional joins in from B1.",
+  },
+  {
+    /*
+      The one drill whose subject is a list of words rather than a shape of
+      question. `within` is the reference page that names them, which is the
+      screen a learner is standing on when the question occurs to them, and it
+      is where the same words are readable rather than asked.
+    */
+    href: "/review/exceptions", title: "Exceptions", subtitle: "The unpredictable forms",
+    icon: "TriangleAlert", tone: "butter", group: "targeted", note: "Typed, three rungs",
+    within: "/grammar/exceptions",
+    blurb:
+      "Tuppa, not toasse. The words where the ending rule stops holding, met, then produced, " +
+      "then put back in a sentence a native writer wrote.",
   },
   {
     /*

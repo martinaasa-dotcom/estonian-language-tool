@@ -44,7 +44,7 @@
  * pool without a random number.
  */
 
-/** A stable non-negative number for a day key, spread so neighbours are not neighbours. */
+/** A stable non-negative number for a day key, spread so neighbors are not neighbors. */
 export function dayHash(day: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < day.length; i++) {

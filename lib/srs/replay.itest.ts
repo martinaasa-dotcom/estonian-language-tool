@@ -239,7 +239,7 @@ describe("the append-only invariant", () => {
 
     const survivors = await prisma.review.findMany({ where: { ownerId: OWNER } });
     expect(survivors).toHaveLength(1);
-    // Still groups into a per-card sequence, which is what FSRS optimisation reads.
+    // Still groups into a per-card sequence, which is what FSRS optimization reads.
     expect(survivors[0]?.cardId).toBe(card.id);
   });
 

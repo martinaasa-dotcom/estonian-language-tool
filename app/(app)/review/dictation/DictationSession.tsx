@@ -24,9 +24,9 @@ export interface DictationTask {
   /** Reviews behind the card, which decides how it may be heard. */
   reps: number;
   lemma: string;
-  /** The dictionary entry behind the word, for the favourite button. */
+  /** The dictionary entry behind the word, for the favorite button. */
   lexemeId: string;
-  /** Whether this word is already one of the learner's favourites. */
+  /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
   /** The attested Estonian sentence, exactly as Ekilex recorded it. */
   et: string;
@@ -34,10 +34,10 @@ export interface DictationTask {
 }
 
 /**
- * The colour each mark carries, and the sentence a screen reader gets.
+ * The color each mark carries, and the sentence a screen reader gets.
  *
  * `label` is not a tooltip. `diacritics` and `typo` share a hue on purpose —
- * both are "nearly", and the palette has one colour for that (design system
+ * both are "nearly", and the palette has one color for that (design system
  * §1) — which used to mean the two were indistinguishable on screen, since a
  * `title` attribute was the only thing between them and hover does not exist
  * on a phone. The visible note now comes from `wordNote`, and this string is

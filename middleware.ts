@@ -273,7 +273,7 @@ export async function middleware(request: NextRequest) {
  *
  * A first-time visitor has nothing to sign back in to, so the front door is
  * the landing page rather than an account form. Anywhere deeper keeps the old
- * behaviour: sign in, then carry on to where they were going. `next` is
+ * behavior: sign in, then carry on to where they were going. `next` is
  * attacker-controllable and is consumed at the moment a fresh session cookie
  * exists, so it is narrowed to a same-origin path.
  */

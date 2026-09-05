@@ -8,7 +8,7 @@ describe("a word spelled the same in both languages", () => {
     twice, which reads as a rendering fault rather than as a fact about the
     word.
   */
-  it("recognises an identical gloss", () => {
+  it("recognizes an identical gloss", () => {
     for (const word of ["film", "number", "park", "sport", "stress", "argument", "risk"]) {
       expect(sameSpelling(word, word)).toBe(true);
     }

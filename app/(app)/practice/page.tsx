@@ -22,7 +22,7 @@ export const metadata = { title: "Practice" };
 export const dynamic = "force-dynamic";
 
 /**
- * Every way to practise, in one place, with the state that decides whether each
+ * Every way to practice, in one place, with the state that decides whether each
  * one is worth doing right now — how many cards are due, your best sprint, your
  * fastest match. A hub that just lists modes makes you guess; this one answers
  * "what should I do with the next five minutes".
@@ -135,7 +135,7 @@ export default async function PracticePage() {
     <Page title="Practice" lead="Words you have already learned, asked every way there is.">
       {snapshot.totalCards === 0 ? (
         <Empty
-          title="Nothing to practise yet"
+          title="Nothing to practice yet"
           body="Every mode here draws on your own deck."
           action={<ButtonLink href="/learn" variant="primary">Learn some words first</ButtonLink>}
         />

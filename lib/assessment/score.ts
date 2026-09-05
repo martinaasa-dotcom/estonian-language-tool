@@ -19,10 +19,10 @@ import {
  * A placement test is where that would hurt most, because the learner has no
  * way yet to know the machine is the one that is confused.
  *
- * **Speaking is never scored.** There is no verified Estonian speech recogniser
+ * **Speaking is never scored.** There is no verified Estonian speech recognizer
  * available here (ADR-018), so the speaking section collects the learner's own
  * rating, reports it as theirs, and contributes nothing to the level. A number
- * invented on top of a recogniser that does not support Estonian would be
+ * invented on top of a recognizer that does not support Estonian would be
  * trusted, which is exactly what makes it worse than silence.
  */
 
@@ -361,7 +361,7 @@ export interface Overall {
   level: Level | null;
   /**
    * The band above `level`, when the average landed at least `NEARLY` of the
-   * way towards it. Null otherwise, and null is the common answer: this is a
+   * way toward it. Null otherwise, and null is the common answer: this is a
    * sentence about an edge case and printing it every time would make it noise.
    */
   nearly: Band | null;

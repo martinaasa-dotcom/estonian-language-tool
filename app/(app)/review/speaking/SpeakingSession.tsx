@@ -22,9 +22,9 @@ export interface SpeakingCard {
   lemma: string;
   /** True when `et` is a whole sentence rather than a single word. */
   isSentence: boolean;
-  /** The dictionary entry behind the card, for the favourite button. */
+  /** The dictionary entry behind the card, for the favorite button. */
   lexemeId: string | null;
-  /** Whether this word is already one of the learner's favourites. */
+  /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
 }
 
@@ -37,7 +37,7 @@ export interface SpeakingCard {
  * there is no Estonian speech-recogniser it could do that with honestly — see
  * components/Recorder.tsx. What it does instead is put the two recordings next
  * to each other and let the learner judge, which is how shadowing is actually
- * practised.
+ * practiced.
  *
  * It grades like any other card: the prompt is a meaning, the answer is
  * Estonian, and the learner rates their own recall — the same self-assessment
@@ -101,7 +101,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
             Well spoken
           </h1>
           <p className="mx-auto mt-2 max-w-[46ch] text-base" style={{ color: "var(--ink-2)" }}>
-            Saying a word out loud is what moves it from something you recognise to something you can
+            Saying a word out loud is what moves it from something you recognize to something you can
             use. Nothing you recorded left this device.
           </p>
         </div>

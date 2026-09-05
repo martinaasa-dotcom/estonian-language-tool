@@ -32,7 +32,7 @@ check("the authoritative forms are shown, not derived ones",
   on the element it happens to be built from.
 
   Matched without regard to case, because the rule is that both names are there
-  and the Estonian one leads, not that the Latin one is capitalised. It used to
+  and the Estonian one leads, not that the Latin one is capitalized. It used to
   ask for "Comitative", and when the Estonian name took the lead the English one
   became a small italic cross-reference set in lower case, so this check had been
   failing on correct markup ever since. Nobody saw it: this suite needs a real

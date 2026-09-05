@@ -418,7 +418,7 @@ export function CostExplorer() {
         </summary>
         <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--ink-2)" }}>
           Everything else on this page came off a stopwatch, a database or somebody&rsquo;s
-          published price list. These are judgements, and they are here so you can disagree
+          published price list. These are judgments, and they are here so you can disagree
           with a specific one rather than with the total.
         </p>
         <ul className="mt-3 space-y-3">

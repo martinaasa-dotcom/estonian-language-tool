@@ -51,7 +51,7 @@ describe("shuffle", () => {
       .toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
   });
 
-  it("is uniform enough that the first element does not favour its own place", () => {
+  it("is uniform enough that the first element does not favor its own place", () => {
     // A deterministic generator, so this measures the algorithm and not a clock.
     let state = 12345;
     const rng = () => (state = (state * 1103515245 + 12345) % 2147483648) / 2147483648;

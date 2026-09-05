@@ -24,7 +24,7 @@ import { Check } from "lucide-react";
  * 2. **Nothing said which one was chosen.** Selection swapped `--raised` for
  *    `--accent-soft`. On the dark theme those are `#221e36` and `#2a2350`,
  *    which is a hue shift of almost no luminance: the palette's own rule is
- *    that a colour may not be the only thing carrying a distinction, and here
+ *    that a color may not be the only thing carrying a distinction, and here
  *    it was carrying the *answer*.
  * 3. **A screen reader was told the wrong thing.** Eight mutually exclusive
  *    options were eight `aria-pressed` toggle buttons, so the group announced
@@ -109,7 +109,7 @@ export function ChoiceGroup({
           : here < 0 ? 0
             : (here + step + radios.length) % radios.length;
     event.preventDefault();
-    // A radio group selects as it moves, which is the behaviour every other
+    // A radio group selects as it moves, which is the behavior every other
     // radio group on the web has and the reason it needs only one tab stop.
     radios[next]?.focus();
     radios[next]?.click();
@@ -147,7 +147,7 @@ function optionRole(select: Select, selected: boolean) {
 
 /*
   Every state lives in `.choice-btn` and the two `[data-on]` rules beside it in
-  app/globals.css. Nothing here sets a background, a border colour or a shadow
+  app/globals.css. Nothing here sets a background, a border color or a shadow
   through `style`, because an inline style beats a stylesheet and a control that
   paints its resting look inline can never define a hover — which is the fault
   this component was written to clear, and which main had already worked out

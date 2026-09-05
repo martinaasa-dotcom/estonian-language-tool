@@ -192,7 +192,7 @@ function formMap(formSet: RawFormSet): Map<string, string> {
  * and `mulle` under one code, and the second is the one anybody says.
  *
  * AND A PARALLEL IS OFTEN A WHOLE SECOND PARADIGM. `pickFormSet` takes one,
- * which is right for the six forms a learner memorises and was silently wrong
+ * which is right for the six forms a learner memorizes and was silently wrong
  * for everything else: `ütlema` is recorded as two full sets of verb forms, one on
  * `ütle-` and one on `öel-`, so `öelge`, `öelnud` and `öelda` were in the
  * response and thrown away, and `öelge` was the word `eval:scene` watched a

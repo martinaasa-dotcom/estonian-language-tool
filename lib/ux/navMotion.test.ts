@@ -127,7 +127,7 @@ describe("the travel", () => {
 
   it("leads with the edge that is nearer where it is going", () => {
     /*
-      Travelling forward the far edge sets off first and the near one follows;
+      Traveling forward the far edge sets off first and the near one follows;
       going back it is the other way about. Get this the wrong way round and
       the pill squashes rather than stretches.
     */
@@ -232,7 +232,7 @@ describe("the capsule's breath", () => {
 describe("what each surface spends", () => {
   it("gives the phone bar a travel and the rail none", () => {
     /*
-      A travelling pill is company for a thumb and an argument with a pointer.
+      A traveling pill is company for a thumb and an argument with a pointer.
       A finger has nothing else to do while a server answers, so the bar's
       marker slides from the cell you left to the cell you asked for; a pointer
       has already arrived, and the pane that has been following it down the rail
