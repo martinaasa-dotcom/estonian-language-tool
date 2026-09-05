@@ -54,6 +54,7 @@ import { writeGrade } from "@/lib/srs/grade";
 import { errandById, outcomeFrom } from "@/lib/collections/errands";
 import { emptyScheduling, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { addPlanToDeck, addUnitsToDeck, lockDeck, planLemmas } from "@/lib/srs/deck";
+import { CARD_SOURCES as KNOWN_SOURCES, DEFAULT_SOURCE } from "@/lib/srs/sources";
 import { ratingFor, SONAD_GUESSES } from "@/lib/games/sonad";
 import { solvedEntries } from "@/lib/games/crossword";
 import { crosswordFor } from "@/lib/progress/crossword";
@@ -97,8 +98,13 @@ import { safeMessage } from "@/lib/observability/report";
  * ever written and quietly break a count that is supposed to be derived from
  * facts. A closed list costs nothing: every caller in the tree already names
  * one of these.
+ *
+ * The list itself is `lib/srs/sources.ts` rather than a set typed here, because
+ * `/review/lookups` reads the same values to decide which words were the
+ * learner's own idea, and a second copy is how a source ends up on one side of
+ * that line in this file and the other side in that round.
  */
-const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN", "ALMANAC", "SCENE"]);
+const CARD_SOURCES = new Set<string>(KNOWN_SOURCES);
 
 /**
  * Add a word to the deck.
@@ -110,7 +116,7 @@ const CARD_SOURCES = new Set(["DICTIONARY", "MANUAL", "TUTOR", "IMPORT", "SCAN",
  * the length of that table, and deduplicated: an unbounded array of the same
  * key was a way to make the generator run a thousand times for one word.
  */
-export async function addToDeck(lexemeId: string, types: CardType[], source = "DICTIONARY") {
+export async function addToDeck(lexemeId: string, types: CardType[], source = "LOOKUP") {
   const known = new Set(CARD_TYPES.map((t) => t.type));
   const wanted = [...new Set(Array.isArray(types) ? types : [])]
     .filter((t): t is CardType => known.has(t as CardType));
@@ -118,7 +124,7 @@ export async function addToDeck(lexemeId: string, types: CardType[], source = "D
     await requireUserId(),
     lexemeId,
     wanted,
-    CARD_SOURCES.has(source) ? source : "MANUAL",
+    CARD_SOURCES.has(source) ? source : DEFAULT_SOURCE,
   );
 }
 
@@ -1512,7 +1518,7 @@ export async function completeOnboarding(input: {
     seconds on the one screen where the app is asking them to trust it. See
     `lib/srs/deck.ts` for the shape.
   */
-  const { added } = await addUnitsToDeck(ownerId, input.unitIds.slice(0, MAX_STARTER_UNITS));
+  const { added } = await addUnitsToDeck(ownerId, input.unitIds.slice(0, MAX_STARTER_UNITS), "COURSE");
 
   revalidatePath("/");
   revalidatePath("/learn");
@@ -1548,7 +1554,7 @@ export async function addCommonWords(group: string) {
   const { added, words } = await addPlanToDeck(
     ownerId,
     planLemmas(lemmasIn(group as FrequencyGroup), ["RECOGNITION", "PRODUCTION"]),
-    "DICTIONARY",
+    "FREQUENCY",
   );
 
   revalidatePath("/dictionary/common");
@@ -1600,7 +1606,7 @@ export async function deepenCommonWords(group: string) {
   const { added, words } = await addPlanToDeck(
     ownerId,
     planLemmas(batch, CARD_TYPES.map((spec) => spec.type)),
-    "DICTIONARY",
+    "FREQUENCY",
   );
 
   revalidatePath("/review/common");
@@ -1615,7 +1621,7 @@ export async function addUnitToDeck(unitId: string) {
   const unit = unitById(unitId);
   if (!unit) return { ok: false as const, error: "That unit does not exist." };
 
-  const { added, words } = await addUnitsToDeck(ownerId, [unitId]);
+  const { added, words } = await addUnitsToDeck(ownerId, [unitId], "COURSE");
 
   revalidatePath("/learn");
   revalidatePath("/words");
@@ -1779,7 +1785,7 @@ export async function completeLesson(
 
   let added = 0;
   for (const lexeme of lexemes) {
-    const result = await addCardsFor(ownerId, lexeme.id, [...unit.cardTypes], "DICTIONARY");
+    const result = await addCardsFor(ownerId, lexeme.id, [...unit.cardTypes], "COURSE");
     if (result.ok) added += result.added ?? 0;
   }
 

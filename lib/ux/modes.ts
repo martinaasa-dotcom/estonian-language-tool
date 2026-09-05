@@ -261,6 +261,25 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "the dictionary, and the conditional joins in from B1.",
   },
   {
+    /*
+      Reached from the deck it is a slice of, which is where somebody is
+      standing when they wonder what happened to the word they looked up.
+
+      It is `targeted` in the strict sense the group means: you open it because
+      you already know what is going wrong, and what is going wrong is that the
+      review queue introduces unseen cards oldest first, so a word added out of
+      curiosity waits behind the whole course backlog. `commonFirst` fixed the
+      ordering for the words the corpus counts; this is for the ones it has
+      never heard of, which is most of what anybody looks up.
+    */
+    href: "/review/lookups", title: "Words you looked up", subtitle: "Yours, not the course's",
+    icon: "BookmarkCheck", tone: "sky", group: "targeted", note: "From your own adds",
+    blurb:
+      "Every word you added from an entry, a photograph, a pasted list or Anu, asked in a " +
+      "different form each time, instead of waiting its turn behind the course.",
+    within: "/words",
+  },
+  {
     href: "/review/clinic", title: "Leech clinic", subtitle: "What keeps failing", icon: "Stethoscope",
     tone: "blush", group: "targeted", note: "From your log",
     blurb:

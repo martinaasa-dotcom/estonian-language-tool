@@ -17,7 +17,7 @@ import { Button } from "@/components/Button";
  * Recognition and production both, which is what the dictionary's own add
  * button offers by default: a word you can read and cannot say is half learned.
  */
-export function AddWordButton({ lexemeId, lemma, source = "DICTIONARY", className, variant = "secondary" }: {
+export function AddWordButton({ lexemeId, lemma, source = "LOOKUP", className, variant = "secondary" }: {
   lexemeId: string;
   /** Named in the live region, so a screen reader hears which word landed. */
   lemma: string;
