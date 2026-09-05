@@ -127,6 +127,15 @@ export interface Evidence {
    * all: a slip is only ever recorded on a requirement that was met.
    */
   readonly slips: readonly Slip[];
+  /**
+   * A question the learner asked: the question word they used, or `?` where
+   * there was only the mark. Null where the turn asked nothing. What
+   * `asideFor` reads to give the other side something to say about it
+   * before their own move, whether the beat asked for the question (then
+   * the answer is the beat's own, banked) or not (then it is whatever the
+   * other side can say).
+   */
+  readonly asked: string | null;
 }
 
 /**
@@ -147,6 +156,12 @@ export interface TurnContext {
   readonly registerForms: ReadonlySet<string>;
   /** Prop slot to every spelling that counts as that value, off the role card. */
   readonly data: ReadonlyMap<string, ReadonlySet<string>>;
+  /**
+   * Prop slot to the lemmas behind a drawn word, so a datum that names a case
+   * can be read through the case table. Absent on a caller that deals no
+   * words, and then a cased datum reads like a plain one.
+   */
+  readonly dataLemmas?: ReadonlyMap<string, readonly string[]>;
   /** The line the other side just said, for the echo rule. */
   readonly previous: string;
   /**
@@ -257,8 +272,16 @@ export function readTurn(
   */
   const satisfiedBy = found.flatMap((hit) => (hit && hit !== YES ? [hit.word] : []));
   const slips = found.flatMap((hit) => (hit && hit !== YES && hit.slip ? [hit.slip] : []));
+  /*
+    A question the beat did not ask for. A person caught off guard by one
+    still answers it before going on, and this is what tells the reply that
+    one was asked and with which word. Not on a beat that wanted a question,
+    because there the question is the turn.
+  */
+  const questionWord = spoken.find((word) => context.questionWords.has(word)) ?? null;
+  const asked = questionWord ?? (text.includes("?") ? "?" : null);
   const shape = (reading: TurnReading): Evidence =>
-    ({ reading, met, missing, words: marked, matched, satisfiedBy, slips });
+    ({ reading, met, missing, words: marked, matched, satisfiedBy, slips, asked });
 
   /*
     No letters at all is nothing anybody could read, unless the beat wanted a
@@ -287,7 +310,7 @@ export function readTurn(
   if (beat.counter && spoken.some((word) => context.negators.has(word))) {
     return {
       reading: "declined", met: beat.needs.map(() => false),
-      missing: beat.needs.map((_, i) => i), words: marked, matched: [], satisfiedBy: [], slips: [],
+      missing: beat.needs.map((_, i) => i), words: marked, matched: [], satisfiedBy: [], slips: [], asked: null,
     };
   }
   /*
@@ -414,6 +437,27 @@ function satisfies(
     case "datum": {
       const accepted = context.data.get(need.slot);
       if (!accepted) return null;
+      /*
+        A drawn word in a named case reads exactly as a `case` requirement
+        does: the case form is the answer, any other form of the word is the
+        word understood in the wrong case, and the recast is the table's.
+      */
+      const lemmas = need.grammCase ? context.dataLemmas?.get(need.slot) ?? [] : [];
+      for (const lemma of lemmas) {
+        const key = caseKeyFor(lemma, need.grammCase!);
+        const inCase = exact(context.lexicon.byCase.get(key));
+        if (inCase) return { word: inCase };
+        const nearCase = nearly(context.lexicon.byCase.get(key));
+        if (nearCase) return { word: nearCase.form, slip: { kind: "spelling", said: nearCase.said, form: nearCase.form, lemma } };
+        const forms = context.lexicon.byLemma.get(lemma);
+        const other = exact(forms) ?? nearly(forms)?.said ?? null;
+        if (other) {
+          return {
+            word: other,
+            slip: { kind: "case", said: other, form: context.lexicon.caseForm.get(key) ?? null, lemma, grammCase: need.grammCase! },
+          };
+        }
+      }
       const hit = exact(accepted);
       if (hit) return { word: hit };
       const lower = text.toLowerCase().replace(/\s+/g, " ");

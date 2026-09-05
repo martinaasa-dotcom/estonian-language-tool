@@ -153,9 +153,10 @@ export interface Lexicon {
    */
   readonly infinitives: ReadonlyMap<string, ReadonlySet<string>>;
   /**
-   * A verb's present persons, by lemma and morph code, off `derivedVerbForms`
+   * A verb's derived forms, by lemma and morph code, off `derivedVerbForms`
    * and so off the stored first person and nothing else (ADR-005 amendment
-   * 1). What the recast of `ma tulema` is read from. Absent for a verb the
+   * 1). What the recast of `ma tulema` is read from, and what an aside's
+   * `ei tea` is read from (`lib/scenes/aside.ts`). Absent for a verb the
    * rule does not reach, and then the slip is understood and not recast.
    */
   readonly persons: ReadonlyMap<string, ReadonlyMap<DerivedVerbCode, string>>;
@@ -191,7 +192,7 @@ export function buildLexicon(entries: readonly DictEntry[]): Lexicon {
       if (inf.size > 0) infinitives.set(entry.lemma, inf);
       const table = new Map<DerivedVerbCode, string>();
       for (const form of derivedVerbForms({ lemma: entry.lemma, pres1sg: entry.parts.PRES_1SG })) {
-        if (form.morphCode.startsWith("IndPr")) table.set(form.morphCode, form.value);
+        table.set(form.morphCode, form.value);
       }
       if (table.size > 0) persons.set(entry.lemma, table);
       continue;

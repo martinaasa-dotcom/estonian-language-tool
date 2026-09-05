@@ -5,7 +5,7 @@ import { isPhrase } from "@/lib/dict/pos";
 import { POOL } from "../../scripts/lib/sceneDraft";
 import { passes, runGate } from "./gate";
 import { words } from "./lexicon";
-import { beatById, scriptable, scriptedFor, sceneBeats } from "./scripted";
+import { answerBeatId, beatById, scriptable, scriptedFor, sceneBeats } from "./scripted";
 import { answerForms, keylessContext, lacksFiniteVerb } from "../../scripts/lib/sceneDraft";
 
 /**
@@ -122,10 +122,31 @@ describe("the scripted bank", () => {
         const phraseBeat = beat.topic.some((lemma) => phrases.has(lemma));
         if (phraseBeat || beat.says) continue;
         if (!scriptable(scene, beat)) continue;
+        // A beat the other side opens with nothing has no opening line by design; its answers are banked under `answer:`.
+        if (beat.awaits) continue;
+        /*
+          An answer is owed only where the beat that asked for the question
+          opens with nothing: everywhere else the next move is the answer,
+          and a banked one is a nicety rather than a hole.
+        */
+        if (beat.id.startsWith("answer:") && !scene.beats.find((b) => b.id === beat.id.slice("answer:".length))?.awaits) continue;
         expect(
           scriptedFor(scene, beat).length,
           `${scene.id}/${beat.id} has no line, so keyless it is English`,
         ).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+describe("the answers to the questions a beat asks for", () => {
+  it("are banked under the beat's own answer id, and every waiting beat has one", () => {
+    for (const scene of SCENES) {
+      for (const beat of scene.beats) {
+        if (!beat.awaits) continue;
+        const answer = beatById(scene, answerBeatId(beat));
+        expect(answer, `${scene.id}/${beat.id} waits and has no answer beat`).toBeDefined();
+        expect(scriptedFor(scene, answer!).length, `${scene.id}/${beat.id} waits and the bank holds no answer`).toBeGreaterThan(0);
       }
     }
   });

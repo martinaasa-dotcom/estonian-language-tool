@@ -22,7 +22,7 @@
  * seventeenth pass added for the words between the words: greetings, question
  * words, pronouns, and the clock. A conversation is mostly those.
  */
-import type { SceneSpec } from "./types";
+import type { SaysPart, SceneSpec } from "./types";
 
 /** Greetings, question words, pronouns, time and number. Every scene needs them. */
 /*
@@ -99,6 +99,25 @@ export const REACTIONS = {
   acknowledge: ["hästi", "aitäh", "jah"],
   waiting: ["jah"],
 } as const;
+
+/**
+ * What the other side says about a question the scene did not anticipate,
+ * before going on with their own move (`lib/scenes/aside.ts`).
+ *
+ * A person caught off guard still answers: "how are you" gets "fine,
+ * thanks", and a question they have no answer to gets "don't know", said
+ * the way a stranger on a street corner says it. Both are parts, in the
+ * shape a beat's `says` takes, so every word is a lemma one of the common
+ * units teaches and the one verb form is read off the derived table rather
+ * than typed. `ei tea` is `ei` and the negative of `teadma`, which is the
+ * stored first person with its ending taken off.
+ */
+export const ASIDES = {
+  /** `Hästi, aitäh.` */
+  howAreYou: [{ lemma: "hästi" }, { lemma: "aitäh" }],
+  /** `Ei tea.` */
+  unknown: [{ lemma: "ei" }, { lemma: "teadma", verb: "IndPrPs_" }],
+} as const satisfies Record<string, readonly SaysPart[]>;
 
 /** The closing phrases, which are the same wherever you are leaving. */
 const FAREWELLS = ["Head aega!", "Nägemist!", "Aitäh!"] as const;
@@ -760,7 +779,7 @@ const CAFE: SceneSpec = {
       they: "They ask what you would like.",
       move: "ask",
       topic: ["kohv", "tee", "jook", "soovima", "tellima"],
-      needs: [{ kind: "datum", slot: "drink" }],
+      needs: [{ kind: "datum", slot: "drink", grammCase: "PARTITIVE" }],
       required: true,
       patience: 3,
       shape: "word",
@@ -868,6 +887,7 @@ const DIRECTIONS: SceneSpec = {
       goal: "Ask whether it is near.",
       they: "They wait in case you have another question.",
       move: "confirm",
+      awaits: true,
       topic: ["lähedal", "kõndima", "minut"],
       needs: [{ kind: "question" }],
       required: false,
@@ -940,7 +960,7 @@ const TICKET: SceneSpec = {
       they: "They ask where you are going.",
       move: "ask",
       topic: ["kuhu", "sõitma", "buss"],
-      needs: [{ kind: "datum", slot: "to" }],
+      needs: [{ kind: "datum", slot: "to", grammCase: "ILLATIVE" }],
       required: true,
       patience: 3,
       shape: "word",
@@ -962,7 +982,19 @@ const TICKET: SceneSpec = {
       they: "They ask whether you are paying by card.",
       move: "ask",
       topic: ["maksma", "kaart", "raha"],
-      needs: [{ kind: "lemma", oneOf: ["kaart", "raha", "jah", "ei", "maksma"] }],
+      needs: [{
+        kind: "anyOf",
+        of: [
+          /*
+            "By card" is `kaardiga`, and `kaart` on its own is the word in
+            the wrong case: understood, and said back as a person at a
+            window says it. A yes or a no is the beat met as it was.
+          */
+          { kind: "case", lemma: "kaart", grammCase: "COMITATIVE" },
+          { kind: "case", lemma: "raha", grammCase: "COMITATIVE" },
+          { kind: "lemma", oneOf: ["jah", "ei", "maksma"] },
+        ],
+      }],
       required: true,
       patience: 2,
       shape: "word",

@@ -86,7 +86,7 @@ export interface SceneContext {
 }
 
 /** One entry as this module needs it: `DictEntry`, its id, and its government. */
-type Row = DictEntry & { readonly id: string; readonly government: string | null };
+export type Row = DictEntry & { readonly id: string; readonly government: string | null };
 
 /**
  * Builds the context for one scene.
@@ -100,7 +100,12 @@ type Row = DictEntry & { readonly id: string; readonly government: string | null
 export async function sceneContext(sceneId: string): Promise<SceneContext | null> {
   const scene = sceneById(sceneId);
   if (!scene) return null;
+  const rows = await readEntries([...sceneLemmas(scene)]);
+  return contextFromRows(scene, rows);
+}
 
+/** Every lemma a scene may reach: its units, its beats' topics, its props, and the way out. */
+export function sceneLemmas(scene: SceneSpec): Set<string> {
   const lemmas = new Set<string>();
   for (const unit of scene.units) for (const lemma of unitById(unit)?.lemmas ?? []) lemmas.add(lemma);
   for (const beat of scene.beats) for (const word of beat.topic) lemmas.add(word);
@@ -108,8 +113,15 @@ export async function sceneContext(sceneId: string): Promise<SceneContext | null
     if (prop.kind === "word" || prop.kind === "weekday") for (const w of prop.oneOf) lemmas.add(w);
   }
   lemmas.add(FALLBACK_PHRASE);
+  return lemmas;
+}
 
-  const rows = await readEntries([...lemmas]);
+/**
+ * The context, from rows already in hand. Pure, so a script can play a scene
+ * against the shipped dictionary with no database (`scripts/play-scene.ts`),
+ * which is how the conversations are read for whether they sound like anybody.
+ */
+export function contextFromRows(scene: SceneSpec, rows: readonly Row[]): SceneContext {
   const lexicon = buildLexicon(rows);
 
   const hasFiniteVerb = finiteVerbs(rows);
@@ -766,6 +778,9 @@ export function replay(
   const data = draw
     ? dataFor(draw.card, context.lexicon)
     : new Map<string, ReadonlySet<string>>();
+  const dataLemmas = new Map<string, readonly string[]>(
+    (draw?.card.props ?? []).map((prop) => [prop.slot, prop.lemmas]),
+  );
 
   const drawn = draw?.curveballs ?? [];
   const closeAt = context.scene.beats.findIndex((b) => b.move === "close");
@@ -779,7 +794,7 @@ export function replay(
     if (!beat) break;
     const said = String(sent.said ?? "").slice(0, MAX_TURN_CHARS);
     const heardNow = String(sent.heard ?? previous).slice(0, MAX_TURN_CHARS);
-    const marker = { ...context.marker, data, previous: heardNow };
+    const marker = { ...context.marker, data, dataLemmas, previous: heardNow };
 
     /*
       A CURVEBALL STANDS IN FRONT OF THE BEAT. While one is up, the turn is

@@ -4241,6 +4241,22 @@ under the learner's own bubble, the debrief leads with the count of turns unders
 grades read a slip as `Hard`, never `Good` and never `Again`, on the case where it was one.
 `docs/21-situations.md` §35.
 
+**And a question the scene did not anticipate is answered before the move, because silence is the
+one thing nobody does with a question.** `lib/scenes/aside.ts` is what the other side can say about
+one, a ladder like the beat's own and every rung the dictionary's: the beat's banked answer where the
+beat asked for the question (`answer:<beat>`, a pseudo-beat `sceneBeats` adds), `Hästi, aitäh.` to
+"how are you", the day and the time off the card to "when", more of what they just said after
+directions or an offer, one gated line from a model on the turn's one booking, and `Ei tea.` from
+`ei` and the derived negative of `teadma`. `Evidence.asked` says a question was asked, `replyFor`
+says the aside first and stacks nothing on it, and where the beat asked for the question and holds
+no banked answer the next move is the answer and no shrug is said. **A beat that waits, waits**:
+`BeatSpec.awaits` opens with the stage direction alone and its bank lines are its answers, because
+the street corner was saying "Jah, see on lähedal" before anybody asked and goodbye after they did.
+A `datum` can name a case, so "where to?" says `Jaama.` back to `jaam`. `scripts/play-scene.ts`
+plays every scene keyless against the shipped dictionary as a sloppy or a curious learner and
+prints the conversation; run it before touching the marker or the reply. `docs/21-situations.md`
+§36.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5363,7 +5379,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
@@ -5396,6 +5412,7 @@ npm run scenes:template  # write the spreadsheet a native speaker fills in, one 
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
 npm run measure:scenes   # how much of a conversation the dictionary can already carry
+npm run play:scenes      # every scene played keyless as a sloppy or curious learner; read the transcripts (--scene, --style)
 npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds (three runs so far; read the ranked list)
 npm run demo             # two months of sample history, for looking at the charts
 npm run test:e2e         # every browser suite, needs the server running

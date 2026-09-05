@@ -51,6 +51,7 @@ function evidence(reading: TurnReading, met: readonly boolean[] = [true]): Evide
     matched: [],
     satisfiedBy: [],
     slips: [],
+    asked: null,
   };
 }
 

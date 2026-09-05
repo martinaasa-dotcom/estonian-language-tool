@@ -11110,6 +11110,34 @@ check("a scene understands a slip before it marks one, and says so", () => {
   assert.doesNotMatch(nearly, /form:\s*["'`]/, "lib/scenes/nearly.ts is typing a form; the recast is the dictionary's");
 });
 
+check("a question the scene did not anticipate is answered before the move", () => {
+  /*
+    A learner told `Minge otse edasi.` who asks `ja kuhu siis?` is owed an
+    answer, and the first version walked past it. `lib/scenes/aside.ts` is
+    the ladder for what the other side can say about a question they did not
+    expect: the beat's own banked answer, "fine, thanks", a fact off the
+    card, more of what they just said, a model inside the list, and an honest
+    "ei tea". The route asks it before the move, the reply says it first, and
+    a beat that waits for the learner's question opens with nothing rather
+    than with its own answer. Each half is asserted, because losing any one
+    of them is the street corner saying goodbye to a question again.
+  */
+  const aside = code("lib/scenes/aside.ts");
+  assert.match(aside, /export function asideFor\(/, "lib/scenes/aside.ts lost asideFor");
+  assert.match(aside, /ASIDES\.unknown/, "the shrug no longer comes off the course's own parts");
+  assert.doesNotMatch(aside, /text:\s*"[^"]*[a-zõäöü]{2,}[^"]*"/i, "lib/scenes/aside.ts is typing a line; every word is the dictionary's");
+  const turn = code("lib/scenes/turn.ts");
+  assert.match(turn, /readonly asked: string \| null/, "Evidence no longer says whether the learner asked something");
+  const reply = code("lib/scenes/reply.ts");
+  assert.match(reply, /if \(aside\) out\.push\(\{ \.\.\.aside, reaction: true \}\)/, "replyFor no longer says the aside first");
+  assert.match(reply, /!aside && landed/, "replyFor stacks an echo or a hästi on top of an aside");
+  const route = code("app/api/scene/route.ts");
+  assert.match(route, /asideFor\(/, "the scene route no longer asks what to say about a question");
+  assert.match(route, /spokenFor\.awaits && !standing/, "the scene route walks the ladder for a beat that opens with nothing, so the answer is said before the question");
+  const scripted = code("lib/scenes/scripted.ts");
+  assert.match(scripted, /export function answerBeatId\(/, "the bank has nowhere to hold a question-beat's answer");
+});
+
 check("nothing but the dictionary can advance a scene", () => {
   const turn = code("lib/scenes/turn.ts");
   const state = code("lib/scenes/state.ts");

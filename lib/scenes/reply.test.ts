@@ -182,6 +182,28 @@ describe("a word understood with a slip", () => {
   });
 });
 
+describe("a question the scene did not anticipate", () => {
+  const aside: SpokenLine = { text: "Otse edasi ja siis vasakule.", provenance: "scripted" };
+
+  it("is answered first, and stands in for the echo and the hästi", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, echo: "pea", aside }));
+    expect(texts(lines)).toEqual(["Otse edasi ja siis vasakule.", FRESH.text]);
+    expect(lines[0]?.reaction).toBe(true);
+  });
+
+  it("is answered before a narrower re-ask too", () => {
+    const other: SpokenLine = { text: "Kus teil valutab?", provenance: "scripted" };
+    const lines = replyFor(input({ answered: ASK, beat: ASK, response: "narrow", reading: "incomplete", aside, line: other }));
+    expect(texts(lines)).toEqual([aside.text, other.text]);
+  });
+
+  it("is not answered on a turn nobody understood, where the repair phrase is the whole reaction", () => {
+    const lines = replyFor(input({ answered: ASK, beat: ASK, response: "repeat", reading: "unrecognised", aside, line: NOTHING }));
+    expect(texts(lines)).not.toContain(aside.text);
+    expect(texts(lines)).toContain(FALLBACK_PHRASE);
+  });
+});
+
 describe("one word where a sentence was due", () => {
   it("gets a look and a wait: one word with a question mark, and no new question", () => {
     const lines = replyFor(input({ answered: ASK, beat: ASK, response: "wait", reading: "fragment" }));

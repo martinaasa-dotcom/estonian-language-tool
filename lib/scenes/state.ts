@@ -56,6 +56,8 @@ export interface TurnRecord {
    * read it (a slip is `Hard`, never `Good`) and the debrief lists it.
    */
   readonly slips?: readonly Slip[];
+  /** The question word of a question the beat did not ask for, or `?`. Absent where none was asked. */
+  readonly asked?: string;
   /** Whether the app had to supply a word for this beat before it was met. */
   readonly helped: boolean;
 }
@@ -165,6 +167,7 @@ export function advance(
     ...(heard ? { heard } : {}),
     ...(evidence.matched.length > 0 ? { matched: evidence.matched } : {}),
     ...(evidence.slips.length > 0 ? { slips: evidence.slips } : {}),
+    ...(evidence.asked ? { asked: evidence.asked } : {}),
   }];
 
   /*
@@ -381,6 +384,7 @@ export function advanceHurdle(
     helped: false,
     ...(heard ? { heard } : {}),
     ...(evidence.slips.length > 0 ? { slips: evidence.slips } : {}),
+    ...(evidence.asked ? { asked: evidence.asked } : {}),
   }];
 
   const previous = state.turns[state.turns.length - 1];

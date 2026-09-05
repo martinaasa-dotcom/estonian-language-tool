@@ -28,6 +28,7 @@
  * Pure: no React, no Next, no Prisma, no clock.
  */
 import type { CaseKey } from "@/lib/estonian/types";
+import type { DerivedVerbCode } from "@/lib/estonian/conjugate";
 import type { CurveballId } from "./curveballs";
 import type { PropSpec } from "./props";
 import type { Level } from "@/lib/collections/syllabus";
@@ -83,8 +84,13 @@ export type Requirement =
   | { readonly kind: "lemma"; readonly oneOf: readonly string[] }
   /** That word, in that case. `caseAnswer` decides, so both illatives count. */
   | { readonly kind: "case"; readonly lemma: string; readonly grammCase: CaseKey }
-  /** A value off the role card: a time, a date, a number, a document code. */
-  | { readonly kind: "datum"; readonly slot: string }
+  /**
+   * A value off the role card: a time, a date, a number, a document code, or
+   * a drawn word. With `grammCase`, the drawn word in that case: "where to?"
+   * wants `jaama`, and `jaam` is the word in the wrong case, understood and
+   * said back put right, exactly as a `case` requirement is.
+   */
+  | { readonly kind: "datum"; readonly slot: string; readonly grammCase?: CaseKey }
   /** A question mark, or one of the question words the course teaches. */
   | { readonly kind: "question" }
   /** The negator. */
@@ -132,6 +138,13 @@ export function leafNeeds(
  */
 export type SaysPart =
   | { readonly lemma: string }
+  /**
+   * A verb in a derived form, read off `Lexicon.persons`: `tea` after `ei`
+   * is the negative of `teadma`, which is the stored first person with its
+   * ending taken off (ADR-005 amendment 1). Withheld whole where the rule
+   * does not reach the verb, like every other part.
+   */
+  | { readonly lemma: string; readonly verb: DerivedVerbCode }
   | { readonly slot: string; readonly grammCase?: CaseKey };
 
 export interface BeatSpec {
@@ -213,6 +226,16 @@ export interface BeatSpec {
     readonly says?: readonly SaysPart[];
     readonly replaces: readonly (readonly [from: string, to: string])[];
   };
+  /**
+   * The other side opens this beat with nothing: they have said their piece
+   * and are waiting to see whether the learner has a question. The screen
+   * prints the stage direction, the ladder is not walked for an opening line,
+   * and what the bank holds for the beat is its **answer**, said once the
+   * learner has asked (`answerBeatId`). Without this the street corner said
+   * "Jah, see on lähedal" before anybody had asked whether it was near, and
+   * then said goodbye when they did.
+   */
+  readonly awaits?: true;
   /** What counts as the learner's turn being complete. */
   readonly needs: readonly Requirement[];
   /** Required beats are the objectives; optional ones are the color. */

@@ -17,7 +17,7 @@
  * `syllabus.test.ts` fails when the harvest did not honor it.
  */
 import { describe, expect, it } from "vitest";
-import { FALLBACK_PHRASE, REACTIONS, SCENES, sceneById } from "./catalogue";
+import { ASIDES, FALLBACK_PHRASE, REACTIONS, SCENES, sceneById } from "./catalogue";
 import { HARVESTED } from "@/prisma/data/harvested";
 import { curveballById } from "./curveballs";
 import { LEFT_OUTCOME, QUESTION_SHAPE, leafNeeds } from "./types";
@@ -69,7 +69,8 @@ describe("the scene catalog", () => {
         for (const lemma of unitById(id)?.lemmas ?? []) taught.add(lemma);
       }
       // The reactions are said in every scene, so every scene has to teach them.
-      const named = [...lemmasOf(scene), ...REACTIONS.acknowledge, ...REACTIONS.waiting, ...TIME_LEMMAS];
+      const asides = Object.values(ASIDES).flatMap((parts) => parts.map((part) => part.lemma));
+      const named = [...lemmasOf(scene), ...REACTIONS.acknowledge, ...REACTIONS.waiting, ...asides, ...TIME_LEMMAS];
       const strangers = [...new Set(named)].filter((lemma) => !taught.has(lemma));
       expect(strangers, `${scene.id} names words none of its units teach`).toEqual([]);
     }

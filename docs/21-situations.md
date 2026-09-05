@@ -2105,3 +2105,68 @@ slip and `tuppa` recast; `Mul on valu korvas` on the inessive beat is met with a
 carries no slip; `valo` and `valosdi` are still misses. What it does not do: it cannot tell a learner
 which word they meant when they used a wrong one, and it cannot answer a question the scene did not
 anticipate (§34). Both are what the help button and more beats are for.
+
+
+## 36. The seventh pass: a question is answered before the move, and a waiting beat waits
+
+§34 stopped a learner's question ticking off a beat it never addressed, and left the question itself
+unanswered: `okei, otse, ja kuhu siis?` got `Otse.` and the next line, which is a street-corner
+exchange and is not an answer. The person reporting it put the standard plainly: a normal person is
+caught off guard by a question and still has a human reaction to it. Silence is the one thing nobody
+does with a question.
+
+**`lib/scenes/aside.ts` is what the other side can say about a question they did not expect**, a
+ladder like the one for a beat's own line, cheapest and surest first, and every rung is Estonian the
+dictionary already vouches for:
+
+| Rung | Answers | Example |
+|---|---|---|
+| the beat's own answer | a question the beat asked the learner for | "is it near?" gets `Jah, see on lähedal.` off `answer:far` |
+| how are you | `kuidas` beside a form of `minema` | `Hästi, aitäh.`, two course words as parts |
+| a fact off the card | `millal`, or `kell` in the turn | `Teisipäeval kell 14:30.`, the day in the adessive off the case table |
+| more about it | a place question, `mis` or a bare `?` after directions, an offer or a refusal | `Otse edasi ja siis vasakule, see on lähedal.`, the beat's next banked line |
+| a model | anything else, on a keyed deployment | one line inside the list, gated as a `confirm`, on the turn's one booking |
+| don't know | anything else | `Ei tea.`, `ei` and the derived negative of `teadma` |
+
+`readTurn` writes down that a question was asked and with which word (`Evidence.asked`);
+`replyFor` says the aside first and stacks no echo and no `hästi` on it, since "Ei tea. Hästi. Kus
+teil valutab?" is a machine and "Ei tea. Kus teil valutab?" is a person; and the route asks
+`asideFor` before it walks the ladder for the move, and gives the turn's one model booking to the
+question rather than to a fresh phrasing of a move the bank usually has anyway. Never on a turn
+nobody understood, where the repair phrase is the whole reaction.
+
+**Where the beat itself asked for the question, the answer is the beat's own, or the next move.**
+"Ask whether it is near" is met by a question, and a question is owed an answer: the bank holds it
+under `answer:<beat>` (`answerBeatId`, a pseudo-beat `sceneBeats` adds for every beat that wants a
+question, so the drafter and the bank test see it), and `asideFor` says it as the reaction. Where the
+bank holds none, the next move is the answer, which is how "where is the station?" is answered by the
+directions and not by a shrug: `asideOwed` is false there, and no model is asked either.
+
+**And a beat that waits, waits.** `far`'s stage direction is "They wait in case you have another
+question" and its banked lines were `Jah, see on lähedal.`, said as the beat's opening move, before
+anybody had asked whether it was near, and then never said when they did. `BeatSpec.awaits` is the
+fix: the other side opens the beat with nothing but the stage direction, the ladder is not walked
+for an opening line, and what the bank holds for the beat lives under its answer id. `far` is the
+one such beat so far; `answer:wait` and `answer:confirm` at the counter and `answer:refuse` at the
+landlord's carry answers of their own, typed in this pass, gated, `reviewed: false`.
+
+**Three beats learned the case a person says the word in.** The ticket window asked "where to?" and
+took `jaam` in any form, so the echo was `Jaam.`; nobody says that. A `datum` requirement can carry
+a `grammCase` now, read through the case table exactly as a `case` requirement is, so `jaam` is the
+word understood in the wrong case and `Jaama.` is said back; "how will you pay?" takes `kaardiga`
+and says `Kaardiga.` to `kaart`; and the café's order is the partitive, `Teed.` to `tee`. Each is a
+`Hard` on that case in the review log, which is the point: the comitative you could not produce at
+a window lands beside the comitative you could not produce on a card.
+
+**`scripts/play-scene.ts` is the instrument**, and it is why this pass found the waiting beat at
+all. It builds every scene from the shipped dictionary with no database (`contextFromRows`), plays
+it keyless through the route's own ladder as a generated learner in one of three styles, `clean`,
+`sloppy` and `curious`, and prints the conversation with every reading, slip and question beside
+it. Reading the seven transcripts is how the asides were shaped, and it is what to run before
+touching the marker or the reply again.
+
+What it does not do: the shrug is the same two words whoever is behind the desk, and a friend on
+the phone saying `Ei tea.` to "and where then?" is a stranger's shrug in a friend's mouth. A
+persona-flavoured off-guard reaction is a table of parts away and was left for a native speaker's
+pass, since "what a friend says when you ask them something odd" is not a thing this app should
+guess at.

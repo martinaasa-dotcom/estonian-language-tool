@@ -37,7 +37,7 @@ import { caseKeyFor, type Lexicon } from "./lexicon";
 import { propBySlot, type RoleCard } from "./props";
 import type { Response } from "./state";
 import type { TurnReading } from "./turn";
-import { leafNeeds, type BeatSpec } from "./types";
+import { leafNeeds, type BeatSpec, type SaysPart } from "./types";
 
 export interface ReplyInput {
   /** The beat the other side speaks on now, after the turn was read. Undefined once the scene is over. */
@@ -87,6 +87,14 @@ export interface ReplyInput {
    * because "said again" would claim the learner said it.
    */
   readonly recast?: boolean;
+  /**
+   * What the other side says about a question the learner asked that the
+   * beat did not ask for, before their own move (`asideFor`). Said first,
+   * because a person answers what they were asked before going on, and it
+   * stands in for the acknowledgment: "Ei tea. Kus teil valutab?" is a
+   * person, and "Ei tea. Hästi. Kus teil valutab?" is a machine.
+   */
+  readonly aside?: SpokenLine | null;
   /** How many beats have been met, which is what rotates the acknowledgment. */
   readonly met: number;
   /**
@@ -116,15 +124,37 @@ export interface ReplyInput {
  */
 export function datumLine(beat: BeatSpec, card: RoleCard | null, lexicon?: Lexicon): SpokenLine | null {
   if (!beat.says || beat.says.length === 0 || !card) return null;
+  const mark = beat.move === "ask" || beat.move === "offer" ? "?" : ".";
+  return partsLine(beat.says, { card, lexicon, mark });
+}
+
+/**
+ * A line out of parts: lemmas as the dictionary spells them, a verb in a
+ * derived form off `Lexicon.persons`, and values off the card, in a named
+ * case where one is asked for. The one assembler, shared by a beat's `says`
+ * and by the asides (`lib/scenes/aside.ts`), so what a part means is decided
+ * once. Null where any part cannot be supplied, for the reason `datumLine`
+ * gives: a line with a piece missing is worse than no line.
+ */
+export function partsLine(
+  parts: readonly SaysPart[],
+  input: { card?: RoleCard | null; lexicon?: Lexicon; mark: "." | "?"; join?: string },
+): SpokenLine | null {
   const pieces: string[] = [];
   let from: string | undefined;
-  for (const part of beat.says) {
+  for (const part of parts) {
     if ("lemma" in part) {
-      pieces.push(part.lemma);
       from ??= part.lemma;
+      if ("verb" in part) {
+        const form = input.lexicon?.persons.get(part.lemma)?.get(part.verb);
+        if (!form) return null;
+        pieces.push(form);
+      } else {
+        pieces.push(part.lemma);
+      }
       continue;
     }
-    const prop = propBySlot(card, part.slot);
+    const prop = input.card ? propBySlot(input.card, part.slot) : undefined;
     if (!prop?.value) return null;
     if (!part.grammCase) {
       pieces.push(prop.value);
@@ -137,14 +167,13 @@ export function datumLine(beat: BeatSpec, card: RoleCard | null, lexicon?: Lexic
       printed in the nominative, which would be Estonian nobody says.
     */
     const lemma = prop.lemmas[0];
-    const form = lemma && lexicon ? lexicon.caseForm.get(caseKeyFor(lemma, part.grammCase)) : undefined;
+    const form = lemma && input.lexicon ? input.lexicon.caseForm.get(caseKeyFor(lemma, part.grammCase)) : undefined;
     if (!form) return null;
     pieces.push(form);
   }
-  const text = pieces.join(" ");
-  const mark = beat.move === "ask" || beat.move === "offer" ? "?" : ".";
+  const text = pieces.join(input.join ?? " ");
   return {
-    text: `${text.charAt(0).toUpperCase()}${text.slice(1)}${mark}`,
+    text: `${text.charAt(0).toUpperCase()}${text.slice(1)}${input.mark}`,
     provenance: "attested",
     ...(from ? { from } : {}),
   };
@@ -232,6 +261,18 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   }
 
   /*
+    A QUESTION THE SCENE DID NOT ANTICIPATE IS ANSWERED BEFORE ANYTHING ELSE.
+    The learner asked where to go next, or how much, or how they are; the
+    other side was caught off guard and, like anybody, says what they can
+    about it and then gets back to what they were doing. What they can say is
+    `asideFor`'s: more about what they just said, the fact off the card, a
+    line a model wrote inside the list and the gate let through, or an honest
+    "ei tea". It is the reaction, so no echo or "hästi" is stacked on it.
+  */
+  const aside = input.aside && reading !== "unrecognised" && reading !== "echo" ? input.aside : null;
+  if (aside) out.push({ ...aside, reaction: true });
+
+  /*
     An acknowledgment after an answer that landed, rotating so the same word
     does not come back six times. Not after a greeting, since the greeting is
     answered by the next line, and not once the scene is over.
@@ -251,7 +292,7 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   */
   const askedThem = answered ? leafNeeds(answered.needs).some(({ need }) => need.kind === "question") : false;
   const landed = response === "answer" || response === "narrow";
-  if (landed && answered && answered.move !== "greet" && !askedThem && beat) {
+  if (!aside && landed && answered && answered.move !== "greet" && !askedThem && beat) {
     /*
       Never a number, which the confirm beat reads back in its own line, and
       never yes or no: "Jah." repeated back after "Jah, piimaga" is the
