@@ -208,12 +208,23 @@ describe("applyGradeBatch", () => {
   });
 
   it("drops a malformed entry instead of wedging the queue", async () => {
+    /*
+      Both are settled, and the malformed one is the point. `settled` is the
+      list the client drops from its outbox, and this used to return the good
+      id alone: the bad row stayed in IndexedDB, the drain loop in
+      `OfflineProvider` stops as soon as a pass settles nothing new, and the
+      "grades pending" badge never cleared again. The flush on sign-out went
+      with it, so the rail warned about losing a grade that could never land.
+      The name of this test was already the rule; the assertion was the bug.
+    */
     const card = await makeCard();
     const result = await applyGradeBatch(OWNER, [
       { id: "bad", cardId: card.id, rating: 9 as never, durationMs: 1, reviewedAt: Date.now() },
       { id: "good", cardId: card.id, rating: 3, durationMs: 1, reviewedAt: Date.now() },
     ]);
-    expect(result.settled).toEqual(["good"]);
+    expect([...result.settled].sort()).toEqual(["bad", "good"]);
+    // And only the good one was actually written.
+    expect(await prisma.review.count({ where: { ownerId: OWNER } })).toBe(1);
   });
 
   it("rejects a batch larger than the agreed limit", async () => {
