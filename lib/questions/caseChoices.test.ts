@@ -57,3 +57,43 @@ describe("caseFormChoices", () => {
     expect(caseFormChoices({ stems: bare, accepted: ["toas"], answer: "toas", rng: fixed })).toBeNull();
   });
 });
+
+import { verbFormChoices, verbFormSlots } from "./caseChoices";
+
+describe("verbFormChoices", () => {
+  const reading = {
+    lemma: "lugema",
+    forms: [
+      { formType: "PRES_1SG", value: "loen" },
+      { formType: "PAST_1SG", value: "lugesin" },
+    ],
+  };
+  const fixed = () => 0.5;
+
+  it("offers four persons of the one verb, the answer among them", () => {
+    const options = verbFormChoices({ lex: reading, accepted: ["loeb"], answer: "loeb", rng: fixed });
+    expect(options).toHaveLength(4);
+    expect(options).toContain("loeb");
+    for (const option of options!) expect(option).toMatch(/^(ei )?(loe|luge)/);
+  });
+
+  it("never offers a spelling the card accepts", () => {
+    const options = verbFormChoices({
+      lex: reading, accepted: ["ei loe", "pole"], answer: "ei loe", rng: fixed,
+    });
+    expect(options).not.toContain("pole");
+  });
+
+  /*
+    The negative carries its `ei`, so `ei loe` and `loe` are two options and
+    two slots rather than one spelling claimed by both, and a wrong pick can be
+    written down as the slot it was.
+  */
+  it("names the slot of every form it can offer, and the pair apart", () => {
+    const slots = verbFormSlots(reading);
+    expect(slots.get("loeb")).toBe("IndPrSg3");
+    expect(slots.get("ei loe")).toBe("IndPrPs_");
+    expect(slots.get("loe")).toBe("ImpPrSg2");
+    expect(slots.get("lugesin")).toBe("IndIpfSg1");
+  });
+});

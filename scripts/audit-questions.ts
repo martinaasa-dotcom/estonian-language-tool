@@ -106,9 +106,10 @@ const REACHES: Record<string, number> = {
     over 4,664 words with an attested sentence behind 1,494; a case is drilled
     in a sentence that uses it now, and where more than one case spells the
     gapped form that way it is drilled by nobody, which is 996 over 914 words.
-    Measured, not estimated: 13,919.
+    Measured, not estimated: 13,919. Then 9,711 when the conjugation card
+    learned the same rule: 4,747 over a stem became 539 in a sentence.
   */
-  deck: 13_919, exam: 2_500, crossword: 5_295, scene: 1_409, target: 4_658,
+  deck: 9_711, exam: 2_500, crossword: 5_295, scene: 1_409, target: 4_658,
   // 627 while a `heard` item was skipped outright; the listening items are
   // asked the "also right" question now and counted.
   check: 740,

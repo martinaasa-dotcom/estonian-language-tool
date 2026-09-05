@@ -17,9 +17,9 @@ import { WordIntro } from "@/components/WordIntro";
 import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
 import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
-import { conjugationSlotFromFront } from "@/lib/srs/slots";
-import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
+import { conjugationSlotFromFront, slotLabel } from "@/lib/srs/slots";
 import { BLANK } from "@/lib/estonian/cloze";
+import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { xpForRating } from "@/lib/gamification/xp";
 import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db";
@@ -35,6 +35,8 @@ export interface ReviewCard {
   back: string;
   hint: string | null;
   targetCase: string | null;
+  /** The conjugation slot a CONJUGATION card is about, as `CONJUGATION_SLOTS` spells it. */
+  slot: string | null;
   lemma: string | null;
   isNew: boolean;
   /**
@@ -85,14 +87,26 @@ const TONE_SOFT: Record<number, string> = {
 /**
  * Which facet of a word this card is asking about.
  *
- * The case column where there is one, and the verb slot the card's own front
- * names otherwise. `slotOfCard` in `lib/srs/slots.ts` is the same question
- * answered from the columns alone, and it cannot reach a conjugation card,
- * which is the one shape whose ask is hardest to read off the screen.
+ * The case column where there is one, then `Card.slot`, which a conjugation
+ * card carries since its front became a sentence with the form taken out, and
+ * then the slot the front names, for a card built before the column existed
+ * whose front is still `lugema → olevik · ta`. `slotOfCard` in
+ * `lib/srs/slots.ts` is the same question answered from the columns alone.
  */
 function slotAsked(card: ReviewCard): string {
-  return card.targetCase ?? conjugationSlotFromFront(card.front) ?? card.cardType;
+  return card.targetCase ?? card.slot ?? conjugationSlotFromFront(card.front) ?? card.cardType;
 }
+
+/**
+ * A front that is a sentence with the form taken out.
+ *
+ * The plain clause below is printed before the answer on a card whose front
+ * already names what it wants (`hammas → kelle?`), where it cashes the name in.
+ * On a gap it would name the case in front of the gap, which is the answer in
+ * two pieces; the sentence is the ask there, and the clause is printed after
+ * the answer instead, where it explains.
+ */
+const isGap = (card: ReviewCard) => card.front.includes(BLANK);
 
 /**
  * "Why?", at the only moment anyone asks it.
@@ -108,15 +122,26 @@ function WhyRow({ card }: { card: ReviewCard }) {
   // who is told to answer in the same words (lib/tutor/prompt.ts).
   const named = card.targetCase ? caseByKey(card.targetCase) : undefined;
   const caseName = named?.et ?? card.targetCase?.toLowerCase() ?? "";
+  // A conjugation card names its slot the same way, off `Card.slot`: the front
+  // is a sentence now and carries no label, and the label is what the learner
+  // wants the moment the answer appears and is not what they thought.
+  const verbSlot = card.slot ? slotLabel(card.slot) : null;
   const question = card.targetCase
     ? `Why is the ${caseName} of "${card.lemma ?? card.front}" what it is? I keep getting this form wrong.`
-    : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
+    : verbSlot
+      ? `Why is "${card.lemma ?? card.front}" in the ${verbSlot} what it is? I keep getting this form wrong.`
+      : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
 
   const pill =
     "press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px";
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+      {verbSlot && !card.targetCase && (
+        <span className={pill} style={{ background: "var(--raised)", color: "var(--ink-2)" }} lang="et">
+          {verbSlot}
+        </span>
+      )}
       {card.targetCase && (
         <Link
           href={`/grammar/${card.targetCase.toLowerCase()}`}
@@ -204,7 +229,8 @@ const spoken = (side: string) => side.split(" / ")[0]!.trim();
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front"
     ? type !== "PRODUCTION"
-    : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION" || type === "CLOZE";
+    : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION" || type === "CLOZE"
+      || type === "CONJUGATION";
 
 /**
  * Card types whose answer is a single Estonian form, and so can be typed and
@@ -212,7 +238,12 @@ const estonianSide = (type: string, side: "front" | "back") =>
  * sentence-ish gloss ("partitive — aitan sind"), and marking that wrong on a
  * word order difference would be punishing the learner for the card's format.
  */
-const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE"]);
+/*
+  `CONJUGATION` joined the set when the card became a sentence with a form
+  taken out: its answer was always a single vouched form and `checkAnswer`
+  could always have marked it, and for a year it was a flip anyway.
+*/
+const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE", "CONJUGATION"]);
 
 type Ask = "intro" | "type" | "choice" | "flip";
 
@@ -904,7 +935,7 @@ export function ReviewSession({
             question stays where it was, the name stays where it was, and
             somebody who has not met `seesütlev` yet can still answer the card.
           */}
-          {!answerShown && plainAsk(slotAsked(card)) && (
+          {(isGap(card) ? answerShown : !answerShown) && plainAsk(slotAsked(card)) && (
             <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
               {plainAskLine(slotAsked(card))}
             </p>

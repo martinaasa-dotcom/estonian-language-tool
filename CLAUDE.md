@@ -831,6 +831,30 @@ any case (`kallis` has `Tere, kallis!`, `Kallid sõbrad!` and `Kallis taevas!`, 
 times), and that unit's own `canDo` is that an adjective agrees with *its noun*, which a bare
 `suur → millesse?` is precisely that noun taken away.
 
+**The verb is held to the same rule, and the sentence settles the one pair it spells alike.**
+`lugema → olevik · ta` over a stem was 4,747 conjugation cards over 679 verbs, with a sentence a
+lexicographer wrote holding that very form behind 421 of them, 252 of those the third person,
+which is the form most sentences are in. A person of a verb is drilled in a sentence that uses it
+now, or it is not drilled: 539 cards over 427 verbs, and no unit loses the type. The negative and
+the singular imperative are one spelling, `loe` is both `ei loe` and `loe!`, and a spelling two
+slots claim is named by neither, exactly as `readCase` refuses `kohvi`; here the sentence itself
+settles it, because the `ei` is in the sentence and a lexicographer wrote both words. So the
+negative gaps `ei loe` whole, which is what the card's back has always been and what `eitus · ma ei`
+asks for, and the imperative refuses a token with `ei` in front of it. That is 232 cards the pair
+alone had been hiding.
+
+**A sentence front carries no label, so the card carries its slot.** The front used to be the
+label (`lugema → olevik · ta`) and the reveal read it off; `olevik · ta` beside `lugema` is `loeb`
+written out in two pieces, the way `sisseütlev` beside `ravim` is `ravimisse`, so the cue is the
+word and its meaning and nothing else. `Card.slot` is where the slot lives, and it is a second
+column rather than a wider `targetCase` for the reason `Review.slot` is not a wider
+`Review.targetCase`: `caseAccuracy` tallies whatever string it finds in that column and would put
+`indprsg3` on the Progress page beside `osastav`. `slotOfCard` reads it, so a review of `loeb` is
+written down as `IndPrSg3` rather than as `CONJUGATION`, and the mastery counter sees eight facets
+of a verb where it saw one. A card built before the column existed reads exactly as it did.
+`syllabus.test.ts` asks the builder now rather than "has a first person", which was a copy of the
+builder's rule that had rotted the same way "has a genitive stem" had.
+
 **And a card this app can mark is never marked by the learner.** The same card ended in "Not yet"
 and "Got it". `TYPEABLE` is the set whose answer is a single Estonian form the dictionary vouches
 for, `CASE_FORM` has always been in it, and `checkAnswer` compares against it, tells a dropped õ
@@ -3876,6 +3900,12 @@ on the Progress page beside `osastav`. `conjugationSlotFromFront` reads it back 
 front, which the builder generates as `${lemma} → ${slot.label}` against a closed table of ten, so
 the lookup is exact and a front that names none of them returns null and the screen prints what it
 always printed. It is a read of what the builder wrote and it never reaches the append-only log.
+Since the conjugation card became a sentence with the form taken out, its front names nothing and
+`Card.slot` carries the slot instead, so `slotOfCard` answers for it and the front-parse reaches only
+the cards in a deck built before the column existed. And on a gap-fronted card the clause is printed
+after the answer rather than before it, for the reason the paragraph above gives `gap` and `heard` no
+clause at all: the sentence is what says which form is wanted, and a clause naming the case in front
+of the gap is the answer in two pieces.
 
 **And the feedback box was painting a hue's ink on that hue's own fill.** The same round drew its
 verdict on `background: var(--butter)` with `color: var(--butter-ink)`, which is two halves of one

@@ -1,6 +1,6 @@
 import { caseByKey } from "@/lib/estonian/cases";
 import { caseFits, caseQuestionFor, localCasesFor } from "@/lib/estonian/caseQuestion";
-import { buildCloze, mentions, naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
+import { BLANK, buildCloze, mentions, naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { gapForms } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
@@ -202,6 +202,17 @@ export interface GeneratedCard {
   back: string;
   hint: string | null;
   targetCase: string | null;
+  /**
+   * The conjugation slot a `CONJUGATION` card is about, and null on every other.
+   *
+   * Required rather than optional for the reason `illSgShort` is: a card
+   * builder that has not thought about which facet of the word it is asking
+   * for does not compile. It travels to `Card.slot`, and `slotOfCard` reads it
+   * so a review of `loeb` is written down as `IndPrSg3` rather than as
+   * "CONJUGATION", which is what let eight cards of one verb count as one
+   * facet in the mastery reading.
+   */
+  slot: string | null;
 }
 
 const form = (l: LexemeForCards, type: string) => l.forms.find((f) => f.formType === type)?.value;
@@ -261,7 +272,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
   for (const type of types) {
     switch (type) {
       case "RECOGNITION":
-        out.push({ cardType: type, front: lex.lemma, back: lex.translation, hint: null, targetCase: null });
+        out.push({ cardType: type, front: lex.lemma, back: lex.translation, hint: null, targetCase: null, slot: null });
         break;
 
       case "PRODUCTION": {
@@ -287,6 +298,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           back: answers.join(" / "),
           hint: lex.pos.toLowerCase(),
           targetCase: null,
+          slot: null,
         });
         break;
       }
@@ -398,6 +410,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
               back: [cloze.answer, ...also].join(" / "),
               hint,
               targetCase: key,
+              slot: null,
             });
             break;
           }
@@ -422,26 +435,106 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           */
           hint: "astmevaheldus · consonant gradation",
           targetCase: "GENITIVE",
+          slot: null,
         });
         break;
       }
 
       case "CONJUGATION": {
+        /*
+          A PERSON OF A VERB IS DRILLED IN A SENTENCE THAT USES IT, OR IT IS NOT
+          DRILLED. The same rule the case card learned, for the same reason:
+          `lugema → olevik · ta` asked for a suffix on a stem and nothing about
+          it said why anybody would say `loeb`. That was 4,747 cards over 679
+          verbs in the shipped dictionary, and a sentence a lexicographer wrote
+          holding that very form exists for 421 of them, 252 of those the third
+          person, which is the form most sentences are in.
+
+          The negative and the singular imperative are one spelling: `loe` is
+          both `ei loe` and `loe!`, and a spelling two slots claim is named by
+          neither, exactly as `readCase` refuses `kohvi`. Here the sentence
+          itself settles it, though, because the `ei` is in the sentence: `Ma
+          ei loe` is the negative and `Loe!` is the imperative, and a
+          lexicographer wrote both words. So the negative gaps `ei loe` whole,
+          which is what the card's back has always been and what `eitus · ma
+          ei` asks for, and the imperative refuses a token with `ei` in front
+          of it. That is 232 more cards the pair alone had been hiding.
+
+          The cue never names the slot. `olevik · ta` beside `lugema` is `loeb`
+          written out in two pieces, the way `sisseütlev` beside `ravim` is
+          `ravimisse`; the slot travels on `Card.slot`, where the reveal and
+          the mastery reading read it.
+        */
         if (lex.pos !== "VERB") break;
+        const sentences = naturalSentencesFor(lex);
+        if (sentences.length === 0) break;
+
+        // Every spelling of every slot, and which slots claim it. The bare
+        // spelling is what a token in a sentence is compared with; `ei` is
+        // handled by looking at the sentence rather than by prefixing.
+        const bySlot = new Map<string, { plain: string[]; whole: string[] }>();
+        const claims = new Map<string, Set<string>>();
         for (const slot of CONJUGATION_SLOTS) {
           const values = conjugationAnswer(lex, slot);
-          if (values.length === 0) continue;
-          const answers = values.map((v) => (slot.negative ? `ei ${v}` : v));
-          for (const also of slot.alsoCode ? attestedForms(lex, slot.alsoCode) : []) {
-            if (!answers.includes(also)) answers.push(also);
+          const also = slot.alsoCode ? attestedForms(lex, slot.alsoCode) : [];
+          if (values.length === 0 && also.length === 0) continue;
+          // `pole` stands on its own; `loe` needs its `ei`.
+          const plain = [...values, ...also];
+          const whole = [...values.map((v) => (slot.negative ? `ei ${v}` : v)), ...also];
+          bySlot.set(slot.code, { plain, whole });
+          for (const v of plain) {
+            const key = v.toLocaleLowerCase("et");
+            (claims.get(key) ?? claims.set(key, new Set()).get(key)!).add(slot.code);
           }
-          out.push({
-            cardType: type,
-            front: `${lex.lemma} → ${slot.label}`,
-            back: answers.join(" / "),
-            hint: lex.translation,
-            targetCase: null,
-          });
+        }
+
+        const pair = new Set(["IndPrPs_", "ImpPrSg2"]);
+        for (const slot of CONJUGATION_SLOTS) {
+          const forms = bySlot.get(slot.code);
+          if (!forms) continue;
+          for (const example of sentences) {
+            const cloze = buildCloze(example.et, forms.plain);
+            if (!cloze) continue;
+            const key = cloze.answer.toLocaleLowerCase("et");
+            const before = cloze.full.slice(0, cloze.index);
+            const ei = /(^|[^\p{L}])ei\s+$/iu.exec(before);
+            const standsAlone = (bySlot.get(slot.code)?.whole ?? []).some(
+              (w) => w.toLocaleLowerCase("et") === key,
+            );
+            if (slot.negative && !ei && !standsAlone) continue;
+            if (!slot.negative && ei) continue;
+            // Any other slot still claiming the spelling, once the negative and
+            // the imperative have been told apart by the `ei`, is a real
+            // ambiguity and the card is not built.
+            const rivals = [...(claims.get(key) ?? [])].filter(
+              (code) => code !== slot.code && !(pair.has(code) && pair.has(slot.code)),
+            );
+            if (rivals.length > 0) continue;
+
+            let front = cloze.text;
+            let answer = cloze.answer;
+            if (slot.negative && ei) {
+              // Gap both words, so what the learner types is what the card's
+              // back has always said: `ei loe`, never a bare `loe`.
+              const start = cloze.index - (ei[0].length - (ei[1] ?? "").length);
+              front = cloze.full.slice(0, start) + BLANK + cloze.full.slice(cloze.index + cloze.answer.length);
+              answer = `ei ${cloze.answer}`;
+            }
+            const also = forms.whole.filter(
+              (w) => w.toLocaleLowerCase("et") !== answer.toLocaleLowerCase("et"),
+            );
+            const asked = [`${lex.lemma}, ${lex.translation}`, lex.translation];
+            const hint = asked.find((line) => !mentions(line, cloze.answer)) ?? null;
+            out.push({
+              cardType: type,
+              front,
+              back: [answer, ...also].join(" / "),
+              hint,
+              targetCase: null,
+              slot: slot.code,
+            });
+            break;
+          }
         }
         break;
       }
@@ -513,6 +606,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
             back: cloze.answer,
             hint,
             targetCase: byValue.get(cloze.answer.toLowerCase()) ?? null,
+            slot: null,
           });
           built++;
         }
@@ -547,6 +641,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           back: lex.government,
           hint: `${term?.alsoCalled ?? "verb government"} · ${lex.translation}`,
           targetCase: null,
+          slot: null,
         });
         break;
       }
