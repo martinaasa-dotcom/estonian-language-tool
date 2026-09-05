@@ -1,5 +1,5 @@
 import { CASES } from "@/lib/estonian/cases";
-import { caseAnswer, type NounStems } from "@/lib/estonian/derive";
+import { caseAnswer, shownForms, type NounStems } from "@/lib/estonian/derive";
 import { differentText, formNearness, pickOptions } from "./distractors";
 import { CONJUGATION_SLOTS } from "@/lib/srs/slots";
 import { attestedForms, conjugationAnswer, type VerbForms } from "@/lib/srs/cards";
@@ -56,9 +56,37 @@ export function caseFormChoices(input: {
   const candidates: string[] = [stems.nomSg, stems.genSg, stems.partSg].filter(
     (f): f is string => !!f,
   );
+  /*
+    EVERY SPELLING OF THE CASE BEING ASKED FOR IS BARRED, NOT ONLY THE ONES ON
+    THE CARD.
+
+    The bar below was built from what the caller marks right, which both
+    callers read off the card's back through `acceptedAnswers`: the value and
+    `alsoRight`, and `alsoRight` is null wherever a case has more than two
+    attested spellings. Ekilex records three elatives for `kodu`, so on
+    `kodu → seestütlev` the answer was `kodust` and `kodunt` was eligible as a
+    decoy: an attested elative offered as the wrong ending, which is exactly
+    the fault the paragraph below says this may never commit.
+
+    AND A DISTRACTOR IS A WORD, NOT A SPELLING WE WOULD ACCEPT. `accepted`
+    holds the suffix guess beside the form a lexicographer recorded, and
+    `derive.ts` says printing that guess "would assert the guess is a real
+    word". It is the right list to mark against and the wrong one to print, so
+    the pool is `shownForms` and the bar is `accepted`, which is the division
+    every screen in the app already draws.
+  */
+  const barred = new Set<string>();
+  const fold = (f: string) => f.trim().toLocaleLowerCase("et");
   for (const spec of CASES) {
     const built = caseAnswer(stems, spec.key);
-    if (built) candidates.push(...built.accepted);
+    if (!built) continue;
+    candidates.push(...shownForms({ singular: built.value, alsoRight: built.alsoRight }));
+    // The case the card is about, found by the answer being one of its
+    // spellings: two cases spelled alike bar both sets, which is the safe
+    // direction, since a spelling either case accepts is a true answer.
+    if (built.accepted.some((a) => fold(a) === fold(answer))) {
+      for (const a of built.accepted) barred.add(fold(a));
+    }
   }
 
   /*
@@ -67,9 +95,7 @@ export function caseFormChoices(input: {
     would mark a learner wrong for the other true answer, which is the `tuppa`
     fault this app has already shipped twice in opposite directions.
   */
-  const barred = new Set(
-    [...accepted, answer].map((f) => f.trim().toLocaleLowerCase("et")),
-  );
+  for (const f of [...accepted, answer]) barred.add(fold(f));
   const pool = candidates
     .map((f) => f.trim())
     .filter((f) => f && !barred.has(f.toLocaleLowerCase("et")))

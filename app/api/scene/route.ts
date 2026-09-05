@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
+import { authoriseCall, recordUsage, releaseReservation, type Reservation } from "@/lib/usage/ledger";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { reportError } from "@/lib/observability/report";
 import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
@@ -302,6 +302,14 @@ export async function POST(request: Request) {
     */
     return answer(reply(cheap), { composed: false, note: decision?.message ?? null });
   }
+  /*
+    Held as a const so the narrowing the guard above just did survives into the
+    closures below: the settlement is written inside `compose`'s callback and
+    the release inside an `after`, and a property read in either place is
+    `Reservation | undefined` again to the compiler. The release used a `!` for
+    that reason and no longer needs one.
+  */
+  const reservation = decision.reservation;
 
   const line = await sceneLine({
     ...shared,
@@ -310,6 +318,9 @@ export async function POST(request: Request) {
     scripted: [],
     compose: (avoid) => compose(chain, {
       ownerId,
+      // The booking this turn was authorised under, so the settlement corrects
+      // it rather than being written down as a second call. See `compose`.
+      reservation,
       move: beat.move,
       they: stageFor(beat, card),
       register: scene.register,
@@ -338,7 +349,7 @@ export async function POST(request: Request) {
     an ordinary one here rather than an error.
   */
   if (line.provenance !== "composed") {
-    after(() => releaseReservation(decision.reservation!));
+    after(() => releaseReservation(reservation));
   }
 
   return answer(reply(line));
@@ -367,6 +378,18 @@ async function compose(
   chain: ReturnType<typeof resolveProviders>,
   input: {
     ownerId: string;
+    /**
+     * What `authoriseCall` booked for this turn. Required, because the
+     * settlement below is what corrects it, and it was not passed: `recordUsage`
+     * reads this field to decide whether a row is a `SETTLEMENT` or a `CALL`,
+     * so every composed turn wrote a second `CALL` at the full cost beside the
+     * reserve, and nothing ever settled the reserve. Both counting limits count
+     * `CALL` rows, so a scene spent the burst and daily SCENE allowances at
+     * twice the rate it should, and the deployment budget saw reserve plus
+     * actual rather than the difference. Required rather than optional so a
+     * caller that has not thought about it does not compile.
+     */
+    reservation: Reservation;
     move: string;
     /** What they are doing, in English, from their side: the beat's `they`. */
     they: string;
@@ -428,6 +451,7 @@ async function compose(
           model: config.model,
           inputTokens: usage.inputTokens,
           outputTokens: usage.outputTokens,
+          reservation: input.reservation,
         }));
       },
       live,

@@ -3384,8 +3384,21 @@ export async function submitExam(input: unknown) {
   const grades = gradesFrom(result).slice(0, REPLAY_BATCH);
   if (grades.length > 0) {
     const now = Date.now();
+    /*
+      AN ID THAT IS STABLE ACROSS A RESUBMIT, WHICH IS WHAT MAKES THE BATCH
+      IDEMPOTENT AT ALL.
+
+      `applyGradeBatch` skips a grade whose `Review` id it already holds, and
+      every other caller supplies an id the client minted once. This one minted
+      a fresh one per invocation, so a double-pressed Submit, or the action
+      re-run, marked the same paper twice: a second set of rows in a table that
+      is append-only and never repaired, and every card in the paper advanced
+      twice on one sitting. The seed identifies the paper and comes off the URL
+      the sitting was taken at, so seed and card together name the grade.
+    */
+    const stable = (cardId: string) => `exam:${seed}:${cardId}`;
     await applyGradeBatch(ownerId, grades.map((g) => ({
-      id: crypto.randomUUID(),
+      id: stable(g.cardId),
       cardId: g.cardId,
       rating: g.rating as RatingValue,
       durationMs: 0,

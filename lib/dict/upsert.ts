@@ -68,8 +68,26 @@ export async function upsertLexemeWithForms(input: LexemeWrite): Promise<LexemeW
 
   const data = {
     lemma, translation, pos,
-    cefr: input.cefr || null,
-    government: input.government || null,
+    /*
+      SUPPLIED OR LEFT ALONE, WHICH IS THE RULE THE PARAGRAPH BELOW STATES AND
+      THESE TWO COLUMNS DID NOT KEEP.
+
+      They were written unconditionally, so a caller that sends neither nulled
+      both on an entry everybody reads. `lib/suggestions/apply.ts` is exactly
+      such a caller: accepting a "this word is missing" report for a lemma the
+      dictionary already holds passes a gloss and forms and nothing else, and
+      it stripped the CEFR band and the government string off the existing
+      row. Losing the band is not cosmetic: it takes the word out of the exam
+      pool, out of the readiness counts and out of the suggestion row, all of
+      which read `cefr` as the record that something vouched for the word.
+
+      The hand-edit form was safe only by accident, because it pre-fills both
+      fields from the entry it is editing. `undefined` means the caller had no
+      opinion; an empty string still clears, since that is a person emptying
+      the field in front of them.
+    */
+    ...(input.cefr !== undefined ? { cefr: input.cefr || null } : {}),
+    ...(input.government !== undefined ? { government: input.government || null } : {}),
     /*
       `notes` IS NOT HERE, AND THAT IS THE FIX RATHER THAN THE OMISSION.
 

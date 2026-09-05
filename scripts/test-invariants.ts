@@ -4889,6 +4889,30 @@ check("nothing reaches a paid provider without going through the ledger", () => 
       `${file} opens a provider without asking the ledger first`,
     );
     assert.match(source, /recordUsage\(/, `${file} opens a provider and never files what it spent`);
+
+    /*
+      AND THE SETTLEMENT SETTLES THE BOOKING RATHER THAN MAKING A SECOND ONE.
+
+      `recordUsage` decides from the `reservation` field alone whether a row is
+      a `SETTLEMENT` or a `CALL`. The scene route booked at authorisation,
+      wrote its settlement without that field, and so filed a second `CALL` at
+      the full cost with the reserve left standing for ever: both counting
+      limits count `CALL` rows, so a conversation spent the burst and the daily
+      SCENE allowance at twice the rate, and the deployment budget saw the
+      reserve plus the actual instead of the difference between them. Its own
+      comment three lines above said it was settling the reservation.
+
+      The check above could not see it, because it asks only that the file
+      mentions the function. A file that books therefore has to hand the
+      booking back somewhere, either to settle it or to release it.
+    */
+    if (/authoriseCall\(/.test(source)) {
+      assert.match(
+        source,
+        /reservation[,:]/,
+        `${file} books a call and never passes the booking to recordUsage or releaseReservation, so the reserve stands and the settlement is filed as a second call`,
+      );
+    }
   }
 
   /*
