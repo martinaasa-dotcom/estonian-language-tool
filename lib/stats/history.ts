@@ -68,40 +68,6 @@ function intensity(count: number, busiest: number): 0 | 1 | 2 | 3 | 4 {
   return 1;
 }
 
-export interface ForecastDay {
-  day: string;
-  /** Cards falling due on that day. */
-  count: number;
-  /** Days from today: 0 is today, 1 tomorrow. */
-  offset: number;
-}
-
-/**
- * What the next `days` days of reviewing actually look like.
- *
- * Anything already overdue is folded into today rather than shown in the past,
- * because that is where the work sits: a card due last Tuesday is due now.
- */
-export function buildForecast(
-  dueDates: Date[],
-  days = 14,
-  from: Date = new Date(),
-  clock: DayClock = dayClock(),
-): ForecastDay[] {
-  const buckets = new Map<number, number>();
-  for (const due of dueDates) {
-    const offset = Math.max(0, clock.daysBetween(from, due));
-    if (offset >= days) continue;
-    buckets.set(offset, (buckets.get(offset) ?? 0) + 1);
-  }
-
-  return Array.from({ length: days }, (_, offset) => ({
-    offset,
-    day: clock.dayKey(clock.shiftDay(from, -offset)),
-    count: buckets.get(offset) ?? 0,
-  }));
-}
-
 export interface RatingBreakdown {
   again: number;
   hard: number;

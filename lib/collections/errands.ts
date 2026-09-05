@@ -29,8 +29,27 @@
  *
  * An errand is offered only where the learner has started its unit, because
  * "order a coffee" to somebody who has not met `kohv` is a dare rather than a
- * task. The two that need only greetings are always available. The walk over
- * the pool is `dayIndex`, so the same errand does not come round for weeks.
+ * task. The two that need only greetings are always available.
+ *
+ * THE WALK IS OVER THE WHOLE LIST AND THE FILTER COMES AFTER IT. This said the
+ * same errand "does not come round for weeks", which is true of somebody who
+ * has started every unit and false of everybody else: the pool is the units a
+ * learner has begun, four of them on a starter deck, and `dayIndex` over a pool
+ * of four repeats every four days. The interval is the pool size, which is a
+ * fact about how far in the learner is rather than a promise this file can
+ * make, and it is why the card appears on a minority of days.
+ *
+ * AND THE MODULUS IS THE POOL, WHICH MEANS STARTING A UNIT CHANGES TODAY'S. It
+ * renumbers the walk, so a learner who begins a unit at lunchtime can be shown
+ * a different errand from the one the card offered that morning. Walking the
+ * fixed list instead and stepping forward to the first available errand was
+ * tried and is worse where it matters: measured over twenty days on a starter
+ * deck it lands on `hello` eleven times in twelve, because stepping forward
+ * gives the errand with the most unavailable entries in front of it the largest
+ * catchment. An even walk over a pool needs the pool's size, so the two cannot
+ * both be had. Variety wins, because the learner with four errands is the one
+ * who would pay for the other choice, and because the card is only offered on a
+ * day the answer was no.
  *
  * Pure.
  */

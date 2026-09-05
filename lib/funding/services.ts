@@ -37,7 +37,7 @@ import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
 import { reserveMicros } from "@/lib/usage/pricing";
 import { DEFAULT_LIMITS } from "@/lib/usage/quota";
 import {
-  ASSUMPTIONS, CLIP_KB, DAYS_PER_MONTH, DEVTOOLS, DOMAIN, EMAIL, ERRORS,
+  CLIP_KB, DAYS_PER_MONTH, DEVTOOLS, DOMAIN, EMAIL, ERRORS,
   HTML_KB, REQUESTS_PER_PAGE, SHARED_JS_KB, SPEECH_MARKET, SUPABASE,
   TUTOR_MODELS, VERCEL,
   assumed, computeFor, distinctClips, gbOf, listOf, overageUsd, round2, usdFromEur,
@@ -383,5 +383,3 @@ export const SERVICES: readonly Service[] = [
   },
 ];
 
-/** Every assumption a service reads, for the check that the page prints them all. */
-export const ASSUMPTIONS_USED = ASSUMPTIONS;

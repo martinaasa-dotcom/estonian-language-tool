@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
+  bestStudyHour, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
   retentionReading, RETENTION_MINIMUM, RETENTION_TARGET, REVIEW_STATE,
 } from "./history";
 import { REQUEST_RETENTION } from "@/lib/srs/scheduler";
@@ -59,27 +59,6 @@ describe("buildHeatmap", () => {
   it("ignores reviews older than the window", () => {
     const grid = buildHeatmap([daysAgo(400)], 30, NOON);
     expect(grid.reduce((s, d) => s + d.count, 0)).toBe(0);
-  });
-});
-
-describe("buildForecast", () => {
-  it("folds overdue cards into today rather than losing them", () => {
-    const forecast = buildForecast([daysAgo(3), daysAgo(1)], 7, NOON);
-    expect(forecast[0]!.offset).toBe(0);
-    expect(forecast[0]!.count).toBe(2);
-  });
-
-  it("buckets future due dates by day", () => {
-    const inDays = (n: number) => shiftDay(NOON, -n);
-    const forecast = buildForecast([inDays(1), inDays(1), inDays(3)], 7, NOON);
-    expect(forecast[1]!.count).toBe(2);
-    expect(forecast[3]!.count).toBe(1);
-    expect(forecast[2]!.count).toBe(0);
-  });
-
-  it("drops anything past the horizon", () => {
-    const forecast = buildForecast([shiftDay(NOON, -90)], 14, NOON);
-    expect(forecast.reduce((s, d) => s + d.count, 0)).toBe(0);
   });
 });
 

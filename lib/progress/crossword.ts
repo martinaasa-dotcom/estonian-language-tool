@@ -5,6 +5,7 @@ import { clueClashes, crosswordPool } from "@/lib/dict/facts";
 import { clueFrom, clueKey } from "@/lib/games/clue";
 import { compile, type Candidate, type Crossword } from "@/lib/games/crossword";
 import { dayOrdinal } from "@/lib/random/dayHash";
+import { dayRng } from "@/lib/random/seeded";
 import { shuffle } from "@/lib/random/shuffle";
 import type { DayKey } from "@/lib/time/day";
 
@@ -67,11 +68,19 @@ export async function crosswordFor(
 
   /*
     Seeded on the day's ordinal, so every learner at one level gets one puzzle
-    and a reload gets it again. `shuffle` takes its generator as a parameter
-    for exactly this, and the generator is written out here rather than
-    imported because it is three lines and a shared one would be shared state.
+    and a reload gets it again. `shuffle` takes its generator as a parameter for
+    exactly this.
+
+    `dayRng` rather than `rng`, and it is not a preference: this generator was
+    written out here on the argument that "a shared one would be shared state",
+    which is true of neither, since both return a fresh closure. What it is is a
+    different sequence, because it pre-adds the constant. `recordCrossword`
+    rebuilds the day's grid from the date to mark it, the way `submitExam`
+    rebuilds a paper (ADR-022), so swapping the stream would mark somebody
+    against a grid they were never given. Both live in `lib/random/seeded.ts`
+    now, with the difference written down where it can be seen.
   */
-  const random = seededRandom(dayOrdinal(day));
+  const random = dayRng(dayOrdinal(day));
   const pool: Candidate[] = shuffle(rows, random)
     .filter((row) => !clashes.has(clueKey(row.lemma, row.pos)))
     .map((row) => ({
@@ -97,19 +106,3 @@ export async function crosswordFor(
   };
 }
 
-/**
- * A small deterministic generator, seeded on the day.
- *
- * Mulberry32, which is four lines and passes the only test that matters here:
- * two consecutive seeds give unrelated sequences, which a linear congruential
- * generator seeded on consecutive integers does not.
- */
-function seededRandom(seed: number): () => number {
-  let a = (seed + 0x6d2b79f5) | 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
-  };
-}

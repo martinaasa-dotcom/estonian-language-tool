@@ -44,8 +44,8 @@ export const dynamic = "force-dynamic";
  * this repository, quoted off a vendor's price list with the date it was read,
  * or named as an assumption the reader can change. The interactive part is not
  * decoration: a total somebody can move is a total they can check, and the
- * three least flattering findings on the page (that the floor is about
- * forty-six dollars before anybody arrives, that speech is the fastest-growing
+ * three least flattering findings on the page (that the floor is about three
+ * hundred dollars before anybody arrives, that speech is the fastest-growing
  * line once anybody puts a figure on it, and that what is given to this app
  * outgrows what it pays for) are all things the model surfaced rather than
  * things anybody chose to admit.
@@ -231,9 +231,11 @@ export default function FundingPage() {
           year fits in less space than a phone photograph album. And a spoken clip is
           uncompressed audio, 43 KB for every second of it once trimmed and stored as
           16-bit, which still makes speech the largest thing this app moves by a wide
-          margin. Turning the audio off in the
-          panel above is the single biggest saving available, and it is also the feature
-          hardest to argue for losing.
+          margin. What it is not is the biggest
+          saving available, and it is worth saying so on a page about the bill: the
+          speech is given rather than charged, so turning it off in the panel above saves
+          nothing at all at a hundred learners and about fifty dollars a month at a
+          hundred thousand. Turning the tutor off saves twenty-two and six hundred.
         </P>
       </S>
 

@@ -2419,6 +2419,40 @@ check("there is one shuffle, and the sort-comparator kind is not a shuffle at al
   );
 });
 
+check("there is one seeded generator, and its two sequences live in one file", () => {
+  /*
+    `lib/random/seeded.ts` opens by saying a second copy is how two of them stop
+    agreeing, and there were three: `lib/collections/lesson.ts` and
+    `lib/collections/checkpoint.ts` had it byte for byte, and
+    `lib/progress/crossword.ts` had a version that pre-adds the constant and
+    keeps its state signed, which is a different stream from the first number
+    out. That last one is what the header warns about happening, and the reason
+    it is kept rather than deleted: `recordCrossword` rebuilds the day's grid
+    from the date to mark it, so swapping the sequence would mark somebody
+    against a grid they were never given. Both are exported from that file now,
+    with the difference written down where a reader meets it.
+
+    The tell is the constant, which is mulberry32's and appears nowhere else.
+  */
+  const HOME = "lib/random/seeded.ts";
+  assert.ok(existsSync(HOME), `the seeded generator has gone from ${HOME}`);
+
+  const home = code(HOME);
+  for (const name of ["export function rng(", "export function dayRng("]) {
+    assert.ok(home.includes(name), `${HOME} no longer exports ${name.slice(16, -1)}`);
+  }
+
+  for (const file of ALL) {
+    if (file === HOME) continue;
+    assert.ok(
+      !/0x6d2b79f5/i.test(code(file)),
+      `${file}: a second copy of the seeded generator. Import rng (or dayRng, for the `
+      + `crossword's own sequence) from ${HOME}. Two copies is how a caller that marks `
+      + `stored work against a seed stops agreeing with the one that built it.`,
+    );
+  }
+});
+
 check("a `take` beside a `distinct` bounds nothing, so it is scoped to one owner", () => {
   /*
     Prisma applies `distinct` in the client. A `LIMIT` would cut rows before the
@@ -4119,7 +4153,8 @@ check("a listening question never offers the meaning of another word it played",
   assert.match(sentenceQuestion, /const inPool = heardIndex\(pool\)/, "the pool's own meanings are no longer indexed");
   assert.match(
     between(items, "export function buildPaper"),
-    /listeningItems\(words,\s*rng,\s*heard\)/,
+    // The generator's local name is not part of the rule; the third argument is.
+    /listeningItems\(words,\s*\w+,\s*heard\)/,
     "buildPaper no longer hands the listening section the dictionary's meanings",
   );
 
