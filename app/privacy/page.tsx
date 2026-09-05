@@ -46,6 +46,7 @@ export default function PrivacyPage() {
               The controller of your data, which means the one answerable for it, is{" "}
               <strong>{operator.name}</strong>
               {operator.registryCode ? ` (registry code ${operator.registryCode})` : ""}
+              {operator.vatId ? `, VAT number ${operator.vatId}` : ""}
               , at {operator.address}. Write to{" "}
               <a href={`mailto:${operator.email}`} className="underline underline-offset-2">
                 {operator.email}

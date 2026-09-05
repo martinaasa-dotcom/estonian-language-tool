@@ -3,6 +3,8 @@ import { questFor } from "@/lib/progress/quest";
 import { grammarTerm } from "@/lib/estonian/terms";
 import { caseByKey } from "@/lib/estonian/cases";
 import { QuestSession } from "./QuestSession";
+import { readSetting, SETTING_KEYS } from "@/lib/settings/store";
+import { roundPaceFrom, secondsFor } from "@/lib/ux/roundClock";
 
 export const metadata = { title: "Daily quest" };
 
@@ -24,9 +26,22 @@ export const dynamic = "force-dynamic";
  * Grades through `gradeCard` like every other mode (ADR-016), so a round played
  * for the timer still moves the schedule and the log records what happened.
  */
+/** The round as it was written. A learner can stretch it in Settings. */
+const BASE_DURATION_S = 120;
+
 export default async function QuestPage() {
   const ownerId = await requireUserId();
   const quest = await questFor(ownerId);
+  /*
+    How long the clock runs, resolved here and handed down as a number of
+    seconds: the session is a client component and has no settings to read.
+    Two minutes is the base and the learner's pace stretches it, up to ten
+    times, which is what WCAG 2.2.1 asks of an adjustable limit. See
+    lib/ux/roundClock.ts.
+  */
+  const seconds = secondsFor(
+    BASE_DURATION_S, roundPaceFrom(await readSetting(ownerId, SETTING_KEYS.roundPace)),
+  );
 
   /*
     The cases named in Estonian first, which is the rule everywhere in this app:
@@ -46,5 +61,5 @@ export default async function QuestPage() {
     };
   });
 
-  return <QuestSession cards={quest.cards} aimed={aimed} />;
+  return <QuestSession cards={quest.cards} aimed={aimed} seconds={seconds} />;
 }

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { currentIdentity } from "@/lib/auth/session";
 import { LOCAL_USER_ID, supabaseConfigured } from "@/lib/auth/mode";
 
 /**
@@ -84,9 +84,15 @@ export const isAdmin = cache(async (): Promise<boolean> => {
   if (!supabaseConfigured()) return true;
   const admins = adminEmails();
   if (admins.length === 0) return false;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return isAdminEmail(user?.email, admins);
+  /*
+    Through the same bounded, per-request identity every other gate uses.
+    `state !== "in"` covers an unreachable auth service as well as a signed-out
+    one, and both answer no: a privilege check is the one place where "we could
+    not tell" must never mean yes.
+  */
+  const who = await currentIdentity();
+  if (who.state !== "in") return false;
+  return isAdminEmail(who.learner.email, admins);
 });
 
 /**
@@ -99,11 +105,10 @@ export const isAdmin = cache(async (): Promise<boolean> => {
  */
 export async function requireAdminId(): Promise<string> {
   if (!supabaseConfigured()) return LOCAL_USER_ID;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not signed in.");
-  if (!isAdminEmail(user.email, adminEmails())) {
+  const who = await currentIdentity();
+  if (who.state !== "in") throw new Error("Not signed in.");
+  if (!isAdminEmail(who.learner.email, adminEmails())) {
     throw new Error("That account does not review suggestions.");
   }
-  return user.id;
+  return who.learner.id;
 }

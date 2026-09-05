@@ -22,6 +22,23 @@ const identity = cache(async (): Promise<Identity> => {
 });
 
 /**
+ * The same answer, for the one caller outside this file that needs it.
+ *
+ * `lib/auth/admin.ts` was resolving who is asking with a bare
+ * `supabase.auth.getUser()` on an ordinary client, which is the call
+ * everything else here stopped making: no 2,500ms deadline, no local
+ * verification of the token's signature, and no sharing with the
+ * `requireUserId` the same request had already resolved. So an admin page paid
+ * two unbounded round trips for one question, and a bad minute at the auth
+ * service hung the review queue rather than failing it.
+ *
+ * Exported rather than reimplemented, because two answers to "who is asking"
+ * is the fault this file was written to remove and a privilege check is the
+ * worst place to have a second one.
+ */
+export const currentIdentity = identity;
+
+/**
  * The signed-in user's id, for scoping every query to their own data.
  *
  * With Supabase configured the middleware already redirects unauthenticated

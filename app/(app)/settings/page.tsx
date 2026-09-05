@@ -23,6 +23,8 @@ import { ClassNamePanel, LetterBarPanel, ResearchPanel, ReviewModePanel } from "
 import { AutoplayPanel, CurrentVoiceSample, FeedbackSoundsPanel, HearingPanel, VoicePanel } from "./AudioPanel";
 import { hearingFrom } from "@/lib/audio/conditions";
 import { GlossLanguagePanel } from "./GlossLanguagePanel";
+import { RoundPacePanel } from "./RoundPacePanel";
+import { ROUND_PACES, roundPaceFrom } from "@/lib/ux/roundClock";
 import { TodayOrderPanel } from "./TodayOrderPanel";
 import { isDefaultTodayOrder, todayOrderFrom } from "@/lib/ux/todayOrder";
 import { TODAY_CARDS } from "@/lib/ux/disclosure";
@@ -101,6 +103,7 @@ export default async function SettingsPage() {
       SETTING_KEYS.displayName,
       SETTING_KEYS.ttsVoice, SETTING_KEYS.autoplayAudio, SETTING_KEYS.feedbackSounds,
       SETTING_KEYS.hearing, SETTING_KEYS.glossLanguage, SETTING_KEYS.todayOrder,
+      SETTING_KEYS.roundPace,
     ]),
     currentLearner(),
     goalsFor(ownerId),
@@ -126,6 +129,9 @@ export default async function SettingsPage() {
   const hearing = hearingFrom(settings[SETTING_KEYS.hearing]);
   const glossLanguage = glossLanguageFrom(settings[SETTING_KEYS.glossLanguage]);
   const todayOrder = todayOrderFrom(settings[SETTING_KEYS.todayOrder]);
+  const roundPace = roundPaceFrom(settings[SETTING_KEYS.roundPace]);
+  const roundPaceName =
+    ROUND_PACES.find((p) => p.id === roundPace)?.label ?? "Standard";
   const glossLanguageName =
     GLOSS_LANGUAGES.find((l) => l.id === glossLanguage)?.label ?? "English";
   const displayName = settings[SETTING_KEYS.displayName] ?? (learner.name === "you" ? "" : learner.name);
@@ -274,6 +280,33 @@ export default async function SettingsPage() {
                 It is only there to motivate you. It never stops you from reviewing more.
               </p>
               <DailyGoalPanel currentGoal={dailyGoal} />
+            </Card>
+          </section>
+
+          {/*
+            HOW LONG A TIMED ROUND RUNS, WHICH IS WCAG 2.2.1 RATHER THAN A
+            DIFFICULTY DIAL.
+
+            The Case Sprint and the daily quest each ran to a clock nobody
+            could change, and a learner who reads slowly or types with one
+            hand was not playing a harder round, they were shut out of it. The
+            criterion is met by letting the limit be adjusted before it is
+            met, which is what this is; see lib/ux/roundClock.ts for why
+            adjusting rather than removing. The mock examination keeps its own
+            clock, because a paper is imitating a timed examination.
+          */}
+          <section id="round-pace">
+            <SectionTitle hint={roundPaceName}>Time in a timed round</SectionTitle>
+            <Card>
+              <p className="mb-3 text-sm" style={{ color: "var(--ink-2)" }}>
+                The sprint and the daily quest run to a clock. This is how long that clock
+                gives you, and it changes nothing else about either round.
+              </p>
+              <RoundPacePanel current={roundPace} />
+              <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+                The mock examination is the one clock this leaves alone. That paper is
+                imitating a timed state examination, so its parts keep the real timings.
+              </p>
             </Card>
           </section>
 

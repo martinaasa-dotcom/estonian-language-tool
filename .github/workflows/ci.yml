@@ -345,6 +345,16 @@ jobs:
       # spaces in a gloss fell.
       - run: node scripts/test-containment.mjs
       - run: node scripts/test-design.mjs
+      # The security controls, asked of the running server rather than read off
+      # the source. `test-invariants.ts` can tell you the middleware mentions
+      # `isSameOriginMutation`; only this can tell you a forged POST is actually
+      # refused, which depends on branch order, on which paths the matcher
+      # covers, and on what the platform does to a response on the way out. It
+      # found one: an `Origin` header that was present and unparseable was being
+      # read as no origin at all, which is the reading reserved for a caller
+      # that is not a browser. Not a penetration test, and `docs/27-security.md`
+      # is careful to say so.
+      - run: node scripts/test-security.mjs
       - run: node scripts/e2e.mjs
       - run: node scripts/test-modes.mjs
       - run: node scripts/test-teaching.mjs
@@ -574,3 +584,19 @@ jobs:
       # a number.
       - run: npm audit --omit=dev --audit-level=high
       - run: npm audit --audit-level=high
+      # THE OTHER SUPPLY CHAIN QUESTION, WHICH `npm audit` HAS NO OPINION ON.
+      #
+      # A licence is the thing nobody thinks to check until the answer is
+      # already in the tree and shipped. This project's code is MIT and its
+      # built dictionary carries Wiktionary's CC BY-SA 4.0, and `LICENSE` says
+      # exactly that; a strong copyleft *code* dependency arriving through a
+      # transitive bump would quietly make that file wrong.
+      #
+      # `actions/dependency-review-action` was the obvious answer, went in, and
+      # failed on every pull request: "Dependency review is not supported on
+      # this repository. Please ensure that Dependency graph is enabled." That
+      # is a setting in a dashboard, and a check whose precondition is a step
+      # outside the repository is a check that does not run. The script asks
+      # the same question with nothing to switch on, walks the whole production
+      # tree rather than a diff, and a clone can run it.
+      - run: node scripts/check-licences.mjs

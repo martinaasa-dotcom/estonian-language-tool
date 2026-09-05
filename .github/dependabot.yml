@@ -1,0 +1,63 @@
+# Keeping what this app is built out of current, without making that somebody's
+# Monday morning.
+#
+# The two workflows either side of this answer whether a dependency is a
+# problem. `ci.yml` reviews what a change brings in with it, `drift.yml` asks
+# weekly whether a hole has been found in something nobody has touched. Neither
+# of them fixes anything, and a project with one maintainer is exactly the shape
+# where "we know about it" and "it is patched" drift apart.
+#
+# WEEKLY RATHER THAN DAILY, AND GROUPED. Twelve separate pull requests every
+# morning is a notification stream, and a notification stream is something a
+# person learns to ignore, which leaves the security updates buried in with the
+# type definitions. One batch a week for the ordinary bumps, with security
+# updates arriving on their own as they are found, is the split that keeps the
+# urgent ones legible.
+#
+# The dates matter for the same reason drift.yml runs on a Monday: a week's
+# worth of change waiting on Monday morning is a thing to work through, and a
+# weekend's is a thing to come back to.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Tallinn
+    open-pull-requests-limit: 5
+    # Grouped so a week of patch bumps is one pull request that CI runs once,
+    # rather than five that each spend a full browser job. This repository's
+    # suite is not cheap: it builds the app, brings up a Postgres, seeds the
+    # dictionary and drives a browser through most of the screens.
+    groups:
+      production:
+        dependency-type: production
+        update-types: [minor, patch]
+      development:
+        dependency-type: development
+        update-types: [minor, patch]
+    # A major bump changes behaviour and wants a person reading the changelog,
+    # so it arrives on its own rather than inside a batch somebody would
+    # otherwise merge on the strength of a green tick.
+    labels: [dependencies]
+    commit-message:
+      prefix: deps
+      prefix-development: deps-dev
+
+  # The actions themselves are a supply chain too, and the one most often
+  # forgotten: a compromised action runs with whatever the workflow grants it.
+  # This repository keeps `permissions: contents: read` at the top of both
+  # workflows and maps no secret into any job in ci.yml, which is what bounds
+  # that, and pinned versions are what keep the bound where it was put.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Tallinn
+    labels: [dependencies]
+    commit-message:
+      prefix: actions

@@ -129,6 +129,36 @@ export function resolveRecipients(): Recipient[] {
     });
   }
 
+  /*
+    THE ONE THAT WAS MISSING, AND IT WAS MISSING FOR A REASON WORTH KEEPING.
+
+    Everything above is a service the application code calls, so the list was
+    built by asking the code what it was configured to call. The machine the
+    code runs on is not one of those, and so it was the one recipient this page
+    never named while handling every request on it: the pages rendered, the
+    answers posted, and a request log with an address in it.
+
+    Only where somebody else owns the machine. Self-hosted, the operator named
+    at the top of the page is the host, and listing them again as a recipient
+    of their own data would be noise. `VERCEL` is set by the platform itself,
+    which is what makes this a fact about where the code is running rather than
+    a guess.
+
+    Named by company rather than by region. `vercel.json` pins the functions
+    beside the database, so a European deployment's requests are answered in
+    Europe, and that is not the question Article 44 asks: the company is
+    established in the United States and is subject to being asked there.
+  */
+  if (process.env.VERCEL === "1") {
+    recipients.push({
+      name: "Vercel, which runs the servers this is answered on",
+      what:
+        "every request you make, while it is being answered, and a log of it "
+        + "carrying your address",
+      eea: false,
+    });
+  }
+
   return recipients;
 }
 

@@ -79,8 +79,12 @@ export function minutesForCards(cards: number, cardsPerMinute: number | null = n
 /**
  * The most a single card may count for, matching the cap `lib/srs/grade.ts`
  * writes. A tab left open overnight is not ten hours of study.
+ *
+ * Exported because `/api/metrics` does this same arithmetic in Postgres, over
+ * every learner at once, and a second copy of the cap is where the two stop
+ * agreeing about how long an evening was.
  */
-const MAX_CARD_MS = 600_000;
+export const MAX_CARD_MS = 600_000;
 
 const DAY_MS = 86_400_000;
 

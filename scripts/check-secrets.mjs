@@ -27,6 +27,36 @@ const PATTERNS = [
   // follow it, so the one key shape the default free chain can hold was the one
   // shape nothing scanned for.
   { name: "Groq API key", re: /\bgsk_[A-Za-z0-9]{20,}\b/g },
+  /*
+    SUPABASE'S NEW KEY FORMAT, WHICH THE JWT CHECK BELOW CANNOT SEE.
+
+    That check tells an anon key from a service_role key by decoding the role
+    claim, which is exactly right and only works on the legacy keys, because
+    those are JWTs. The current format is not: a publishable key is
+    `sb_publishable_…` and a secret key is `sb_secret_…`, opaque strings with
+    no payload to decode. This deployment is already issuing the new format,
+    so the one shape a fresh project hands out was the one shape nothing
+    scanned for.
+
+    `sb_publishable_` is deliberately absent from this list. It is designed to
+    be public, it is in the bundle on purpose, and flagging it would be the
+    check crying wolf on the one key that belongs there.
+
+    `sbp_` is the management API's personal access token. It is not an
+    application key at all and no code here should ever hold one, which is why
+    it is worth scanning for: a token that can create and delete whole projects
+    reaching a browser is the worst thing on this list.
+  */
+  { name: "Supabase secret key", re: /\bsb_secret_[A-Za-z0-9_-]{16,}/g },
+  { name: "Supabase personal access token", re: /\bsbp_[A-Za-z0-9]{32,}\b/g },
+  /*
+    Neither of these is read by application code, and both are the sort of
+    thing that reaches a repository through a script, a comment or a hurried
+    paste into a config file, from where a bundler will happily inline it.
+  */
+  { name: "GitHub token", re: /\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36,}\b/g },
+  { name: "GitHub fine-grained token", re: /\bgithub_pat_[A-Za-z0-9_]{50,}\b/g },
+  { name: "Resend API key", re: /\bre_[A-Za-z0-9]{16,}\b/g },
   { name: "Postgres connection string with a password", re: /postgres(?:ql)?:\/\/[^\s"'`:]+:[^\s"'`@]+@/g },
   { name: "Ekilex API key assignment", re: /EKILEX_API_KEY["'`\s]*[:=]\s*["'`][^"'`\s]{8,}/g },
   { name: "private key block", re: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g },

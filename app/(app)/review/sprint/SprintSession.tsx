@@ -11,6 +11,7 @@ import { Speak } from "@/components/Speak";
 import { StarWord } from "@/components/StarWord";
 import { VERDICT_CLASS } from "@/lib/ux/verdict";
 import { isAdvanceKey } from "@/lib/ux/advanceKey";
+import { roundLength } from "@/lib/ux/roundClock";
 
 export interface SprintCard {
   id: string;
@@ -24,12 +25,18 @@ export interface SprintCard {
   cardType: string;
 }
 
-const DURATION_S = 60;
-
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front" ? type !== "PRODUCTION" : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION";
 
-export function SprintSession({ cards: initialCards, best }: { cards: SprintCard[]; best: number }) {
+/**
+ * How long the clock runs, resolved on the server from the learner's own pace
+ * (`lib/ux/roundClock.ts`). It arrives as a number rather than being read here,
+ * because a client component has no settings to read and a round that fetched
+ * its own length in an effect would start before it knew it.
+ */
+export function SprintSession({
+  cards: initialCards, best, seconds,
+}: { cards: SprintCard[]; best: number; seconds: number }) {
   // Snapshotted once on mount, and never updated from later props. gradeCard()
   // is a Server Action, and Next.js refreshes this route's Server Component
   // after every call — which would hand down a shrinking `cards` prop as
@@ -41,7 +48,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
   const [revealed, setRevealed] = useState(false);
   const [correct, setCorrect] = useState(0);
   const [attempted, setAttempted] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(DURATION_S);
+  const [secondsLeft, setSecondsLeft] = useState(seconds);
   const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
   const [busy, setBusy] = useState(false);
   const [isNewBest, setIsNewBest] = useState(false);
@@ -108,7 +115,7 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
   if (phase === "ready") {
     if (cards.length === 0) {
       return (
-        <Page title="Case Sprint" lead="A 60-second speed round through your deck.">
+        <Page title="Case Sprint" lead={`A speed round through your deck, ${roundLength(seconds)} on the clock.`}>
           <Empty
             title="Nothing to sprint through yet"
             body="This draws on cards that are due, or that you have slipped on before."
@@ -133,8 +140,8 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
             Case Sprint
           </h1>
           <p className="mx-auto mt-2 max-w-[44ch] text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
-            {cards.length} cards loaded. Flip and answer as fast as you can for {DURATION_S} seconds. Space to
-            flip, Enter for correct, Backspace for missed.
+            {cards.length} cards loaded. Flip and answer as fast as you can for{" "}
+            {roundLength(seconds)}. Space to flip, Enter for correct, Backspace for missed.
           </p>
           <p
             className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold"
@@ -145,6 +152,16 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           <div className="mt-7">
             <Button variant="primary" size="lg" className="px-10" onClick={start}>Start the clock</Button>
           </div>
+          {/* Said here rather than only in Settings, because the moment
+              somebody notices the round is too fast is the moment they are
+              looking at this screen. */}
+          <p className="mt-4 text-xs" style={{ color: "var(--ink-3)" }}>
+            Need longer?{" "}
+            <Link href="/settings#round-pace" className="underline underline-offset-2">
+              Give yourself more time
+            </Link>
+            , up to ten times this.
+          </p>
         </div>
       </div>
     );

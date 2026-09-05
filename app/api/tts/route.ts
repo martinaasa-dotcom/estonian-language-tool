@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import { NextResponse, after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
-import { bucketForRequest, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
+import { bucketForRequest, rateLimited } from "@/lib/security/rateLimit";
+import { checkSharedRateLimit } from "@/lib/usage/sharedLimit";
 import { type AudioSource, readAudio, writeAudio } from "@/lib/audio/store";
 import { singleFlightTagged } from "@/lib/cache/singleFlight";
 import { recordUsage, authoriseCall, releaseReservation } from "@/lib/usage/ledger";
@@ -56,7 +57,7 @@ const SPEECH_PER_MINUTE = 120;
  */
 export async function POST(request: Request) {
   const ownerId = await requireUserId().catch(() => null);
-  const limit = checkRateLimit(
+  const limit = await checkSharedRateLimit(
     `tts:${bucketForRequest(request, ownerId)}`,
     SPEECH_PER_MINUTE,
     60_000,
