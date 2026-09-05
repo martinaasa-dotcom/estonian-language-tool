@@ -6884,6 +6884,27 @@ check("every cache the service worker writes to is bounded, except the one that 
     /keys\.filter\(\(k\) => k\.startsWith\("kodukeel-"\) && !k\.startsWith\(VERSION\)\)/,
     "activate stopped deleting the caches of previous versions",
   );
+
+  /*
+    AND NO SUITE TYPES THAT VERSION OUT AGAIN.
+
+    `smoke-offline.mjs` opened `kodukeel-v3-audio` by name in both halves of
+    its trim check, so bumping VERSION to v4 left it filling one cache with
+    420 entries and asking a different one whether it had been trimmed: 420
+    in, 420 out, reported as a worker that does not trim, on a worker that
+    trims perfectly. A failure that misnames its cause sends the reader into
+    the wrong file, which is the rule test-restore.mjs has a paragraph about,
+    and the cause here is the fault the build cache already has one layer
+    down: a name typed by hand drifts from the thing it names. A suite reads
+    the version off a cache the worker actually opened.
+  */
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    assert.doesNotMatch(
+      code(file),
+      /"kodukeel-v\d/,
+      `${file} types the worker's cache version, which drifts the day VERSION is bumped`,
+    );
+  }
 });
 
 /**
