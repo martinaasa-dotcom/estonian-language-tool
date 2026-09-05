@@ -31,6 +31,7 @@
  * Pure: no React, no Next, no Prisma, no clock.
  */
 import type { CaseKey } from "@/lib/estonian/types";
+import type { RoleCard } from "./props";
 import type { SceneState } from "./state";
 import { leafNeeds, type BeatSpec, type SceneSpec } from "./types";
 
@@ -172,11 +173,30 @@ export function stalledWords(scene: SceneSpec, state: SceneState): string[] {
  * second rule about "which word does this beat want" is how the two would
  * come apart.
  */
-export function offerFor(beat: BeatSpec): string | null {
+export function offerFor(beat: BeatSpec, card: RoleCard | null = null): string | null {
   for (const { need } of leafNeeds(beat.needs)) {
-    if (need.kind === "lemma") return need.oneOf[0] ?? null;
+    if (need.kind === "lemma") {
+      /*
+        THE CARD IS THE TRUTH ABOUT THIS RUN, AND THE HINT HAS TO AGREE WITH
+        IT. A beat lists every word that would satisfy it, so the landlord's
+        "say what has gone wrong" offers eleven; the first of them was handed
+        over regardless, and a learner whose card said the door was broken was
+        told to say the heating was. That is worse than no hint: they follow
+        it, they are marked as having met the beat, and they have practised
+        saying something that was not true of their own card. Where the card
+        drew one of the beat's own words, that is the word.
+      */
+      const drawn = card?.props.flatMap((prop) => prop.lemmas).find((lemma) => need.oneOf.includes(lemma));
+      return drawn ?? need.oneOf[0] ?? null;
+    }
     if (need.kind === "case") return need.lemma;
   }
+  /*
+    And nothing where the beat wants a value off the card or a question: the
+    answer is already in front of them, or what they need is a shape rather
+    than a word, and a word that would not meet the beat is the fault above
+    in a smaller room. The question said again is the honest move there.
+  */
   return null;
 }
 

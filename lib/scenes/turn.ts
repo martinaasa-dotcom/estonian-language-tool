@@ -217,15 +217,26 @@ const ENGLISH = new Set([
 const ENGLISH_FLOOR = 2;
 
 /**
- * Half the words vouched is the line between "real Estonian, wrong target" and
- * "I did not catch that".
+ * ONE WORD YOU RECOGNISED IS NOT "I DID NOT CATCH THAT".
  *
- * Drawn at a half rather than at a threshold with more decimal places in it
- * because the two readings differ in what the other side *says* rather than in
- * anything scored: one asks a narrower question and the other asks again. A
- * turn on the boundary gets a re-ask either way and neither is a mark.
+ * This was half the words, on the reasoning that the two readings differ in
+ * what the other side *says* rather than in anything scored. That is true and
+ * it drew the line in the wrong place, because the two things it decides
+ * between are "ask a narrower question" and "tell them they were
+ * incomprehensible", and nobody who caught a word of a sentence says the
+ * second. A person hearing one word they know asks about that word.
+ *
+ * So the repair phrase is for a turn the scene recognised **nothing** in,
+ * which is what a person means by it, and everything else gets a narrower
+ * re-ask. It matters because the scene's list is the units the scene
+ * declares rather than the whole course: a learner reaching for a real word
+ * from a unit this scene does not name had most of their sentence counted
+ * against them, and heard "I did not understand" for using Estonian they had
+ * been taught somewhere else.
  */
-const VOUCHED_SHARE = 0.5;
+function caughtSomething(marked: readonly TurnWord[]): boolean {
+  return marked.some((word) => word.vouched);
+}
 
 /**
  * Reads one turn. The only producer of `Evidence`.
@@ -374,8 +385,7 @@ export function readTurn(
   if (missing.length === 0) return shape("complete");
   if (missing.length < beat.needs.length) return shape("incomplete");
 
-  const vouched = marked.filter((w) => w.vouched).length;
-  return shape(vouched >= marked.length * VOUCHED_SHARE ? "offtarget" : "unrecognised");
+  return shape(caughtSomething(marked) ? "offtarget" : "unrecognised");
 }
 
 /** A requirement met by something other than a word: a question mark, small talk. */

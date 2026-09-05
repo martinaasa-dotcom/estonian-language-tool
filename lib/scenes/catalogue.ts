@@ -396,7 +396,15 @@ const LANDLORD: SceneSpec = {
       they: "They ask what has gone wrong.",
       move: "ask",
       topic: ["küte", "elekter", "remont", "lekkima", "mööbel"],
-      needs: [{ kind: "lemma", oneOf: ["küte", "elekter", "remont", "lekkima", "mööbel", "ruum"] }],
+      /*
+        Every word the card can deal, and the two the beat is about beside
+        them. `aken` and `uks` were dealt and refused, so a third of runs
+        handed somebody a card whose problem the landlord would not hear.
+      */
+      needs: [{
+        kind: "lemma",
+        oneOf: ["küte", "elekter", "remont", "mööbel", "aken", "uks", "lekkima", "ruum"],
+      }],
       required: true,
       patience: 3,
       shape: "sentence",

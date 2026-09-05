@@ -263,7 +263,7 @@ export async function POST(request: Request) {
       beat they were answering, not the one coming next: they are stuck on
       the question they were asked.
     */
-    offer: response === "help" && answered ? offerFor(answered) : null,
+    offer: response === "help" && answered ? offerFor(answered, card) : null,
     met: state.done.length,
   });
   const answer = (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>

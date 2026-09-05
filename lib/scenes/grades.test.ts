@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { advance, startScene, type SceneState } from "./state";
-import { gradesFor, stalledWords } from "./grades";
+import { gradesFor, offerFor, stalledWords } from "./grades";
 import type { Evidence, TurnReading } from "./turn";
 import type { SceneSpec } from "./types";
 
@@ -206,5 +206,42 @@ describe("the words a run needed and the learner did not have", () => {
     // And the head of the list, so what is offered is the beat's own first
     // word rather than whichever three a set happened to iterate.
     expect(stalled[0]).toBe("pea");
+  });
+});
+
+/**
+ * The word handed over when somebody says they are not following. It has to
+ * agree with their own card, or they follow the hint and practise saying
+ * something that was not true of the run they are in.
+ */
+describe("the word the other side offers", () => {
+  const beat = SCENE.beats[0]!;
+
+  it("is the one the card dealt, where the card dealt one of the beat's own", () => {
+    const card = {
+      you: "You.",
+      props: [{ slot: "problem", card: "What is wrong", literal: [], lemmas: ["haigus"], value: "haigus" }],
+    };
+    expect(offerFor(beat, card)).toBe("haigus");
+  });
+
+  it("is the beat's own first word where the card dealt none of them", () => {
+    const card = { you: "You.", props: [{ slot: "x", card: "x", literal: [], lemmas: ["tuba"], value: "tuba" }] };
+    expect(offerFor(beat, card)).toBe("valu");
+    expect(offerFor(beat, null)).toBe("valu");
+  });
+
+  it("is the word a case requirement is about", () => {
+    expect(offerFor(SCENE.beats[1]!)).toBe("pea");
+  });
+
+  /*
+    And nothing where the beat wants a value off the card or a question: the
+    answer is already in front of them, or what they need is a shape rather
+    than a word, and a word that would not meet the beat is a hint that
+    cannot help.
+  */
+  it("is nothing where no word of theirs would meet the beat", () => {
+    expect(offerFor(SCENE.beats[2]!)).toBeNull();
   });
 });

@@ -306,7 +306,6 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     "ei tea". It is the reaction, so no echo or "hästi" is stacked on it.
   */
   const aside = input.aside && reading !== "unrecognised" && reading !== "echo" ? input.aside : null;
-  if (aside) out.push({ ...aside, reaction: true });
 
   /*
     An acknowledgment after an answer that landed, rotating so the same word
@@ -328,7 +327,18 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   */
   const askedThem = answered ? leafNeeds(answered.needs).some(({ need }) => need.kind === "question") : false;
   const landed = response === "answer" || response === "narrow";
-  if (!aside && response !== "moveOn" && landed && answered && answered.move !== "greet" && !askedThem && beat) {
+  /*
+    THE REACTION TO WHAT THEY SAID COMES BEFORE THE ANSWER TO WHAT THEY ASKED.
+    A turn can do both: `mahl, ja kuhu siis?` orders juice in the wrong case
+    and asks a question, and the first version let the aside displace the
+    recast, so the learner never heard their own word put right. `Mahla. Ei
+    tea.` is a person taking the order back and then answering; the other way
+    round is a person answering a question and forgetting what was ordered.
+
+    What does stand down under an aside is the *generic* acknowledgment, since
+    "Ei tea. Hästi." is two reactions contradicting each other.
+  */
+  if ((!aside || input.recast) && response !== "moveOn" && landed && answered && answered.move !== "greet" && !askedThem && beat) {
     /*
       Never a number, which the confirm beat reads back in its own line, and
       never yes or no: "Jah." repeated back after "Jah, piimaga" is the
@@ -349,11 +359,13 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
         text: echo.charAt(0).toUpperCase() + echo.slice(1) + ".",
         provenance: input.recast ? "recast" : "again", reaction: true,
       });
-    } else if (input.acknowledges && response === "answer") {
+    } else if (!aside && input.acknowledges && response === "answer") {
       const choices = REACTIONS.acknowledge;
       out.push(reaction(choices[input.met % choices.length] ?? choices[0], "."));
     }
   }
+
+  if (aside) out.push({ ...aside, reaction: true });
 
   /*
     THEY LET IT GO IN ESTONIAN, NOT IN A STAGE DIRECTION. Running out of

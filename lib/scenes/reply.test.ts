@@ -197,6 +197,22 @@ describe("a question the scene did not anticipate", () => {
     expect(texts(lines)).toEqual([aside.text, other.text]);
   });
 
+  /*
+    A turn can do both: `mahl, ja kuhu siis?` orders in the wrong case and
+    asks a question. Taking the order back comes first; answering the
+    question comes after. The other way round is a person answering and
+    forgetting what was ordered.
+  */
+  it("comes after the learner's own word put right, and not instead of it", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, echo: "mahla", recast: true, aside }));
+    expect(texts(lines)).toEqual(["Mahla.", aside.text, FRESH.text]);
+  });
+
+  it("still stands in for the plain acknowledgment, which would contradict it", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, aside }));
+    expect(texts(lines)).toEqual([aside.text, FRESH.text]);
+  });
+
   it("is not answered on a turn nobody understood, where the repair phrase is the whole reaction", () => {
     const lines = replyFor(input({ answered: ASK, beat: ASK, response: "repeat", reading: "unrecognised", aside, line: NOTHING }));
     expect(texts(lines)).not.toContain(aside.text);

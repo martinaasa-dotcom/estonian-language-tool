@@ -4315,6 +4315,22 @@ the aside is for a turn that landed and `narrow` asks again, which is what stopp
 English?" being answered with "I do not know". `npm run play:scenes --style lost` is the transcript
 all of that came off. `docs/21-situations.md` §39.
 
+**A card may not deal a word the scene will not take, and the hint agrees with the card.** The
+landlord's card drew a problem from six words and the beat accepted a different six, so a third of
+runs dealt a card whose word the beat refused: the learner reads that the window is broken, says so,
+and is treated as having said nothing. `catalogue.test.ts` walks every prop's values against every
+beat's requirements. And `offerFor` takes the card, since offering the beat's first word told
+somebody whose card said the door was broken to say the heating was, which is worse than no hint
+because they follow it. **One word the scene recognised is not "I did not catch that"**: the split
+was half the words vouched, and the two things it decides between are "ask about the word I caught"
+and "tell them they were incomprehensible". The scene's list is the units it declares rather than the
+whole course, so a learner reaching for a real word from elsewhere was told they were not understood
+for using Estonian they had been taught. **The recast survives an aside**, because `Mahla. Ei tea.`
+is a person taking the order back and then answering, and only the generic acknowledgment stands
+down. **And the review counts turns that answered something**, not turns whose words were recognised,
+or somebody who met no beat reads "19 of your 21 turns were understood" over six things left undone.
+`docs/21-situations.md` §40.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5437,7 +5453,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `LOST`, `isLost`, `offerFor`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `LOST`, `isLost`, `offerFor`, `caughtSomething`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.

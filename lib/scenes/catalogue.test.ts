@@ -77,6 +77,35 @@ describe("the scene catalog", () => {
   });
 
   /*
+    A CARD MAY NOT DEAL A WORD THE SCENE WILL NOT TAKE.
+
+    The landlord's card drew from six problems and the beat that asks what
+    has gone wrong accepted a different six: two of the draws, a third of
+    runs, dealt a card whose word the beat refused. The learner reads "the
+    window is broken", says so correctly, and is treated as having said
+    nothing, which is the worst thing this module can do to somebody.
+  */
+  it("deals no word its own beats cannot accept", () => {
+    for (const scene of SCENES) {
+      const accepted = new Set<string>();
+      for (const beat of scene.beats) {
+        for (const { need } of leafNeeds(beat.needs)) {
+          if (need.kind === "lemma") for (const lemma of need.oneOf) accepted.add(lemma);
+          if (need.kind === "case") accepted.add(need.lemma);
+          // A datum requirement takes whatever the card dealt for that slot.
+          if (need.kind === "datum") accepted.add(`slot:${need.slot}`);
+        }
+      }
+      for (const prop of scene.props) {
+        if (prop.kind !== "word" && prop.kind !== "weekday") continue;
+        if (accepted.has(`slot:${prop.slot}`)) continue;
+        const refused = prop.oneOf.filter((lemma) => !accepted.has(lemma));
+        expect(refused, `${scene.id} deals ${prop.slot} words no beat accepts`).toEqual([]);
+      }
+    }
+  });
+
+  /*
     A scene exists to check one of the course's own claims, so it says which.
     Without this the catalog drifts into a list of situations somebody thought
     sounded useful, which is the failure mode that has no test.

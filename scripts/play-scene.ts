@@ -131,7 +131,7 @@ async function play(sceneId: string) {
       reading: last?.reading ?? null, line, heard, card, translates: persona.translates,
       acknowledges: persona.acknowledges, echo: last?.matched?.[0] ?? null,
       recast: Boolean(last?.slips?.some((s) => s.form && s.form === last?.matched?.[0])),
-      aside, offer: response === "help" && answered ? offerFor(answered) : null,
+      aside, offer: response === "help" && answered ? offerFor(answered, card ?? draw.card) : null,
       met: state.done.length,
       hurdle: standing ? { beat: standing, line: standing === spokenFor ? line : null, said: hurdleSpec(state)?.said } : null,
     });

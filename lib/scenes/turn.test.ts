@@ -186,6 +186,21 @@ describe("reading a turn", () => {
     expect(readTurn("Mul on valu", asks, context()).reading).toBe("complete");
   });
 
+  /*
+    One word you recognised is not "I did not catch that". The scene's list is
+    the units it declares rather than the whole course, so a learner reaching
+    for a real word from somewhere else had most of their sentence counted
+    against them and was told they were incomprehensible for using Estonian.
+  */
+  it("reads a turn with one word it knows as aimed elsewhere, not as unreadable", () => {
+    const seen = readTurn("ma tahan blorp xyzzy qwerty tuba", beat(), context());
+    expect(seen.reading).toBe("offtarget");
+  });
+
+  it("keeps the repair phrase for a turn it recognised nothing in", () => {
+    expect(readTurn("blorp xyzzy qwerty", beat(), context()).reading).toBe("unrecognised");
+  });
+
   it("tells real Estonian aimed elsewhere from a turn nobody could read", () => {
     const asks = beat({ needs: [{ kind: "datum", slot: "since" }] });
     // Every word vouched, none of them the point.

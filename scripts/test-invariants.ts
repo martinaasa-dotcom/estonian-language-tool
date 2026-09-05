@@ -11130,7 +11130,21 @@ check("a question the scene did not anticipate is answered before the move", () 
   assert.match(turn, /readonly asked: string \| null/, "Evidence no longer says whether the learner asked something");
   const reply = code("lib/scenes/reply.ts");
   assert.match(reply, /if \(aside\) out\.push\(\{ \.\.\.aside, reaction: true \}\)/, "replyFor no longer says the aside first");
-  assert.match(reply, /!aside &&[\s\S]{0,80}landed/, "replyFor stacks an echo or a hästi on top of an aside");
+  /*
+    The plain acknowledgment stands down under an aside, since "Ei tea.
+    Hästi." is two reactions contradicting each other. The learner's own word
+    put right does not: `Mahla. Ei tea.` is a person taking the order back
+    and then answering, and the first version let the aside displace the
+    recast so the word was never said back at all.
+  */
+  assert.match(
+    reply, /!aside && input\.acknowledges/,
+    "replyFor stacks a hästi on top of an aside, which is two reactions contradicting each other",
+  );
+  assert.match(
+    reply, /\(!aside \|\| input\.recast\)/,
+    "an aside displaces the learner's own word put right, so a slip is never said back",
+  );
   const route = code("app/api/scene/route.ts");
   assert.match(route, /asideFor\(/, "the scene route no longer asks what to say about a question");
   assert.match(route, /spokenFor\.awaits && !standing/, "the scene route walks the ladder for a beat that opens with nothing, so the answer is said before the question");
@@ -11285,6 +11299,26 @@ check("a learner who says they are lost is handed the word, never the question a
     code("app/api/scene/route.ts"),
     /wantsAside = Boolean\(askedNow\) && \(response === "answer" \|\| response === "counter"\)/,
     "the scene route answers a question from a turn that missed the beat, which shrugs at somebody who is lost",
+  );
+  /*
+    And the hint agrees with the learner's own card. A beat lists every word
+    that would satisfy it; handing over the first regardless told somebody
+    whose card said the door was broken to say the heating was, which is
+    worse than no hint because they follow it.
+  */
+  assert.match(
+    code("lib/scenes/grades.ts"), /card\?\.props\.flatMap\(\(prop\) => prop\.lemmas\)/,
+    "the offered word no longer reads the card, so a hint can contradict the run's own card",
+  );
+  /*
+    And one word the scene recognised is not "I did not catch that". A person
+    hearing one word they know asks about that word; the repair phrase is for
+    a turn there was nothing in.
+  */
+  assert.match(
+    turn, /caughtSomething\(marked\) \? "offtarget" : "unrecognised"/,
+    "the repair phrase is decided on a share of the words again, so a learner using Estonian from "
+    + "another unit is told they were incomprehensible",
   );
 });
 

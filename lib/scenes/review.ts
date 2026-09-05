@@ -76,6 +76,9 @@ export interface SceneReview {
 /** How many of the learner's own pairs a note prints before it is a list. */
 const EVIDENCE_SHOWN = 3;
 
+/** How many unmet goals a note names before it becomes a wall of sentences. */
+const MISSED_NAMED = 2;
+
 export function reviewOf(scene: SceneSpec, state: SceneState): SceneReview {
   /*
     The turns that were turns. A fragment and an echo cost no patience and
@@ -83,7 +86,18 @@ export function reviewOf(scene: SceneSpec, state: SceneState): SceneReview {
     a learner they said fourteen things when they said nine.
   */
   const turns = state.turns.filter((t) => t.reading !== "fragment" && t.reading !== "echo");
-  const understood = turns.filter((t) => t.reading !== "unrecognised" && t.reading !== "english");
+  /*
+    TURNS THAT ANSWERED SOMETHING, NOT TURNS WHOSE WORDS WERE RECOGNISED.
+
+    The first version counted everything that was not the repair phrase, so a
+    learner who met no beat at all was told "19 of your 21 turns were
+    understood" over a list of six things left undone. Their Estonian was
+    read, which is worth saying, and it is not what "understood" means to the
+    person reading it: they answered nothing and the sentence told them they
+    had. What counts is a turn the beat took something from.
+  */
+  const landed = turns.filter((t) => t.reading === "complete" || t.met.some(Boolean));
+  const read = turns.filter((t) => t.reading !== "unrecognised" && t.reading !== "english");
   const slips = turns.flatMap((t) => t.slips ?? []);
 
   const notes = [
@@ -95,22 +109,43 @@ export function reviewOf(scene: SceneSpec, state: SceneState): SceneReview {
     ...englishNote(turns.filter((t) => t.reading === "english").length),
   ];
 
-  return { lead: lead(turns.length, understood.length, slips.length, notes.length), notes };
+  return {
+    lead: lead({ turns: turns.length, landed: landed.length, read: read.length, slips: slips.length, notes: notes.length }),
+    notes,
+  };
 }
 
-function lead(turns: number, understood: number, slips: number, notes: number): string {
-  if (turns === 0) return "Nothing was said this time, which is a fine way to find out what a scene is like.";
-  const all = understood === turns;
-  const count = turns === 1 ? "The one thing you said" : `${understood} of your ${turns} turns`;
+function lead(n: {
+  turns: number; landed: number; read: number; slips: number; notes: number;
+}): string {
+  if (n.turns === 0) return "Nothing was said this time, which is a fine way to find out what a scene is like.";
+
+  /*
+    Nothing landed. Saying what did happen is still worth more than a count
+    of nothing, and it is true: the words were Estonian and they were read.
+    The way in goes with it, because a learner who got nowhere needs the
+    button rather than a figure.
+  */
+  if (n.landed === 0) {
+    const seen = n.read > 0
+      ? "Your Estonian was read every time; none of it was the thing that was being asked for. "
+      : "";
+    return `${seen}Nothing landed this time. The word button hands you one of the beat's own words, `
+      + "and saying you have not followed gets it handed over too.";
+  }
+
+  const all = n.landed === n.turns;
   const opener = all
-    ? turns === 1 ? "The one thing you said was understood." : `Every one of your ${turns} turns was understood.`
-    : `${count} were understood.`;
-  if (slips === 0) {
-    return notes === 0
+    ? n.turns === 1
+      ? "The one thing you said answered what was asked."
+      : `Every one of your ${n.turns} turns answered what was asked.`
+    : `${n.landed} of your ${n.turns} turns answered what was asked.`;
+  if (n.slips === 0) {
+    return n.notes === 0
       ? `${opener} Nothing needed putting right, which is rarer than it sounds.`
       : opener;
   }
-  const ending = slips === 1 ? "One ending or spelling was off" : `${slips} endings or spellings were off`;
+  const ending = n.slips === 1 ? "One ending or spelling was off" : `${n.slips} endings or spellings were off`;
   return `${opener} ${ending}, and not one of them stopped the conversation.`;
 }
 
@@ -255,10 +290,17 @@ function missedNote(scene: SceneSpec, state: SceneState): ReviewNote[] {
   const done = new Set(state.done);
   const missed = scene.beats.filter((b) => b.required && !done.has(b.id));
   if (missed.length === 0) return [];
+  /*
+    Two of them and a count, rather than every goal run together in one
+    paragraph: six sentences end to end is a wall, and the objectives are
+    listed with ticks a few lines above this anyway.
+  */
+  const named = missed.slice(0, MISSED_NAMED).map((b) => b.goal).join(" ");
+  const rest = missed.length - MISSED_NAMED;
   return [{
     id: "missed",
     heading: missed.length === 1 ? "The one thing left undone" : "What was left undone",
-    body: `${missed.map((b) => b.goal).join(" ")} `
+    body: `${named}${rest > 0 ? ` And ${rest} more.` : ""} `
       + "Worth going in again for that alone, since the second run of a scene is where most of it sticks.",
     evidence: [],
   }];

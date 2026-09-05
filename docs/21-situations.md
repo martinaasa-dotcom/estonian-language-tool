@@ -2349,3 +2349,46 @@ they are said with, and adding a second one is this module editing the dictionar
 What it still cannot do: tell a learner *which* of the beat's words they need where the beat wants a
 value off their own card, since the answer is already in front of them. Repeating the question is the
 honest move there, and it is what a person does when there is nothing to point at.
+
+
+## 40. The eleventh pass: the hint agrees with the card, and one word you know is not nothing
+
+Five more, all off the `lost` and `curious` transcripts.
+
+**A card may not deal a word the scene will not take.** The landlord's card drew a problem from six
+words and the beat that asks what has gone wrong accepted a different six. Two of the draws, a third
+of runs, dealt a card whose word the beat refused: the learner reads that the window is broken, says
+so correctly, and is treated as having said nothing. That is the worst thing this module can do to
+somebody, and it was a fact about one catalogue entry rather than about any rule, which is what makes
+it worth a test rather than a fix. `catalogue.test.ts` walks every `word` and `weekday` prop against
+every beat's own requirements and fails on a value no beat accepts. One scene, two words.
+
+**And the word the other side hands over agrees with that card.** §39 offered the beat's first
+acceptable word, so a learner whose card said the door was broken was told to say the heating was.
+Worse than no hint, because they follow it: they are marked as having met the beat and have practised
+saying something that was not true of their own run. `offerFor` takes the card and prefers the word
+it dealt.
+
+**One word the scene recognised is not "I did not catch that".** The split between a narrower re-ask
+and the repair phrase was half the words vouched. The two things it decides between are "ask about
+the word I caught" and "tell them they were incomprehensible", and nobody who caught a word of a
+sentence says the second. It matters because the scene's list is the units the scene declares rather
+than the whole course: a learner reaching for a real word from a unit this scene does not name had
+most of their sentence counted against them and was told they were not understood for using Estonian
+they had been taught somewhere else. The repair phrase is now for a turn the scene recognised nothing
+in, which is what a person means by it.
+
+**The learner's own word put right survives an answer to their question.** A turn can do both:
+`mahl, ja kuhu siis?` orders juice in the wrong case and asks something, and the aside displaced the
+recast, so the word was never said back. `Mahla. Ei tea.` is a person taking the order back and then
+answering; the other way round is a person answering and forgetting what was ordered. What still
+stands down under an aside is the *generic* acknowledgment, since "Ei tea. Hästi." is two reactions
+contradicting each other.
+
+**And the review does not tell somebody who answered nothing that they were understood.** It counted
+every turn that was not the repair phrase, so a learner who met no beat at all read "19 of your 21
+turns were understood" over a list of six things left undone. Their Estonian *was* read, which is
+worth saying and is not what "understood" means to whoever is reading it. The lead counts turns the
+beat took something from; where none did, it says what happened and points at the way in, which is
+what somebody who got nowhere needs rather than a figure. The unmet goals are two and a count rather
+than six sentences run together, since the objectives are listed with ticks a few lines above.

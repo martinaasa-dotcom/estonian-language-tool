@@ -32,10 +32,37 @@ function state(turns: TurnRecord[], done: string[] = ["reason", "where"]): Scene
 const CASE_SLIP: Slip = { kind: "case", said: "pea", form: "peas", lemma: "pea", grammCase: "INESSIVE" };
 
 describe("the review of a conversation", () => {
-  it("leads on being understood, because that is the sentence somebody takes away", () => {
+  it("leads on what landed, because that is the sentence somebody takes away", () => {
     const review = reviewOf(SCENE, state([turn(), turn(), turn()]));
-    expect(review.lead).toMatch(/understood/);
+    expect(review.lead).toMatch(/answered what was asked/);
     expect(review.lead).not.toMatch(/wrong|mistake|error/i);
+  });
+
+  /*
+    Turns that answered something, not turns whose words were recognised. A
+    learner who met no beat was told "19 of your 21 turns were understood"
+    over a list of six things left undone: their Estonian was read, which is
+    worth saying, and it is not what "understood" means to whoever reads it.
+  */
+  it("does not tell somebody who answered nothing that they were understood", () => {
+    const missed = [turn({ reading: "offtarget", met: [false] }), turn({ reading: "offtarget", met: [false] })];
+    const review = reviewOf(SCENE, state(missed, []));
+    expect(review.lead).not.toMatch(/[0-9]+ of your/);
+    expect(review.lead).toMatch(/Nothing landed/);
+    // And it says the way in rather than a figure.
+    expect(review.lead).toMatch(/word button/);
+  });
+
+  it("still says their Estonian was read, where it was", () => {
+    const review = reviewOf(SCENE, state([turn({ reading: "offtarget", met: [false] })], []));
+    expect(review.lead).toMatch(/read every time/);
+  });
+
+  it("names two unmet goals and counts the rest, rather than running six together", () => {
+    const note = reviewOf(SCENE, state([turn()], [])).notes.find((n) => n.id === "missed");
+    expect(note?.body).toContain("Say what is wrong.");
+    // The fixture has two required beats, so nothing is left over to count.
+    expect(note?.body).not.toMatch(/And \d+ more/);
   });
 
   it("counts turns the other side acted on, and not the ones it waited through", () => {
@@ -142,7 +169,7 @@ describe("the review of a conversation", () => {
 
   it("says something kind and true about a run where nothing was said", () => {
     const review = reviewOf(SCENE, state([], []));
-    expect(review.lead).toBeTruthy();
+    expect(review.lead).toMatch(/Nothing was said/);
     expect(review.notes.some((n) => n.id === "missed")).toBe(true);
   });
 });
