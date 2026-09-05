@@ -11875,6 +11875,116 @@ check("every round that puts one word up carries the favorite button", () => {
   }
 });
 
+
+check("a text box has one shape, and the keys under it stand one distance off", () => {
+  /*
+    THREE THINGS ONE SCREEN GOT WRONG AND EVERY OTHER SCREEN GOT DIFFERENTLY.
+
+    A learner said the row of Estonian keys felt glued to the box above it and
+    the screen felt claustrophobic. The distance was 8px, typed by hand on ten
+    screens and 12px on the eleventh, and the boxes themselves came in nine
+    paddings on three radii. `--field-gap` is the one distance and
+    `.under-field` is how a caller asks for it; `.field` and `.field-lg` are
+    the one shape. See app/globals.css for both arguments.
+
+    The first check is on the wrapper rather than on the bar: the bar also
+    stands beside a button on the add-a-word form and under a crossword clue,
+    where there is no field edge, so what is asserted is that a bar drawn
+    directly under an input or textarea is drawn through the class. A margin
+    typed onto the wrapper is exactly the copy this exists to stop.
+  */
+  const css = code("app/globals.css");
+  assert.match(css, /--field-gap:\s*\d+px/, "the field gap token is gone");
+  assert.match(css, /\.under-field\s*\{[^}]*margin-top:\s*var\(--field-gap\)/, ".under-field no longer reads --field-gap");
+  assert.match(css, /\.field\s*\{[^}]*padding:/, ".field no longer sets a padding");
+  assert.match(css, /\.field-lg\s*\{[^}]*padding:/, ".field-lg no longer sets a padding");
+
+  let barsUnderFields = 0;
+  for (const file of ALL) {
+    const body = code(file);
+    if (!body.includes("<DiacriticBar")) continue;
+    // Every bar that follows a field on the same screen: the element wrapping it.
+    const wrapped = body.match(/<[a-z]+ className="([^"]*)"[^>]*>\s*<DiacriticBar\b/g) ?? [];
+    for (const hit of wrapped) {
+      const cls = /className="([^"]*)"/.exec(hit)![1]!;
+      if (/\bunder-field\b/.test(cls)) { barsUnderFields++; continue; }
+      assert.doesNotMatch(
+        cls, /\bm[ty]-\d/,
+        `${file} sets its own distance between a field and the letter bar. Wrap the bar in `
+        + "`under-field` so it stands the one distance off, or say here why it is not under a field.",
+      );
+    }
+    assert.doesNotMatch(
+      body, /<DiacriticBar\b[^>]*className=/,
+      `${file} hands the bar a className; the distance belongs on the wrapper`,
+    );
+  }
+  assert.ok(barsUnderFields >= 9, `only ${barsUnderFields} bars under a field found, so this check stopped looking`);
+
+  /*
+    Every input and textarea that takes typing wears `.field` or `.field-lg`
+    and pads itself with neither. A checkbox, a radio, a range, a file picker
+    and a hidden input are controls rather than boxes; the crossword's cells
+    are a grid, and the deck's filter is a pill beside a row of pill filters,
+    which is a shape chosen to match its neighbours rather than a tenth field.
+  */
+  const exempt: Record<string, string> = {
+    "app/(app)/crossword/CrosswordSession.tsx": "a cell in a grid, sized by the grid",
+    "app/(app)/words/WordsTable.tsx": "a pill beside a row of pill filters",
+  };
+  let fields = 0;
+  for (const file of ALL) {
+    const body = code(file);
+    // `=>` inside an onChange is a `>` that is not the end of the tag.
+    const tags = body.match(/<(input|textarea)\b(?:[^>]|(?<==)>)*>/g) ?? [];
+    for (const tag of tags) {
+      if (/type="(checkbox|radio|range|file|hidden)"/.test(tag)) continue;
+      if (/className="sr-only"/.test(tag)) continue;
+      const cls = /className=(?:"([^"]*)"|\{`([^`]*)`\})/.exec(tag);
+      if (!cls) continue;
+      const classes = cls[1] ?? cls[2] ?? "";
+      if (file in exempt) continue;
+      if (!/\b(px|py|p|pt|pb|pl|pr|rounded)-/.test(classes) && !/\bfield(-lg)?\b/.test(classes)) continue;
+      fields++;
+      assert.match(
+        classes, /\bfield(-lg)?\b/,
+        `${file} draws a text box of its own: ${classes}. Give it \`field\` or \`field-lg\`.`,
+      );
+      assert.doesNotMatch(
+        classes, /\b(px|py|p|pt|pb|pl|pr|rounded)-/,
+        `${file} pads or rounds a field by hand beside the shared shape: ${classes}`,
+      );
+    }
+  }
+  assert.ok(fields >= 25, `only ${fields} fields found, so this check stopped looking`);
+  for (const file of Object.keys(exempt)) {
+    assert.ok(ALL.includes(file), `${file} is exempted and no longer exists`);
+  }
+});
+
+check("a round's header, body and footer share one inset", () => {
+  /*
+    The card a round is played on had three insets: the header at 20px, the
+    body at 24px and the footer at 16px, so the button under an answer box
+    started eight pixels left of the box it belonged to. Read off the card's
+    own footer rule rather than off a list of rounds, because a round added
+    later inherits the same `border-t` and the same chance to type 16.
+  */
+  const rounds = ALL.filter((f) => /\/review\/.*Session\.tsx$/.test(f));
+  let seams = 0;
+  for (const file of rounds) {
+    const body = code(file);
+    for (const hit of body.match(/className="[^"]*\bborder-[tb]\b[^"]*"/g) ?? []) {
+      // A seam is inset sideways; a list row with `border-b py-2` is not one.
+      if (!/\bp[x]?-\d/.test(hit)) continue;
+      seams++;
+      assert.match(hit, /\bpx-6\b/, `${file} insets a card seam at something other than px-6: ${hit}`);
+      assert.doesNotMatch(hit, /\bp-\d/, `${file} pads a card seam on all sides at once: ${hit}`);
+    }
+  }
+  assert.ok(seams >= 20, `only ${seams} seams found, so this check stopped looking`);
+});
+
 console.log(
   failures === 0
     ? `\nAll ${checks} invariants hold.`

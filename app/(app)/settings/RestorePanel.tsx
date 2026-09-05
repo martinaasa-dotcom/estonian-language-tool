@@ -182,7 +182,7 @@ export function RestorePanel({ currentReviews }: { currentReviews: number }) {
                 onChange={(e) => setConfirmText(e.target.value)}
                 aria-label="Type replace to confirm"
                 placeholder="replace"
-                className="mt-2.5 rounded-md border px-2.5 py-1.5 text-sm"
+                className="field mt-2.5 text-sm"
                 style={{ borderColor: "var(--again)", background: "var(--surface)", color: "var(--ink)" }}
               />
             </div>

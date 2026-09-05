@@ -222,7 +222,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
         </div>
 
         {revealed && (
-          <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
+          <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             {question.example && (
               <div className="flex flex-wrap items-center gap-2">
                 <p lang="et" className="text-lg font-semibold" style={{ color: "var(--accent-deep)" }}>

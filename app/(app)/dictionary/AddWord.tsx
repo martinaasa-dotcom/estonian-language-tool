@@ -140,7 +140,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
             value={lemma}
             onChange={(e) => setLemma(e.target.value)}
             placeholder="sõna"
-            className="rounded-md border px-3 py-2 text-md"
+            className="field text-md"
             style={field}
           />
         </label>
@@ -150,7 +150,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
             value={translation}
             onChange={(e) => setTranslation(e.target.value)}
             placeholder="word"
-            className="rounded-md border px-3 py-2 text-md"
+            className="field text-md"
             style={field}
           />
         </label>
@@ -159,7 +159,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
       <div className="flex flex-wrap gap-3">
         <label className="flex flex-col gap-1.5">
           <span className="label-xs" style={{ color: "var(--ink-3)" }}>Type</span>
-          <select value={pos} onChange={(e) => setPos(e.target.value)} className="rounded-md border px-3 py-2 text-sm" style={field}>
+          <select value={pos} onChange={(e) => setPos(e.target.value)} className="field text-sm" style={field}>
             <option value="NOUN">Noun</option>
             <option value="VERB">Verb</option>
             <option value="PRONOUN">Pronoun</option>
@@ -170,7 +170,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="label-xs" style={{ color: "var(--ink-3)" }}>Level</span>
-          <select value={cefr} onChange={(e) => setCefr(e.target.value)} className="rounded-md border px-3 py-2 text-sm" style={field}>
+          <select value={cefr} onChange={(e) => setCefr(e.target.value)} className="field text-sm" style={field}>
             {LEVELS.map((l) => <option key={l} value={l}>{l || NO_VALUE}</option>)}
           </select>
         </label>
@@ -181,7 +181,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
               value={government}
               onChange={(e) => setGovernment(e.target.value)}
               placeholder="partitive, aitan sind"
-              className="rounded-md border px-3 py-2 text-sm"
+              className="field text-sm"
               style={field}
             />
           </label>
@@ -203,7 +203,7 @@ export function AddWord({ initialLemma = "", edit }: { initialLemma?: string; ed
                   value={forms[key] ?? ""}
                   onChange={(e) => setForm(key, e.target.value)}
                   placeholder={example}
-                  className="rounded-md border px-2.5 py-1.5 text-base"
+                  className="field text-base"
                   style={field}
                 />
               </label>

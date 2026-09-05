@@ -53,7 +53,7 @@ export function EstonianInput({
   const ref = inputRef ?? own;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div>
       <input
         ref={ref}
         id={id}
@@ -65,12 +65,10 @@ export function EstonianInput({
         onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
           if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); }
         }}
-        className={`w-full rounded-[var(--r-lg)] border transition-shadow focus:shadow-[var(--shadow)] ${
-          large ? "px-5 py-3.5 text-xl" : compact ? "px-4 py-2.5 text-sm" : "px-5 py-3 text-md"
-        }`}
+        className={`w-full ${large ? "field-lg text-xl" : compact ? "field text-sm" : "field-lg text-md"}`}
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)", boxShadow: "var(--shadow-sm)" }}
       />
-      {bar && <DiacriticBar standalone={false} fallbackRef={ref} />}
+      {bar && <div className="under-field"><DiacriticBar standalone={false} fallbackRef={ref} /></div>}
     </div>
   );
 }

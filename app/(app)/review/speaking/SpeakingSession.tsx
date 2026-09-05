@@ -210,7 +210,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
           )}
         </div>
 
-        <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
+        <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }}>
           {!revealed ? (
             <Button variant="primary" size="lg" className="w-full" onClick={() => setRevealed(true)}>
               I said it, show me

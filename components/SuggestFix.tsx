@@ -216,7 +216,7 @@ export function SuggestFix({
             id="suggest-kind"
             value={kind}
             onChange={(e) => setKind(e.target.value as SuggestionCategory)}
-            className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+            className="field w-full text-sm"
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           >
             {choices.map((c) => (
@@ -243,7 +243,7 @@ export function SuggestFix({
                 id="suggest-meaning"
                 value={meaning}
                 onChange={(e) => setMeaning(e.target.value)}
-                className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+                className="field w-full text-sm"
                 style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
               />
             </div>
@@ -276,7 +276,7 @@ export function SuggestFix({
             id="suggest-gloss"
             value={meaning}
             onChange={(e) => setMeaning(e.target.value)}
-            className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+            className="field w-full text-sm"
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           />
           <p className="mt-1.5 text-xs" style={{ color: "var(--ink-3)" }}>
@@ -299,7 +299,7 @@ export function SuggestFix({
                 setFormType(e.target.value);
                 setFormValue(formTypes.find((f) => f.formType === e.target.value)?.value ?? "");
               }}
-              className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+              className="field w-full text-sm"
               style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
             >
               {formTypes.map((f) => (
@@ -326,7 +326,7 @@ export function SuggestFix({
             value={sentence}
             onChange={(e) => setSentence(e.target.value)}
             lang="et"
-            className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+            className="field w-full text-sm"
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           >
             {examples.map((s) => (
@@ -347,7 +347,7 @@ export function SuggestFix({
           onChange={(e) => setNote(e.target.value)}
           rows={3}
           placeholder="What you expected, where you saw it, what your teacher or dictionary says."
-          className="w-full rounded-[var(--r)] border px-3 py-2.5 text-sm"
+          className="field w-full text-sm"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
       </div>

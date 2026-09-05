@@ -382,6 +382,20 @@ dimming is exactly how every disabled control here is drawn: the strongest signa
 those screens was the control appearing to switch off. A link may still fade, and a `<button>`
 drawn as underlined text is a link wearing the right element.
 
+**A text box has one shape, in two sizes, and the keys under it stand one distance off.** `.field`
+is a form's field, at `--r` and 10px by 14px; `.field-lg` is the answer box a round leads with, a
+search box, an exam paper and the shared `EstonianInput`, at `--r-lg` and 14px by 20px. There were
+nine shapes before them, on three radii and with paddings from px-2.5 to px-5, so the caret sat a
+different distance in from the edge on every screen that asked for a word and two boxes on one form
+did not match each other. Type size and colour stay with the caller: a box in a card sits on
+`--raised` and one on a page on `--surface`, and that is a fact about the surface under it. A
+learner said the row of Estonian keys felt glued to the box above it, and it was: 8px, which is the
+rhythm between rows in a list, under a row of 36px circles. `--field-gap` is 14px, the same as the
+field's own inner padding, and `.under-field` is how a caller asks for it, on the wrapper rather
+than the bar, because the bar also stands beside a button and under a crossword clue where there is
+no field edge. The invariant reads every input and textarea in the tree, so a tenth shape cannot
+arrive by hand, and fails on a bar under a field that types its own margin.
+
 `components/brand.tsx` holds **Õ**, the mascot: Estonian's most recognizable letter is already a
 round face with a squiggle on top, so the mascot is that letter taken literally. It appears in
 the rail, in every empty state, at the end of a session, and on the landing page. It is a
@@ -424,6 +438,11 @@ have to re-learn the frame:
   area (`aria-live="polite"`), and a footer holding the only action;
 - a **summary** on the way out: the mascot cheering, then `StatTile`s, then the two or three
   places worth going next.
+
+The three bands of that card share one inset, 24px, and they did not: the header sat at 20, the body
+at 24 and the footer at 16, so the one action started eight pixels left of the answer box it
+belonged to. Every seam a round draws is `px-6` now and an invariant reads the seams off the rounds
+rather than off a list of them.
 
 Nothing about that is decoration. The counter is what stops a session feeling endless, the single
 footer action is what makes the next keystroke obvious, and the summary is where an achievement

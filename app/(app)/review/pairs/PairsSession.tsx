@@ -285,7 +285,7 @@ export function PairsSession({ questions: initialQuestions }: { questions: PairQ
         </div>
 
         {revealed && (
-          <div className="border-t px-6 py-5" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
+          <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }} aria-live="polite">
             <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
               {question.letter
                 ? <>The two only differ in how long the <strong lang="et">{question.letter}</strong> sounds.

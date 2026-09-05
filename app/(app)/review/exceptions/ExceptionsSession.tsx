@@ -219,17 +219,17 @@ export function ExceptionsSession({ tasks: initialTasks }: { tasks: ExceptionTas
                 spellCheck={false}
                 disabled={!!mark}
                 onChange={(e) => setTyped(e.target.value)}
-                className="mt-2 w-full rounded-md border px-3.5 py-3 text-[19px] disabled:opacity-70"
+                className="field-lg mt-2 w-full text-[19px] disabled:opacity-70"
                 style={{ borderColor: "var(--rule)", background: "var(--raised)", color: "var(--ink)" }}
               />
-              {!mark && <div className="mt-2"><DiacriticBar /></div>}
+              {!mark && <div className="under-field"><DiacriticBar /></div>}
             </div>
           )}
 
           {mark && <Feedback task={task} mark={mark} />}
         </div>
 
-        <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
+        <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }}>
           {meeting ? (
             <Button variant="primary" className="w-full py-3" onClick={next} autoFocus>
               Got it <kbd className="ml-1">↵</kbd>

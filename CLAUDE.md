@@ -3986,6 +3986,23 @@ still pane is the observer's job, so an ordinary re-render is two comparisons an
 same observer answers "does this surface have a box" for nothing, which takes that question off
 the render path too. Measured after: 11 to 15 reads, and one `getClientRects` rather than eleven.
 
+**A text box is one shape and the keys under it stand one distance off, and neither was true.** A
+learner said the row of Estonian letters felt glued to the box above it and the screen felt
+claustrophobic. It was 8px, typed by hand on ten screens and 12px on the eleventh, and 8px is the
+rhythm between rows in a list, not the air under a row of 36px circles. `--field-gap` is the one
+distance, 14px, which is the field's own inner padding, and `.under-field` on the wrapper is how a
+caller asks for it: on the wrapper rather than the bar, because the bar also stands beside a button
+on the add-a-word form and under a crossword clue, where there is no field edge to stand off from.
+The boxes themselves came in nine shapes, five paddings on three radii, so the caret sat a different
+distance in on every screen that asked for a word and the add-a-word form's own fields did not
+match each other. `.field` and `.field-lg` in `app/globals.css` are the two, a form's field and the
+answer box a round leads with, and every input and textarea in the tree wears one; the invariant
+reads the tags themselves, with a lookbehind for the `=>` inside an `onChange`, because the first
+version read to the first `>` and found no fields at all while passing. The crossword's cells and
+the deck's filter pill are exempt by name. And the card a round is played on had three insets, the
+header at 20, the body at 24 and the footer at 16, so "Check it" started eight pixels left of the box
+it checked; every seam is `px-6` now, read off the rounds rather than off a list of them.
+
 **Space is what says two things are separate, and it was saying five different things.** Pages
 stacked their top-level sections at gap-5, gap-6, gap-7, gap-8 and gap-9 depending on who wrote
 them, so moving from Progress to Practice changed how tightly the app breathed for no reason a

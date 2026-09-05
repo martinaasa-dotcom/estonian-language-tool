@@ -204,7 +204,7 @@ function AddExample({ lexemeId, onAdded, onCancel }: {
         onChange={(e) => setEn(e.target.value)}
         placeholder="English (optional)"
         aria-label="English translation"
-        className="mt-2 w-full rounded-[var(--r)] border px-3.5 py-2.5 text-sm transition-shadow focus:shadow-[var(--shadow)]"
+        className="field mt-2 w-full text-sm"
         style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
       />
       {error && <p role="alert" className="mt-2 text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}

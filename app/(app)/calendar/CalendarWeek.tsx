@@ -349,7 +349,7 @@ function AddPanel({ days, opensAs, onDone }: {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={isReminder ? "Hand in the essay" : "Eesti keel B1"}
-          className="mt-1 w-full rounded-[var(--r)] border px-3 py-2.5 text-base"
+          className="field mt-1 w-full text-base"
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
       </label>
@@ -363,7 +363,7 @@ function AddPanel({ days, opensAs, onDone }: {
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="mt-1 w-full rounded-[var(--r)] border px-3 py-2.5 text-base"
+                className="field mt-1 w-full text-base"
                 style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
               />
             </label>
@@ -372,7 +372,7 @@ function AddPanel({ days, opensAs, onDone }: {
               <select
                 value={minutes}
                 onChange={(e) => setMinutes(Number(e.target.value))}
-                className="mt-1 w-full rounded-[var(--r)] border px-3 py-2.5 text-base"
+                className="field mt-1 w-full text-base"
                 style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
               >
                 {[30, 45, 60, 90, 120, 180].map((m) => (
@@ -414,7 +414,7 @@ function AddPanel({ days, opensAs, onDone }: {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="mt-1 w-full max-w-full rounded-[var(--r)] border px-3 py-2.5 text-base"
+            className="field mt-1 w-full max-w-full text-base"
             style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
           />
         </label>

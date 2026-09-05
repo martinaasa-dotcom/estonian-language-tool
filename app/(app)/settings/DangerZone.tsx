@@ -117,7 +117,7 @@ export function DangerZone({ counts }: { counts: { cards: number; reviews: numbe
                 onChange={(e) => setConfirmation(e.target.value)}
                 aria-label="Type delete to confirm"
                 placeholder="delete"
-                className="rounded border px-2.5 py-1.5 text-[13.5px]"
+                className="field text-sm"
                 style={{
                   borderColor: "var(--again)", background: "var(--surface)", color: "var(--ink)",
                 }}

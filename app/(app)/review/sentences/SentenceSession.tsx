@@ -312,7 +312,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
           )}
         </div>
 
-        <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
+        <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }}>
           {checked ? (
             <Button variant="primary" size="lg" className="w-full" onClick={next}>
               Next sentence <ArrowRight size={15} aria-hidden />

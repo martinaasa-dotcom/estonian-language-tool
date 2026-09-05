@@ -256,7 +256,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 border-t p-4 sm:grid-cols-2" style={{ borderColor: "var(--rule-soft)" }}>
+        <div className="grid grid-cols-1 gap-2 border-t px-6 py-4 sm:grid-cols-2" style={{ borderColor: "var(--rule-soft)" }}>
           {card.choices.map((choice, i) => {
             const isCorrectChoice = choice === card.correct;
             const isPicked = choice === selected;
@@ -284,7 +284,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
         </div>
 
         {answered && (
-          <div className="border-t p-4" style={{ borderColor: "var(--rule-soft)" }}>
+          <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule-soft)" }}>
             <Button variant="primary" size="lg" className="w-full" onClick={next}>
               Continue
               <kbd className="ml-1 rounded-md px-1.5 py-0.5 text-2xs key-cap">Space</kbd>
