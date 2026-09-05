@@ -264,6 +264,21 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
         </Card>
       )}
 
+      {/*
+        THE ONE WAY OUT, AND IT SAYS WHAT IT COSTS.
+
+        `Speak` calls `onUnavailable` when the service refuses, which skips the
+        section by itself, so what is left for this button is audio that plays
+        and cannot be heard: a device muted, or a browser that blocked the
+        first play. Nothing can detect that, which is why the button has to
+        exist. What it must not be is a neutral option under every listening
+        question, which is how it read: one press drops a scored skill, and
+        `overallFrom` averages what is left, so the level a learner is then
+        shown rests on two thirds of the paper. The line says so now.
+
+        What this does not do is wait until the learner has pressed play. That
+        is the honest gate and it needs a signal `Speak` does not send.
+      */}
       {!needsIntro && (item.kind === "choice" || item.kind === "dictation") && item.skill === "listening" && (
         <div className="mt-4 text-center">
           <button
@@ -272,7 +287,7 @@ export function AssessmentRunner({ items: initialItems, missing, onFinish }: {
             className="min-h-[44px] text-xs underline underline-offset-2"
             style={{ color: "var(--ink-3)" }}
           >
-            The audio will not play. Leave listening unmeasured.
+            The audio will not play. Leave listening unmeasured, out of the three that count.
           </button>
         </div>
       )}

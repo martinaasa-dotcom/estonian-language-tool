@@ -57,7 +57,15 @@ export interface Debrief {
   review: SceneReview;
   graded: number;
   /** The conversation, both sides, in order. A stage direction is not a line and is left out. */
-  turns: readonly { who: "them" | "you"; text: string }[];
+  /*
+    `lang` because the other side does not only speak Estonian. Where neither
+    rung could put their move into words the course teaches, `reply` says what
+    they did in English, and the transcript kept those lines and marked the lot
+    `lang="et"`, so a screen reader read the English half with Estonian
+    phonology. The live conversation gets this right through `spokenEstonian`;
+    the debrief was the copy that did not.
+  */
+  turns: readonly { who: "them" | "you"; text: string; lang: "et" | "en" }[];
 }
 
 export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: () => void }) {
@@ -140,7 +148,7 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
             {turns.map((turn, index) => (
               <li key={index} className={turn.who === "you" ? "self-end text-right" : "self-start"}>
                 <Card className="inline-block max-w-full text-sm">
-                  <span lang="et" style={turn.who === "them" ? { color: "var(--ink-2)" } : undefined}>
+                  <span lang={turn.lang} style={turn.who === "them" ? { color: "var(--ink-2)" } : undefined}>
                     {turn.text}
                   </span>
                 </Card>

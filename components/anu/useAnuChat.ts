@@ -103,7 +103,10 @@ export function useAnuChat(initialMessages: Msg[]) {
       const half = acc.trim() ? `${acc.trim()}\n\n` : "";
       setMessages((m) => [...m.slice(0, -1), {
         role: "assistant",
-        content: `${half}⚠ Lost the connection to Anu. Your question is still in the box above. Try again.`,
+        // Not "still in the box above": both surfaces clear the input on the
+        // same line that calls this, so the question is gone and the learner
+        // was being sent to a box that no longer held it.
+        content: `${half}⚠ Lost the connection to Anu. Ask that again when you are ready.`,
       }]);
     } finally {
       setStreaming(false);

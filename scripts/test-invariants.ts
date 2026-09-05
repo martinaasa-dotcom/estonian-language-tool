@@ -9357,6 +9357,19 @@ check("a hue's fill is never used as its ink", () => {
   const fillAsInk = /(?:\bcolor:\s*[^;\n]*?|(?<!ink=)\btone=)"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
   const statAsFill = /\btone=\{?[^}]*?"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
   const offenders: string[] = [];
+  /*
+    `accent` is deliberately not in that list, and the sync banner is what the
+    absence cost: it wrote `--accent` on `--accent-soft` at 3.40:1 in the light
+    theme, on the one message that has to be read at a glance, and the design
+    system calls that pairing the trap. Adding it was tried and fires on honest
+    code: the only three places that write `--accent` as a colour are an
+    aria-hidden middot, an aria-hidden icon, and the 80px speaker glyph on the
+    pairs round, none of which are words and all of which clear the 3:1 a
+    graphical object is held to. A line-by-line regex cannot tell an icon from
+    a sentence, and a check that fires on honest code is a check people learn
+    to waive. The banner was corrected by hand; the guard for its shape is
+    `scripts/test-design.mjs`, which measures what it can reach.
+  */
   for (const file of [...APP, ...COMPONENTS]) {
     for (const line of read(file).split("\n")) {
       // A bar and its label side by side: the fill is the bar's, the ink is the

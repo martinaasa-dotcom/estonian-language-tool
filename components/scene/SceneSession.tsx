@@ -139,7 +139,34 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   const [phase, setPhase] = useState<Phase>("briefing");
   const [difficulty, setDifficulty] = useState<Difficulty>("good");
   const [opened, setOpened] = useState<Opened | null>(null);
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [turns, setTurnsState] = useState<Turn[]>([]);
+  /*
+    THE TRANSCRIPT IS READ FROM A REF, BECAUSE THE DEBRIEF IS BUILT IN THE SAME
+    BREATH AS THE LAST TURN.
+
+    The reply arrives, `setTurns` appends it, and two lines later `data.over`
+    calls `hangUp`, all inside one continuation after `await response.json()`.
+    React batches updates scheduled there, so no render commits between them
+    and `hangUpRef.current` is still the closure from the previous commit,
+    whose `turns` does not hold the reply that just arrived. Every scene that
+    ends the ordinary way, on its last beat or on the persona running out of
+    patience, produced a debrief missing its final exchange: the sign-off, or
+    the moment they gave up, and the slips written onto the learner's last turn
+    with it. A scene that ended on the first server turn had no transcript at
+    all.
+
+    The ref is written by the same updater that writes the state, so the two
+    cannot come apart, and `hangUp` reads the ref. Grading was never affected:
+    `finishScene` is handed `finalTurns` as an argument, which is fresh.
+  */
+  const turnsRef = useRef<Turn[]>([]);
+  const setTurns = useCallback((update: (was: Turn[]) => Turn[]) => {
+    setTurnsState((was) => {
+      const next = update(was);
+      turnsRef.current = next;
+      return next;
+    });
+  }, []);
   const [sent, setSent] = useState<Sent[]>([]);
   const [beatId, setBeatId] = useState<string | null>(null);
   const [goal, setGoal] = useState<string | null>(null);
@@ -285,7 +312,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     } finally {
       setBusy(false);
     }
-  }, [opened, used]);
+  }, [opened, used, setTurns]);
 
   async function start() {
     setBusy(true);
@@ -358,10 +385,22 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       gaps: result.gaps,
       graded: result.graded,
       review: result.review,
-      turns: turns.flatMap((turn): Debrief["turns"][number][] => {
-        if (turn.who === "you") return [{ who: "you", text: turn.text }];
-        const said = turn.lines.filter(spoken).map((line) => line.text).join(" ");
-        return said ? [{ who: "them", text: said }] : [];
+      turns: turnsRef.current.flatMap((turn): Debrief["turns"][number][] => {
+        if (turn.who === "you") return [{ who: "you", text: turn.text, lang: "et" }];
+        /*
+          Split by language rather than joined into one string, because the
+          other side does not only speak Estonian: where neither rung could put
+          their move into words the course teaches, `reply` says what they did
+          in English. Joining the two and marking the result `lang="et"` had a
+          screen reader saying the English with Estonian phonology.
+        */
+        const said = turn.lines.filter(spoken);
+        const et = said.filter(spokenEstonian).map((line) => line.text).join(" ");
+        const en = said.filter((line) => !spokenEstonian(line)).map((line) => line.text).join(" ");
+        return [
+          ...(et ? [{ who: "them" as const, text: et, lang: "et" as const }] : []),
+          ...(en ? [{ who: "them" as const, text: en, lang: "en" as const }] : []),
+        ];
       }),
     });
     setPhase("debrief");

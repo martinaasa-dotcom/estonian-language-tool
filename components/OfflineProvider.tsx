@@ -200,7 +200,14 @@ function OfflineBanner({ online, pending, syncing }: {
       className="bottom-notice fixed inset-x-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-sm md:left-auto md:right-3 md:inset-x-auto md:rounded-md"
       style={{
         background: online ? "var(--accent-soft)" : "var(--raised)",
-        color: online ? "var(--accent)" : "var(--ink-2)",
+        // `--accent-deep` is the ink for the accent's tint and `--accent` is
+        // the fill. The fill measured 3.40:1 on `--accent-soft` in the light
+        // theme against a bar of 4.5, on the one message that has to be read
+        // at a glance, and no check could see it: the fill-as-ink invariant
+        // omitted `accent`, which the design system calls the trap, and a
+        // browser sweep can only reach a state a fixture arrives in, which
+        // "syncing" is not.
+        color: online ? "var(--accent-deep)" : "var(--ink-2)",
         boxShadow: "var(--shadow)",
       }}
     >

@@ -156,9 +156,22 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
         <Footprints size={16} aria-hidden className="mt-1" /> {REPLY[answer]}
       </p>
       <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-        {conversations === 1
+        {/*
+          THE COUNT INCLUDES THE ANSWER THAT WAS JUST GIVEN.
+
+          `conversations` was counted on the server before this answer existed
+          and the reply renders straight away, so a learner reporting their
+          first ever conversation read "They understood you. That is the whole
+          point of all of this." over "0 in the last 30 days" until
+          `router.refresh()` landed: a zero directly under a confirmation of
+          one, on the panel this app says it is measured by. Counted the way
+          the server counts it, so a report that is a conversation adds one and
+          an honest no adds nothing, and the refresh then agrees rather than
+          correcting it.
+        */}
+        {conversations + 1 === 1
           ? `Your first in the last ${days} days. `
-          : `${conversations} in the last ${days} days. `}
+          : `${conversations + 1} in the last ${days} days. `}
         <Link href="/progress" className="underline">Progress keeps the count</Link>.
         {/*
           The switch is the thing being practised against, and every scene

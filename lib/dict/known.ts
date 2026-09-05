@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { fold } from "@/lib/estonian/fold";
+import { fold, FOLD_FROM, FOLD_TO } from "@/lib/estonian/fold";
 import { isKnownForm, lemmasOfForm } from "./forms";
 
 /**
@@ -77,6 +77,26 @@ export async function isKnownWord(query: string): Promise<boolean> {
  * which `prisma/indexes.ts` already warns is possible. A typo is nearly always
  * later in the word than the second character, and an answer that is fast and
  * usually right beats one that is thorough and sometimes very slow.
+ *
+ * SHORTEST FIRST, BECAUSE THE CAP CUTS AN ALPHABET IN HALF. Ordered by lemma,
+ * the cap took the alphabetically first `CANDIDATES` words with the prefix,
+ * and 54 of the 373 two-letter prefixes hold more than that: measured over the
+ * 154,995-row word list, 77,402 words, essentially half of it, could never be
+ * offered. The alphabetical head of a big prefix is long rare compounds, so
+ * what it discarded was exactly what a beginner mistypes: `ka` cut at
+ * `kaelarätik`, so `kana`, `kartul` and `kass` were unreachable; `ko` cut at
+ * `kohevus`, so `kohv` and `kool` were; `va` cut at
+ * `vahelduvvooluampermeeter`, so `vana` was. That is the `aberratsioon` fault
+ * on the screen whose whole purpose is not being a dead end. Length is the
+ * honest key: a suggestion is ranked by edit distance from a query of the
+ * length somebody typed, so a shorter candidate is the likelier correction and
+ * a 24-letter compound never was one. The lemma still ends the order, so the
+ * cut is stable rather than the plan's choice.
+ *
+ * And the folding table is `lib/estonian/fold.ts`'s, not a fourth copy of the
+ * six letters: that module exists because a marker and a search box that
+ * disagreed about `ž` would mark somebody wrong for a spelling the dictionary
+ * had just offered them.
  */
 export async function didYouMean(query: string): Promise<string[]> {
   const folded = fold(query.trim());
@@ -87,8 +107,8 @@ export async function didYouMean(query: string): Promise<string[]> {
   const prefix = folded.slice(0, 2);
   const rows = await prisma.$queryRaw<{ lemma: string }[]>`
     SELECT lemma FROM "KnownWord"
-    WHERE translate(lower(lemma), 'õäöüšž', 'oaousz') LIKE ${`${prefix}%`}
-    ORDER BY lemma ASC
+    WHERE translate(lower(lemma), ${FOLD_FROM}, ${FOLD_TO}) LIKE ${`${prefix}%`}
+    ORDER BY length(lemma) ASC, lemma ASC
     LIMIT ${CANDIDATES}
   `;
   return nearest(folded, rows.map((r) => r.lemma));
