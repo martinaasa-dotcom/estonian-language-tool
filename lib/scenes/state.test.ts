@@ -50,6 +50,7 @@ function evidence(reading: TurnReading, met: readonly boolean[] = [true]): Evide
     words: [],
     matched: [],
     satisfiedBy: [],
+    slips: [],
   };
 }
 
@@ -228,6 +229,31 @@ describe("waiting", () => {
       state = advance(SCENE, state, evidence("fragment", [false]), "valu").state;
     }
     expect(isOver(SCENE, state)).toBe(true);
+  });
+});
+
+describe("a one-word answer said twice", () => {
+  it("is taken the second time where it meets the beat, because a person waits once", () => {
+    /*
+      Asked what is wrong, a learner who says `pea`, is looked at, and says
+      `pea` again has answered, and any receptionist takes it. The second
+      fragment used to spend a try like a miss and the third ran the beat
+      out, over an answer that was the right one.
+    */
+    const start = advance(SCENE, startScene(SCENE), evidence("complete"), "Tere!").state;
+    const first = advance(SCENE, start, evidence("fragment", [true]), "valu");
+    expect(first.response).toBe("wait");
+    const second = advance(SCENE, first.state, evidence("fragment", [true]), "valu");
+    expect(second.response).toBe("answer");
+    expect(second.state.done).toContain("reason");
+  });
+
+  it("is still a miss the second time where it does not meet the beat", () => {
+    const start = advance(SCENE, startScene(SCENE), evidence("complete"), "Tere!").state;
+    const first = advance(SCENE, start, evidence("fragment", [false]), "ilm");
+    const second = advance(SCENE, first.state, evidence("fragment", [false]), "ilm");
+    expect(second.response).not.toBe("answer");
+    expect(second.state.done).not.toContain("reason");
   });
 });
 

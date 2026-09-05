@@ -50,6 +50,13 @@ export type Provenance =
   | "fallback"
   /** The line the learner already heard, said once more, because they did not answer it. */
   | "again"
+  /**
+   * The learner's own word, said back the way the other side would say it.
+   * `Poodi.` after `pood`, `Tulen?` after `ma tulema`: the one correction a
+   * conversation makes without stopping, and the form is the dictionary's
+   * (`lib/scenes/nearly.ts`), never composed. Set only by `replyFor`.
+   */
+  | "recast"
   /** Said in English on purpose: the other side switched, and the learner is practising not to. */
   | "english"
   /**

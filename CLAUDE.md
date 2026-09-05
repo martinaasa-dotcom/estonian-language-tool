@@ -4224,6 +4224,23 @@ travels down the cascade rather than being compared only against the beat before
 takes the same guard. What is left is that the other side still cannot answer a question the scene
 did not anticipate, which is more beats rather than a change to the machine (§34).
 
+**A scene understands before it marks, because that is what the person on the other side does.**
+`ma tulema koju` is not Estonian and every Estonian who hears it knows the person is coming home.
+The marker held every turn to the dictionary's exact spelling and a learner reported the scenes as
+robotic, which they were: a dropped õ, a slipped letter, `pood` where `poodi` was due and `tulema`
+where `tulen` was due each read as a turn nobody could follow, and the other side said "I did not
+catch that" to somebody who had been perfectly clear. `lib/scenes/nearly.ts` is the one definition of
+close enough: a diacritic folded away, one letter out on a word of five or more, the right word in
+the wrong case, and the ma-infinitive straight after a subject pronoun. Each is the beat met, with a
+`Slip` written down beside it, and **the recast is the dictionary's**: `Lexicon.caseForm` for a
+case, the derived present for a person, and a slip the dictionary cannot recast is understood and
+not recast. Two letters out, a typo on a short word, a wrong word and the da-infinitive are
+deliberately not slips, and `nearly.ts` says why for each. The other side says the word back put
+right (`recast`, labeled as the learner's word the way they say it), the screen says "Understood"
+under the learner's own bubble, the debrief leads with the count of turns understood anyway, and the
+grades read a slip as `Hard`, never `Good` and never `Again`, on the case where it was one.
+`docs/21-situations.md` §35.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5346,7 +5363,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`addsEvidence`, `satisfiedBy`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.

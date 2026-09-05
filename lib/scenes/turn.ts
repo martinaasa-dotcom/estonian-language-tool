@@ -26,8 +26,11 @@
  * Pure: no React, no Next, no Prisma, no network, no clock.
  */
 import { looksLikeSentence } from "@/lib/estonian/writing";
+import { fold } from "@/lib/estonian/fold";
+import type { CaseKey } from "@/lib/estonian/types";
 import { words, type Lexicon } from "./lexicon";
 import { caseKeyFor } from "./lexicon";
+import { nearlySpelled, personAsked } from "./nearly";
 import type { BeatSpec, Requirement } from "./types";
 
 /**
@@ -61,6 +64,23 @@ export type TurnReading =
 export interface TurnWord {
   readonly word: string;
   readonly vouched: boolean;
+}
+
+/**
+ * A right thought in a slightly wrong shape, understood anyway.
+ *
+ * `lib/scenes/nearly.ts` says what qualifies. `said` is what the learner
+ * wrote and `form` is what the other side says back, read off the dictionary
+ * and never made here; null where the dictionary holds no form to say, and
+ * then the slip is understood and not recast. A case slip carries the case
+ * so the review log can file it beside the same case missed on a card.
+ */
+export interface Slip {
+  readonly kind: "spelling" | "case" | "person";
+  readonly said: string;
+  readonly form: string | null;
+  readonly lemma: string;
+  readonly grammCase?: CaseKey;
 }
 
 /**
@@ -101,6 +121,12 @@ export interface Evidence {
    * whole of why the cascade cannot run on one.
    */
   readonly satisfiedBy: readonly string[];
+  /**
+   * What was understood despite itself, one per requirement met that way.
+   * Empty on a turn that was right, and on one that was not understood at
+   * all: a slip is only ever recorded on a requirement that was met.
+   */
+  readonly slips: readonly Slip[];
 }
 
 /**
@@ -197,9 +223,14 @@ export function readTurn(
   context: TurnContext,
 ): Evidence {
   const spoken = words(text);
+  /*
+    Vouched exactly, or vouched with the diacritics folded away: `koik` is a
+    word the scene knows, typed on a keyboard with no õ, and counting it as
+    unknown is what tipped a clear turn into "I did not catch that".
+  */
   const marked = spoken.map((word) => ({
     word,
-    vouched: context.lexicon.forms.has(word),
+    vouched: context.lexicon.forms.has(word) || context.lexicon.folded.has(fold(word)),
   }));
 
   const found = beat.needs.map((need) => satisfies(need, text, spoken, context));
@@ -209,22 +240,25 @@ export function readTurn(
     What is worth repeating back: a case form, a value off the card, and a
     word that answered a one-word question. A word out of a sentence is not,
     since `Ma tahan maksta` met the bill beat on `maksta` and "Maksta." is
-    not a thing a waiter says.
+    not a thing a waiter says. Where the word came with a slip, what is
+    repeated is the recast, the word the way the other side would say it,
+    which is the one correction a conversation can make without stopping.
   */
   const matched = found.flatMap((hit, i) => {
     const need = beat.needs[i];
     if (!hit || hit === YES || !need) return [];
     if ((need.kind === "lemma" || need.kind === "anyOf") && beat.shape !== "word") return [];
-    return [hit];
+    return [hit.slip?.form ?? hit.word];
   });
   /*
     Every word a requirement was met by. Unfiltered, because this answers
     "what did this turn actually supply" rather than "what is worth saying
     back", and `addsEvidence` needs the first.
   */
-  const satisfiedBy = found.filter((hit): hit is string => hit !== null && hit !== YES);
+  const satisfiedBy = found.flatMap((hit) => (hit && hit !== YES ? [hit.word] : []));
+  const slips = found.flatMap((hit) => (hit && hit !== YES && hit.slip ? [hit.slip] : []));
   const shape = (reading: TurnReading): Evidence =>
-    ({ reading, met, missing, words: marked, matched, satisfiedBy });
+    ({ reading, met, missing, words: marked, matched, satisfiedBy, slips });
 
   /*
     No letters at all is nothing anybody could read, unless the beat wanted a
@@ -253,7 +287,7 @@ export function readTurn(
   if (beat.counter && spoken.some((word) => context.negators.has(word))) {
     return {
       reading: "declined", met: beat.needs.map(() => false),
-      missing: beat.needs.map((_, i) => i), words: marked, matched: [], satisfiedBy: [],
+      missing: beat.needs.map((_, i) => i), words: marked, matched: [], satisfiedBy: [], slips: [],
     };
   }
   /*
@@ -290,32 +324,85 @@ export function readTurn(
 /** A requirement met by something other than a word: a question mark, small talk. */
 const YES = "\u0001";
 
+/** A requirement met by a word: the word, and what slipped on the way, if anything. */
+interface Hit {
+  readonly word: string;
+  readonly slip?: Slip;
+}
+
 /**
  * Whether one requirement is met, and by which word. Every branch is a
  * comparison against the dictionary. Null is not met; `YES` is met by
  * something that is not a word to repeat back.
+ *
+ * UNDERSTOOD BEFORE CORRECT. Each word-shaped branch asks three questions in
+ * order: is the form here exactly; is it here with a slip of the pen
+ * (`nearlySpelled`); and, for a case, is the *word* here in some other case.
+ * Every yes is the requirement met, because every one of them is a turn a
+ * person would understand, and the slip travels with the hit so the other
+ * side can say the word back properly and the debrief can list it. What
+ * stays a no is a different word, which is not a slip but a miss.
  */
 function satisfies(
   need: Requirement,
   text: string,
   spoken: readonly string[],
   context: TurnContext,
-): string | null {
-  const has = (forms: ReadonlySet<string> | undefined): string | null =>
+): Hit | typeof YES | null {
+  const exact = (forms: ReadonlySet<string> | undefined): string | null =>
     forms === undefined ? null : spoken.find((word) => forms.has(word)) ?? null;
+  const nearly = (forms: ReadonlySet<string> | undefined): { said: string; form: string } | null => {
+    if (forms === undefined) return null;
+    for (const said of spoken) {
+      const form = nearlySpelled(said, forms);
+      if (form) return { said, form };
+    }
+    return null;
+  };
 
   switch (need.kind) {
     case "any":
       return YES;
     case "lemma": {
       for (const lemma of need.oneOf) {
-        const hit = has(context.lexicon.byLemma.get(lemma));
-        if (hit) return hit;
+        const forms = context.lexicon.byLemma.get(lemma);
+        const hit = exact(forms);
+        if (hit) return { word: hit, ...personSlip(hit, lemma, spoken, context) };
+        const near = nearly(forms);
+        if (near) return { word: near.form, slip: { kind: "spelling", said: near.said, form: near.form, lemma } };
       }
       return null;
     }
-    case "case":
-      return has(context.lexicon.byCase.get(caseKeyFor(need.lemma, need.grammCase)));
+    case "case": {
+      const key = caseKeyFor(need.lemma, need.grammCase);
+      const accepted = context.lexicon.byCase.get(key);
+      const hit = exact(accepted);
+      if (hit) return { word: hit };
+      const near = nearly(accepted);
+      if (near) {
+        return { word: near.form, slip: { kind: "spelling", said: near.said, form: near.form, lemma: need.lemma } };
+      }
+      /*
+        THE RIGHT WORD IN THE WRONG CASE IS UNDERSTOOD. `Ma lähen pood` is
+        not Estonian and nobody who hears it wonders where the person is
+        going. The beat is met, the case it wanted is written down as the
+        slip, and the other side says `poodi` back, off the same table every
+        case card reads. Nothing is derived here: a case the table holds no
+        form for is understood and not recast.
+      */
+      const forms = context.lexicon.byLemma.get(need.lemma);
+      const other = exact(forms) ?? nearly(forms)?.said ?? null;
+      if (other) {
+        return {
+          word: other,
+          slip: {
+            kind: "case", said: other, form: context.lexicon.caseForm.get(key) ?? null,
+            lemma: need.lemma, grammCase: need.grammCase,
+          },
+        };
+      }
+      return null;
+    }
     /*
       A time is digits, and `words()` returns letters, so `11:30` never reached
       `spoken` and the offer beat could not be met by writing the time on the
@@ -327,10 +414,14 @@ function satisfies(
     case "datum": {
       const accepted = context.data.get(need.slot);
       if (!accepted) return null;
-      const hit = has(accepted);
-      if (hit) return hit;
+      const hit = exact(accepted);
+      if (hit) return { word: hit };
       const lower = text.toLowerCase().replace(/\s+/g, " ");
-      return [...accepted].find((value) => (/\d|\s/.test(value)) && lower.includes(value)) ?? null;
+      const literal = [...accepted].find((value) => (/\d|\s/.test(value)) && lower.includes(value));
+      if (literal) return { word: literal };
+      const near = nearly(accepted);
+      if (near) return { word: near.form, slip: { kind: "spelling", said: near.said, form: near.form, lemma: near.form } };
+      return null;
     }
     /*
       A question mark or a question word, and the mark counts on its own,
@@ -340,11 +431,11 @@ function satisfies(
       they ask a question" was not a question the dictionary could answer.
     */
     case "question":
-      return text.includes("?") || has(context.questionWords) ? YES : null;
+      return text.includes("?") || exact(context.questionWords) ? YES : null;
     case "negation":
-      return has(context.negators) ? YES : null;
+      return exact(context.negators) ? YES : null;
     case "register":
-      return has(context.registerForms) ? YES : null;
+      return exact(context.registerForms) ? YES : null;
     /*
       The first option that is met, and the word that met it, so the other
       side can repeat `Sobib.` back the way it repeats `Poodi.`
@@ -357,6 +448,30 @@ function satisfies(
       return null;
     }
   }
+}
+
+/**
+ * `ma tulema` for `ma tulen`: the ma-infinitive straight after a subject
+ * pronoun is the dictionary form where a person was due. Understood, and
+ * recast to the person the pronoun names, off the derived present, which is
+ * the stored first person and a regular ending (ADR-005 amendment 1). Only
+ * where the two stand together, because `ma tahan minna` is right and a
+ * pronoun anywhere in the sentence says nothing about a verb elsewhere in
+ * it; and only the ma-form, since the da-form after another verb is what
+ * Estonian does.
+ */
+function personSlip(
+  hit: string, lemma: string, spoken: readonly string[], context: TurnContext,
+): { slip: Slip } | Record<string, never> {
+  const inf = context.lexicon.infinitives.get(lemma);
+  if (!inf?.has(hit)) return {};
+  const at = spoken.indexOf(hit);
+  if (at < 1) return {};
+  const person = personAsked([spoken[at - 1]!]);
+  if (!person) return {};
+  const form = context.lexicon.persons.get(lemma)?.get(person) ?? null;
+  if (form === hit) return {};
+  return { slip: { kind: "person", said: hit, form, lemma } };
 }
 
 /** Two English function words and nothing the scene's list could vouch for. */

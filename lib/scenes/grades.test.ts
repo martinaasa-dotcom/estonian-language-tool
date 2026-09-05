@@ -31,15 +31,17 @@ const SCENE: SceneSpec = {
   ],
 };
 
-function evidence(reading: TurnReading, met: readonly boolean[]): Evidence {
-  return { reading, met, missing: met.flatMap((ok, i) => (ok ? [] : [i])), words: [], matched: [], satisfiedBy: [] };
+function evidence(reading: TurnReading, met: readonly boolean[], slips: Evidence["slips"] = []): Evidence {
+  return { reading, met, missing: met.flatMap((ok, i) => (ok ? [] : [i])), words: [], matched: [], satisfiedBy: [], slips };
 }
 
 /** Plays the turns given, in order, and hands back where it got to. */
-function play(turns: { reading: TurnReading; met: boolean[]; helped?: boolean }[]): SceneState {
+function play(
+  turns: { reading: TurnReading; met: boolean[]; helped?: boolean; slips?: Evidence["slips"] }[],
+): SceneState {
   let state = startScene(SCENE);
   for (const turn of turns) {
-    ({ state } = advance(SCENE, state, evidence(turn.reading, turn.met), "x", turn.helped));
+    ({ state } = advance(SCENE, state, evidence(turn.reading, turn.met, turn.slips), "x", turn.helped));
   }
   return state;
 }
@@ -59,6 +61,19 @@ describe("what a conversation writes into the review log", () => {
     ]));
     expect(grades[0]?.rating, "a conversation cannot tell easy from lucky").toBe(2);
     for (const grade of grades) expect(grade.rating).toBeLessThan(4);
+  });
+
+  it("grades Hard where the word was understood with a slip, and never Again for it", () => {
+    /*
+      `pood` for `poodi` is the word had and the form not yet: the other side
+      understood, so it is not a miss, and the form was not produced, so it
+      is not a recall the scheduler should stretch an interval on.
+    */
+    const grades = gradesFor(SCENE, play([{
+      reading: "complete", met: [true],
+      slips: [{ kind: "case", said: "valu", form: "valus", lemma: "valu", grammCase: "INESSIVE" }],
+    }]));
+    expect(grades[0]?.rating).toBe(2);
   });
 
   it("grades Again where the app had to supply the word", () => {

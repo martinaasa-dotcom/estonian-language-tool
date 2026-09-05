@@ -35,6 +35,14 @@ const ENTRIES: DictEntry[] = [
     extraForms: [{ code: "IndPrSg3", value: "on" }],
     usages: [],
   },
+  {
+    lemma: "kõrv", pos: "NOUN", cefr: "A1",
+    parts: {
+      NOM_SG: "kõrv", GEN_SG: "kõrva", PART_SG: "kõrva",
+      NOM_PL: "kõrvad", PART_PL: "kõrvu", GEN_PL: "kõrvade",
+    },
+    usages: [],
+  },
   { lemma: "Head aega!", pos: "PHRASE", cefr: "A1", parts: {}, usages: [] },
 ];
 
@@ -70,7 +78,7 @@ describe("reading a turn", () => {
     }
   });
 
-  it("meets a case requirement only in that case, and takes every spelling of it", () => {
+  it("meets a case requirement in that case, and takes every spelling of it, with no slip", () => {
     const asks = beat({ needs: [{ kind: "case", lemma: "tuba", grammCase: "ILLATIVE" }] });
     /*
       The illative is the one case with two answers and only one of them is
@@ -78,11 +86,32 @@ describe("reading a turn", () => {
       prevent, pointed at a conversation, so both count and the fixture asserts
       both rather than trusting the sentence that says so.
     */
-    expect(readTurn("Ma lähen tuppa", asks, context()).reading).toBe("complete");
-    expect(readTurn("Ma lähen toasse", asks, context()).reading).toBe("complete");
-    // The nominative is the same word and is not the answer.
-    expect(readTurn("Ma lähen tuba", asks, context()).reading).not.toBe("complete");
+    for (const said of ["Ma lähen tuppa", "Ma lähen toasse"]) {
+      const seen = readTurn(said, asks, context());
+      expect(seen.reading, said).toBe("complete");
+      expect(seen.slips, said).toEqual([]);
+    }
     expect(LEX.byCase.get(caseKeyFor("tuba", "ILLATIVE"))?.has("tuppa")).toBe(true);
+  });
+
+  /*
+    THE RIGHT WORD IN THE WRONG CASE IS UNDERSTOOD. `Ma lähen tuba` is not
+    Estonian and nobody who hears it wonders where the person is going. The
+    beat is met, the slip carries the case, and the recast is the table's
+    own form, so the other side can say `tuppa` back.
+  */
+  it("understands the right word in the wrong case, and writes the case down as the slip", () => {
+    const asks = beat({ needs: [{ kind: "case", lemma: "tuba", grammCase: "ILLATIVE" }] });
+    const seen = readTurn("Ma lähen tuba", asks, context());
+    expect(seen.reading).toBe("complete");
+    expect(seen.met).toEqual([true]);
+    expect(seen.slips).toEqual([
+      { kind: "case", said: "tuba", form: "tuppa", lemma: "tuba", grammCase: "ILLATIVE" },
+    ]);
+    // What the other side repeats is the recast, never the slip.
+    expect(seen.matched).toEqual(["tuppa"]);
+    // A different word is still a miss, not a slip.
+    expect(readTurn("Ma lähen valu", asks, context()).reading).not.toBe("complete");
   });
 
   it("takes a question mark as a question, because Homme? is one", () => {
@@ -348,5 +377,90 @@ describe("carrying one turn on to the next beat", () => {
     expect(seen.matched).toEqual([]);
     expect(seen.satisfiedBy).toEqual(["valu"]);
     expect(addsEvidence(seen, new Set(["toas"]))).toBe(true);
+  });
+});
+
+
+/**
+ * Being understood is not the same as being correct, and the marker reads
+ * the first (`lib/scenes/nearly.ts`). Each shape of nearly-right is met, is
+ * written down as a slip, and is recast off the dictionary and nothing else.
+ */
+describe("a turn that is nearly right", () => {
+  const ctx = context();
+
+  it("reads a dropped diacritic as the word, with the spelling noted", () => {
+    const asks = beat({ needs: [{ kind: "case", lemma: "kõrv", grammCase: "INESSIVE" }], shape: "sentence" });
+    const seen = readTurn("Mul on valu korvas", asks, ctx);
+    expect(seen.reading).toBe("complete");
+    expect(seen.slips).toEqual([{ kind: "spelling", said: "korvas", form: "kõrvas", lemma: "kõrv" }]);
+    expect(seen.matched).toEqual(["kõrvas"]);
+  });
+
+  it("counts a folded spelling as vouched, so a clear turn is not read as unreadable", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["tuba"] }] });
+    const seen = readTurn("korv korvad", asks, ctx);
+    expect(seen.words.every((w) => w.vouched)).toBe(true);
+    // Real Estonian aimed elsewhere, not a turn nobody could read.
+    expect(seen.reading).toBe("offtarget");
+  });
+
+  it("reads one letter out on a long enough word as that word", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["valu"] }] });
+    // `valusid` is the partitive plural; one letter slipped.
+    const seen = readTurn("Mul on valusod", asks, ctx);
+    expect(seen.reading).toBe("complete");
+    expect(seen.slips).toEqual([{ kind: "spelling", said: "valusod", form: "valusid", lemma: "valu" }]);
+  });
+
+  it("does not read a short word as a typo of another, because pea and tee are one edit apart", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["valu"] }] });
+    expect(readTurn("Mul on valo", asks, ctx).reading).not.toBe("complete");
+  });
+
+  it("does not read two letters out as the word", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["valu"] }] });
+    expect(readTurn("Mul on valosdi", asks, ctx).reading).not.toBe("complete");
+  });
+
+  it("understands an infinitive after a subject pronoun, and recasts it to the person", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["olema"] }], shape: "sentence" });
+    const seen = readTurn("ma olema kodus", asks, context({ hasFiniteVerb: () => false }));
+    expect(seen.reading).toBe("complete");
+    /*
+      `olema` is the one verb the present rule refuses, so the slip is
+      understood and not recast: `form` is null and the screen says
+      "understood" and no more, which is what a person does with a verb they
+      cannot put right in passing.
+    */
+    expect(seen.slips).toEqual([{ kind: "person", said: "olema", form: null, lemma: "olema" }]);
+  });
+
+  it("recasts a regular verb off the derived present", () => {
+    const entries: DictEntry[] = [
+      ...ENTRIES,
+      {
+        lemma: "tulema", pos: "VERB", cefr: "A1",
+        parts: { INF_MA: "tulema", INF_DA: "tulla", PRES_1SG: "tulen", PAST_1SG: "tulin" },
+        usages: [],
+      },
+    ];
+    const ctx2 = context({ lexicon: buildLexicon(entries) });
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["tulema"] }], shape: "sentence" });
+    const seen = readTurn("ma tulema koju", asks, ctx2);
+    expect(seen.reading).toBe("complete");
+    expect(seen.slips).toEqual([{ kind: "person", said: "tulema", form: "tulen", lemma: "tulema" }]);
+    expect(readTurn("ta tulema koju", asks, ctx2).slips[0]?.form).toBe("tuleb");
+    // The infinitive on its own, or after another verb, is not a slip.
+    expect(readTurn("tulema koju", asks, ctx2).slips).toEqual([]);
+    expect(readTurn("ma tahan tulla", asks, ctx2).slips).toEqual([]);
+    expect(readTurn("ma tulen koju", asks, ctx2).slips).toEqual([]);
+  });
+
+  it("never records a slip on a requirement that was not met", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["valu"] }] });
+    const seen = readTurn("xyzzy blorp", asks, ctx);
+    expect(seen.reading).toBe("unrecognised");
+    expect(seen.slips).toEqual([]);
   });
 });

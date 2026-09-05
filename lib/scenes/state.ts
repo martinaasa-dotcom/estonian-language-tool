@@ -16,7 +16,7 @@
  *
  * Pure: no React, no Next, no Prisma, no network, no clock.
  */
-import { advances, type Evidence, type TurnReading } from "./turn";
+import { advances, type Evidence, type Slip, type TurnReading } from "./turn";
 import { curveballById, type CurveballId, type CurveballSpec } from "./curveballs";
 import type { BeatSpec, SceneSpec } from "./types";
 
@@ -49,6 +49,13 @@ export interface TurnRecord {
   readonly met: readonly boolean[];
   /** The words that met them, for the other side to repeat back. Absent on a row written before it was kept. */
   readonly matched?: readonly string[];
+  /**
+   * What was understood despite itself: a dropped diacritic, the right word
+   * in the wrong case, an infinitive where a person was due. Absent where the
+   * turn was right, and on a row written before slips were read. The grades
+   * read it (a slip is `Hard`, never `Good`) and the debrief lists it.
+   */
+  readonly slips?: readonly Slip[];
   /** Whether the app had to supply a word for this beat before it was met. */
   readonly helped: boolean;
 }
@@ -157,9 +164,24 @@ export function advance(
     helped,
     ...(heard ? { heard } : {}),
     ...(evidence.matched.length > 0 ? { matched: evidence.matched } : {}),
+    ...(evidence.slips.length > 0 ? { slips: evidence.slips } : {}),
   }];
 
-  if (advances(evidence.reading)) {
+  /*
+    A PERSON WAITS ONCE, AND THEN TAKES THE WORD. The fragment rule below
+    gives a one-word answer on a sentence beat a look and a wait, once. What
+    happened on the second one was that it spent a try like a miss, so a
+    learner asked what was wrong who said `pea`, was looked at, and said `pea`
+    again was answered with the question a third time and then given up on,
+    over an answer any receptionist takes the second time it is said. A second
+    fragment that meets everything the beat asked is the beat met.
+  */
+  const previous = state.turns[state.turns.length - 1];
+  const waitedAlready = previous?.beatId === beat.id
+    && (previous.reading === "fragment" || previous.reading === "echo");
+  const taken = evidence.reading === "fragment" && waitedAlready && evidence.missing.length === 0;
+
+  if (advances(evidence.reading) || taken) {
     return {
       state: { ...state, ...moveOn(scene, state.beat), done: [...state.done, beat.id], turns },
       response: "answer",
@@ -194,9 +216,6 @@ export function advance(
     person waits once. The second fragment in a row on the same beat is read
     as a turn that missed, and spends a try like one.
   */
-  const previous = state.turns[state.turns.length - 1];
-  const waitedAlready = previous?.beatId === beat.id
-    && (previous.reading === "fragment" || previous.reading === "echo");
   if ((evidence.reading === "fragment" || evidence.reading === "echo") && !waitedAlready) {
     return {
       state: { ...state, turns },
@@ -361,9 +380,15 @@ export function advanceHurdle(
     met: evidence.met,
     helped: false,
     ...(heard ? { heard } : {}),
+    ...(evidence.slips.length > 0 ? { slips: evidence.slips } : {}),
   }];
 
-  if (advances(evidence.reading)) {
+  const previous = state.turns[state.turns.length - 1];
+  const waitedAlready = previous?.beatId === `hurdle:${hurdle.id}`
+    && (previous.reading === "fragment" || previous.reading === "echo");
+  const taken = evidence.reading === "fragment" && waitedAlready && evidence.missing.length === 0;
+
+  if (advances(evidence.reading) || taken) {
     return {
       state: {
         ...state, turns, hurdle: null,
@@ -372,9 +397,6 @@ export function advanceHurdle(
       response: "answer",
     };
   }
-  const previous = state.turns[state.turns.length - 1];
-  const waitedAlready = previous?.beatId === `hurdle:${hurdle.id}`
-    && (previous.reading === "fragment" || previous.reading === "echo");
   if ((evidence.reading === "fragment" || evidence.reading === "echo") && !waitedAlready) {
     return { state: { ...state, turns }, response: evidence.reading === "echo" ? "repeat" : "wait" };
   }

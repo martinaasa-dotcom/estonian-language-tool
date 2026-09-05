@@ -425,6 +425,16 @@ the type, so a fifth screen cannot reintroduce the fault by not knowing about th
   translates the question, the brisk one repeats it in Estonian. It is counted in the debrief and it
   is never scolded. Reaching for English under pressure is the thing being practised against.
 
+### Understood before correct (amendment, §35)
+
+Each of the readings above is decided against the dictionary's exact spelling, and that turned out
+to be the wrong instrument for a conversation: a learner is understood far more often than they are
+correct, and the gap between the two is most of what makes speaking feel possible. So a requirement
+is met by the word *nearly* as well: a diacritic folded away, one letter out on a word of five or
+more, the right word in the wrong case, or the ma-infinitive straight after a subject pronoun. Each
+is the beat met, with a `Slip` written down beside it, and the other side says the word back the way
+they say it. §35 is the argument and the boundaries.
+
 ### What counts as a turn
 
 Two holes are worth closing before somebody finds them.
@@ -2035,3 +2045,63 @@ is a street-corner exchange and is not an answer to what was asked. Answering an
 means a model deciding what happens next, which is the one thing §18 rules out; what is available
 instead is more beats and more pinned lines per beat, which is a catalogue change rather than a
 machine one.
+
+
+## 35. The sixth pass: understood before correct
+
+A learner played the scenes and reported them as robotic and fake, and the concrete example they gave
+is the whole of the diagnosis: `ma tulema koju`. That is not Estonian and every Estonian who hears it
+knows the person is coming home. The marker held every turn to the dictionary's exact spelling, so a
+dropped õ, a slipped letter, `pood` where `poodi` was due and `tulema` where `tulen` was due each read
+as a turn nobody could follow, and the other side said "I did not catch that" to somebody who had
+been perfectly clear. A learner who meets that three times stops talking, which is the opposite of
+what this module is for (§18, and `docs/22-real-life.md`).
+
+**A person understands first and corrects, if at all, in passing.** That is the rule now, and
+`lib/scenes/nearly.ts` is where "close enough" is defined, once. Four shapes of nearly-right are read
+as the word, understood, with the slip written down:
+
+| Slip | Example | Recast |
+|---|---|---|
+| spelling, a diacritic folded away | `korvas` for `kõrvas` | the dictionary's spelling |
+| spelling, one letter out on a word of five or more | `valusod` for `valusid` | the form it was one edit from |
+| case, the right word in the wrong case | `pood` where `poodi` was due | `Lexicon.caseForm`, the same table every case card reads |
+| person, the ma-infinitive straight after a subject pronoun | `ma tulema` for `ma tulen` | the derived present, off the stored first person |
+
+**Every recast is the dictionary's and nothing is written.** The case form is read off the same
+table `datumLine` reads for an offered day; the person is `derivedVerbForms`, which `npm run
+audit:verbs` checked against Ekilex over 797 verbs (ADR-005 amendment 1). A slip the dictionary
+cannot recast, `olema` after a pronoun for one, is understood and not recast, which is what a person
+does with a verb they cannot put right in passing. `nearly.ts` holds a pronoun table as keys and no
+form, asserted.
+
+**What is deliberately not tolerated** is as much of the design as what is. Two letters out, because
+at that distance `kool` is `kohv` and the marker would be guessing rather than understanding. A typo
+on a word under five letters, because `pea`, `käsi` and `tee` are one edit from each other. A wrong
+*word*, which is what `offtarget` already is. And the da-infinitive, because `ma tahan minna` is
+right. A slip is a right thought in a slightly wrong shape, and that is the whole of what it may be.
+
+**It reaches the screen three ways and none of them is a mark.** The other side says the word back
+put right, `Poodi.` and then the next question, which is the one correction a conversation makes
+without stopping and is labeled on screen as the learner's word the way they say it, never as "said
+again". Under the learner's own bubble the quiet ink says "Understood. Here it is *poodi*." The
+debrief has a section headed by the count of turns that were understood anyway, and the forms under
+it for when there is a minute. And the review log sees it as a `Hard` on that word, and on that case
+where the slip was a case: the learner *had* the word and was understood, so it is not `Again`, and
+the form was not produced, so it is not `Good`, and the case they could not produce at a counter
+lands beside the case they could not produce on a card.
+
+**Two smaller things came with it, both in the same direction.** A folded spelling counts as vouched
+in the share that tells real Estonian aimed elsewhere from a turn nobody could read, so a clear
+sentence with no õ in it is answered with a narrower question rather than with the repair phrase.
+And a one-word answer said twice on a sentence-shaped beat is taken the second time where it meets
+the beat: a person waits once, and a receptionist told `pea` twice does not ask a third time. A turn
+read as `narrow` also takes up the part that landed before the re-ask, `Poodi.` and then the
+question, where it used to ask the whole question again as though nothing had been said.
+
+**Measured against the fixture marker:** `Ma lähen tuba` on the illative beat is met with a case
+slip and `tuppa` recast; `Mul on valu korvas` on the inessive beat is met with a spelling slip;
+`ma tulema koju` is met with `tulen` recast and `ta tulema koju` with `tuleb`; `ma tahan tulla`
+carries no slip; `valo` and `valosdi` are still misses. What it does not do: it cannot tell a learner
+which word they meant when they used a wrong one, and it cannot answer a question the scene did not
+anticipate (§34). Both are what the help button and more beats are for.

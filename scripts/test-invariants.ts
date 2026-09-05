@@ -11066,6 +11066,50 @@ check("a scene's debrief points at a drill that exists", () => {
   }
 });
 
+check("a scene understands a slip before it marks one, and says so", () => {
+  /*
+    `ma tulema koju` is not Estonian and everybody who hears it knows the
+    person is coming home. The marker held every turn to the dictionary's
+    exact spelling and a learner reported the scenes as robotic, which they
+    were: a dropped õ, a slipped letter, the right word in the wrong case and
+    an infinitive where a person was due each read as a turn nobody could
+    follow. `lib/scenes/nearly.ts` says what "close enough" means, `readTurn`
+    reads it as met with a `Slip`, the grades read a slip as `Hard`, the
+    other side says the word back as a `recast`, and the screen says
+    "understood" under the learner's own bubble. Four halves, and losing any
+    one of them is the old marker with a kinder comment on it.
+  */
+  const turn = code("lib/scenes/turn.ts");
+  assert.match(
+    turn, /from "\.\/nearly"/,
+    "lib/scenes/turn.ts no longer reads lib/scenes/nearly.ts, so a slip of the pen is a miss again",
+  );
+  assert.match(turn, /slips: readonly Slip\[\]/, "Evidence no longer carries the slips a turn was understood despite");
+  assert.match(
+    turn, /kind: "case", said: other, form: context\.lexicon\.caseForm\.get\(key\)/,
+    "the right word in the wrong case is no longer understood, or the recast is not the dictionary's own form",
+  );
+  assert.match(
+    code("lib/scenes/grades.ts"), /turn\.slips\?\.length[\s\S]{0,200}!slipped \? 3 : 2/,
+    "lib/scenes/grades.ts no longer reads a slip, so a word understood with the wrong ending grades Good",
+  );
+  assert.match(
+    code("lib/scenes/reply.ts"), /input\.recast \? "recast" : "again"/,
+    "replyFor no longer labels a recast as the learner's word put right",
+  );
+  const session = code("components/scene/SceneSession.tsx");
+  assert.match(session, /recast:/, "the scene screen has no label for a recast line");
+  assert.match(session, /Understood\./, "the scene screen no longer says a slipped turn was understood");
+  /*
+    And nothing in `nearly.ts` writes Estonian: the recast is read off the
+    lexicon, so the module holds a pronoun table as keys and nothing else.
+    A form literal there would be this app writing Estonian into a line the
+    other side says.
+  */
+  const nearly = code("lib/scenes/nearly.ts");
+  assert.doesNotMatch(nearly, /form:\s*["'`]/, "lib/scenes/nearly.ts is typing a form; the recast is the dictionary's");
+});
+
 check("nothing but the dictionary can advance a scene", () => {
   const turn = code("lib/scenes/turn.ts");
   const state = code("lib/scenes/state.ts");

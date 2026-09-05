@@ -80,6 +80,13 @@ export interface ReplyInput {
    * that is not a word (a question, a no) or where nothing was met.
    */
   readonly echo: string | null;
+  /**
+   * Whether `echo` is the learner's word put right rather than repeated: the
+   * turn was understood with a slip and the form the other side says back is
+   * the dictionary's (`Slip.form`). A recast is labeled as one on screen,
+   * because "said again" would claim the learner said it.
+   */
+  readonly recast?: boolean;
   /** How many beats have been met, which is what rotates the acknowledgment. */
   readonly met: number;
   /**
@@ -235,21 +242,37 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     question that has no yes in it. A turn the beat wanted as a question is
     answered by the move that follows, so the reaction is the move.
   */
+  /*
+    AND THE PART THAT LANDED IS TAKEN UP BEFORE THE PART THAT DID NOT. A turn
+    read as `narrow` met some of what the beat asked, and the other side used
+    to answer it with the whole question again, as though nothing had been
+    said. A person says "Poodi, jah. Aga millal?": the echo, then the re-ask.
+    The re-ask is the ladder's; the echo is the same one a landed turn gets.
+  */
   const askedThem = answered ? leafNeeds(answered.needs).some(({ need }) => need.kind === "question") : false;
-  if (response === "answer" && answered && answered.move !== "greet" && !askedThem && beat) {
+  const landed = response === "answer" || response === "narrow";
+  if (landed && answered && answered.move !== "greet" && !askedThem && beat) {
     /*
       Never a number, which the confirm beat reads back in its own line, and
       never yes or no: "Jah." repeated back after "Jah, piimaga" is the
       machine showing through.
+
+      A RECAST IS THE ONE CORRECTION THIS MODULE MAKES, AND IT IS MADE THE WAY
+      A PERSON MAKES IT. The learner wrote `pood` and was understood; the
+      friend says "Poodi." and moves on, which is what a friend does and is
+      the whole of what a learner needs to hear: you were understood, and
+      this is how it is said. Not a verdict, not a colour, not a stop. The
+      form is the dictionary's own, off the slip, and the line is labeled as
+      the learner's word put right rather than as said again.
     */
     const flat = new Set<string>([...REACTIONS.acknowledge, ...REACTIONS.waiting, "ei"]);
     const echo = input.echo && !/\d/.test(input.echo) && !flat.has(input.echo) ? input.echo : null;
     if (echo) {
       out.push({
         text: echo.charAt(0).toUpperCase() + echo.slice(1) + ".",
-        provenance: "again", reaction: true,
+        provenance: input.recast ? "recast" : "again", reaction: true,
       });
-    } else if (input.acknowledges) {
+    } else if (input.acknowledges && response === "answer") {
       const choices = REACTIONS.acknowledge;
       out.push(reaction(choices[input.met % choices.length] ?? choices[0], "."));
     }

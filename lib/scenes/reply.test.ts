@@ -152,6 +152,36 @@ describe("a turn that was understood and missed the point", () => {
   });
 });
 
+describe("a word understood with a slip", () => {
+  it("is said back put right, and labeled as the learner's word rather than as said again", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, echo: "poodi", recast: true }));
+    expect(lines[0]).toEqual({ text: "Poodi.", provenance: "recast", reaction: true });
+    expect(lines[1]).toEqual(FRESH);
+  });
+
+  it("is said back as the learner's own where nothing slipped", () => {
+    const lines = replyFor(input({ answered: ASK, beat: OFFER, echo: "poodi" }));
+    expect(lines[0]?.provenance).toBe("again");
+  });
+
+  it("is taken up before a narrower re-ask, so the part that landed is not ignored", () => {
+    const other: SpokenLine = { text: "Aga millal?", provenance: "scripted" };
+    const lines = replyFor(input({
+      answered: ASK, beat: ASK, response: "narrow", reading: "incomplete", echo: "poodi", recast: true, line: other,
+    }));
+    expect(texts(lines)).toEqual(["Poodi.", "Aga millal?"]);
+    expect(lines[0]?.provenance).toBe("recast");
+  });
+
+  it("does not add an acknowledgment to a re-ask, since nothing has been settled yet", () => {
+    const other: SpokenLine = { text: "Aga millal?", provenance: "scripted" };
+    const lines = replyFor(input({
+      answered: ASK, beat: ASK, response: "narrow", reading: "incomplete", line: other,
+    }));
+    expect(lines).toEqual([other]);
+  });
+});
+
 describe("one word where a sentence was due", () => {
   it("gets a look and a wait: one word with a question mark, and no new question", () => {
     const lines = replyFor(input({ answered: ASK, beat: ASK, response: "wait", reading: "fragment" }));
@@ -241,6 +271,7 @@ describe("a line off the card", () => {
   const lexicon: Lexicon = {
     forms: new Set(), byLemma: new Map(), byCase: new Map(),
     caseForm: new Map([[caseKeyFor("teisipäev", "ADESSIVE"), "teisipäeval"]]),
+    folded: new Map(), infinitives: new Map(), persons: new Map(),
   };
   const dated: BeatSpec = {
     ...OFFER,

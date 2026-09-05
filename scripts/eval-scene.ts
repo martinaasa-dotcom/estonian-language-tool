@@ -83,7 +83,10 @@ function suspect(tokens: readonly string[]): boolean {
   return governmentSuspect(tokens, gateContext(EMPTY_LEXICON, new Set()));
 }
 
-const EMPTY_LEXICON: Lexicon = { forms: new Set(), byLemma: new Map(), byCase: new Map(), caseForm: new Map() };
+const EMPTY_LEXICON: Lexicon = {
+  forms: new Set(), byLemma: new Map(), byCase: new Map(), caseForm: new Map(),
+  folded: new Map(), infinitives: new Map(), persons: new Map(),
+};
 
 async function partA() {
   console.log("\n=== Part A: the gate, against a real model ===\n");

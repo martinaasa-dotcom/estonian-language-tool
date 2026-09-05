@@ -173,6 +173,12 @@ export async function POST(request: Request) {
       rather than with a verdict. Five readings, not two (§8).
     */
     reading: state.turns[state.turns.length - 1]?.reading ?? null,
+    /*
+      What the last turn was understood despite, so the screen can say under
+      the learner's own bubble that they were understood and how the word is
+      said. Empty on a turn that was right.
+    */
+    slips: last?.slips ?? [],
   };
 
   /*
@@ -198,6 +204,12 @@ export async function POST(request: Request) {
     translates: persona?.translates ?? false,
     acknowledges: persona?.acknowledges ?? true,
     echo: last?.matched?.[0] ?? null,
+    /*
+      The word the other side repeats is the learner's own, or, where it was
+      understood with a slip, the dictionary's form of it (`Slip.form`), which
+      `readTurn` already put first in `matched`. The flag is what labels it.
+    */
+    recast: Boolean(last?.slips?.some((slip) => slip.form && slip.form === last?.matched?.[0])),
     met: state.done.length,
   });
   const answer = (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>

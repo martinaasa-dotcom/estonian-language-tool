@@ -8,10 +8,14 @@
  * without pressing help for it, in a beat that was met.
  *
  * NEVER `Easy`, because a conversation cannot tell easy from lucky. `Good` on
- * the first attempt, `Hard` after a repair, and `Again` where the app had to
- * supply the word. Nothing about `RATINGS` or the scheduler changes here; this
- * only decides which of the four to send, which is the same latitude the scene
- * game and the crossword already take.
+ * the first attempt, `Hard` after a repair or where the word was understood
+ * with a slip (`pood` for `poodi`, `tulema` for `tulen`), and `Again` where
+ * the app had to supply the word. A slip is `Hard` and never `Again`, because
+ * the learner *had* the word and the other side understood it, and never
+ * `Good`, because the scheduler would then stretch the interval on a form
+ * that has not been produced yet. Nothing about `RATINGS` or the scheduler
+ * changes here; this only decides which of the four to send, which is the
+ * same latitude the scene game and the crossword already take.
  *
  * WHERE THE REQUIREMENT WAS A CASE, THE ROW CARRIES IT. That is the whole
  * pedagogical point of doing this at all: **the case you fail under pressure
@@ -70,7 +74,8 @@ export function gradesFor(scene: SceneSpec, state: SceneState): SceneGrade[] {
       (turn) => turn.reading !== "fragment" && turn.reading !== "echo",
     ).length;
 
-    const rating = helped ? 1 : attempts <= 1 ? 3 : 2;
+    const slipped = turns.some((turn) => (turn.slips?.length ?? 0) > 0);
+    const rating = helped ? 1 : attempts <= 1 && !slipped ? 3 : 2;
 
     for (const { need, index } of leafNeeds(beat.needs)) {
       /*
