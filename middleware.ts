@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { halfConfigured, supabaseConfigured } from "@/lib/auth/mode";
 import { isAllowedEmail, safeNext } from "@/lib/auth/access";
+import { canonicalRedirect } from "@/lib/auth/canonical";
 import { boundedTransport, hasSessionCookie, readIdentity } from "@/lib/auth/identity";
 import { buildContentSecurityPolicy } from "@/lib/security/headers";
 import { isMutatingRequest, isSameOriginMutation } from "@/lib/security/sameOrigin";
@@ -48,7 +49,33 @@ export async function middleware(request: NextRequest) {
   };
 
   /*
-    THE FORGED-REQUEST GATE COMES FIRST, AND IT COVERS EVERY PATH.
+    A REQUEST ON THE WRONG HOST IS ANSWERED WITH WHERE THE APP LIVES, AND
+    WITH NOTHING ELSE.
+
+    A deployment answers on the platform's own name as well as its domain,
+    and sign-in cannot survive the difference: the PKCE verifier is a cookie
+    on the origin the learner pressed the button on, and Supabase sends them
+    back to its Site URL wherever the origin they asked for is not on its
+    list, so one sign-in was starting on the domain and finishing on
+    `kodukeel.vercel.app` with nothing to finish it with. With
+    `NEXT_PUBLIC_SITE_URL` set there is one origin, permanently, and a stale
+    bookmark lands on it too. See lib/auth/canonical.ts for what is exempt.
+
+    It comes before the forged-request gate rather than after it, because a
+    308 keeps the method and the body, and the gate is going to see the same
+    mutation again on the host it belongs to, carrying whatever the browser
+    says about where it came from. Nothing about the request is read here
+    but its host, and nothing about it is acted on.
+  */
+  const home = canonicalRedirect(
+    request.headers.get("host") ?? request.nextUrl.host,
+    request.nextUrl.pathname + request.nextUrl.search,
+  );
+  if (home) return withCsp(NextResponse.redirect(home, 308));
+
+  /*
+    THE FORGED-REQUEST GATE COMES FIRST AMONG THE CHECKS THAT READ THE
+    REQUEST, AND IT COVERS EVERY PATH.
 
     The obvious place to put this is inside a `/api/` branch, and that would
     be watching the quiet door. Every mutation a learner makes in this app,

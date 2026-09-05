@@ -419,6 +419,21 @@ to set up, both one-time:
 Neither Google credential nor the Supabase service role key is ever needed in this app's own code, 
 the OAuth exchange happens entirely inside Supabase.
 
+**One address, and Supabase has to be told which.** A Vercel deployment answers on
+`<app>.vercel.app` as well as on the domain you point at it, and Google sign-in is the one path
+that cannot survive the difference: the sign-in starts on the origin the learner is on, and
+Supabase sends them back there only if that origin's `/auth/callback` is on the project's
+**Redirect URLs**. Anywhere else it falls back to the project's **Site URL**, silently, and the
+exchange then fails on a host that never started the sign-in, which reads as a sign-in that
+"did not go through" and works on the second press. So, under **Authentication → URL
+Configuration**: set **Site URL** to the address people use (`https://kodukeel.ee`), add
+`https://kodukeel.ee/auth/callback` to **Redirect URLs**, and set `NEXT_PUBLIC_SITE_URL` to the
+same address in Vercel. With that set the app redirects every other host it answers on, the
+platform's own name included, to that one, permanently, so there is a single origin for the
+verifier cookie, the session and the callback to agree on. Previews and `localhost` are never
+redirected. A callback that still arrives with nothing to finish it says so on the sign-in
+screen and names the setting.
+
 **A mailed link, so a Google account is not the price of entry.** Anyone without one, or unwilling
 to attach one to a language app, could not reach the product at all. Supabase dashboard →
 **Authentication → Providers → Email**: turn it on and leave "Confirm email" as it is. Then
