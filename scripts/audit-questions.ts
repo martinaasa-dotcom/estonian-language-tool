@@ -43,6 +43,7 @@
  * `npm run db:seed` loads.
  */
 import { readExpanded } from "./lib/expandedFile";
+import { borrowSentences } from "../lib/dict/borrow";
 import { generateCards, availableCardTypes, type LexemeForCards } from "../lib/srs/cards";
 import { buildPaper as buildExam, type PoolWord } from "../lib/exam/paper";
 import { buildPaper as buildPlacement, type WordRow } from "../lib/assessment/items";
@@ -63,6 +64,18 @@ interface Row { lemma: string; pos: string; cefr: string | null; translation: st
   semanticTypes?: string | null }
 
 const entries = readExpanded() as unknown as Row[];
+
+/*
+  What each word may borrow from the rest of the dictionary for its case and
+  conjugation cards, keyed the way the sections below key a word. The deck
+  builder and the flash round are handed the same pool, so a borrowed card is a
+  card this audit asks about. See lib/dict/borrow.ts.
+*/
+const borrowed = borrowSentences(entries.map((e) => ({
+  key: e.lemma, lemma: e.lemma, pos: e.pos,
+  forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null })),
+  examples: (e.examples ?? []).map((x) => ({ et: x.et, en: x.en ?? null, source: "EKILEX" as const })),
+})));
 
 /** Everything a learner is shown, joined; and the string they have to produce. */
 interface Asked { where: string; shown: string; answer: string }
@@ -107,21 +120,27 @@ const REACHES: Record<string, number> = {
     in a sentence that uses it now, and where more than one case spells the
     gapped form that way it is drilled by nobody, which is 996 over 914 words.
     Measured, not estimated: 13,919. Then 9,711 when the conjugation card
-    learned the same rule: 4,747 over a stem became 539 in a sentence.
+    learned the same rule: 4,747 over a stem became 539 in a sentence. And
+    10,887 once a word could borrow a sentence recorded under another word
+    for its case and conjugation cards (lib/dict/borrow.ts): 1,546 case cards
+    and 821 conjugation cards, cut from the same twelve thousand sentences.
   */
   /*
-    5,295 until a clue had to have one answer. Naming the kind of word costs
-    nothing, and refusing a clue another entry answers just as well took 1,304
-    of them out: `kena` and `ilus` are both "beautiful", and whichever the grid
-    wanted the other was a right answer marked wrong. See `lib/games/clue.ts`.
+    5,295 crossword clues until a clue had to have one answer. Naming the kind
+    of word costs nothing, and refusing a clue another entry answers just as
+    well took 1,304 of them out: `kena` and `ilus` are both "beautiful", and
+    whichever the grid wanted the other was a right answer marked wrong. See
+    `lib/games/clue.ts`.
   */
-  deck: 9_711, exam: 2_500, crossword: 3_991, scene: 1_409, target: 4_658,
+  deck: 10_887, exam: 2_500, crossword: 3_991, scene: 1_409, target: 4_658,
   // 627 while a `heard` item was skipped outright; the listening items are
   // asked the "also right" question now and counted.
   check: 740,
   // Measured on the merged tree once the flash round read `caseFits`: the
-  // local cases it may ask narrowed with everything else's, from 46,851.
-  flash: 46_615,
+  // local cases it may ask narrowed with everything else's, from 46,851. Then
+  // 45,856 once the round led with the sentence: a gap whose English gloss
+  // spells the form is refused rather than asked the plain way.
+  flash: 45_856,
 };
 
 /*
@@ -169,6 +188,7 @@ for (const e of entries) {
     government: e.government ?? null, semanticTypes: e.semanticTypes ?? null,
     examples: JSON.stringify(e.examples ?? []),
     forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null })),
+    borrowed: borrowed.get(e.lemma) ?? [],
   } as unknown as LexemeForCards;
   let cards;
   try { cards = generateCards(lex, availableCardTypes(lex)); }
@@ -305,7 +325,10 @@ for (const e of entries) {
     pos: e.pos,
     semanticTypes: e.semanticTypes ?? null,
     forms: (e.forms ?? []).map((f) => ({ formType: f.formType, value: f.value, morphCode: null })),
-    examples: (e.examples ?? []).map((x) => ({ et: x.et, en: x.en ?? null, source: "EKILEX" })),
+    examples: [
+      ...(e.examples ?? []).map((x) => ({ et: x.et, en: x.en ?? null, source: "EKILEX" as const })),
+      ...(borrowed.get(e.lemma) ?? []),
+    ],
   };
 
   const slots = askableSlots(word);

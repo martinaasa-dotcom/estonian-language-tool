@@ -8,6 +8,8 @@ import {
   alsoAcceptedByLemma as sharedAlsoAccepted, sharedPrompts,
 } from "@/lib/collections/senses";
 import { heardIndex, type HeardIndex } from "@/lib/assessment/heard";
+import { borrowSentences } from "@/lib/dict/borrow";
+import { parseExamples, type Example } from "@/lib/dict/examples";
 
 /**
  * FACTS ABOUT THE SHARED DICTIONARY, READ ONCE RATHER THAN ONCE PER LEARNER.
@@ -389,6 +391,30 @@ export interface CrosswordWord {
   /** Named on the clue, because English does not mark one and Estonian does. */
   pos: string;
   translation: string;
+}
+
+/**
+ * The sentences every entry may borrow from the rest of the dictionary, by
+ * lexeme id. See `lib/dict/borrow.ts` for the rule.
+ *
+ * A fact about the shared dictionary and not about the person waiting, so it
+ * is cached here like the others: it reads every entry's forms and usages once
+ * a minute at most, and a deck build, a single add, the flash round and the
+ * seed's repair all read the one answer. Measured over the shipped dictionary
+ * at about a second to build, which is why it is not built per request.
+ */
+export function borrowedSentences(): Promise<Map<string, Example[]>> {
+  return remember("borrowed-sentences", FACTS_TTL_MS, async () => {
+    const rows = await prisma.lexeme.findMany({
+      select: {
+        id: true, lemma: true, pos: true, examples: true,
+        forms: { select: { formType: true, value: true, morphCode: true } },
+      },
+    });
+    return borrowSentences(rows.map((r) => ({
+      key: r.id, lemma: r.lemma, pos: r.pos, forms: r.forms, examples: parseExamples(r.examples),
+    })));
+  });
 }
 
 /**

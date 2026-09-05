@@ -325,6 +325,21 @@ describe("generateCards — CASE_FORM", () => {
   });
 
   /*
+    A SENTENCE RECORDED UNDER ANOTHER WORD IS STILL A LEXICOGRAPHER'S SENTENCE.
+    The word's own usages come first and a borrowed one fills the case they
+    do not reach; the gap-fill card keeps to the word's own. See
+    lib/dict/borrow.ts for who may borrow what.
+  */
+  it("cuts a case card from a borrowed sentence where its own have none", () => {
+    const borrowed = [{ et: "Ta magab voodis.", en: null, source: "EKILEX" as const }];
+    const cards = generateCards({ ...bed, examples: null, borrowed }, ["CASE_FORM"]);
+    expect(cards.map((c) => [c.targetCase, c.front, c.back])).toEqual([
+      ["INESSIVE", `Ta magab ${BLANK}.`, "voodis"],
+    ]);
+    expect(generateCards({ ...bed, examples: null, borrowed }, ["CLOZE"])).toEqual([]);
+  });
+
+  /*
     AND THE CHECKLIST ASKS THE BUILDER RATHER THAN THE MORPHOLOGY. Left as
     "does it have a genitive stem" this advertised a case card on 4,664 words
     and built one on 914: the unit page lists the type, no card appears, and

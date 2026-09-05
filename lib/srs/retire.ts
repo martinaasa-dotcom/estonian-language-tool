@@ -1,6 +1,7 @@
 import { caseFits, caseIsUnsaidFor, type CaseSubject } from "@/lib/estonian/caseQuestion";
 import { CASES } from "@/lib/estonian/cases";
 import type { CaseKey } from "@/lib/estonian/types";
+import { generateCards, isBareCaseFront, type LexemeForCards } from "@/lib/srs/cards";
 
 /**
  * THE CASE CARDS A DECK KEPT THAT ARE WRONG ABOUT ESTONIAN.
@@ -84,7 +85,9 @@ export type RetireReason =
   /** A being asked for an inside case: `isas`, `õpetajasse`, `koeras`. */
   | "wrong-local-set"
   /** The word has no singular, so the form asked for belongs to another word. */
-  | "no-singular";
+  | "no-singular"
+  /** A bare ask, `ravim → millesse? kuhu?`, that no recorded sentence can carry. */
+  | "no-sentence";
 
 export interface Retirement {
   readonly id: string;
@@ -156,6 +159,74 @@ export function retirableCaseCards(cards: readonly DeckCaseCard[]): Retirement[]
     if (caseIsUnsaidFor(key, subject)) {
       out.push({ id: card.id, ownerId: card.ownerId, lemma: subject.lemma, grammCase: key, why: "wrong-local-set" });
     }
+  }
+  return out;
+}
+
+/**
+ * A bare case card, as the third rule needs it: the front, to tell the old
+ * shape from the new, and the whole entry, because deciding whether a sentence
+ * exists for a case is the builder's own question and the builder wants the
+ * entry it builds from.
+ */
+export interface BareCaseCard {
+  readonly id: string;
+  readonly ownerId: string;
+  readonly targetCase: string | null;
+  readonly front: string;
+  readonly lexeme: LexemeForCards | null;
+}
+
+/**
+ * THE BARE CASE CARDS NO SENTENCE CAN REPLACE.
+ *
+ * A case is drilled in a sentence that uses it, or it is not drilled: that is
+ * the rule `lib/srs/cards.ts` builds by now, and a learner reported the card it
+ * replaced, `ravim → millele? kuhu?`, in exactly those terms. What is the point
+ * of the form, and when would anybody use it? A deck built before the change
+ * still holds the bare ask, on every case of every word that had a genitive
+ * stem, and nothing in the app rewrites a card.
+ *
+ * Two things happen to those cards and this is the second. `repairCaseFronts`
+ * in `prisma/repair.ts` rewrites a bare card into the sentence shape wherever
+ * the dictionary holds a sentence naming that case, which keeps the card, its
+ * schedule and its history and changes only the question. What that leaves is
+ * the card the builder would not build today and cannot rebuild: the word has
+ * no recorded sentence in that case, so the ask can only ever be a suffix on a
+ * stem. Those are named here, for `scripts/audit-decks.ts` to report and, on a
+ * second run, remove.
+ *
+ * THE BUILDER IS THE TEST, deliberately, where the two rules above it ask a
+ * narrower question. Deleting `isas` needed positive evidence because the
+ * builder's default on an unclassified word is a guess, and a guess is not
+ * grounds for a deletion. Here there is no guess to make: either a
+ * lexicographer wrote a sentence carrying this case of this word, and the
+ * builder finds it, or nobody did. A card the builder can rebuild is left
+ * alone and is the repair's to rewrite; only a card it cannot is named.
+ *
+ * A card already in the sentence shape is never named, whatever the entry
+ * holds now: it was built out of a sentence and the question on it is a real
+ * one, even if the dictionary has since lost the usage behind it.
+ */
+export function unsentencedCaseCards(cards: readonly BareCaseCard[]): Retirement[] {
+  const out: Retirement[] = [];
+  const built = new Map<LexemeForCards, Set<string>>();
+  for (const card of cards) {
+    const key = card.targetCase;
+    if (!key || !isCaseKey(key)) continue;
+    if (!isBareCaseFront(card.front)) continue;
+    if (!card.lexeme) continue;
+
+    let cases = built.get(card.lexeme);
+    if (!cases) {
+      cases = new Set(
+        generateCards(card.lexeme, ["CASE_FORM"]).map((c) => c.targetCase ?? ""),
+      );
+      built.set(card.lexeme, cases);
+    }
+    if (cases.has(key)) continue;
+
+    out.push({ id: card.id, ownerId: card.ownerId, lemma: card.lexeme.lemma, grammCase: key, why: "no-sentence" });
   }
   return out;
 }

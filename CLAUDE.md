@@ -831,6 +831,73 @@ any case (`kallis` has `Tere, kallis!`, `Kallid sõbrad!` and `Kallis taevas!`, 
 times), and that unit's own `canDo` is that an adjective agrees with *its noun*, which a bare
 `suur → millesse?` is precisely that noun taken away.
 
+**And the decks built before that rule are brought under it, in two halves.** The builder fix
+reached no deck that already existed, because a `Card` row keeps the front it was built with, and a
+learner reported exactly the card it was written to replace, `ravim → millele? kuhu?`, in exactly
+the terms the rule was drawn in: what is the point of the form, and when would anybody use it.
+`repairCaseFronts` in `prisma/repair.ts` is the first half. It runs where `repairProductionBacks`
+runs, before the `--only-if-empty` early return, and rewrites a bare case card into the card the
+builder would make today, asking `generateCards` for it rather than carrying a copy of the rule, so
+a repaired card and a fresh one are the same card: `kool → milles? kus?` became
+`Ta töötab ____ õpetajana.` with `koolis` on the back and `kool, school` as the cue. It touches the
+question and nothing else, never `targetCase` and never a scheduling column, and its guard is the
+arrow, since a sentence a lexicographer recorded carries none. The second half is the card the
+builder cannot rebuild, because nobody has recorded the word in that case, which is `ravim` in every
+case it had. `unsentencedCaseCards` in `lib/srs/retire.ts` names those and `npm run audit:decks`
+reports them as a third fault beside the two it had, so they are removed on a second run rather
+than coming back due for ever. Run the seed first, or the audit reports every bare card a seed would
+have rewritten as well as the ones it cannot; run against a seeded local database, twelve bare
+cards on four words came back as one rewritten and ten named, the twelfth being `isa → milles?`,
+which the older rule already knew about.
+
+**A sentence recorded under another word is still a lexicographer's sentence, and a word may
+borrow it.** The rule above made the sentence the card and left most words with nothing to cut one
+from: a word's own usages are a handful, Ekilex filed three under `ravim` and none in a case, and the
+dictionary ships twelve thousand natural sentences that are about every word in them, not only the
+headword each was filed under. `lib/dict/borrow.ts` lends a word the sentences recorded under other
+entries that carry one of its forms, for the two cards that are about a form, and `formSentencesFor`
+in the builder reads the word's own first and the borrowed pool behind them. Measured over the
+shipped dictionary: 996 case cards over 914 words became 1,546 over 1,327, and 539 conjugation cards
+over 427 verbs became 821 over 496, with nothing written and no source added. `ravim → millega?`
+became `Organism harjus ____ ja see ei toiminud enam.` on the same deployment where it had been named
+for removal.
+
+**The spelling has to belong to this word and no other, and the claim index over-reaches on
+purpose.** A word's own usages are about the word, so a form found in one is that word's; a sentence
+found across the dictionary makes no such promise. `Tolm ajas aevastama` carries `ajas`, which is
+the inessive of `aeg` and the past of `ajama`, and the sentence means the second. So a spelling is
+claimed by every entry whose forms reach it and a sentence is lent only for a spelling exactly one
+entry claims, and the index claims more than `gapForms` reaches: the simple past is derived nowhere
+in this app, since `tahtsin` goes to `tahtis`, but a *refusal* can afford to over-reach, so a verb
+also claims its stored first-person past with the `in` taken off. A claim too many costs a
+sentence; a claim too few costs a wrong card. What it cannot see is a homograph the dictionary does
+not hold at all, and that is the residual; `npm run audit:questions` builds the borrowed cards with
+the rest, 10,887 in the deck section now against 9,711. The pool is a fact about the shared
+dictionary, so `borrowedSentences` in `lib/dict/facts.ts` caches it, and an invariant holds every
+path that builds a form card to being handed it: the deck build, the single add, the flash round,
+the seed's repair and both audits. The gap-fill card keeps to the word's own sentences, because it
+hides whatever form a sentence happens to hold and is capped at two a word, so widening its pool
+would change how big a deck is without teaching a form the word could not already show.
+
+**Tatoeba was measured for the same job and left out, with the number written down.** Its Estonian
+export is 6,315 sentences under CC BY, and a whole-sentence gate through the dictionary at the
+scanned-page standard passes 149 of them, because the corpus is full of `Tom` and the dictionary's
+claim index does not carry the short forms of `olema` and the pronouns outside the course harvest.
+Those 149 add 27 case cards. A new table, a licence credit in four places and a second source of
+provenance are not worth 27 cards; the sentences a native speaker writes through
+`docs/20-contributed-sentences.md` are the source that changes this number.
+
+**The flash round leads with the sentence for the same reason, and it had it backwards.** It opened
+every word on the bare ask and reached the gap on the second correct answer, on the argument that
+the plainest shape opens the pool. The same learner said the ask was still not specific enough:
+`kohtuma` over "How do you say this about somebody else, already happened?" is a clause describing
+a form, and what they wanted was `Ta ____ eile sõbraga`, the sentence that needs it. So where the
+dictionary holds a sentence carrying the form the pool is `gap`, `heard`, `build` and the bare ask
+is not in it, since there is no step at which a bare ask on a word the app can show in use becomes
+the better question; `inflect` survives only where no sentence exists, because the alternative
+there is not asking the form at all, and the page asks a word for the slots it can show before the
+ones it cannot, through `hasSentence`. Nothing about what is marked or written changed.
+
 **The verb is held to the same rule, and the sentence settles the one pair it spells alike.**
 `lugema → olevik · ta` over a stem was 4,747 conjugation cards over 679 verbs, with a sentence a
 lexicographer wrote holding that very form behind 421 of them, 252 of those the third person,
@@ -5144,7 +5211,9 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
-`glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`. Most of them now
+`glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
+`repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`claimIndex`, `borrowedSentences`, `formSentencesFor`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

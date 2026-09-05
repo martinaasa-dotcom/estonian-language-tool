@@ -54,6 +54,16 @@
  * which is a row somebody has to decide about later, about a card that can
  * never be right.
  *
+ * THREE — A BARE ASK NO SENTENCE CAN REPLACE. `ravim → millele? kuhu?` was
+ * reported as pointless by a learner: nothing on it says when anybody would
+ * say `ravimile`. The builder makes a case card out of a recorded sentence now,
+ * and `repairCaseFronts` in `prisma/repair.ts` rewrites the old cards into that
+ * shape wherever the dictionary has a sentence naming the case, on the next
+ * seed. What is left is a card the builder would not build and cannot rebuild,
+ * because no lexicographer recorded the word in that case. `unsentencedCaseCards`
+ * in `lib/srs/retire.ts` names those. Run the seed first, or this reports every
+ * bare card that a seed would have rewritten as well as the ones it cannot.
+ *
  * WHAT IT DOES NOT DO IS BUILD THE RIGHT CARD IN ITS PLACE. Adding rows to a
  * stranger's deck is a larger claim than taking an unanswerable question out
  * of it, and the word is still in the dictionary with its own entry, its own
@@ -65,7 +75,9 @@
  */
 import { prisma } from "../lib/db";
 import { acceptedAnswers } from "../lib/estonian/answer";
-import { retirableCaseCards, type Retirement } from "../lib/srs/retire";
+import { retirableCaseCards, unsentencedCaseCards, type Retirement } from "../lib/srs/retire";
+import { borrowSentences } from "../lib/dict/borrow";
+import { parseExamples } from "../lib/dict/examples";
 
 const write = process.argv.includes("--write");
 
@@ -74,18 +86,22 @@ const WHY: Record<Retirement["why"] | "prints-its-answer", string> = {
   "prints-its-answer": "the answer is the word in the question",
   "wrong-local-set": "a being, asked for an inside case nobody says",
   "no-singular": "the word has no singular, so that form is another word's",
+  "no-sentence": "a bare ask, and no recorded sentence uses the word in that case",
 };
 
 async function main() {
   const cards = await prisma.card.findMany({
     where: { cardType: "CASE_FORM", lexemeId: { not: null } },
     select: {
-      id: true, back: true, front: true, ownerId: true, targetCase: true,
+      id: true, back: true, front: true, ownerId: true, targetCase: true, lexemeId: true,
       lexeme: {
         select: {
-          lemma: true,
-          semanticTypes: true,
-          forms: { select: { formType: true, value: true } },
+          lemma: true, translation: true, pos: true, semanticTypes: true,
+          gradation: true, gradationNote: true, government: true, examples: true,
+          forms: {
+            select: { formType: true, value: true, morphCode: true },
+            orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
+          },
         },
       },
     },
@@ -126,6 +142,42 @@ async function main() {
   */
   const byId = new Map(cards.map((card) => [card.id, card]));
   for (const gone of retirableCaseCards(cards)) {
+    condemn({
+      id: gone.id,
+      lemma: gone.lemma,
+      back: byId.get(gone.id)?.back ?? "",
+      targetCase: gone.grammCase,
+      why: gone.why,
+    });
+    owners.add(gone.ownerId);
+  }
+
+  /*
+    The third rule, last, so a card the first two already condemn is reported
+    under the fault its reader knows. This one needs the whole entry, which is
+    why the query above reads more than the first two need.
+  */
+  /*
+    With the sentences each word may borrow from the rest of the dictionary,
+    because the builder is given them too: a card the deck builder can make
+    is not a card to remove. See lib/dict/borrow.ts.
+  */
+  const all = await prisma.lexeme.findMany({
+    select: {
+      id: true, lemma: true, pos: true, examples: true,
+      forms: { select: { formType: true, value: true, morphCode: true } },
+    },
+  });
+  const borrowed = borrowSentences(all.map((r) => ({
+    key: r.id, lemma: r.lemma, pos: r.pos, forms: r.forms, examples: parseExamples(r.examples),
+  })));
+  const withBorrowed = cards.map((card) => ({
+    ...card,
+    lexeme: card.lexeme && card.lexemeId
+      ? { ...card.lexeme, borrowed: borrowed.get(card.lexemeId) ?? [] }
+      : card.lexeme,
+  }));
+  for (const gone of unsentencedCaseCards(withBorrowed)) {
     condemn({
       id: gone.id,
       lemma: gone.lemma,

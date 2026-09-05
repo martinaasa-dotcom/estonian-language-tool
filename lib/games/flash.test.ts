@@ -194,8 +194,9 @@ describe("shapesFor", () => {
   const inessive = () => askableSlots(TUBA).find((s) => s.slot === "INESSIVE")!;
 
   it("offers the sentence shapes only where a sentence carries that very form", () => {
-    // `Ma olen toas.` is recorded, so the inessive can be heard and gapped.
-    expect(shapesFor(TUBA, inessive())).toEqual(["inflect", "gap", "heard", "build"]);
+    // `Ma olen toas.` is recorded, so the inessive is asked as that sentence
+    // first, and never as a bare "put it in the seesütlev".
+    expect(shapesFor(TUBA, inessive())).toEqual(["gap", "heard", "build"]);
     // Nothing recorded carries `toaga`, so those two shapes are simply absent
     // rather than invented.
     const comitative = askableSlots(TUBA).find((s) => s.slot === "COMITATIVE")!;
@@ -213,17 +214,28 @@ describe("shapesFor", () => {
 
 describe("shapeFor", () => {
   it("opens one shape at a time as the word gets right", () => {
-    const pool = ["inflect", "gap", "heard", "build"] as const;
-    expect(shapeFor(pool, 0)).toBe("inflect");
-    expect(shapeFor(pool, 1)).toBe("gap");
-    expect(shapeFor(pool, 2)).toBe("heard");
-    expect(shapeFor(pool, 3)).toBe("build");
+    const pool = ["gap", "heard", "build"] as const;
+    expect(shapeFor(pool, 0)).toBe("gap");
+    expect(shapeFor(pool, 1)).toBe("heard");
+    expect(shapeFor(pool, 2)).toBe("build");
   });
 
   it("keeps rotating once every shape is open, so one word is not one question", () => {
-    const pool = ["inflect", "gap", "heard", "build"] as const;
-    expect(shapeFor(pool, 4)).toBe("inflect");
-    expect(shapeFor(pool, 5)).toBe("gap");
+    const pool = ["gap", "heard", "build"] as const;
+    expect(shapeFor(pool, 3)).toBe("gap");
+    expect(shapeFor(pool, 4)).toBe("heard");
+  });
+
+  it("leads with the sentence on the first ask, wherever the dictionary has one", () => {
+    const inessive = askableSlots(TUBA).find((s) => s.slot === "INESSIVE")!;
+    const task = flashTask({ word: TUBA, slot: inessive, cardId: "c", step: 0 })!;
+    expect(task.shape).toBe("gap");
+    expect(task.gapped).toBe("Ma olen ____.");
+  });
+
+  it("falls back to the bare ask only where no sentence carries the form", () => {
+    const comitative = askableSlots(TUBA).find((s) => s.slot === "COMITATIVE")!;
+    expect(flashTask({ word: TUBA, slot: comitative, cardId: "c", step: 0 })!.shape).toBe("inflect");
   });
 
   it("never runs off the end of a short pool", () => {
@@ -243,7 +255,7 @@ describe("flashTask", () => {
     });
 
   it("builds a gap out of the sentence, never out of thin air", () => {
-    const task = taskFor(TUBA, "INESSIVE", 1)!;
+    const task = taskFor(TUBA, "INESSIVE", 0)!;
     expect(task.shape).toBe("gap");
     expect(task.gapped).toBe("Ma olen ____.");
     expect(task.sentence).toBe("Ma olen toas.");
@@ -275,7 +287,7 @@ describe("flashTask", () => {
   });
 
   it("hides the sentence on the heard shape and keeps it for the reveal", () => {
-    const task = taskFor(TUBA, "INESSIVE", 2)!;
+    const task = taskFor(TUBA, "INESSIVE", 1)!;
     expect(task.shape).toBe("heard");
     expect(task.gapped).toBeNull();
     expect(task.sentence).toBe("Ma olen toas.");
@@ -285,17 +297,18 @@ describe("flashTask", () => {
     // Both illatives are right and a lexicographer writes whichever the
     // sentence wanted, so a screen marking the form inside it has to look for
     // the one that is in it.
-    const task = taskFor(TUBA, "INESSIVE", 1)!;
+    const task = taskFor(TUBA, "INESSIVE", 0)!;
     expect(task.sentenceForm).toBe("toas");
     expect(taskFor(TUBA, "COMITATIVE", 0)!.sentenceForm).toBeNull();
 
-    // And a shape that is not about a sentence carries none, even where the
-    // dictionary has one: an `inflect` task shows the pair the slot leads
-    // with, not whichever spelling a lexicographer reached for.
-    const plain = taskFor(TUBA, "INESSIVE", 0)!;
+    // And a shape that is not about a sentence carries none: an `inflect`
+    // task shows the pair the slot leads with, not whichever spelling a
+    // lexicographer reached for. It is only ever reached where the dictionary
+    // has no sentence, so the comitative is the one to ask.
+    const plain = taskFor(TUBA, "COMITATIVE", 0)!;
     expect(plain.shape).toBe("inflect");
     expect(plain.sentence).toBeNull();
-    expect(plain.shown).toEqual(["toas"]);
+    expect(plain.shown).toEqual(["toaga"]);
   });
 
   it("says whether the form was retrieved or worked out", () => {

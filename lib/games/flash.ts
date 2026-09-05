@@ -49,10 +49,29 @@ import type { CaseKey } from "@/lib/estonian/types";
  *
  * `shapeFor` widens the pool as the learner gets the word right: the first ask
  * is the plainest shape available and each correct answer opens the next one,
- * so `tuba` starts at "what is it in the seesütlev" and ends at "write me a
+ * so `tuba` starts at the gap in `Ma olen ____.` and ends at "write me a
  * sentence with it". A word never gets harder than the dictionary can support:
  * a sentence shape needs an attested sentence carrying that very form, and
  * where there is none the pool simply holds fewer shapes.
+ *
+ * THE SENTENCE IS THE PLAINEST ASK, NOT THE HARDEST, and the first version had
+ * that backwards. It opened every word on `inflect`, the word and the question
+ * a case answers, and only the second correct answer reached the gap. A
+ * learner drove it and said the ask was still not specific enough: `kohtuma`
+ * over "How do you say this about somebody else, already happened?" is a
+ * clause describing a form, and what they wanted was the sentence that needs
+ * it, `Ta ____ eile sõbraga`, so that the reason for the ending is on the
+ * screen and not in a grammar book. That is the rule the deck already keeps
+ * (a case is drilled in a sentence that uses it, or it is not drilled), and a
+ * round built on the same log has no argument for being looser. So where the
+ * dictionary holds a sentence carrying the form, the pool is `gap`, `heard`,
+ * `build` and `inflect` is not in it: a bare ask on a word the app can show
+ * in use is the less effective question, and there is no step at which it
+ * becomes the better one. `inflect` survives only where no lexicographer has
+ * recorded the form, since the alternative there is not asking the form at
+ * all, and the page prefers a slot with a sentence behind it over one
+ * without. Every form of the ask is still marked against what the dictionary
+ * holds, and nothing is written (ADR-005).
  *
  * NOTHING HERE IS WRITTEN AND NOTHING IS GENERATED. Every Estonian character in
  * a task came out of Ekilex or off the app's own derivation from a stored stem,
@@ -283,13 +302,23 @@ function shapesFrom(
 ): FlashShape[] {
   if (slot.slot === "PRODUCTION") return ["recall"];
 
-  const out: FlashShape[] = ["inflect"];
+  // The sentence leads wherever there is one, and the bare ask is not offered
+  // beside it: see the header. Without a sentence the bare ask is all there is.
   if (sentence) {
-    out.push("gap");
+    const out: FlashShape[] = ["gap"];
     if (canSpeak) out.push("heard");
+    out.push("build");
+    return out;
   }
-  out.push("build");
-  return out;
+  return ["inflect", "build"];
+}
+
+/**
+ * Whether the dictionary can show this slot in a sentence, which is what the
+ * page uses to ask a word for the forms it can show before the ones it cannot.
+ */
+export function hasSentence(word: FlashWord, slot: FlashSlot): boolean {
+  return sentenceFor(word, slot) !== null;
 }
 
 /**

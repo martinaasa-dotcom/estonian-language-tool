@@ -6,7 +6,7 @@ import { gapForms } from "@/lib/estonian/gapForms";
 import { caseAnswer, stemsFrom } from "@/lib/estonian/derive";
 import { caseIndex, readCase } from "@/lib/estonian/whichCase";
 import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
-import { parseExamples, usableExamples } from "@/lib/dict/examples";
+import { parseExamples, usableExamples, type Example } from "@/lib/dict/examples";
 import { CONJUGATION_SLOTS, type ConjugationSlot } from "@/lib/srs/slots";
 import type { CaseKey } from "@/lib/estonian/types";
 
@@ -24,7 +24,7 @@ export interface CardTypeSpec {
 export const CARD_TYPES: readonly CardTypeSpec[] = [
   { type: "RECOGNITION", label: "Recognition", description: "Estonian → English", defaultOn: true },
   { type: "PRODUCTION", label: "Production", description: "English → Estonian", defaultOn: true },
-  { type: "CASE_FORM", label: "Case form", description: "Answer a case question from the stem", defaultOn: false },
+  { type: "CASE_FORM", label: "Case form", description: "Put the word in the form a real sentence needs", defaultOn: false },
   { type: "GRADATION", label: "Gradation", description: "Strong grade → weak grade", defaultOn: false },
   { type: "GOVERNMENT", label: "Government", description: "Which case the verb takes", defaultOn: false },
   { type: "CLOZE", label: "In a sentence", description: "Fill the gap in a real Estonian sentence", defaultOn: true },
@@ -194,6 +194,18 @@ export interface LexemeForCards {
    * was built before rather than silently claiming a word has no synonym.
    */
   alsoAccepted?: readonly string[];
+  /**
+   * Sentences recorded under other entries that carry one of this word's own
+   * forms, for the cards that are about a form.
+   *
+   * A case card and a conjugation card are cut from a sentence carrying the
+   * form, and a word's own usages are a handful; the dictionary's twelve
+   * thousand sentences are about every word in them. `lib/dict/borrow.ts` is
+   * the rule for which of those a word may borrow, and it is strict on
+   * purpose: a spelling exactly one entry claims, or nothing. Absent for a
+   * caller that has not asked, which builds the cards that were built before.
+   */
+  borrowed?: readonly Example[];
 }
 
 export interface GeneratedCard {
@@ -216,6 +228,21 @@ export interface GeneratedCard {
 }
 
 const form = (l: LexemeForCards, type: string) => l.forms.find((f) => f.formType === type)?.value;
+
+/**
+ * Whether a case card's front is the shape this builder used to make.
+ *
+ * A case card was `tuba → milles? kus?` for a year, the word and the question
+ * a case answers, and it is a sentence with a gap in it now. A `Card` row keeps
+ * whichever front it was built with, so the two shapes sit side by side in any
+ * deck assembled across the change, and this is how the repair in
+ * `prisma/repair.ts` and the audit in `scripts/audit-decks.ts` tell them
+ * apart. The arrow is the whole test: a sentence a lexicographer recorded does
+ * not carry one, and every bare front did.
+ */
+export function isBareCaseFront(front: string): boolean {
+  return front.includes(" → ");
+}
 
 /**
  * The cases every word is drilled on, whichever set of local ones it takes.
@@ -252,6 +279,27 @@ const DRILL_CASES: readonly CaseKey[] = ["COMITATIVE", "TRANSLATIVE"];
 function naturalSentencesFor(lex: LexemeForCards) {
   const opener = nominalOpener(lex.pos, [lex.lemma, ...lex.forms.map((f) => f.value)]);
   return usableExamples(parseExamples(lex.examples)).filter((e) => naturalSentence(e.et, opener));
+}
+
+/**
+ * The sentences a card *about a form* may be cut from: the word's own first,
+ * then what it may borrow from the rest of the dictionary.
+ *
+ * Own first, because a usage filed under the word is about the word and the
+ * borrowed pool is a second opinion at best. The gap-fill card keeps to the
+ * word's own sentences: it hides whatever form a sentence happens to hold and
+ * is capped at two a word, so widening its pool would change how big a deck is
+ * without teaching a form the word could not already show.
+ */
+function formSentencesFor(lex: LexemeForCards) {
+  const own = naturalSentencesFor(lex);
+  if (!lex.borrowed || lex.borrowed.length === 0) return own;
+  const opener = nominalOpener(lex.pos, [lex.lemma, ...lex.forms.map((f) => f.value)]);
+  const seen = new Set(own.map((e) => e.et.toLocaleLowerCase("et")));
+  const extra = lex.borrowed.filter(
+    (e) => naturalSentence(e.et, opener) && !seen.has(e.et.toLocaleLowerCase("et")),
+  );
+  return [...own, ...extra];
 }
 
 /**
@@ -341,7 +389,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           carries `targetCase`, which is the column every case figure in the
           app is derived from.
         */
-        const sentences = naturalSentencesFor(lex);
+        const sentences = formSentencesFor(lex);
         if (sentences.length === 0) break;
         const stems = stemsFrom(lex.forms);
         const index = caseIndex(stems);
@@ -466,7 +514,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
           the mastery reading read it.
         */
         if (lex.pos !== "VERB") break;
-        const sentences = naturalSentencesFor(lex);
+        const sentences = formSentencesFor(lex);
         if (sentences.length === 0) break;
 
         // Every spelling of every slot, and which slots claim it. The bare
