@@ -10,6 +10,7 @@ import { useFeedbackSound } from "@/components/AudioPrefs";
 import type { QuestCard } from "@/lib/progress/quest";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /** Two minutes, which is what was asked for and is about right for 24 cards. */
 const DURATION_S = 120;
@@ -158,7 +159,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
         }
         return;
       }
-      if (e.key === " " && !revealed) { e.preventDefault(); setRevealed(true); return; }
+      if (isAdvanceKey(e) && !revealed) { e.preventDefault(); setRevealed(true); return; }
       if (!revealed) return;
       if (e.key === "1") { e.preventDefault(); void answer(false); }
       if (e.key === "2") { e.preventDefault(); void answer(true); }
@@ -241,8 +242,8 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
               : "Every one of those went into the schedule, so the cards you missed come back sooner."}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <ButtonLink href="/" variant="primary" size="lg">Back to Today</ButtonLink>
             <ButtonLink href="/practice" size="lg">Play a round</ButtonLink>
+            <ButtonLink href="/" variant="primary" size="lg">Back to Today</ButtonLink>
           </div>
         </div>
       </Page>

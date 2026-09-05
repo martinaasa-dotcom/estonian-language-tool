@@ -16,6 +16,7 @@ import { checkAnswer, countsAsRecalled } from "@/lib/estonian/answer";
 import { isAnswerable, type LessonStep } from "@/lib/collections/lesson";
 import { grammarPoint } from "@/lib/estonian/grammar";
 import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 interface Answer {
   id: string;
@@ -145,7 +146,7 @@ function Verdict({ ok, note }: { ok: boolean; note?: string }) {
 function Continue({ onNext, label = "Continue" }: { onNext: () => void; label?: string }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter") { e.preventDefault(); onNext(); }
+      if (isAdvanceKey(e)) { e.preventDefault(); onNext(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

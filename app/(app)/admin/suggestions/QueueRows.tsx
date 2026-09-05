@@ -137,17 +137,17 @@ function Row({ row, onDone }: { row: QueueRow; onDone: (message: string) => void
 
         {row.status === "OPEN" ? (
           <div className="flex flex-wrap gap-2">
+            <Button variant="ghost" disabled={pending} onClick={() => act("DECLINE", false)}>
+              <X size={15} aria-hidden /> Decline
+            </Button>
+            <Button variant="secondary" disabled={pending} onClick={() => act("ACCEPT", false)}>
+              {canApply ? "Accept without applying" : "Accept"}
+            </Button>
             {canApply && (
               <Button variant="primary" disabled={pending} onClick={() => act("ACCEPT", true)}>
                 <Check size={15} aria-hidden /> Accept and apply
               </Button>
             )}
-            <Button variant="secondary" disabled={pending} onClick={() => act("ACCEPT", false)}>
-              {canApply ? "Accept without applying" : "Accept"}
-            </Button>
-            <Button variant="ghost" disabled={pending} onClick={() => act("DECLINE", false)}>
-              <X size={15} aria-hidden /> Decline
-            </Button>
           </div>
         ) : (
           <Chip tone={row.status === "ACCEPTED" ? "good" : "neutral"}>

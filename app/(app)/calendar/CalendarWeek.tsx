@@ -112,8 +112,8 @@ export function CalendarWeek({
         <AddPanel days={days} opensAs={adding} onDone={() => setAdding(null)} />
       ) : (
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" size="lg" onClick={() => setAdding("CLASS")}>
-            <CalendarPlus size={16} aria-hidden /> Add a class or study slot
+          <Button size="lg" onClick={() => setAdding("REMINDER")}>
+            <BellPlus size={16} aria-hidden /> Add a task or reminder
           </Button>
           {/*
             A reminder is a `Task`, which is the row Today already draws and
@@ -122,8 +122,8 @@ export function CalendarWeek({
             beside it. Which is exactly why it needs its own button: the two
             are one form and two different things to want.
           */}
-          <Button size="lg" onClick={() => setAdding("REMINDER")}>
-            <BellPlus size={16} aria-hidden /> Add a task or reminder
+          <Button variant="primary" size="lg" onClick={() => setAdding("CLASS")}>
+            <CalendarPlus size={16} aria-hidden /> Add a class or study slot
           </Button>
         </div>
       )}
@@ -425,10 +425,10 @@ function AddPanel({ days, opensAs, onDone }: {
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
+        <Button onClick={onDone} disabled={pending}>Cancel</Button>
         <Button variant="primary" onClick={submit} disabled={pending || !title.trim()}>
           {pending ? "Saving" : "Add it"}
         </Button>
-        <Button onClick={onDone} disabled={pending}>Cancel</Button>
       </div>
     </Card>
   );

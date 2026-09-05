@@ -14,8 +14,8 @@ export default function NotFound() {
         English, and inflected forms, which is usually what you actually have in front of you.
       </p>
       <div className="mt-2 flex flex-wrap justify-center gap-3">
-        <ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>
         <ButtonLink href="/">Back to Today</ButtonLink>
+        <ButtonLink href="/dictionary" variant="primary">Open the dictionary</ButtonLink>
       </div>
       {/* A link inside the app that leads nowhere is our fault, not the reader's. */}
       <div className="mt-2 w-full">

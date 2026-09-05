@@ -140,8 +140,8 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
             Every one of those went into the schedule, so what you missed comes back sooner.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <ButtonLink href="/review/target" variant="primary" size="lg">Again</ButtonLink>
             <ButtonLink href="/practice" size="lg">Back to practice</ButtonLink>
+            <ButtonLink href="/review/target" variant="primary" size="lg">Again</ButtonLink>
           </div>
         </div>
       </Page>

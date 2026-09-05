@@ -110,9 +110,9 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
           <StatTile value={`${minutes}m`} label="Time" tone="sky" />
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/review/speaking" variant="primary" size="lg">Another round</ButtonLink>
           <ButtonLink href="/practice" size="lg">Other modes</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
+          <ButtonLink href="/review/speaking" variant="primary" size="lg">Another round</ButtonLink>
         </div>
       </div>
     );

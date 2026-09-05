@@ -13,6 +13,7 @@ import { OPTION_CLASS, optionState } from "@/lib/ux/verdict";
 import { VOICES } from "@/lib/audio/voice";
 import { conditionFor, describeHearing } from "@/lib/audio/conditions";
 import { useAudioPrefs } from "@/components/AudioPrefs";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /**
  * A different speaker for each word, the way the examination's listening part
@@ -109,7 +110,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
     const onKey = (e: KeyboardEvent) => {
       if (finished) return;
       if (answered) {
-        if (e.key === " " || e.key === "Enter") { e.preventDefault(); next(); }
+        if (isAdvanceKey(e)) { e.preventDefault(); next(); }
         return;
       }
       const n = Number(e.key);
@@ -150,8 +151,8 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           <StatTile value={attempted} label="Attempted" tone="sky" />
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/review/listening" variant="primary" size="lg">Listen again</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
+          <ButtonLink href="/review/listening" variant="primary" size="lg">Listen again</ButtonLink>
         </div>
       </div>
     );
