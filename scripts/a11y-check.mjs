@@ -171,6 +171,14 @@ const ROUTES = [
     heading at all.
   */
   "/situations", "/situations/arsti-aeg",
+  /*
+    And the exception area, which is the fourth time this list has been caught
+    by the fault its own header names. `/review/exceptions` is a whole session
+    rendered from one component, and its first rung draws a form, a paragraph
+    and one button with nothing to type into, which is the shape this list was
+    written for.
+  */
+  "/grammar/exceptions", "/grammar/exceptions/stem", "/review/exceptions",
 ];
 
 const browser = await launchChromium();

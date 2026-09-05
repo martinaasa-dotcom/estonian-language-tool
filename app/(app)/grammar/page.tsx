@@ -1,5 +1,5 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
-import { Sparkles, Target } from "lucide-react";
+import { Sparkles, Target, TriangleAlert } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { oneEntryPerLemma } from "@/lib/dict/search";
@@ -91,6 +91,38 @@ export default async function GrammarIndexPage() {
             </div>
           </div>
         </Card>
+
+        {/*
+          WHERE THE PATTERN STOPS, LINKED FROM THE PAGE THAT TEACHES IT.
+
+          The card above says three are memorised and eleven follow, which is
+          true and is the most motivating fact a beginner is given. It is also
+          the thing that burns them, because `caseAnswer` prefers an attested
+          form over the rule and prints `tuppa` under a heading that taught
+          `sse`. A learner who is not told where the rule ends has been handed
+          a pattern presented as more reliable than it is.
+        */}
+        <Link
+          href="/grammar/exceptions"
+          className="lift flex items-start gap-4 rounded-[var(--r-lg)] border p-5"
+          style={{ borderColor: "var(--rule)", background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+        >
+          <span
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+            style={{ background: "var(--butter)", color: "var(--surface)" }}
+          >
+            <TriangleAlert size={19} aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-lg font-bold" style={{ color: "var(--ink)" }}>
+              Where the endings stop
+            </span>
+            <span className="mt-1.5 block text-sm" style={{ color: "var(--ink-2)" }}>
+              Tuppa, not toasse. The stem moves, and then eleven cases move with it. Which words do
+              that, and how to drill them.
+            </span>
+          </span>
+        </Link>
 
         {weakest.length > 0 && (
           <section>

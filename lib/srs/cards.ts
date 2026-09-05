@@ -249,7 +249,9 @@ const DRILL_CASES: readonly CaseKey[] = ["COMITATIVE", "TRANSLATIVE"];
  * pattern is a usage that names its own headword and then illustrates a sense
  * the gloss beside it does not name.
  */
-function naturalSentencesFor(lex: LexemeForCards) {
+export function naturalSentencesFor(lex: {
+  lemma: string; pos: string; examples?: string | null; forms: { value: string }[];
+}) {
   const opener = nominalOpener(lex.pos, [lex.lemma, ...lex.forms.map((f) => f.value)]);
   return usableExamples(parseExamples(lex.examples)).filter((e) => naturalSentence(e.et, opener));
 }

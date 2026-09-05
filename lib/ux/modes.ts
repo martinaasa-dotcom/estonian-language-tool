@@ -261,6 +261,20 @@ export const PRACTICE_MODES: readonly PracticeMode[] = [
       "the dictionary, and the conditional joins in from B1.",
   },
   {
+    /*
+      The one drill whose subject is a list of words rather than a shape of
+      question. `within` is the reference page that names them, which is the
+      screen a learner is standing on when the question occurs to them, and it
+      is where the same words are readable rather than asked.
+    */
+    href: "/review/exceptions", title: "Exceptions", subtitle: "The unpredictable forms",
+    icon: "TriangleAlert", tone: "butter", group: "targeted", note: "Typed, three rungs",
+    within: "/grammar/exceptions",
+    blurb:
+      "Tuppa, not toasse. The words where the ending rule stops holding, met, then produced, " +
+      "then put back in a sentence a native writer wrote.",
+  },
+  {
     href: "/review/clinic", title: "Leech clinic", subtitle: "What keeps failing", icon: "Stethoscope",
     tone: "blush", group: "targeted", note: "From your log",
     blurb:

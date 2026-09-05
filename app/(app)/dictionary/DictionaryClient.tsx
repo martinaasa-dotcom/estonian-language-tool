@@ -11,6 +11,8 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Speak, SpeakPair } from "@/components/Speak";
 import { Card, Chip, Empty } from "@/components/ui";
 import { buildCaseTable, shownForms, stemsFrom } from "@/lib/estonian/derive";
+import { exceptionsFor } from "@/lib/estonian/exceptions";
+import { WordExceptions } from "@/components/WordExceptions";
 import { caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import { availableCardTypes, CARD_TYPES, type CardType } from "@/lib/srs/cards";
 import type { Example } from "@/lib/dict/examples";
@@ -696,6 +698,22 @@ function Entry({ entry, tutorReady, glossLanguage }: {
           </div>
         </div>
       )}
+
+      {/*
+        WHERE THIS WORD BREAKS THE PATTERN, BETWEEN THE PARTS AND THE TABLE.
+
+        The table below is headed "the rest, worked out from the genitive" and
+        prints `tuppa` in the illative row, because `caseAnswer` prefers an
+        attested form over the rule. Both facts are right and the page never put
+        them next to each other, so a learner left with the ending `sse` and a
+        form that does not have it, and no way to know which to reach for
+        tomorrow. The gradation chip in the header is not that: it names an
+        alternation, sits above four surprises and points at none of them.
+
+        Computed from the forms already on the screen (`lib/estonian/exceptions.ts`),
+        so this cannot drift from the table under it.
+      */}
+      <WordExceptions exceptions={exceptionsFor({ lemma: entry.lemma, pos: entry.pos, forms: entry.forms })} />
 
       {retrieved.length > 0 ? (
         <WordForms

@@ -284,6 +284,18 @@ export const SECTIONS: NavSection[] = [
         tone: "butter", keywords: "cases reference partitive genitive inessive endings rules seesutlev",
       },
       {
+        /*
+          Where the endings stop being predictable. A part of the grammar
+          reference rather than a place beside it: the whole point of the area
+          is what it says about the pattern that page teaches, and it is linked
+          from the top of it. See `lib/estonian/exceptions.ts`.
+        */
+        href: "/grammar/exceptions", label: "Exceptions",
+        blurb: "The words the endings do not reach", icon: "TriangleAlert",
+        tone: "butter", within: "/grammar",
+        keywords: "irregular exception gradation stem change tuppa illative unpredictable memorise astmevaheldus",
+      },
+      {
         href: "/dictionary/common", label: "Commonest words",
         blurb: "The hundred of each kind you will meet most", icon: "TrendingUp",
         tone: "sky", within: "/dictionary",

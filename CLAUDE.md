@@ -1150,6 +1150,81 @@ of the statement now and checks it against the keys `expanded.json` carries. Its
 passed with the column deleted, because the paragraph explaining why it mattered still mentioned it
 by name, which is the trap `code()` exists for one directory over.
 
+**And the app taught a pattern without ever saying where it stops.** `/grammar` opens with "three
+you memorise, and eleven you can work out", which is true and is the most motivating fact a
+beginner is given. `caseAnswer` then quietly prefers an attested form over the rule, so a learner
+meets `tuppa` printed under a heading that taught them `sse` and has no way of knowing which of the
+two to reach for tomorrow. That is worse than not knowing: the pattern is presented as more
+reliable than it is, and the place it fails first is the stem the whole singular table is built on
+(`tuba : toa`, `aeg : aja`, `aken : akna`), where guessing wrong gets eleven cases wrong at once.
+
+**No word in the exception area is typed.** A hand-written table of irregular forms would be this
+app writing Estonian and the first misspelling in it would ship in silence and then be drilled
+(ADR-005). `lib/estonian/exceptions.ts` states, per slot, the pattern a course actually teaches,
+and reports every word whose stored form disagrees: delete every Estonian word from its comments
+and its output is identical, because what it holds is suffixes, the same latitude `cases.ts` and
+`conjugate.ts` take, and the illative's is read off `CASES` rather than typed. Nothing is stored
+either, which is ADR-014's rule in a different room: a column would be a second source of truth for
+a fact that is a string comparison away, and it would be wrong the moment somebody corrected an
+entry by hand.
+
+**The rules were measured into shape rather than reasoned into it, and `npm run audit:exceptions`
+is the instrument.** The first pass flagged 3,253 partitive plurals, 61% of the dictionary, and the
+ranked list said why: `aadresse`, `aegu`, `asju` are the ordinary short partitive plural that every
+one of those words has. A kind covering most of the language is a rule written down badly rather
+than a language full of exceptions. What is worth flagging there is one thing rather than two, that
+the plural sits on a different stem from the singular, and the genitive plural test folded into it.
+Read the ranked list, not the total, exactly as `eval:scene` requires. Over the shipped dictionary
+3,586 of 5,363 entries break a pattern somewhere: short illative 2,699, stem 1,196, partitive
+singular 880, plural stem 857, partitive plural 498, tud participle 204, da-infinitive 189, present
+stem 116, polite imperative 75, past third person 46, no plural 30, past stem 23, nominative plural
+1. Two of those exist only for the course words, because the harvest stores what the rules cannot
+reach and the Wiktionary expansion holds none.
+
+**Silence is never evidence**, which is the rule `lib/srs/retire.ts` was corrected for. Every test
+runs only where the form is stored, so a thin entry reports nothing rather than reporting that it
+behaves, and "no plural" needs a complete singular beside it or a word confirmed off a photograph
+would be reported as having none.
+
+**A screen prints what the pattern would have given only where that is also a word.** Both
+illatives are Estonian, a course teaches them as a pair and `caseAnswer` accepts either, so
+`toasse` is printed beside `tuppa`. Everywhere else the rule's answer is a form nobody says, and
+putting one on screen with a line through it is this app writing Estonian and hoping nobody
+memorised it. `ruleFormIsAlsoRight` is the guard and it is asserted on the member access rather
+than on the word, for the reason the readiness card's evidence tier is.
+
+**A word breaks several patterns and each one is its own row.** `aeg` breaks four, and rolling them
+into one sentence is what the gradation chip on the entry already did: "gradation g : j" is true,
+sits above four surprises and points at none of them. The entry, the kind's page and the round all
+draw the same `ExceptionNote`, so a word explained in one place cannot say something else in
+another.
+
+**And showing a form is not the same as asking for it.** The short illative is spelled like a
+principal part for 1,937 of the 2,700 words that have one, because that is what the case does, so
+the reference page prints `Euroopa · sisseütlev` and the round refuses to ask for it: a card whose
+answer is the word in its own question cannot be failed, and the scheduler reads every pass as a
+recall. `drillable` is that rule and `npm run audit:questions` is the backstop that found it, along
+with `saun`, whose English gloss is "sauna" and whose short illative is `sauna`, so the meaning
+printed beside the word answered the question. The gap rung has the stricter version of the same
+test, which is `readCase`'s: `arsti` is the short illative of `arst` and also its genitive and its
+partitive, so `Läksin ____ juurde.` gapped for the illative asks for a genitive and then names it
+the sisseütlev. Exactly one slot claims the spelling, or no gap.
+
+**The round is meet it, type it, use it, and it is the ladder rather than a second progression.**
+Every word is met, then every word is produced, then every word is used, so the gap between being
+shown a form and being asked for it is the size of the round rather than one card, which is
+`requeue`'s argument in `lib/srs/queue.ts`. Meeting writes nothing, because a card you have never
+seen cannot be recalled; the other two grade through `gradeCard` carrying the slot that was asked
+(ADR-016), so the illative somebody cannot produce here lands in the same weakest-case chart as the
+illative they cannot produce on a card. A word the learner holds no card for writes nothing at all,
+which is the answer `/review/emoji` gives about the same situation. `markForm` is the flash round's
+own marker split out rather than copied, because two screens disagreeing about whether `toast` is a
+slip or the wrong case is exactly the judgement that matters here. What a gap may hide is still
+`gapForms`, narrowed to the exception being asked about and never widened. And a round spreads
+itself across the kinds: half the dictionary has a short illative, so taking each word's first
+exception gave five illatives and one verb, three of them country names, which is a true sample of
+the area and a poor round.
+
 **And "the other ten are one ending each" was an assertion about five words until it was measured.**
 The verbs had `npm run audit:verbs` and 797 of them checked against Ekilex; the nouns, which is the
 larger half of the language and every case table in the app, had a note saying somebody had run the
@@ -4975,7 +5050,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
-`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`. Most of them now
+`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `exceptionsFor`,
+`KIND_NOTES`, `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands
@@ -4994,6 +5070,7 @@ npm run audit:decks      # case cards already in a deck whose answer spells the 
 npm run audit:cases      # derive every case of every noun, both columns, and compare with Ekilex (--write fills the gaps)
 npm run audit:senses     # re-check every course gloss against the sense Ekilex files it under
 npm run audit:sense      # does every question make sense for the word it is about
+npm run audit:exceptions # which words do not follow the pattern, ranked by kind (--list for the words)
 npm run audit:homonyms   # does each gloss describe the word whose forms sit beside it (--write applies the pins)
 npm run audit:merge      # after merging: what the other side added that is no longer here
 npm run check:secrets    # fails if a credential reached the client bundle

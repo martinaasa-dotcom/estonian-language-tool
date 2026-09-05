@@ -149,6 +149,15 @@ const ROUTES = [
   "/grammar",
   "/grammar/partitive",
   "/grammar/topic/object",
+  /*
+    The exception area. Two cards a row, each carrying a title, a count chip and
+    a paragraph, which is the shape that goes over at 768 where the rail appears
+    and the column is at its narrowest; the kind page is a list of entries whose
+    row is a word, a gloss and two chips on one line.
+  */
+  "/grammar/exceptions",
+  "/grammar/exceptions/stem",
+  "/review/exceptions",
 
   // The course.
   "/learn",
