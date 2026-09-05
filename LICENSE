@@ -44,6 +44,19 @@ terms set by the people who made it:
       share-alike. `lib/collections/frequency.ts` is built from them and
       carries the same terms. https://github.com/hermitdave/FrequencyWords
 
+  Every spelling of every word
+      `prisma/data/forms/` is the forms list: whether a spelling is Estonian
+      and which headword it belongs to, and nothing else. Built by
+      `scripts/build-forms.ts` from three sources. The Ekilex enumeration
+      above; Ekilex's own inflection tables as published in
+      KristjanPikhof/Estonian-Wordlist-Enriched-Ekilex, CC BY 4.0 for the
+      Institute's data and CC BY-SA 4.0 for that repository, so the list
+      carries share-alike; and Vabamorf, Filosoft's open-source
+      morphological analyser and synthesiser for Estonian, LGPL, whose
+      lexicon the synthesised forms come from.
+      https://github.com/KristjanPikhof/Estonian-Wordlist-Enriched-Ekilex
+      https://github.com/Filosoft/vabamorf
+
   Synthesised speech
       From TartuNLP at the University of Tartu, fetched at runtime and
       cached. Not redistributed as part of this repository.

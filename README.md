@@ -542,6 +542,7 @@ npm run test:browser     # routes, modes, offline, the level check, scanning and
 npm run test:mobile      # the phone, measured; needs the server running
 npm run build:frequency  # recount the commonest words from the published corpus
 npm run demo             # two months of sample history, to look around
+npm run forms            # rebuild the forms list: every spelling of every Estonian word
 npm run db:seed          # reload the built-in dictionary (always)
 npm run db:seed:ensure   # load it only if the dictionary is empty, what the deploy runs
 ```

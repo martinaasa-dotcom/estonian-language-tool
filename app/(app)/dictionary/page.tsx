@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { searchLexemes } from "@/lib/dict/search";
 import { enrichWithinDeadline, lookupAndStore } from "@/lib/dict/lookup";
-import { didYouMean, isKnownWord } from "@/lib/dict/known";
+import { didYouMean, knownAs as knownLemmas } from "@/lib/dict/known";
 import { backfillClozeCards } from "@/lib/srs/backfill";
 import { ekilexConfigured } from "@/lib/ekilex/client";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
@@ -44,14 +44,44 @@ export default async function DictionaryPage({
   const { q = "", entry: wanted } = await searchParams;
   let hits = q ? await searchLexemes(q) : [];
 
-  // Nothing locally: ask Ekilex, store what comes back, and search again. The
-  // second lookup of the same word never leaves the machine.
+  /*
+    NOTHING LOCALLY, SO ASK WHICH WORD THAT SPELLING IS A FORM OF.
+
+    The search strips a case ending to find a genitive stem and a person
+    ending to find a first person, and that reaches every form the dictionary
+    holds. It reaches nothing for a word the dictionary has no entry for, and
+    that is where a form used to become a dead end twice over: `põhjas` is not
+    a headword, so Ekilex's search answered nothing for it too, and the screen
+    said nothing was found about the seesütlev of `põhi`. The forms list
+    (`lib/dict/forms.ts`) says which headwords a spelling belongs to, so the
+    live lookup below asks for the word rather than for the form.
+  */
+  const knownAs = q && hits.length === 0 ? await knownLemmas(q) : [];
+  /*
+    The first few and not all of them, because a spelling can belong to
+    several: `koolis` is the seesütlev of `kool` and a person of `koolma`, and
+    the list is ordered with the likeliest first. Each one is a query and each
+    one below is a request to a free academic service, so the cap is what
+    stops an ambiguous spelling costing five of each.
+  */
+  const WORTH_TRYING = 3;
+  for (const lemma of knownAs.slice(0, WORTH_TRYING)) {
+    if (hits.length > 0 || lemma === q.trim()) break;
+    hits = await searchLexemes(lemma);
+  }
+
+  // Still nothing: ask Ekilex, store what comes back, and search again. The
+  // second lookup of the same word never leaves the machine. The headword
+  // first, since that is what Ekilex is keyed on, then the spelling as typed.
   let fetched = false;
   if (q && hits.length === 0 && ekilexConfigured()) {
-    const found = await lookupAndStore(ownerId, q);
-    if (found) {
-      hits = await searchLexemes(found.lemma);
-      fetched = true;
+    for (const wanted of [...knownAs.slice(0, WORTH_TRYING), q]) {
+      const found = await lookupAndStore(ownerId, wanted);
+      if (found) {
+        hits = await searchLexemes(found.lemma);
+        fetched = true;
+        break;
+      }
     }
   }
 
@@ -75,10 +105,10 @@ export default async function DictionaryPage({
   /*
     AND WHETHER IT IS A WORD AT ALL, WHICH IS A DIFFERENT QUESTION.
 
-    Everything above searches the 5,363 entries this app can teach. `KnownWord`
-    is the 154,995 headwords Ekilex holds, built in thirty-two requests, and it
-    knows only that they exist. That is enough to tell three dead ends apart
-    which used to render identically:
+    Everything above searches the 5,363 entries this app can teach. The forms
+    list is every spelling of the 164,000 headwords Ekilex holds, and it knows
+    only that they exist and which word each belongs to. That is enough to
+    tell three dead ends apart which used to render identically:
 
       - A real Estonian word the dictionary has no entry for. The screen can
         say so, which is the case that was reported: `uudishimulik` appears in
@@ -86,12 +116,13 @@ export default async function DictionaryPage({
       - A misspelling of one. Offer it.
       - Neither, in which case the blank really is the answer.
 
-    Two indexed reads, and only on the path that was going to be a dead end.
+    One file read and one indexed query, and only on the path that was going
+    to be a dead end.
     `soundAlike` above stays and is the better answer where it fires, because
     it knows which Estonian sounds a learner confuses; this is the wider net
     behind it, over every word rather than the ones with entries.
   */
-  const known = hits.length === 0 && q ? await isKnownWord(q) : false;
+  const known = hits.length === 0 && knownAs.length > 0;
   const spellings = hits.length === 0 && q && !known && heard.length === 0
     ? await didYouMean(q)
     : [];
@@ -161,6 +192,7 @@ export default async function DictionaryPage({
         hits={hits}
         heard={heard}
         known={known}
+        knownAs={knownAs}
         spellings={spellings}
         glossLanguage={glossLanguage}
         openedId={opened?.id ?? null}
