@@ -91,8 +91,8 @@ export function diagnose(
   if (before.grammCase === reached) {
     return {
       sure: "likely",
-      says: `That is the case the question before wanted. Staying in the last answer's ending is the `
-        + `commonest thing that happens in a conversation, and hearing the new question word is what breaks it.`,
+      says: `you stayed in the ending the question before wanted. That is the commonest thing that `
+        + `happens in a conversation, and listening for the new question word is what breaks it.`,
     };
   }
 
@@ -113,27 +113,27 @@ export function diagnose(
     const dueMeans = CASE_NOTES.find((n) => n.key === wanted)?.plain;
     const askedMeans = CASE_NOTES.find((n) => n.key === reached)?.plain;
     const both = dueMeans && askedMeans
-      ? ` ${due.et} is the ending for ${dueMeans}, and ${asked.et} is the ending for ${askedMeans}.`
+      ? ` ${due.et} means ${dueMeans}; ${asked.et} means ${askedMeans}.`
       : "";
     return {
       sure: "likely",
-      says: `Both of these answer ${due.asksWhere}, so a class teaches them together and they get swapped.${both}`,
+      says: `both answer ${due.asksWhere}, so they are taught together and they get swapped.${both}`,
     };
   }
 
   if (reached === "NOMINATIVE") {
     return {
       sure: "likely",
-      says: "That is the word as the dictionary lists it, so the word had arrived and the ending had not. "
-        + "It is the right half to have first.",
+      says: "you used the word as the dictionary lists it. The word was there and the ending was not, "
+        + "which is the right half to have first.",
     };
   }
 
   if (reached === "GENITIVE" || reached === "PARTITIVE") {
     return {
       sure: "possible",
-      says: `${asked.et} is one of the three forms every other ending is built on, so this may be the stem `
-        + `arriving without the ending after it. ${due.et} is that stem plus one more piece.`,
+      says: `you used ${asked.et}, one of the three forms every other ending is built on, so the stem `
+        + `arrived without the ending after it. ${due.et} is that stem plus one more piece.`,
     };
   }
 
@@ -150,7 +150,7 @@ export function diagnose(
 export function diagnosePerson(): Hunch {
   return {
     sure: "likely",
-    says: "A dictionary lists a verb in that form, so it is the one you have met most and the one that "
+    says: "a dictionary lists a verb in that form, so it is the one you have met most and the one that "
       + "arrives first when you are thinking about what to say rather than how to say it.",
   };
 }

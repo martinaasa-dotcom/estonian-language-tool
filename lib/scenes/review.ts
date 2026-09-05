@@ -20,6 +20,14 @@
  * learner's own class does. Delete every Estonian word from the comments here
  * and the output is identical.
  *
+ * WHAT IT MAY NOT SAY TWICE. What was left undone. A learner reported this
+ * screen as unreadable, and the clearest single fault in it was that the same
+ * unmet goal was printed three times: ticked off in the objectives, again as a
+ * note here, and again under "One thing to work on" with the drill beside it.
+ * The list is the record and the drill is the action, so the note in the
+ * middle was the copy with nothing of its own to add. A run where nothing at
+ * all was said says so in the lead, which is where it belongs.
+ *
  * WHAT IT MAY NOT DO. Mark. There is no score, no percentage and no ranking
  * of the learner: a count of things achieved is the debrief's, a claim about
  * somebody's Estonian is the mock exam's alone (ADR-022), and this is advice.
@@ -30,6 +38,7 @@
  */
 import { caseByKey } from "@/lib/estonian/cases";
 import { CASE_NOTES } from "@/lib/estonian/grammar";
+import { plainAsk } from "@/lib/estonian/plainAsk";
 import type { CaseKey } from "@/lib/estonian/types";
 import type { SceneState } from "./state";
 import { diagnose, diagnosePerson, type Hunch } from "./diagnose";
@@ -39,8 +48,24 @@ import type { SceneSpec } from "./types";
 /** One thing worth saying, with the learner's own words under it. */
 export interface ReviewNote {
   readonly id: string;
-  /** English, a few words. What this note is about. */
+  /**
+   * English, a few words, and it leads.
+   *
+   * A learner reported this screen as unreadable and the heading is most of
+   * why: it read the case's Estonian name and its question word, which are a
+   * name and a question word to somebody who has met neither yet, over a note
+   * about their own sentence. That is the fault `lib/estonian/plainAsk.ts` was
+   * written for one screen over, and the answer is its answer: say what the
+   * ending is for in words anybody has, and keep the name underneath as the
+   * cross-reference it was always meant to be.
+   */
   readonly heading: string;
+  /**
+   * The Estonian name and the question it is taught by, where the note is
+   * about a case. Printed quietly under the heading, because a learner sitting
+   * a course needs the word their teacher uses and does not need it first.
+   */
+  readonly term?: string;
   /** English, one or two sentences. What to do about it. */
   readonly body: string;
   /**
@@ -76,10 +101,7 @@ export interface SceneReview {
 /** How many of the learner's own pairs a note prints before it is a list. */
 const EVIDENCE_SHOWN = 3;
 
-/** How many unmet goals a note names before it becomes a wall of sentences. */
-const MISSED_NAMED = 2;
-
-export function reviewOf(scene: SceneSpec, state: SceneState): SceneReview {
+export function reviewOf(_scene: SceneSpec, state: SceneState): SceneReview {
   /*
     The turns that were turns. A fragment and an echo cost no patience and
     earn no rating (`advance`, `gradesFor`), and counting them here would tell
@@ -105,7 +127,6 @@ export function reviewOf(scene: SceneSpec, state: SceneState): SceneReview {
     ...personNote(slips),
     ...formNote(slips),
     ...spellingNote(slips),
-    ...missedNote(scene, state),
     ...englishNote(turns.filter((t) => t.reading === "english").length),
   ];
 
@@ -167,22 +188,50 @@ function caseNotes(_slips: readonly Slip[], state: SceneState): ReviewNote[] {
     .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
     .map(([key, rows]) => {
       const spec = caseByKey(key);
-      const note = CASE_NOTES.find((n) => n.key === key);
+      const plain = CASE_NOTES.find((n) => n.key === key)?.plain;
+      /*
+        WHAT THE ENDING IS FOR, AND ONCE.
+
+        The body used to run `plain` and `englishHook` together, and for the
+        illative those two are "into" and "into.", so the screen read "It is
+        the ending for into. into." Two fields saying one thing is a sentence
+        nobody reads past. The clause is `plainAsk`'s, which is the one table
+        of what a slot is asking for in the words somebody would use out loud,
+        so this review and the card the same learner meets tomorrow explain
+        the ending the same way.
+      */
+      const clause = plainAsk(key);
       const many = rows.length > 1;
       return {
         id: `case:${key}`,
-        heading: spec ? `${spec.et} · ${spec.question}` : key.toLowerCase(),
+        heading: headingFor(plain, spec?.suffix),
+        term: spec ? `${spec.et} ${MIDDOT} ${spec.question}` : undefined,
         body: [
           many
-            ? `This came out as another form ${rows.length} times.`
-            : "This came out as another form.",
-          note ? `It is the ending for ${note.plain}.` : "",
-          note?.englishHook ?? note?.watchOut ?? "",
+            ? `You reached for a different ending here, ${rows.length} times.`
+            : "You reached for a different ending here.",
+          clause ? `This is the one to use ${clause}.` : "",
         ].filter(Boolean).join(" "),
         evidence: rows.slice(0, EVIDENCE_SHOWN).map((r) => ({ said: r.slip.said, form: r.slip.form })),
         ...hunchFor(key, rows),
       };
     });
+}
+
+/** The separator this app uses in a label, so no dash reaches a reader. */
+const MIDDOT = "\u00b7";
+
+/**
+ * The heading, which says what the ending is for rather than what it is called.
+ *
+ * READ OFF `CASES` RATHER THAN BRANCHED ON A KEY. The three principal parts
+ * carry no suffix, so calling one of them an ending would teach something
+ * false about the language, and `CaseSpec.suffix` is the one place that fact
+ * already lives.
+ */
+function headingFor(plain: string | undefined, suffix: string | undefined): string {
+  if (!plain) return "The form this one wanted";
+  return suffix ? `The ending for “${plain}”` : `The form for “${plain}”`;
 }
 
 /** One case slip, with the case the question before it wanted. */
@@ -243,10 +292,9 @@ function personNote(slips: readonly Slip[]): ReviewNote[] {
   if (rows.length === 0) return [];
   return [{
     id: "person",
-    heading: "The verb, in a person",
-    body: "You reached for the dictionary form of the verb where the sentence wanted a person. "
-      + "Estonian builds all six persons off the first: take the -n off it and add the ending for who is doing it. "
-      + "It was clear either way, and it is the one rule that gets you five forms for the price of one.",
+    heading: "The verb needed a person on it",
+    body: "You used the dictionary form where the sentence wanted a person. "
+      + "Estonian builds all six off the first person: take the -n off it, add the ending for who is doing it.",
     evidence: rows.slice(0, EVIDENCE_SHOWN).map((s) => ({ said: s.said, form: s.form })),
     hunch: diagnosePerson(),
   }];
@@ -258,10 +306,9 @@ function formNote(slips: readonly Slip[]): ReviewNote[] {
   if (rows.length === 0) return [];
   return [{
     id: "form",
-    heading: "An ending Estonian does not use here",
-    body: "The stem was right and the ending was not one the word takes, which is why it was understood. "
-      + "Estonian glues its endings onto the genitive stem, so that one form is worth learning first: "
-      + "get it and eleven cases fall out of it.",
+    heading: "An ending this word does not take",
+    body: "The stem was right, so it was understood. Estonian glues its endings onto the genitive, "
+      + "which is why that one form is the one worth learning first: eleven cases fall out of it.",
     evidence: rows.slice(0, EVIDENCE_SHOWN).map((s) => ({ said: s.said, form: s.form })),
   }];
 }
@@ -278,31 +325,10 @@ function spellingNote(slips: readonly Slip[]): ReviewNote[] {
   if (rows.length === 0) return [];
   return [{
     id: "spelling",
-    heading: "A letter or two",
-    body: "Spelled a little differently, and understood as it stood. "
-      + "The row of Estonian letters under the box types the ones an English keyboard has no key for.",
+    heading: "A letter or two out",
+    body: "Understood as it stood. The row of letters under the box types the ones "
+      + "an English keyboard has no key for.",
     evidence: rows.slice(0, EVIDENCE_SHOWN).map((s) => ({ said: s.said, form: s.form })),
-  }];
-}
-
-/** What they came in to do and did not get to. The goal is the beat's own English. */
-function missedNote(scene: SceneSpec, state: SceneState): ReviewNote[] {
-  const done = new Set(state.done);
-  const missed = scene.beats.filter((b) => b.required && !done.has(b.id));
-  if (missed.length === 0) return [];
-  /*
-    Two of them and a count, rather than every goal run together in one
-    paragraph: six sentences end to end is a wall, and the objectives are
-    listed with ticks a few lines above this anyway.
-  */
-  const named = missed.slice(0, MISSED_NAMED).map((b) => b.goal).join(" ");
-  const rest = missed.length - MISSED_NAMED;
-  return [{
-    id: "missed",
-    heading: missed.length === 1 ? "The one thing left undone" : "What was left undone",
-    body: `${named}${rest > 0 ? ` And ${rest} more.` : ""} `
-      + "Worth going in again for that alone, since the second run of a scene is where most of it sticks.",
-    evidence: [],
   }];
 }
 
@@ -319,8 +345,8 @@ function englishNote(count: number): ReviewNote[] {
   return [{
     id: "english",
     heading: count === 1 ? "One turn in English" : `${count} turns in English`,
-    body: "That is what happens on the street too, and holding out in Estonian for one more turn is "
-      + "most of what this is practice for. The word button hands you one of the beat's own words if you are stuck.",
+    body: "That happens on the street too. Holding out in Estonian for one more turn is most of what "
+      + "this is practice for, and the word button hands you one of the beat's own words when you are stuck.",
     evidence: [],
   }];
 }

@@ -173,7 +173,17 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
             {review.notes.map((note) => (
               <li key={note.id}>
                 <p className="text-sm font-medium">{note.heading}</p>
-                <p className="text-sm" style={{ color: "var(--ink-2)" }}>{note.body}</p>
+                {/*
+                  The name a class uses, under the plain heading rather than
+                  instead of it. A learner sitting a course needs `seesutlev`
+                  and `kus?` to follow their teacher, and needs to know what
+                  the ending is for before either of them means anything
+                  (`lib/estonian/plainAsk.ts`).
+                */}
+                {note.term && (
+                  <p className="label-xs" lang="et" style={{ color: "var(--ink-3)" }}>{note.term}</p>
+                )}
+                <p className="mt-1 text-sm" style={{ color: "var(--ink-2)" }}>{note.body}</p>
                 {/*
                   Why it most likely happened, marked as the guess it is.
                   Quieter than the note it sits under, and worded as a guess
@@ -184,24 +194,32 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
                 {note.hunch && (
                   <p className="mt-1 text-sm" style={{ color: "var(--ink-3)" }}>
                     <span className="font-medium">
-                      {note.hunch.sure === "likely" ? "Most likely" : "It may be"}:
+                      {note.hunch.sure === "likely" ? "Most likely" : "Possibly"}:
                     </span>{" "}
                     {note.hunch.says}
                   </p>
                 )}
                 {note.evidence.length > 0 && (
-                  <ul className="mt-1 flex flex-col gap-0.5 text-sm">
+                  /*
+                    THE PAIR IS A SENTENCE, NOT TWO WORDS ROUND A VERB. It read
+                    `ulikool  is said  ulikooli`, three runs of text with no
+                    label on any of them, and the likeliest reading of that is
+                    that the first word is pronounced like the second. What the
+                    learner needs to know is which one they wrote and which one
+                    goes there, so the screen says both in words, with the two
+                    Estonian forms carrying the weight.
+                  */
+                  <ul className="mt-1.5 flex flex-col gap-1 text-sm">
                     {note.evidence.map((one) => (
-                      <li key={one.said} className="flex flex-wrap items-baseline gap-x-2">
-                        <span lang="et" style={{ color: "var(--ink-3)" }}>{one.said}</span>
+                      <li key={one.said} style={{ color: "var(--ink-2)" }}>
+                        You wrote <span lang="et" className="font-medium">{one.said}</span>
                         {one.form ? (
                           <>
-                            <span style={{ color: "var(--ink-3)" }}>is said</span>
+                            {". Here it is "}
                             <span lang="et" className="font-medium">{one.form}</span>
+                            {"."}
                           </>
-                        ) : (
-                          <span style={{ color: "var(--ink-3)" }}>was understood as it stood</span>
-                        )}
+                        ) : ", and it was understood as it stood."}
                       </li>
                     ))}
                   </ul>
@@ -244,7 +262,15 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
       {missed && (
         <section>
           <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>One thing to work on</h3>
-          <p className="mb-2 text-sm" style={{ color: "var(--ink-2)" }}>{missed.goal}</p>
+          {/*
+            The one goal to go back in for, and the whole list of them is
+            ticked off a few sections above. `lib/scenes/review.ts` used to
+            print the unmet goals a third time in between, which is how the
+            same sentence came to be on this screen three times over.
+          */}
+          <p className="mb-2 text-sm" style={{ color: "var(--ink-2)" }}>
+            {missed.goal} The second run of a scene is where most of it sticks.
+          </p>
           {/*
             A link into a drill that already exists rather than advice this
             screen invented, and the drill is read off what the beat needed
