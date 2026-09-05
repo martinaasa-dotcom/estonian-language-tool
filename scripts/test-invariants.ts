@@ -570,17 +570,22 @@ check("the mock paper's minutes and marks are the ones the exam doc cites", () =
 });
 
 /*
-  SLOW IS PLAYBACK, NOT A SECOND CLIP.
+  EVERY RATE IS THE ONE CLIP, STRETCHED IN ONE PLACE, AND NEVER BY THE BROWSER.
 
   TartuNLP's `speed` is a duration regulator inside the acoustic model, and a
   clip asked for at 0.6 is every phoneme held on repeated frames: flat, buzzing,
-  and reported as robotic. The route forwards no speed, the one clip is played
-  slower with the pitch held in lib/audio/clip.ts, and every clip is trimmed,
-  leveled and written as 16-bit by lib/audio/wav.ts before it is cached. A
-  second file setting `playbackRate` would be a second answer to how slow is
-  done, and a `speed` reappearing in the route would be the model doing it.
+  and reported as robotic. The browser's `playbackRate` with `preservesPitch`
+  was the second answer and was reported the same way, because it stretches a
+  consonant burst by as much as a vowel and each browser does it differently.
+  So the route forwards no speed, every clip is trimmed, its pauses capped and
+  its voices leveled by lib/audio/wav.ts before it is cached, and the one clip
+  is stretched by lib/audio/stretch.ts, which spends the slowing on the vowels
+  and the pauses and keeps the consonants whole, from lib/audio/clip.ts alone.
+  A `playbackRate` anywhere would be the browser's stretch back beside ours, a
+  `speed` in the route would be the model doing it, and a second importer of
+  the stretch would be a second answer to how slow is done.
 */
-check("slow is the same clip played slower, and every clip is prepared before it is kept", () => {
+check("every rate is the one clip stretched in one place, and every clip is prepared before it is kept", () => {
   const route = code("app/api/tts/route.ts");
   assert.doesNotMatch(route, /\bspeed\b/, "the speech route is asking the model to slow down again");
   assert.match(route, /prepareClip\(raw\)/, "the route stopped calling prepareClip on what the service sent");
@@ -590,13 +595,21 @@ check("slow is the same clip played slower, and every clip is prepared before it
     "a clip reaches the cache without going through prepareClip",
   );
   const player = code("lib/audio/clip.ts");
-  assert.match(player, /preservesPitch\s*=\s*true/, "the slow play stopped holding the pitch");
-  assert.match(player, /playbackRate\s*=\s*SLOW_RATE/, "the slow play stopped reading SLOW_RATE");
-  const others = ["app", "lib", "components"]
+  assert.match(player, /stretch\(decodeWav\(/, "the player stopped stretching the clip it plays");
+  assert.match(player, /request\.slow\) return SLOW_RATE/, "the slow play stopped reading SLOW_RATE");
+  assert.match(player, /return NORMAL_RATE/, "the everyday play stopped reading NORMAL_RATE");
+  assert.match(player, /stretchedClip\(request, rateFor\(request\)\)/, "playClip plays a clip at a rate it did not work out through rateFor");
+  const browserStretch = ["app", "lib", "components"]
     .flatMap((dir) => sourceFiles(dir))
-    .filter((file) => file !== join("lib", "audio", "clip.ts"))
     .filter((file) => /playbackRate|preservesPitch/.test(code(file)));
-  assert.deepEqual(others, [], "a second file decides how slow a clip plays");
+  assert.deepEqual(browserStretch, [], "the browser's own stretch is back beside ours");
+  const importers = ALL
+    .filter((file) => !/\.(test|itest)\.tsx?$/.test(file))
+    .filter((file) => /from "(\.\/stretch|@\/lib\/audio\/stretch)"/.test(code(file)))
+    .sort();
+  assert.deepEqual(importers, ["lib/audio/clip.ts"], "a second file decides how a clip is stretched");
+  const stretcher = code("lib/audio/stretch.ts");
+  assert.doesNotMatch(stretcher, /AudioContext|window\.|document\.|import /, "the stretch stopped being pure");
 });
 
 check("nothing plays a clip outside lib/audio/clip.ts", () => {
@@ -643,9 +656,9 @@ check("the room a clip is heard in is made in one module, and only the rounds th
     "an AudioContext is opened somewhere other than the mixer and the feedback tones",
   );
   assert.match(code("lib/audio/clip.ts"), /playThrough\(/, "playClip stopped routing a condition through the mixer");
-  // The rate is a playback rate on the element with the pitch held, never a
-  // number sent to the service, which is the rule the slow play states.
-  assert.match(code("lib/audio/clip.ts"), /playbackRate\s*=\s*condition\.speed/, "the player stopped reading the condition's speed");
+  // The rate is the one stretch over the one clip, never a number sent to the
+  // service, which is the rule the slow play states.
+  assert.match(code("lib/audio/clip.ts"), /return request\.condition\.speed/, "the player stopped reading the condition's speed");
   assert.doesNotMatch(code("lib/audio/clip.ts"), /speed:/, "a speed is being sent to the speech service again");
 
   for (const file of [
@@ -6871,6 +6884,27 @@ check("every cache the service worker writes to is bounded, except the one that 
     /keys\.filter\(\(k\) => k\.startsWith\("kodukeel-"\) && !k\.startsWith\(VERSION\)\)/,
     "activate stopped deleting the caches of previous versions",
   );
+
+  /*
+    AND NO SUITE TYPES THAT VERSION OUT AGAIN.
+
+    `smoke-offline.mjs` opened `kodukeel-v3-audio` by name in both halves of
+    its trim check, so bumping VERSION to v4 left it filling one cache with
+    420 entries and asking a different one whether it had been trimmed: 420
+    in, 420 out, reported as a worker that does not trim, on a worker that
+    trims perfectly. A failure that misnames its cause sends the reader into
+    the wrong file, which is the rule test-restore.mjs has a paragraph about,
+    and the cause here is the fault the build cache already has one layer
+    down: a name typed by hand drifts from the thing it names. A suite reads
+    the version off a cache the worker actually opened.
+  */
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    assert.doesNotMatch(
+      code(file),
+      /"kodukeel-v\d/,
+      `${file} types the worker's cache version, which drifts the day VERSION is bumped`,
+    );
+  }
 });
 
 /**

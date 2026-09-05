@@ -50,8 +50,23 @@ const browserUrls: ObjectUrls = {
   revoke: (url) => URL.revokeObjectURL(url),
 };
 
-/** Insertion order is the LRU order; a hit re-inserts to the end. */
-const clips = new Map<string, string>();
+/**
+ * Insertion order is the LRU order; a hit re-inserts to the end.
+ *
+ * THE BLOB IS KEPT BESIDE ITS URL, because the page's Content Security Policy
+ * says `connect-src 'self'` and a `blob:` url is not self: a `fetch` of one is
+ * refused, so the bytes of a clip already in hand can only come from the blob
+ * that made the url. The stretch and the mixer both read them that way.
+ */
+const clips = new Map<string, { url: string; blob: Blob }>();
+
+function touch(key: string): { url: string; blob: Blob } | null {
+  const held = clips.get(key);
+  if (held === undefined) return null;
+  clips.delete(key);
+  clips.set(key, held);
+  return held;
+}
 
 /**
  * The url for a clip already fetched, or null.
@@ -60,11 +75,12 @@ const clips = new Map<string, string>();
  * drilled right now is the last thing evicted rather than the first.
  */
 export function cachedClip(key: string): string | null {
-  const url = clips.get(key);
-  if (url === undefined) return null;
-  clips.delete(key);
-  clips.set(key, url);
-  return url;
+  return touch(key)?.url ?? null;
+}
+
+/** The bytes of a clip already fetched, or null. A hit counts as use, as above. */
+export function cachedBlob(key: string): Blob | null {
+  return touch(key)?.blob ?? null;
 }
 
 /**
@@ -82,14 +98,14 @@ export function rememberClip(key: string, blob: Blob, urls: ObjectUrls = browser
   if (existing !== undefined) return cachedClip(key)!;
 
   const url = urls.create(blob);
-  clips.set(key, url);
+  clips.set(key, { url, blob });
 
   while (clips.size > MAX_CLIPS) {
     const oldest = clips.keys().next();
     if (oldest.done) break;
     const stale = clips.get(oldest.value)!;
     clips.delete(oldest.value);
-    urls.revoke(stale);
+    urls.revoke(stale.url);
   }
 
   return url;
@@ -97,7 +113,7 @@ export function rememberClip(key: string, blob: Blob, urls: ObjectUrls = browser
 
 /** Releases everything. For tests, and for a caller that knows it is done. */
 export function forgetClips(urls: ObjectUrls = browserUrls): void {
-  for (const url of clips.values()) urls.revoke(url);
+  for (const { url } of clips.values()) urls.revoke(url);
   clips.clear();
 }
 

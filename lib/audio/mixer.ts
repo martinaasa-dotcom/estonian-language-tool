@@ -2,10 +2,11 @@
  * The room a clip is heard in, made in the browser.
  *
  * `lib/audio/conditions.ts` says what a condition is; this turns one into
- * sound. A clip arrives as the same WAV the speech service always sends, and
- * on its way to the speaker it may be cut to a telephone band, sat inside
- * filtered noise, or started from partway through. None of that touches the
- * text: what changes is the delivery of a sentence a lexicographer recorded.
+ * sound. A clip arrives already at its rate (`lib/audio/stretch.ts`, through
+ * `playClip`), and on its way to the speaker it may be cut to a telephone
+ * band, sat inside filtered noise, or started from partway through. None of
+ * that touches the text: what changes is the delivery of a sentence a
+ * lexicographer recorded.
  *
  * Web Audio rather than a second file, because a café is a filter over noise
  * the browser can generate for nothing, and a phone line is one band-pass.
@@ -57,14 +58,16 @@ export function needsMixer(condition: Condition): boolean {
 }
 
 /**
- * Plays the clip at `url` under `condition`, resolving when it has finished.
+ * Plays the clip whose WAV bytes these are under `condition`, resolving when
+ * it has finished. Bytes rather than a url, because a `blob:` url cannot be
+ * fetched under the page's `connect-src 'self'`, and the caller holds the blob.
  *
  * `unasked` is the autoplay case: a context the browser will not run yet
  * answers `blocked` rather than throwing, and anything else that goes wrong
  * throws, which is the one outcome a caller has to act on.
  */
 export async function playThrough(
-  url: string,
+  bytes: ArrayBuffer,
   condition: Condition,
   { unasked = false }: { unasked?: boolean } = {},
 ): Promise<PlayOutcome> {
@@ -84,8 +87,8 @@ export async function playThrough(
     }
   }
 
-  const bytes = await (await fetch(url)).arrayBuffer();
-  const buffer = await ctx.decodeAudioData(bytes);
+  // `decodeAudioData` detaches the buffer it is given, so it gets a copy.
+  const buffer = await ctx.decodeAudioData(bytes.slice(0));
   const offset = Math.min(buffer.duration * condition.skip, Math.max(0, buffer.duration - 0.4));
   const remaining = buffer.duration - offset;
   const at = ctx.currentTime + 0.02;
