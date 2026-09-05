@@ -5000,6 +5000,130 @@ check("a card never answers the card before it", () => {
   assert.doesNotMatch(queue, /\.filter\(/, "the spacer filters, which would silently drop a due card");
 });
 
+check("a word the learner went and got is reachable, and the commonest lead", () => {
+  /*
+    REPORTED BY SOMEBODY USING THE APP, AND RIGHT ABOUT THE MECHANISM.
+
+    A word looked up out of curiosity goes into one deck with everything else,
+    and the review queue introduces unseen cards oldest first: sixty read,
+    ordered by band, ten shown. So the word somebody stopped and looked up on
+    the bus sits behind the whole course backlog, which on a deck built by
+    adding a level in first run is a year long. Anki has the opposite failure,
+    where everything a learner adds lands at the front, and the two fixes point
+    in opposite directions, so it is worth writing down which one this is.
+
+    THREE THINGS HOLD THE ANSWER UP AND EACH IS ANCHORED ON WHAT ROTS.
+
+    `Card.source` has to be able to tell the two apart. It could not: both
+    `addUnitsToDeck` and the button on a dictionary entry wrote `DICTIONARY`,
+    so the column answered "which table did this come out of" rather than
+    "whose idea was this word". `lib/srs/sources.ts` is the closed list and the
+    reading, and no other file may name one of those values, because a literal
+    written beside a `createMany` is a card filed under a label the round
+    cannot see.
+
+    `DICTIONARY` is claimed by neither side and has to stay that way. Reading
+    it as a lookup fills the round with course words for every learner who
+    already has a deck; reading it as course material hides the lookups they
+    already have. Silence is never evidence and the safe direction is to claim
+    less.
+
+    And the trickle is ordered by the corpus this repository already counts.
+    `commonFirst` is a partition rather than a rank, for the reason its own
+    header gives at length: a nominal is counted on its dictionary form and a
+    verb on its persons, so ranking one against the other compares two
+    measurements. A comparator reading the index is the shape to catch.
+  */
+  const sources = code("lib/srs/sources.ts");
+  assert.match(sources, /export const CARD_SOURCES/, "the closed list of card sources has gone");
+  assert.match(sources, /export const YOUR_OWN_SOURCES/, "nothing says which sources are the learner's own");
+  assert.doesNotMatch(
+    sources, /YOUR_OWN_SOURCES[\s\S]*?"DICTIONARY"[\s\S]*?\] as const satisfies/,
+    "DICTIONARY is claimed as a lookup, which files every existing deck's course words in that round",
+  );
+  assert.doesNotMatch(
+    sources, /YOUR_OWN_SOURCES[\s\S]*?"SCENE"[\s\S]*?\] as const satisfies/,
+    "a scene's words are the course's, and a scene names unit ids rather than words",
+  );
+
+  /*
+    Every source literal in the tree is one the table names, and the table is
+    the only place they are written down other than the schema's own comment.
+    Read off `sources.ts` rather than typed here, or this check is the second
+    copy it exists to forbid.
+  */
+  const known = new Set([...sources.matchAll(/^\s*"([A-Z_]+)",$/gm)].map((m) => m[1]!));
+  assert.ok(known.size >= 8, "the source list could not be read off lib/srs/sources.ts");
+
+  /*
+    The four doors a card is written through, and the last argument of each is
+    the source. Anchored on the call rather than on the word `source`, because
+    `Example.source` is a different column on a different table with values of
+    its own (`EKILEX`, `USER`, `AI`), and a sweep for the word reads those as
+    card sources and fails on honest code.
+  */
+  const WRITES = /\b(?:addToDeck|addCardsFor|addUnitsToDeck|addPlanToDeck)\(([^;]*)\)/g;
+  for (const file of [...APP, ...LIB, ...COMPONENTS].filter((f) => f !== "lib/srs/sources.ts")) {
+    for (const [, args] of code(file).matchAll(WRITES)) {
+      /*
+        The source is the *last* argument. Anchored on the end of the argument
+        list rather than on the last quoted word anywhere in it, because the
+        card types before it are shouted too and because several callers pass
+        a variable: `AddWordButton` ends its call with `source`, and reading
+        the last literal there reports `PRODUCTION` as a card source.
+      */
+      const tail = /"([A-Z_]{4,})"\s*,?\s*$/.exec(args!.trim());
+      if (!tail) continue;
+      const written = tail[1]!;
+      assert.ok(
+        known.has(written),
+        `${file} files a card under "${written}", which lib/srs/sources.ts does not name`,
+      );
+    }
+  }
+
+  /*
+    And nothing under lib/srs writes one as a literal beside a row, which is
+    the other door: `backfillClozeCards` used to type `DICTIONARY` next to its
+    `createMany`, so a gap-fill arriving for a course word would have moved it
+    into the lookups round. It reads the word's existing cards instead.
+  */
+  const srsSource = LIB.filter(
+    (f) => f.startsWith("lib/srs/") && f !== "lib/srs/sources.ts" && !/\.i?test\.ts$/.test(f),
+  );
+  for (const file of srsSource) {
+    for (const [, written] of code(file).matchAll(/source:\s*"([A-Z_]{4,})"/g)) {
+      assert.ok(
+        known.has(written!),
+        `${file} writes a card source of "${written}", which lib/srs/sources.ts does not name`,
+      );
+    }
+  }
+
+  // The round reads the table rather than a `where` clause of its own.
+  const round = code("app/(app)/review/lookups/page.tsx");
+  assert.match(
+    round, /source: \{ in: \[\.\.\.YOUR_OWN_SOURCES\] \}/,
+    "the lookups round names its own sources, which is a second answer to whose idea a word was",
+  );
+  // It is a slice of the one deck, graded through the one log, not a second
+  // scheduler: it renders the shared session like every other round (ADR-016).
+  assert.match(round, /<ReviewSession/, "the lookups round grew a card runner of its own");
+
+  const review = code("app/(app)/review/page.tsx");
+  assert.match(
+    review, /aroundFirst\(commonFirst\(/,
+    "the new-card trickle no longer puts the commonest words of their kind first, "
+      + "or the band has stopped being the outer ordering",
+  );
+
+  const common = code("lib/collections/commonFirst.ts");
+  assert.doesNotMatch(
+    common, /indexOf|\.sort\(/,
+    "commonFirst ranks rather than partitions, which compares a noun's count against a verb's",
+  );
+});
+
 check("signing out forgets the device", () => {
   /*
     Signing out cleared one cookie and left everything the app keeps in the

@@ -21,7 +21,7 @@ import { emptyScheduling } from "@/lib/srs/scheduler";
 export async function backfillClozeCards(ownerId: string, lexemeId: string): Promise<number> {
   const lexeme = await prisma.lexeme.findUnique({
     where: { id: lexemeId },
-    include: { forms: true, cards: { where: { ownerId }, select: { cardType: true, front: true } } },
+    include: { forms: true, cards: { where: { ownerId }, select: { cardType: true, front: true, source: true } } },
   });
   if (!lexeme || lexeme.cards.length === 0) return 0;
   if (lexeme.cards.some((c) => c.cardType === "CLOZE")) return 0;
@@ -29,6 +29,18 @@ export async function backfillClozeCards(ownerId: string, lexemeId: string): Pro
   const generated = generateCards(lexeme as LexemeForCards, ["CLOZE"]);
   if (generated.length === 0) return 0;
 
+  /*
+    THE CARD INHERITS THE WORD, BECAUSE IT IS NOT A NEW WORD.
+
+    `Card.source` says whose idea a word was, and `/review/lookups` reads it to
+    ask about the ones the learner went and got themselves. A gap-fill added
+    here is a card for a word already in the deck, so writing a source of its
+    own would move a course word into that round, or a looked-up word out of
+    it, on the strength of a sentence arriving from Ekilex. The existing cards
+    are read in the same query already, and they were all written together, so
+    the first of them is the answer.
+  */
+  const source = lexeme.cards[0]?.source ?? "MANUAL";
   const scheduling = emptyScheduling(new Date());
   await prisma.card.createMany({
     data: generated.map((c) => ({
@@ -40,7 +52,7 @@ export async function backfillClozeCards(ownerId: string, lexemeId: string): Pro
       hint: c.hint,
       targetCase: c.targetCase,
       slot: c.slot,
-      source: "DICTIONARY",
+      source,
       due: scheduling.due,
       stability: scheduling.stability,
       difficulty: scheduling.difficulty,
