@@ -572,6 +572,8 @@ being read. The strongest skill is still reported beside the level. *Consequence
 does not show two rules side by side. The per skill columns are the measurement and are never
 touched, which is what keeps `Assessment` append-only in the sense that matters.
 
+Those six figures came from a simulation that lived in a pull request. The instrument kept in the repository, `npm run measure:placement`, models a harsher learner and reports 72, 87, 82, 78, 79 and 69 for the same paper, re-run on 2026-09-05. Its own header says its figures compare with each other and not with these, so a change to a scoring rule is measured against its baseline rather than against this line: `lib/assessment/score.ts` is where that baseline is written down.
+
 *Rejected:* marking with a model
 (a hallucination that marks a right answer wrong on somebody's first day destroys the only trust
 this app has), a single number rather than a profile (it hides which skill is behind, which is the

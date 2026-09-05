@@ -12,11 +12,15 @@ import { needsMixer, playThrough } from "./mixer";
  * added to the key in one place and not another would play the wrong voice
  * from cache and look like the setting not saving.
  *
- * So the key is built here, once, from everything that changes the sound:
- * the text, the speed, and the voice. The server hashes the same three. A
- * hearing condition (`lib/audio/conditions.ts`) changes the speed the service
- * is asked for and nothing else the server sees; the room it is heard in is
- * made in the browser after the fetch, so it is not part of the key.
+ * So the key is built here, once, from everything that changes the *clip*:
+ * the text and the voice, which is what the server hashes too. Nothing about
+ * how it is played is in it. The route forwards no speed at all, and a rate,
+ * a slow play and a hearing condition (`lib/audio/conditions.ts`) are all
+ * applied in the browser to the one clip that came back, which is what makes
+ * a slow play work offline wherever a normal one does. This paragraph said
+ * the speed was in the key and hashed by the server, and had said so since
+ * before the route stopped taking one: `clipKey` two screens down is the
+ * truth and always was.
  *
  * Browser only, since it mints object URLs. Never throws on a play that the
  * browser refuses; a clip that could not be fetched rejects, which is the one

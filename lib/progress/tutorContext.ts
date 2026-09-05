@@ -36,11 +36,22 @@ export async function learnerContextFor(ownerId: string, now = new Date()): Prom
     goalsFor(ownerId).catch(() => null),
     caseReviewsFor(ownerId, now),
     pathWithProgress(ownerId),
-    // The last conversation they rehearsed, and what it stalled on, so Anu
-    // can answer a question about the doctor's with the doctor's in mind.
+    /*
+      The last conversation they rehearsed, and what it stalled on, so Anu can
+      answer a question about the doctor's with the doctor's in mind.
+
+      FINISHED, AND RECENT. `endedAt` is what `finishRun` writes and it was
+      not in this query, so a run somebody opened and closed the tab on was
+      handed to Anu as the conversation they had just had, with an empty
+      `outcome` that parses to no missed beats and no gaps: the least useful
+      shape this can take, since she is told a scene is current and told
+      nothing about it. And a conversation from March is not what somebody is
+      asking about today, so it is bounded, and the order is by when it ended
+      rather than when it was opened, because that is what "the last one" is.
+    */
     prisma.sceneRun.findFirst({
-      where: { ownerId },
-      orderBy: [{ startedAt: "desc" }, { id: "desc" }],
+      where: { ownerId, endedAt: { not: null, gte: sceneSince(now) } },
+      orderBy: [{ endedAt: "desc" }, { id: "desc" }],
       select: { id: true, sceneId: true, outcome: true },
     }).then(async (run) => {
       if (!run) return null;
@@ -96,6 +107,16 @@ export async function learnerContextFor(ownerId: string, now = new Date()): Prom
  * on a chart.
  */
 const MIN_CASE_REVIEWS = 12;
+
+/**
+ * How far back a rehearsed conversation is still the one they had.
+ *
+ * The same thirty days `outThere` reads, and for the same reason: it is the
+ * stretch a person means by "lately". Beyond it the scene is a fact about
+ * last term and Anu is better told nothing than told it is current.
+ */
+const SCENE_DAYS = 30;
+const sceneSince = (now: Date) => new Date(now.getTime() - SCENE_DAYS * 86_400_000);
 
 /** A case answered right every time is not a weakness worth a sentence. */
 const PERFECT = 100;
