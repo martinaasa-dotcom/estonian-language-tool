@@ -211,9 +211,17 @@ describe("the suggestion row", () => {
 
   it("says why it chose these words, whichever source answered", async () => {
     feedSays(["itest-nothing-matches-this"]);
+    /*
+      The roll is handed in rather than left to `Math.random`, one value inside
+      each of the three orderings `order` draws from. This used to take 25
+      draws and ask for two distinct sources, and with the feed stubbed empty
+      the level source leads only on a roll past 0.8, so about one run in 260
+      saw the season source 25 times and reported the others dead. A check
+      that fails on a fair coin is a check people learn to re-run.
+    */
     const seen = new Set<string>();
-    for (let i = 0; i < 25; i += 1) {
-      const row = await suggestWords(OWNER);
+    for (const roll of [0, 0.6, 0.9]) {
+      const row = await suggestWords(OWNER, new Date(), () => roll);
       expect(row.label.length, "a row of chips with nothing above it").toBeGreaterThan(3);
       seen.add(row.source);
     }
