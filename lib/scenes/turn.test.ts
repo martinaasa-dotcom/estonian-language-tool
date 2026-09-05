@@ -114,6 +114,33 @@ describe("reading a turn", () => {
     expect(readTurn("Ma lähen valu", asks, context()).reading).not.toBe("complete");
   });
 
+  /*
+    AND IT IS ONLY SAID WHERE THE WORD WAS THE ANSWER.
+
+    A case slip claims the learner reached for the wrong ending, and it was
+    claimed wherever the word turned up in any other form. Inside a sentence
+    that is a guess about grammar this module cannot parse, and on a real run
+    it was wrong twice over: a learner who wrote a correct sentence with the
+    word as its subject was told "here it is" and given another form. The
+    position rule is what stops it, and it costs nothing on the case the
+    correction is actually for, which is the word said on its own or at the
+    end of a short answer.
+  */
+  it("does not correct a word sitting in the middle of a sentence, where it may be doing another job", () => {
+    const asks = beat({ needs: [{ kind: "case", lemma: "tuba", grammCase: "INESSIVE" }] });
+    const seen = readTurn("Tuba on suur ja valge", asks, context());
+    expect(seen.reading).toBe("complete");
+    expect(seen.slips).toEqual([]);
+    // And nothing is said back as a correction, so no bubble claims they were wrong.
+    expect(seen.matched).toEqual(["tuba"]);
+  });
+
+  it("still corrects the word when it is the answer", () => {
+    const asks = beat({ needs: [{ kind: "case", lemma: "tuba", grammCase: "ILLATIVE" }] });
+    expect(readTurn("tuba", asks, context()).slips).toHaveLength(1);
+    expect(readTurn("Ma lähen tuba", asks, context()).slips).toHaveLength(1);
+  });
+
   it("takes a question mark as a question, because Homme? is one", () => {
     const asks = beat({ needs: [{ kind: "question" }] });
     expect(readTurn("Kus?", asks, context()).reading).toBe("complete");

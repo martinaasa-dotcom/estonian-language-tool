@@ -70,7 +70,14 @@ describe("the scene catalog", () => {
       }
       // The reactions are said in every scene, so every scene has to teach them.
       const asides = Object.values(ASIDES).flatMap((parts) => parts.map((part) => part.lemma));
-      const named = [...lemmasOf(scene), ...REACTIONS.acknowledge, ...REACTIONS.waiting, ...asides, ...TIME_LEMMAS];
+      /*
+        Every reaction, read off the table rather than named here. The first
+        version listed `acknowledge` and `waiting`, so the day a third kind
+        of reaction was added it was said in every scene and checked in none,
+        which is the fault this file's own header describes one layer out.
+      */
+      const reactions = Object.values(REACTIONS).flat();
+      const named = [...lemmasOf(scene), ...reactions, ...asides, ...TIME_LEMMAS];
       const strangers = [...new Set(named)].filter((lemma) => !taught.has(lemma));
       expect(strangers, `${scene.id} names words none of its units teach`).toEqual([]);
     }
@@ -101,6 +108,100 @@ describe("the scene catalog", () => {
         if (accepted.has(`slot:${prop.slot}`)) continue;
         const refused = prop.oneOf.filter((lemma) => !accepted.has(lemma));
         expect(refused, `${scene.id} deals ${prop.slot} words no beat accepts`).toEqual([]);
+      }
+    }
+  });
+
+  /*
+    A BEAT'S GOAL NAMES THE ANSWER, WHEREVER THERE IS EXACTLY ONE.
+
+    A goal is the objective printed on the screen, and where the beat accepts
+    exactly one word a goal that does not name it is a trap rather than an
+    instruction. The milk scene had four of them: it asked "Say where you are
+    now" and took only "at the shop", so a learner reading their own card,
+    which had put them at home, answered honestly three times and was refused
+    three times. There is nothing wrong with the marker in that story; the
+    screen simply never told them what was wanted.
+
+    The English gloss is what the check reads, because that is the one column
+    of the harvest a person authored and it is how the word would be named to
+    somebody who does not have it yet. A gloss is a list of senses and any of
+    them counts: `pood` is "shop, store", and either word in the goal is the
+    goal naming it.
+
+    Deliberately not asked of a beat that would take any of several words: the
+    landlord's "say what has gone wrong" accepts eleven, and naming one would
+    be the fault `offerFor` already had, where a learner is told to say the
+    heating is broken by a scene whose card says it is the door. Nor of a
+    `datum`, whose answer is on the card and differs per run; that one is
+    covered by the check below.
+  */
+  it("names the one word it will take, wherever a beat will take exactly one", () => {
+    const glosses = new Map(HARVESTED.map((word) => [word.lemma, word.gloss]));
+    /* The senses of a gloss, since `shop, store` offers two names for one word. */
+    const senses = (gloss: string) =>
+      gloss.split(/[,;]/).map((sense) => sense.replace(/\([^)]*\)/g, "").trim()).filter(Boolean);
+    const missing: string[] = [];
+    for (const scene of SCENES) {
+      for (const beat of scene.beats) {
+        const leaves = leafNeeds(beat.needs);
+        /*
+          One requirement, and one word that would meet it. A beat that offers
+          a choice is a beat with no single answer to name.
+        */
+        if (leaves.length !== 1) continue;
+        const only = leaves[0]!.need;
+        const lemma = only.kind === "case" ? only.lemma
+          : only.kind === "lemma" && only.oneOf.length === 1 ? only.oneOf[0]!
+          : null;
+        if (!lemma) continue;
+        const gloss = glosses.get(lemma);
+        if (!gloss) continue;
+        const goal = beat.goal.toLowerCase();
+        if (senses(gloss).some((sense) => goal.includes(sense.toLowerCase()))) continue;
+        missing.push(`${scene.id}/${beat.id}: "${beat.goal}" never names ${lemma} (${gloss})`);
+      }
+    }
+    expect(missing, "a beat takes one word and its goal does not say which").toEqual([]);
+  });
+
+  /*
+    And where the answer is a value off the card, the goal says so, because
+    the learner cannot know a card holds it unless they are told. This is the
+    other half of the rule above and it is checkable the same way: the word
+    "card" is in the sentence, or it is not.
+  */
+  it("sends the learner to their card wherever the answer is on it", () => {
+    const silent: string[] = [];
+    for (const scene of SCENES) {
+      for (const beat of scene.beats) {
+        const leaves = leafNeeds(beat.needs);
+        if (!leaves.some(({ need }) => need.kind === "datum")) continue;
+        /*
+          Except where they have just been told the value: a beat that reads
+          a time back to check it was heard is about the line above it, not
+          about the card, and sending them to the card there would be sending
+          them to the wrong place.
+        */
+        if (/\{\w+\}/.test(beat.they)) continue;
+        if (/card/i.test(beat.goal)) continue;
+        silent.push(`${scene.id}/${beat.id}: "${beat.goal}"`);
+      }
+    }
+    expect(silent, "a beat wants a value off the card and never says so").toEqual([]);
+  });
+
+  /*
+    TIME PASSING IS ENGLISH, AND A SENTENCE. `meanwhile` is printed as a break
+    in the conversation, so it is held to what every other authored line in
+    this file is held to: no Estonian, and a sentence rather than a fragment.
+  */
+  it("writes what has happened since in English, as a sentence", () => {
+    for (const scene of SCENES) {
+      for (const beat of scene.beats) {
+        if (!beat.meanwhile) continue;
+        expect(beat.meanwhile, `${scene.id}/${beat.id} is not a sentence`).toMatch(/^[A-Z].*\.$/);
+        expect(beat.meanwhile, `${scene.id}/${beat.id} carries an Estonian letter`).not.toMatch(/[õäöüšž]/i);
       }
     }
   });

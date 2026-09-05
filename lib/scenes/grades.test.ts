@@ -241,7 +241,20 @@ describe("the word the other side offers", () => {
     than a word, and a word that would not meet the beat is a hint that
     cannot help.
   */
-  it("is nothing where no word of theirs would meet the beat", () => {
-    expect(offerFor(SCENE.beats[2]!)).toBeNull();
+  /*
+    Where the answer is a value off the card there is no word that would meet
+    the beat, and that used to mean nothing was said at all: somebody stuck
+    got the same question back with no sign of what it was about. The beat's
+    own topic says what kind of thing is wanted and gives the answer away
+    nowhere, because the answer is on the card.
+  */
+  it("points at what the beat is about where the answer is a value off the card", () => {
+    const beat = SCENE.beats[2]!;
+    expect(beat.topic).toContain(offerFor(beat));
+  });
+
+  it("never points at the question word they were just asked", () => {
+    const beat = { ...SCENE.beats[2]!, topic: ["kuhu", "aeg"] };
+    expect(offerFor(beat, null, new Set(["kuhu"]))).toBe("aeg");
   });
 });

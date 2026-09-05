@@ -27,7 +27,11 @@ import type { CurveballId } from "./curveballs";
 
 export interface PersonaSpec {
   readonly id: string;
-  /** English, one line, shown before the scene starts. */
+  /**
+   * Who you are talking to, in one plain sentence, shown before the scene
+   * starts. It tells the learner what to expect from this person, so it says
+   * what they will do rather than hinting at a mood.
+   */
   readonly who: string;
   /**
    * Added to every beat's patience. Never below one try in total, which
@@ -64,7 +68,7 @@ export interface PersonaSpec {
 export const PERSONAS: readonly PersonaSpec[] = [
   {
     id: "brisk",
-    who: "They would like the queue to be shorter than it is.",
+    who: "They are busy and will not wait long for an answer.",
     patience: -1,
     voice: "kylli",
     speed: 1.1,
@@ -74,7 +78,7 @@ export const PERSONAS: readonly PersonaSpec[] = [
   },
   {
     id: "thorough",
-    who: "They are unhurried and they will ask you for all of it.",
+    who: "They take their time, and they will ask you for every detail.",
     patience: 1,
     voice: "mari",
     speed: 0.95,
@@ -84,7 +88,7 @@ export const PERSONAS: readonly PersonaSpec[] = [
   },
   {
     id: "new",
-    who: "They started here recently and are checking as they go.",
+    who: "They are new to the job and check things as they go.",
     patience: 1,
     voice: "indrek",
     speed: 1,
@@ -94,7 +98,7 @@ export const PERSONAS: readonly PersonaSpec[] = [
   },
   {
     id: "by-the-book",
-    who: "They are following the form, in the order the form has.",
+    who: "They work through the form in its own order, whatever order you give it in.",
     patience: 0,
     voice: "peeter",
     speed: 1,

@@ -11757,6 +11757,146 @@ check("a learner who says they are lost is handed the word, never the question a
     "the scene context no longer resolves what the course can account for",
   );
   /*
+    AND THE COURSE IS 1,449 WORDS, WHICH IS NOT THE LANGUAGE. Everything else
+    read as noise, so the other side said `Ma ei saa aru` to a learner who
+    answered `Tere!` with `Tervitused!`: real Estonian, a real greeting, and
+    a word this course does not happen to teach. `prisma/data/forms/` is what
+    that file exists for, and this is its accept side: a spelling let through
+    here costs a turn being read as Estonian off the point rather than as
+    noise, and it can never meet a requirement, because a requirement is
+    still decided against the scene's own lexicon alone.
+  */
+  const sceneRead = code("lib/progress/scene.ts");
+  assert.match(
+    sceneRead, /isKnownForm/,
+    "the scene marker no longer asks the forms list, so a real Estonian word from outside the course "
+    + "is answered with the repair phrase",
+  );
+  for (const [file, calls] of [
+    ["app/api/scene/route.ts", 1],
+    ["lib/progress/scene.ts", 2],
+  ] as const) {
+    const source = code(file);
+    /*
+      Every caller of `replay` widens first. The reading a learner sees while
+      they are talking and the one written down when they stop come from one
+      function over one input, so a caller that skipped this would mark the
+      same turn two ways and the debrief would call a word incomprehensible
+      that the conversation had understood.
+    */
+    const replays = source.match(/\breplay\(/g)?.length ?? 0;
+    const widened = source.match(/await knowing\(/g)?.length ?? 0;
+    assert.ok(replays > 0, `${file} no longer replays a scene`);
+    assert.equal(
+      widened, calls,
+      `${file} replays a scene without widening what counts as Estonian first`,
+    );
+  }
+  /*
+    A MISS IS ANSWERED AS A MISS, AND THE QUESTION IS PUT AGAIN RATHER THAN
+    PUT DIFFERENTLY. A turn that landed got a word and then the next question;
+    a turn that was real Estonian off the point got nothing and then a
+    *rephrased* question, so on the screen the two were one event. A learner
+    read three questions and thought they had answered two of them.
+  */
+  const answering = code("lib/scenes/reply.ts");
+  assert.match(
+    answering, /REACTIONS\.missed/,
+    "a turn that missed is answered with nothing again, so it reads exactly like a turn that landed",
+  );
+  assert.match(
+    answering, /response === "narrow" && reading === "offtarget"/,
+    "a beat that missed is asked again in other words, so a learner cannot tell a re-ask from a new question",
+  );
+  /*
+    And letting a question go is not agreement. It drew from the
+    acknowledgment rotation, so running out of patience could come out as
+    `Aitäh.` or `Jah.`
+  */
+  assert.match(
+    answering, /response === "moveOn" && !aside\) \{[\s\S]{0,600}?REACTIONS\.letGo/,
+    "running out of patience is acknowledged like an answer, so giving up reads as agreement",
+  );
+  /*
+    AND A CASE IS ONLY CORRECTED WHERE THE WORD WAS THE ANSWER. `Piim on
+    otsas` is a correct sentence and was answered "Understood. Here it is
+    piima.": the app telling somebody their own good Estonian was wrong, in
+    the one place where being wrong is supposed to be survivable. This module
+    cannot parse a sentence, so it does not make claims about the middle of
+    one.
+  */
+  assert.match(
+    turn, /const isAnswer = \(word: string\) =>/,
+    "the marker corrects a case wherever the word turns up, so a correct sentence is answered with a correction",
+  );
+  /*
+    NOBODY LEAVES A BEAT WITHOUT HAVING BEEN TOLD WHAT IT WANTED.
+
+    Two halves, and neither is the other. The character says the word on the
+    way past when they give up, so a beat never ends in silence; and the app
+    says, in its own voice and in English, what is being waited for once the
+    learner has missed twice, because the other side of a conversation cannot
+    explain itself and a learner watching it ask a third time and give up
+    reads that as the app having decided they are stupid.
+  */
+  assert.match(
+    answering, /if \(input\.offer\) out\.push/,
+    "the other side gives up without saying the word it was waiting for",
+  );
+  assert.match(
+    answering, /coachFor\(beat, card\)/,
+    "a learner who is stuck is no longer told what the beat wants, so a scene can run out of "
+    + "patience on somebody who never found out what it was asking",
+  );
+  /*
+    And the hint holds no Estonian of its own. `lib/scenes/coach.ts` names a
+    lemma the beat already named, which the catalog test has checked against
+    the scene's own units, and it never spells a form: the ending is what a
+    case beat is drilling, so a hint that gave it would answer the question
+    and then let the scheduler record the learner as having produced it.
+  */
+  const coach = code("lib/scenes/coach.ts");
+  assert.doesNotMatch(coach, /[õäöüšž]/i, "the hint has started writing Estonian");
+  assert.doesNotMatch(
+    coach, /caseAnswer|caseForm|byCase|lexicon/i,
+    "the hint reaches the form table, so it can hand over the ending the beat is drilling",
+  );
+  /*
+    AND A SCENE THAT MOVES THE LEARNER SAYS SO. A scene can span an errand,
+    and the beats knew that while the screen did not, so somebody walked to a
+    shop was still, as far as anything on the screen said, in the kitchen
+    their card had put them in. They answered honestly and were refused for
+    it, three times, and reported the scene as broken.
+  */
+  assert.match(
+    answering, /beat\.meanwhile && beat !== answered/,
+    "a break in time is no longer printed, or is printed again on every miss",
+  );
+  {
+    /*
+      And the screen draws both, which is a different claim from the reply
+      building them: a provenance the component does not know renders as a
+      stage direction, so a hint would arrive as grey italics beside the
+      thing it exists to be distinguishable from.
+    */
+    const session = code("components/scene/SceneSession.tsx");
+    for (const kind of ["meanwhile", "coach"]) {
+      assert.match(
+        session, new RegExp(`line\\.provenance === "${kind}"`),
+        `the scene screen draws a ${kind} line as an ordinary stage direction`,
+      );
+    }
+    /*
+      And it reads the list of kinds off `lib/scenes/line.ts` rather than
+      keeping its own, which is how it came to know nine kinds on the day the
+      reply learned eleven.
+    */
+    assert.doesNotMatch(
+      session, /type Provenance = "attested"/,
+      "the scene screen keeps its own copy of the provenance list, so it can fall behind the reply",
+    );
+  }
+  /*
     And the gate is not widened with it. A model composing inside the course
     rather than inside the scene's own units is a line the learner has not
     been taught to read, which is the one thing the closed list is for.

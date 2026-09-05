@@ -128,11 +128,13 @@ async function play(sceneId: string) {
     }
     const lines = replyFor({
       beat: speaking, answered: turns.length ? answered : null, response: turns.length ? response : null,
-      reading: last?.reading ?? null, line, heard, card, translates: persona.translates,
+      reading: last?.reading ?? null, line, heard, said: last?.said ?? null, card, translates: persona.translates,
       acknowledges: persona.acknowledges, echo: last?.matched?.[0] ?? null,
       recast: Boolean(last?.slips?.some((s) => s.form && s.form === last?.matched?.[0])),
-      aside, offer: response === "help" && answered ? offerFor(answered, card ?? draw.card) : null,
+      aside, offer: (response === "help" || response === "moveOn") && answered
+        ? offerFor(answered, card ?? draw.card, context.marker.questionWords) : null,
       met: state.done.length,
+      tries: answered ? state.turns.filter((t) => t.beatId === answered.id).length : 0,
       hurdle: standing ? { beat: standing, line: standing === spokenFor ? line : null, said: hurdleSpec(state)?.said } : null,
     });
     if (last) {

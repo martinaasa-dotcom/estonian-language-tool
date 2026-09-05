@@ -173,7 +173,16 @@ export function stalledWords(scene: SceneSpec, state: SceneState): string[] {
  * second rule about "which word does this beat want" is how the two would
  * come apart.
  */
-export function offerFor(beat: BeatSpec, card: RoleCard | null = null): string | null {
+export function offerFor(
+  beat: BeatSpec,
+  card: RoleCard | null = null,
+  /**
+   * The question words, so a beat that wants a value off the card can point
+   * at what kind of thing it wants without pointing at `kuhu`, which is the
+   * question they were just asked said back at them.
+   */
+  questionWords: ReadonlySet<string> = new Set(),
+): string | null {
   for (const { need } of leafNeeds(beat.needs)) {
     if (need.kind === "lemma") {
       /*
@@ -192,12 +201,22 @@ export function offerFor(beat: BeatSpec, card: RoleCard | null = null): string |
     if (need.kind === "case") return need.lemma;
   }
   /*
-    And nothing where the beat wants a value off the card or a question: the
-    answer is already in front of them, or what they need is a shape rather
-    than a word, and a word that would not meet the beat is the fault above
-    in a smaller room. The question said again is the honest move there.
+    AND WHERE THE BEAT WANTS A VALUE OFF THE CARD, THE WORD IS THE KIND OF
+    THING RATHER THAN THE ANSWER.
+
+    This used to return nothing, on the argument that the answer is already in
+    front of them. That is true and it is not what somebody stuck needs to
+    hear, which is nothing: asked `Millal te soovite sõita?` and lost, they
+    got the same question again and no sign of what it was about. The beat's
+    own topic is what it is about (`kell` for a time, `pilet` for a ticket),
+    it is a lemma the scene's units teach like every other word here, and it
+    gives the answer away nowhere, because the answer is a value on the card.
+
+    Never a question word: `Kuhu?` handed to somebody who was just asked
+    `Kuhu te sõidate?` is the question said back at them with nothing added.
   */
-  return null;
+  const pointer = beat.topic.find((lemma) => !questionWords.has(lemma));
+  return pointer ?? null;
 }
 
 /**

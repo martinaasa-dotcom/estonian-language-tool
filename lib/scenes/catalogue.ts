@@ -98,6 +98,31 @@ export const FALLBACK_PHRASE = "Ma ei saa aru";
 export const REACTIONS = {
   acknowledge: ["hästi", "aitäh", "jah"],
   waiting: ["jah"],
+  /*
+    EVERY FAILURE USED TO LOOK LIKE A SUCCESS, which is the single reason a
+    learner reported a whole conversation as broken. A turn that landed got a
+    word and then the next question; a turn that missed got nothing and then a
+    question, and where the ladder had a fresh line for the same beat it got a
+    *differently worded* question. So `kool` answered "where are you going?"
+    with silence and "Kuhu te sõidate?", and there was no way on the screen to
+    tell that apart from having been understood and asked something new.
+
+    A person says so. This is what they say: the one word in the course for
+    "that was not what I asked", said before the question is put again, and
+    said only on a turn that was real Estonian off the point, since a turn
+    nobody could read already has the repair phrase and a turn that half
+    landed already gets its own word back.
+  */
+  missed: ["Vabandust!"],
+  /*
+    And running out of patience is not agreement. It drew from `acknowledge`,
+    so giving up on getting an answer could come out as `Aitäh.` or `Jah.`:
+    the other side thanking somebody for an answer they never gave, which is
+    the machine showing through at the exact moment the learner most needed
+    to know they had not been understood. One word, and never the two that
+    read as taking something.
+  */
+  letGo: ["hästi"],
 } as const;
 
 /**
@@ -442,7 +467,7 @@ const LANDLORD: SceneSpec = {
     },
     {
       id: "since",
-      goal: "Say since when.",
+      goal: "Say since when. Your card says which day.",
       they: "They ask since when.",
       move: "ask",
       topic: ["päev", "nädal", "aeg", "õhtu"],
@@ -543,7 +568,7 @@ const COUNTER: SceneSpec = {
   */
   units: [...COMMON, "linn-ja-teenused", "suhtlemine", "plaanid", "omadussonad", "inimesed", "minevik", "ostmine"],
   register: "teie",
-  role: "You have a form to hand in. You were given a reference for it and you are at the desk that takes them.",
+  role: "You have a form to hand in. You were given a reference number for it, and you are at the desk where forms are handed in.",
   props: [
     {
       kind: "word", slot: "paper", oneOf: ["avaldus", "dokument", "luba", "arve", "allkiri"],
@@ -608,7 +633,8 @@ const COUNTER: SceneSpec = {
     },
     {
       id: "fill",
-      goal: "Fill it in as they ask, not as you planned.",
+      goal: "Give them the details in the order they ask for them.",
+      meanwhile: "Twenty minutes in the queue. Your number comes up and you are back at the desk.",
       they: "They tell you what to fill in, and in what order.",
       move: "instruct",
       topic: ["täitma", "avaldus", "allkiri"],
@@ -684,7 +710,7 @@ const SHOP: SceneSpec = {
   tests: "ostmine",
   units: [...COMMON, "ostmine", "sook-ja-jook", "pohiverbid", "kodu", "kus-ja-kuhu", "omadussonad"],
   register: "sina",
-  role: "You are at home and there is no milk. You are going to the corner shop for some, and a friend keeps ringing to ask where you have got to.",
+  role: "You have run out of milk, so you are walking to the corner shop to buy some. A friend rings you a few times along the way to ask how you are getting on.",
   props: [],
   curveballs: ["small-talk", "misheard", "interrupted", "faster", "english"],
   beats: [
@@ -701,8 +727,8 @@ const SHOP: SceneSpec = {
     },
     {
       id: "going",
-      goal: "Say where you are going.",
-      they: "Your friend asks where you are off to.",
+      goal: "Tell them you are going to the shop.",
+      they: "Your friend asks where you are going.",
       move: "ask",
       topic: ["pood", "minema", "kuhu"],
       lines: ["Kuhu sa lähed?"],
@@ -713,8 +739,9 @@ const SHOP: SceneSpec = {
     },
     {
       id: "inside",
-      goal: "Say where you are now.",
-      they: "A little later they ring again and ask where you are now.",
+      goal: "Tell them you are at the shop now.",
+      meanwhile: "Five minutes later. You have walked to the shop and you are inside it.",
+      they: "A little later they ring again and ask where you are.",
       move: "ask",
       topic: ["pood", "olema", "kus"],
       needs: [{ kind: "case", lemma: "pood", grammCase: "INESSIVE" }],
@@ -724,8 +751,8 @@ const SHOP: SceneSpec = {
     },
     {
       id: "item",
-      goal: "Say what you want.",
-      they: "They ask what you are getting.",
+      goal: "Tell them you want milk.",
+      they: "They ask what you are buying.",
       move: "ask",
       topic: ["piim", "tahtma", "ostma", "mis"],
       needs: [{ kind: "case", lemma: "piim", grammCase: "PARTITIVE" }],
@@ -735,8 +762,9 @@ const SHOP: SceneSpec = {
     },
     {
       id: "back",
-      goal: "Say where you are coming from.",
-      they: "On the way home they ring once more and ask where you are coming from.",
+      goal: "Tell them you are on your way back from the shop.",
+      meanwhile: "You have paid, and you are walking home with the milk.",
+      they: "They ring once more on your way home and ask where you are coming from.",
       move: "ask",
       topic: ["pood", "tulema", "kust"],
       needs: [{ kind: "case", lemma: "pood", grammCase: "ELATIVE" }],
@@ -819,7 +847,7 @@ const CAFE: SceneSpec = {
     },
     {
       id: "order",
-      goal: "Say what you would like.",
+      goal: "Say what you would like. Your card says what.",
       they: "They ask what you would like.",
       move: "ask",
       topic: ["kohv", "tee", "jook", "soovima", "tellima"],
@@ -842,6 +870,7 @@ const CAFE: SceneSpec = {
     {
       id: "bill",
       goal: "Ask to pay.",
+      meanwhile: "A couple of minutes later. Your drink is on the counter in front of you.",
       they: "They set it down and ask whether that is everything.",
       move: "ask",
       topic: ["arve", "maksma", "raha", "hind"],
@@ -1000,7 +1029,7 @@ const TICKET: SceneSpec = {
     },
     {
       id: "to",
-      goal: "Say where to.",
+      goal: "Say where you are going. Your card says where.",
       they: "They ask where you are going.",
       move: "ask",
       topic: ["kuhu", "sõitma", "buss"],
@@ -1155,6 +1184,7 @@ const RESTAURANT: SceneSpec = {
     {
       id: "bill",
       goal: "Ask for the bill.",
+      meanwhile: "You have eaten. The waiter comes back to clear the table.",
       they: "They ask whether it was good.",
       move: "ask",
       topic: ["maitse", "hea", "arve", "maksma"],
@@ -1638,7 +1668,7 @@ const INTERVIEW: SceneSpec = {
   */
   units: [...COMMON, "too-ja-raha", "haridus", "kool-ja-keel", "kus-ja-kuhu", "ostmine", "kodu", "minevik", "plaanid", "omadussonad", "inimesed"],
   register: "teie",
-  role: "You are being interviewed for a job. The card says where you worked before, what you are good at and when you could start. None of it is about you.",
+  role: "You are being interviewed for a job. The card says where you worked before, what you are good at and when you could start. None of it is about your real life.",
   props: [
     {
       kind: "word", slot: "before", oneOf: ["kool", "ülikool", "kohvik", "haigla", "pood", "hotell"],
