@@ -164,8 +164,17 @@ await page.goto(`${B}/dictionary?q=tuba`, { waitUntil: "networkidle" });
 const entryBody = (await page.textContent("body")) ?? "";
 check("the entry says where that word breaks the pattern",
   /Where this word breaks the pattern/.test(entryBody));
-check("and prints the other form only because it is also right",
-  /is right too, and is what the ending gives you/.test(entryBody));
+/*
+  And it names which of the two is which, which the first version did not.
+  It printed the pair under a sentence about half the dictionary having a
+  short form and labelled neither, and somebody using it reported that as
+  being told a shorter form exists and never being told what it is. So the
+  check is on the labelling rather than on the pair being there: an entry
+  that prints both spellings and says nothing about them passes anything
+  looser and is the state this was written for.
+*/
+check("and prints the other form only because it is also right, saying which is which",
+  /is the short one, and .* is the long one the ending gives you/.test(entryBody));
 
 await page.goto(`${B}/review/exceptions`, { waitUntil: "networkidle" });
 const roundBody = (await page.textContent("body")) ?? "";
