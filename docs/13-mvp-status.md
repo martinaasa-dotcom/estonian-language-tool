@@ -168,9 +168,9 @@ deployment had quietly broken. This pass closes those.
 | **Undo (`u`)** | Restores the card's previous FSRS state; the `Review` row stays | Specified in `07-srs.md`, unbuilt at MVP. The log is append-only, so what rewinds is the scheduling, which is derived, and not the history |
 | **Match** (`/review/match`) | Eight pairs against the clock | The only mode that makes you scan a *set* of words at once |
 | **Practice hub** (`/practice`) | Every mode with its live state, plus one-click drills for weak cases | Answers "what should I do with five minutes" instead of listing modes |
-| **XP, levels, quests** | `lib/gamification/`: derived from the review log, never stored (ADR-014) | A streak alone says nothing about six weeks of work. Three quests a day, chosen deterministically from the date |
-| **Progress** (`/progress`) | Six-month heatmap, 14-day forecast, accuracy trend, per-case accuracy, CEFR reach | The forecast in particular is what stops an SRS becoming an unsustainable pile |
-| **Class leaderboard** | Opt-in, name chosen by the learner, weekly XP only | The one feature a class actually asks for. Off by default; no email or history is ever shared |
+| **XP, levels, quests, badges** | Withdrawn. They were derived from the review log and never stored (ADR-014), so nothing is held anywhere and they can come back computed the same way | A second score beside the readiness rungs, the mastery tiers and the exam figure, on the one page that already answers "how am I doing" four ways. Reported as too busy by somebody using it |
+| **Progress** (`/progress`) | Six-month heatmap, accuracy trend, per-case accuracy, answer pace, CEFR reach, readiness | The 14-day forecast went with the XP: it floored an empty day at the same 2px bar as a day holding one card, and the only place it said how many was a hover |
+| **Class leaderboard** | Opt-in, name chosen by the learner, reviews this week only | The one feature a class actually asks for. Off by default; no email or history is ever shared |
 | **Offline PWA** | Manifest, service worker, and a localStorage grade queue (ADR-015) | Restores the standing rule that review works with no network |
 | **Local mode** | No Supabase keys → one learner, no sign-in (ADR-013) | `npm run setup && npm run dev` is a complete installation again |
 | **⌘K palette, skip link, loading/error/not-found routes, phone nav sheet** | n/a | The difference between a demo and something you use on a Tuesday |

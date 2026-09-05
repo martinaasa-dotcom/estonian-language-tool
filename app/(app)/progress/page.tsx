@@ -7,7 +7,7 @@ import { CEFR_LEVELS } from "@/lib/estonian/types";
 import { dailySummary, deckSnapshot, pathWithProgress } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import {
-  bestStudyHour, buildForecast, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
+  bestStudyHour, buildHeatmap, caseAccuracy, dailyLoad, ratingBreakdown,
   retentionReading,
 } from "@/lib/stats/history";
 import { stickingPoints } from "@/lib/stats/sticking";
@@ -17,7 +17,6 @@ import { Heatmap } from "@/components/Heatmap";
 import { ShareProgress } from "@/components/ShareProgress";
 import { StickingPoints } from "@/components/StickingPoints";
 import { WeakestCases } from "@/components/WeakestCases";
-import { icon } from "@/components/icons";
 import { NotAutomatic } from "@/components/NotAutomatic";
 import { confusions } from "@/lib/stats/confusions";
 import { answerTimeReading } from "@/lib/stats/answerTime";
@@ -26,8 +25,6 @@ import { readinessPicture } from "@/lib/progress/readiness";
 import { caseReviewsFor } from "@/lib/progress/cases";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Board, BoardSkeleton } from "./Board";
-import { BADGES } from "@/lib/achievements/badges";
-import { BadgeShelf } from "@/components/achievements/BadgeShelf";
 import { numberSetting, readSettings, SETTING_KEYS } from "@/lib/settings/store";
 import { lemmasByCardLexeme } from "@/lib/dict/facts";
 import { Card, Chip, Empty, Meter, Page, Ring, SectionTitle, Stack, Stat } from "@/components/ui";
@@ -40,7 +37,6 @@ export const dynamic = "force-dynamic";
 
 const HEATMAP_DAYS = 182;
 const TREND_DAYS = 30;
-const FORECAST_DAYS = 14;
 
 export default async function ProgressPage() {
   const ownerId = await requireUserId();
@@ -49,8 +45,8 @@ export default async function ProgressPage() {
   // server, whose midnight is the deployment's. See lib/time/day.ts.
   const [clock, snapshot] = await Promise.all([learnerDayClock(ownerId), deckSnapshot(ownerId, now)]);
 
-  const [summary, units, reviews, dueDates, deck, caseReviews, earned, shieldRow, readiness, outside] = await Promise.all([
-    dailySummary(ownerId, snapshot, now, clock),
+  const [summary, units, reviews, deck, caseReviews, shieldRow, readiness, outside] = await Promise.all([
+    dailySummary(ownerId, now, clock),
     pathWithProgress(ownerId, snapshot),
     prisma.review.findMany({
       where: { ownerId, reviewedAt: { gte: new Date(now.getTime() - HEATMAP_DAYS * 86_400_000) } },
@@ -69,10 +65,6 @@ export default async function ProgressPage() {
         durationMs: true, slot: true, reachedSlot: true,
       },
       orderBy: { reviewedAt: "asc" },
-    }),
-    prisma.card.findMany({
-      where: { ownerId, suspended: false, state: { not: 0 } },
-      select: { due: true },
     }),
     /*
       ONE READ OF THE DECK, NOT TWO, AND ONE ROUND TRIP RATHER THAN FOUR.
@@ -103,9 +95,8 @@ export default async function ProgressPage() {
       input too, and the window is the one this page already used.
     */
     caseReviewsFor(ownerId, now),
-    // The shelf and the shields lived on Settings, which is where you change
-    // things, not where you find out how you are doing. Both are readings.
-    prisma.achievement.findMany({ where: { ownerId }, select: { key: true }, orderBy: { key: "asc" } }),
+    // The shields lived on Settings, which is where you change things, not
+    // where you find out how you are doing. This is a reading.
     readSettings(ownerId, [SETTING_KEYS.streakShields]),
     /*
       Which of the course's situations this learner could follow, take part
@@ -118,7 +109,6 @@ export default async function ProgressPage() {
     // readiness reading is a forecast of.
     outThere(ownerId, clock, now),
   ]);
-  const earnedKeys = new Set(earned.map((a) => a.key));
   const shields = numberSetting(shieldRow[SETTING_KEYS.streakShields], 0);
 
   // The lemma behind each card, out of the dictionary the whole deployment
@@ -139,7 +129,6 @@ export default async function ProgressPage() {
   );
 
   const heatmap = buildHeatmap(reviews.map((r) => r.reviewedAt), HEATMAP_DAYS, now, clock);
-  const forecast = buildForecast(dueDates.map((c) => c.due), FORECAST_DAYS, now, clock);
   const trend = dailyLoad(reviews, TREND_DAYS, now, clock);
   const breakdown = ratingBreakdown(reviews);
   // The narrower, more useful number: how often a card the scheduler believed
@@ -169,15 +158,6 @@ export default async function ProgressPage() {
     byLevel.set(level, entry);
   }
 
-  const busiest = Math.max(1, ...forecast.map((f) => f.count));
-  // Read off the same rows the bars are drawn from, so the sentence under the
-  // chart and the chart cannot disagree about what is coming.
-  const forecastTotal = forecast.reduce((n, f) => n + f.count, 0);
-  const peak = forecast.find((f) => f.count === busiest);
-  const busiestDay =
-    peak === undefined ? "nothing due yet"
-      : peak.offset === 0 ? `${busiest} of them due now`
-        : `busiest in ${peak.offset} day${peak.offset === 1 ? "" : "s"} at ${busiest}`;
   const trendPeak = Math.max(1, ...trend.map((d) => d.reviews));
   const pathKnown = units.reduce((s, u) => s + u.known, 0);
   const pathTotal = units.reduce((s, u) => s + u.available, 0);
@@ -217,108 +197,41 @@ export default async function ProgressPage() {
       }
     >
       <Stack>
-        <Card className="flex flex-wrap items-center gap-6">
-          <Ring pct={summary.level.pct} size={78} label={`Level ${summary.level.level}, ${summary.level.pct}% to the next`}>
-            <span className="tnum text-lg font-bold" style={{ color: "var(--ink)" }}>
-              {summary.level.level}
-            </span>
-          </Ring>
-          <div className="min-w-0 flex-1">
-            {/*
-              The Estonian name and what it means are one fact about the level,
-              so they are one line: the gloss set under the title in small grey
-              read as a caption about the card rather than as the translation of
-              the word above it, which is the whole reason the name is Estonian.
-              Same shape as the badges below, and the same shape the grammar
-              pages take with a case: the Estonian leads, the English follows it
-              as the cross-reference it is.
-            */}
-            <p className="text-lg font-semibold" style={{ color: "var(--ink)" }}>
-              <span lang="et">{summary.level.title}</span>
-              <span className="font-normal" style={{ color: "var(--ink-2)" }}> · {summary.level.gloss}</span>
-            </p>
-            <p className="text-xs" style={{ color: "var(--ink-3)" }}>
-              {summary.level.totalXp} XP total · {summary.level.remaining} to level {summary.level.level + 1}
-            </p>
-            <div className="mt-2 max-w-sm">
-              <Meter pct={summary.level.pct} label="Level progress" />
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-7">
-            <Stat
-              value={<span className="inline-flex items-center gap-1.5">{summary.streak}<Flame size={18} aria-hidden style={{ color: "var(--hard-ink)" }} /></span>}
-              label="Day streak"
-            />
-            <Stat value={snapshot.knownCards} label="Cards known" tone="var(--good-ink)" />
-            <Stat value={breakdown.accuracy === null ? NO_VALUE : `${breakdown.accuracy}%`} label="Recall rate" />
-            <ShareProgress />
-          </div>
-        </Card>
-
         {/*
-          TODAY'S THREE QUESTS, WHICH USED TO BE A CARD OF THEIR OWN ON TODAY.
+          WHAT THIS LEARNER HAS DONE, WHICH IS FOUR FIGURES AND NOT A SCORE.
 
-          They are XP, and this is the page the XP story is told on: the ring
-          above already carries the level, the total and what is left to the
-          next one, and three meters counting towards the same currency belong
-          under it rather than on the screen somebody opens with two minutes to
-          spend. Nothing about them changed on the way over. They are still
-          derived per request off the append-only log (ADR-014) and still reset
-          on the learner's own midnight, and pressing anything they name is
-          still a row of the rail away.
+          This card opened with a level ring, an Estonian level title and an XP
+          total, and three quest meters counting towards the same currency sat
+          under it. All of that was withdrawn: it was a second scoring system
+          beside the ones that mean something on this page, and a learner
+          reading down got several ways of being scored before reaching the one
+          that says what to drill. Nothing was lost with it, because XP was
+          derived from the review log on every request and never stored
+          (ADR-014), so there is no column holding anybody's old total.
+
+          The streak stays, and so do the shields, because they answer a
+          different question: not how well, but whether you turned up. The
+          shields moved here from the badge shelf they were paid out beside.
         */}
-        <section>
-          <SectionTitle hint={`${summary.questsDone} of ${summary.quests.length} done`}>
-            Today&rsquo;s quests
-          </SectionTitle>
-          <Card>
-            <ul className="flex flex-col gap-2">
-              {summary.quests.map((q) => {
-                const Icon = icon(q.icon);
-                return (
-                  <li
-                    key={q.key}
-                    className="flex items-center gap-3.5 rounded-[var(--r-lg)] border px-4 py-3.5"
-                    style={{
-                      borderColor: q.done ? "transparent" : "var(--rule)",
-                      background: q.done ? "var(--good-soft)" : "var(--surface)",
-                      boxShadow: q.done ? "none" : "var(--shadow-sm)",
-                    }}
-                  >
-                    <span
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                      style={{
-                        background: q.done ? "var(--surface)" : "var(--accent-soft)",
-                        color: q.done ? "var(--good-ink)" : "var(--accent-deep)",
-                      }}
-                    >
-                      <Icon size={17} aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-baseline justify-between gap-3">
-                        <span className="text-base font-semibold" style={{ color: "var(--ink)" }}>{q.title}</span>
-                        <span className="tnum text-xs" style={{ color: "var(--ink-3)" }}>
-                          {q.progress}/{q.target}
-                        </span>
-                      </span>
-                      <span className="mt-1.5 block">
-                        <Meter
-                          pct={(q.progress / q.target) * 100}
-                          label={`${q.title}: ${q.progress} of ${q.target}`}
-                          tone={q.done ? "var(--good)" : "var(--accent)"}
-                          height={5}
-                        />
-                      </span>
-                      <span className="mt-1.5 block text-xs" style={{ color: "var(--ink-3)" }}>
-                        {q.detail} · +{q.reward} XP
-                      </span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
-        </section>
+        <Card className="flex flex-wrap items-center gap-7">
+          <Stat
+            value={<span className="inline-flex items-center gap-1.5">{summary.streak}<Flame size={18} aria-hidden style={{ color: "var(--hard-ink)" }} /></span>}
+            label="Day streak"
+          />
+          <Stat value={snapshot.knownCards} label="Cards known" tone="var(--good-ink)" />
+          <Stat value={breakdown.accuracy === null ? NO_VALUE : `${breakdown.accuracy}%`} label="Recall rate" />
+          <Stat
+            value={<span className="inline-flex items-center gap-1.5">{shields}<Shield size={16} aria-hidden style={{ color: "var(--accent-deep)" }} /></span>}
+            label={`Shield${shields === 1 ? "" : "s"} banked`}
+          />
+          <span className="ml-auto"><ShareProgress /></span>
+          {/* What the shield figure beside it means. It used to be explained on
+              the badge shelf, which is where it was paid out and is not where
+              it is spent. */}
+          <p className="w-full text-xs" style={{ color: "var(--ink-3)" }}>
+            A shield carries your streak through one day you miss. One arrives at 7, 30 and 100 days.
+          </p>
+        </Card>
 
         {/* The number FSRS is actually steering, and what it means. Placed
             above the charts because it is the one that changes what to do. */}
@@ -377,77 +290,38 @@ export default async function ProgressPage() {
           </Card>
         </section>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <section>
-            <SectionTitle hint={`next ${FORECAST_DAYS} days · overdue counted as today`}>What&rsquo;s coming</SectionTitle>
-            <Card>
-              {/*
-                A day with nothing due draws the rule rather than a bar. It used
-                to floor every bar at 2px, so a day holding one card and a day
-                holding none were the same mark, and a fortnight that is mostly
-                empty read as a chart that had failed to load. The only thing
-                saying how many was a `title`, which is a hover, on a page
-                measured at 360px: the numbers are under the chart in words.
-              */}
-              <div className="flex h-28 items-end gap-1.5">
-                {forecast.map((f) => (
-                  <div key={f.day} className="flex flex-1 flex-col items-center gap-1">
-                    <span
-                      className="w-full rounded-t-[2px]"
-                      style={{
-                        height: f.count === 0 ? "1px" : `${Math.max(3, (f.count / busiest) * 88)}px`,
-                        background: f.count === 0 ? "var(--rule)"
-                          : f.offset === 0 ? "var(--accent)" : "var(--accent-soft)",
-                      }}
-                      title={`${f.day}: ${f.count} card${f.count === 1 ? "" : "s"} due`}
-                    />
-                    <span className="text-2xs" style={{ color: "var(--ink-3)" }}>
-                      {f.offset === 0 ? "now" : f.offset % 2 === 0 ? f.offset : ""}
-                    </span>
-                  </div>
-                ))}
-              </div>
+        <section>
+          <SectionTitle hint={`last ${TREND_DAYS} days`}>Reviews and recall</SectionTitle>
+          <Card>
+            <div className="flex h-28 items-end gap-[3px]">
+              {trend.map((d) => (
+                <div key={d.day} className="flex flex-1 flex-col justify-end" title={`${d.day}: ${d.reviews} reviews${d.accuracy === null ? "" : `, ${d.accuracy}% recalled`}`}>
+                  <span
+                    className="w-full rounded-t-[2px]"
+                    style={{
+                      height: `${Math.max(2, (d.reviews / trendPeak) * 88)}px`,
+                      background:
+                        d.accuracy === null ? "var(--raised)"
+                        : d.accuracy >= 85 ? "var(--good)"
+                        : d.accuracy >= 65 ? "var(--hard)" : "var(--again)",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+            {breakdown.total === 0 && (
               <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                {dueDates.length === 0
-                  ? "This fills in as you review more cards."
-                  : `${forecastTotal} card${forecastTotal === 1 ? "" : "s"} over the fortnight, ${busiestDay}`}
+                No reviews yet. Each bar is a day, coloured by how much you recalled.
               </p>
-            </Card>
-          </section>
-
-          <section>
-            <SectionTitle hint={`last ${TREND_DAYS} days`}>Reviews and recall</SectionTitle>
-            <Card>
-              <div className="flex h-28 items-end gap-[3px]">
-                {trend.map((d) => (
-                  <div key={d.day} className="flex flex-1 flex-col justify-end" title={`${d.day}: ${d.reviews} reviews${d.accuracy === null ? "" : `, ${d.accuracy}% recalled`}`}>
-                    <span
-                      className="w-full rounded-t-[2px]"
-                      style={{
-                        height: `${Math.max(2, (d.reviews / trendPeak) * 88)}px`,
-                        background:
-                          d.accuracy === null ? "var(--raised)"
-                          : d.accuracy >= 85 ? "var(--good)"
-                          : d.accuracy >= 65 ? "var(--hard)" : "var(--again)",
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-              {breakdown.total === 0 && (
-                <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                  No reviews yet. Each bar is a day, coloured by how much you recalled.
-                </p>
-              )}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Chip tone="again">{breakdown.again} again</Chip>
-                <Chip tone="hard">{breakdown.hard} hard</Chip>
-                <Chip tone="good">{breakdown.good} good</Chip>
-                <Chip tone="accent">{breakdown.easy} easy</Chip>
-              </div>
-            </Card>
-          </section>
-        </div>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Chip tone="again">{breakdown.again} again</Chip>
+              <Chip tone="hard">{breakdown.hard} hard</Chip>
+              <Chip tone="good">{breakdown.good} good</Chip>
+              <Chip tone="accent">{breakdown.easy} easy</Chip>
+            </div>
+          </Card>
+        </section>
 
         {readiness.totalReviews > 0 && <ReadinessPanel summary={readiness.summary} />}
 
@@ -571,25 +445,6 @@ export default async function ProgressPage() {
             </Card>
           </section>
 
-          <section>
-            <SectionTitle hint={`${earnedKeys.size} of ${BADGES.length}`}>Achievements</SectionTitle>
-            <Card>
-              <BadgeShelf earnedKeys={earnedKeys} />
-              <div className="mt-5 flex items-start gap-3 border-t pt-5" style={{ borderColor: "var(--rule-soft)" }}>
-                <Shield size={18} aria-hidden className="shrink-0" style={{ color: "var(--accent-deep)" }} />
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-                    {shields} streak shield{shields === 1 ? "" : "s"} banked
-                  </p>
-                  <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
-                    Earned at 7-, 30- and 100-day streaks. Each one carries your streak
-                    through a single day you miss entirely, and is spent on its own the
-                    next time you are back.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </section>
         </div>
 
         {/*

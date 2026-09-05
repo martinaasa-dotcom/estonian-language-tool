@@ -132,4 +132,40 @@ describe("the streak, counted in the learner's zone", () => {
     });
     expect(spent).toBeNull();
   });
+
+  /*
+    A SHIELD IS EARNED BY THE STREAK NOW, AND ONLY ONCE.
+
+    It used to arrive on the side of a badge, and the `Achievement` row that had
+    just been written was what stopped it arriving again on the next render.
+    The badges were withdrawn; without the high-water mark that replaced that
+    row, this function runs on every load of Today and would hand out a shield
+    on each one. So both halves are asserted: the seventh day pays, and the
+    eighth does not pay again.
+  */
+  it("banks a shield the first time the streak reaches a milestone, and not twice", async () => {
+    const now = new Date();
+    const clock = dayClock(TALLINN);
+    await reviewsAt(daysBack(now, [0, 1, 2, 3, 4, 5, 6], TALLINN, 9));
+
+    const first = await resolveStreakFor(OWNER, now, clock);
+    expect(first.streak).toBe(7);
+    expect(first.shieldsAvailable).toBe(1);
+
+    const again = await resolveStreakFor(OWNER, now, clock);
+    expect(again.shieldsAvailable).toBe(1);
+  });
+
+  it("pays for a milestone passed while nobody was looking, once", async () => {
+    // Thirty days in a restore, opened for the first time afterwards: seven and
+    // thirty are both behind them, and both are owed.
+    const now = new Date();
+    const clock = dayClock(TALLINN);
+    await reviewsAt(daysBack(now, Array.from({ length: 30 }, (_, i) => i), TALLINN, 9));
+
+    const result = await resolveStreakFor(OWNER, now, clock);
+    expect(result.streak).toBe(30);
+    expect(result.shieldsAvailable).toBe(2);
+    expect((await resolveStreakFor(OWNER, now, clock)).shieldsAvailable).toBe(2);
+  });
 });

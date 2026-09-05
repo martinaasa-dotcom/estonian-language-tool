@@ -3,16 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Mic, X } from "lucide-react";
-import { checkAchievements, gradeCard } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Recorder } from "@/components/Recorder";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { SpeakPair } from "@/components/Speak";
 import { StarWord } from "@/components/StarWord";
-import type { Badge } from "@/lib/achievements/badges";
-import { xpForRating } from "@/lib/gamification/xp";
 import { SELF_GRADES, type RatingValue } from "@/lib/srs/scheduler";
 import { VERDICT_CLASS, verdictOfRating } from "@/lib/ux/verdict";
 
@@ -57,13 +54,9 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [done, setDone] = useState(0);
-  const [correct, setCorrect] = useState(0);
-  const [xp, setXp] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const startedAt = useRef(Date.now());
   const shownAt = useRef(Date.now());
-  const checked = useRef(false);
 
   const card = cards[index];
   const finished = !card;
@@ -73,20 +66,10 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
     shownAt.current = Date.now();
   }, [index]);
 
-  useEffect(() => {
-    if (!finished || cards.length === 0 || checked.current) return;
-    checked.current = true;
-    void checkAchievements(true).then((r) => {
-      if (r.ok) setNewBadges(r.newBadges);
-    });
-  }, [finished, cards.length, done, correct]);
-
   const submit = useCallback(async (rating: RatingValue) => {
     if (!card || busy) return;
     setBusy(true);
     setDone((d) => d + 1);
-    setXp((x) => x + xpForRating(rating));
-    if (rating >= 3) setCorrect((c) => c + 1);
     try {
       await gradeCard(card.cardId, rating, Date.now() - shownAt.current);
     } catch {
@@ -122,9 +105,8 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
             use. Nothing you recorded left this device.
           </p>
         </div>
-        <div className="mt-8 grid grid-cols-3 gap-3">
+        <div className="mt-8 grid grid-cols-2 gap-3">
           <StatTile value={done} label="Spoken" tone="accent" />
-          <StatTile value={`+${xp}`} label="XP" tone="blush" />
           <StatTile value={`${minutes}m`} label="Time" tone="sky" />
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -132,7 +114,6 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
           <ButtonLink href="/practice" size="lg">Other modes</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
-        <AchievementToasts badges={newBadges} />
       </div>
     );
   }
@@ -258,7 +239,7 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
       </div>
 
       <p className="mt-4 text-center text-2xs" style={{ color: "var(--ink-3)" }}>
-        {done} spoken · +{xp} XP · audio from the University of Tartu
+        {done} spoken · audio from the University of Tartu
       </p>
     </div>
   );

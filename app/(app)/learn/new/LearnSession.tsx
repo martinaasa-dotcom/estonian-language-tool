@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { BookOpen, Check, Sparkles, X } from "lucide-react";
-import { checkAchievements, gradeCard } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Chip, Empty, Meter, Page, StatTile } from "@/components/ui";
@@ -16,11 +15,9 @@ import { WordIntro } from "@/components/WordIntro";
 import { useAudioPrefs, useFeedbackSound } from "@/components/AudioPrefs";
 import { useOffline } from "@/components/OfflineProvider";
 import { prefetchClip } from "@/lib/audio/clip";
-import type { Badge } from "@/lib/achievements/badges";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { BLANK } from "@/lib/estonian/cloze";
 import { splitOnForm } from "@/lib/dict/examples";
-import { xpForRating } from "@/lib/gamification/xp";
 import { sameSpelling } from "@/lib/copy/values";
 import { enqueueGrade } from "@/lib/offline/db";
 import { LEARN_BATCH, ratingFor, rungOf, tally, type Outcome, type Rung } from "@/lib/learn/ladder";
@@ -135,9 +132,7 @@ export function LearnSession({
   const [chosen, setChosen] = useState<string | null>(null);
   const [answered, setAnswered] = useState(0);
   const [right, setRight] = useState(0);
-  const [xp, setXp] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [pendingOffline, setPendingOffline] = useState(0);
   const { pending: outboxPending, refresh: refreshOutbox } = useOffline();
   const { voice } = useAudioPrefs();
@@ -152,7 +147,6 @@ export function LearnSession({
   const scheduled = useRef(new Map<string, LearnScheduling>());
   const shownAt = useRef(Date.now());
   const startedAt = useRef(Date.now());
-  const checked = useRef(false);
   const run = useRef(0);
 
   const byId = useMemo(
@@ -194,12 +188,6 @@ export function LearnSession({
     const upcoming = nextId ? byId.get(nextId) : undefined;
     if (upcoming) prefetchClip({ text: upcoming.lemma, voice });
   }, [queue, byId, voice]);
-
-  useEffect(() => {
-    if (!finished || total === 0 || checked.current) return;
-    checked.current = true;
-    void checkAchievements(true).then((r) => { if (r.ok) setNewBadges(r.newBadges); });
-  }, [finished, total]);
 
   const cheer = useCallback((won: boolean) => {
     run.current = won ? run.current + 1 : 0;
@@ -298,7 +286,6 @@ export function LearnSession({
     scheduled.current.set(word.cardId, after);
     const moved = { ...rungs, [word.cardId]: rungOf(after.state, after.learningSteps) };
     setAnswered((n) => n + 1);
-    setXp((x) => x + xpForRating(rating));
     if (rating >= 3) setRight((n) => n + 1);
 
     // A clean hit moves on. A miss keeps its screen, because the correction is
@@ -401,10 +388,9 @@ export function LearnSession({
           </p>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatTile value={counts.kept} label="To practice" tone="mint" />
           <StatTile value={counts.staying} label="Still learning" tone="butter" />
-          <StatTile value={`+${xp}`} label="XP" tone="blush" />
           <StatTile value={`${minutes}m`} label="Time" tone="sky" />
         </div>
 
@@ -449,7 +435,6 @@ export function LearnSession({
           <ButtonLink href="/review" size="lg">Practise what is due</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
-        <AchievementToasts badges={newBadges} />
       </div>
     );
   }

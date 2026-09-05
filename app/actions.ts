@@ -34,7 +34,6 @@ import { resolveOneWord } from "@/lib/dict/resolveScan";
 import { guessPos, MAX_ITEMS as SCAN_MAX_ITEMS } from "@/lib/scan/extract";
 import { parseItems, sanitiseItems, serialiseItems } from "@/lib/scan/items";
 import { translateSentenceWithAnu } from "@/lib/tutor/translate";
-import { checkAchievementsFor } from "@/lib/progress/achievements";
 import { resolveStreakFor } from "@/lib/progress/summary";
 import { learnerDayClock } from "@/lib/progress/dayClock";
 import { isTimeZone } from "@/lib/time/day";
@@ -811,41 +810,6 @@ export async function resolveStreak() {
   const ownerId = await requireUserId();
   const result = await resolveStreakFor(ownerId, new Date(), await learnerDayClock(ownerId));
   return { ok: true as const, ...result };
-}
-
-/**
- * Computes current stats from the review log and decks, then awards any badge
- * whose condition is newly met. Idempotent and safe to call often: an already
- * -earned key is never re-awarded or removed, so a badge earned once is kept
- * forever even if the underlying stat later dips (e.g. a streak breaks).
- *
- * The work itself lives in lib/progress/achievements.ts, so a page that has
- * already loaded the learner's deck and day can award badges from what it
- * holds instead of asking the database all over again.
- *
- * No revalidatePath here: this is called from a Server Component render (Today)
- * as well as from actual actions, and revalidating during render is an error.
- */
-/**
- * Awards whatever this learner has earned, and takes no numbers on trust.
- *
- * The argument used to be `{ count, accuracy }` for the session that just
- * ended, and this file is `"use server"`, so those were a claim rather than a
- * measurement: `checkAchievements({ count: 10, accuracy: 100 })` from a
- * console earned `perfect_session` with no card answered, into a table that is
- * never re-awarded and never removed. Only the learner is cheated by that,
- * which is why it is worth fixing rather than worth an alarm: a badge shelf
- * you know is a lie is not a badge shelf.
- *
- * What is left is a boolean saying a session ended, which the caller does know
- * and cannot lie usefully about: the run is read off the review log
- * (`lib/progress/session.ts`), so a forged `true` at a keyboard nobody has
- * touched counts nothing.
- */
-export async function checkAchievements(sessionEnded = false) {
-  const ownerId = await requireUserId();
-  const newBadges = await checkAchievementsFor(ownerId, sessionEnded === true);
-  return { ok: true as const, newBadges };
 }
 
 /**
@@ -1806,7 +1770,6 @@ export async function completeLesson(
 
   const applied = await gradeAnswers(ownerId, answers);
   if (!applied.ok) return { ok: false as const, error: applied.error ?? "Could not record the lesson." };
-  await checkAchievementsFor(ownerId);
   revalidatePath("/learn");
   revalidatePath(`/learn/${unitId}`);
   revalidatePath("/words");

@@ -7,9 +7,9 @@ import { Card, Chip, Empty, Note, SectionTitle, StatTile } from "@/components/ui
  * A sponsored group, as the sponsor sees it.
  *
  * Three things are missing from this screen on purpose, and each of them is on
- * the teacher's roster one file over. There is no XP column, because ranking
- * colleagues by how much homework they did is a league table their employer is
- * reading. There is no weakest case, because an employer has no lesson to plan
+ * the teacher's roster one file over. There is no ranking column, because
+ * ordering colleagues by how much homework they did is a league table their
+ * employer is reading. There is no weakest case, because an employer has no lesson to plan
  * and "Kadri keeps getting the partitive wrong" follows somebody into a review
  * they never see. And there is no confidence percentage, because a figure that
  * precise about a named employee cannot be argued with by the person it

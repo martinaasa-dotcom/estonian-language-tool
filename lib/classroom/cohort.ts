@@ -163,7 +163,7 @@ export function summariseCohort(input: CohortInput[], level: ExamLevel): CohortS
   /*
     Alphabetical, and that is a decision rather than a default.
 
-    The teacher's roster sorts by XP this week, which in a classroom is a
+    The teacher's roster sorts by reviews this week, which in a classroom is a
     leaderboard and is meant to be one. The same sort in a workplace ranks
     colleagues against each other by how much homework they did, on a screen
     their employer is looking at, and puts whoever is struggling most at the

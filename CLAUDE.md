@@ -2444,8 +2444,44 @@ level a check has already said the learner has not reached, and it names what Es
 lives in, off the `situation` phrase each reason in `goals.ts` carries beside its hours. One table,
 so the plan's note and her briefing cannot describe one learner two ways.
 
-**Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed from
-the append-only review log on each request (`lib/gamification/`, `lib/stats/`, `lib/progress/`).
+**XP, the daily quests and the badges were withdrawn, and the streak was not.** They were a second
+scoring system beside the ones that mean something. A learner opening Progress was handed XP, a
+level with an Estonian title, three quest meters, a streak, mastery tiers, readiness rungs and an
+exam confidence figure: seven ways of being scored, of which only the last four answer a question
+anybody can act on, and 23 badges of which two were earned read as a wall of dotted boxes listing
+what somebody had not done. It was reported as too busy by the person using it, and the call was
+that the app's own content is what needs polishing first.
+
+Nothing was lost by going. Every one of them was derived from the append-only review log on each
+request (ADR-014), so there is no column anywhere holding an old total, and if they come back they
+come back computed from the same rows. `Achievement` stays in the schema, in the export and in the
+erasure, because rows somebody earned are theirs whether or not a screen draws them.
+
+**What could have been lost is the shield.** A shield was paid out on the side of a badge,
+`streak_7`, `streak_30` and `streak_100` each granting one, and the `Achievement` row that had just
+been written was what stopped it being granted again on the next render. Deleting the badges and
+keeping the panel would have left the one thing that protects a streak impossible to earn, silently,
+with the figure reading 0 for ever like somebody's own fault. So `resolveStreakFor` banks them now
+off a high-water mark of its own (`SHIELD_MILESTONES`, `streakShieldsAwarded`), which is a number
+rather than a set because the milestones are a ladder, and `lib/progress/streak.itest.ts` drives a
+real database to check that the seventh day pays and the eighth does not pay again. `computeStreak`
+moved to `lib/stats/streak.ts` with its tests, since it outlived the file it was living in.
+
+The invariant is a sweep rather than a list: no file may reach for `xpForRating`, `questsForDay`,
+`AchievementToasts` or their neighbours, and `lib/gamification/`, `lib/achievements/` and
+`components/achievements/` may not come back. What it is really guarding against is the half
+removal, a round still booking a toast or a screen still reading a level off the summary, which is
+dead weight that reads as a feature to whoever finds it next.
+
+**And the review forecast went with them.** "What's coming" drew fourteen bars off the due dates
+and floored every one at 2px, so a day holding one card and a day holding none were the same mark
+and a fortnight that was mostly empty read as a chart that had failed to load. The only thing
+saying how many was a `title`, which is a hover, on a page measured at 360px. A chart nobody can
+read a number off is a chart taking up a panel, and what it was reporting is already on Today as
+the count of what is due.
+
+**Progress is derived, never stored.** The streak, the goal, the readiness rungs and every chart are
+computed from the append-only review log on each request (`lib/stats/`, `lib/progress/`).
 Do not add a counter column. A stored score is a second source of truth that drifts, and it can be
 awarded for something that never happened. The only exceptions are values no log can reconstruct: a
 personal best, and which days a streak shield has already covered. (ADR-014.)
@@ -2505,8 +2541,8 @@ The home page was then rewritten, reached for `caseAccuracy` like everybody else
 query beside it, which made it the fourth answer: all of time rather than the half-year, and
 unordered. The pairing is asserted now rather than described, anchored on the *call* rather than on
 the import, because a file can import the shared query and go on using its own rows, which is
-exactly what happened. It is scoped to `app/`: the class roster rolls a whole class up at once and
-the badge stats read all time on purpose, and a check that fires on honest code is a check people
+exactly what happened. It is scoped to `app/`: the class roster rolls a whole class up at once,
+which one learner's query cannot express, and a check that fires on honest code is a check people
 learn to waive.
 
 **And a `take` beside a `distinct` bounds nothing at all.** Prisma deduplicates in the client, so a
@@ -2617,8 +2653,8 @@ sixty words at the front of the alphabet. The window starts where the unit point
 answer `paperFor` had already reached one file over.
 
 **A day is the learner's day, and every screen that counts one is rendered on a server.** The
-streak, the daily goal, the quests, the week strip, the heatmap and the two badges about the hour
-of the day are all derived server-side, and a server's midnight is the deployment's. `lib/time/day.ts`
+streak, the daily goal, the week strip, the heatmap and the errand of the day are all derived
+server-side, and a server's midnight is the deployment's. `lib/time/day.ts`
 had a header saying its days were "the learner's own calendar days" and a body reading
 `getFullYear()`, which is the day boundary of whichever process is running: on Vercel, UTC. The
 shortcut that file was written to forbid was being taken one layer down from where it forbade it.
@@ -3076,7 +3112,7 @@ file.
 **A response built out of one learner's own rows says it is theirs and is never kept.** The
 framework's silence is not a cache policy: `ImageResponse` stamps `public, immutable,
 max-age=31536000` on anything that does not say otherwise, so the share card, which carries a
-name, a streak and an XP total, was cached for a year at one fixed URL. Measured on the built app:
+name, a streak and a review count, was cached for a year at one fixed URL. Measured on the built app:
 three fetches made one request, and the second and third were served from the browser's own cache
 *after* everything `forgetThisDevice` clears had been cleared, so signing out on a shared laptop
 left the last person's card one fetch away. `/api/export` and `/api/reminder` sent no freshness
@@ -3245,7 +3281,8 @@ AWS region, and there each of those is a round trip: giving every query a 20ms d
 again, Today was 400ms and fourteen of those trips happened **one after another**, because the page
 awaited the clock, then the deck, then the settings, then a batch, then another batch, then the
 badge check, then the level. Nine of the forty queries were the same read of the same fifteen
-settings rows.
+settings rows. (The badge check and the level are gone with the badges and the XP; the shape of
+the fault is what this paragraph is about.)
 
 Three rules came out of it and each has an invariant or a module behind it. **A read that is a fact
 about the shared dictionary is not a fact about the person waiting**, so it is cached across
@@ -3261,10 +3298,10 @@ dropping it, because a Server Action that banks a shield and then reads the coun
 is on Today. And **two answers that do not need each other are asked at once**, which is most of
 what was wrong: the four opening reads of Today were four `await`s in a row and are one `Promise.all`.
 
-**And what a page does not need before its first byte goes behind a `Suspense`.** The badge check
-on Today is three round trips to decide whether to draw a toast over a page that has not rendered
-yet, and the class board on Progress is four to fill the last panel on a page of charts. Both now
-stream in behind the page rather than in front of it. This is not licence to wrap everything: a
+**And what a page does not need before its first byte goes behind a `Suspense`.** The class board
+on Progress is four round trips to fill the last panel on a page of charts, so it streams in behind
+the page rather than in front of it. The badge check on Today was the other one, three trips to
+decide whether to draw a toast, and it went with the badges. This is not licence to wrap everything: a
 panel that can turn out to be nothing (`ExamCountdownCard` when no target was set, `StruggleAreas`
 with nothing to report) would show a skeleton and then vanish, which is a layout jump on somebody's
 home page, and that is worse than the wait it saves. A boundary is right where the fallback is
@@ -3337,8 +3374,7 @@ that stops asking the module, and on anybody outside it comparing a review count
 of their own, since a second answer to "has this learner started yet" is how the first one rots.
 
 **And then the rule over-reached, and day one paid for it.** "A figure computed from an empty log"
-is a streak of nought, a goal ring at nought percent and a level bar at 40 XP, and those are still
-held back. It is not the word of the day, which is a dictionary lookup keyed on the date and reads
+is a streak of nought and a goal ring at nought percent, and those are still held back. It is not the word of the day, which is a dictionary lookup keyed on the date and reads
 the same on the first morning as in the second year. It was withheld anyway on the strength of not
 being the review button, so `arriving` was two cards on an otherwise empty page, which a learner
 reads as an app with nothing in it. Restraint that leaves a screen looking broken is not restraint.
@@ -3352,7 +3388,7 @@ fourteen cards on a settled morning. The daily quest and the game of the day bot
 something short". The sticking points and the weakest cases were a second drawing of two sections
 Progress already has under their own headings, and one of them, `StruggleAreas`, described itself
 in its own header as "a heading and a link". Three quest meters and an XP bar reported how much had
-been done, which is what Progress is for. Six practice tiles were a menu on a screen whose job is a
+been done, which is what Progress is for, before both were withdrawn from the app entirely. Six practice tiles were a menu on a screen whose job is a
 thing to press. The exam countdown was a forecast the hub prints in full. And a standing pitch for
 Anu sat under a button that is in the corner of every signed-in screen, which is the argument
 `lib/ux/nav.ts` already makes about refusing her a rail row. None of those is wrong on its own. All
@@ -3362,8 +3398,7 @@ somebody using it.
 So `TODAY_CARDS` is five, the page names its cards in priority order and draws the first five under
 the hero, and six is the whole screen. The order is the argument and it is what to do today: what
 to say to a real person, what is actually on today, the one short round, the run of days, a word,
-and then the course. What came off moved rather than went: the XP bar and the three quests are on
-Progress beside the ring that already carried the level, the countdown card is on the examination
+and then the course. What came off moved rather than went: the countdown card is on the examination
 hub in place of the block that was hand-building the same four figures beside it, and the sticking
 points and the weakest cases were already there, which is why `StruggleAreas` was deleted rather
 than moved. Everything else is in the rail, in the palette and on its own page, exactly as with the
@@ -3394,8 +3429,8 @@ greyer row is a hue carrying a distinction on its own.
 accident. What happens is somebody adds `{newCard}` beside the sliced array, which reads as a card
 being added and is a card that cannot be cut, so what is asserted is that every child of `Columns`
 on that page comes out of the one expression the cap is applied to. Made to fail three ways before
-it was trusted: a card drawn loose beside the list, the `slice` deleted, and the quests orphaned on
-their way to Progress.
+it was trusted: a card drawn loose beside the list, the `slice` deleted, and a card orphaned on
+its way off the page.
 
 **Today is a dashboard, and its modules are declared before they are placed.** What a card is and
 where it sits are two questions, and they were one six-hundred-line return statement with a
@@ -4301,7 +4336,7 @@ shape that breaks this and it is the natural thing to write, so the invariant re
   fail, it gets slower or it passes against whatever rows happen to be there.
   Each directory is checked to exist too, so a rename fails there rather than
   quietly covering nothing.
-- Data that drives UI but holds no JSX (badges, path units, quests) carries a lucide icon *name*;
+- Data that drives UI but holds no JSX (path units, practice modes) carries a lucide icon *name*;
   `components/icons.tsx` is the only place that turns one into a component.
 - Settings go through `lib/settings/store.ts`. No new string keys scattered through pages. The five
   goal keys (`goalReason`, `goalTarget`, `goalDeadline`, `goalDays`, `goalNote`) are declared there
@@ -4518,7 +4553,7 @@ shape that breaks this and it is the natural thing to write, so the invariant re
 - **`opacity` never goes on a box that holds words.** It multiplies through everything inside, so a
   fade meaning "not yet" fades the sentence explaining why. A locked unit on the course page ended
   up saying "you can still open it" at 2.63:1, on every locked row of a 73-unit course; the badge
-  shelf and the grammar reference had the same shape. A state that means "not yet" has a border, an
+  shelf that has since been withdrawn and the grammar reference had the same shape. A state that means "not yet" has a border, an
   icon and a sentence to say so with. Where a fade genuinely helps, it goes on the icon.
 - **And the sweep is axe, not a hand-rolled one.** `scripts/a11y-check.mjs` spent its life saying it
   was "not a substitute for axe", which was true and was also why five real failures sat unseen. The
@@ -4730,9 +4765,10 @@ aggregate said the class was weak on the partitive and nothing about who to sit 
 argument does not survive the move into a workplace: an employer has no lesson to plan, and "Kadri
 keeps getting the partitive wrong" follows somebody into a review they never see. So
 `workplaceRoster` never selects `targetCase`, hands `assessReadiness` an empty `cases`, and returns
-a `CohortSummary` with nowhere to put one. There is no XP column either, because ranking colleagues
-by how much homework they did is a league table their employer is reading, and the list is ordered
-by name for the same reason: sorting by band would put whoever is struggling at one end of it.
+a `CohortSummary` with nowhere to put one. There is no ranking column either, because ordering
+colleagues by how much homework they did is a league table their employer is reading, and the list
+is ordered by name for the same reason: sorting by band would put whoever is struggling at one end
+of it.
 
 What a sponsor gets instead is a **band, never a percentage**. The learner's own hub prints "41
 percent likely to pass B1" and should, since they can act on it and the tier beside it says what it

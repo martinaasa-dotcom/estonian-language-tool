@@ -1,9 +1,7 @@
 import { prisma } from "@/lib/db";
 import { dictionaryLemmas, gradedLemmas, lemmasByCardLexeme } from "@/lib/dict/facts";
 import { PATH, unitProgress, type PathUnit, type UnitProgress } from "@/lib/collections/syllabus";
-import { computeStreakWithShields } from "@/lib/achievements/badges";
-import { levelFromXp, xpFromRatingCounts, type LevelInfo } from "@/lib/gamification/xp";
-import { questsForDay, type Quest, type QuestStats } from "@/lib/gamification/quests";
+import { computeStreakWithShields } from "@/lib/stats/streak";
 import {
   dailyGoalFrom, numberSetting, readSettings, SETTING_KEYS, writeSetting,
 } from "@/lib/settings/store";
@@ -229,93 +227,67 @@ export interface DailySummary {
   shieldsAvailable: number;
   dailyGoal: number;
   reviewsToday: number;
-  xpToday: number;
-  totalXp: number;
   /**
    * Every review this learner has ever graded.
    *
-   * Free: it is the sum of the rating counts already loaded for XP. It is here
-   * because `lib/ux/disclosure.ts` decides how much of the app a screen leads
-   * with from it, and a second query to answer "has this person started yet"
-   * would be a query on every render of the busiest page in the app.
+   * One aggregate rather than a query of its own: `lib/ux/disclosure.ts`
+   * decides how much of the app a screen leads with from it, and a second
+   * query to answer "has this person started yet" would be a query on every
+   * render of the busiest page in the app.
    */
   reviewsAllTime: number;
-  level: LevelInfo;
-  quests: Quest[];
-  questsDone: number;
   goalPct: number;
   goalMet: boolean;
 }
 
 /**
- * Everything the Today screen leads with.
- *
- * XP is recomputed from the review log every time rather than stored — see
- * lib/gamification/xp.ts for why that matters.
+ * Everything the Today screen leads with, derived from the append-only review
+ * log on every request rather than counted into a column (ADR-014).
  */
 export async function dailySummary(
   ownerId: string,
-  snapshot: DeckSnapshot,
   now = new Date(),
   clock: DayClock = dayClock(),
 ): Promise<DailySummary> {
   const startToday = clock.startOfDay(now);
 
-  const [allRatings, todayRatings, todayReviews, cardsAddedToday, tasksDoneToday, settings, streakInfo] =
-    await Promise.all([
-      prisma.review.groupBy({ by: ["rating"], where: { ownerId }, _count: true }),
-      prisma.review.groupBy({
-        by: ["rating"],
-        where: { ownerId, reviewedAt: { gte: startToday } },
-        _count: true,
-      }),
-      prisma.review.findMany({
-        where: { ownerId, reviewedAt: { gte: startToday } },
-        select: { rating: true, stateBefore: true },
-      }),
-      prisma.card.count({ where: { ownerId, createdAt: { gte: startToday } } }),
-      prisma.task.count({ where: { ownerId, completedAt: { gte: startToday } } }),
-      readSettings(ownerId, [SETTING_KEYS.dailyGoal]),
-      resolveStreakFor(ownerId, now, clock),
-    ]);
+  /*
+    Four counts where there used to be seven reads.
 
-  const toCounts = (rows: { rating: number; _count: number }[]) =>
-    Object.fromEntries(rows.map((r) => [r.rating, r._count]));
+    Two of the old queries loaded every rating this learner has ever given,
+    grouped, so XP could be summed from them, and two more counted the cards
+    added and the tasks finished today for the three daily quests. XP and the
+    quests are gone, and what is left of them is a number of rows, which
+    Postgres counts without sending any.
+  */
+  const [reviewsAllTime, reviewsToday, settings, streakInfo] = await Promise.all([
+    prisma.review.count({ where: { ownerId } }),
+    prisma.review.count({ where: { ownerId, reviewedAt: { gte: startToday } } }),
+    readSettings(ownerId, [SETTING_KEYS.dailyGoal]),
+    resolveStreakFor(ownerId, now, clock),
+  ]);
 
-  const totalXp = xpFromRatingCounts(toCounts(allRatings));
-  const reviewsAllTime = allRatings.reduce((sum, row) => sum + row._count, 0);
-  const xpToday = xpFromRatingCounts(toCounts(todayRatings));
   const dailyGoal = dailyGoalFrom(settings[SETTING_KEYS.dailyGoal]);
 
-  const questStats: QuestStats = {
-    reviewsToday: todayReviews.length,
-    newCardsToday: todayReviews.filter((r) => r.stateBefore === 0).length,
-    recalledToday: todayReviews.filter((r) => r.rating >= 3).length,
-    cardsAddedToday,
-    tasksDoneToday,
-    dueRemaining: snapshot.dueCount,
-    dailyGoal,
-  };
-
-  const key = clock.dayKey(now);
-  const quests = questsForDay(key, questStats);
-
   return {
-    dayKey: key,
+    dayKey: clock.dayKey(now),
     streak: streakInfo.streak,
     shieldsAvailable: streakInfo.shieldsAvailable,
     dailyGoal,
-    reviewsToday: questStats.reviewsToday,
-    xpToday,
-    totalXp,
+    reviewsToday,
     reviewsAllTime,
-    level: levelFromXp(totalXp),
-    quests,
-    questsDone: quests.filter((q) => q.done).length,
-    goalPct: Math.min(100, Math.round((questStats.reviewsToday / dailyGoal) * 100)),
-    goalMet: questStats.reviewsToday >= dailyGoal,
+    goalPct: Math.min(100, Math.round((reviewsToday / dailyGoal) * 100)),
+    goalMet: reviewsToday >= dailyGoal,
   };
 }
+
+/**
+ * The streak lengths that bank a shield, one each, once.
+ *
+ * The same three the badges paid out on, kept where the streak is resolved
+ * rather than where a shelf was drawn.
+ */
+export const SHIELD_MILESTONES = [7, 30, 100] as const;
 
 /**
  * Current streak, spending banked shields on any missed days.
@@ -372,7 +344,9 @@ export async function resolveStreakFor(
         AND "reviewedAt" >= ${new Date(now.getTime() - 400 * 86_400_000)}
       ORDER BY day DESC
     `,
-    readSettings(ownerId, [SETTING_KEYS.streakShields, SETTING_KEYS.streakShieldDates]),
+    readSettings(ownerId, [
+      SETTING_KEYS.streakShields, SETTING_KEYS.streakShieldDates, SETTING_KEYS.streakShieldsAwarded,
+    ]),
   ]);
 
   const shieldsAvailable = numberSetting(settings[SETTING_KEYS.streakShields], 0);
@@ -391,16 +365,45 @@ export async function resolveStreakFor(
     days.map((d) => d.day), shieldsAvailable, shieldedDates, now, clock,
   );
 
-  if (result.newlyShieldedDates.length > 0) {
-    await Promise.all([
-      writeSetting(ownerId, SETTING_KEYS.streakShields, String(result.shieldsRemaining)),
-      writeSetting(
-        ownerId,
-        SETTING_KEYS.streakShieldDates,
-        JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]),
-      ),
-    ]);
-  }
+  /*
+    A SHIELD IS BANKED BY THE STREAK ITSELF NOW.
 
-  return { streak: result.streak, shieldsAvailable: result.shieldsRemaining };
+    It used to arrive on the side of a badge: `awardBadges` saw `streak_7`,
+    `streak_30` or `streak_100` become true and paid one out, and the
+    `Achievement` row it had just written was what stopped it being paid again
+    on the next render. The badges were withdrawn and the shields were not, so
+    without this the one thing that protects a streak could no longer be
+    earned, which is the shape of dead feature nothing reports: the panel
+    would go on saying "0 banked" for ever and read as somebody's own fault.
+
+    The high-water mark replaces the row and is a number rather than a set,
+    because the milestones are a ladder: reaching 30 means 7 was passed on the
+    way, so one comparison says how many are owed even to somebody who first
+    opened the app after a fortnight of reviews landed in a restore.
+  */
+  const awardedTo = numberSetting(settings[SETTING_KEYS.streakShieldsAwarded], 0);
+  const earned = SHIELD_MILESTONES.filter((m) => m > awardedTo && result.streak >= m);
+  const shields = result.shieldsRemaining + earned.length;
+
+  const writes: Promise<unknown>[] = [];
+  if (result.newlyShieldedDates.length > 0) {
+    writes.push(writeSetting(
+      ownerId,
+      SETTING_KEYS.streakShieldDates,
+      JSON.stringify([...shieldedDates, ...result.newlyShieldedDates]),
+    ));
+  }
+  if (result.newlyShieldedDates.length > 0 || earned.length > 0) {
+    writes.push(writeSetting(ownerId, SETTING_KEYS.streakShields, String(shields)));
+  }
+  if (earned.length > 0) {
+    writes.push(writeSetting(
+      ownerId,
+      SETTING_KEYS.streakShieldsAwarded,
+      String(earned[earned.length - 1]),
+    ));
+  }
+  if (writes.length > 0) await Promise.all(writes);
+
+  return { streak: result.streak, shieldsAvailable: shields };
 }

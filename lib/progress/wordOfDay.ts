@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { computeStreak } from "@/lib/achievements/badges";
+import { computeStreak } from "@/lib/stats/streak";
 import { occasionsFor, type Occasion } from "@/lib/copy/almanac";
 import { bandsAround, isAround } from "@/lib/collections/levels";
 import { dayHashFor, dayIndex } from "@/lib/random/dayHash";

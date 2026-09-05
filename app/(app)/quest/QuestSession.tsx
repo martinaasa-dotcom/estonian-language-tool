@@ -2,13 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Flame, Target, Timer, X } from "lucide-react";
-import { checkAchievements, gradeCard } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { useFeedbackSound } from "@/components/AudioPrefs";
-import type { Badge } from "@/lib/achievements/badges";
 import type { QuestCard } from "@/lib/progress/quest";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { OPTION_CLASS, VERDICT_CLASS, optionState } from "@/lib/ux/verdict";
@@ -76,7 +74,6 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
   const [secondsLeft, setSecondsLeft] = useState(DURATION_S);
   const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
   const [busy, setBusy] = useState(false);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const shownAt = useRef(Date.now());
   const sound = useFeedbackSound();
 
@@ -89,10 +86,7 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
     return () => clearInterval(t);
   }, [phase]);
 
-  const finish = useCallback(() => {
-    setPhase("done");
-    void checkAchievements().then((r) => { if (r.ok) setNewBadges(r.newBadges); });
-  }, []);
+  const finish = useCallback(() => setPhase("done"), []);
 
   useEffect(() => {
     if (phase === "running" && (secondsLeft === 0 || exhausted)) finish();
@@ -250,7 +244,6 @@ export function QuestSession({ cards: initialCards, aimed }: { cards: QuestCard[
             <ButtonLink href="/" variant="primary" size="lg">Back to Today</ButtonLink>
             <ButtonLink href="/practice" size="lg">Play a round</ButtonLink>
           </div>
-          <AchievementToasts badges={newBadges} />
         </div>
       </Page>
     );

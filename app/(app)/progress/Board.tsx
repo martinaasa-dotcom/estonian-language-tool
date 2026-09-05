@@ -62,7 +62,10 @@ export async function Board({ ownerId, now }: { ownerId: string; now: Date }) {
 
   return (
     <section>
-      <SectionTitle hint="this week">
+      {/* The figure in each row is what somebody reviewed this week, so the
+          hint says so: it used to read "N XP" in the row itself and a bare
+          number under "this week" says nothing. */}
+      <SectionTitle hint="reviews this week">
         {classBoard ? classroom?.name : "Class leaderboard"}
       </SectionTitle>
       <Card>
@@ -79,11 +82,11 @@ export async function Board({ ownerId, now }: { ownerId: string; now: Date }) {
                   }}
                 >
                   <span className="tnum w-6 text-xs">{i + 1}</span>
-                  {i === 0 && row.weeklyXp > 0
+                  {i === 0 && row.reviewsThisWeek > 0
                     ? <Trophy size={15} aria-hidden style={{ color: "var(--hard-ink)" }} />
                     : <Users size={15} aria-hidden style={{ opacity: 0.5 }} />}
                   <span className="min-w-0 flex-1 truncate text-sm">{row.displayName}</span>
-                  <span className="tnum text-xs">{row.weeklyXp} XP</span>
+                  <span className="tnum text-xs">{row.reviewsThisWeek}</span>
                 </li>
               ))}
             </ol>
@@ -119,7 +122,7 @@ export async function Board({ ownerId, now }: { ownerId: string; now: Date }) {
 export function BoardSkeleton() {
   return (
     <section aria-busy="true" aria-label="Loading the board">
-      <SectionTitle hint="this week">Class leaderboard</SectionTitle>
+      <SectionTitle hint="reviews this week">Class leaderboard</SectionTitle>
       <Card>
         <Skeleton height={132} />
       </Card>

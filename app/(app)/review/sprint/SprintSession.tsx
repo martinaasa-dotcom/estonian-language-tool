@@ -3,14 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Timer, Trophy, X } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
-import { checkAchievements, gradeCard, recordSprintScore } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard, recordSprintScore } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import { StarWord } from "@/components/StarWord";
-import type { Badge } from "@/lib/achievements/badges";
 import { VERDICT_CLASS } from "@/lib/ux/verdict";
 
 export interface SprintCard {
@@ -45,7 +43,6 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
   const [secondsLeft, setSecondsLeft] = useState(DURATION_S);
   const [phase, setPhase] = useState<"ready" | "running" | "done">("ready");
   const [busy, setBusy] = useState(false);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [isNewBest, setIsNewBest] = useState(false);
   const shownAt = useRef(Date.now());
 
@@ -60,11 +57,9 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
 
   const finish = useCallback((finalScore: number) => {
     setPhase("done");
-    void recordSprintScore(finalScore).then(async (r) => {
+    void recordSprintScore(finalScore).then((r) => {
       // A refused score is not a new best; the round is over either way.
       setIsNewBest(r.ok && r.isNewBest);
-      const check = await checkAchievements(true);
-      if (check.ok) setNewBadges(check.newBadges);
     });
   }, []);
 
@@ -177,7 +172,6 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
           <ButtonLink href="/review/sprint" variant="primary" size="lg">Sprint again</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
-        <AchievementToasts badges={newBadges} />
       </div>
     );
   }

@@ -142,10 +142,11 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   what was due and nothing about the Monday evening that produced it. Put your class times and the
   slots you study in, and what is due shows up beside them. Estonian only: a dentist appointment
   belongs in the calendar you already have.
-- **Progress worth looking at.** XP, levels, a streak with shields, three daily quests, badges, a
-  six-month heatmap, a two-week forecast, per-case accuracy and vocabulary reach by CEFR, all
-  computed live from the review log, never stored, so none of it can drift from what you actually
-  did. An opt-in weekly leaderboard exists for classes; it is off until you set a name and join.
+- **Progress worth looking at.** A streak with shields, a six-month heatmap, per-case accuracy,
+  the cards that keep coming back, what you could hold a conversation about and vocabulary reach by
+  CEFR, all computed live from the review log, never stored, so none of it can drift from what you
+  actually did. There is no XP and there are no badges: a second score beside the readings that
+  mean something is noise, and this one is not the app anybody is here for. An opt-in weekly leaderboard exists for classes; it is off until you set a name and join.
 - **How ready you actually are, in situations rather than a percentage.** Every unit of the course
   makes a claim, "describe a symptom to a doctor and understand the advice", and the app reads each
   one on three rungs off your own answers: whether you would follow it, take part in it, or lead
@@ -225,8 +226,8 @@ Everything except the two things that need a model, Anu and reading a photograph
   choose from. A card reads itself aloud when a word is met and when its answer appears, and the
   next card's clip is fetched while you answer this one. No key, no setup.
 - **Flashcards**. FSRS scheduling, 7 card types, typed or flipped, keyboard-only review.
-- **The learning path, every practice mode, the grammar reference, printable worksheets, XP, quests,
-  badges and the progress charts.**
+- **The learning path, every practice mode, the grammar reference, printable worksheets and the
+  progress charts.**
 - **Writing**. Write your own sentence using a word in a named case. The form is checked against
   the dictionary *before* any model runs, so the verdict is certain and works with no API key.
 - **Verb government**. Which case a verb demands (`aitan sind`, `helistan sulle`). The error
@@ -560,8 +561,7 @@ lib/usage/        the AI spend ledger and the quota policy.
 lib/offline/      the grade outbox and its replay rules.
 lib/collections/  the course: syllabus, lessons, placement and checkpoints, as references into the dictionary.
 lib/classroom/    join codes and the roster a teacher sees, and only that.
-lib/gamification/ XP, levels and the daily quests. Pure functions over stats.
-lib/stats/        heatmap, forecast and accuracy aggregation.
+lib/stats/        heatmap, streak, accuracy and answer-time aggregation.
 lib/progress/     the database side of the above, shared by Today, the path and /progress.
 lib/offline/      the queue that lets a review session survive with no network.
 lib/dict/         search.
@@ -580,7 +580,7 @@ Four rules the code holds to, all explained in `docs/`:
   derived from the genitive at render time. Where a form is unknown, the app shows a gap, an
   invented form gets drilled into memory by the SRS, which is worse than a blank.
 - **No key ever reaches the browser.** The AI and speech services are called from server routes only.
-- **Progress is derived, never stored.** XP, levels, streaks, quests and every chart are computed
+- **Progress is derived, never stored.** The streak, the goal and every chart are computed
   from the append-only review log on each request. There is no score column to increment, so there
   is no way to be awarded something that did not happen, and none of it can be lost in a restore.
 - **Every view has four states.** Empty, loading, error and offline, a view without an empty state

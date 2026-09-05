@@ -3,14 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Headphones, X } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
-import { checkAchievements, gradeCard } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import { StarWord } from "@/components/StarWord";
-import type { Badge } from "@/lib/achievements/badges";
 import { OPTION_CLASS, optionState } from "@/lib/ux/verdict";
 import { VOICES } from "@/lib/audio/voice";
 import { conditionFor, describeHearing } from "@/lib/audio/conditions";
@@ -64,9 +62,7 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
   // The whole exercise is the audio. If the proxy cannot produce any, the word
   // is shown rather than leaving four choices and no question.
   const [noAudio, setNoAudio] = useState(false);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const shownAt = useRef(Date.now());
-  const checkedAchievements = useRef(false);
   const [voiceStart] = useState(() => Math.floor(Math.random() * VOICES.length));
 
   const card = cards[index];
@@ -87,14 +83,6 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
     shownAt.current = Date.now();
     setSelected(null);
   }, [index]);
-
-  useEffect(() => {
-    if (!finished || wasEmptyAtStart || checkedAchievements.current) return;
-    checkedAchievements.current = true;
-    void checkAchievements(true).then((r) => {
-      if (r.ok) setNewBadges(r.newBadges);
-    });
-  }, [finished, attempted, correct, wasEmptyAtStart]);
 
   const pick = useCallback(async (choice: string) => {
     if (!card || answered || busy) return;
@@ -165,7 +153,6 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           <ButtonLink href="/review/listening" variant="primary" size="lg">Listen again</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
-        <AchievementToasts badges={newBadges} />
       </div>
     );
   }
