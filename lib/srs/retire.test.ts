@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { retirableCaseCards, type DeckCaseCard } from "./retire";
+import { retirableCaseCards, unsentencedCaseCards, type BareCaseCard, type DeckCaseCard } from "./retire";
 
 /**
  * The rule a destructive command deletes by, exercised on the words that
@@ -158,5 +158,59 @@ describe("retirableCaseCards", () => {
         lexeme: { lemma: "prillid", semanticTypes: null, forms: [] },
       }),
     ])).toEqual([]);
+  });
+});
+
+/*
+  THE BARE ASK NO SENTENCE CAN REPLACE. `ravim → millele? kuhu?` was reported as
+  pointless, and the builder makes a case card out of a recorded sentence now.
+  A bare card the builder could rebuild is the repair's to rewrite and is left
+  alone here; only the one it cannot is named. A card already in the sentence
+  shape is never named, whatever the dictionary holds.
+*/
+describe("unsentencedCaseCards", () => {
+  const tuba = {
+    lemma: "tuba", translation: "room", pos: "NOUN",
+    gradation: "QUALITATIVE", gradationNote: "b : ∅", government: null,
+    semanticTypes: "koht_hoone",
+    forms: [
+      { formType: "NOM_SG", value: "tuba" },
+      { formType: "GEN_SG", value: "toa" },
+      { formType: "PART_SG", value: "tuba" },
+    ],
+    examples: JSON.stringify([{ et: "Ma olen toas.", source: "EKILEX" }]),
+  };
+  const bare = (over: Partial<BareCaseCard>): BareCaseCard => ({
+    id: "c", ownerId: "learner", targetCase: "INESSIVE", front: "tuba → milles? kus?", lexeme: tuba, ...over,
+  });
+
+  it("names a bare card whose case no recorded sentence uses", () => {
+    const found = unsentencedCaseCards([bare({ targetCase: "COMITATIVE", front: "tuba → millega?" })]);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({ lemma: "tuba", grammCase: "COMITATIVE", why: "no-sentence" });
+  });
+
+  it("leaves a bare card the builder can rebuild, which is the repair's to rewrite", () => {
+    expect(unsentencedCaseCards([bare({})])).toEqual([]);
+  });
+
+  it("never names a card already built out of a sentence", () => {
+    expect(unsentencedCaseCards([
+      bare({ targetCase: "COMITATIVE", front: "Ma olen ____." }),
+    ])).toEqual([]);
+  });
+
+  it("names every bare case of a word with no sentences at all", () => {
+    const none = { ...tuba, examples: null };
+    const found = unsentencedCaseCards([
+      bare({ lexeme: none }),
+      bare({ id: "d", lexeme: none, targetCase: "ELATIVE", front: "tuba → millest? kust?" }),
+    ]);
+    expect(found.map((f) => f.grammCase)).toEqual(["INESSIVE", "ELATIVE"]);
+  });
+
+  it("ignores a card whose targetCase is not a case, or that has lost its entry", () => {
+    expect(unsentencedCaseCards([bare({ targetCase: "indprsg3" })])).toEqual([]);
+    expect(unsentencedCaseCards([bare({ lexeme: null })])).toEqual([]);
   });
 });

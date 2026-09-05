@@ -980,6 +980,131 @@ check("what a deck audit deletes rests on something the dictionary said", () => 
   );
 });
 
+/**
+ * A CASE IS DRILLED IN A SENTENCE THAT USES IT, AND THE DECKS BUILT BEFORE THAT
+ * RULE ARE BROUGHT UNDER IT.
+ *
+ * `lib/srs/cards.ts` builds a case card out of a recorded sentence, and a
+ * learner reported the card it replaced, `ravim → millele? kuhu?`, as
+ * pointless: nothing on it says when anybody would say the form. A `Card` row
+ * keeps the front it was built with, so the fix reached no deck that already
+ * existed. Two things bring those rows under the rule, and each is checked on
+ * the call: the seed rewrites a bare card into the sentence shape before its
+ * `--only-if-empty` early return, because a bare card only exists on a database
+ * that was already seeded, and the deck audit names the bare cards no sentence
+ * can replace, through the rule in `lib/srs/retire.ts`, so they are reported
+ * rather than left to come back due for ever.
+ *
+ * And the flash round, which asks the same forms off the same log, leads with
+ * the sentence wherever the dictionary has one. It opened every word on the
+ * bare ask and reached the gap on the second correct answer, and the same
+ * learner said the ask was still not specific enough.
+ */
+check("a bare case card is rewritten into a sentence, or reported", () => {
+  const seed = code("prisma/seed.ts");
+  const repairAt = seed.indexOf("repairCaseFronts(prisma)");
+  const earlyReturn = seed.indexOf('"--only-if-empty"');
+  assert.ok(repairAt >= 0, "prisma/seed.ts no longer rewrites the case cards built before the sentence rule");
+  assert.ok(
+    earlyReturn < 0 || repairAt < earlyReturn,
+    "prisma/seed.ts rewrites bare case cards after the --only-if-empty early return, which is " +
+    "the one case where there are any to rewrite",
+  );
+
+  const repair = code("prisma/repair.ts");
+  const fn = repair.slice(repair.indexOf("export async function repairCaseFronts"));
+  assert.ok(fn.length > 0, "repairCaseFronts is gone from prisma/repair.ts");
+  assert.match(
+    fn,
+    /generateCards\(lex, \["CASE_FORM"\]\)/,
+    "repairCaseFronts no longer asks the builder for the sentence card, so a repaired card and " +
+    "a fresh one can stop being the same card",
+  );
+  assert.doesNotMatch(
+    fn,
+    /SET[^;]*\b(due|stability|difficulty|reps|lapses|state|"targetCase")\b/,
+    "repairCaseFronts writes a column that is not the question, so a repair costs somebody progress",
+  );
+
+  assert.match(
+    code("scripts/audit-decks.ts"),
+    /unsentencedCaseCards\(/,
+    "scripts/audit-decks.ts no longer reports the bare case cards no sentence can replace",
+  );
+
+  const flash = code("lib/games/flash.ts");
+  const shapes = flash.slice(
+    flash.indexOf("function shapesFrom"),
+    flash.indexOf("export function hasSentence"),
+  );
+  assert.ok(shapes.length > 0, "shapesFrom or hasSentence is gone from lib/games/flash.ts");
+  assert.match(
+    shapes,
+    /if \(sentence\) \{\s*const out: FlashShape\[\] = \["gap"\]/,
+    "the flash round no longer leads with the sentence where the dictionary has one",
+  );
+  assert.match(
+    code("app/(app)/review/flashcards/page.tsx"),
+    /hasSentence\(/,
+    "the flash page no longer asks a word for the forms it can show in a sentence first",
+  );
+});
+
+/**
+ * A SENTENCE RECORDED UNDER ANOTHER WORD IS STILL A LEXICOGRAPHER'S SENTENCE,
+ * AND EVERY BUILDER IS HANDED THE SAME POOL.
+ *
+ * A case card is cut from a sentence carrying the form, and a word's own
+ * usages are a handful; `lib/dict/borrow.ts` lends a word the sentences filed
+ * under other words that carry a spelling only it claims. Measured over the
+ * shipped dictionary: 996 case cards became 1,546 and 539 conjugation cards
+ * became 821, with nothing written. Two things hold it. The claim index
+ * over-reaches on the simple past, because `ajas` is the inessive of `aeg` and
+ * the past of `ajama` and only a claim from the verb keeps the sentence off
+ * the noun. And every path that builds a form card is handed the pool, since
+ * a builder that is not is the deck asking for a card the seed's repair would
+ * make and the audit would count, which is the `objekt` fault one layer down.
+ */
+check("a word borrows sentences under one rule, and every builder is handed them", () => {
+  const rule = code("lib/dict/borrow.ts");
+  const claims = rule.slice(rule.indexOf("export function claimIndex"), rule.indexOf("export function borrowSentences"));
+  assert.match(
+    claims,
+    /PAST_1SG/,
+    "claimIndex no longer claims a verb's past off its stored first person, so `Tolm ajas " +
+    "aevastama` is lent to `aeg` as its inessive",
+  );
+  assert.match(
+    rule,
+    /claimed\.size !== 1/,
+    "borrowSentences lends a sentence for a spelling more than one entry claims",
+  );
+
+  const builder = code("lib/srs/cards.ts");
+  assert.match(
+    builder.slice(builder.indexOf("function formSentencesFor")),
+    /lex\.borrowed/,
+    "lib/srs/cards.ts no longer reads the borrowed pool for its form cards",
+  );
+
+  const handed: Record<string, RegExp> = {
+    "lib/srs/deck.ts": /borrowedSentences\(\)/,
+    "app/actions.ts": /borrowedSentences\(\)/,
+    "app/(app)/review/flashcards/page.tsx": /borrowedSentences\(\)/,
+    "prisma/repair.ts": /borrowSentences\(/,
+    "scripts/audit-decks.ts": /borrowSentences\(/,
+    "scripts/audit-questions.ts": /borrowSentences\(/,
+  };
+  for (const [file, call] of Object.entries(handed)) {
+    assert.match(
+      code(file),
+      call,
+      `${file} builds form cards without the sentences the word may borrow, so it builds ` +
+      "fewer cards than the seed's repair and the audits count",
+    );
+  }
+});
+
 check("every generator that picks a case asks which ones the word takes", () => {
   const askers = [
     "lib/srs/cards.ts",
@@ -10428,7 +10553,7 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
 
   assert.match(
     caseBlock,
-    /naturalSentencesFor\(lex\)/,
+    /formSentencesFor\(lex\)/,
     "lib/srs/cards.ts builds a case card without asking for a sentence to build it out " +
     "of. That is the `ravim → millesse? kuhu?` fault: a form nobody can be shown " +
     "using is a form this app cannot teach.",
@@ -10466,7 +10591,7 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
   );
   assert.match(
     verbBlock,
-    /naturalSentencesFor\(lex\)/,
+    /formSentencesFor\(lex\)/,
     "lib/srs/cards.ts builds a conjugation card without a sentence to build it out of, " +
     "which is `lugema → olevik · ta` again: a suffix on a stem with nothing saying why.",
   );
