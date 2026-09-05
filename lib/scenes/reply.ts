@@ -33,10 +33,11 @@
 import { FALLBACK_PHRASE, REACTIONS } from "./catalogue";
 import type { Check } from "./gate";
 import { fallbackLine, type SpokenLine } from "./line";
+import { caseKeyFor, type Lexicon } from "./lexicon";
 import { propBySlot, type RoleCard } from "./props";
 import type { Response } from "./state";
 import type { TurnReading } from "./turn";
-import type { BeatSpec } from "./types";
+import { leafNeeds, type BeatSpec } from "./types";
 
 export interface ReplyInput {
   /** The beat the other side speaks on now, after the turn was read. Undefined once the scene is over. */
@@ -90,24 +91,97 @@ export interface ReplyInput {
 }
 
 /**
- * The line a beat says out of one course word and the value the card dealt,
- * or null where the beat has none or the card holds no such value.
+ * The line a beat says out of course words and the values the card dealt, or
+ * null where the beat has none or a part cannot be supplied.
  *
- * `Kell 13:30?` for an offer. Tried by the route before the ledger, since it
- * costs nothing, and after the bank, since a line a person has read outranks
- * one assembled here. Its provenance is the course's, because every letter
- * in it is a headword or a datum the learner is already reading off the card.
+ * `Kell 13:30?` for an offer, `Teisipäeval kell 13:30?` for one that names
+ * the day. Tried by the route before the ledger, since it costs nothing, and
+ * after the bank, since a line a person has read outranks one assembled
+ * here. Its provenance is the course's, because every letter in it is a
+ * headword, a datum the learner is already reading off the card, or a case
+ * form read off the same table every case card reads (`Lexicon.caseForm`).
+ *
+ * WITHHELD WHOLE WHERE A PART IS MISSING. A slot the card did not deal, or a
+ * case the dictionary holds no form for, is not a part to leave out: `Kell
+ * 13:30?` where the beat meant to name a day is the line a learner reported
+ * as the landlord agreeing to nothing in particular, and it is worse than the
+ * stage direction the route falls back to, which at least says "next week".
  */
-export function datumLine(beat: BeatSpec, card: RoleCard | null): SpokenLine | null {
-  if (!beat.says || !card) return null;
-  const value = propBySlot(card, beat.says.slot)?.value;
-  if (!value) return null;
-  const word = beat.says.lemma;
+export function datumLine(beat: BeatSpec, card: RoleCard | null, lexicon?: Lexicon): SpokenLine | null {
+  if (!beat.says || beat.says.length === 0 || !card) return null;
+  const pieces: string[] = [];
+  let from: string | undefined;
+  for (const part of beat.says) {
+    if ("lemma" in part) {
+      pieces.push(part.lemma);
+      from ??= part.lemma;
+      continue;
+    }
+    const prop = propBySlot(card, part.slot);
+    if (!prop?.value) return null;
+    if (!part.grammCase) {
+      pieces.push(prop.value);
+      continue;
+    }
+    /*
+      A drawn word in a named case. The prop's lemma is what was drawn and the
+      lexicon's own table is what spells it, so nothing here inflects; where
+      the table has no form, the line is withheld rather than the lemma
+      printed in the nominative, which would be Estonian nobody says.
+    */
+    const lemma = prop.lemmas[0];
+    const form = lemma && lexicon ? lexicon.caseForm.get(caseKeyFor(lemma, part.grammCase)) : undefined;
+    if (!form) return null;
+    pieces.push(form);
+  }
+  const text = pieces.join(" ");
   const mark = beat.move === "ask" || beat.move === "offer" ? "?" : ".";
   return {
-    text: `${word.charAt(0).toUpperCase()}${word.slice(1)} ${value}${mark}`,
+    text: `${text.charAt(0).toUpperCase()}${text.slice(1)}${mark}`,
     provenance: "attested",
-    from: word,
+    ...(from ? { from } : {}),
+  };
+}
+
+/**
+ * The beat as the other side speaks it after the offer was turned down: the
+ * counter's own stage direction and parts, under an id of its own so nothing
+ * drafted for the first offer is said as the second. The route hands this to
+ * the ladder and to `replyFor` where the response is `counter`.
+ */
+export function counterBeat(beat: BeatSpec): BeatSpec {
+  if (!beat.counter) return beat;
+  const { they, says } = beat.counter;
+  const { lines: _lines, ...rest } = beat;
+  return { ...rest, id: `${beat.id}:counter`, they, ...(says ? { says } : {}) };
+}
+
+/**
+ * The card with every countered beat's values stood in for by its second
+ * offer's, so a line that reads the time back reads the one that was
+ * accepted. The card itself is never rewritten: the draw is what a reload and
+ * the debrief read, and this is a view of it for the lines said after a
+ * counter.
+ */
+export function cardInPlay(
+  card: RoleCard | null,
+  beats: readonly BeatSpec[],
+  countered: readonly string[] | undefined,
+): RoleCard | null {
+  if (!card || !countered || countered.length === 0) return card;
+  const swaps = new Map<string, string>();
+  for (const beat of beats) {
+    if (!countered.includes(beat.id) || !beat.counter) continue;
+    for (const [from, to] of beat.counter.replaces) swaps.set(from, to);
+  }
+  if (swaps.size === 0) return card;
+  return {
+    ...card,
+    props: card.props.map((prop) => {
+      const to = swaps.get(prop.slot);
+      const stand = to ? propBySlot(card, to) : undefined;
+      return stand ? { ...stand, slot: prop.slot } : prop;
+    }),
   };
 }
 
@@ -155,7 +229,14 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     does not come back six times. Not after a greeting, since the greeting is
     answered by the next line, and not once the scene is over.
   */
-  if (response === "answer" && answered && answered.move !== "greet" && beat) {
+  /*
+    AND NOT AFTER THE LEARNER ASKED SOMETHING. "Millal teil on aeg?" was
+    answered "Jah." and then the offer, which is a person saying yes to a
+    question that has no yes in it. A turn the beat wanted as a question is
+    answered by the move that follows, so the reaction is the move.
+  */
+  const askedThem = answered ? leafNeeds(answered.needs).some(({ need }) => need.kind === "question") : false;
+  if (response === "answer" && answered && answered.move !== "greet" && !askedThem && beat) {
     /*
       Never a number, which the confirm beat reads back in its own line, and
       never yes or no: "Jah." repeated back after "Jah, piimaga" is the
@@ -211,7 +292,7 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     out.push({ text: heard, provenance: "again" });
   } else if (line && line.provenance !== "fallback") {
     out.push(line);
-  } else if (heard && response !== "answer" && response !== "moveOn") {
+  } else if (heard && response !== "answer" && response !== "moveOn" && response !== "counter") {
     out.push({ text: heard, provenance: "again" });
   } else {
     out.push(stage(stageFor(beat, card), line?.withheld));
@@ -238,8 +319,9 @@ function sayAgainWanted(response: Response | null, heard: string | null): heard 
  */
 export function stageFor(beat: BeatSpec, card: RoleCard | null): string {
   return beat.they.replace(/\{(\w+)\}/g, (whole, slot: string) => {
-    const value = card ? propBySlot(card, slot)?.value : undefined;
-    return value ?? whole;
+    const prop = card ? propBySlot(card, slot) : undefined;
+    // A drawn word is named in English inside an English sentence, where the caller supplied one.
+    return prop?.english ?? prop?.value ?? whole;
   });
 }
 

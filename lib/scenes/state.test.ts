@@ -240,3 +240,44 @@ describe("a curveball echoed at", () => {
     expect(second.state.hurdle?.tries ?? HURDLE_TRIES).toBeGreaterThan(0);
   });
 });
+
+describe("an offer that is turned down", () => {
+  const offer = {
+    ...SCENE.beats[1]!,
+    id: "offer", move: "offer" as const,
+    counter: { they: "They offer another time.", replaces: [["time", "time2"]] as const },
+  };
+  const scene = { ...SCENE, beats: [SCENE.beats[0]!, offer, ...SCENE.beats.slice(2)] };
+  const atOffer = { ...startScene(scene), beat: 1, patience: offer.patience };
+
+  it("gets a second offer once, at no cost to patience, and the beat waits", () => {
+    const first = advance(scene, atOffer, evidence("declined", [false]), "Ei sobi");
+    expect(first.response).toBe("counter");
+    expect(first.state.beat).toBe(1);
+    expect(first.state.patience).toBe(offer.patience);
+    expect(first.state.countered).toEqual(["offer"]);
+    expect(first.state.done).not.toContain("offer");
+  });
+
+  it("and a second no is the learner saying it will not do, which meets the beat", () => {
+    const first = advance(scene, atOffer, evidence("declined", [false]), "Ei sobi");
+    const second = advance(scene, first.state, evidence("declined", [false]), "Ei");
+    expect(second.response).toBe("answer");
+    expect(second.state.beat).toBe(2);
+    expect(second.state.done).toContain("offer");
+  });
+
+  it("a yes to the second offer meets the beat like any other answer", () => {
+    const first = advance(scene, atOffer, evidence("declined", [false]), "Ei sobi");
+    const yes = advance(scene, first.state, evidence("complete"), "Sobib");
+    expect(yes.response).toBe("answer");
+    expect(yes.state.done).toContain("offer");
+  });
+
+  it("on a beat with nothing else to offer, a no read as declined is an answer", () => {
+    const plain = { ...SCENE, beats: [SCENE.beats[0]!, { ...offer, counter: undefined }, ...SCENE.beats.slice(2)] };
+    const out = advance(plain, atOffer, evidence("declined", [false]), "Ei");
+    expect(out.response).toBe("answer");
+    expect(out.state.done).toContain("offer");
+  });
+});

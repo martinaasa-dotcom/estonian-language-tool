@@ -103,3 +103,27 @@ describe("the role card", () => {
     }
   });
 });
+
+describe("the other side's facts", () => {
+  it("are drawn and stored like the learner's, and marked as theirs so the card never prints them", () => {
+    const theirs = drawProp({ ...DAY, slot: "day", theirs: true }, seeded(2));
+    expect(theirs.theirs).toBe(true);
+    expect(DAY.oneOf).toContain(theirs.value);
+    expect(drawProp(DAY, seeded(2)).theirs).toBeUndefined();
+  });
+});
+
+describe("a second offer's slot", () => {
+  it("never repeats the first, whichever seed drew them", () => {
+    const specs: PropSpec[] = [TIME, { ...TIME, slot: "time2", differentFrom: "time" }];
+    for (let seed = 1; seed < 200; seed += 1) {
+      const card = drawCard("you", specs, seeded(seed));
+      expect(propBySlot(card, "time2")?.value).not.toBe(propBySlot(card, "time")?.value);
+    }
+    const days: PropSpec[] = [DAY, { ...DAY, slot: "day2", differentFrom: "since", theirs: true }];
+    for (let seed = 1; seed < 100; seed += 1) {
+      const card = drawCard("you", days, seeded(seed));
+      expect(propBySlot(card, "day2")?.value).not.toBe(propBySlot(card, "since")?.value);
+    }
+  });
+});
