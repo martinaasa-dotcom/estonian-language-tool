@@ -101,7 +101,7 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
           */}
           <ul className="flex flex-col gap-1">
             {hurdles.map((hurdle) => {
-              const spec = curveballById(hurdle.id as never);
+              const spec = curveballById(hurdle.id);
               if (!spec) return null;
               return (
                 <li key={`${hurdle.id}-${hurdle.beat}`} className="flex items-start gap-2 text-sm">

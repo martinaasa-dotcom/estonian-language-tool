@@ -457,7 +457,26 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         {turns.map((turn, index) => (
           turn.who === "you" ? (
             <div key={index} className="self-end text-right">
-              <Card className="inline-block max-w-full"><p lang="et">{turn.text}</p></Card>
+              {/*
+                What you typed, and a button to hear it said by a native
+                voice, which the design (§11) promised and nothing drew: a
+                learner who reads their own line back in a voice that is not
+                theirs hears where the stress falls, which is the half of
+                speaking a typed turn cannot rehearse. Never autoplayed, and
+                the speaker is the app's own, so a turn of English is read
+                with Estonian phonology and sounds exactly as wrong as it is.
+              */}
+              <Card className="inline-block max-w-full">
+                <p lang="et" className="flex items-center justify-end gap-2">
+                  <span>{turn.text}</span>
+                  <Speak
+                    text={turn.text}
+                    voice={voice}
+                    size={14}
+                    className="press inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-[var(--raised)]"
+                  />
+                </p>
+              </Card>
             </div>
           ) : (
             <div key={index} className="flex flex-col items-start gap-1.5">

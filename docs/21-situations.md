@@ -1989,3 +1989,36 @@ then `Ei` ends on `Hästi.` and the farewell with the beat met. What it does not
 counter and not a negotiation, since a third offer is a branch and the machine is a line, and every
 line the bank holds is still `reviewed: false`.
 
+## 34. The fifth pass: the loop closes, and there are fourteen scenes
+
+**What was wrong.** The purpose doc says the app rehearses the conversation, sets one small thing
+to say to a real person and counts the conversations had outside. All three existed and none
+pointed at the others: the debrief ended in "have it again", the errand card linked to a word list,
+and the readiness table knew which unit a scene tested while the errand table knew nothing about
+scenes at all. Of the forty-five live claims the course makes, seven had a rehearsal.
+
+**What changed.**
+
+- An `Errand` names the scene that rehearses it (`lib/collections/errands.ts`), asserted against
+  the catalog and against the scene declaring the errand's unit. The card on Today offers the
+  rehearsal; a debrief whose every required beat was met offers the errand and the language cafés.
+  The scene tile says which errand it is a rehearsal of.
+- Seven scenes: a pharmacy, a restaurant table, a shop rung before you go, the neighbor on the
+  stairs, the first evening of a language course, a job interview and taking something back to a
+  shop. `bank.test.ts` holds every beat and every admitted curveball to a line, so the 137 lines
+  they needed went through `npm run check:lines` and into the bank marked `authored`, unreviewed.
+- `contradiction` was in the catalog and admitted by nobody; `misheard` by one scene. Both are
+  admitted where the beat shape fits.
+- `SceneGap` was written by every finished run and read by nothing. `recencyFor` reads the last
+  twenty, and a word prop whose pool holds one draws it first, so the word missed at the doctor's
+  is the word on the card at the pharmacy, and the card says so.
+- Wednesday on the week table is a conversation, and Today draws it, since every other day was
+  recall. First run names the first conversation off the reason the learner gave.
+- The learner's own turn carries the speaker, which §11 promised and nothing drew.
+
+**What this does not fix.** A native speaker has read none of the 296 lines in the bank, and every
+one is `reviewed: false`. The eval (`npm run eval:scene`) has not been run over the seven new
+scenes, because it needs a key this environment does not carry; the ranked list of withheld words
+is what will say which units they should also declare. And a scene is still typed: the spoken
+unmarked mode of §11 is the same distance away it was.
+

@@ -80,9 +80,13 @@ describe("the situation table", () => {
     }
   });
 
-  it("only gives a live exchange something to expect", () => {
+  it("only gives a live exchange something to expect, and every live exchange something", () => {
     for (const s of SITUATIONS) {
       if (!s.live) expect(s.expect, `${s.id} is not live and expects something`).toBeUndefined();
+      // Knowing what is coming is useful before you are ready for it, and it
+      // held for all 45 by care alone; a 46th without one would be the first
+      // live situation that sends somebody out unwarned.
+      else expect(s.expect, `${s.id} is live and expects nothing`).toBeTruthy();
     }
     // And most of the early course is live, which is what the screen is for.
     const a1 = SITUATIONS.filter((s) => s.level === "A1");

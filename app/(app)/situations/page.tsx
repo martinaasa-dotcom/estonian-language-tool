@@ -8,6 +8,7 @@ import { unitById } from "@/lib/collections/syllabus";
 import { Card, Chip, Empty, Page, Stack } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
 import { PLACES_TO_TALK } from "@/lib/collections/placesToTalk";
+import { errandForScene } from "@/lib/collections/errands";
 import { practises } from "@/lib/scenes/practises";
 import { sceneHistoryFor, type SceneHistory } from "@/lib/progress/scene";
 
@@ -116,6 +117,7 @@ function SceneTile({ scene, history }: { scene: (typeof SCENES)[number]; history
   const unit = unitById(scene.tests);
   const objectives = scene.beats.filter((beat) => beat.required).length;
   const drills = practises(scene);
+  const errand = errandForScene(scene.id);
   return (
     <li>
       <Link href={`/situations/${scene.id}`} className="block h-full">
@@ -134,6 +136,16 @@ function SceneTile({ scene, history }: { scene: (typeof SCENES)[number]; history
           {drills.length > 0 && (
             <p className="text-xs" style={{ color: "var(--ink-2)" }}>
               Practices {drills.slice(0, 4).join(", ")}{drills.length > 4 ? " and more" : ""}.
+            </p>
+          )}
+          {/*
+            The real one, on the tile, so a scene is read as a rehearsal of
+            something rather than as a game: the errand this scene rehearses
+            is what the debrief offers once it has gone well.
+          */}
+          {errand && (
+            <p className="text-xs" style={{ color: "var(--ink-2)" }}>
+              Then for real: {errand.says}
             </p>
           )}
           <p className="mt-auto text-xs" style={{ color: "var(--ink-3)" }}>

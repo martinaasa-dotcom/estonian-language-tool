@@ -345,6 +345,12 @@ function placeFor(
   return free[Math.floor(random() * free.length)] ?? null;
 }
 
-export function curveballById(id: CurveballId): CurveballSpec | undefined {
+/**
+ * A string rather than a `CurveballId`, because a hurdle read back off a
+ * stored run is a string and the debrief was casting it to `never` to get
+ * here. An id the catalog does not hold comes back undefined, which is the
+ * honest answer for a run written before a curveball was renamed.
+ */
+export function curveballById(id: string): CurveballSpec | undefined {
   return CURVEBALLS.find((c) => c.id === id);
 }
