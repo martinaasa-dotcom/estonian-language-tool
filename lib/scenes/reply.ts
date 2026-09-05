@@ -37,7 +37,7 @@ import { caseKeyFor, type Lexicon } from "./lexicon";
 import { propBySlot, type RoleCard } from "./props";
 import type { Response } from "./state";
 import type { TurnReading } from "./turn";
-import { leafNeeds, type BeatSpec } from "./types";
+import { leafNeeds, type BeatSpec, type SaysPart } from "./types";
 
 export interface ReplyInput {
   /** The beat the other side speaks on now, after the turn was read. Undefined once the scene is over. */
@@ -80,6 +80,28 @@ export interface ReplyInput {
    * that is not a word (a question, a no) or where nothing was met.
    */
   readonly echo: string | null;
+  /**
+   * Whether `echo` is the learner's word put right rather than repeated: the
+   * turn was understood with a slip and the form the other side says back is
+   * the dictionary's (`Slip.form`). A recast is labeled as one on screen,
+   * because "said again" would claim the learner said it.
+   */
+  readonly recast?: boolean;
+  /**
+   * What the other side says about a question the learner asked that the
+   * beat did not ask for, before their own move (`asideFor`). Said first,
+   * because a person answers what they were asked before going on, and it
+   * stands in for the acknowledgment: "Ei tea. Kus teil valutab?" is a
+   * person, and "Ei tea. Hästi. Kus teil valutab?" is a machine.
+   */
+  readonly aside?: SpokenLine | null;
+  /**
+   * The word to hand over where the learner said they were not following:
+   * a lemma off the beat's own requirements, the way the help button picks
+   * one. Null where the beat wants a value off the card and there is no
+   * word to point at.
+   */
+  readonly offer?: string | null;
   /** How many beats have been met, which is what rotates the acknowledgment. */
   readonly met: number;
   /**
@@ -109,15 +131,37 @@ export interface ReplyInput {
  */
 export function datumLine(beat: BeatSpec, card: RoleCard | null, lexicon?: Lexicon): SpokenLine | null {
   if (!beat.says || beat.says.length === 0 || !card) return null;
+  const mark = beat.move === "ask" || beat.move === "offer" ? "?" : ".";
+  return partsLine(beat.says, { card, lexicon, mark });
+}
+
+/**
+ * A line out of parts: lemmas as the dictionary spells them, a verb in a
+ * derived form off `Lexicon.persons`, and values off the card, in a named
+ * case where one is asked for. The one assembler, shared by a beat's `says`
+ * and by the asides (`lib/scenes/aside.ts`), so what a part means is decided
+ * once. Null where any part cannot be supplied, for the reason `datumLine`
+ * gives: a line with a piece missing is worse than no line.
+ */
+export function partsLine(
+  parts: readonly SaysPart[],
+  input: { card?: RoleCard | null; lexicon?: Lexicon; mark: "." | "?"; join?: string },
+): SpokenLine | null {
   const pieces: string[] = [];
   let from: string | undefined;
-  for (const part of beat.says) {
+  for (const part of parts) {
     if ("lemma" in part) {
-      pieces.push(part.lemma);
       from ??= part.lemma;
+      if ("verb" in part) {
+        const form = input.lexicon?.persons.get(part.lemma)?.get(part.verb);
+        if (!form) return null;
+        pieces.push(form);
+      } else {
+        pieces.push(part.lemma);
+      }
       continue;
     }
-    const prop = propBySlot(card, part.slot);
+    const prop = input.card ? propBySlot(input.card, part.slot) : undefined;
     if (!prop?.value) return null;
     if (!part.grammCase) {
       pieces.push(prop.value);
@@ -130,14 +174,13 @@ export function datumLine(beat: BeatSpec, card: RoleCard | null, lexicon?: Lexic
       printed in the nominative, which would be Estonian nobody says.
     */
     const lemma = prop.lemmas[0];
-    const form = lemma && lexicon ? lexicon.caseForm.get(caseKeyFor(lemma, part.grammCase)) : undefined;
+    const form = lemma && input.lexicon ? input.lexicon.caseForm.get(caseKeyFor(lemma, part.grammCase)) : undefined;
     if (!form) return null;
     pieces.push(form);
   }
-  const text = pieces.join(" ");
-  const mark = beat.move === "ask" || beat.move === "offer" ? "?" : ".";
+  const text = pieces.join(input.join ?? " ");
   return {
-    text: `${text.charAt(0).toUpperCase()}${text.slice(1)}${mark}`,
+    text: `${text.charAt(0).toUpperCase()}${text.slice(1)}${input.mark}`,
     provenance: "attested",
     ...(from ? { from } : {}),
   };
@@ -213,6 +256,35 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   if (response === "wait") return [reaction(REACTIONS.waiting[0], "?")];
 
   /*
+    THEY SAID THEY ARE NOT FOLLOWING, SO THE WORD IS HANDED OVER.
+
+    A learner who writes "I do not understand" and is answered with the same
+    question a third time has been told by a machine that the problem is
+    them. A person says the word they are waiting for, and then asks again in
+    the same breath. `offer` is the beat's own word off its requirements, the
+    way `sceneHelp` picks one, so nothing is chosen here and nothing is
+    written: it is a lemma the dictionary spells and the course teaches.
+
+    Where the beat wants a value off the card rather than a word there is
+    nothing to hand over, and the question said again is the whole answer,
+    which is still the right thing: it is what a person does when there is no
+    word to point at.
+  */
+  if (response === "help") {
+    const word = input.offer;
+    const offered = word ? { ...reaction(word, "?"), provenance: "offered" as const } : null;
+    if (offered) out.push(offered);
+    /*
+      And the question again, unless the word *was* the question: a greeting
+      beat's word and its line are the same, and nobody says `Tere!` twice in
+      one breath.
+    */
+    if (heard && heard !== offered?.text) out.push({ text: heard, provenance: "again" });
+    else if (!heard && beat) out.push(stage(stageFor(beat, card)));
+    return out;
+  }
+
+  /*
     THE REPAIR PHRASE IS SAID ABOUT A TURN NOBODY COULD READ, AND ABOUT NOTHING
     ELSE. `reading` rather than `response`, because the response is what the
     state machine did and the reading is what the marker found, and only the
@@ -225,6 +297,17 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   }
 
   /*
+    A QUESTION THE SCENE DID NOT ANTICIPATE IS ANSWERED BEFORE ANYTHING ELSE.
+    The learner asked where to go next, or how much, or how they are; the
+    other side was caught off guard and, like anybody, says what they can
+    about it and then gets back to what they were doing. What they can say is
+    `asideFor`'s: more about what they just said, the fact off the card, a
+    line a model wrote inside the list and the gate let through, or an honest
+    "ei tea". It is the reaction, so no echo or "hästi" is stacked on it.
+  */
+  const aside = input.aside && reading !== "unrecognised" && reading !== "echo" ? input.aside : null;
+
+  /*
     An acknowledgment after an answer that landed, rotating so the same word
     does not come back six times. Not after a greeting, since the greeting is
     answered by the next line, and not once the scene is over.
@@ -235,27 +318,68 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     question that has no yes in it. A turn the beat wanted as a question is
     answered by the move that follows, so the reaction is the move.
   */
+  /*
+    AND THE PART THAT LANDED IS TAKEN UP BEFORE THE PART THAT DID NOT. A turn
+    read as `narrow` met some of what the beat asked, and the other side used
+    to answer it with the whole question again, as though nothing had been
+    said. A person says "Poodi, jah. Aga millal?": the echo, then the re-ask.
+    The re-ask is the ladder's; the echo is the same one a landed turn gets.
+  */
   const askedThem = answered ? leafNeeds(answered.needs).some(({ need }) => need.kind === "question") : false;
-  if (response === "answer" && answered && answered.move !== "greet" && !askedThem && beat) {
+  const landed = response === "answer" || response === "narrow";
+  /*
+    THE REACTION TO WHAT THEY SAID COMES BEFORE THE ANSWER TO WHAT THEY ASKED.
+    A turn can do both: `mahl, ja kuhu siis?` orders juice in the wrong case
+    and asks a question, and the first version let the aside displace the
+    recast, so the learner never heard their own word put right. `Mahla. Ei
+    tea.` is a person taking the order back and then answering; the other way
+    round is a person answering a question and forgetting what was ordered.
+
+    What does stand down under an aside is the *generic* acknowledgment, since
+    "Ei tea. Hästi." is two reactions contradicting each other.
+  */
+  if ((!aside || input.recast) && response !== "moveOn" && landed && answered && answered.move !== "greet" && !askedThem && beat) {
     /*
       Never a number, which the confirm beat reads back in its own line, and
       never yes or no: "Jah." repeated back after "Jah, piimaga" is the
       machine showing through.
+
+      A RECAST IS THE ONE CORRECTION THIS MODULE MAKES, AND IT IS MADE THE WAY
+      A PERSON MAKES IT. The learner wrote `pood` and was understood; the
+      friend says "Poodi." and moves on, which is what a friend does and is
+      the whole of what a learner needs to hear: you were understood, and
+      this is how it is said. Not a verdict, not a colour, not a stop. The
+      form is the dictionary's own, off the slip, and the line is labeled as
+      the learner's word put right rather than as said again.
     */
     const flat = new Set<string>([...REACTIONS.acknowledge, ...REACTIONS.waiting, "ei"]);
     const echo = input.echo && !/\d/.test(input.echo) && !flat.has(input.echo) ? input.echo : null;
     if (echo) {
       out.push({
         text: echo.charAt(0).toUpperCase() + echo.slice(1) + ".",
-        provenance: "again", reaction: true,
+        provenance: input.recast ? "recast" : "again", reaction: true,
       });
-    } else if (input.acknowledges) {
+    } else if (!aside && input.acknowledges && response === "answer") {
       const choices = REACTIONS.acknowledge;
       out.push(reaction(choices[input.met % choices.length] ?? choices[0], "."));
     }
   }
 
-  if (response === "moveOn") out.push(stage("They let it go, and move on."));
+  if (aside) out.push({ ...aside, reaction: true });
+
+  /*
+    THEY LET IT GO IN ESTONIAN, NOT IN A STAGE DIRECTION. Running out of
+    patience is the commonest thing that happens to a learner who is stuck,
+    and it printed a line of English in the middle of the conversation, three
+    times in a row on the transcripts `npm run play:scenes` prints. A person
+    who decides not to press a point says so with a word and carries on, and
+    the word is one every scene teaches. The move follows it, so the
+    conversation is steered on rather than stopped and annotated.
+  */
+  if (response === "moveOn" && !aside) {
+    const choices = REACTIONS.acknowledge;
+    out.push(reaction(choices[input.met % choices.length] ?? choices[0], "."));
+  }
 
   /*
     Over. If the learner said goodbye first, they are owed one back, and the
@@ -331,7 +455,14 @@ export function stageFor(beat: BeatSpec, card: RoleCard | null): string {
  * asked, which is the difference between "Jah." and "Jah?".
  */
 export function reaction(lemma: string, mark: "." | "?"): SpokenLine {
-  const text = lemma.charAt(0).toUpperCase() + lemma.slice(1) + mark;
+  /*
+    A phrase carries its own mark. `Tere!` offered as a word came out
+    `Tere!?`, which is nothing anybody writes: the course spells its phrases
+    with the punctuation they are said with, and adding a second one is this
+    module editing the dictionary's own entry.
+  */
+  const said = /[.!?]$/.test(lemma) ? lemma : lemma + mark;
+  const text = said.charAt(0).toUpperCase() + said.slice(1);
   return { text, provenance: "attested", from: lemma, reaction: true };
 }
 

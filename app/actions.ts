@@ -1177,7 +1177,16 @@ export async function finishScene(input: {
       select: { id: true },
     });
     if (!card) continue;
-    const result = await gradeCard(card.id, grade.rating, 0);
+    /*
+      The case that came back instead travels with the grade, so the pair
+      somebody mixes up at a counter is counted beside the pair they mix up
+      on a card. `writeGrade` checks both against the closed list rather than
+      trusting them, which is what it does for every other caller.
+    */
+    const result = await gradeCard(
+      card.id, grade.rating, 0, undefined,
+      grade.grammCase ?? undefined, grade.reachedCase ?? undefined,
+    );
     if (result.ok) graded += 1;
   }
 
@@ -1190,6 +1199,7 @@ export async function finishScene(input: {
     outcome: finished.outcome,
     turns: finished.turns,
     gaps: finished.gaps,
+    review: finished.review,
     graded,
   };
 }

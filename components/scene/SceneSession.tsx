@@ -44,7 +44,7 @@ import { practises } from "@/lib/scenes/practises";
  * debrief handles it without a word of reproach.
  */
 
-type Provenance = "attested" | "scripted" | "composed" | "fallback" | "again" | "english" | "unspoken";
+type Provenance = "attested" | "scripted" | "composed" | "fallback" | "again" | "recast" | "offered" | "english" | "unspoken";
 
 interface Line {
   readonly text: string;
@@ -52,8 +52,20 @@ interface Line {
   readonly reaction?: true;
 }
 
+/**
+ * What a turn was understood despite: the learner's spelling and the form
+ * the other side would use, off the server's own marking. Shown under the
+ * learner's bubble as "understood", never as a verdict, because that is
+ * what happened (`lib/scenes/nearly.ts`).
+ */
+export interface SlipNote {
+  readonly kind: "spelling" | "case" | "person";
+  readonly said: string;
+  readonly form: string | null;
+}
+
 type Turn =
-  | { readonly who: "you"; readonly text: string }
+  | { readonly who: "you"; readonly text: string; readonly slips?: readonly SlipNote[] }
   | { readonly who: "them"; readonly lines: readonly Line[] };
 
 type Phase = "briefing" | "talking" | "debrief";
@@ -196,9 +208,25 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         beatId?: string | null; goal?: string | null; done?: string[];
         over?: boolean; error?: string;
         composed?: boolean; note?: string | null;
+        slips?: SlipNote[];
       };
       if (data.error) { setError(data.error); return; }
       if (data.composed === false && data.note) setNote(data.note);
+
+      /*
+        What the last turn was understood despite, written onto that turn so
+        the note sits under the learner's own words. The server marked it,
+        because the screen never decides whether a turn landed.
+      */
+      const slips = data.slips ?? [];
+      if (slips.length > 0) {
+        setTurns((was) => {
+          const at = was.length - 1;
+          const last = was[at];
+          if (!last || last.who !== "you") return was;
+          return [...was.slice(0, at), { ...last, slips }];
+        });
+      }
 
       setBeatId(data.beatId ?? null);
       setGoal(data.goal ?? null);
@@ -300,6 +328,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       outcome: result.outcome,
       gaps: result.gaps,
       graded: result.graded,
+      review: result.review,
       turns: turns.flatMap((turn): Debrief["turns"][number][] => {
         if (turn.who === "you") return [{ who: "you", text: turn.text }];
         const said = turn.lines.filter(spoken).map((line) => line.text).join(" ");
@@ -329,6 +358,15 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
           <p className="text-xs" style={{ color: "var(--ink-3)" }}>
             You will need {practises(scene).join(", ")}. They speak first, you answer, and the card
             below the conversation says what to get done.
+          </p>
+          {/*
+            Said before the first line rather than discovered on the third,
+            because a learner who expects to be marked writes less than one
+            who expects to be understood, and being understood is the point.
+          */}
+          <p className="text-xs" style={{ color: "var(--ink-3)" }}>
+            An ending that is off is still understood, the way it would be on the street. They
+            will say the word back the way they say it, and the debrief lists those afterwards.
           </p>
         </Card>
 
@@ -452,6 +490,31 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
           turn.who === "you" ? (
             <div key={index} className="self-end text-right">
               <Card className="inline-block max-w-full"><p lang="et">{turn.text}</p></Card>
+              {/*
+                Understood, and how the word is said. Under the learner's own
+                words and in the quiet ink, because it is not a verdict: the
+                conversation carried on, and this is the one thing worth
+                knowing about the turn. The form is the dictionary's, off the
+                server's marking, and a slip the dictionary cannot recast is
+                still "understood", which is the half that matters.
+              */}
+              {turn.slips && turn.slips.length > 0 && (
+                <p className="mt-0.5 text-xs" style={{ color: "var(--ink-3)" }}>
+                  Understood.
+                  {turn.slips.some((slip) => slip.form) && (
+                    <>
+                      {" "}Here it is{" "}
+                      {turn.slips.filter((slip) => slip.form).map((slip, at, all) => (
+                        <span key={slip.said}>
+                          <span lang="et" className="font-medium" style={{ color: "var(--ink-2)" }}>{slip.form}</span>
+                          {at < all.length - 1 && ", "}
+                        </span>
+                      ))}
+                      .
+                    </>
+                  )}
+                </p>
+              )}
             </div>
           ) : (
             <div key={index} className="flex flex-col items-start gap-1.5">
@@ -581,6 +644,18 @@ const PROVENANCE: Record<Provenance, string> = {
   composed: "Written for this turn",
   fallback: "They did not catch that",
   again: "Said again",
+  /*
+    The learner's word, put right and said back, which is the one correction
+    a conversation makes without stopping. The label says whose word it was
+    and what happened to it; "said again" would claim they had said it.
+  */
+  recast: "Your word, the way they say it",
+  /*
+    Handed over because the learner said they were not following. The label
+    says whose word it is and that it was given rather than asked for, since
+    "from the course" would read as the other side making a move.
+  */
+  offered: "The word you were reaching for",
   english: "They said it in English",
   /*
     The sixth is not a line they said, it is what they did, and the label has

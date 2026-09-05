@@ -45,6 +45,8 @@
     "measure:asr": "node scripts/measure-asr.mjs",
     "measure:scenes": "tsx scripts/measure-scenes.ts",
     "measure:placement": "tsx scripts/measure-placement.ts",
+    "play:scenes": "tsx scripts/play-scene.ts",
+    "probe:turns": "tsx scripts/probe-turns.ts",
     "eval:scene": "tsx scripts/eval-scene.ts",
     "draft:lines": "tsx scripts/draft-lines.ts",
     "check:lines": "tsx scripts/check-lines.ts",

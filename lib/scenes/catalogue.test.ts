@@ -17,7 +17,7 @@
  * `syllabus.test.ts` fails when the harvest did not honor it.
  */
 import { describe, expect, it } from "vitest";
-import { FALLBACK_PHRASE, REACTIONS, SCENES, sceneById } from "./catalogue";
+import { ASIDES, FALLBACK_PHRASE, REACTIONS, SCENES, sceneById } from "./catalogue";
 import { HARVESTED } from "@/prisma/data/harvested";
 import { curveballById } from "./curveballs";
 import { LEFT_OUTCOME, QUESTION_SHAPE, leafNeeds } from "./types";
@@ -69,9 +69,39 @@ describe("the scene catalog", () => {
         for (const lemma of unitById(id)?.lemmas ?? []) taught.add(lemma);
       }
       // The reactions are said in every scene, so every scene has to teach them.
-      const named = [...lemmasOf(scene), ...REACTIONS.acknowledge, ...REACTIONS.waiting, ...TIME_LEMMAS];
+      const asides = Object.values(ASIDES).flatMap((parts) => parts.map((part) => part.lemma));
+      const named = [...lemmasOf(scene), ...REACTIONS.acknowledge, ...REACTIONS.waiting, ...asides, ...TIME_LEMMAS];
       const strangers = [...new Set(named)].filter((lemma) => !taught.has(lemma));
       expect(strangers, `${scene.id} names words none of its units teach`).toEqual([]);
+    }
+  });
+
+  /*
+    A CARD MAY NOT DEAL A WORD THE SCENE WILL NOT TAKE.
+
+    The landlord's card drew from six problems and the beat that asks what
+    has gone wrong accepted a different six: two of the draws, a third of
+    runs, dealt a card whose word the beat refused. The learner reads "the
+    window is broken", says so correctly, and is treated as having said
+    nothing, which is the worst thing this module can do to somebody.
+  */
+  it("deals no word its own beats cannot accept", () => {
+    for (const scene of SCENES) {
+      const accepted = new Set<string>();
+      for (const beat of scene.beats) {
+        for (const { need } of leafNeeds(beat.needs)) {
+          if (need.kind === "lemma") for (const lemma of need.oneOf) accepted.add(lemma);
+          if (need.kind === "case") accepted.add(need.lemma);
+          // A datum requirement takes whatever the card dealt for that slot.
+          if (need.kind === "datum") accepted.add(`slot:${need.slot}`);
+        }
+      }
+      for (const prop of scene.props) {
+        if (prop.kind !== "word" && prop.kind !== "weekday") continue;
+        if (accepted.has(`slot:${prop.slot}`)) continue;
+        const refused = prop.oneOf.filter((lemma) => !accepted.has(lemma));
+        expect(refused, `${scene.id} deals ${prop.slot} words no beat accepts`).toEqual([]);
+      }
     }
   });
 

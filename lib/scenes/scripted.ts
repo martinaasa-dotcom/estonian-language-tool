@@ -1,7 +1,7 @@
 import { BANK } from "./bank";
 import { curveballById } from "./curveballs";
 import { hurdleBeat } from "./state";
-import type { BeatSpec, SceneSpec } from "./types";
+import { leafNeeds, type BeatSpec, type SceneSpec } from "./types";
 
 /**
  * LINES WRITTEN BEFORE ANYBODY PLAYED, AND WHICH BEATS MAY HAVE ONE.
@@ -95,7 +95,33 @@ export function sceneBeats(scene: SceneSpec): BeatSpec[] {
     const beat = hurdleBeat({ id, beat: 0, tries: 0 });
     return beat ? [beat] : [];
   });
-  return [...scene.beats, ...hurdles];
+  /*
+    AND ONE ANSWER PER BEAT THAT ASKS THE LEARNER FOR A QUESTION. A beat whose
+    goal is "ask whether it is near" is met by a question, and a question is
+    owed an answer before the next move: the bank holds it under
+    `answer:<beat>`, and `asideFor` says it as the reaction when the beat is
+    met. Without this the answer was either said as the beat's opening line,
+    before anybody had asked, or never.
+  */
+  const answers = scene.beats
+    .filter((beat) => leafNeeds(beat.needs).some(({ need }) => need.kind === "question"))
+    .map((beat): BeatSpec => ({
+      id: answerBeatId(beat),
+      goal: beat.goal,
+      they: "They answer the question they were just asked, briefly, and no more.",
+      move: "confirm",
+      topic: beat.topic,
+      needs: [],
+      required: false,
+      patience: 0,
+      shape: "word",
+    }));
+  return [...scene.beats, ...hurdles, ...answers];
+}
+
+/** The pseudo-beat under which a question-beat's answers are banked. */
+export function answerBeatId(beat: BeatSpec): string {
+  return `answer:${beat.id}`;
 }
 
 export function beatById(scene: SceneSpec, id: string): BeatSpec | undefined {

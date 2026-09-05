@@ -11153,6 +11153,295 @@ check("a scene's debrief points at a drill that exists", () => {
   }
 });
 
+check("a scene understands a slip before it marks one, and says so", () => {
+  /*
+    `ma tulema koju` is not Estonian and everybody who hears it knows the
+    person is coming home. The marker held every turn to the dictionary's
+    exact spelling and a learner reported the scenes as robotic, which they
+    were: a dropped õ, a slipped letter, the right word in the wrong case and
+    an infinitive where a person was due each read as a turn nobody could
+    follow. `lib/scenes/nearly.ts` says what "close enough" means, `readTurn`
+    reads it as met with a `Slip`, the grades read a slip as `Hard`, the
+    other side says the word back as a `recast`, and the screen says
+    "understood" under the learner's own bubble. Four halves, and losing any
+    one of them is the old marker with a kinder comment on it.
+  */
+  const turn = code("lib/scenes/turn.ts");
+  assert.match(
+    turn, /from "\.\/nearly"/,
+    "lib/scenes/turn.ts no longer reads lib/scenes/nearly.ts, so a slip of the pen is a miss again",
+  );
+  assert.match(turn, /slips: readonly Slip\[\]/, "Evidence no longer carries the slips a turn was understood despite");
+  assert.match(
+    turn, /kind: "case" as const, said, form: context\.lexicon\.caseForm\.get\(key\)/,
+    "the right word in the wrong case is no longer understood, or the recast is not the dictionary's own form",
+  );
+  assert.match(
+    code("lib/scenes/grades.ts"), /turn\.slips\?\.length[\s\S]{0,200}!slipped \? 3 : 2/,
+    "lib/scenes/grades.ts no longer reads a slip, so a word understood with the wrong ending grades Good",
+  );
+  assert.match(
+    code("lib/scenes/reply.ts"), /input\.recast \? "recast" : "again"/,
+    "replyFor no longer labels a recast as the learner's word put right",
+  );
+  const session = code("components/scene/SceneSession.tsx");
+  assert.match(session, /recast:/, "the scene screen has no label for a recast line");
+  assert.match(session, /Understood\./, "the scene screen no longer says a slipped turn was understood");
+  /*
+    And nothing in `nearly.ts` writes Estonian: the recast is read off the
+    lexicon, so the module holds a pronoun table as keys and nothing else.
+    A form literal there would be this app writing Estonian into a line the
+    other side says.
+  */
+  const nearly = code("lib/scenes/nearly.ts");
+  assert.doesNotMatch(nearly, /form:\s*["'`]/, "lib/scenes/nearly.ts is typing a form; the recast is the dictionary's");
+});
+
+check("a question the scene did not anticipate is answered before the move", () => {
+  /*
+    A learner told `Minge otse edasi.` who asks `ja kuhu siis?` is owed an
+    answer, and the first version walked past it. `lib/scenes/aside.ts` is
+    the ladder for what the other side can say about a question they did not
+    expect: the beat's own banked answer, "fine, thanks", a fact off the
+    card, more of what they just said, a model inside the list, and an honest
+    "ei tea". The route asks it before the move, the reply says it first, and
+    a beat that waits for the learner's question opens with nothing rather
+    than with its own answer. Each half is asserted, because losing any one
+    of them is the street corner saying goodbye to a question again.
+  */
+  const aside = code("lib/scenes/aside.ts");
+  assert.match(aside, /export function asideFor\(/, "lib/scenes/aside.ts lost asideFor");
+  assert.match(aside, /ASIDES\.unknown/, "the shrug no longer comes off the course's own parts");
+  assert.doesNotMatch(aside, /text:\s*"[^"]*[a-zõäöü]{2,}[^"]*"/i, "lib/scenes/aside.ts is typing a line; every word is the dictionary's");
+  const turn = code("lib/scenes/turn.ts");
+  assert.match(turn, /readonly asked: string \| null/, "Evidence no longer says whether the learner asked something");
+  const reply = code("lib/scenes/reply.ts");
+  assert.match(reply, /if \(aside\) out\.push\(\{ \.\.\.aside, reaction: true \}\)/, "replyFor no longer says the aside first");
+  /*
+    The plain acknowledgment stands down under an aside, since "Ei tea.
+    Hästi." is two reactions contradicting each other. The learner's own word
+    put right does not: `Mahla. Ei tea.` is a person taking the order back
+    and then answering, and the first version let the aside displace the
+    recast so the word was never said back at all.
+  */
+  assert.match(
+    reply, /!aside && input\.acknowledges/,
+    "replyFor stacks a hästi on top of an aside, which is two reactions contradicting each other",
+  );
+  assert.match(
+    reply, /\(!aside \|\| input\.recast\)/,
+    "an aside displaces the learner's own word put right, so a slip is never said back",
+  );
+  const route = code("app/api/scene/route.ts");
+  assert.match(route, /asideFor\(/, "the scene route no longer asks what to say about a question");
+  assert.match(route, /spokenFor\.awaits && !standing/, "the scene route walks the ladder for a beat that opens with nothing, so the answer is said before the question");
+  const scripted = code("lib/scenes/scripted.ts");
+  assert.match(scripted, /export function answerBeatId\(/, "the bank has nowhere to hold a question-beat's answer");
+});
+
+check("a scene reviews itself in English, and the review teaches nothing it made up", () => {
+  /*
+    The debrief said what happened and never the thing a teacher says after a
+    role-play: here is the ending that kept coming out wrong and here is what
+    it is for. `lib/scenes/review.ts` is that, derived from the transcript,
+    and it holds no Estonian at all: the case names are read off `CASES`, the
+    explanations are `CASE_NOTES`, and every Estonian character on the screen
+    comes through `evidence`, which is the learner's own word or the
+    dictionary's recast. It is `lib/estonian/grammar.ts`'s standing pointed
+    at a conversation, and it is asserted the same way.
+  */
+  const review = code("lib/scenes/review.ts");
+  assert.match(review, /export function reviewOf\(/, "lib/scenes/review.ts lost reviewOf");
+  assert.doesNotMatch(
+    review, /[\u00f5\u00e4\u00f6\u00fc\u0161\u017e]/i,
+    "lib/scenes/review.ts is writing Estonian. Every form in a review is the learner's own or the dictionary's, "
+    + "and the case names are read off CASES (ADR-005).",
+  );
+  assert.match(
+    review, /caseByKey|CASES/,
+    "the review no longer names a case the way the learner's own class does",
+  );
+  /*
+    And it never marks. A count of things achieved is the debrief's and a
+    claim about somebody's Estonian is the mock exam's alone (ADR-022), so a
+    percentage here would be a third answer to how well somebody is doing.
+  */
+  assert.doesNotMatch(review, /percent|%`|toFixed/, "lib/scenes/review.ts is scoring a conversation");
+
+  /*
+    AND WHY IT HAPPENED IS A GUESS THAT SAYS SO. Three of the reasons a
+    learner reaches for the wrong case leave evidence in the run, and the
+    honest thing to do with evidence that is strong and not conclusive is to
+    print it marked rather than to say nothing. A hunch that lost its tier
+    would be this app telling somebody the reason for a mistake they did not
+    make, in a voice they have no way to argue with.
+  */
+  const diagnose = code("lib/scenes/diagnose.ts");
+  assert.match(diagnose, /export function diagnose\(/, "lib/scenes/diagnose.ts lost diagnose");
+  assert.match(
+    diagnose, /sure: "likely" \| "possible"/,
+    "a hunch no longer carries how sure it is, so a guess reads as a finding",
+  );
+  assert.match(
+    diagnose, /asked\.asksWhere === due\.asksWhere/,
+    "the pair that answers one question word is no longer read off CASES, so it is a list somebody typed",
+  );
+  assert.doesNotMatch(
+    diagnose, /[\u00f5\u00e4\u00f6\u00fc\u0161\u017e]/i,
+    "lib/scenes/diagnose.ts is writing Estonian. The case names are read off CASES (ADR-005).",
+  );
+  assert.match(
+    code("components/scene/SceneDebrief.tsx"), /note\.hunch\.sure === "likely" \? "Most likely"/,
+    "the debrief prints a hunch without saying it is one",
+  );
+  /*
+    And the pair somebody mixes up at a counter is counted beside the pair
+    they mix up on a card, which is the argument for a scene writing to the
+    shared log at all.
+  */
+  assert.match(
+    code("app/actions.ts"), /grade\.grammCase \?\? undefined, grade\.reachedCase \?\? undefined/,
+    "a scene's grades no longer carry the case that came back instead, so the confusion is lost",
+  );
+
+  const debrief = code("components/scene/SceneDebrief.tsx");
+  assert.match(debrief, /review\.lead/, "the debrief no longer prints the review's lead");
+  assert.match(debrief, /review\.notes\.map/, "the debrief no longer prints the review's notes");
+  assert.match(
+    code("lib/progress/scene.ts"), /reviewOf\(scene, state\)/,
+    "finishRun no longer derives the review from the run it just marked",
+  );
+});
+
+check("a scene understands any ending on a stem it knows", () => {
+  /*
+    `ma tahan minna haiglat` is not Estonian and there is no doubt whatever
+    about which building is meant. The marker reads a word the scene's list
+    cannot vouch for, sharing a long enough opening with a form of the word
+    the beat is about, as that word (`nearlyInflected`), and the guard that
+    makes it safe is that a word the list *can* vouch for is never read as a
+    mangled other one.
+  */
+  const nearly = code("lib/scenes/nearly.ts");
+  assert.match(nearly, /export function nearlyInflected\(/, "lib/scenes/nearly.ts lost the stem rule");
+  assert.match(
+    nearly, /vouched\(word\)/,
+    "the stem rule no longer stands down on a word the scene's list can vouch for, so a real word can be read as a mangled other one",
+  );
+  assert.match(
+    code("lib/scenes/turn.ts"), /inflected\(forms\)/,
+    "the marker no longer asks the stem rule, so an ending the word does not have is a miss again",
+  );
+  /*
+    And in a slot that wants a case, a wrong ending is a case rather than a
+    slip of the pen: only a folded diacritic is read as spelling there, or
+    the review sends somebody to the letter bar over a case.
+  */
+  assert.match(
+    code("lib/scenes/turn.ts"), /const near = folded\(accepted\)/,
+    "the case branch reads a one-edit ending as a typo again, which files a case slip under spelling",
+  );
+});
+
+check("a learner who says they are lost is handed the word, never the question again", () => {
+  /*
+    The moment somebody decides whether they are stupid or simply learning.
+    A learner who writes "I do not understand" and is answered with the same
+    question a third time has been told by a machine that the problem is
+    them. `LOST` is how they say it, in the course's own words; `readTurn`
+    reads it before the fragment and after everything the beat could have
+    been met by; `advance` charges nothing the first time, the way a look and
+    a wait charges nothing; `replyFor` hands over the beat's own word; and
+    `gradesFor` counts it as help, because the app supplied the word.
+  */
+  const turn = code("lib/scenes/turn.ts");
+  assert.match(turn, /\| "lost"/, "the marker no longer reads a learner saying they are not following");
+  assert.match(
+    turn, /!wantsNo && isLost\(spoken, context\)/,
+    "the lost reading no longer stands down on a beat that wanted a no, where ei is the answer",
+  );
+  assert.match(
+    code("lib/scenes/catalogue.ts"), /export const LOST = \{/,
+    "the words a learner says when lost are no longer a table beside the reactions",
+  );
+  assert.match(
+    code("lib/scenes/state.ts"), /evidence\.reading === "lost" && !waitedAlready/,
+    "saying you are lost costs a try the first time, which charges somebody for asking",
+  );
+  assert.match(
+    code("lib/scenes/reply.ts"), /response === "help"/,
+    "replyFor no longer hands over a word when the learner says they are not following",
+  );
+  assert.match(
+    code("lib/scenes/grades.ts"), /turn\.helped \|\| turn\.reading === "lost"/,
+    "a word the other side handed over is graded as though the learner produced it",
+  );
+  /*
+    And the shrug is not the answer to somebody who has not answered yet. A
+    question asked while the floor is still theirs is a learner who is
+    confused, and the human move is to ask again rather than to say "I do
+    not know" at them (§39).
+  */
+  assert.match(
+    code("app/api/scene/route.ts"),
+    /wantsAside = Boolean\(askedNow\) && \(response === "answer" \|\| response === "counter"\)/,
+    "the scene route answers a question from a turn that missed the beat, which shrugs at somebody who is lost",
+  );
+  /*
+    And the hint agrees with the learner's own card. A beat lists every word
+    that would satisfy it; handing over the first regardless told somebody
+    whose card said the door was broken to say the heating was, which is
+    worse than no hint because they follow it.
+  */
+  assert.match(
+    code("lib/scenes/grades.ts"), /card\?\.props\.flatMap\(\(prop\) => prop\.lemmas\)/,
+    "the offered word no longer reads the card, so a hint can contradict the run's own card",
+  );
+  /*
+    And one word the scene recognised is not "I did not catch that". A person
+    hearing one word they know asks about that word; the repair phrase is for
+    a turn there was nothing in.
+  */
+  assert.match(
+    turn, /caughtSomething\(marked\) \? "offtarget" : "unrecognised"/,
+    "the repair phrase is decided on a share of the words again, so a learner using Estonian from "
+    + "another unit is told they were incomprehensible",
+  );
+  /*
+    AND WHETHER THE LEARNER WAS UNDERSTOOD IS A WIDER QUESTION THAN WHAT THIS
+    SCENE MAY SAY. The closed list is the units the scene declares and it
+    stays that for the gate and for retrieval, which is §6; the marker asks
+    the course as well, or a bus window that does not declare the shopping
+    unit answers "I did not catch that" to somebody who said "with cash".
+  */
+  assert.match(
+    turn, /Boolean\(context\.known\?\.\(word\)\)/,
+    "the marker no longer asks what the course can account for, so a real word from another unit "
+    + "is read as nothing anybody could make out",
+  );
+  assert.match(
+    code("lib/progress/scene.ts"), /courseForms\(\)/,
+    "the scene context no longer resolves what the course can account for",
+  );
+  /*
+    And the gate is not widened with it. A model composing inside the course
+    rather than inside the scene's own units is a line the learner has not
+    been taught to read, which is the one thing the closed list is for.
+  */
+  const gate = code("lib/progress/scene.ts").match(/gate: \{[^}]*\}/)?.[0] ?? "";
+  assert.doesNotMatch(gate, /known|courseForms/, "the gate is vouching against the course, not against the scene's own list");
+  /*
+    And a real word is never read as a slip of the pen for another: `valutab`
+    is the third person of a verb the course teaches, and reading it as a
+    typo for `valuta` told a learner the word they got right is said some
+    other way.
+  */
+  assert.match(
+    turn, /if \(vouched\(said\)\) continue;/,
+    "a word the course knows can be read as a typo of another, so the review corrects a word that was right",
+  );
+});
+
 check("nothing but the dictionary can advance a scene", () => {
   const turn = code("lib/scenes/turn.ts");
   const state = code("lib/scenes/state.ts");

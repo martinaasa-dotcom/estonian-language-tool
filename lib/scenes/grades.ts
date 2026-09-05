@@ -8,10 +8,14 @@
  * without pressing help for it, in a beat that was met.
  *
  * NEVER `Easy`, because a conversation cannot tell easy from lucky. `Good` on
- * the first attempt, `Hard` after a repair, and `Again` where the app had to
- * supply the word. Nothing about `RATINGS` or the scheduler changes here; this
- * only decides which of the four to send, which is the same latitude the scene
- * game and the crossword already take.
+ * the first attempt, `Hard` after a repair or where the word was understood
+ * with a slip (`pood` for `poodi`, `tulema` for `tulen`), and `Again` where
+ * the app had to supply the word. A slip is `Hard` and never `Again`, because
+ * the learner *had* the word and the other side understood it, and never
+ * `Good`, because the scheduler would then stretch the interval on a form
+ * that has not been produced yet. Nothing about `RATINGS` or the scheduler
+ * changes here; this only decides which of the four to send, which is the
+ * same latitude the scene game and the crossword already take.
  *
  * WHERE THE REQUIREMENT WAS A CASE, THE ROW CARRIES IT. That is the whole
  * pedagogical point of doing this at all: **the case you fail under pressure
@@ -27,14 +31,23 @@
  * Pure: no React, no Next, no Prisma, no clock.
  */
 import type { CaseKey } from "@/lib/estonian/types";
+import type { RoleCard } from "./props";
 import type { SceneState } from "./state";
-import { leafNeeds, type SceneSpec } from "./types";
+import { leafNeeds, type BeatSpec, type SceneSpec } from "./types";
 
 /** One row this run earned. `rating` is the scheduler's own vocabulary. */
 export interface SceneGrade {
   readonly lemma: string;
   /** Set where the beat asked for a case, so the weak-case charts see it. */
   readonly grammCase: CaseKey | null;
+  /**
+   * The case that came back instead, where exactly one case spells it that
+   * way. `Review.reachedSlot` is the column it lands in, so the pair somebody
+   * mixes up at a counter is counted beside the pair they mix up on a card
+   * (`lib/stats/confusions.ts`), which is the whole argument for a scene
+   * writing to the shared log at all.
+   */
+  readonly reachedCase: CaseKey | null;
   /** 1 Again, 2 Hard, 3 Good. Never 4. */
   readonly rating: 1 | 2 | 3;
   /** Which beat earned it, so the debrief can say where. */
@@ -58,7 +71,13 @@ export function gradesFor(scene: SceneSpec, state: SceneState): SceneGrade[] {
 
     const turns = state.turns.filter((turn) => turn.beatId === beat.id);
     if (turns.length === 0) continue;
-    const helped = turns.some((turn) => turn.helped);
+    /*
+      The app supplied the word either way: because the learner pressed the
+      button, or because they said they were not following and the other side
+      handed it over (`offerFor`). Both are help and both grade `Again`, or
+      the scheduler would stretch an interval on a word it had just been told.
+    */
+    const helped = turns.some((turn) => turn.helped || turn.reading === "lost");
 
     /*
       The attempts that count are the ones that were turns. A fragment and an
@@ -70,7 +89,8 @@ export function gradesFor(scene: SceneSpec, state: SceneState): SceneGrade[] {
       (turn) => turn.reading !== "fragment" && turn.reading !== "echo",
     ).length;
 
-    const rating = helped ? 1 : attempts <= 1 ? 3 : 2;
+    const slipped = turns.some((turn) => (turn.slips?.length ?? 0) > 0);
+    const rating = helped ? 1 : attempts <= 1 && !slipped ? 3 : 2;
 
     for (const { need, index } of leafNeeds(beat.needs)) {
       /*
@@ -78,17 +98,24 @@ export function gradesFor(scene: SceneSpec, state: SceneState): SceneGrade[] {
         `datum` and `any` are all things a learner did and none of them is a
         word they hold a card for, so there is nothing to schedule.
       */
+      const reachedCase = turns
+        .flatMap((turn) => turn.slips ?? [])
+        .find((slip) => slip.kind === "case" && slip.grammCase && slip.reached)?.reached ?? null;
+
       if (need.kind === "lemma") {
         // One requirement, one row: `oneOf` is a choice and the turn does not
         // say which was taken, so a row per candidate would credit words
         // nobody used. The first is the beat's own head word.
         const lemma = need.oneOf[0];
         if (lemma && turns.some((turn) => turn.met[index])) {
-          out.push({ lemma, grammCase: null, rating, beatId: beat.id });
+          out.push({ lemma, grammCase: null, reachedCase: null, rating, beatId: beat.id });
         }
       }
       if (need.kind === "case" && turns.some((turn) => turn.met[index])) {
-        out.push({ lemma: need.lemma, grammCase: need.grammCase, rating, beatId: beat.id });
+        out.push({
+          lemma: need.lemma, grammCase: need.grammCase, rating, beatId: beat.id,
+          reachedCase: reachedCase === need.grammCase ? null : reachedCase,
+        });
       }
     }
   }
@@ -134,6 +161,43 @@ export function stalledWords(scene: SceneSpec, state: SceneState): string[] {
     }
   }
   return [...out];
+}
+
+/**
+ * The one word to hand over when the learner says they are not following.
+ *
+ * The beat's own, off its requirements rather than off its topic, because
+ * the topic is what the other side's line is about and the requirement is
+ * what the learner is being asked for. Beside `stalledWords` because it is
+ * the same question asked of one beat instead of every unmet one, and a
+ * second rule about "which word does this beat want" is how the two would
+ * come apart.
+ */
+export function offerFor(beat: BeatSpec, card: RoleCard | null = null): string | null {
+  for (const { need } of leafNeeds(beat.needs)) {
+    if (need.kind === "lemma") {
+      /*
+        THE CARD IS THE TRUTH ABOUT THIS RUN, AND THE HINT HAS TO AGREE WITH
+        IT. A beat lists every word that would satisfy it, so the landlord's
+        "say what has gone wrong" offers eleven; the first of them was handed
+        over regardless, and a learner whose card said the door was broken was
+        told to say the heating was. That is worse than no hint: they follow
+        it, they are marked as having met the beat, and they have practised
+        saying something that was not true of their own card. Where the card
+        drew one of the beat's own words, that is the word.
+      */
+      const drawn = card?.props.flatMap((prop) => prop.lemmas).find((lemma) => need.oneOf.includes(lemma));
+      return drawn ?? need.oneOf[0] ?? null;
+    }
+    if (need.kind === "case") return need.lemma;
+  }
+  /*
+    And nothing where the beat wants a value off the card or a question: the
+    answer is already in front of them, or what they need is a shape rather
+    than a word, and a word that would not meet the beat is the fault above
+    in a smaller room. The question said again is the honest move there.
+  */
+  return null;
 }
 
 /**

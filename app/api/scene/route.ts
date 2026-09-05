@@ -9,6 +9,11 @@ import { MAX_TURNS, MAX_TURN_CHARS, readDraw, replay, sceneContext } from "@/lib
 import { sceneById } from "@/lib/scenes/catalogue";
 import { sceneLine, type SpokenLine } from "@/lib/scenes/line";
 import { cardInPlay, counterBeat, datumLine, replyFor, stageFor, wantsFreshLine } from "@/lib/scenes/reply";
+import { asideFor, asideOwed, shrug } from "@/lib/scenes/aside";
+import { answerBeatId } from "@/lib/scenes/scripted";
+import { offerFor } from "@/lib/scenes/grades";
+import { passes, runGate } from "@/lib/scenes/gate";
+import { words } from "@/lib/scenes/lexicon";
 import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "@/lib/scenes/state";
 import { personaById, type PersonaSpec } from "@/lib/scenes/personas";
 import { DEFAULT_VOICE } from "@/lib/audio/voice";
@@ -146,6 +151,48 @@ export async function POST(request: Request) {
   const answered = last ? scene.beats.find((b) => b.id === last.beatId) ?? null : null;
   const heard = last?.heard ?? null;
 
+  const used = new Set(
+    Array.isArray(body.used) ? body.used.filter((v): v is string => typeof v === "string") : [],
+  );
+
+  /*
+    A QUESTION THE SCENE DID NOT ANTICIPATE GETS AN ANSWER BEFORE THE MOVE.
+    `readTurn` wrote down that one was asked and with which word; `asideFor`
+    answers it from what the other side knows, a fact off the card or more of
+    what they just said, and where it cannot, a model is asked for one line
+    inside the list below, and failing that the other side says they do not
+    know, which is what a person says. Never on a turn nobody understood,
+    since then the repair phrase is the whole reaction.
+  */
+  /*
+    A QUESTION IS ANSWERED WHERE THE TURN LANDED, AND NOT WHERE IT MISSED.
+
+    §36 put an answer in front of the move for a learner who said their piece
+    and asked something extra, which is what `okei, otse, ja kuhu siis?` is.
+    It read every question the same way, so a learner who missed the beat and
+    asked something got `Ei tea.` and then the question again: "do you speak
+    English?" answered with "I don't know", and "sorry, what?" answered the
+    same way. Neither is a person. When the floor is still theirs and the
+    learner has not answered yet, the human move is to ask again, which is
+    what `narrow` already does.
+  */
+  const askedNow = last?.asked ?? null;
+  const wantsAside = Boolean(askedNow) && (response === "answer" || response === "counter");
+  const fresh = (id: string | undefined) =>
+    (id ? context.scripted.get(id) ?? [] : []).filter((text) => !used.has(text));
+  const asking = {
+    asked: askedNow,
+    spoken: words(last?.said ?? ""),
+    answered,
+    card,
+    lexicon: context.lexicon,
+    more: fresh(answered?.id),
+    answers: answered ? fresh(answerBeatId(answered)) : [],
+  };
+  let aside = wantsAside ? asideFor(asking) : null;
+  /* Whether the model, if any, is asked for the aside rather than for the move. */
+  const asideWantsModel = wantsAside && aside === null && asideOwed(asking);
+
   /*
     WHERE THE CONVERSATION IS, AND EVERY BRANCH RETURNS IT. Three of the four
     used to return the line alone, so the screen was handed something to read
@@ -173,6 +220,12 @@ export async function POST(request: Request) {
       rather than with a verdict. Five readings, not two (§8).
     */
     reading: state.turns[state.turns.length - 1]?.reading ?? null,
+    /*
+      What the last turn was understood despite, so the screen can say under
+      the learner's own bubble that they were understood and how the word is
+      said. Empty on a turn that was right.
+    */
+    slips: last?.slips ?? [],
   };
 
   /*
@@ -198,6 +251,19 @@ export async function POST(request: Request) {
     translates: persona?.translates ?? false,
     acknowledges: persona?.acknowledges ?? true,
     echo: last?.matched?.[0] ?? null,
+    /*
+      The word the other side repeats is the learner's own, or, where it was
+      understood with a slip, the dictionary's form of it (`Slip.form`), which
+      `readTurn` already put first in `matched`. The flag is what labels it.
+    */
+    recast: Boolean(last?.slips?.some((slip) => slip.form && slip.form === last?.matched?.[0])),
+    aside,
+    /*
+      The word to hand over where the turn said they were not following. The
+      beat they were answering, not the one coming next: they are stuck on
+      the question they were asked.
+    */
+    offer: response === "help" && answered ? offerFor(answered, card) : null,
     met: state.done.length,
   });
   const answer = (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>
@@ -209,13 +275,20 @@ export async function POST(request: Request) {
     still owed one back.
   */
   const spokenFor = standing ?? speaking ?? (answered?.move === "close" ? answered : undefined);
-  if (!spokenFor) return answer(reply(null));
-  if (!wantsFreshLine(turns.length > 0 ? response : null, heard)) return answer(reply(null));
+  /*
+    A beat the other side opens with nothing: they said their piece and are
+    waiting, so no line is built and the screen prints what they are doing.
+  */
+  if (!spokenFor || (spokenFor.awaits && !standing)) {
+    if (asideWantsModel) aside = shrug(context.lexicon);
+    return answer(reply(null));
+  }
+  if (!wantsFreshLine(turns.length > 0 ? response : null, heard)) {
+    if (asideWantsModel) aside = shrug(context.lexicon);
+    return answer(reply(null));
+  }
   const beat = spokenFor;
 
-  const used = new Set(
-    Array.isArray(body.used) ? body.used.filter((v): v is string => typeof v === "string") : [],
-  );
   const said = Array.isArray(body.said)
     ? body.said
         .filter((v): v is string => typeof v === "string")
@@ -243,9 +316,47 @@ export async function POST(request: Request) {
     learner over a request nobody made.
   */
   const cheap = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
-  if (cheap.provenance !== "fallback") return answer(reply(cheap));
   // A line the beat can say out of course words and the card's own values: `Teisipäeval kell 13:30?`.
-  const dealt = datumLine(beat, card, context.lexicon);
+  const dealt = cheap.provenance === "fallback" ? datumLine(beat, card, context.lexicon) : null;
+  const move = cheap.provenance !== "fallback" ? cheap : dealt ?? cheap;
+
+  /*
+    THE TURN'S ONE BOOKING GOES TO THE QUESTION WHERE THERE IS ONE. A learner
+    who asked something is owed an answer more than a fresh phrasing of the
+    next move, which the bank usually has anyway. The model is asked for one
+    line answering what they asked, inside the list, and the gate reads it as
+    a `confirm` (a question or a statement, either); what it withholds, the
+    other side answers with "ei tea", which is at least true.
+  */
+  if (asideWantsModel) {
+    const chain = resolveProviders();
+    const decision = chain.length > 0 ? await authoriseCall(ownerId, "SCENE") : null;
+    if (!decision?.allowed || !decision.reservation) {
+      aside = shrug(context.lexicon);
+      return answer(reply(move), { composed: false, note: decision?.message ?? null });
+    }
+    const asking: typeof beat = { ...beat, id: `aside:${beat.id}`, move: "confirm", topic: [] };
+    const drafted = await compose(chain, {
+      ownerId,
+      move: "answer",
+      they: "They were just asked a question they did not expect. They answer it briefly, as best they can from what they know, and no more.",
+      register: scene.register,
+      words: [...context.lexicon.byLemma.keys()],
+      examples: [...context.scripted.values()].flatMap((lines) => lines.slice(0, 1)).slice(0, 6),
+      said,
+      avoid: [],
+    });
+    const verdict = drafted ? runGate(drafted, asking, context.gate) : null;
+    if (drafted && verdict && passes(verdict)) {
+      aside = { text: drafted, provenance: "composed" };
+    } else {
+      after(() => releaseReservation(decision.reservation!));
+      aside = shrug(context.lexicon);
+    }
+    return answer(reply(move));
+  }
+
+  if (cheap.provenance !== "fallback") return answer(reply(cheap));
   if (dealt) return answer(reply(dealt));
 
   /*

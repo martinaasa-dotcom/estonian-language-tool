@@ -8,6 +8,7 @@ import { DrillLink } from "@/components/DrillLink";
 import type { SceneSpec } from "@/lib/scenes/types";
 import { drillFor } from "@/lib/scenes/drills";
 import { curveballById } from "@/lib/scenes/curveballs";
+import type { SceneReview } from "@/lib/scenes/review";
 
 /** So "words your conversations needed" is a query and never a counter (ADR-014). */
 export const SCENE_SOURCE = "SCENE";
@@ -21,11 +22,17 @@ export const SCENE_SOURCE = "SCENE";
  *    achieved, never a percentage, because a mark on a conversation is a claim
  *    about somebody's Estonian and only the mock exam may make one (ADR-022).
  * 3. **Your turns**, so a learner can read back what they actually said.
- * 4. **The words you needed and did not have**, each with an add-to-deck
+ * 4. **How it went**, which is the review a teacher gives after a role-play:
+ *    it leads on how much of what you said was understood, and then names
+ *    each ending that came out as something else, what that ending is for,
+ *    and your own words beside the ones the other side used. English, and
+ *    derived from the transcript rather than written here
+ *    (`lib/scenes/review.ts`).
+ * 5. **The words you needed and did not have**, each with an add-to-deck
  *    button, from the help button and from the beats that stalled.
- * 5. **One thing to work on**, as a `DrillLink` into the drill that addresses
+ * 6. **One thing to work on**, as a `DrillLink` into the drill that addresses
  *    it, rather than advice this screen wrote itself.
- * 6. **Try it again**, which is one button, because the second run is where
+ * 7. **Try it again**, which is one button, because the second run is where
  *    most of the learning is.
  *
  * No score anywhere on this screen. That is not an omission.
@@ -36,13 +43,15 @@ export interface Debrief {
   hurdles: readonly { id: string; beat: number; met: boolean }[];
   outcome: { id: string; says: string } | null;
   gaps: readonly { lemma: string; lexemeId: string | null }[];
+  /** What to do differently, in English, derived from the run (`lib/scenes/review.ts`). */
+  review: SceneReview;
   graded: number;
   /** The conversation, both sides, in order. A stage direction is not a line and is left out. */
   turns: readonly { who: "them" | "you"; text: string }[];
 }
 
 export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: () => void }) {
-  const { scene, objectives, hurdles, outcome, gaps, turns, graded } = debrief;
+  const { scene, objectives, hurdles, outcome, gaps, turns, graded, review } = debrief;
   const byId = new Map(scene.beats.map((beat) => [beat.id, beat]));
   const required = scene.beats.filter((beat) => beat.required);
   const missed = objectives.missed.length > 0 ? byId.get(objectives.missed[0]!) : undefined;
@@ -128,6 +137,60 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
           </ul>
         </section>
       )}
+
+      <section>
+        <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>How it went</h3>
+        {/*
+          The lead is the sentence a learner takes away, and it is about being
+          understood rather than about being right: those are the same run
+          described two ways, and only one of them gets somebody to open the
+          next scene. The notes under it are the teaching, in the quiet ink,
+          with the learner's own words beside the ones the other side used.
+        */}
+        <p className="text-sm">{review.lead}</p>
+        {review.notes.length > 0 && (
+          <ul className="mt-3 flex flex-col gap-3">
+            {review.notes.map((note) => (
+              <li key={note.id}>
+                <p className="text-sm font-medium">{note.heading}</p>
+                <p className="text-sm" style={{ color: "var(--ink-2)" }}>{note.body}</p>
+                {/*
+                  Why it most likely happened, marked as the guess it is.
+                  Quieter than the note it sits under, and worded as a guess
+                  in both tiers, because a wrong confident diagnosis teaches
+                  a learner a reason for a mistake they did not make and they
+                  have no way to tell (`lib/scenes/diagnose.ts`).
+                */}
+                {note.hunch && (
+                  <p className="mt-1 text-sm" style={{ color: "var(--ink-3)" }}>
+                    <span className="font-medium">
+                      {note.hunch.sure === "likely" ? "Most likely" : "It may be"}:
+                    </span>{" "}
+                    {note.hunch.says}
+                  </p>
+                )}
+                {note.evidence.length > 0 && (
+                  <ul className="mt-1 flex flex-col gap-0.5 text-sm">
+                    {note.evidence.map((one) => (
+                      <li key={one.said} className="flex flex-wrap items-baseline gap-x-2">
+                        <span lang="et" style={{ color: "var(--ink-3)" }}>{one.said}</span>
+                        {one.form ? (
+                          <>
+                            <span style={{ color: "var(--ink-3)" }}>is said</span>
+                            <span lang="et" className="font-medium">{one.form}</span>
+                          </>
+                        ) : (
+                          <span style={{ color: "var(--ink-3)" }}>was understood as it stood</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {gaps.length > 0 && (
         <section>

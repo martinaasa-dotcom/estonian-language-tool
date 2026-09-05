@@ -13,6 +13,10 @@
 import type { ScriptedLine } from "./scripted";
 
 export const BANK: readonly ScriptedLine[] = [
+  { scene: "ametiasutus", beat: "answer:confirm", text: "Nädala pärast.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
+  { scene: "ametiasutus", beat: "answer:confirm", text: "Varsti, nädala pärast.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
+  { scene: "ametiasutus", beat: "answer:wait", text: "See võtab kümme minutit.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
+  { scene: "ametiasutus", beat: "answer:wait", text: "Kümme minutit.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
   { scene: "ametiasutus", beat: "close", text: "Head aega ja aitäh teile!", model: "minimax/minimax-m3:free", draftedAt: "2026-09-04", reviewed: false },
   { scene: "ametiasutus", beat: "close", text: "Head aega ja aitäh!", model: "minimax/minimax-m3:free", draftedAt: "2026-09-04", reviewed: false },
   { scene: "ametiasutus", beat: "close", text: "Head aega!", model: "minimax/minimax-m3:free", draftedAt: "2026-09-04", reviewed: false },
@@ -130,8 +134,8 @@ export const BANK: readonly ScriptedLine[] = [
   { scene: "poodi-piima", beat: "item", text: "Mida sa soovid osta?", model: "minimax/minimax-m3:free", draftedAt: "2026-09-04", reviewed: false },
   { scene: "poodi-piima", beat: "item", text: "Mida sa tahad osta?", model: "minimax/minimax-m3:free", draftedAt: "2026-09-04", reviewed: false },
   { scene: "poodi-piima", beat: "item", text: "Mida sina tahad osta?", model: "minimax/minimax-m3:free", draftedAt: "2026-09-04", reviewed: false },
-  { scene: "tee-kusimine", beat: "far", text: "Jah, see on lähedal.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
-  { scene: "tee-kusimine", beat: "far", text: "See on siin kõrval, viis minutit.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
+  { scene: "tee-kusimine", beat: "answer:far", text: "Jah, see on lähedal.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
+  { scene: "tee-kusimine", beat: "answer:far", text: "See on siin kõrval, viis minutit.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
   { scene: "tee-kusimine", beat: "hurdle:faster", text: "Kiire on, mul ei ole aega.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
   { scene: "tee-kusimine", beat: "hurdle:faster", text: "Kiire on, öelge kohe.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
   { scene: "tee-kusimine", beat: "hurdle:interrupted", text: "Üks minut, palun.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
@@ -165,6 +169,7 @@ export const BANK: readonly ScriptedLine[] = [
   { scene: "uuri-remont", beat: "hurdle:wrong-price", text: "See maksab nüüd rohkem raha.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
   { scene: "uuri-remont", beat: "problem", text: "Kas küte on katki?", model: "minimax/minimax-m3:free", draftedAt: "2026-09-04", reviewed: false },
   { scene: "uuri-remont", beat: "problem", text: "Vabandust, kas elekter on katki?", model: "minimax/minimax-m3:free", draftedAt: "2026-09-04", reviewed: false },
+  { scene: "uuri-remont", beat: "answer:refuse", text: "Varsti.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
   { scene: "uuri-remont", beat: "refuse", text: "Sel nädalal ei ole aega.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
   { scene: "uuri-remont", beat: "refuse", text: "Sel nädalal ei ole mul aega.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
   { scene: "uuri-remont", beat: "refuse", text: "Täna ei saa keegi tulla.", model: "authored", draftedAt: "2026-09-05", reviewed: false },
