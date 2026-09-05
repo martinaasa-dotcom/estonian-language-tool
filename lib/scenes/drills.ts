@@ -23,10 +23,11 @@
  * and an invariant checks every href here is one of them, because a drill that
  * was retired leaves a dead link on a screen somebody reached by failing.
  */
-import type { Requirement } from "./types";
+import { leafNeeds, type Requirement } from "./types";
 
 export function drillFor(needs: readonly Requirement[]): string | null {
-  for (const need of needs) {
+  const leaves = leafNeeds(needs).map((leaf) => leaf.need);
+  for (const need of leaves) {
     /*
       A case first, because it is the specific one: `/review/write` asks for a
       word in a named case, checks it against the dictionary before any model
@@ -35,7 +36,7 @@ export function drillFor(needs: readonly Requirement[]): string | null {
     */
     if (need.kind === "case") return "/review/write";
   }
-  for (const need of needs) {
+  for (const need of leaves) {
     /*
       A word they could not find. The words themselves are already above with a
       button to keep them, so this is the round for words you have met and not

@@ -2264,6 +2264,49 @@ name the module exports being used as an element rather than on the import, beca
 nobody renders is the same silence one line later. It has the floor every sweep here has, and it
 was made to fail first, on the real bug rather than on a hypothetical one.
 
+**A word is kept from the card it is on, and the list of kept words is on the page about words.**
+Starring existed for the whole life of this app and could be done on exactly one screen, the
+dictionary entry, and read back on that same screen. That is the screen a learner is least often
+on: the word worth keeping turns up in the middle of a round, on a card, and by the time anybody is
+in the dictionary they have already forgotten which one it was. So the star is in the corner of
+every card that puts a word up to learn, which is the review session and everything that renders
+it, the learn ladder, the unit lesson, flash cards, sprint, listening, speaking, dictation,
+conjugation, government and writing, and the favourites are listed on `/words/mastery` above the
+four tiers, because that page is already the answer to "how are my words doing" and a second page
+for "which words are mine" is one page nobody finds.
+
+**One button, and the state is reset by the word rather than by a key.** `components/StarWord.tsx`
+is the one drawing and the only caller of `toggleStar`, asserted, because eleven copies would be
+eleven answers to what a favourite looks like and what it does when the write fails. The reset is
+the part a copy gets wrong: every one of these screens shows one word after another out of one
+queue, React keeps a component's state while its position in the tree holds still, and without the
+prop superseding it, starring a word and pressing Next draws the next word as a favourite it is
+not. A `key` at each call site fixes it and is what a twelfth caller forgets.
+
+**The accent, not butter.** The dictionary's own star was `--hard-ink`, which the design system
+gives to "nearly, timed, a warning that isn't a failure", and butter is what a near miss is painted
+on the very screens the star has moved onto. A favourite is "this is yours", which is what the
+accent means. Filled against outlined carries it as well, since a hue is never the only thing
+saying which state something is in.
+
+**Two rounds hold it back until the answer is in, and both for the same reason.** The star's label
+names the word, so on listening, where the word is played and deliberately never written down, and
+on dictation, where the lemma is a word out of the sentence being typed, a star in the corner reads
+the answer out to a screen reader before anybody has picked anything. Both draw it after the answer,
+which is where dictation's own "full entry" link already sat.
+
+**A board is not a card and is exempt by name.** Match, pairs, the picture board, Target and the
+scene game put several words up at once or none in particular, and the cloze and sentence rounds are
+about a sentence; the level checkpoint withholds every answer until the end and its questions carry
+no entry to keep. Every other session under `app/(app)/review/` and `app/(app)/learn/` is read off
+the filesystem and has to draw the button, anchored on the element rather than the import for the
+reason this file gives five times over, because a round added later with no star looks exactly like
+a star nobody has pressed. It found the unit lesson, which had been missed.
+
+**Not queued when the network is gone.** A grade is an answer and goes into the outbox because
+losing one loses evidence (ADR-015). A star is a bookmark, and the honest thing to do with one that
+did not land is to put the button back the way it was rather than promise it later.
+
 **A dead end offers a way out, and the way out is a queue somebody works.** Nothing here may tell
 somebody it cannot help them and then stop. A search that found nothing, an answer marked wrong that
 was right, a word off their own homework the dictionary would not vouch for, a grammar page that
@@ -4006,6 +4049,24 @@ The other side repeats the learner's own word back before moving on, off `Eviden
 every line is spoken in the persona's voice. Seven scenes, and all seven play keyless from the
 first line to the debrief. `docs/21-situations.md` §32 has the table and what it does not fix.
 
+**An offer names a day, and a yes is an answer.** The landlord asked `Kas küte on katki?`, heard
+"Millal teil on aeg?", and said `Jah. Kell 14:00?`: a yes to a question with no yes in it, then a
+clock time with no day, after the learner had asked when anybody could come. Then `Sobib` was read
+as Estonian off the point, twice, and the landlord ran out of patience over the right answer. And
+`Neljal korrusel` got a look and a wait, on a beat whose requirement named `kord`, an occasion,
+where the floor of a building is `korrus`. So a `Requirement` can be `anyOf` several, one to the
+marker and each option to everybody else through `leafNeeds`; a line said off the card is a list
+of parts and a part can be a drawn word in a named case, read off `Lexicon.caseForm` and never
+joined here, so the offer is `Teisipäeval kell 14:00?` and is withheld whole where a part is
+missing; the day is a prop marked `theirs`, stored with the draw and never printed on the card,
+with the dictionary's English beside it for the stage direction; a two-word turn that meets the
+beat is an answer and a turn the beat wanted as a question gets no `Jah.` in front of the move.
+And a no is not the end of the call: a beat can carry a `counter`, the marker reads `ei sobi` on
+such a beat as `declined` before it reads the `sobi` in it, the machine offers again once off a
+second day and time drawn to differ from the first, a second no meets the beat, and `cardInPlay`
+is what every later line reads so a time read back is the one that was accepted.
+`docs/21-situations.md` §33 is the transcript and what it does not fix.
+
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
 five, so a guesser who has placed the consonants can still be choosing between three words on the
@@ -5125,9 +5186,9 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
-`glossSentences`, `GlossedSentence`, `repairCaseFronts`, `unsentencedCaseCards`,
-`isBareCaseFront`, `hasSentence`, `borrowSentences`, `claimIndex`, `borrowedSentences`,
-`formSentencesFor`. Most of them now
+`glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
+`repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`claimIndex`, `borrowedSentences`, `formSentencesFor`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

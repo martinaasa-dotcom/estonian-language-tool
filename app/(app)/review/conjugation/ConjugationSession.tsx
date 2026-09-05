@@ -9,6 +9,7 @@ import { Chip, Stat } from "@/components/ui";
 import { EstonianInput } from "@/components/EstonianInput";
 import { DiacriticBar } from "@/components/DiacriticBar";
 import { Speak } from "@/components/Speak";
+import { StarWord } from "@/components/StarWord";
 import { SuggestFix } from "@/components/SuggestFix";
 import { useFeedbackSound } from "@/components/AudioPrefs";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
@@ -25,6 +26,8 @@ export interface ConjugationQuestion {
   translation: string;
   cefr: string | null;
   inDeck: boolean;
+  /** Whether this verb is already one of the learner's favourites. */
+  starred: boolean;
   tense: Tense;
   /** The first person, shown: the principal part the rest hang off. */
   given: { person: string; value: string };
@@ -185,6 +188,11 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
           <Chip tone="accent"><Repeat size={12} aria-hidden /> <span lang="et">{group.et}</span></Chip>
           {question.cefr && <Chip>{question.cefr}</Chip>}
           {!question.inDeck && <Chip tone="good">new to you</Chip>}
+          {/* The corner of the card, which is where somebody looks for this
+              the moment a word turns out to be worth keeping. */}
+          <div className="ml-auto">
+            <StarWord lexemeId={question.lexemeId} starred={question.starred} label={question.lemma} />
+          </div>
         </div>
 
         <div className="px-6 pt-7 text-center">

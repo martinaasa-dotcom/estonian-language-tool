@@ -13,6 +13,7 @@ import {
 import { caseFormChoices, verbFormChoices } from "@/lib/questions/caseChoices";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { stemsFrom } from "@/lib/estonian/derive";
+import { starredAmong } from "@/lib/progress/stars";
 import type { ReviewCard } from "./ReviewSession";
 
 /**
@@ -155,6 +156,11 @@ function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
     targetCase: c.targetCase,
     slot: c.slot,
     lemma: c.lexeme?.lemma ?? null,
+    lexemeId: c.lexemeId,
+    // Filled in by `withChoices`, which reads the whole session's stars in one
+    // query. A card mapped without that read is drawn unstarred, which is what
+    // a session with nothing starred looks like anyway.
+    starred: false,
     isNew: c.state === 0,
     // Only on a card that has never been seen. Every other card in the session
     // would carry a sentence nothing renders.
@@ -301,9 +307,33 @@ async function formsForCases(rows: CardRow[]): Promise<Map<string, HeldForms>> {
  * apart.
  */
 export async function withChoices(
-  rows: CardRow[], glossLanguage: GlossLanguage,
+  rows: CardRow[], glossLanguage: GlossLanguage, ownerId: string,
 ): Promise<ReviewCard[]> {
-  const cards = await withGlosses(rows.map((c) => toReviewCard(c, glossLanguage)));
+  /*
+    WHICH OF THESE WORDS ARE ALREADY FAVOURITES, AND THE GLOSSED SENTENCE.
+
+    Two reads that do not need each other, so they go together: on the
+    deployment's own pooler each `await` is a round trip, and this is the
+    hottest read in the app.
+
+    The stars are read here rather than in either page for the reason the
+    option ranking is: two routes render this session, and a second copy of
+    the read is two answers to which star is filled in. The owner is a
+    parameter because nothing in this module resolves a session, and it is
+    REQUIRED, for the reason `illSgShort` is a required field on `NounStems`:
+    a caller that has not thought about it does not compile. Optional was the
+    first version and a third caller arrived one commit later without it, from
+    a branch that had never heard of stars, which would have drawn every star
+    on that round empty for a word that is a favourite. Every route rendering
+    this session resolves an owner already.
+  */
+  const [glossed, starred] = await Promise.all([
+    withGlosses(rows.map((c) => toReviewCard(c, glossLanguage))),
+    starredAmong(ownerId, rows.map((r) => r.lexemeId).filter((id): id is string => !!id)),
+  ]);
+  const cards = glossed.map(
+    (card) => (card.lexemeId && starred.has(card.lexemeId) ? { ...card, starred: true } : card),
+  );
 
   /*
     The case cards first, because they need no pool: the wrong answers are

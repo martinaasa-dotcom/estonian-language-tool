@@ -10,6 +10,7 @@ import { SpeakPair } from "@/components/Speak";
 import { useFeedbackSound } from "@/components/AudioPrefs";
 import { Chip, Meter, Stat } from "@/components/ui";
 import { useOffline } from "@/components/OfflineProvider";
+import { StarWord } from "@/components/StarWord";
 import { enqueueGrade } from "@/lib/offline/db";
 import { splitOnForm } from "@/lib/dict/examples";
 import { askLine, markFlash, plainAskFor, type FlashMark, type FlashTask } from "@/lib/games/flash";
@@ -21,6 +22,8 @@ import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
 /** A task, plus where the word stands, which is the thing the round is moving. */
 export interface FlashPrompt extends FlashTask {
   progress: { correct: number; needCorrect: number; slots: number; needSlots: number };
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
 }
 
 /**
@@ -209,6 +212,11 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
         >
           <Chip tone="accent">{askLine({ ...task, shape: shape ?? task.shape })}</Chip>
           {task.provenance === "derived" && <Chip>worked out from the stem</Chip>}
+          {/* The corner of the card, which is where somebody looks for this the
+              moment a word turns out to be worth keeping. */}
+          <div className="ml-auto">
+            <StarWord lexemeId={task.lexemeId} starred={task.starred} label={task.lemma} />
+          </div>
         </div>
 
         <div className="px-6 py-8">

@@ -13,6 +13,7 @@ import { Speak } from "@/components/Speak";
 import { useAudioPrefs, useFeedbackSound } from "@/components/AudioPrefs";
 import { prefetchClip } from "@/lib/audio/clip";
 import { SuggestFix } from "@/components/SuggestFix";
+import { StarWord } from "@/components/StarWord";
 import { WordIntro } from "@/components/WordIntro";
 import type { GlossedToken } from "@/lib/dict/glossed";
 import type { Badge } from "@/lib/achievements/badges";
@@ -40,6 +41,16 @@ export interface ReviewCard {
   /** The conjugation slot a CONJUGATION card is about, as `CONJUGATION_SLOTS` spells it. */
   slot: string | null;
   lemma: string | null;
+  /**
+   * The dictionary entry behind the card, for the favourite button.
+   *
+   * Null on the handful of cards with no entry behind them, which is what the
+   * `lemma` above is null on too, and the star is simply not drawn there:
+   * there is nothing to keep.
+   */
+  lexemeId: string | null;
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
   isNew: boolean;
   /**
    * What to show the first time this word is met, assembled by the page out of
@@ -892,15 +903,26 @@ export function ReviewSession({
           {card.isNew && <Chip tone="good">New word</Chip>}
           {drillCase && <Chip tone="hard">{drillCase.toLowerCase()} drill</Chip>}
           {drillScan && <Chip tone="sky">{drillScan.title}</Chip>}
-          {card.lemma && (
-            <Link
-              href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
-              className="ml-auto flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-60"
-              style={{ color: "var(--ink-3)" }}
-            >
-              <BookOpen size={13} aria-hidden /> Full entry
-            </Link>
-          )}
+          <div className="ml-auto flex items-center gap-1">
+            {card.lemma && (
+              <Link
+                href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
+                className="flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-60"
+                style={{ color: "var(--ink-3)" }}
+              >
+                <BookOpen size={13} aria-hidden /> Full entry
+              </Link>
+            )}
+            {/* The corner of the card, which is where somebody looks for this
+                the moment a word turns out to be worth keeping. */}
+            {card.lexemeId && (
+              <StarWord
+                lexemeId={card.lexemeId}
+                starred={card.starred}
+                label={card.lemma ?? card.front}
+              />
+            )}
+          </div>
         </div>
 
         <div
