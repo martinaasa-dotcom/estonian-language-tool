@@ -10,6 +10,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Chip, Empty, Meter, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
+import { StarWord } from "@/components/StarWord";
 import { SuggestFix } from "@/components/SuggestFix";
 import { WordIntro } from "@/components/WordIntro";
 import { useAudioPrefs, useFeedbackSound } from "@/components/AudioPrefs";
@@ -486,13 +487,18 @@ export function LearnSession({
         <div className="flex flex-wrap items-center gap-2 border-b px-5 py-3.5" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent">{RUNG_LABEL[rung]}</Chip>
           <Ladder rung={rung} />
-          <Link
-            href={`/dictionary?q=${encodeURIComponent(word.lemma)}`}
-            className="ml-auto flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-60"
-            style={{ color: "var(--ink-3)" }}
-          >
-            <BookOpen size={13} aria-hidden /> Full entry
-          </Link>
+          <div className="ml-auto flex items-center gap-1">
+            <Link
+              href={`/dictionary?q=${encodeURIComponent(word.lemma)}`}
+              className="flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-60"
+              style={{ color: "var(--ink-3)" }}
+            >
+              <BookOpen size={13} aria-hidden /> Full entry
+            </Link>
+            {/* The corner of the card, which is where somebody looks for this
+                the moment a word turns out to be worth keeping. */}
+            <StarWord lexemeId={word.lexemeId} starred={word.starred} label={word.lemma} />
+          </div>
         </div>
 
         <div className="flex min-h-[16rem] flex-col items-center justify-center gap-3 px-5 py-8 text-center">

@@ -8,6 +8,7 @@ import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
+import { StarWord } from "@/components/StarWord";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import { useAudioPrefs } from "@/components/AudioPrefs";
@@ -26,6 +27,10 @@ export interface DictationTask {
   /** Reviews behind the card, which decides how it may be heard. */
   reps: number;
   lemma: string;
+  /** The dictionary entry behind the word, for the favourite button. */
+  lexemeId: string;
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
   /** The attested Estonian sentence, exactly as Ekilex recorded it. */
   et: string;
   en: string | null;
@@ -240,13 +245,19 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
               is already showing it. The link is worth keeping for afterwards,
               when looking the word up is the natural next thing to do. */}
           {result && (
-            <Link
-              href={`/dictionary?q=${encodeURIComponent(task.lemma)}`}
-              className="ml-auto text-xs"
-              style={{ color: "var(--ink-3)" }}
-            >
-              {task.lemma}
-            </Link>
+            <div className="ml-auto flex items-center gap-1">
+              <Link
+                href={`/dictionary?q=${encodeURIComponent(task.lemma)}`}
+                className="text-xs"
+                style={{ color: "var(--ink-3)" }}
+              >
+                {task.lemma}
+              </Link>
+              {/* Held back with the link above it, and for the link's reason:
+                  the star's own label names the word, which is a word out of
+                  the sentence being dictated. */}
+              <StarWord lexemeId={task.lexemeId} starred={task.starred} label={task.lemma} />
+            </div>
           )}
         </div>
 

@@ -79,7 +79,7 @@ export default async function ReviewPage({
     const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill, gloss)}
+        cards={await withChoices(drill, gloss, ownerId)}
         drillCase={targetCase}
         totalCards={0}
         mode={await modeChosen()}
@@ -100,7 +100,7 @@ export default async function ReviewPage({
     const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill, gloss)}
+        cards={await withChoices(drill, gloss, ownerId)}
         drillUnit={unitId}
         totalCards={0}
         mode={await modeChosen()}
@@ -138,7 +138,7 @@ export default async function ReviewPage({
     const gloss = await glossChosen();
     return (
       <ReviewSession
-        cards={await withChoices(drill, gloss)}
+        cards={await withChoices(drill, gloss, ownerId)}
         drillScan={scan ? { id: scan.id, title: scan.title } : { id: scanId, title: "A page" }}
         totalCards={0}
         mode={await modeChosen()}
@@ -222,7 +222,7 @@ export default async function ReviewPage({
   const room = Math.max(0, Math.min(NEW_PER_SESSION, MAX_SESSION - due.length));
   const fresh = atLevelFirst(await inBandPool(ownerId, freshPool, level, room), level).slice(0, room);
   const gloss = await glossChosen();
-  const cards = await withChoices([...spaced, ...inTeachingOrder(fresh)], gloss);
+  const cards = await withChoices([...spaced, ...inTeachingOrder(fresh)], gloss, ownerId);
 
   /*
     WHEN THE NEXT CARD COMES BACK, WHICH IS THE ONLY QUESTION AN EMPTY QUEUE

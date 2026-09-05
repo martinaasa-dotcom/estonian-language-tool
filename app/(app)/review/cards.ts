@@ -11,6 +11,7 @@ import {
 import { caseFormChoices, verbFormChoices } from "@/lib/questions/caseChoices";
 import { acceptedAnswers } from "@/lib/estonian/answer";
 import { stemsFrom } from "@/lib/estonian/derive";
+import { starredAmong } from "@/lib/progress/stars";
 import type { ReviewCard } from "./ReviewSession";
 
 /**
@@ -106,6 +107,11 @@ function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
     targetCase: c.targetCase,
     slot: c.slot,
     lemma: c.lexeme?.lemma ?? null,
+    lexemeId: c.lexemeId,
+    // Filled in by `withChoices`, which reads the whole session's stars in one
+    // query. A card mapped without that read is drawn unstarred, which is what
+    // a session with nothing starred looks like anyway.
+    starred: false,
     isNew: c.state === 0,
     // Only on a card that has never been seen. Every other card in the session
     // would carry a sentence nothing renders.
@@ -252,9 +258,26 @@ async function formsForCases(rows: CardRow[]): Promise<Map<string, HeldForms>> {
  * apart.
  */
 export async function withChoices(
-  rows: CardRow[], glossLanguage: GlossLanguage,
+  rows: CardRow[], glossLanguage: GlossLanguage, ownerId?: string,
 ): Promise<ReviewCard[]> {
-  const cards = rows.map((c) => toReviewCard(c, glossLanguage));
+  /*
+    WHICH OF THESE WORDS ARE ALREADY FAVOURITES.
+
+    One query for the session rather than one per card, and it is here rather
+    than in either page for the reason the option ranking is: two routes render
+    this session, and a second copy of the read is two answers to which star is
+    filled in. The owner is a parameter because nothing in this module resolves
+    a session, and it is optional so a caller that has not got one draws every
+    star empty rather than failing to build a round.
+  */
+  const starred = ownerId
+    ? await starredAmong(ownerId, rows.map((r) => r.lexemeId).filter((id): id is string => !!id))
+    : new Set<string>();
+
+  const cards = rows.map((c) => {
+    const card = toReviewCard(c, glossLanguage);
+    return c.lexemeId && starred.has(c.lexemeId) ? { ...card, starred: true } : card;
+  });
 
   /*
     The case cards first, because they need no pool: the wrong answers are

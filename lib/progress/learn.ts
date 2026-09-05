@@ -4,6 +4,7 @@ import { challengeFirst } from "@/lib/collections/levels";
 import type { Level } from "@/lib/collections/syllabus";
 import { unitIntroducing } from "@/lib/collections/syllabus";
 import { decoyOptions } from "@/lib/dict/facts";
+import { starredAmong } from "@/lib/progress/stars";
 import { parseExamples, teachingSentence, usableExamples } from "@/lib/dict/examples";
 import { isPhrase } from "@/lib/dict/pos";
 import { buildCloze, mentions } from "@/lib/estonian/cloze";
@@ -129,6 +130,8 @@ export interface LearnWord {
   } | null;
   /** Four glosses, one of them right, ranked rather than shuffled. */
   choices: string[] | null;
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
   rung: Rung;
   scheduling: LearnScheduling;
 }
@@ -242,6 +245,16 @@ export async function learnBatch(
   */
   const pool = await decoyOptions();
 
+  /*
+    Which of the batch are already favourites, so the star in the corner of
+    each card is drawn in the state it is actually in. One query for the batch
+    rather than one per word, and it is here rather than in the page because
+    the batch is assembled here and a second read would be a second answer.
+  */
+  const starred = await starredAmong(
+    ownerId, rows.map((row) => row.lexeme!.id),
+  );
+
   const words = rows.map((row) => {
     const lexeme = row.lexeme!;
     const { sentence, gap } = sentenceAndGap(lexeme);
@@ -278,6 +291,7 @@ export async function learnBatch(
       sentence,
       gap,
       choices: picked ? picked.options : null,
+      starred: starred.has(lexeme.id),
       rung: rungOf(row.state, row.learningSteps),
       scheduling: schedulingOf(row),
     } satisfies LearnWord;

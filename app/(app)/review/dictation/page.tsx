@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { naturalSentence, nominalOpener } from "@/lib/estonian/cloze";
 import { dictationWords } from "@/lib/estonian/dictation";
+import { starredAmong } from "@/lib/progress/stars";
 import { DictationSession, type DictationTask } from "./DictationSession";
 import { shuffle } from "@/lib/random/shuffle";
 
@@ -45,7 +46,9 @@ export default async function DictationPage() {
   });
 
   // One task per word, and one card per word to grade against.
-  const byLexeme = new Map<string, { cardId: string; reps: number; lemma: string; pos: string; examples: string }>();
+  const byLexeme = new Map<string, {
+    cardId: string; lexemeId: string; reps: number; lemma: string; pos: string; examples: string;
+  }>();
   for (const card of cards) {
     const lex = card.lexeme;
     if (!lex) continue;
@@ -53,9 +56,16 @@ export default async function DictationPage() {
     // The gap-fill card is the closest thing in the deck to "this word, in a
     // sentence, spelled out", so it is the one this round grades.
     if (!held || card.cardType === "CLOZE") {
-      byLexeme.set(lex.id, { cardId: card.id, reps: card.reps, lemma: lex.lemma, pos: lex.pos, examples: lex.examples });
+      byLexeme.set(lex.id, {
+        cardId: card.id, lexemeId: lex.id, reps: card.reps,
+        lemma: lex.lemma, pos: lex.pos, examples: lex.examples,
+      });
     }
   }
+
+  // Which of the words are already favourites, in one read rather than one per
+  // task, so the star drawn after an answer is in the state it is actually in.
+  const starred = await starredAmong(ownerId, [...byLexeme.keys()]);
 
   const tasks: DictationTask[] = [];
   for (const entry of byLexeme.values()) {
@@ -80,6 +90,8 @@ export default async function DictationPage() {
       if (example.et.length > MAX_CHARS) continue;
       tasks.push({
         cardId: entry.cardId,
+        lexemeId: entry.lexemeId,
+        starred: starred.has(entry.lexemeId),
         reps: entry.reps,
         lemma: entry.lemma,
         et: example.et,

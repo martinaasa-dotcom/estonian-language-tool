@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { starredAmong } from "@/lib/progress/stars";
 import { resolveProvider } from "@/lib/tutor/provider";
 import { writingTasksFor } from "@/lib/estonian/writing";
 import { ButtonLink } from "@/components/Button";
@@ -65,7 +66,7 @@ export default async function WritePage() {
   });
   const weakCases = new Set(weak.map((w) => w.targetCase).filter((c): c is string => !!c));
 
-  const pool: WritingPrompt[] = [];
+  const pool: Omit<WritingPrompt, "starred">[] = [];
   for (const lexeme of lexemes) {
     for (const task of writingTasksFor(lexeme)) {
       const cardId = cardFor.get(lexeme.id);
@@ -110,5 +111,18 @@ export default async function WritePage() {
     );
   }
 
-  return <WriteSession prompts={round} aiAvailable={resolveProvider() !== null} />;
+  /*
+    Which of the round's words are already favourites, in one read rather than
+    one per prompt. After the round is picked rather than before it, since the
+    pool is every word in the deck that can carry a writing task and the round
+    is six.
+  */
+  const starred = await starredAmong(ownerId, round.map((p) => p.lexemeId));
+
+  return (
+    <WriteSession
+      prompts={round.map((p) => ({ ...p, starred: starred.has(p.lexemeId) }))}
+      aiAvailable={resolveProvider() !== null}
+    />
+  );
 }

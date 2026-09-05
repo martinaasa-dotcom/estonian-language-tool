@@ -10,6 +10,7 @@ import { Recorder } from "@/components/Recorder";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { SpeakPair } from "@/components/Speak";
+import { StarWord } from "@/components/StarWord";
 import type { Badge } from "@/lib/achievements/badges";
 import { xpForRating } from "@/lib/gamification/xp";
 import { SELF_GRADES, type RatingValue } from "@/lib/srs/scheduler";
@@ -24,6 +25,10 @@ export interface SpeakingCard {
   lemma: string;
   /** True when `et` is a whole sentence rather than a single word. */
   isSentence: boolean;
+  /** The dictionary entry behind the card, for the favourite button. */
+  lexemeId: string | null;
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
 }
 
 /**
@@ -179,13 +184,20 @@ export function SpeakingSession({ cards: initialCards }: { cards: SpeakingCard[]
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent"><Mic size={12} aria-hidden /> Say it out loud</Chip>
           {card.isSentence && <Chip>sentence</Chip>}
-          <Link
-            href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
-            className="ml-auto text-xs"
-            style={{ color: "var(--ink-3)" }}
-          >
-            Full entry
-          </Link>
+          <div className="ml-auto flex items-center gap-1">
+            <Link
+              href={`/dictionary?q=${encodeURIComponent(card.lemma)}`}
+              className="text-xs"
+              style={{ color: "var(--ink-3)" }}
+            >
+              Full entry
+            </Link>
+            {/* The corner of the card, which is where somebody looks for this
+                the moment a word turns out to be worth keeping. */}
+            {card.lexemeId && (
+              <StarWord lexemeId={card.lexemeId} starred={card.starred} label={card.lemma} />
+            )}
+          </div>
         </div>
 
         <div className="flex min-h-[300px] flex-col items-center justify-center gap-5 px-6 py-10 text-center" aria-live="polite">
