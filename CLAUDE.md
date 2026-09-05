@@ -831,6 +831,36 @@ any case (`kallis` has `Tere, kallis!`, `Kallid sõbrad!` and `Kallis taevas!`, 
 times), and that unit's own `canDo` is that an adjective agrees with *its noun*, which a bare
 `suur → millesse?` is precisely that noun taken away.
 
+**And the decks built before that rule are brought under it, in two halves.** The builder fix
+reached no deck that already existed, because a `Card` row keeps the front it was built with, and a
+learner reported exactly the card it was written to replace, `ravim → millele? kuhu?`, in exactly
+the terms the rule was drawn in: what is the point of the form, and when would anybody use it.
+`repairCaseFronts` in `prisma/repair.ts` is the first half. It runs where `repairProductionBacks`
+runs, before the `--only-if-empty` early return, and rewrites a bare case card into the card the
+builder would make today, asking `generateCards` for it rather than carrying a copy of the rule, so
+a repaired card and a fresh one are the same card: `kool → milles? kus?` became
+`Ta töötab ____ õpetajana.` with `koolis` on the back and `kool, school` as the cue. It touches the
+question and nothing else, never `targetCase` and never a scheduling column, and its guard is the
+arrow, since a sentence a lexicographer recorded carries none. The second half is the card the
+builder cannot rebuild, because nobody has recorded the word in that case, which is `ravim` in every
+case it had. `unsentencedCaseCards` in `lib/srs/retire.ts` names those and `npm run audit:decks`
+reports them as a third fault beside the two it had, so they are removed on a second run rather
+than coming back due for ever. Run the seed first, or the audit reports every bare card a seed would
+have rewritten as well as the ones it cannot; run against a seeded local database, twelve bare
+cards on four words came back as one rewritten and ten named, the twelfth being `isa → milles?`,
+which the older rule already knew about.
+
+**The flash round leads with the sentence for the same reason, and it had it backwards.** It opened
+every word on the bare ask and reached the gap on the second correct answer, on the argument that
+the plainest shape opens the pool. The same learner said the ask was still not specific enough:
+`kohtuma` over "How do you say this about somebody else, already happened?" is a clause describing
+a form, and what they wanted was `Ta ____ eile sõbraga`, the sentence that needs it. So where the
+dictionary holds a sentence carrying the form the pool is `gap`, `heard`, `build` and the bare ask
+is not in it, since there is no step at which a bare ask on a word the app can show in use becomes
+the better question; `inflect` survives only where no sentence exists, because the alternative
+there is not asking the form at all, and the page asks a word for the slots it can show before the
+ones it cannot, through `hasSentence`. Nothing about what is marked or written changed.
+
 **The verb is held to the same rule, and the sentence settles the one pair it spells alike.**
 `lugema → olevik · ta` over a stem was 4,747 conjugation cards over 679 verbs, with a sentence a
 lexicographer wrote holding that very form behind 421 of them, 252 of those the third person,
@@ -4975,7 +5005,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
-`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`. Most of them now
+`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `repairCaseFronts`,
+`unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

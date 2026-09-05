@@ -14,7 +14,9 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { sharedPrompts } from "@/lib/collections/senses";
-import { repairProductionBacks } from "./repair";
+import { repairCaseFronts, repairProductionBacks } from "./repair";
+import { generateCards, isBareCaseFront } from "@/lib/srs/cards";
+import { acceptedAnswers } from "@/lib/estonian/answer";
 
 const MINE = "itest-owner-repair";
 
@@ -142,5 +144,93 @@ describe("repairProductionBacks", () => {
       .toBe(first!.translation);
     expect((await prisma.card.findUniqueOrThrow({ where: { id: gradation.id } })).back)
       .toBe(first!.lemma);
+  });
+});
+
+/**
+ * The repair that puts a bare case card into the sentence its form is used in.
+ *
+ * Against a real database for the reason the one above is: what it claims is
+ * that a row's question changed and its schedule did not.
+ */
+describe("repairCaseFronts", () => {
+  beforeEach(wipe);
+  afterAll(wipe);
+
+  /** A seeded word the builder makes at least one sentence case card for. */
+  async function aSentencedWord() {
+    const rows = await prisma.lexeme.findMany({
+      where: { provenance: "SEED", pos: "NOUN" },
+      select: {
+        id: true, lemma: true, translation: true, pos: true, semanticTypes: true,
+        gradation: true, gradationNote: true, government: true, examples: true,
+        forms: {
+          select: { formType: true, value: true, morphCode: true },
+          orderBy: [{ orderIndex: "asc" }, { id: "asc" }],
+        },
+      },
+      orderBy: { lemma: "asc" },
+      take: 200,
+    });
+    for (const row of rows) {
+      if (!row.examples) continue;
+      const [built] = generateCards(row, ["CASE_FORM"]);
+      if (built?.targetCase) return { row, built };
+    }
+    return null;
+  }
+
+  it("rewrites the question and leaves the schedule and the case alone", async () => {
+    const found = await aSentencedWord();
+    if (!found) return; // A dictionary with no sentences has nothing to rewrite.
+    const { row, built } = found;
+
+    const due = new Date("2027-01-01T00:00:00.000Z");
+    const card = await prisma.card.create({
+      data: {
+        ownerId: MINE, lexemeId: row.id, cardType: "CASE_FORM",
+        front: `${row.lemma} → milles? kus?`, back: acceptedAnswers(built.back, "et").join(" / "),
+        hint: "seesütlev · the inessive", targetCase: built.targetCase,
+        due, stability: 12.5, difficulty: 6.25, reps: 9, lapses: 3, state: 2,
+      },
+    });
+
+    expect(await repairCaseFronts(prisma)).toBeGreaterThan(0);
+
+    const after = await prisma.card.findUniqueOrThrow({ where: { id: card.id } });
+    expect(after.front).toBe(built.front);
+    expect(isBareCaseFront(after.front)).toBe(false);
+    expect(after.hint).toBe(built.hint);
+    expect(after.back).toBe(built.back);
+    expect(after.targetCase).toBe(built.targetCase);
+    expect(after.due).toEqual(due);
+    expect(after.stability).toBe(12.5);
+    expect(after.reps).toBe(9);
+    expect(after.lapses).toBe(3);
+    expect(after.state).toBe(2);
+
+    // And a second run has nothing left to match.
+    expect(await repairCaseFronts(prisma)).toBe(0);
+  });
+
+  it("leaves a bare card whose case no sentence carries, for the audit to report", async () => {
+    const found = await aSentencedWord();
+    if (!found) return;
+    const { row } = found;
+    const cases = new Set(generateCards(row, ["CASE_FORM"]).map((c) => c.targetCase));
+    const missing = ["COMITATIVE", "TRANSLATIVE", "ESSIVE", "ABESSIVE", "TERMINATIVE"]
+      .find((key) => !cases.has(key));
+    if (!missing) return;
+
+    const card = await prisma.card.create({
+      data: {
+        ownerId: MINE, lexemeId: row.id, cardType: "CASE_FORM",
+        front: `${row.lemma} → millega?`, back: "x", targetCase: missing,
+      },
+    });
+    await repairCaseFronts(prisma);
+    const after = await prisma.card.findUniqueOrThrow({ where: { id: card.id } });
+    expect(after.front).toBe(card.front);
+    expect(after.back).toBe("x");
   });
 });

@@ -980,6 +980,76 @@ check("what a deck audit deletes rests on something the dictionary said", () => 
   );
 });
 
+/**
+ * A CASE IS DRILLED IN A SENTENCE THAT USES IT, AND THE DECKS BUILT BEFORE THAT
+ * RULE ARE BROUGHT UNDER IT.
+ *
+ * `lib/srs/cards.ts` builds a case card out of a recorded sentence, and a
+ * learner reported the card it replaced, `ravim → millele? kuhu?`, as
+ * pointless: nothing on it says when anybody would say the form. A `Card` row
+ * keeps the front it was built with, so the fix reached no deck that already
+ * existed. Two things bring those rows under the rule, and each is checked on
+ * the call: the seed rewrites a bare card into the sentence shape before its
+ * `--only-if-empty` early return, because a bare card only exists on a database
+ * that was already seeded, and the deck audit names the bare cards no sentence
+ * can replace, through the rule in `lib/srs/retire.ts`, so they are reported
+ * rather than left to come back due for ever.
+ *
+ * And the flash round, which asks the same forms off the same log, leads with
+ * the sentence wherever the dictionary has one. It opened every word on the
+ * bare ask and reached the gap on the second correct answer, and the same
+ * learner said the ask was still not specific enough.
+ */
+check("a bare case card is rewritten into a sentence, or reported", () => {
+  const seed = code("prisma/seed.ts");
+  const repairAt = seed.indexOf("repairCaseFronts(prisma)");
+  const earlyReturn = seed.indexOf('"--only-if-empty"');
+  assert.ok(repairAt >= 0, "prisma/seed.ts no longer rewrites the case cards built before the sentence rule");
+  assert.ok(
+    earlyReturn < 0 || repairAt < earlyReturn,
+    "prisma/seed.ts rewrites bare case cards after the --only-if-empty early return, which is " +
+    "the one case where there are any to rewrite",
+  );
+
+  const repair = code("prisma/repair.ts");
+  const fn = repair.slice(repair.indexOf("export async function repairCaseFronts"));
+  assert.ok(fn.length > 0, "repairCaseFronts is gone from prisma/repair.ts");
+  assert.match(
+    fn,
+    /generateCards\(lex, \["CASE_FORM"\]\)/,
+    "repairCaseFronts no longer asks the builder for the sentence card, so a repaired card and " +
+    "a fresh one can stop being the same card",
+  );
+  assert.doesNotMatch(
+    fn,
+    /SET[^;]*\b(due|stability|difficulty|reps|lapses|state|"targetCase")\b/,
+    "repairCaseFronts writes a column that is not the question, so a repair costs somebody progress",
+  );
+
+  assert.match(
+    code("scripts/audit-decks.ts"),
+    /unsentencedCaseCards\(/,
+    "scripts/audit-decks.ts no longer reports the bare case cards no sentence can replace",
+  );
+
+  const flash = code("lib/games/flash.ts");
+  const shapes = flash.slice(
+    flash.indexOf("function shapesFrom"),
+    flash.indexOf("export function hasSentence"),
+  );
+  assert.ok(shapes.length > 0, "shapesFrom or hasSentence is gone from lib/games/flash.ts");
+  assert.match(
+    shapes,
+    /if \(sentence\) \{\s*const out: FlashShape\[\] = \["gap"\]/,
+    "the flash round no longer leads with the sentence where the dictionary has one",
+  );
+  assert.match(
+    code("app/(app)/review/flashcards/page.tsx"),
+    /hasSentence\(/,
+    "the flash page no longer asks a word for the forms it can show in a sentence first",
+  );
+});
+
 check("every generator that picks a case asks which ones the word takes", () => {
   const askers = [
     "lib/srs/cards.ts",

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
-import { askableSlots, flashTask, type FlashWord } from "@/lib/games/flash";
+import { askableSlots, flashTask, hasSentence, type FlashWord } from "@/lib/games/flash";
 import { masteryFor, type MasteredWord } from "@/lib/progress/mastery";
 import { MASTERY_CORRECT, MASTERY_ORDER } from "@/lib/srs/mastery";
 import { slotOfCard } from "@/lib/srs/slots";
@@ -198,7 +198,15 @@ function promptFor(
   const open = askable.filter((s) => !filled.has(s.slot));
   const preferred = open.length > 0 ? open : askable;
   const forms = preferred.filter((s) => s.slot !== "PRODUCTION");
-  const pool = forms.length > 0 ? forms : preferred;
+  /*
+    A FORM THE DICTIONARY CAN SHOW IN A SENTENCE IS ASKED BEFORE ONE IT CANNOT.
+    The sentence is what says why anybody would produce the form, so while a
+    word still has an open slot with a recorded sentence behind it, that slot
+    is asked; the bare ask is what is left once those are filled. See the
+    header of `lib/games/flash.ts`.
+  */
+  const sentenced = forms.filter((s) => hasSentence(source, s));
+  const pool = sentenced.length > 0 ? sentenced : forms.length > 0 ? forms : preferred;
 
   /*
     WHICH OF THE OPEN SLOTS, WHICH IS NOT THE FIRST ONE.

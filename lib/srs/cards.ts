@@ -24,7 +24,7 @@ export interface CardTypeSpec {
 export const CARD_TYPES: readonly CardTypeSpec[] = [
   { type: "RECOGNITION", label: "Recognition", description: "Estonian → English", defaultOn: true },
   { type: "PRODUCTION", label: "Production", description: "English → Estonian", defaultOn: true },
-  { type: "CASE_FORM", label: "Case form", description: "Answer a case question from the stem", defaultOn: false },
+  { type: "CASE_FORM", label: "Case form", description: "Put the word in the form a real sentence needs", defaultOn: false },
   { type: "GRADATION", label: "Gradation", description: "Strong grade → weak grade", defaultOn: false },
   { type: "GOVERNMENT", label: "Government", description: "Which case the verb takes", defaultOn: false },
   { type: "CLOZE", label: "In a sentence", description: "Fill the gap in a real Estonian sentence", defaultOn: true },
@@ -216,6 +216,21 @@ export interface GeneratedCard {
 }
 
 const form = (l: LexemeForCards, type: string) => l.forms.find((f) => f.formType === type)?.value;
+
+/**
+ * Whether a case card's front is the shape this builder used to make.
+ *
+ * A case card was `tuba → milles? kus?` for a year, the word and the question
+ * a case answers, and it is a sentence with a gap in it now. A `Card` row keeps
+ * whichever front it was built with, so the two shapes sit side by side in any
+ * deck assembled across the change, and this is how the repair in
+ * `prisma/repair.ts` and the audit in `scripts/audit-decks.ts` tell them
+ * apart. The arrow is the whole test: a sentence a lexicographer recorded does
+ * not carry one, and every bare front did.
+ */
+export function isBareCaseFront(front: string): boolean {
+  return front.includes(" → ");
+}
 
 /**
  * The cases every word is drilled on, whichever set of local ones it takes.

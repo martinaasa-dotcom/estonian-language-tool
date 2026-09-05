@@ -7,7 +7,7 @@ import { HARVESTED } from "./data/harvested";
 import { LEXEME_COLUMNS, type SeedEntry } from "./columns";
 import { applyPosCorrections, writeExpanded } from "./expanded";
 import { writeWordlist } from "./wordlist";
-import { repairProductionBacks } from "./repair";
+import { repairCaseFronts, repairProductionBacks } from "./repair";
 import { ensureSearchIndexes } from "./indexes";
 import { classifyGradation, classifyVerbGradation, gradates } from "../lib/estonian/gradation";
 import { courseWords } from "../lib/collections/syllabus/index";
@@ -69,6 +69,21 @@ async function main() {
   const widened = await repairProductionBacks(prisma);
   if (widened > 0) {
     console.log(`Widened ${widened} production cards whose prompt has more than one answer.`);
+  }
+
+  /*
+    And the case cards built before the builder put the question in a sentence.
+
+    `ravim → millele? kuhu?` was reported as pointless, and it was: nothing on
+    it says when anybody says the form. The builder makes a case card out of a
+    recorded sentence now, and this rewrites the old ask into that sentence
+    wherever the dictionary holds one, touching the question and no scheduling
+    column. The ones no sentence can carry stay for `npm run audit:decks`,
+    which reports before it removes.
+  */
+  const resentenced = await repairCaseFronts(prisma);
+  if (resentenced > 0) {
+    console.log(`Put ${resentenced} case cards into the sentence their form is used in.`);
   }
 
   if (process.argv.includes("--only-if-empty")) {
