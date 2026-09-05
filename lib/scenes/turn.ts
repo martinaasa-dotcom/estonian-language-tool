@@ -86,6 +86,21 @@ export interface Evidence {
    * anything this module chose.
    */
   readonly matched: readonly string[];
+  /**
+   * Every word that satisfied a requirement, unfiltered.
+   *
+   * `matched` is the same list narrowed to what is worth saying back, which is
+   * the right question for an echo and the wrong one for evidence: `maksta` out
+   * of `Ma tahan maksta` is not a thing a waiter repeats and it is still the
+   * word that met the beat. This is what `addsEvidence` weighs, so a turn is
+   * credited with a second beat on the strength of a word rather than on the
+   * strength of a word somebody would repeat.
+   *
+   * A requirement met by something that is not a word (a question mark, small
+   * talk, the negator, the register) contributes nothing here, which is the
+   * whole of why the cascade cannot run on one.
+   */
+  readonly satisfiedBy: readonly string[];
 }
 
 /**
@@ -202,7 +217,14 @@ export function readTurn(
     if ((need.kind === "lemma" || need.kind === "anyOf") && beat.shape !== "word") return [];
     return [hit];
   });
-  const shape = (reading: TurnReading): Evidence => ({ reading, met, missing, words: marked, matched });
+  /*
+    Every word a requirement was met by. Unfiltered, because this answers
+    "what did this turn actually supply" rather than "what is worth saying
+    back", and `addsEvidence` needs the first.
+  */
+  const satisfiedBy = found.filter((hit): hit is string => hit !== null && hit !== YES);
+  const shape = (reading: TurnReading): Evidence =>
+    ({ reading, met, missing, words: marked, matched, satisfiedBy });
 
   /*
     No letters at all is nothing anybody could read, unless the beat wanted a
@@ -231,7 +253,7 @@ export function readTurn(
   if (beat.counter && spoken.some((word) => context.negators.has(word))) {
     return {
       reading: "declined", met: beat.needs.map(() => false),
-      missing: beat.needs.map((_, i) => i), words: marked, matched: [],
+      missing: beat.needs.map((_, i) => i), words: marked, matched: [], satisfiedBy: [],
     };
   }
   /*
@@ -360,4 +382,40 @@ function isEcho(spoken: readonly string[], previous: string): boolean {
 /** Whether this reading lets the scene move to the next beat. */
 export function advances(reading: TurnReading): boolean {
   return reading === "complete";
+}
+
+/**
+ * WHETHER ONE TURN MAY BE CREDITED WITH A SECOND BEAT, WHICH NEEDS SOMETHING
+ * NEW IN IT.
+ *
+ * `replay` reads a turn that landed against the next beat too, because "Tere,
+ * ma lähen poodi" greets and says where you are going and a friend who heard
+ * it does not then ask where you are going. That rule was written with no
+ * test of whether the turn had said two things, and a requirement can be met
+ * by something that is not a word: `{ kind: "question" }` is satisfied by a
+ * question mark anywhere in the text, and `{ kind: "any" }` by anything at
+ * all. So any turn ending in `?` walked past every question-shaped beat
+ * downstream of the one it answered, in silence, on the strength of its own
+ * punctuation.
+ *
+ * A learner reported it from the street corner scene. They were told `Minge
+ * otse edasi.`, wrote `okei, otse, ja kuhu siis?`, and were answered `Head
+ * aega!`. The `otse` met the beat; the question mark then met `far`, whose
+ * goal is to ask whether it is near; the scene arrived at the farewell two
+ * beats later with the learner's own question never answered, and said
+ * goodbye to somebody who had just asked where to go next.
+ *
+ * So a second beat is credited only where the turn met it with a **word the
+ * beats already credited to this turn did not use**. A word rather than a
+ * requirement, because that is what "they said two things" means and because
+ * a mark cannot be said twice; a word not already spent, because `poodi`
+ * meeting two beats is one thing said, not two.
+ *
+ * What it costs is a beat whose only requirement is a question or an `any`
+ * being met by the same breath as the beat before it, which is the case it
+ * exists to refuse. A beat that wants a question *and* something else still
+ * cascades on the something else: `Tere, kus on pank?` greets and asks.
+ */
+export function addsEvidence(next: Evidence, spent: ReadonlySet<string>): boolean {
+  return next.satisfiedBy.some((word) => !spent.has(word));
 }

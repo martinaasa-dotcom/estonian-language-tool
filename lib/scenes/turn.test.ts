@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildLexicon, caseKeyFor, type DictEntry } from "./lexicon";
-import { advances, readTurn, type TurnContext } from "./turn";
+import { addsEvidence, advances, readTurn, type TurnContext } from "./turn";
 import type { BeatSpec } from "./types";
 
 /**
@@ -277,5 +277,76 @@ describe("a no on an offer that has a counter", () => {
 
   it("does not stop a yes being a yes", () => {
     expect(readTurn("14:30", offer, ctx).reading).toBe("complete");
+  });
+});
+
+/**
+ * The rule that keeps one turn from being credited with a beat it never
+ * addressed. The transcript in the header of `addsEvidence` is a real one.
+ */
+describe("carrying one turn on to the next beat", () => {
+  const ctx = context();
+
+  it("does not carry on a beat met by a question mark alone", () => {
+    const directions = beat({
+      id: "way", shape: "word",
+      needs: [{ kind: "lemma", oneOf: ["valu"] }],
+    });
+    const near = beat({ id: "far", shape: "sentence", needs: [{ kind: "question" }] });
+
+    const first = readTurn("okei, valu, ja kus siis?", directions, ctx);
+    expect(first.reading).toBe("complete");
+    const second = readTurn("okei, valu, ja kus siis?", near, ctx);
+    // The next beat reads as met, and on nothing the turn has not already spent.
+    expect(second.reading).toBe("complete");
+    expect(addsEvidence(second, new Set(first.satisfiedBy))).toBe(false);
+  });
+
+  it("does not carry on a beat that anything at all satisfies", () => {
+    const anything = beat({ id: "confirm", shape: "sentence", needs: [{ kind: "any" }] });
+    const seen = readTurn("Mul on valu", anything, ctx);
+    expect(seen.reading).toBe("complete");
+    expect(addsEvidence(seen, new Set(["valu"]))).toBe(false);
+    expect(addsEvidence(seen, new Set())).toBe(false);
+  });
+
+  it("carries on where the turn said a second thing", () => {
+    const greet = beat({ id: "greet", move: "greet", shape: "word", topic: ["Head aega!"],
+      needs: [{ kind: "lemma", oneOf: ["Head aega!"] }] });
+    const where = beat({
+      id: "where", shape: "sentence",
+      needs: [{ kind: "question" }, { kind: "case", lemma: "tuba", grammCase: "INESSIVE" }],
+    });
+    const said = "head aega, kus on toas?";
+    const first = readTurn(said, greet, ctx);
+    expect(first.reading).toBe("complete");
+    const second = readTurn(said, where, ctx);
+    expect(second.reading).toBe("complete");
+    // The case form is a word the greeting did not use, so the beat is met.
+    expect(addsEvidence(second, new Set(first.satisfiedBy))).toBe(true);
+  });
+
+  it("does not let one word buy two beats", () => {
+    const one = beat({ id: "a", shape: "word", needs: [{ kind: "lemma", oneOf: ["valu"] }] });
+    const seen = readTurn("valu", one, ctx);
+    expect(seen.satisfiedBy).toEqual(["valu"]);
+    expect(addsEvidence(seen, new Set(["valu"]))).toBe(false);
+  });
+
+  /*
+    A word out of a sentence is not worth repeating back and is still the word
+    that met the beat, which is why this reads `satisfiedBy` rather than
+    `matched`.
+  */
+  it("counts a word a sentence-shaped beat was met by, which the echo list drops", () => {
+    const sentence = beat({
+      id: "reason", shape: "sentence",
+      needs: [{ kind: "lemma", oneOf: ["valu"] }],
+    });
+    const seen = readTurn("Mul on valu", sentence, ctx);
+    expect(seen.reading).toBe("complete");
+    expect(seen.matched).toEqual([]);
+    expect(seen.satisfiedBy).toEqual(["valu"]);
+    expect(addsEvidence(seen, new Set(["toas"]))).toBe(true);
   });
 });

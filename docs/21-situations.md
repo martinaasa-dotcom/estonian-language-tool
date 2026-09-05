@@ -1989,3 +1989,49 @@ then `Ei` ends on `Hästi.` and the farewell with the beat met. What it does not
 counter and not a negotiation, since a third offer is a branch and the machine is a line, and every
 line the bank holds is still `reviewed: false`.
 
+
+## 34. The fifth pass: a turn is credited with two beats on two words, not on one mark
+
+`replay` reads a turn that landed against the next beat too, and the argument for it is sound and
+still stands: "Tere, ma lähen poodi" greets and says where you are going, and a friend who heard it
+does not then ask where you are going. What that rule never had is a test of whether the turn had
+said two things. A requirement can be met by something that is not a word. `{ kind: "question" }` is
+satisfied by a question mark anywhere in the text, deliberately, because `Homme?` is a question
+anybody asks and has no question word in it; `{ kind: "any" }` is satisfied by anything at all. So a
+turn ending in `?` walked past every question-shaped beat downstream of the one it answered, in
+silence, on the strength of its own punctuation. Five beats in the catalogue are reachable that way.
+
+A learner found it on the street corner. They were told `Minge otse edasi.`, wrote `okei, otse, ja
+kuhu siis?`, and were answered `Head aega!`. Every step was the machine doing what it was told:
+`otse` met the directions beat, the question mark then met `far`, whose goal is to ask whether it is
+near, the scene arrived at the farewell two beats later, and the ladder said goodbye to somebody who
+had just asked where to go next. Their own question was never taken, and the objective on screen
+jumped from saying the directions back to saying thank you without ever asking for anything in
+between.
+
+**So a second beat is credited to the same turn only where the turn met it with a word the beats
+already credited to that turn did not use.** `addsEvidence` in `lib/scenes/turn.ts` is the rule and
+`Evidence.satisfiedBy` is what it weighs: every word a requirement was met by, unfiltered. That is a
+second list beside `matched` rather than the same one, because `matched` is narrowed to what is
+worth saying back and that is a different question: `maksta` out of `Ma tahan maksta` is not
+something a waiter repeats and it is still the word that met the beat, so a cascade reading
+`matched` would refuse every sentence-shaped beat with a lemma requirement. A word rather than a
+requirement, because that is what "they said two things" means and because a mark cannot be said
+twice. Not already spent, because `poodi` meeting two beats is one thing said, not two, and the
+spent set travels down the cascade rather than being compared only against the beat before.
+
+The hurdle path takes the same guard, since "Mul ei ole, aga siin on avaldus" clears the curveball
+and answers the beat behind it on two different words, and a turn that cleared a curveball with a
+question mark alone has done one thing.
+
+What it costs is a beat whose only requirement is a question or an `any` being met in the same
+breath as the beat before it, which is exactly the case it exists to refuse: the learner asks it as
+its own turn, and the other side answers with the beat's own line. A beat that wants a question
+*and* something else still cascades on the something else, so `Tere, kus on pank?` greets and asks.
+
+What it does not fix: the other side still cannot answer a question the scene did not anticipate.
+`okei, otse, ja kuhu siis?` now gets `Otse.` and the next beat's line rather than a farewell, which
+is a street-corner exchange and is not an answer to what was asked. Answering an arbitrary question
+means a model deciding what happens next, which is the one thing §18 rules out; what is available
+instead is more beats and more pinned lines per beat, which is a catalogue change rather than a
+machine one.

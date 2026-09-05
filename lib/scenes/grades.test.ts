@@ -32,7 +32,7 @@ const SCENE: SceneSpec = {
 };
 
 function evidence(reading: TurnReading, met: readonly boolean[]): Evidence {
-  return { reading, met, missing: met.flatMap((ok, i) => (ok ? [] : [i])), words: [], matched: [] };
+  return { reading, met, missing: met.flatMap((ok, i) => (ok ? [] : [i])), words: [], matched: [], satisfiedBy: [] };
 }
 
 /** Plays the turns given, in order, and hands back where it got to. */

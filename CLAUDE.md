@@ -4202,6 +4202,29 @@ second day and time drawn to differ from the first, a second no meets the beat, 
 is what every later line reads so a time read back is the one that was accepted.
 `docs/21-situations.md` §33 is the transcript and what it does not fix.
 
+**A turn is credited with a second beat on a second word, never on its own punctuation.** `replay`
+reads a turn that landed against the next beat too, because "Tere, ma lähen poodi" greets and says
+where you are going and a friend who heard it does not then ask where you are going. That rule had
+no test of whether the turn had said two things, and a requirement can be met by something that is
+not a word: `{ kind: "question" }` is satisfied by a question mark anywhere in the text, which is
+right on its own beat because `Homme?` is a question with no question word in it, and `{ kind: "any"
+}` by anything at all. So any turn ending in `?` walked past every question-shaped beat downstream
+of the one it answered, in silence. Told `Minge otse edasi.`, a learner wrote `okei, otse, ja kuhu
+siis?` and was answered `Head aega!`: `otse` met the directions beat, the mark met "ask whether it
+is near", and the street corner said goodbye to somebody who had just asked where to go next.
+
+`addsEvidence` is the rule and it weighs `Evidence.satisfiedBy`, which is every word a requirement
+was met by, unfiltered. **A second list beside `matched` rather than the same one**, because
+`matched` is narrowed to what is worth saying back and that is a different question: `maksta` out of
+`Ma tahan maksta` is not a thing a waiter repeats and is still the word that met the beat, so a
+cascade reading it would refuse every sentence-shaped beat with a lemma requirement. A word rather
+than a requirement, because that is what "they said two things" means and a mark cannot be said
+twice; not one already spent, because `poodi` meeting two beats is one thing said, and the spent set
+travels down the cascade rather than being compared only against the beat before. The hurdle path
+takes the same guard. What is left is that the other side still cannot answer a question the scene
+did not anticipate, which is more beats rather than a change to the machine (§34).
+
+
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
 five, so a guesser who has placed the consonants can still be choosing between three words on the
@@ -5323,7 +5346,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.

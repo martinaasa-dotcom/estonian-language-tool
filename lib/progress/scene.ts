@@ -39,7 +39,7 @@ import {
   advance, currentBeat, objectivesOf, outcomeOf, startScene, walkOut, type Objectives, type Response, type SceneState, type TurnRecord, advanceHurdle, hurdleBeat, raiseHurdle, type HurdleRecord,
 } from "@/lib/scenes/state";
 import { gradesFor, stalledWords, type SceneGrade } from "@/lib/scenes/grades";
-import { readTurn } from "@/lib/scenes/turn";
+import { addsEvidence, readTurn } from "@/lib/scenes/turn";
 
 /**
  * The units that supply the machinery every scene's marker needs.
@@ -804,6 +804,12 @@ export function replay(
       previous = heardNow;
       if (response !== "answer") continue;
       if (beatToo.reading !== "complete") continue;
+      /*
+        The turn cleared the curveball and answered the beat behind it, which
+        is only true where it met the beat with a word the curveball did not
+        already use. Otherwise it did one thing, and the beat is asked.
+      */
+      if (!ignored && !addsEvidence(beatToo, new Set(evidence.satisfiedBy))) continue;
       ({ state, response } = advance(context.scene, state, beatToo, said, Boolean(sent.helped), heardNow));
       state = raiseHurdle(context.scene, state, drawn);
       continue;
@@ -844,7 +850,18 @@ export function replay(
       too, and again while it keeps landing, each beat recorded as met by the
       same turn. The scene stays the same shape; only a person who said two
       things at once is not made to say the second one twice.
+
+      AND SAYING TWO THINGS MEANS TWO WORDS, WHICH IS WHAT `addsEvidence`
+      WEIGHS. A requirement can be met by something that is not a word, so
+      without that test a turn carrying a question mark walked past every
+      question-shaped beat after the one it answered: `okei, otse, ja kuhu
+      siis?` met the directions beat on `otse`, met "ask whether it is near"
+      on its own punctuation, and the other side said `Head aega!` to
+      somebody who had just asked where to go next. The words this turn has
+      already spent travel down the cascade, so one word cannot buy two
+      beats either.
     */
+    const spent = new Set(evidence.satisfiedBy);
     while (response === "answer" || response === "moveOn") {
       state = raiseHurdle(context.scene, state, drawn);
       if (state.hurdle || response === "moveOn") break;
@@ -852,6 +869,8 @@ export function replay(
       if (!next) break;
       const more = readTurn(said, next, marker);
       if (more.reading !== "complete") break;
+      if (!addsEvidence(more, spent)) break;
+      for (const word of more.satisfiedBy) spent.add(word);
       ({ state, response } = advance(context.scene, state, more, said, false, heard));
     }
     previous = heard;
