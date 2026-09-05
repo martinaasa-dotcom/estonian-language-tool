@@ -2419,6 +2419,33 @@ check("there is one shuffle, and the sort-comparator kind is not a shuffle at al
   );
 });
 
+check("what a word is advertised as drilling is asked of the builder", () => {
+  /*
+    The `objekt` fault, in the function written to prevent it. Its own comment
+    opens "ASKED OF THE BUILDER, NOT OF THE MORPHOLOGY" and then three of the
+    five lines under it asked the morphology. Gradation is where that diverged:
+    the builder also asks `caseFits("GENITIVE", subject)`, because the genitive
+    singular of a word with no singular belongs to another word, so
+    `kõrvaklapid`, `lihavõtted` and `eriväed` were listed as making a gradation
+    card and made none. The screen names the type, nothing appears, and nothing
+    says why.
+
+    Every type past the two every word has has to come from a `generateCards`
+    call, which is the only thing that can answer for certain.
+  */
+  const body = between(code("lib/srs/cards.ts"), "export function availableCardTypes");
+  const pushed = [...body.matchAll(/types\.push\("(\w+)"\)/g)].map((m) => m[1]!);
+  assert.ok(pushed.length > 0, "availableCardTypes no longer pushes any type");
+
+  for (const type of pushed) {
+    assert.ok(
+      new RegExp(`generateCards\\(lex, \\["${type}"\\]\\)[^;]*types\\.push\\("${type}"\\)`).test(body),
+      `lib/srs/cards.ts: availableCardTypes offers ${type} without asking generateCards for one. `
+      + `A type advertised and not built is a screen naming a card that never appears.`,
+    );
+  }
+});
+
 check("there is one seeded generator, and its two sequences live in one file", () => {
   /*
     `lib/random/seeded.ts` opens by saying a second copy is how two of them stop

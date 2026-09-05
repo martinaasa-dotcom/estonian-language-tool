@@ -702,7 +702,6 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
 
 /** Card types this word can actually support, for the add-to-deck checklist. */
 export function availableCardTypes(lex: LexemeForCards): CardType[] {
-  const genSg = form(lex, "GEN_SG");
   const types: CardType[] = ["RECOGNITION", "PRODUCTION"];
   /*
     ASKED OF THE BUILDER, NOT OF THE MORPHOLOGY. A genitive stem is what a case
@@ -713,8 +712,16 @@ export function availableCardTypes(lex: LexemeForCards): CardType[] {
     unit page lists the type, no card appears, and nothing says why.
   */
   if (generateCards(lex, ["CASE_FORM"]).length > 0) types.push("CASE_FORM");
-  if (lex.gradation !== "NONE" && genSg) types.push("GRADATION");
-  if (lex.pos === "VERB" && lex.government) types.push("GOVERNMENT");
+  /*
+    And these two, which the paragraph above was written about and did not
+    reach. Gradation was the one that diverged: the builder also asks
+    `caseFits("GENITIVE", subject)`, because the genitive singular of a word
+    with no singular belongs to another word, so `jõulud` and `prillid` were
+    advertised a card nothing would build. Government's two guards happened to
+    agree, and a second copy of a rule agreeing today is how it stops agreeing.
+  */
+  if (generateCards(lex, ["GRADATION"]).length > 0) types.push("GRADATION");
+  if (generateCards(lex, ["GOVERNMENT"]).length > 0) types.push("GOVERNMENT");
   // Offered only when they can genuinely be built: an option that silently
   // produces no cards is worse than no option.
   if (generateCards(lex, ["CONJUGATION"]).length > 0) types.push("CONJUGATION");
