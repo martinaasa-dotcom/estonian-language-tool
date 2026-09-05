@@ -9,6 +9,7 @@ import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
+import { StarWord } from "@/components/StarWord";
 import type { Badge } from "@/lib/achievements/badges";
 import { OPTION_CLASS, optionState } from "@/lib/ux/verdict";
 import { VOICES } from "@/lib/audio/voice";
@@ -40,6 +41,10 @@ export interface ListeningCard {
    * speed, over noise or down a phone line (lib/audio/conditions.ts).
    */
   reps: number;
+  /** The dictionary entry behind the card, for the favourite button. */
+  lexemeId: string | null;
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
 }
 
 export function ListeningSession({ cards: initialCards }: { cards: ListeningCard[] }) {
@@ -214,6 +219,14 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent"><Headphones size={12} aria-hidden /> Listening</Chip>
           <span className="ml-auto text-xs" style={{ color: "var(--ink-3)" }}>{correct} correct</span>
+          {/* ONLY ONCE THE ANSWER IS IN, WHICH IS NOT THE RULE ON ANY OTHER
+              ROUND. The word here is played and deliberately never written
+              down until it has been answered, and this button's own label
+              names it: a screen reader would read the answer out of the
+              corner of the card before a learner had picked anything. */}
+          {answered && card.lexemeId && (
+            <StarWord lexemeId={card.lexemeId} starred={card.starred} label={card.lemma} />
+          )}
         </div>
 
         <div className="flex min-h-[220px] flex-col items-center justify-center gap-4 px-6 py-10 text-center" aria-live="polite">

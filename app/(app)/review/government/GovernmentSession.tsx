@@ -7,6 +7,7 @@ import { addToDeck, gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Stat } from "@/components/ui";
 import { Speak } from "@/components/Speak";
+import { StarWord } from "@/components/StarWord";
 import { CASES } from "@/lib/estonian/cases";
 import { OPTION_CLASS, VERDICT_INK, optionState } from "@/lib/ux/verdict";
 import type { CaseKey } from "@/lib/estonian/types";
@@ -28,6 +29,8 @@ export interface GovernmentQuestion {
   gloss: string | null;
   experiencer: boolean;
   inDeck: boolean;
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
   options: CaseKey[];
 }
 
@@ -152,6 +155,11 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
           <Chip tone="accent"><Scale size={12} aria-hidden /> Rektsioon</Chip>
           {question.cefr && <Chip>{question.cefr}</Chip>}
           {!question.inDeck && <Chip tone="good">new to you</Chip>}
+          {/* The corner of the card, which is where somebody looks for this
+              the moment a word turns out to be worth keeping. */}
+          <div className="ml-auto">
+            <StarWord lexemeId={question.lexemeId} starred={question.starred} label={question.lemma} />
+          </div>
         </div>
 
         <div className="px-6 py-8 text-center">

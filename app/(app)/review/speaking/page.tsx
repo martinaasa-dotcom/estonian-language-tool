@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { naturalSentence } from "@/lib/estonian/cloze";
+import { starredAmong } from "@/lib/progress/stars";
 import { SpeakingSession, type SpeakingCard } from "./SpeakingSession";
 
 export const metadata = { title: "Speaking" };
@@ -48,8 +49,15 @@ export default async function SpeakingPage() {
     pool = [...pool, ...rest];
   }
 
+  // Which of the round are already favourites, in one read rather than one per
+  // card, so the star in the corner is drawn in the state it is actually in.
+  const starred = await starredAmong(
+    ownerId, pool.map((c) => c.lexemeId).filter((id): id is string => !!id),
+  );
+
   const cards: SpeakingCard[] = pool.map((card) => {
     const lemma = card.lexeme?.lemma ?? card.front;
+    const kept = { lexemeId: card.lexemeId, starred: !!card.lexemeId && starred.has(card.lexemeId) };
     /*
       And only a sentence somebody could be asked to say aloud. `usableExamples`
       keeps what is worth printing on a dictionary entry, which is not the same
@@ -61,9 +69,9 @@ export default async function SpeakingPage() {
     const translated = usableExamples(parseExamples(card.lexeme?.examples))
       .find((e) => e.en && naturalSentence(e.et));
     if (translated?.en) {
-      return { cardId: card.id, et: translated.et, prompt: translated.en, lemma, isSentence: true };
+      return { cardId: card.id, et: translated.et, prompt: translated.en, lemma, isSentence: true, ...kept };
     }
-    return { cardId: card.id, et: lemma, prompt: card.back, lemma, isSentence: false };
+    return { cardId: card.id, et: lemma, prompt: card.back, lemma, isSentence: false, ...kept };
   });
 
   return <SpeakingSession cards={cards} />;

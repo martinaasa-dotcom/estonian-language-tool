@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { starredAmong } from "@/lib/progress/stars";
 import { courseLevelFor } from "@/lib/progress/level";
 import { bandsAround } from "@/lib/collections/levels";
 import { buildOptions, maskExample, parseGovernment } from "@/lib/estonian/government";
@@ -147,7 +148,7 @@ export default async function GovernmentPage() {
     knowing that `aitama` also takes the seestütlev costs the drill its
     credibility.
   */
-  const questions: GovernmentQuestion[] = ordered.flatMap(({ v, g }) => {
+  const questions: Omit<GovernmentQuestion, "starred">[] = ordered.flatMap(({ v, g }) => {
     const options = buildOptions(g, pool);
     if (!options) return [];
     return [{
@@ -169,7 +170,19 @@ export default async function GovernmentPage() {
     }];
   });
 
-  return <GovernmentSession questions={questions} />;
+  /*
+    Which of the round's words are already favourites, in one read rather than
+    one per question. After the round is picked rather than before it, because
+    the pool this draws from is the whole banded dictionary and the round is a
+    dozen.
+  */
+  const starred = await starredAmong(ownerId, questions.map((q) => q.lexemeId));
+
+  return (
+    <GovernmentSession
+      questions={questions.map((q) => ({ ...q, starred: starred.has(q.lexemeId) }))}
+    />
+  );
 }
 
 /**

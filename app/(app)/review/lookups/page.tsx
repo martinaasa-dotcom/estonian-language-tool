@@ -115,7 +115,7 @@ export default async function LookupsRoundPage() {
   }
 
   const gloss = glossLanguageFrom(glossSetting);
-  const round = await withChoices(shuffle(picked), gloss);
+  const round = await withChoices(shuffle(picked), gloss, ownerId);
 
   return (
     <ReviewSession

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
+import { starredAmong } from "@/lib/progress/stars";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
 import { ListeningSession, type ListeningCard } from "./ListeningSession";
@@ -90,6 +91,12 @@ export default async function ListeningPage() {
       been read. One table rather than a copy here, because two rankings of one
       question drift a weight at a time.
     */
+    // Which of the pool are already favourites, in one read rather than one
+    // per card, so the star drawn after an answer is in the right state.
+    const starred = await starredAmong(
+      ownerId, cards.map((c) => c.lexemeId).filter((id): id is string => !!id),
+    );
+
     const listeningCards: ListeningCard[] = [];
     for (const c of shuffle(cards)) {
       const correct = c.back;
@@ -109,6 +116,8 @@ export default async function ListeningPage() {
       if (!picked) continue;
       listeningCards.push({
         id: c.id, lemma: c.lexeme?.lemma ?? c.front, correct, choices: picked.options, reps: c.reps,
+        lexemeId: c.lexemeId,
+        starred: !!c.lexemeId && starred.has(c.lexemeId),
       });
     }
 

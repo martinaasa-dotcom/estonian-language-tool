@@ -7,6 +7,7 @@ import { MASTERY_CORRECT, MASTERY_ORDER } from "@/lib/srs/mastery";
 import { slotOfCard } from "@/lib/srs/slots";
 import { ButtonLink } from "@/components/Button";
 import { Empty, Page } from "@/components/ui";
+import { starredAmong } from "@/lib/progress/stars";
 import { FlashSession, type FlashPrompt } from "./FlashSession";
 
 export const metadata = { title: "Flash cards" };
@@ -101,7 +102,7 @@ export default async function FlashcardsPage() {
     shortfall out of a longer list is one query; discovering it afterwards
     would be another.
   */
-  const [lexemes, cards] = await Promise.all([
+  const [lexemes, cards, starred] = await Promise.all([
     prisma.lexeme.findMany({
       where: { id: { in: lexemeIds } },
       select: {
@@ -118,6 +119,9 @@ export default async function FlashcardsPage() {
       select: { id: true, lexemeId: true, cardType: true, targetCase: true },
       orderBy: { id: "asc" },
     }),
+    // Which of the round's words are already favourites, so the star in the
+    // corner of each card is drawn in the state it is actually in.
+    starredAmong(ownerId, lexemeIds),
   ]);
 
   const byLexeme = new Map(lexemes.map((l) => [l.id, l]));
@@ -133,7 +137,7 @@ export default async function FlashcardsPage() {
     const prompt = promptFor(
       word, byLexeme.get(word.lexemeId), cardsFor.get(word.lexemeId) ?? [], prompts.length,
     );
-    if (prompt) prompts.push(prompt);
+    if (prompt) prompts.push({ ...prompt, starred: starred.has(word.lexemeId) });
   }
 
   if (prompts.length === 0) {
@@ -170,7 +174,7 @@ function promptFor(
   cards: { id: string; lexemeId: string | null; cardType: string; targetCase: string | null }[],
   /** Where this word sits in the round, which is half of what varies the case. */
   offset: number,
-): FlashPrompt | null {
+): Omit<FlashPrompt, "starred"> | null {
   if (!lexeme || cards.length === 0) return null;
 
   const source: FlashWord = {

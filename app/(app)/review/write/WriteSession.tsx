@@ -7,6 +7,7 @@ import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { DiacriticBar } from "@/components/DiacriticBar";
 import { Chip, Stat } from "@/components/ui";
+import { StarWord } from "@/components/StarWord";
 import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
 import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import type { GradedSentence } from "@/lib/tutor/grader";
@@ -26,6 +27,8 @@ export interface WritingPrompt {
   caseQuestion: string;
   provenance: "ekilex" | "derived";
   weak: boolean;
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
 }
 
 interface Marked {
@@ -183,6 +186,11 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent"><PenLine size={12} aria-hidden /> Write a sentence</Chip>
           {prompt.weak && <Chip tone="hard">your weak case</Chip>}
+          {/* The corner of the card, which is where somebody looks for this
+              the moment a word turns out to be worth keeping. */}
+          <div className="ml-auto">
+            <StarWord lexemeId={prompt.lexemeId} starred={prompt.starred} label={prompt.lemma} />
+          </div>
         </div>
 
         <div className="px-6 py-8">

@@ -51,6 +51,11 @@ export type StepKind =
 
 /** A dictionary word, resolved, as the lesson needs it. */
 export interface LessonWord {
+  /**
+   * The dictionary entry this word is, which the meeting step carries through
+   * so a learner can keep the word from the screen it is taught on.
+   */
+  lexemeId: string;
   lemma: string;
   gloss: string;
   /**
@@ -97,6 +102,8 @@ export interface IntroStep extends StepBase {
 }
 export interface MeetStep extends StepBase {
   kind: "meet";
+  /** The dictionary entry, for the favourite button in the card's corner. */
+  lexemeId: string;
   lemma: string;
   gloss: string;
   /** The meaning in the learner's own language, where Ekilex recorded one. */
@@ -591,7 +598,7 @@ export function planLesson(input: LessonInput): LessonStep[] {
    * tomorrow's review queue.
    */
   const meetLane = (block: readonly LessonWord[]) => block.map((word): LessonStep => ({
-    id: nextId("meet"), kind: "meet", lemma: word.lemma, gloss: word.gloss,
+    id: nextId("meet"), kind: "meet", lexemeId: word.lexemeId, lemma: word.lemma, gloss: word.gloss,
     equivalent: word.equivalent ?? null,
     pos: word.pos, example: word.examples[0] ?? null,
   }));

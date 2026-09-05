@@ -9,6 +9,7 @@ import { Confetti } from "@/components/Confetti";
 import { Et } from "@/components/Et";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Speak } from "@/components/Speak";
+import { StarWord } from "@/components/StarWord";
 import { Card, Empty, Meter, Page } from "@/components/ui";
 import { BLANK, sentenceMatches } from "@/lib/estonian/cloze";
 import { checkAnswer, countsAsRecalled } from "@/lib/estonian/answer";
@@ -41,13 +42,15 @@ interface Answer {
  * carries an id generated once, here.
  */
 export function LessonSession({
-  unitId, unitTitle, initialSteps, part, parts,
+  unitId, unitTitle, initialSteps, part, parts, starred,
 }: {
   unitId: string;
   unitTitle: string;
   initialSteps: LessonStep[];
   part: number;
   parts: number;
+  /** The lexeme ids this learner has already favourited, read once by the page. */
+  starred: readonly string[];
 }) {
   const [steps] = useState(initialSteps);
   const [at, setAt] = useState(0);
@@ -118,6 +121,7 @@ export function LessonSession({
           step={step}
           onAnswer={record}
           onNext={advance}
+          starred={starred}
           summary={{ correct, total: answered, saving, saved }}
         />
       </div>
@@ -212,11 +216,12 @@ function Options({
 }
 
 function StepCard({
-  step, onAnswer, onNext, summary,
+  step, onAnswer, onNext, starred, summary,
 }: {
   step: LessonStep;
   onAnswer: (lemma: string, kind: string, ok: boolean) => void;
   onNext: () => void;
+  starred: readonly string[];
   summary: { correct: number; total: number; saving: boolean; saved: { ok: boolean; error?: string } | null };
 }) {
   const [chosen, setChosen] = useState<number | null>(null);
@@ -279,7 +284,18 @@ function StepCard({
     case "meet":
       return (
         <Card className="flex flex-col gap-4">
-          <span className="text-sm" style={{ color: "var(--ink-3)" }}>A new word</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm" style={{ color: "var(--ink-3)" }}>A new word</span>
+            {/* The corner of the card, which is where somebody looks for this
+                the moment a word turns out to be worth keeping. */}
+            <div className="ml-auto">
+              <StarWord
+                lexemeId={step.lexemeId}
+                starred={starred.includes(step.lexemeId)}
+                label={step.lemma}
+              />
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-3">
             <Et className="text-3xl">{step.lemma}</Et>
             <Speak text={step.lemma} size={20} />

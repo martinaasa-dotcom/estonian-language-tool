@@ -128,7 +128,7 @@ export default async function CommonRoundPage({ params }: {
   }
 
   const gloss = glossLanguageFrom(glossSetting);
-  const round = await withChoices(shuffle(picked), gloss);
+  const round = await withChoices(shuffle(picked), gloss, ownerId);
 
   return (
     <ReviewSession

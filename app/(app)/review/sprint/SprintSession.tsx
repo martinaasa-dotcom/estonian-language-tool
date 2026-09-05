@@ -9,6 +9,7 @@ import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
+import { StarWord } from "@/components/StarWord";
 import type { Badge } from "@/lib/achievements/badges";
 import { VERDICT_CLASS } from "@/lib/ux/verdict";
 
@@ -17,6 +18,10 @@ export interface SprintCard {
   front: string;
   back: string;
   lemma: string | null;
+  /** The dictionary entry behind the card, for the favourite button. */
+  lexemeId: string | null;
+  /** Whether this word is already one of the learner's favourites. */
+  starred: boolean;
   cardType: string;
 }
 
@@ -210,6 +215,11 @@ export function SprintSession({ cards: initialCards, best }: { cards: SprintCard
         <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3" style={{ borderColor: "var(--rule-soft)" }}>
           <Chip tone="accent">Sprint</Chip>
           <span className="ml-auto text-xs" style={{ color: "var(--ink-3)" }}>#{attempted + 1}</span>
+          {/* The corner of the card, which is where somebody looks for this the
+              moment a word turns out to be worth keeping. */}
+          {card.lexemeId && (
+            <StarWord lexemeId={card.lexemeId} starred={card.starred} label={card.lemma ?? card.front} />
+          )}
         </div>
 
         <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 py-12 text-center" aria-live="polite">

@@ -671,7 +671,15 @@ export async function toggleStar(lexemeId: string) {
   } else {
     await prisma.starredWord.create({ data: { ownerId, lexemeId } });
   }
+  /*
+    The dictionary is where a star used to be set from and the only place it
+    could be read; the mastery page is where the favourites are listed now,
+    and the star sits on a review card, on the flash round and on the learn
+    ladder as well, so a word kept mid-session shows up on the list without a
+    reload.
+  */
   revalidatePath("/dictionary");
+  revalidatePath("/words/mastery");
   return { ok: true as const, starred: !existing };
 }
 
