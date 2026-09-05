@@ -4680,6 +4680,73 @@ is wrong with you" refused `valutama`, which is §29's finding about the whole c
 one beat. `npm run probe:turns` is the instrument: sixty sentences a real person would type, and the
 `unrecognised` lines are the ones to hunt. `docs/21-situations.md` §41.
 
+**Every failure in a conversation looked exactly like a success, and that is why the whole module
+was reported as unusable.** A turn that landed got a word back and then the next question. A turn
+that was real Estonian off the point got nothing back and then a question, and where the ladder had
+a line for the same beat it got a *differently worded* one, so `Kuhu te lähete?` became
+`Kuhu te sõidate?` became `Mis kell te sõidate?` and a learner read three new questions and thought
+they had answered two of them. Five rules, and every one of them is in the machine rather than in a
+scene, so it holds for the fourteen scenes there are and the ones nobody has written yet.
+
+**A miss is answered as a miss.** `REACTIONS.missed` is the one word the course teaches for "that
+was not what I asked", said before the question goes again, and only on a turn that missed
+outright: a turn nobody could read already has the repair phrase and a turn that half landed
+already gets its own word back. **And the question is put again rather than put differently**
+(`sayAgainWanted`), because a person who did not get an answer repeats themselves; `incomplete` is
+the one reading that still gets a fresh line, since there the next question really is a narrower
+one. That is also a booking the ledger never has to make. **Letting a question go is not
+agreement**: running out of patience drew from the acknowledgment rotation, so giving up could come
+out as `Aitäh.` or `Jah.`, the other side thanking somebody for an answer they never gave.
+`REACTIONS.letGo` is its own word.
+
+**Telling somebody they were incomprehensible is the worst thing this module can do, and it was the
+default.** `unrecognised` fires where the app can vouch for no word of a turn, and what it vouched
+against was the scene's units widened once to the course, which is 1,449 words: everything else in
+the language read as noise. A learner answered `Tere!` with `Tervitused!`, which is Estonian, which
+is a greeting, and which this course does not happen to teach, and was told they had not been
+understood. `knowing` in `lib/progress/scene.ts` asks `prisma/data/forms/` about the spellings in
+the run, which is the accept side of ADR-005 and the reason that file exists: a spelling let
+through costs a turn being read as Estonian off the point rather than as noise, and it can never
+meet a requirement, because a requirement is still decided against the scene's own lexicon alone.
+Every caller of `replay` widens first, asserted, or the reading a learner sees while they talk and
+the one written down when they stop would come from two markers.
+
+**A case is corrected only where the word was the answer.** A slip claims the learner reached for
+the wrong ending, and it was claimed wherever the word turned up in any other form. Inside a
+sentence that is a guess about grammar this module cannot parse: `Piim on otsas` is a correct
+sentence with `piim` as its subject and was answered "Understood. Here it is piima.", and
+`Ma olen ikka kodus, pood on 5 minuti kaugusel` was answered "Here it is poes." over a `pood` that
+was the subject of its own clause. Both told a learner their correct Estonian was wrong. `isAnswer`
+is a position rule and not a parse, so it is wrong at the edges and errs toward saying nothing,
+which is the side to err on. **And a word is said back to a word, never to a sentence**: repeating
+the answer is what a person does with a one-word one, and after a sentence it is a stutter. A
+recast survives whatever the length, because it is a correction rather than an echo.
+
+**Nobody leaves a beat without having been told what it wanted.** Two halves and neither is the
+other. The character says the word on the way past when they give up, so a beat never ends in
+silence, and `offerFor` points at the beat's own topic where the answer is a value off the card,
+since "the answer is already in front of them" is true and is not what somebody stuck needs to
+hear. And **the app steps out of character**: `lib/scenes/coach.ts` says in English, after a second
+miss, which word is being waited for, or which line of the card holds the answer, or that a
+question is wanted. It holds no Estonian, it names only a lemma the beat already named, and it
+**never spells the form**, because the ending is what a case beat is drilling and a hint that gave
+it would answer the question and then let the scheduler record the learner as having produced it.
+Once per beat, since the same paragraph three times running is the machine repeating itself at
+somebody already struggling.
+
+**A scene that moves the learner says so.** A scene can span an errand and the beats knew that
+while the screen did not, so somebody walked to a shop was still, as far as anything on screen
+said, in the kitchen their card had put them in: asked where they were, they answered honestly,
+were refused, and reported the scene as broken. `BeatSpec.meanwhile` is one line of English printed
+as a break in the conversation before the beat's line, once, on the turn that arrives at it.
+
+**And a beat's goal names the answer wherever there is exactly one.** A goal is the objective on
+the screen, and where a beat accepts one word a goal that does not name it is a trap rather than an
+instruction: "Say where you are now" took only "at the shop". `catalogue.test.ts` reads the
+harvest's own English gloss and fails on a beat with one requirement, one candidate and a goal that
+never names it, and on a beat wanting a value off the card whose goal never mentions the card. That
+is the half that reaches every scene written after this one.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5857,7 +5924,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `LOST`, `isLost`, `offerFor`, `caughtSomething`, `courseForms`, `isEstonian`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `knowing`, `isAnswer`, `coachFor`, `NUDGE_AFTER`, `meanwhile`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `caseOfForm`, `diagnose`, `Hunch`, `reachedCase`, `LOST`, `isLost`, `offerFor`, `caughtSomething`, `courseForms`, `isEstonian`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`, `isAdvanceKey`, `buttonRuns`, `readSsoPolicy`,
 `ssoDomainFor`, `checkSharedRateLimit`, `bucketDigest`, `windowStartMs`, `KNOWN_DEPLOYMENTS`,

@@ -408,6 +408,13 @@ export function readTurn(
   return shape(caughtSomething(marked) ? "offtarget" : "unrecognised");
 }
 
+/**
+ * How short a turn has to be for every word in it to count as the answer.
+ * Two, so `pood` and `kell kaks` are answers and anything longer is a
+ * sentence whose middle this module may not make claims about.
+ */
+const ANSWER_WORDS = 2;
+
 /** A requirement met by something other than a word: a question mark, small talk. */
 const YES = "\u0001";
 
@@ -473,6 +480,34 @@ function satisfies(
   */
   const vouched = (word: string) =>
     context.lexicon.forms.has(word) || Boolean(context.known?.(word));
+  /*
+    WHETHER THE WORD WAS THE ANSWER, WHICH IS THE ONLY POSITION WE CAN SAY
+    ANYTHING ABOUT ITS CASE FROM.
+
+    A case slip says "you reached for the wrong ending", and it was claimed
+    wherever the word turned up in any other form. Inside a sentence that is a
+    guess about grammar this module cannot parse, and it was wrong in both
+    directions on a real run: `Piim on otsas` is a correct sentence with `piim`
+    as its subject, and it was answered "Understood. Here it is piima.", and
+    `Ma olen ikka kodus, pood on 5 minuti kaugusel` was answered "Here it is
+    poes." over a `pood` that was the subject of its own clause. Both told a
+    learner their correct Estonian was wrong, in the one place this app has
+    where being wrong is supposed to be survivable.
+
+    What the position can settle is the case where the word IS the answer:
+    asked `Kuhu sa lähed?` and told `pood`, or told `Ma lähen pood`, the
+    ending really is missing and saying so is the one correction a
+    conversation makes without stopping. So a slip is claimed where the word
+    is the whole turn or the last word of it, and never where it sits in the
+    middle of a sentence doing a job we cannot read.
+
+    It is a position rule and not a parse, so it is wrong at the edges: `Ma
+    olen kodus, mitte pood` would be recast. It errs toward saying nothing,
+    which is the side to err on, because a correction nobody needed is read
+    as the app being broken and a correction withheld is read as nothing at
+    all.
+  */
+  const isAnswer = (word: string) => spoken.length <= ANSWER_WORDS || spoken[spoken.length - 1] === word;
   const inflected = (forms: ReadonlySet<string> | undefined): { said: string; form: string } | null => {
     if (forms === undefined) return null;
     for (const said of spoken) {
@@ -525,7 +560,8 @@ function satisfies(
         where the learner needs one about the case.
       */
       const otherForm = exact(forms);
-      const cased = (said: string) => {
+      const cased = (said: string): Hit => {
+        if (!isAnswer(said)) return { word: said };
         const reached = caseOfForm(context.lexicon, need.lemma, said);
         return {
           word: said,
@@ -570,7 +606,8 @@ function satisfies(
       for (const lemma of lemmas) {
         const key = caseKeyFor(lemma, need.grammCase!);
         const forms = context.lexicon.byLemma.get(lemma);
-        const cased = (said: string) => {
+        const cased = (said: string): Hit => {
+          if (!isAnswer(said)) return { word: said };
           const reached = caseOfForm(context.lexicon, lemma, said);
           return {
             word: said,

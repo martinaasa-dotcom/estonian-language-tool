@@ -80,7 +80,43 @@ export type Provenance =
    * not understand". English is the one language this project may write
    * (ADR-005), and "the receptionist asks where it hurts" is at least true.
    */
-  | "unspoken";
+  | "unspoken"
+  /**
+   * TIME PASSING, SAID OUT LOUD, BECAUSE OTHERWISE NOBODY KNOWS IT DID.
+   *
+   * A scene can span an errand: you leave the house, you get to the shop, you
+   * walk home. The beats knew that and the screen did not, so a learner
+   * answering "where are you now?" was still, as far as the screen was
+   * concerned, standing in their own kitchen where the card had put them. They
+   * answered honestly, were refused, answered again, were refused again, and
+   * reported the whole scene as broken. They were right: the conversation had
+   * moved and nothing had told them.
+   *
+   * `BeatSpec.meanwhile` is one line of English saying what has happened since
+   * the last beat, and it is printed as a break in the conversation rather
+   * than as something anybody said. It is not a stage direction: `unspoken`
+   * stands in for a line the other side could not be given in Estonian, and
+   * this is the scene itself moving the learner from one place to another.
+   */
+  | "meanwhile"
+  /**
+   * THE APP STEPPING OUT OF CHARACTER TO SAY WHAT IS WANTED.
+   *
+   * Everything else in a reply is the other side of a conversation, and the
+   * other side of a conversation cannot explain itself: a receptionist who has
+   * asked twice asks a third time and then gives up, and a learner watching
+   * that happen has no way to tell a question they answered wrongly from one
+   * they answered in the wrong shape. Two people reported the same feeling
+   * from it, which is that the app had decided they were stupid.
+   *
+   * So when somebody is stuck the app says so in its own voice, in English,
+   * off the beat's own requirements: this is the word they are waiting for,
+   * or the answer is the line on your card. It is never Estonian this app
+   * wrote (`lib/scenes/coach.ts` holds no Estonian and names only lemmas the
+   * dictionary spells), it never advances anything, and it is drawn as a note
+   * rather than as a bubble, because nobody said it.
+   */
+  | "coach";
 
 export interface SpokenLine {
   readonly text: string;

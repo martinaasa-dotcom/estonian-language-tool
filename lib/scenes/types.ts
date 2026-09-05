@@ -236,6 +236,24 @@ export interface BeatSpec {
    * then said goodbye when they did.
    */
   readonly awaits?: true;
+  /**
+   * What has happened since the last beat, in English, where anything has.
+   *
+   * A scene can span an errand, and the beats knew that while the screen did
+   * not: the milk scene walks a learner from their kitchen to the shop and
+   * home again, and each leg was a fresh question with nothing between it and
+   * the one before. So somebody answering "where are you now?" was, as far as
+   * anything on the screen said, still standing where the role card had put
+   * them. They said so, truthfully, were refused, said it again, were refused
+   * again, and reported the scene as broken.
+   *
+   * One line, printed as a break in the conversation before the beat's own
+   * line: "Five minutes later. You are at the shop." It is the scene moving
+   * the learner rather than anybody speaking, so it is neither a bubble nor a
+   * stage direction, and it may carry `{slot}` for a value off the card the
+   * way `they` does. English is the one language a scene file may write.
+   */
+  readonly meanwhile?: string;
   /** What counts as the learner's turn being complete. */
   readonly needs: readonly Requirement[];
   /** Required beats are the objectives; optional ones are the color. */

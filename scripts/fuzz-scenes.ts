@@ -88,9 +88,10 @@ async function main() {
             try {
               lines = replyFor({
                 beat: speaking, answered: turns.length ? answered : null, response: turns.length ? response : null,
-                reading: last?.reading ?? null, line, heard: last?.heard ?? null, card,
+                reading: last?.reading ?? null, line, heard: last?.heard ?? null, said: last?.said ?? null, card,
                 translates: persona.translates, acknowledges: persona.acknowledges,
                 echo: last?.matched?.[0] ?? null, met: state.done.length,
+                tries: answered ? state.turns.filter((t) => t.beatId === answered.id).length : 0,
                 hurdle: standing ? { beat: standing, line: standing === spokenFor ? line : null, said: hurdleSpec(state)?.said } : null,
               });
             } catch (e) { bad(`${scene.id} replyFor threw: ${(e as Error).message}`); break; }

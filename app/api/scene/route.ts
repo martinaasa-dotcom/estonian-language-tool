@@ -5,7 +5,7 @@ import { authoriseCall, recordUsage, releaseReservation, type Reservation } from
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { reportError } from "@/lib/observability/report";
 import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
-import { MAX_TURNS, MAX_TURN_CHARS, readDraw, replay, sceneContext } from "@/lib/progress/scene";
+import { MAX_TURNS, MAX_TURN_CHARS, knowing, readDraw, replay, sceneContext } from "@/lib/progress/scene";
 import { sceneById } from "@/lib/scenes/catalogue";
 import { sceneLine, type SpokenLine } from "@/lib/scenes/line";
 import { cardInPlay, counterBeat, datumLine, replyFor, stageFor, wantsFreshLine } from "@/lib/scenes/reply";
@@ -134,7 +134,17 @@ export async function POST(request: Request) {
     : [];
 
   const draw = readDraw(row!.transcript);
-  const { state, response } = replay(context, draw, turns);
+  /*
+    WHETHER THE LEARNER WAS UNDERSTOOD IS A WIDER QUESTION THAN WHAT THIS
+    SCENE MAY SAY. The scene's list is its declared units and the marker was
+    widened once to the course, so a real Estonian word from anywhere else
+    read as noise and the other side said `Ma ei saa aru` to somebody who had
+    written perfectly good Estonian. `knowing` asks the forms list about the
+    spellings in this run, which is the accept side of ADR-005 and the reason
+    that file exists.
+  */
+  const marking = await knowing(context, turns.map((t) => t.said));
+  const { state, response } = replay(marking, draw, turns);
   const current = currentBeat(scene, state);
   /*
     A curveball in the way is what the other side says next and what the
@@ -248,6 +258,7 @@ export async function POST(request: Request) {
     reading: progress.reading,
     line,
     heard,
+    said: last?.said ?? null,
     card,
     translates: persona?.translates ?? false,
     acknowledges: persona?.acknowledges ?? true,
@@ -264,8 +275,18 @@ export async function POST(request: Request) {
       beat they were answering, not the one coming next: they are stuck on
       the question they were asked.
     */
-    offer: response === "help" && answered ? offerFor(answered, card) : null,
+    offer: (response === "help" || response === "moveOn") && answered
+      ? offerFor(answered, card, context.marker.questionWords)
+      : null,
     met: state.done.length,
+    /*
+      How long they have been on this beat, so the app knows when to step out
+      of character and say what is wanted (`lib/scenes/coach.ts`). Turns that
+      cost no patience are still turns the learner took, so they are counted:
+      somebody who has answered three times and got nowhere is stuck whether
+      or not the machine spent a try on it.
+    */
+    tries: answered ? state.turns.filter((turn) => turn.beatId === answered.id).length : 0,
   });
   /*
     THE OTHER SIDE'S LINE, WITH THE DICTIONARY UNDER IT.
@@ -315,7 +336,7 @@ export async function POST(request: Request) {
     if (asideWantsModel) aside = shrug(context.lexicon);
     return answer(reply(null));
   }
-  if (!wantsFreshLine(turns.length > 0 ? response : null, heard)) {
+  if (!wantsFreshLine(turns.length > 0 ? response : null, heard, progress.reading)) {
     if (asideWantsModel) aside = shrug(context.lexicon);
     return answer(reply(null));
   }

@@ -25,13 +25,14 @@ import type { CaseKey } from "@/lib/estonian/types";
 import { FALLBACK_PHRASE, sceneById } from "@/lib/scenes/catalogue";
 import { sceneBeats, scriptedFor } from "@/lib/scenes/scripted";
 import type { GateContext, GovernedWord } from "@/lib/scenes/gate";
-import { buildLexicon, type DictEntry, type Lexicon } from "@/lib/scenes/lexicon";
+import { buildLexicon, words, type DictEntry, type Lexicon } from "@/lib/scenes/lexicon";
 import { topicForms, type Line } from "@/lib/scenes/retrieval";
 import type { TurnContext } from "@/lib/scenes/turn";
 import { timeWords, type RoleCard } from "@/lib/scenes/props";
 import type { BeatSpec, SceneSpec } from "@/lib/scenes/types";
 import { isPhrase } from "@/lib/dict/pos";
 import { courseForms } from "@/lib/dict/facts";
+import { isKnownForm } from "@/lib/dict/forms";
 import { parseExamples, usableExamples } from "@/lib/dict/examples";
 import { planRun, RECENCY_WINDOW, type Recency, type SceneRun as SceneRunPlan } from "@/lib/scenes/run";
 import { randomUUID } from "node:crypto";
@@ -115,6 +116,66 @@ export async function sceneContext(sceneId: string): Promise<SceneContext | null
   ]);
   const context = contextFromRows(scene, rows);
   return { ...context, marker: { ...context.marker, known: (word: string) => known.has(word) } };
+}
+
+/**
+ * How many spellings one request will look up in the forms list. A turn is a
+ * handful of words and a run is a dozen turns; the bound is here so a client
+ * sending forty turns of forty words cannot turn one reply into a file read
+ * per word.
+ */
+const KNOWN_LOOKUPS = 80;
+
+/**
+ * The context, widened to know that the words in these turns are Estonian.
+ *
+ * TELLING SOMEBODY THEY WERE INCOMPREHENSIBLE IS THE WORST THING THIS MODULE
+ * CAN DO, AND IT WAS THE DEFAULT.
+ *
+ * `readTurn` reads a turn it can vouch for no word of as `unrecognised`, and
+ * the other side answers that with `Ma ei saa aru`. What it vouches against
+ * was the scene's own units, widened once to the course, which is 1,449 words:
+ * everything else in the language read as noise. A learner answered `Tere!`
+ * with `Tervitused!`, which is Estonian, which is a greeting, and which the
+ * course does not happen to teach, and was told they had not been understood.
+ * That is the app calling somebody's correct Estonian gibberish, on the
+ * screen whose whole purpose is that being stuck is survivable.
+ *
+ * `prisma/data/forms/` is the answer and it is the reason that file exists:
+ * 5.7 million spellings, and the one question it answers is "is that an
+ * Estonian word". This is the accept side of ADR-005, exactly as the word
+ * game is: a spelling let through here costs a turn being read as real
+ * Estonian off the point rather than as noise, and it can never become a card
+ * answer, a marking target or a word the beat accepts, because a requirement
+ * is still met only against the scene's own lexicon.
+ *
+ * So `unrecognised` now means what a person means by it: there was nothing
+ * in there anybody could read. Everything else is `offtarget`, which is a
+ * narrower re-ask and never an accusation.
+ */
+export async function knowing(
+  context: SceneContext,
+  said: readonly string[],
+): Promise<SceneContext> {
+  const already = context.marker.known;
+  const asking = [...new Set(said.flatMap((text) => words(text)))]
+    .filter((word) => !context.lexicon.forms.has(word) && !already?.(word))
+    .slice(0, KNOWN_LOOKUPS);
+  if (asking.length === 0) return context;
+
+  const found = new Set<string>();
+  await Promise.all(asking.map(async (word) => {
+    if (await isKnownForm(word)) found.add(word);
+  }));
+  if (found.size === 0) return context;
+
+  return {
+    ...context,
+    marker: {
+      ...context.marker,
+      known: (word: string) => found.has(word) || Boolean(already?.(word)),
+    },
+  };
 }
 
 /** Every lemma a scene may reach: its units, its beats' topics, its props, and the way out. */
@@ -716,7 +777,7 @@ export async function finishRun(input: {
     every turn. Two markers would be two answers to "were you understood", and
     the one nobody watches is the one that drifts.
   */
-  let { state } = replay(context, draw, input.turns);
+  let { state } = replay(await knowing(context, input.turns.map((t) => t.said)), draw, input.turns);
   if (input.walkedOut) state = walkOut(state);
 
   const objectives = objectivesOf(scene, state);
@@ -803,7 +864,8 @@ export async function beatNow(input: {
   const context = await sceneContext(row.sceneId);
   if (!context) return null;
 
-  const { state } = replay(context, readDraw(row.transcript), input.turns);
+  const widened = await knowing(context, input.turns.map((t) => t.said));
+  const { state } = replay(widened, readDraw(row.transcript), input.turns);
   return currentBeat(context.scene, state) ?? null;
 }
 

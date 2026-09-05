@@ -8,6 +8,7 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Card } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
 import { Speak } from "@/components/Speak";
+import type { Provenance as SceneProvenance } from "@/lib/scenes/line";
 import { conditionFor } from "@/lib/audio/conditions";
 import { GlossedSentence } from "@/components/GlossedSentence";
 import type { GlossedToken } from "@/lib/dict/glossed";
@@ -47,7 +48,14 @@ import { practises } from "@/lib/scenes/practises";
  * debrief handles it without a word of reproach.
  */
 
-type Provenance = "attested" | "scripted" | "composed" | "fallback" | "again" | "recast" | "offered" | "english" | "unspoken";
+/*
+  Read off the one definition rather than written out again. This was a second
+  copy of the list, so the day a line learned to be a break in time or a hint
+  from the app, the screen went on knowing nine kinds and `PROVENANCE` still
+  type-checked with two of them missing. A type-only import is erased, so a
+  client component pays nothing for it.
+*/
+type Provenance = SceneProvenance;
 
 interface Line {
   readonly text: string;
@@ -111,10 +119,17 @@ const DIFFICULTIES: { id: Difficulty; label: string; blurb: string }[] = [
   { id: "bad", label: "Hard", blurb: "As bad as a Tuesday at a busy desk." },
 ];
 
-/** Whether a line is Estonian the other side said, as opposed to a stage direction or their English. */
-const spokenEstonian = (line: Line) => line.provenance !== "unspoken" && line.provenance !== "english";
+/**
+ * The three kinds of line that are nobody speaking: what the other side did
+ * where no Estonian could be built for it, time passing between two beats, and
+ * the app stepping out of character to say what is wanted. None of them is a
+ * bubble, because nobody said any of them.
+ */
+const NOT_SAID = new Set<Provenance>(["unspoken", "meanwhile", "coach"]);
+/** Whether a line is Estonian the other side said, as opposed to a note or their English. */
+const spokenEstonian = (line: Line) => !NOT_SAID.has(line.provenance) && line.provenance !== "english";
 /** Whether a line was said at all, in either language. */
-const spoken = (line: Line) => line.provenance !== "unspoken";
+const spoken = (line: Line) => !NOT_SAID.has(line.provenance);
 
 /**
  * The line the learner is now answering: the other side's last move, which is
@@ -682,6 +697,55 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                       )}
                     </p>
                   </div>
+                ) : line.provenance === "meanwhile" ? (
+                  /*
+                    TIME PASSING, DRAWN AS A BREAK RATHER THAN AS A MURMUR.
+
+                    A stage direction is set small and grey because it stands
+                    in for a line and is worth less than one. This is the
+                    opposite: it is the scene telling the learner where they
+                    now are, and missing it is what left somebody answering
+                    "where are you now?" from the kitchen the card had put
+                    them in. So it is centred, ruled on both sides and set in
+                    the ordinary ink, which is what a break in a story looks
+                    like everywhere else it is drawn.
+                  */
+                  <p
+                    key={at}
+                    className="my-2 flex items-center gap-3 text-sm"
+                    style={{ color: "var(--ink-2)" }}
+                  >
+                    <span aria-hidden className="h-px flex-1" style={{ background: "var(--rule)" }} />
+                    <span className="text-center">{line.text}</span>
+                    <span aria-hidden className="h-px flex-1" style={{ background: "var(--rule)" }} />
+                  </p>
+                ) : line.provenance === "coach" ? (
+                  /*
+                    THE APP, OUT OF CHARACTER, AND DRAWN SO NOBODY MISTAKES IT
+                    FOR THE OTHER PERSON. A panel in the accent's softest tint
+                    with the ink drawn to sit on it, which is the pairing
+                    `test-design.mjs` measures: a hint set as grey italics
+                    beside a grey italic stage direction is a hint nobody sees
+                    at the moment they most need one.
+                  */
+                  <p
+                    key={at}
+                    className="rounded-2xl px-4 py-3 text-sm"
+                    style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
+                  >
+                    {/*
+                      One word in the eyebrow, because `label-xs` uppercases:
+                      the whole label set in capitals is a shouted sentence
+                      over a panel that exists to be reassuring. The sentence
+                      itself is read to a screen reader instead, where the
+                      panel's colour and position say nothing.
+                    */}
+                    <span className="label-xs block" style={{ color: "var(--accent-deep)" }}>
+                      Hint
+                      <span className="sr-only"> ({PROVENANCE.coach})</span>
+                    </span>
+                    {line.text}
+                  </p>
                 ) : (
                   /*
                     A stage direction: what they did, in English, because no
@@ -788,6 +852,20 @@ const PROVENANCE: Record<Provenance, string> = {
     is the app blaming a learner for its own empty pool.
   */
   unspoken: "In English, because no Estonian line could be built for it",
+  /*
+    Time passing. Not a stage direction and not something anybody said: it is
+    the scene moving the learner from one place to the next, which the screen
+    used not to do at all, so a conversation that walked somebody to a shop
+    left them answering from their own kitchen.
+  */
+  meanwhile: "What has happened since",
+  /*
+    The app, out of character. Everything else on this screen is one side of a
+    conversation and a conversation cannot explain itself; this can, and the
+    label says whose voice it is so nobody reads it as the other person
+    breaking into English.
+  */
+  coach: "A hint, from the app rather than from them",
 };
 
 export { BUDGETS };
