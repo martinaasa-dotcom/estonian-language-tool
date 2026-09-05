@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db";
 import { cellsOf, MAX_ENTRIES, MAX_SIDE, MIN_ENTRIES, solvedEntries } from "@/lib/games/crossword";
 import type { DayKey } from "@/lib/time/day";
 import { SEED_SET_SIZE } from "@/lib/collections/seedSize";
-import { clueFrom, crosswordFor } from "./crossword";
+import { clueClashes, clueKey } from "@/lib/games/clue";
+import { crosswordFor } from "./crossword";
 
 /**
  * The compiler over the dictionary that ships, which is the only place the
@@ -92,6 +93,47 @@ describe("the daily crossword", () => {
     expect(seen.size).toBe(14);
   }, 30_000);
 
+  /*
+    A CLUE WITH TWO ANSWERS OVER A REAL DICTIONARY, WHICH IS WHERE IT LIVES.
+
+    `clue.test.ts` proves the two rules over invented entries. What it cannot
+    prove is that they survive the join: the clash set is read over every
+    entry the dictionary holds and the pool over one band, so a bug that read
+    the clash off the pool would pass every unit test in that file and put
+    `3 down: human` back on somebody's screen.
+  */
+  it("names the kind of word every clue wants", async () => {
+    for (const level of ["A1", "B1"] as const) {
+      const puzzle = await crosswordFor(OWNER, "2026-09-02" as DayKey, level);
+      for (const entry of puzzle!.entries) {
+        expect(entry.clue, `${entry.lemma} is clued without a kind of word`)
+          .toMatch(/ · (noun|verb|adjective|adverb)$/);
+      }
+    }
+  });
+
+  it("sets no clue a second entry answers", async () => {
+    const rows = await prisma.lexeme.findMany({
+      select: { lemma: true, pos: true, translation: true },
+    });
+    const clashes = clueClashes(rows);
+    for (const day of days.slice(0, 7)) {
+      const puzzle = await crosswordFor(OWNER, day, "B1");
+      for (const entry of puzzle!.entries) {
+        // The kind is read off the clue's own tail rather than off the first
+        // row with that lemma, because `@@unique` is on `(lemma, pos)` and
+        // `hall` is two entries: a `find` would pick whichever the query
+        // happened to return first and ask about the other word.
+        const kind = entry.clue.slice(entry.clue.lastIndexOf(" · ") + 3);
+        const row = rows.find((r) => r.lemma === entry.lemma && r.pos.toLowerCase() === kind);
+        expect(row, `${entry.lemma} is clued as a ${kind} and the dictionary has no such entry`)
+          .toBeTruthy();
+        expect(clashes.has(clueKey(entry.lemma, row!.pos)), `${entry.lemma} is clued twice over`)
+          .toBe(false);
+      }
+    }
+  }, 30_000);
+
   /**
    * Every answer is a word the dictionary holds, which is the ADR-005 half:
    * nothing here writes Estonian, it only arranges what is already there.
@@ -134,48 +176,5 @@ describe("the daily crossword", () => {
       });
     }
     expect(solvedEntries(puzzle!, typed).size).toBe(puzzle!.entries.length);
-  });
-});
-
-describe("clueFrom", () => {
-  it("keeps at most two senses", () => {
-    expect(clueFrom("a devil, an evil spirit, the deuce", "kurat")).toBe("a devil, an evil spirit");
-  });
-
-  it("takes the first group where a gloss is split by a semicolon", () => {
-    expect(clueFrom("to read; to count", "lugema")).toBe("to read");
-  });
-
-  it("drops a gloss too long to be a clue rather than cutting it mid-word", () => {
-    expect(clueFrom("a".repeat(60), "pikk")).toBe("");
-  });
-
-  it("drops an empty gloss", () => {
-    expect(clueFrom("   ", "tühi")).toBe("");
-  });
-
-  /*
-    A CLUE THAT IS THE ANSWER WRITES IT ACROSS THE TOP OF THE GRID. The clue is
-    the English beside the entry, and a few dozen Estonian words are spelled
-    the same in English: 34 of the 5,329 words in the shipped dictionary with a
-    usable clue, 23 of them the answer exactly.
-  */
-  it("drops a clue that is the answer", () => {
-    expect(clueFrom("film", "film")).toBe("");
-    expect(clueFrom("number", "number")).toBe("");
-    expect(clueFrom("monument", "monument")).toBe("");
-  });
-
-  it("drops a clue that merely contains the answer as a word", () => {
-    expect(clueFrom("sport, sports", "sport")).toBe("");
-    expect(clueFrom("norm, quota", "norm")).toBe("");
-    // Typed without case, so a capital letter hides nothing.
-    expect(clueFrom("August", "august")).toBe("");
-  });
-
-  it("keeps a clue that only looks like the answer", () => {
-    // `mark` inside `market` is not the word, and the clue is the whole point.
-    expect(clueFrom("a market", "mark")).toBe("a market");
-    expect(clueFrom("a lamp shade", "lambivari")).toBe("a lamp shade");
   });
 });

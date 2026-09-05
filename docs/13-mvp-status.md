@@ -2345,3 +2345,49 @@ whose line names a value off the card. `npm run check:lines` is the tool for the
 a seeded database, on Easy, Normal and Hard; 2,437 unit tests, 215 database tests, 261 invariants
 and the scene browser suite green. What no machine here can judge is whether it feels like talking
 to a person, and that is the thing to ask the next learner who plays it.
+## 36. The thirtieth pass: a clue with one answer
+
+A learner opened the crossword, read `3 down: human`, typed `inimene`, which is what a human is,
+watched it fill the seven squares, and was marked wrong. The grid wanted `inimlik`, the adjective.
+
+Nothing about that clue was false, which is why nothing caught it. `inimlik` is glossed "human" and
+`inimene` is glossed "human being": two entries, two parts of speech, two glosses, and one English
+word standing over both of them. English does not mark a part of speech and Estonian derivation
+does, so a bare noun-looking gloss over an adjective is a clue for a different word.
+
+**Every other screen answers this by widening and a grid cannot.** A production card with two right
+answers puts both on the back, which is what `acceptedAnswers` is for. A crossword square takes one
+string, crossing other words at a fixed length, so a clue with two honest answers is a trick rather
+than a question. The clue narrows instead, and `lib/games/clue.ts` is both halves of it. It holds
+no English of its own: every rule in it refuses a clue or labels one, which is what keeps the
+crossword inside ADR-005 exactly as before.
+
+**The clue says what kind of word it wants.** `human · adjective` is `inimlik` and nothing else,
+and it costs one word of the line. It is the hint a production card has carried since the deck was
+built, on the one screen that had never printed it.
+
+**And no other entry answers it.** Naming the kind cannot reach a rival of the same kind: 92 clue
+lines in the shipped dictionary are the same line over the same part of speech, `kena` and `ilus`
+are both "beautiful", and whichever the grid wants the other is a right answer marked wrong. Both
+sides are refused, because which of two synonyms a grid ought to have is not a question the
+dictionary can answer.
+
+**Two decisions in how that is read, and both are measured.** Over the **whole dictionary** rather
+than the day's band, which is the half that would have caught the report: `inimene` is graded A1
+and the grid was B1, so the rival was never in the pool and a clash read off `crosswordPool` would
+have passed on the very clue this exists for. And over a **sense set** rather than a string,
+because a clue is a list: "a friend" and "a friend, a mate" are two lines and everything the
+shorter one says is true of both entries. Strings refuse 319 of the 2,290 words the pool can draw
+on; sets refuse 665, which is 29%.
+
+**What it costs is a word the compiler was never going to reach.** 271 words are left at A1 and 511
+at B1 against a grid that wants seven, and a full seven-word grid still compiles on every day of a
+year at every level, which is the measurement §29 of this document already records for the
+compiler and which was re-run rather than assumed. `npm run audit:questions` asks 3,991 crossword
+clues where it asked 5,295, and still reports that none of them prints its own answer.
+
+**Measured.** 269 invariants, the new one made to fail three ways first: the part of speech dropped
+from `clueFrom`, the clash filter deleted from the pool, and the clash reading narrowed to a band.
+2,489 unit tests, and the clue rules moved out of an integration test into a hermetic one, since
+deciding what a clue says is a question about two strings and a part of speech and it was being
+asked behind a Postgres connection.

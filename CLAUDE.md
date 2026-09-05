@@ -1815,6 +1815,38 @@ Estonian is written at all.
 teaches.** You know what you mean and you are looking for the word, which is where a learner is
 every time they open their mouth. The other way round is a reading exercise with extra steps.
 
+**A clue has one answer, or it is not set.** A learner read `3 down: human`, typed `inimene`, which
+is what a human is, watched it fill the seven squares, and was marked wrong: the grid wanted
+`inimlik`, the adjective. Nothing about that clue was false. `inimlik` is glossed "human" and
+`inimene` "human being", two entries with two parts of speech, so no check this app had could see
+that one English word was standing over both. Every other screen answers this by *widening*, which
+is what `acceptedAnswers` does for a word with two right spellings, and a grid cannot: a square
+takes one string, crossing other words, so a clue with two honest answers is a trick rather than a
+question and the clue has to narrow instead. `lib/games/clue.ts` is both halves of that and holds
+no English of its own; every rule in it refuses a clue or labels one.
+
+**The clue says what kind of word it wants**, because English does not mark a part of speech and
+Estonian derivation does: "human" is a noun and an adjective in English and is two words here, and
+so are "clean", "light" and "empty". `human · adjective` is `inimlik` and nothing else, and it costs
+one word of the line. It is the hint a production card has carried since the deck was built, on the
+one screen that had never printed it. **And no other entry answers it**, which is the half naming
+the kind cannot reach: 92 clue lines in the shipped dictionary are the same line over the same part
+of speech, `kena` and `ilus` are both "beautiful", and whichever of them the grid wants the other
+is a right answer marked wrong. Both sides are refused, since which of two synonyms a grid ought to
+have is not a question the dictionary can answer.
+
+**Read over the whole dictionary rather than the day's band, which is the half that would have
+caught the report.** `inimene` is graded A1 and the grid was B1, so the rival was never in the pool
+and a clash read off `crosswordPool` would have passed on the very clue this exists for. A learner
+knows words outside their own band, which is what a band is. And **a sense set rather than a
+string**, because a clue is a list: "a friend" and "a friend, a mate" are two different lines and
+everything the shorter one says is true of both entries. Comparing the strings refuses 319 of the
+2,290 words the pool can draw on and comparing the sets refuses 665, which is 29% and the reason it
+was measured rather than reasoned about. What it costs is a word the compiler was never going to
+reach: 271 words are left at A1 and 511 at B1 against a grid that wants seven, and a full
+seven-word grid still compiles on every day of a year at every level. `npm run audit:questions`
+asks 3,991 crossword clues where it asked 5,295.
+
 **A criss-cross rather than a dense grid, and that is a fact about the dictionary.** A five-by-five
 where every row and column is a word needs a search over words with the right letter in the right
 place five times over, and at A1 there are 215 six-letter words to search: it does not reliably
