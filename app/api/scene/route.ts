@@ -237,8 +237,8 @@ export async function POST(request: Request) {
   */
   const cheap = await sceneLine({ ...shared, pool: context.pool.get(beat.id) ?? [] });
   if (cheap.provenance !== "fallback") return answer(reply(cheap));
-  // A line the beat can say out of one course word and the card's own value: `Kell 13:30?`.
-  const dealt = datumLine(beat, draw?.card ?? null);
+  // A line the beat can say out of course words and the card's own values: `Teisipäeval kell 13:30?`.
+  const dealt = datumLine(beat, draw?.card ?? null, context.lexicon);
   if (dealt) return answer(reply(dealt));
 
   /*

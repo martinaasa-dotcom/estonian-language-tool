@@ -103,3 +103,12 @@ describe("the role card", () => {
     }
   });
 });
+
+describe("the other side's facts", () => {
+  it("are drawn and stored like the learner's, and marked as theirs so the card never prints them", () => {
+    const theirs = drawProp({ ...DAY, slot: "day", theirs: true }, seeded(2));
+    expect(theirs.theirs).toBe(true);
+    expect(DAY.oneOf).toContain(theirs.value);
+    expect(drawProp(DAY, seeded(2)).theirs).toBeUndefined();
+  });
+});

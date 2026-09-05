@@ -3857,6 +3857,20 @@ The other side repeats the learner's own word back before moving on, off `Eviden
 every line is spoken in the persona's voice. Seven scenes, and all seven play keyless from the
 first line to the debrief. `docs/21-situations.md` §32 has the table and what it does not fix.
 
+**An offer names a day, and a yes is an answer.** The landlord asked `Kas küte on katki?`, heard
+"Millal teil on aeg?", and said `Jah. Kell 14:00?`: a yes to a question with no yes in it, then a
+clock time with no day, after the learner had asked when anybody could come. Then `Sobib` was read
+as Estonian off the point, twice, and the landlord ran out of patience over the right answer. And
+`Neljal korrusel` got a look and a wait, on a beat whose requirement named `kord`, an occasion,
+where the floor of a building is `korrus`. So a `Requirement` can be `anyOf` several, one to the
+marker and each option to everybody else through `leafNeeds`; a line said off the card is a list
+of parts and a part can be a drawn word in a named case, read off `Lexicon.caseForm` and never
+joined here, so the offer is `Teisipäeval kell 14:00?` and is withheld whole where a part is
+missing; the day is a prop marked `theirs`, stored with the draw and never printed on the card,
+with the dictionary's English beside it for the stage direction; a two-word turn that meets the
+beat is an answer and a turn the beat wanted as a question gets no `Jah.` in front of the move.
+`docs/21-situations.md` §33 is the transcript and what it does not fix.
+
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
 five, so a guesser who has placed the consonants can still be choosing between three words on the
@@ -4975,7 +4989,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `answerTimeReading`, `confusions`, `formatAnswerTime`, `NotAutomatic`, `scriptedFor`, `scriptable`,
 `TODAY_CARDS`, `weakestCase`, `roundCard`, `orderTodayCards`, `todayOrderFrom`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
-`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`. Most of them now
+`conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `leafNeeds`, `caseForm`. Most of them now
 have an invariant behind them; that list is what to check when adding one.
 
 ## Commands

@@ -200,8 +200,18 @@ const DOCTOR: SceneSpec = {
       they: "They offer you an appointment at {time}.",
       move: "offer",
       topic: ["aeg", "kell", "tund", "päev"],
-      says: { lemma: "kell", slot: "time" },
-      needs: [{ kind: "datum", slot: "time" }],
+      says: [{ lemma: "kell" }, { slot: "time" }],
+      /*
+        The time back, or a yes, or a no. "Does 14:30 suit you?" is answered
+        `Sobib` far more often than `14:30`, and the first version took the
+        time alone, so the one word a receptionist is waiting for was read as
+        Estonian off the point and the time was offered again.
+      */
+      needs: [{ kind: "anyOf", of: [
+        { kind: "datum", slot: "time" },
+        { kind: "lemma", oneOf: ["sobima", "hea", "jah"] },
+        { kind: "negation" },
+      ] }],
       required: true,
       patience: 2,
       shape: "word",
@@ -212,7 +222,7 @@ const DOCTOR: SceneSpec = {
       they: "They read the time back to check: {time}.",
       move: "confirm",
       topic: ["aeg", "kell", "päev"],
-      says: { lemma: "kell", slot: "time" },
+      says: [{ lemma: "kell" }, { slot: "time" }],
       needs: [{ kind: "any" }],
       required: false,
       patience: 1,
@@ -284,6 +294,19 @@ const LANDLORD: SceneSpec = {
     },
     { kind: "time", slot: "time", from: 8, to: 18 },
     { kind: "number", slot: "floor", min: 1, max: 5, says: "You live on floor" },
+    /*
+      The day the landlord offers, drawn per run so a reload offers the same
+      one, and the other side's rather than the learner's: it is not printed
+      on the card, because a card that says what the landlord is about to
+      propose is a script. Without it the offer was `Kell 14:00?`, a clock
+      time with no day, after the learner had just asked when anybody could
+      come, and it read as agreeing to nothing in particular.
+    */
+    {
+      kind: "weekday", slot: "day", theirs: true,
+      oneOf: ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede"],
+      says: "The day they can come.",
+    },
   ],
   /*
     No queue: this one is a telephone call, so the only curveball in the
@@ -323,8 +346,15 @@ const LANDLORD: SceneSpec = {
       goal: "Say which room, and which floor.",
       they: "They ask which room it is in, and which floor.",
       move: "ask",
-      topic: ["ruum", "kord", "naaber"],
-      needs: [{ kind: "lemma", oneOf: ["ruum", "kord"] }],
+      /*
+        `korrus` is the floor of a building and `kord` is not: it is an
+        occasion or an order, and the beat used to accept it in the floor's
+        place while refusing `Neljal korrusel`, which is the answer. The rooms
+        are the ones the `kodu` unit teaches, since somebody ringing about a
+        flat says which room by its name.
+      */
+      topic: ["ruum", "korrus", "tuba", "köök"],
+      needs: [{ kind: "lemma", oneOf: ["korrus", "ruum", "tuba", "köök", "kord"] }],
       required: true,
       patience: 2,
       shape: "sentence",
@@ -354,11 +384,21 @@ const LANDLORD: SceneSpec = {
     {
       id: "agree",
       goal: "Agree a time, or say it will not do.",
-      they: "They offer {time} next week and ask whether that works.",
+      they: "They offer {day} next week at {time} and ask whether that works.",
       move: "offer",
       topic: ["aeg", "päev", "kell", "üürima"],
-      says: { lemma: "kell", slot: "time" },
-      needs: [{ kind: "datum", slot: "time" }],
+      /*
+        `Teisipäeval kell 14:00?`: the day in the case a day is said in, read
+        off the dictionary's own table, then the time. An answer to "when can
+        anybody come" names a day or it has not answered.
+      */
+      says: [{ slot: "day", grammCase: "ADESSIVE" }, { lemma: "kell" }, { slot: "time" }],
+      needs: [{ kind: "anyOf", of: [
+        { kind: "datum", slot: "time" },
+        { kind: "datum", slot: "day" },
+        { kind: "lemma", oneOf: ["sobima", "hea", "jah"] },
+        { kind: "negation" },
+      ] }],
       required: true,
       patience: 2,
       shape: "word",
@@ -379,7 +419,7 @@ const LANDLORD: SceneSpec = {
     {
       id: "fixed",
       when: ["greet", "problem", "where", "since", "refuse", "agree", "close"],
-      says: "Someone is coming to look at it, on a day you agreed to.",
+      says: "They know what is broken, where, and since when, and you settled between you when somebody comes.",
     },
     {
       id: "logged",

@@ -78,7 +78,7 @@ async function main() {
                 hasFiniteVerb: context.hasFiniteVerb, fallback: context.fallback,
                 scripted: context.scripted.get(spokenFor.id) ?? [], used: new Set(),
               });
-              line = cheap.provenance !== "fallback" ? cheap : (datumLine(spokenFor, draw.card) ?? cheap);
+              line = cheap.provenance !== "fallback" ? cheap : (datumLine(spokenFor, draw.card, context.lexicon) ?? cheap);
             }
             const last = state.turns[state.turns.length - 1] ?? null;
             const answered = last ? scene.beats.find((b) => b.id === last.beatId) ?? null : null;

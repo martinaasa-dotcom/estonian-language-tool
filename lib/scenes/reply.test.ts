@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FALLBACK_PHRASE, REACTIONS } from "./catalogue";
 import { fallbackLine, type SpokenLine } from "./line";
 import { datumLine, replyFor, reaction, stageFor, wantsFreshLine, type ReplyInput } from "./reply";
+import { caseKeyFor, type Lexicon } from "./lexicon";
 import type { RoleCard } from "./props";
 import type { BeatSpec } from "./types";
 
@@ -212,7 +213,7 @@ describe("a reaction", () => {
 });
 
 describe("a line off the card", () => {
-  const offers: BeatSpec = { ...OFFER, says: { lemma: "kell", slot: "time" } };
+  const offers: BeatSpec = { ...OFFER, says: [{ lemma: "kell" }, { slot: "time" }] };
 
   it("is one course word and the value the card dealt, asked", () => {
     expect(datumLine(offers, CARD)).toMatchObject({ text: "Kell 14:30?", provenance: "attested", from: "kell" });
@@ -221,7 +222,60 @@ describe("a line off the card", () => {
   it("is nothing where the beat says none or the card holds no such value", () => {
     expect(datumLine(OFFER, CARD)).toBeNull();
     expect(datumLine(offers, null)).toBeNull();
-    expect(datumLine({ ...offers, says: { lemma: "kell", slot: "floor" } }, CARD)).toBeNull();
+    expect(datumLine({ ...offers, says: [{ lemma: "kell" }, { slot: "floor" }] }, CARD)).toBeNull();
+  });
+
+  /*
+    The landlord's offer. "When can anybody come?" is answered with a day, and
+    the line used to be `Kell 14:00?`, which a learner reported as agreeing to
+    nothing in particular. The day is a word the card drew and the form is the
+    dictionary's own, read off the lexicon's case table and never built here.
+  */
+  const withDay: RoleCard = {
+    ...CARD,
+    props: [...CARD.props, {
+      slot: "day", card: "The day they can come.", literal: [], lemmas: ["teisipäev"], value: "teisipäev",
+      theirs: true, english: "Tuesday",
+    }],
+  };
+  const lexicon: Lexicon = {
+    forms: new Set(), byLemma: new Map(), byCase: new Map(),
+    caseForm: new Map([[caseKeyFor("teisipäev", "ADESSIVE"), "teisipäeval"]]),
+  };
+  const dated: BeatSpec = {
+    ...OFFER,
+    they: "They offer {day} next week at {time} and ask whether that works.",
+    says: [{ slot: "day", grammCase: "ADESSIVE" }, { lemma: "kell" }, { slot: "time" }],
+  };
+
+  it("names the day in the case a day is said in, off the dictionary's own table", () => {
+    expect(datumLine(dated, withDay, lexicon)).toMatchObject({ text: "Teisipäeval kell 14:30?", from: "kell" });
+  });
+
+  it("is withheld whole rather than said without the day where the table has no form", () => {
+    expect(datumLine(dated, withDay)).toBeNull();
+    expect(datumLine(dated, withDay, { ...lexicon, caseForm: new Map() })).toBeNull();
+  });
+
+  it("and the stage direction says the day in English, never the lemma", () => {
+    expect(stageFor(dated, withDay)).toBe("They offer Tuesday next week at 14:30 and ask whether that works.");
+  });
+});
+
+describe("a turn that asked them something", () => {
+  const asksBack: BeatSpec = {
+    ...ASK, id: "refuse", move: "refuse", they: "They say nobody can come this week.",
+    needs: [{ kind: "question" }],
+  };
+
+  it("is answered by the move and never with a yes, since a question has no yes in it", () => {
+    const lines = replyFor(input({ answered: asksBack, beat: OFFER, line: FRESH, met: 3 }));
+    expect(lines).toEqual([FRESH]);
+  });
+
+  it("even where the question was one option among several", () => {
+    const either: BeatSpec = { ...asksBack, needs: [{ kind: "anyOf", of: [{ kind: "question" }, { kind: "negation" }] }] };
+    expect(replyFor(input({ answered: either, beat: OFFER, line: FRESH, met: 3 }))).toEqual([FRESH]);
   });
 });
 

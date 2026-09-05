@@ -1921,3 +1921,57 @@ cannot: a line in the other register fails the gate by design, so it stays a sta
 the gate learns to make an exception it can explain. And the drafter still cannot fill a beat whose
 line has to name a value off the card, so a keyed deployment composes those live and a keyless one
 says `Kell 11:30?` off one course word and the card.
+
+## 33. The fourth pass: an offer names a day, and a yes is an answer
+
+A learner played the landlord scene through and sent the transcript. Every line on it was true to
+its own rule and the conversation still did not flow, and the transcript says where.
+
+- **"Millal teil on aeg?" was answered "Jah. Kell 14:00?"** The learner had asked when anybody
+  could come, which is the beat's own goal, and the reply opened with a yes to a question that has
+  no yes in it and then offered a clock time with no day. The `they` line for that beat has said
+  "next week" since it was written and the Estonian never did, because `datumLine` could say one
+  course word and one value off the card and a day was neither.
+- **"Sobib" was read as Estonian off the point.** The beat took the time alone, so the one word a
+  person is waiting for after offering a time was asked again, twice, and the landlord ran out of
+  patience over an answer that was the right one. The debrief then named agreeing a time as the one
+  thing to work on, to somebody who had agreed it twice.
+- **"Neljal korrusel" got "Jah?" and a wait.** The beat asked which floor, wanted a sentence, and
+  read a two-word answer with no verb as a learner who had not finished talking. And it could not
+  have been met anyway: the requirement named `kord`, which is an occasion or an order, where the
+  floor of a building is `korrus`, a word the scene's own `kodu` unit teaches.
+
+Four changes, each the smallest thing that makes that transcript flow.
+
+**A requirement can be a choice.** `Requirement` has an `anyOf` kind, and the marker takes the
+first option met and repeats back the word that met it, so an offered time is answered with the
+time, with `sobib`, with `jah`, or with `ei`, and every one of those is the beat done. It is one
+requirement to the marker and each of its options to everybody else: `leafNeeds` opens it for the
+grades, the drills, the tile and the catalogue test, carrying the index a `TurnRecord.met` row is
+keyed by. Both offers in the catalogue take it, the doctor's and the landlord's.
+
+**A line off the card is made of parts, and one of them can be a case.** `says` is a list: a
+lemma as the dictionary spells it, a slot as the card dealt it, or a slot in a named case, read off
+`Lexicon.caseForm`, which is the case table's own printed singular and never a suffix joined here.
+`Teisipäeval kell 14:00?` is the landlord's offer now. A part the dictionary cannot supply withholds
+the whole line, because `Kell 14:00?` where a day was meant is the line that started this and the
+English stage direction under it at least says "next week".
+
+**A fact can be the other side's.** The day is drawn per run and stored with the card, so a reload
+offers the same day and the debrief can say which, and it is marked `theirs` so the briefing never
+prints it: a card that says what the landlord is about to propose is a script rather than a role.
+The draw carries the English of every drawn word off the dictionary's gloss, so the stage direction
+says "Tuesday" inside an English sentence rather than the lemma.
+
+**A phrase that answers the question is not a fragment, and a question is not acknowledged.** A turn
+of two or more words that meets everything the beat asked for is an answer whatever its verb count;
+a single word on a sentence beat is still a look and a wait. And where the learner's turn was itself
+the question the beat wanted, the reaction is the move that answers it, never `Jah.` first. A bare
+`14:30` is read as the time it is, which it was not: `words()` returns letters, a turn with none was
+"unrecognised" before the datum rule was consulted, and the datum rule had already found it.
+
+Driven offline against the harvest, the transcript above now meets all seven beats and ends on the
+outcome that says so. What it does not fix: a learner who says the time will not do is told goodbye
+rather than offered another, since a second offer is a branch and the machine is a line, and every
+line the bank holds is still `reviewed: false`.
+

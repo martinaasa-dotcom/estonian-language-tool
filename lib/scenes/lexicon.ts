@@ -115,6 +115,18 @@ export interface Lexicon {
    * marker, which would put the dictionary back in a module that has none.
    */
   readonly byCase: ReadonlyMap<string, ReadonlySet<string>>;
+  /**
+   * `lemma|CASE` to the one spelling a screen prints for it.
+   *
+   * `byCase` is what a marker takes and is deliberately wider than what a
+   * screen shows, for the reason `accepted` is wider than `alsoRight` on a
+   * `DerivedForm`: it holds a suffix guess beside a retrieved form, and
+   * printing the pair would assert the guess is a word. A line the other side
+   * says off the card (`datumLine`) needs the printed form and only that,
+   * `teisipäeval` for the day they are offering, so this is the table's own
+   * singular, and a case the table has no form for is simply absent.
+   */
+  readonly caseForm: ReadonlyMap<string, string>;
 }
 
 /** The key `byCase` is read with. One place, so a caller cannot spell it wrong. */
@@ -127,6 +139,7 @@ export function buildLexicon(entries: readonly DictEntry[]): Lexicon {
   const forms = new Set<string>();
   const byLemma = new Map<string, Set<string>>();
   const byCase = new Map<string, Set<string>>();
+  const caseForm = new Map<string, string>();
   for (const entry of entries) {
     const own = byLemma.get(entry.lemma) ?? new Set<string>();
     for (const form of formsOf(entry)) {
@@ -143,9 +156,10 @@ export function buildLexicon(entries: readonly DictEntry[]): Lexicon {
         for (const word of words(value)) seen.add(word);
       }
       byCase.set(key, seen);
+      if (row.singular && !caseForm.has(key)) caseForm.set(key, row.singular);
     }
   }
-  return { forms, byLemma, byCase };
+  return { forms, byLemma, byCase, caseForm };
 }
 
 /** The eleven derivable cases of one nominal, attested forms leading. */
@@ -179,5 +193,5 @@ function caseTableOf(entry: DictEntry) {
 export function withExtras(lexicon: Lexicon, extras: Iterable<string>): Lexicon {
   const forms = new Set(lexicon.forms);
   for (const word of extras) forms.add(word.toLowerCase());
-  return { forms, byLemma: lexicon.byLemma, byCase: lexicon.byCase };
+  return { forms, byLemma: lexicon.byLemma, byCase: lexicon.byCase, caseForm: lexicon.caseForm };
 }

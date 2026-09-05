@@ -201,3 +201,54 @@ describe("what was matched", () => {
     expect(asked.matched).toEqual([]);
   });
 });
+
+describe("a beat that takes any one of several answers", () => {
+  /*
+    "Does 14:30 suit you?" is answered with the time, with `sobib`, with
+    `jah` or with `ei`, and the landlord's offer used to take the time alone:
+    `Sobib` read as real Estonian off the point and the offer was made again
+    until his patience ran out. The learner had said yes twice.
+  */
+  const offer = beat({
+    id: "agree", shape: "word",
+    needs: [{ kind: "anyOf", of: [
+      { kind: "datum", slot: "time" },
+      { kind: "lemma", oneOf: ["valu"] },
+      { kind: "negation" },
+    ] }],
+  });
+  const ctx = context({ data: new Map([["time", new Set(["14:30", "14.30", "14"])]]) });
+
+  it("is met by whichever option the learner took", () => {
+    for (const said of ["14:30", "Valu", "Ei"]) {
+      expect(readTurn(said, offer, ctx).reading, said).toBe("complete");
+    }
+  });
+
+  it("is one requirement to the marker, so a miss is a miss and not a partial answer", () => {
+    const seen = readTurn("tuba", offer, ctx);
+    expect(seen.reading).toBe("offtarget");
+    expect(seen.met).toEqual([false]);
+  });
+
+  it("repeats back the word that met it, and never the no", () => {
+    expect(readTurn("valu", offer, ctx).matched).toEqual(["valu"]);
+    expect(readTurn("ei", offer, ctx).matched).toEqual([]);
+  });
+});
+
+describe("a phrase that answers the question", () => {
+  const wants = beat({ shape: "sentence", needs: [{ kind: "lemma", oneOf: ["tuba"] }] });
+
+  it("is an answer, with or without a verb: asked which room, `toas` and `valu` is not somebody still talking", () => {
+    expect(readTurn("valu toas", wants, context()).reading).toBe("complete");
+  });
+
+  it("while the one required word alone is still a look and a wait", () => {
+    expect(readTurn("toas", wants, context()).reading).toBe("fragment");
+  });
+
+  it("and two words that miss the point are still what they were", () => {
+    expect(readTurn("valu valu", wants, context()).reading).toBe("fragment");
+  });
+});

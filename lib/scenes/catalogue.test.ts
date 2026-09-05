@@ -20,7 +20,7 @@ import { describe, expect, it } from "vitest";
 import { FALLBACK_PHRASE, REACTIONS, SCENES, sceneById } from "./catalogue";
 import { HARVESTED } from "@/prisma/data/harvested";
 import { curveballById } from "./curveballs";
-import { LEFT_OUTCOME, QUESTION_SHAPE } from "./types";
+import { LEFT_OUTCOME, QUESTION_SHAPE, leafNeeds } from "./types";
 import { unitById } from "@/lib/collections/syllabus";
 import { TIME_LEMMAS } from "./props";
 
@@ -29,8 +29,8 @@ function lemmasOf(scene: (typeof SCENES)[number]): string[] {
   const out: string[] = [];
   for (const beat of scene.beats) {
     out.push(...beat.topic);
-    if (beat.says) out.push(beat.says.lemma);
-    for (const need of beat.needs) {
+    for (const part of beat.says ?? []) if ("lemma" in part) out.push(part.lemma);
+    for (const { need } of leafNeeds(beat.needs)) {
       if (need.kind === "lemma") out.push(...need.oneOf);
       if (need.kind === "case") out.push(need.lemma);
     }
@@ -132,8 +132,10 @@ describe("the scene catalogue", () => {
     for (const scene of SCENES) {
       const slots = new Set(scene.props.map((prop) => prop.slot));
       for (const beat of scene.beats) {
-        if (!beat.says) continue;
-        expect(slots.has(beat.says.slot), `${scene.id}/${beat.id} says a slot the card never deals`).toBe(true);
+        for (const part of beat.says ?? []) {
+          if (!("slot" in part)) continue;
+          expect(slots.has(part.slot), `${scene.id}/${beat.id} says a slot the card never deals`).toBe(true);
+        }
       }
     }
   });
@@ -239,7 +241,7 @@ describe("the scene catalogue", () => {
     for (const scene of SCENES) {
       const slots = new Set(scene.props.map((p) => p.slot));
       for (const beat of scene.beats) {
-        for (const need of beat.needs) {
+        for (const { need } of leafNeeds(beat.needs)) {
           if (need.kind !== "datum") continue;
           expect(slots, `${scene.id}/${beat.id} waits on a prop the card does not carry`)
             .toContain(need.slot);
@@ -271,7 +273,7 @@ describe("the scene catalogue", () => {
       for (const id of scene.curveballs) {
         const ball = curveballById(id);
         expect(ball, `${scene.id} admits ${id}, which is not in the catalogue`).toBeDefined();
-        for (const need of ball?.needs ?? []) {
+        for (const { need } of leafNeeds(ball?.needs ?? [])) {
           if (need.kind === "lemma") {
             for (const lemma of need.oneOf) {
               expect(taught, `${scene.id} admits ${id}, whose out needs ${lemma}, which it does not teach`)

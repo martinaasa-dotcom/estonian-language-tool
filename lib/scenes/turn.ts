@@ -192,12 +192,17 @@ export function readTurn(
   const matched = found.flatMap((hit, i) => {
     const need = beat.needs[i];
     if (!hit || hit === YES || !need) return [];
-    if (need.kind === "lemma" && beat.shape !== "word") return [];
+    if ((need.kind === "lemma" || need.kind === "anyOf") && beat.shape !== "word") return [];
     return [hit];
   });
   const shape = (reading: TurnReading): Evidence => ({ reading, met, missing, words: marked, matched });
 
-  if (spoken.length === 0) return shape("unrecognised");
+  /*
+    No letters at all is nothing anybody could read, unless the beat wanted a
+    value and got one: `14:30` on its own is how people answer "what time",
+    `words()` returns letters, and the datum rule above already found it.
+  */
+  if (spoken.length === 0) return shape(missing.length === 0 ? "complete" : "unrecognised");
   if (isEnglish(spoken, marked)) return shape("english");
   /*
     Not on a beat whose answer *is* the other side's line. `Tere!` is answered
@@ -214,12 +219,23 @@ export function readTurn(
     vouch for at all are not a short answer, they are a turn nobody could
     read, and answering `xyzzy blorp` with "Jah?" as though the rest of the
     sentence were coming is the look-and-wait printed at the wrong person.
+
+    AND A PHRASE THAT ANSWERS THE QUESTION IS NOT A FRAGMENT. The rule exists
+    so that the one required word on its own cannot finish a beat that wanted
+    a sentence, and it was written as "no finite verb", which read `Neljal
+    korrusel` as a learner who had not finished talking. Asked which floor,
+    that is the whole answer, and anybody on the phone would take it: a
+    landlord who says "Jah?" and waits after it is waiting for a verb nobody
+    was going to supply. So a turn of two or more words that meets everything
+    the beat asked for is an answer, and a single word, or a phrase that
+    misses the point, is still what it was.
   */
   const anyVouched = marked.some((w) => w.vouched);
   const sentence = looksLikeSentence(text)
     || (spoken.length >= 2 && spoken.some((word) => context.hasFiniteVerb(word)))
     // `Kui kaua?` is a whole question, and a question is a whole turn.
-    || text.trim().endsWith("?");
+    || text.trim().endsWith("?")
+    || (spoken.length >= 2 && missing.length === 0);
   if (beat.shape === "sentence" && anyVouched && !sentence) return shape("fragment");
 
   if (missing.length === 0) return shape("complete");
@@ -287,6 +303,17 @@ function satisfies(
       return has(context.negators) ? YES : null;
     case "register":
       return has(context.registerForms) ? YES : null;
+    /*
+      The first option that is met, and the word that met it, so the other
+      side can repeat `Sobib.` back the way it repeats `Poodi.`
+    */
+    case "anyOf": {
+      for (const option of need.of) {
+        const hit = satisfies(option, text, spoken, context);
+        if (hit) return hit;
+      }
+      return null;
+    }
   }
 }
 
