@@ -103,6 +103,15 @@ describe("what happened outside the app", () => {
     expect((await outThere(OWNER, CLOCK, NOW)).streak).toBe(2);
   });
 
+  it("breaks the run on a morning the question went unanswered further back", async () => {
+    // Only the leading unreported day is stepped over. A gap behind it is a
+    // day nobody reported on, and a run across it would be conversations
+    // nobody claimed.
+    await report("UNDERSTOOD", at(YESTERDAY));
+    await report("SWITCHED", at("01"));
+    expect((await outThere(OWNER, CLOCK, NOW)).streak).toBe(1);
+  });
+
   it("reads the thirty days before the window, so the switch has something to fall from", async () => {
     await report("UNDERSTOOD", new Date("2026-07-20T10:00:00+03:00"));
     await report("SWITCHED", new Date("2026-07-25T10:00:00+03:00"));

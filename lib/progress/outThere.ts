@@ -86,6 +86,7 @@ export async function outThere(ownerId: string, clock: DayClock, now = new Date(
   const recent = new Set(clock.recentDayKeys(OUT_THERE_DAYS, now));
   const byOutcome = { UNDERSTOOD: 0, SWITCHED: 0, BAILED: 0 } as Record<Outcome, number>;
   const days = new Set<string>();
+  const reported = new Set<string>();
   let total = 0;
   const previous = { total: 0, switched: 0 };
   for (const r of all) {
@@ -97,12 +98,24 @@ export async function outThere(ownerId: string, clock: DayClock, now = new Date(
       continue;
     }
     byOutcome[r.outcome] += 1;
+    reported.add(r.about);
     if (!isConversation(r.outcome)) continue;
     total += 1;
     days.add(r.about);
   }
+  /*
+    The run is walked back from yesterday, which is the last day anybody can
+    have reported on, and yesterday is reported on by this morning's answer.
+    Before that answer is given yesterday is not a day with nothing in it, it
+    is a day nobody has been asked about yet, so it is stepped over rather
+    than read as a break. Only that one: a gap further back is a morning the
+    question went unanswered, and a run across it would be a run of
+    conversations nobody reported.
+  */
+  const walk = clock.recentDayKeys(OUT_THERE_DAYS, clock.shiftDay(now, 1)).reverse();
+  if (walk[0] !== undefined && !reported.has(walk[0])) walk.shift();
   let streak = 0;
-  for (const day of clock.recentDayKeys(OUT_THERE_DAYS, clock.shiftDay(now, 1)).reverse()) {
+  for (const day of walk) {
     if (!days.has(day)) break;
     streak += 1;
   }
