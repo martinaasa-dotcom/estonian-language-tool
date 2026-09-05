@@ -234,7 +234,7 @@ export const SONAD_LETTERS = /^[a-zäöüõšž]+$/u;
  * QWERTY, with Ü and Õ closing the top row and Ö and Ä closing the home row,
  * which is exactly where somebody who types Estonian already reaches. Š and Ž
  * are AltGr keys on the real thing and have no place of their own, so they sit
- * at the end of the bottom row: `KnownWord` holds loanwords, a guess may
+ * at the end of the bottom row: the forms list holds loanwords, a guess may
  * legitimately contain them, and a letter with no key is a word nobody can
  * type. That pairing is the rule and `sonad.test.ts` holds it in both
  * directions, because a keyboard missing a letter looks exactly like a

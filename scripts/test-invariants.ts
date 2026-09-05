@@ -8584,10 +8584,11 @@ check("Sonad decides nothing on the client but what to type", () => {
 
     TWO WORD LISTS, AND THEY ARE NOT THE SAME LIST. The answers are graded
     dictionary entries, because an answer has to be a word the app can teach
-    and link to. The guesses are `KnownWord`, the 154,995 headwords the Ekilex
-    enumeration brought back, because telling somebody an ordinary Estonian
-    word is not a word is the one thing a game like this must never do, and the
-    built dictionary alone would do it several times a round.
+    and link to. The guesses are the forms list, every spelling of every
+    headword Ekilex holds, because telling somebody an ordinary Estonian word
+    is not a word is the one thing a game like this must never do, and the
+    built dictionary alone would do it several times a round. The headword
+    list did it too: `põhjas` was refused to a learner as not a word.
   */
   const action = /export async function recordSonad\(([\s\S]*?)\n\}/.exec(code("app/actions.ts"))?.[1] ?? "";
   assert.ok(action, "recordSonad has gone, or changed shape past recognition");
@@ -8611,11 +8612,12 @@ check("Sonad decides nothing on the client but what to type", () => {
     "Sonad no longer takes its guesses from the whole language",
   );
   assert.match(picker, /bandsAround\(/, "Sonad's answer is no longer banded on the learner's level");
-  // And the far end of that: the wide list really is the enumeration's table
-  // and not the built dictionary, which would refuse a real word every round.
+  // And the far end of that: the wide list really is the forms list and not
+  // the built dictionary or the headword table, either of which refuses a
+  // real word every round.
   assert.match(
-    code("lib/dict/facts.ts"), /guessableWords[\s\S]{0,600}"KnownWord"/,
-    "the guess list is no longer read from KnownWord",
+    code("lib/dict/facts.ts"), /guessableWords[\s\S]{0,600}formsOfLength\(/,
+    "the guess list is no longer read from the forms list",
   );
 
   /*
@@ -8640,6 +8642,57 @@ check("Sonad decides nothing on the client but what to type", () => {
     /prefers-reduced-motion[\s\S]{0,400}sonad-settle/,
     "Sonad's movements are not held under prefers-reduced-motion",
   );
+});
+
+check("the forms list is an accept list and never an answer", () => {
+  /*
+    `põhjas` WAS REFUSED AS NOT A WORD, and the fix is a list of 5.8 million
+    spellings from every source that may be used: Ekilex's own inflection
+    tables and Vabamorf's synthesiser with guessing off (`scripts/build-forms.ts`).
+    What keeps that inside ADR-005 is which side of the app reads it. On the
+    accept side a synthesised form costs a non-word being let through on a
+    word game; on the answer side the same form would be drilled, or marked
+    against, or confirmed off a photograph as a word with principal parts it
+    does not have. So the list decides "is that a word" and "which word", and
+    nothing that builds a card, marks a paper, scores a level or vouches for a
+    scanned word may reach it.
+  */
+  const store = "lib/dict/forms.ts";
+  assert.ok(existsSync(store), "the forms list reader has gone");
+  const forbidden = ["lib/srs", "lib/exam", "lib/assessment", "lib/scan", "lib/tutor"]
+    .flatMap((dir) => sourceFiles(dir))
+    .concat(["lib/dict/resolveScan.ts", "lib/dict/search.ts", "lib/dict/upsert.ts"])
+    .filter((file) => /from "(@\/lib\/dict\/forms|\.\/forms)"/.test(code(file)));
+  assert.deepEqual(forbidden, [], "a module on the answer side reads the forms list");
+
+  // And the reader is a file read, never a table: six million rows in Postgres
+  // is half a gigabyte on the ladder /funding measures, for a yes or no.
+  assert.doesNotMatch(code(store), /@\/lib\/db|@prisma\/client|\bprisma\./, "the forms list has become a database read");
+
+  // The game's length is one the builder wrote a file for, because the list
+  // is read off that file and a length nobody built answers with nothing,
+  // which on a word game is every guess refused.
+  const sonad = code("lib/games/sonad.ts");
+  const length = /export const SONAD_LENGTH = (\d+);/.exec(sonad)?.[1];
+  assert.ok(length, "SONAD_LENGTH has gone");
+  const manifest = JSON.parse(read("prisma/data/forms/manifest.json")) as { lengths?: Record<string, number> };
+  assert.ok(
+    (manifest.lengths?.[length] ?? 0) > 7_134,
+    `the forms list holds no file for length ${length}, or fewer spellings than the headword list had; run npm run forms`,
+  );
+  assert.ok(existsSync(join("prisma/data/forms", `length-${length}.txt.gz`)), "the length file the game reads is missing");
+
+  // And the deployment carries the files, which a bundler does not do for a
+  // path only ever built at runtime.
+  assert.match(
+    read("next.config.ts"), /outputFileTracingIncludes[\s\S]{0,300}prisma\/data\/forms/,
+    "the forms list is not traced into the deployment, so a hosted Sõnad refuses every guess",
+  );
+
+  // Every source is credited where the others are.
+  for (const file of ["LICENSE", "app/(chromeless)/sign-in/page.tsx", "app/(chromeless)/welcome/page.tsx", "app/terms/page.tsx"]) {
+    assert.match(read(file), /Vabamorf/, `${file} does not credit Vabamorf`);
+  }
 });
 
 check("a crossword clue has one answer and says what kind of word it wants", () => {

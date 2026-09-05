@@ -208,6 +208,56 @@ list of Estonian words. Inserted and never updated, outside `--only-if-empty`'s 
 reason `ensureSearchIndexes` is, because a deployment seeded before this has a full dictionary and
 an empty word list.
 
+**And knowing a word exists is not the same as knowing the spelling in front of you.** `KnownWord`
+holds headwords, and nobody meets Estonian in its headwords: a learner typed `põhjas` into Sõnad,
+which is the seesütlev of `põhi`, and the game told them it was not a word. A headword list does
+that to every case of every noun and every person of every verb, and no amount of adding headwords
+fixes it, because the shape of the question is wrong.
+
+`prisma/data/forms/` is the forms list and `scripts/build-forms.ts` builds it from three sources,
+each openly licensed and each credited in `LICENSE`, on sign-in, in the landing footer and on
+/terms: the Ekilex enumeration this repository already had, Ekilex's own inflection tables for
+160,000 words as published in `KristjanPikhof/Estonian-Wordlist-Enriched-Ekilex` (CC BY 4.0 for the
+Institute's data, CC BY-SA 4.0 for the repository, so the share-alike reaches the built list the way
+Wiktionary's already does), and Vabamorf, Filosoft's open-source analyser and synthesiser (LGPL),
+run over the union with **guessing off on both sides**. That last is the whole of what makes the
+third source safe: `analyze(guess=False)` answers only for a headword the lexicon holds and
+`synthesize(guess=False)` produces a form only from the set of endings the lexicon assigned that
+word, so nothing in the file is a rule applied to a spelling nobody has ever classified. 5,755,280 spellings over 6,044,103
+form-headword pairs; at six letters, which is the length Sõnad plays, 60,812 where the headwords
+gave 7,134.
+
+**It is an accept list, and that is a stronger claim than "not a dictionary".** It holds a spelling
+and the headwords it belongs to, and no gloss, no level, no case label and no sentence, so there is
+nothing in it that could become a card answer, an exam answer, a marking target or a scanned word
+the app vouches for. That is what keeps ADR-005 whole with a synthesiser in the build: on the accept
+side a wrong form costs a non-word being let through on a word game, and on the answer side the same
+form would be drilled. `lib/srs`, `lib/exam`, `lib/assessment`, `lib/scan`, `lib/tutor`, the
+scanner's resolver, the dictionary search and the upsert may not import `lib/dict/forms.ts`, and
+that is asserted rather than described. **Never widen it into the dictionary.** A form the app is
+going to teach still comes from Ekilex or from a rule over a stored stem, exactly as before.
+
+**Files rather than rows, and both halves of that were measured.** The 6,044,103 pairs in Postgres,
+keyed and with the folded index the search would need, are **789 MB**: 333 MB of table and 456 MB of
+index, measured with `pg_total_relation_size` after a `\copy` into a local cluster. That is more than
+the whole rest of this database for a question whose answer never changes and which two screens ask,
+and it is the number the instance ladder on `/funding` is priced against. It is gzipped shards keyed on a form's folded first
+three letters, 3,857 files and 15 MB, read one at a time and indexed by folded spelling on the way
+in. Two letters was tried first and is the wrong depth: 552 files, a median shard of 322 bytes and
+`ka` at 698 KB, which took 449ms to read, decompress and index on the dictionary's own miss path,
+which is exactly where somebody is waiting. Three gives a median of 291 bytes, a worst case of
+170 KB, and a cold lookup of 37 to 99 ms against nothing at all once the shard is held. `outputFileTracingIncludes` is what carries the files onto a deployment, since a bundler
+traces what a module imports rather than what it opens, and without it a hosted Sõnad refuses every
+guess in silence.
+
+**The dictionary asks it before it asks Ekilex, which is the half a learner notices.** A search that
+misses used to go straight to the live lookup with whatever was typed, so `põhjas` was asked of
+Ekilex as a headword, found nothing there either, and came back as "nothing found" about the
+seesütlev of a word the dictionary has a full entry for. The forms list names the headwords first,
+the local search is retried on each, and only then is Ekilex asked, for the word rather than for the
+form. The screen says which word the spelling belongs to. The spelling suggestion stays over the
+headwords, because a suggestion is a link to an entry and an entry is named by its headword.
+
 **The built-in dictionary is built, not typed.** `scripts/expand-seed.ts` produces
 `prisma/data/expanded.json` from two sources with a strict division of labor: every Estonian
 form and every example sentence comes from Ekilex, every English gloss from Wiktionary, and the
@@ -5418,6 +5468,7 @@ npm run build:frequency  # recount the commonest words (cached corpus, --refresh
 npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
+npm run forms            # rebuild the forms list: every spelling of every word, from Ekilex and Vabamorf (cached, needs python3 with estnltk)
 npm run measure:scenes   # how much of a conversation the dictionary can already carry
 npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds (three runs so far; read the ranked list)
 npm run demo             # two months of sample history, for looking at the charts

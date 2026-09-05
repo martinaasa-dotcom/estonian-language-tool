@@ -104,7 +104,7 @@ const VERB_PARTS = [
 ] as const;
 
 export function DictionaryClient({
-  initialQuery, hits, heard, known, spellings, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan, glossLanguage,
+  initialQuery, hits, heard, known, knownAs, spellings, openedId, entry, matchedAs, suggestions, headlines, feedHost, starred, tutorReady, justFetched, canScan, glossLanguage,
 }: {
   initialQuery: string;
   /** Which language the learner asked for their meanings in. */
@@ -125,6 +125,8 @@ export function DictionaryClient({
    * which is a different sentence from "no such word".
    */
   known: boolean;
+  /** The headwords the spelling is a form of, where it is one. Leads with itself where it is a headword. */
+  knownAs: string[];
   /** Spellings close enough to be worth offering, when it is not a word. */
   spellings: string[];
   /**
@@ -333,12 +335,14 @@ export function DictionaryClient({
             was most wrong about: `uudishimulik` appears in Kodukeel's own copy,
             and searching for it here said nothing found.
 
-            `KnownWord` tells them apart. It knows only which words exist, which
-            is exactly enough.
+            The forms list tells them apart. It knows only which spellings
+            exist and which word each is a form of, which is exactly enough.
           */}
           <Empty
             title={known
-              ? `${initialQuery} is an Estonian word`
+              ? (knownAs[0] && knownAs[0] !== initialQuery.trim()
+                ? `${initialQuery} is a form of ${knownAs.slice(0, 3).join(", ")}`
+                : `${initialQuery} is an Estonian word`)
               : `Nothing found for "${initialQuery}"`}
             body={known
               ? "It is not in the built-in dictionary yet. Add it with its genitive and it is yours straight away."
