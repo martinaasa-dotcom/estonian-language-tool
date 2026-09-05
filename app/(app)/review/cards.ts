@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { parseExamples, teachingSentence } from "@/lib/dict/examples";
+import { glossSentences } from "@/lib/dict/glossed";
+import { resolveProvider } from "@/lib/tutor/provider";
 import { isPhrase } from "@/lib/dict/pos";
 import { equivalentIn, type GlossLanguage } from "@/lib/collections/glossLanguage";
 import { isStillLearning } from "@/lib/srs/scheduler";
@@ -89,12 +91,59 @@ function introFor(c: CardRow, glossLanguage: GlossLanguage): ReviewCard["intro"]
   return {
     lemma: c.lexeme.lemma,
     gloss: c.lexeme.translation,
+    lexemeId: c.lexemeId,
     equivalent: equivalent ? { text: equivalent, lang: glossLanguage } : null,
     sentence: found
       ? { et: found.example.et, en: found.example.en ?? null, form: found.form }
       : null,
+    /*
+      Filled in by `withGlosses`, in one query for the whole session rather
+      than one per card. Null here rather than an empty list, because "the page
+      did not look" and "the dictionary vouched for nothing in it" are
+      different things and the screen draws them differently.
+    */
+    tokens: null,
+    /*
+      Whether this deployment has a model to ask for the sentence in English.
+      Read here rather than threaded down through two sessions as a prop: it is
+      a fact about the deployment, and it belongs beside the sentence it is
+      about. The default deployment has none, and then nothing is offered at
+      all rather than offered and refused.
+    */
+    canTranslate: resolveProvider() !== null,
     isPhrase: isPhrase(c.lexeme.pos),
   };
+}
+
+/**
+ * The dictionary under every first meeting in the session, in one read.
+ *
+ * A first meeting shows an attested sentence and, for most words, Ekilex
+ * records no English for it, so a beginner met six words they had never seen
+ * around the one they had just been told about. Every word the dictionary
+ * vouches for is looked up here and opens on the card (ADR-021, and see
+ * `lib/dict/glossed.ts` for what may be underlined).
+ *
+ * One query for the session rather than one per card, for the reason every
+ * other batched read in this file gives: the review queue is the hottest read
+ * in the app, and a hosted database is a round trip away in another region.
+ * A session with no first meeting in it does not ask at all.
+ */
+async function withGlosses(cards: ReviewCard[]): Promise<ReviewCard[]> {
+  const wanted: { index: number; et: string; form: string | null }[] = [];
+  cards.forEach((card, index) => {
+    const sentence = card.intro?.sentence;
+    if (sentence) wanted.push({ index, et: sentence.et, form: sentence.form });
+  });
+  if (wanted.length === 0) return cards;
+
+  const glossed = await glossSentences(wanted);
+  const byIndex = new Map(wanted.map((w, i) => [w.index, glossed[i] ?? null]));
+  return cards.map((card, index) => {
+    const tokens = byIndex.get(index);
+    if (!tokens || !card.intro) return card;
+    return { ...card, intro: { ...card.intro, tokens } };
+  });
 }
 
 function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
@@ -258,26 +307,33 @@ async function formsForCases(rows: CardRow[]): Promise<Map<string, HeldForms>> {
  * apart.
  */
 export async function withChoices(
-  rows: CardRow[], glossLanguage: GlossLanguage, ownerId?: string,
+  rows: CardRow[], glossLanguage: GlossLanguage, ownerId: string,
 ): Promise<ReviewCard[]> {
   /*
-    WHICH OF THESE WORDS ARE ALREADY FAVOURITES.
+    WHICH OF THESE WORDS ARE ALREADY FAVOURITES, AND THE GLOSSED SENTENCE.
 
-    One query for the session rather than one per card, and it is here rather
-    than in either page for the reason the option ranking is: two routes render
-    this session, and a second copy of the read is two answers to which star is
-    filled in. The owner is a parameter because nothing in this module resolves
-    a session, and it is optional so a caller that has not got one draws every
-    star empty rather than failing to build a round.
+    Two reads that do not need each other, so they go together: on the
+    deployment's own pooler each `await` is a round trip, and this is the
+    hottest read in the app.
+
+    The stars are read here rather than in either page for the reason the
+    option ranking is: two routes render this session, and a second copy of
+    the read is two answers to which star is filled in. The owner is a
+    parameter because nothing in this module resolves a session, and it is
+    REQUIRED, for the reason `illSgShort` is a required field on `NounStems`:
+    a caller that has not thought about it does not compile. Optional was the
+    first version and a third caller arrived one commit later without it, from
+    a branch that had never heard of stars, which would have drawn every star
+    on that round empty for a word that is a favourite. Every route rendering
+    this session resolves an owner already.
   */
-  const starred = ownerId
-    ? await starredAmong(ownerId, rows.map((r) => r.lexemeId).filter((id): id is string => !!id))
-    : new Set<string>();
-
-  const cards = rows.map((c) => {
-    const card = toReviewCard(c, glossLanguage);
-    return c.lexemeId && starred.has(c.lexemeId) ? { ...card, starred: true } : card;
-  });
+  const [glossed, starred] = await Promise.all([
+    withGlosses(rows.map((c) => toReviewCard(c, glossLanguage))),
+    starredAmong(ownerId, rows.map((r) => r.lexemeId).filter((id): id is string => !!id)),
+  ]);
+  const cards = glossed.map(
+    (card) => (card.lexemeId && starred.has(card.lexemeId) ? { ...card, starred: true } : card),
+  );
 
   /*
     The case cards first, because they need no pool: the wrong answers are

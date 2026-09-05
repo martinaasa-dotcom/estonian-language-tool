@@ -269,7 +269,7 @@ export function GovernmentSession({ questions: initialQuestions }: { questions: 
                 <Button
                   disabled={added === question.lexemeId}
                   onClick={async () => {
-                    await addToDeck(question.lexemeId, ["RECOGNITION", "GOVERNMENT"], "DICTIONARY");
+                    await addToDeck(question.lexemeId, ["RECOGNITION", "GOVERNMENT"], "LOOKUP");
                     setAdded(question.lexemeId);
                   }}
                 >

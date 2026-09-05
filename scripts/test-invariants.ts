@@ -4908,6 +4908,62 @@ check("a headline is read through the dictionary's gate, and the feed writes not
   assert.doesNotMatch(feed, /ownerId|cookies|headers\(/, "the feed request carries something of the learner's");
 });
 
+check("a word under a teaching sentence is one the dictionary vouched for", () => {
+  /*
+    THE SENTENCE A WORD IS TAUGHT WITH IS THE FIFTH DOOR ONTO ADR-021'S GATE,
+    AFTER THE PHOTOGRAPH, THE HEADLINE, THE FREQUENCY COUNT AND THE
+    CONTRIBUTED SENTENCE.
+
+    Ekilex records no English against a usage on a reader key, so a first
+    meeting showed an attested sentence a beginner could read one word of: the
+    screen whose whole claim is a word behaving. Every other word in it is
+    glossed now, and every gloss on it is there because `matchEstonianForm`
+    recognised that exact spelling, a stored form, or a regular case of the
+    genitive stem. A word it will not vouch for is printed plain, because
+    leaving it out would be editing an attested sentence and guessing at it
+    would be worse.
+
+    Three things follow and all three are here. The module decides with the
+    matcher and writes nothing down. The screen underlines what the module
+    vouched for rather than what looks like a word. And the taught word, which
+    is glossed at the top of the same screen, is marked rather than offered a
+    panel repeating it.
+  */
+  const reader = code("lib/dict/glossed.ts");
+  assert.match(reader, /matchEstonianForm\(candidates/, "a sentence's words are no longer vouched by the dictionary");
+  assert.match(reader, /candidatesFor\(/, "the lookup no longer narrows through the scanner's own candidate query");
+  assert.doesNotMatch(
+    reader,
+    /prisma\.(lexeme|form|card|review)\.(create|update|upsert|delete)/,
+    "the sentence reader writes to the dictionary",
+  );
+  // Nothing on the provider chain: a gloss here is a column, never a reading.
+  assert.doesNotMatch(reader, /tutor\/provider|openWithFallback|complete/, "the sentence reader can reach a model");
+
+  const screen = code("components/GlossedSentence.tsx");
+  assert.match(screen, /token\.entry \?|!token\.entry/, "the screen opens something other than a vouched word");
+  assert.match(screen, /token\.taught/, "the taught word is no longer marked apart from the words being looked up");
+  assert.match(
+    reader,
+    /piece\.word && !run\.match/,
+    "the taught form's own runs are being looked up as though they were another word",
+  );
+  // A press, never a render: the panel's button is the only way a word from a
+  // sentence reaches a deck, and it names a source the closed list knows.
+  assert.match(screen, /addToDeck\(entry\.lexemeId/, "the panel no longer adds through the shared action");
+  // The list moved out of `app/actions.ts` into its own module, because
+  // `/review/lookups` reads the same values to decide whose idea a word was.
+  // A word hit inside a sentence and kept is the learner's own by that
+  // reading, in the way keeping the word of the day is.
+  const sources = code("lib/srs/sources.ts");
+  assert.match(sources, /"SENTENCE"/, "a word kept from a sentence has no source of its own");
+  assert.match(
+    /YOUR_OWN_SOURCES = \[([\s\S]*?)\]/.exec(sources)?.[1] ?? "",
+    /"SENTENCE"/,
+    "a word the learner stopped and kept out of a sentence is filed as material the app chose",
+  );
+});
+
 check("a response built out of one learner's own rows is never cacheable", () => {
   /*
     THE FRAMEWORK'S SILENCE IS NOT A CACHE POLICY.
@@ -4998,6 +5054,130 @@ check("a card never answers the card before it", () => {
   // It reorders and never drops: the set out is the set in.
   assert.match(queue, /remaining\.splice/, "the spacer no longer moves cards rather than filtering them");
   assert.doesNotMatch(queue, /\.filter\(/, "the spacer filters, which would silently drop a due card");
+});
+
+check("a word the learner went and got is reachable, and the commonest lead", () => {
+  /*
+    REPORTED BY SOMEBODY USING THE APP, AND RIGHT ABOUT THE MECHANISM.
+
+    A word looked up out of curiosity goes into one deck with everything else,
+    and the review queue introduces unseen cards oldest first: sixty read,
+    ordered by band, ten shown. So the word somebody stopped and looked up on
+    the bus sits behind the whole course backlog, which on a deck built by
+    adding a level in first run is a year long. Anki has the opposite failure,
+    where everything a learner adds lands at the front, and the two fixes point
+    in opposite directions, so it is worth writing down which one this is.
+
+    THREE THINGS HOLD THE ANSWER UP AND EACH IS ANCHORED ON WHAT ROTS.
+
+    `Card.source` has to be able to tell the two apart. It could not: both
+    `addUnitsToDeck` and the button on a dictionary entry wrote `DICTIONARY`,
+    so the column answered "which table did this come out of" rather than
+    "whose idea was this word". `lib/srs/sources.ts` is the closed list and the
+    reading, and no other file may name one of those values, because a literal
+    written beside a `createMany` is a card filed under a label the round
+    cannot see.
+
+    `DICTIONARY` is claimed by neither side and has to stay that way. Reading
+    it as a lookup fills the round with course words for every learner who
+    already has a deck; reading it as course material hides the lookups they
+    already have. Silence is never evidence and the safe direction is to claim
+    less.
+
+    And the trickle is ordered by the corpus this repository already counts.
+    `commonFirst` is a partition rather than a rank, for the reason its own
+    header gives at length: a nominal is counted on its dictionary form and a
+    verb on its persons, so ranking one against the other compares two
+    measurements. A comparator reading the index is the shape to catch.
+  */
+  const sources = code("lib/srs/sources.ts");
+  assert.match(sources, /export const CARD_SOURCES/, "the closed list of card sources has gone");
+  assert.match(sources, /export const YOUR_OWN_SOURCES/, "nothing says which sources are the learner's own");
+  assert.doesNotMatch(
+    sources, /YOUR_OWN_SOURCES[\s\S]*?"DICTIONARY"[\s\S]*?\] as const satisfies/,
+    "DICTIONARY is claimed as a lookup, which files every existing deck's course words in that round",
+  );
+  assert.doesNotMatch(
+    sources, /YOUR_OWN_SOURCES[\s\S]*?"SCENE"[\s\S]*?\] as const satisfies/,
+    "a scene's words are the course's, and a scene names unit ids rather than words",
+  );
+
+  /*
+    Every source literal in the tree is one the table names, and the table is
+    the only place they are written down other than the schema's own comment.
+    Read off `sources.ts` rather than typed here, or this check is the second
+    copy it exists to forbid.
+  */
+  const known = new Set([...sources.matchAll(/^\s*"([A-Z_]+)",$/gm)].map((m) => m[1]!));
+  assert.ok(known.size >= 8, "the source list could not be read off lib/srs/sources.ts");
+
+  /*
+    The four doors a card is written through, and the last argument of each is
+    the source. Anchored on the call rather than on the word `source`, because
+    `Example.source` is a different column on a different table with values of
+    its own (`EKILEX`, `USER`, `AI`), and a sweep for the word reads those as
+    card sources and fails on honest code.
+  */
+  const WRITES = /\b(?:addToDeck|addCardsFor|addUnitsToDeck|addPlanToDeck)\(([^;]*)\)/g;
+  for (const file of [...APP, ...LIB, ...COMPONENTS].filter((f) => f !== "lib/srs/sources.ts")) {
+    for (const [, args] of code(file).matchAll(WRITES)) {
+      /*
+        The source is the *last* argument. Anchored on the end of the argument
+        list rather than on the last quoted word anywhere in it, because the
+        card types before it are shouted too and because several callers pass
+        a variable: `AddWordButton` ends its call with `source`, and reading
+        the last literal there reports `PRODUCTION` as a card source.
+      */
+      const tail = /"([A-Z_]{4,})"\s*,?\s*$/.exec(args!.trim());
+      if (!tail) continue;
+      const written = tail[1]!;
+      assert.ok(
+        known.has(written),
+        `${file} files a card under "${written}", which lib/srs/sources.ts does not name`,
+      );
+    }
+  }
+
+  /*
+    And nothing under lib/srs writes one as a literal beside a row, which is
+    the other door: `backfillClozeCards` used to type `DICTIONARY` next to its
+    `createMany`, so a gap-fill arriving for a course word would have moved it
+    into the lookups round. It reads the word's existing cards instead.
+  */
+  const srsSource = LIB.filter(
+    (f) => f.startsWith("lib/srs/") && f !== "lib/srs/sources.ts" && !/\.i?test\.ts$/.test(f),
+  );
+  for (const file of srsSource) {
+    for (const [, written] of code(file).matchAll(/source:\s*"([A-Z_]{4,})"/g)) {
+      assert.ok(
+        known.has(written!),
+        `${file} writes a card source of "${written}", which lib/srs/sources.ts does not name`,
+      );
+    }
+  }
+
+  // The round reads the table rather than a `where` clause of its own.
+  const round = code("app/(app)/review/lookups/page.tsx");
+  assert.match(
+    round, /source: \{ in: \[\.\.\.YOUR_OWN_SOURCES\] \}/,
+    "the lookups round names its own sources, which is a second answer to whose idea a word was",
+  );
+  // It is a slice of the one deck, graded through the one log, not a second
+  // scheduler: it renders the shared session like every other round (ADR-016).
+  assert.match(round, /<ReviewSession/, "the lookups round grew a card runner of its own");
+
+  const review = code("app/(app)/review/page.tsx");
+  assert.match(
+    review, /aroundFirst\(commonFirst\(/,
+    "the new-card trickle no longer puts the commonest words of their kind first, "
+      + "or the band has stopped being the outer ordering",
+  );
+
+  const common = code("lib/collections/commonFirst.ts");
+  assert.doesNotMatch(
+    common, /indexOf|\.sort\(/,
+    "commonFirst ranks rather than partitions, which compares a noun's count against a verb's",
+  );
 });
 
 check("signing out forgets the device", () => {
@@ -8270,6 +8450,80 @@ check("Sonad decides nothing on the client but what to type", () => {
     css,
     /prefers-reduced-motion[\s\S]{0,400}sonad-settle/,
     "Sonad's movements are not held under prefers-reduced-motion",
+  );
+});
+
+check("a crossword clue has one answer and says what kind of word it wants", () => {
+  /*
+    A LEARNER READ `3 down: human`, TYPED `inimene`, AND WAS MARKED WRONG.
+
+    `inimene` is what a human is, it is seven letters, and the row was seven
+    squares. The grid wanted `inimlik`, the adjective, which is glossed
+    "human"; `inimene` is glossed "human being". Two entries, two parts of
+    speech, two glosses, and nothing this app had could see that one English
+    word was standing over both of them: English does not mark a part of
+    speech and Estonian derivation does.
+
+    A CARD WIDENS AND A GRID CANNOT, which is what makes this its own rule
+    rather than `acceptedAnswers` one screen further out. A production card
+    with two right answers puts both on the back. A crossword square takes one
+    string, crossing other words, so a clue with two honest answers is a trick
+    rather than a question and the clue has to narrow instead.
+
+    TWO RULES AND THEY CATCH DIFFERENT THINGS. The clue names the kind of word,
+    which is the hint a production card has carried since the deck was built
+    and the one screen that had never printed it; and a clue another entry
+    answers just as well is refused on both sides, because which of `kena` and
+    `ilus` a grid ought to have is not a question the dictionary can answer.
+    Measured on the shipped dictionary: 3,991 clues where there were 5,295, and
+    a full seven-word grid on every day of a year at every level.
+  */
+  const clue = code(join("lib", "games", "clue.ts"));
+  const signature = /export function clueFrom\(([^)]*)\)/.exec(clue)?.[1] ?? "";
+  assert.ok(signature, "clueFrom has gone, or changed shape past recognition");
+  /*
+    Required rather than optional, for the reason `illSgShort` is: a caller
+    that has not thought about which word its clue is about should not compile.
+    An optional parameter is the shape this fault arrives in again.
+  */
+  assert.match(
+    signature, /\bpos\s*:\s*string\b/,
+    "clueFrom no longer takes the part of speech, so the clue does not say what kind of word it wants",
+  );
+  assert.doesNotMatch(
+    signature, /pos\s*\?/,
+    "the part of speech is optional on clueFrom, which is a clue that names a kind only when somebody remembered to",
+  );
+
+  /*
+    Anchored on the call rather than on the import, because a file that reads
+    the clash set and then clues every row it was handed satisfies any check
+    that only looks for the import. This is the fault Today had with
+    `caseAccuracy`.
+  */
+  const picker = code(join("lib", "progress", "crossword.ts"));
+  assert.match(
+    picker, /clashes\.has\(clueKey\(/,
+    "the crossword no longer refuses a clue another entry answers",
+  );
+  assert.match(
+    picker, /clueFrom\([^)]*\bpos\b/,
+    "the crossword builds a clue without saying which kind of word it wants",
+  );
+
+  /*
+    AND THE CLASH IS READ OVER THE WHOLE DICTIONARY, WHICH IS THE HALF THAT
+    WOULD HAVE CAUGHT THE REPORT. `inimene` is graded A1 and the grid was B1,
+    so the rival was never in the day's pool: a clash read off `crosswordPool`
+    would have passed on the very clue this exists for. A band in that query is
+    the regression.
+  */
+  const facts = code(join("lib", "dict", "facts.ts"));
+  const reading = /export function clueClashes\(\)[\s\S]*?\n\}/.exec(facts)?.[0] ?? "";
+  assert.ok(reading, "lib/dict/facts.ts no longer reads the clue clashes");
+  assert.doesNotMatch(
+    reading, /cefr|bands|MIN_LETTERS|char_length/,
+    "the clue clashes are read over a band or a length, so a rival outside the day's pool is invisible",
   );
 });
 

@@ -307,7 +307,7 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
                   <Button
                     disabled={added === question.lexemeId}
                     onClick={async () => {
-                      await addToDeck(question.lexemeId, ["RECOGNITION", "PRODUCTION", "CONJUGATION"], "DICTIONARY");
+                      await addToDeck(question.lexemeId, ["RECOGNITION", "PRODUCTION", "CONJUGATION"], "LOOKUP");
                       setAdded(question.lexemeId);
                     }}
                   >

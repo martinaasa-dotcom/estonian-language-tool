@@ -508,6 +508,9 @@ export function LearnSession({
               gloss={word.gloss}
               equivalent={word.equivalent}
               sentence={word.sentence}
+              tokens={word.tokens}
+              lexemeId={word.lexemeId}
+              canTranslate={word.canTranslate}
               isPhrase={word.isPhrase}
             />
           )}

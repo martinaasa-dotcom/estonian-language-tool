@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/auth/session";
 import { courseLevelFor } from "@/lib/progress/level";
 import { aroundFirst, bandsAround, isAround } from "@/lib/collections/levels";
+import { commonFirst } from "@/lib/collections/commonFirst";
 import { unitById, type Level } from "@/lib/collections/syllabus";
 import { MAX_ITEMS as MAX_SCAN_ITEMS } from "@/lib/scan/extract";
 import { parseItems } from "@/lib/scan/items";
@@ -343,7 +344,8 @@ async function inBandPool(
 }
 
 /**
- * New words around the learner's level first.
+ * New words around the learner's level first, and the commonest of those
+ * ahead of the rest.
  *
  * The one place a level can honestly reach the daily loop. What is *due* is
  * decided by FSRS and may not be reordered by anything: a card comes back when
@@ -355,9 +357,24 @@ async function inBandPool(
  * pasted or photographed carries no band at all and counts as at level, since
  * they went to the trouble of putting it there. Both of those are
  * `lib/collections/levels.ts`, which is where they can be tested.
+ *
+ * THE BAND IS THE OUTER ORDERING AND THE CORPUS IS THE INNER ONE, which is
+ * what composing the two stable partitions in this order gets: `commonFirst`
+ * runs first and `aroundFirst` runs over its answer, so a word out of band
+ * never leads on the strength of being common, and inside a band the words the
+ * corpus counts most lead the ones it has never heard of. Until now the tie
+ * inside a band was `createdAt`, which is when a card happened to be written:
+ * a deck holding a unit, a photographed handout and an afternoon of looking
+ * things up taught them in assembly order, and `ja` and `aga` waited behind
+ * whatever went in first. The measurement was already in the repository and
+ * reached two browsing screens and not the queue.
+ *
+ * It is a partition rather than a rank for the reason `commonFirst` gives at
+ * length, which is that a noun and a verb are counted differently and cannot
+ * be ranked against each other.
  */
 function atLevelFirst(cards: readonly CardRow[], level: Level): CardRow[] {
-  return aroundFirst(cards, level, (c) => c.lexeme?.cefr);
+  return aroundFirst(commonFirst(cards, (c) => c.lexeme?.lemma), level, (c) => c.lexeme?.cefr);
 }
 
 
