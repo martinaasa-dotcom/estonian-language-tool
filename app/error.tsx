@@ -80,8 +80,8 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         </code>
       )}
       <div className="mt-2 flex gap-3">
-        <Button variant="primary" onClick={reset}>Try again</Button>
         <ButtonLink href="/">Back to Today</ButtonLink>
+        <Button variant="primary" onClick={reset}>Try again</Button>
       </div>
       {/*
         A screen that failed is the one place a person has nothing else to do,

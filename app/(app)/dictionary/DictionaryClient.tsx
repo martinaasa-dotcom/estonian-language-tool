@@ -921,10 +921,10 @@ function AddToDeck({ entry }: { entry: EntryView }) {
         ))}
       </div>
       <div className="mt-4 flex gap-2">
+        <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
         <Button variant="primary" onClick={submit} disabled={pending || selected.length === 0} className="flex-1">
           {pending ? "Adding…" : "Add"}
         </Button>
-        <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
       </div>
     </div>
   );

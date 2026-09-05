@@ -18,6 +18,7 @@ import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import { englishName } from "@/lib/games/flash";
 import { caseByKey } from "@/lib/estonian/cases";
 import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /** A task, plus where the word stands, which is the thing the round is moving. */
 export interface FlashPrompt extends FlashTask {
@@ -136,8 +137,8 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
   */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (mark) { if (isAdvanceKey(e)) { e.preventDefault(); next(); } return; }
       if (e.key !== "Enter") return;
-      if (mark) { e.preventDefault(); next(); return; }
       if (shape === "build" && !(e.metaKey || e.ctrlKey)) return;
       e.preventDefault();
       void check();
@@ -169,8 +170,8 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/words/mastery" variant="primary">Where your words stand</ButtonLink>
           <ButtonLink href="/review/flashcards">Another round</ButtonLink>
+          <ButtonLink href="/words/mastery" variant="primary">Where your words stand</ButtonLink>
         </div>
       </div>
     );

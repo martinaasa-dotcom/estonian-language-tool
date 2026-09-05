@@ -15,6 +15,7 @@ import { useFeedbackSound } from "@/components/AudioPrefs";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { VERB_GROUP_LABELS } from "@/lib/estonian/morph";
 import { VERDICT_CLASS, VERDICT_INK, verdictOfCheck } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export type Tense = "present" | "conditional";
 
@@ -115,7 +116,7 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
         to the field. The same guard ReviewSession carries, for the same event.
       */
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (revealed && (e.key === "Enter" || e.key === " ")) {
+      if (revealed && isAdvanceKey(e)) {
         e.preventDefault();
         next();
       }
@@ -147,8 +148,8 @@ export function ConjugationSession({ questions: initialQuestions }: { questions:
           <Stat value={`${minutes}m`} label="Time" />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
           <ButtonLink href="/review/conjugation">Another round</ButtonLink>
+          <ButtonLink href="/" variant="primary">Back to Today</ButtonLink>
         </div>
       </div>
     );

@@ -25,6 +25,7 @@ import type { LearnScheduling, LearnWord } from "@/lib/progress/learn";
 import { grade, type RatingValue } from "@/lib/srs/scheduler";
 import { requeue } from "@/lib/srs/queue";
 import { OPTION_CLASS, VERDICT_CLASS, VERDICT_PAUSE_MS, optionState } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 /**
  * THE LEARN LADDER, DRIVEN.
@@ -384,10 +385,10 @@ export function LearnSession({
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
       if (phase === "feedback") {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); carryOn(); }
+        if (isAdvanceKey(e)) { e.preventDefault(); carryOn(); }
         return;
       }
-      if (rung === "meet" && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); met(); }
+      if (rung === "meet" && isAdvanceKey(e)) { e.preventDefault(); met(); }
       if (rung === "choice" && word?.choices) {
         const at = Number(e.key) - 1;
         const option = word.choices[at];
@@ -467,13 +468,13 @@ export function LearnSession({
         )}
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <ButtonLink href="/review" size="lg">Practice what is due</ButtonLink>
+          <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
           {more > 0 && (
             <ButtonLink href="/learn/new" variant="primary" size="lg">
               <Sparkles size={15} aria-hidden /> Learn {Math.min(more, LEARN_BATCH)} more
             </ButtonLink>
           )}
-          <ButtonLink href="/review" size="lg">Practice what is due</ButtonLink>
-          <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
       </div>
     );

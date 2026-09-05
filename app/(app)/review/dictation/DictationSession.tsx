@@ -17,6 +17,7 @@ import { checkDictation, wordNote, type DictationResult, type WordStatus } from 
 import type { RatingValue } from "@/lib/srs/scheduler";
 import { AI_TAG } from "@/lib/copy/values";
 import { VERDICT_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
+import { isAdvanceKey } from "@/lib/ux/advanceKey";
 
 export interface DictationTask {
   /** The card this counts against — every mode grades through the same log. */
@@ -132,6 +133,18 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
 
   const next = () => setIndex((i) => i + 1);
 
+  /* Once the sentence is marked, Enter or Space is "next", the same two keys
+     every other round takes for moving on. Before the mark the field owns
+     Enter through `onEnter`, and a space is a letter in the sentence. */
+  useEffect(() => {
+    if (!result) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (isAdvanceKey(e)) { e.preventDefault(); next(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [result]);
+
   if (round.length === 0) {
     return (
       <Page title="Dictation" lead="Hear a sentence, write it down.">
@@ -165,9 +178,9 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
           <StatTile value={`${minutes}m`} label="Time" tone="sky" />
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href="/review/dictation" variant="primary" size="lg">Another round</ButtonLink>
           <ButtonLink href="/practice" size="lg">Other modes</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
+          <ButtonLink href="/review/dictation" variant="primary" size="lg">Another round</ButtonLink>
         </div>
       </div>
     );

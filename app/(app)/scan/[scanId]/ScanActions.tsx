@@ -78,12 +78,12 @@ export function ScanActions({ scanId, title, pending }: {
           style={{ borderColor: "var(--rule)", background: "var(--surface)", color: "var(--ink)" }}
         />
         <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => { setRenaming(false); setDraft(title); }}>
+            Cancel
+          </Button>
           <Button variant="primary" onClick={rename} disabled={busy}>
             <Check size={15} aria-hidden />
             Save
-          </Button>
-          <Button variant="ghost" onClick={() => { setRenaming(false); setDraft(title); }}>
-            Cancel
           </Button>
         </div>
       </div>

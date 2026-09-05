@@ -511,10 +511,10 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
                 : "That part's time ran out while you were away. It'll open closed, just like it would in a real exam hall."}
             </p>
             <span className="mt-3 flex flex-wrap gap-2">
-              <Button variant="primary" size="sm" onClick={onResume}>Carry on</Button>
               <Button variant="ghost" size="sm" onClick={onDiscard}>
                 Throw it away and start fresh
               </Button>
+              <Button variant="primary" size="sm" onClick={onResume}>Carry on</Button>
             </span>
           </Card>
         </div>

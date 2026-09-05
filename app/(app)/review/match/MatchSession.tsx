@@ -198,9 +198,9 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
           <Stat value={missed} label="Wrong taps" tone={missed === 0 ? VERDICT_INK.right : undefined} />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/review/match" variant="primary">Another round</ButtonLink>
           <ButtonLink href="/practice">Other modes</ButtonLink>
           <ButtonLink href="/">Back to Today</ButtonLink>
+          <ButtonLink href="/review/match" variant="primary">Another round</ButtonLink>
         </div>
       </div>
     );
