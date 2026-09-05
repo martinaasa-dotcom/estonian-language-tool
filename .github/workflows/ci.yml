@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       # Prisma's client is generated, so `tsc` has nothing to check against
@@ -54,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       - run: npx prisma generate
@@ -67,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       - run: npx prisma generate
@@ -83,7 +83,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       # No database and no key: it reads prisma/data/expanded.json, which is
@@ -113,7 +113,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       # This is the whole reason the suite will stay green. Upside Lab kept
@@ -130,7 +130,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       - run: npx prisma generate
@@ -217,7 +217,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       # The real deploy command: generate, push the schema, seed the
@@ -264,7 +264,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       - run: npx playwright install --with-deps chromium
@@ -474,7 +474,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       - run: npx playwright install --with-deps chromium
@@ -510,7 +510,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       - run: npm run build
@@ -537,7 +537,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { persist-credentials: false }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: "20", cache: npm }
       - run: npm ci
       # Read every advisory in the whole tree, out loud, whether or not it
