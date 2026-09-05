@@ -162,7 +162,8 @@ For a language house running one course with this beside it, the numbers worth a
 end of the term, all of which the app already produces without a survey:
 
 - conversations reported per learner per week, and the share in which the other person switched
-  to English, at the start of the course and at the end;
+  to English, at the start of the course and at the end, which is what the research file's
+  encounters table carries, by month, under the disclosure gate;
 - for each unit's "you can do this" claim, the share of learners who got every required beat of its
   situation done at least once;
 - which objective a class most often missed, which is what the class panel already shows a teacher;

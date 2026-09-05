@@ -42,16 +42,32 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
   unitTitle: string;
 }) {
   const [answer, setAnswer] = useState<Outcome | null>(answered);
+  const [failed, setFailed] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
 
   const report = (outcome: Outcome) => {
     setAnswer(outcome);
+    setFailed(false);
     start(async () => {
-      // No errand id: this is the learner's own day rather than our homework,
-      // and a conversation with a neighbor is not ours to take credit for.
-      await recordEncounter(null, outcome);
-      router.refresh();
+      /*
+        No errand id: this is the learner's own day rather than our homework,
+        and a conversation with a neighbor is not ours to take credit for.
+
+        A report is not a grade, so it is not queued for a train (ADR-015): a
+        press that did not land puts the three answers back with a line
+        saying so, which is the star button's answer to the same failure. It
+        used to throw into nothing and leave the card claiming the day was
+        answered when the server had heard nothing.
+      */
+      try {
+        const result = await recordEncounter(null, outcome);
+        if (!result.ok) throw new Error(result.error);
+        router.refresh();
+      } catch {
+        setAnswer(null);
+        setFailed(true);
+      }
     });
   };
 
@@ -65,6 +81,11 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
         <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
           Anything counts. A shop, a colleague, one sentence at the door.
         </p>
+        {failed && (
+          <p className="mt-2 text-xs" role="status" style={{ color: "var(--hard-ink)" }}>
+            That did not save. Try again when you are back online.
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Whether you spoke Estonian yesterday">
           {OUTCOMES.map((o) => (
             <button
@@ -139,6 +160,15 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
           ? `Your first in the last ${days} days. `
           : `${conversations} in the last ${days} days. `}
         <Link href="/progress" className="underline">Progress keeps the count</Link>.
+        {/*
+          The switch is the thing being practised against, and every scene
+          has a moment where the other side gives up on Estonian. A learner
+          who was just switched on is the one person for whom that rehearsal
+          is worth a line.
+        */}
+        {answer === "SWITCHED" && (
+          <> Every <Link href="/situations" className="underline">conversation here</Link> has a moment where they switch, so you can rehearse holding the line.</>
+        )}
       </p>
       {/*
         THE ONE THING WORTH KEEPING FROM A CONVERSATION IS THE WORD YOU DID
