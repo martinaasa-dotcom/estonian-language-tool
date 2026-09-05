@@ -194,6 +194,19 @@ function bandScores(items: readonly ItemRef[], responses: readonly Response[]): 
  * wrong in; pre-A1 gave up two points and "placed above" rose by one to
  * three, which is the price of reading a confirmed near miss as the pass it
  * probably was.
+ *
+ * RE-RUN ON 2026-09-05 AND IT REPRODUCES, which is the only thing that makes
+ * the three figures above worth having written down. The whole table, 2,000
+ * learners a level: pre-A1 72%, A1 87%, A2 82%, B1 78%, B2 79%, C1 69% placed
+ * at their own level, with the rest below at every band but pre-A1, where 28%
+ * are placed above because there is nothing below to place them at.
+ *
+ * These are **not** the 97, 98, 93, 85, 80 and 72 that `docs/03-architecture.md`
+ * quotes for the same paper. That set came from a simulation that lived in a
+ * pull request, with a more generous learner behind it; this script says in
+ * its own header that its model is its own and its figures compare with each
+ * other rather than with those. Two instruments, one paper, and the numbers
+ * only mean anything beside the ones from the same instrument.
  */
 export function levelFrom(bands: readonly BandScore[]): Level | null {
   if (bands.length === 0) return null;

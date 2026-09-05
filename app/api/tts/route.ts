@@ -55,6 +55,25 @@ const SPEECH_PER_MINUTE = 120;
  * working with audio when the network is gone, and keeps us a polite
  * consumer of a free academic service.
  */
+/**
+ * What shape a stored clip is, as part of its key.
+ *
+ * The store is content-addressed, shared across every instance and every
+ * learner, and prunes nothing, so a clip written under an old key is served
+ * for ever. Anything that changes what is kept, rather than what is said, has
+ * to move this or the fix reaches new phrases only.
+ *
+ * A CONSTANT BECAUSE THE COMMENT AND THE KEY HAD ALREADY COME APART. The pass
+ * that trims by frame, caps the pauses and levels by loudness says in its own
+ * message that "the route's cache key and the worker's cache version both
+ * move", and its whole diff here was one comment line: the worker went to v4
+ * and the key stayed at v3. So every phrase spoken before it kept the 390ms of
+ * vocoder hiss that pass measured, while the worker bump made every phone
+ * throw away its local copy and fetch the stale one again. Two spellings of
+ * one version is one spelling too many.
+ */
+const CLIP_SHAPE = "v4";
+
 export async function POST(request: Request) {
   const ownerId = await requireUserId().catch(() => null);
   const limit = await checkSharedRateLimit(
@@ -96,9 +115,7 @@ export async function POST(request: Request) {
   }
 
   const speaker = voice ?? voiceFrom(process.env.TTS_SPEAKER ?? DEFAULT_VOICE);
-  // `v4` because a clip under the old key is float32 with half a second of
-  // silence on each end, and the key has to say which shape is behind it.
-  const hash = createHash("sha256").update(`v3|${text}|${speaker}`).digest("hex");
+  const hash = createHash("sha256").update(`${CLIP_SHAPE}|${text}|${speaker}`).digest("hex");
   // Content-addressed and shared across instances and users: a clip fetched
   // once is available to everybody, forever. Writing to /tmp instead, as this
   // did, is per-instance and wiped on every cold start — not a cache, just a
@@ -117,9 +134,28 @@ export async function POST(request: Request) {
     ledger has described the gate for this the whole time and nothing called
     it, so the durable daily allowance was dead code. A hit and a joiner are
     still free: neither asks anybody for anything.
+
+    AND A MISS WITH NOBODY TO CHARGE IS REFUSED RATHER THAN WAVED THROUGH.
+    `requireUserId` is caught above so a caller the auth service could not
+    answer for still gets a bucket and still gets a clip; the middleware lets
+    that state through deliberately, because taking somebody's deck away over
+    a bad minute at Supabase is worse than the alternative. What may not
+    follow from it is spending. Ternaried into `null`, the ledger was skipped
+    for exactly the caller nothing could bill, so during an auth outage a
+    request reached TartuNLP and wrote into a store nothing prunes with only
+    the per-instance limiter in front of it, which that module says of itself
+    is not the thing that bounds cost. `lib/usage` has no off switch and fails
+    closed, so this fails closed too: what is already stored still plays, and
+    a new clip waits for somebody the meter can name.
   */
-  const decision = ownerId ? await authoriseCall(ownerId, "TTS") : null;
-  if (decision && !decision.allowed) {
+  if (!ownerId) {
+    return Response.json(
+      { error: "That clip is not stored yet, and we could not tell who is asking. Try again in a moment." },
+      { status: 503, headers: { "retry-after": "30" } },
+    );
+  }
+  const decision = await authoriseCall(ownerId, "TTS");
+  if (!decision.allowed) {
     return Response.json(
       { error: decision.message, reason: decision.reason },
       {
@@ -151,7 +187,7 @@ export async function POST(request: Request) {
     // this row counts requests actually made of TartuNLP, and a joiner made
     // none. Counting them would tighten the speech allowance by the size of
     // whatever burst the deduplication just absorbed.
-    const joinerBooking = joined ? decision?.reservation : undefined;
+    const joinerBooking = joined ? decision.reservation : undefined;
     if (joinerBooking) {
       // A joiner made no request of anybody, so it hands its booking back.
       after(() => releaseReservation(joinerBooking));
@@ -160,14 +196,14 @@ export async function POST(request: Request) {
       after(() => recordUsage({
         ownerId, kind: "TTS", provider: "tartunlp", model: speaker,
         inputTokens: text.length, outputTokens: 0, costMicros: 0,
-        reservation: decision?.reservation,
+        reservation: decision.reservation,
       }));
     }
     return wav(audio, joined ? "joined" : "upstream");
   } catch (error) {
     // Nothing was spoken, so the booking goes back: a learner must not spend
     // their day's allowance on a minute when TartuNLP was down.
-    const booking = decision?.reservation;
+    const booking = decision.reservation;
     if (booking) after(() => releaseReservation(booking));
     const status = error instanceof SpeechError ? error.status : 503;
     const message =

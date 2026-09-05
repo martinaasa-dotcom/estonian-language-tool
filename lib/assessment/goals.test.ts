@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { DEADLINES, REASONS, TARGETS, countdownPhrase, daysUntil, deadlineFrom, describeSituation, impliedTarget, normaliseGoals, reasonById, reasonsFor, reasonsToStored, targetByBand, weeksUntil } from "./goals";
+import { DEADLINES, REASONS, TARGETS, countdownPhrase, daysUntil, deadlineFrom, describeSituation, firstSceneFor, impliedTarget, normaliseGoals, reasonById, reasonsFor, reasonsToStored, targetByBand, weeksUntil } from "./goals";
 import { BANDS } from "./types";
+import { sceneById } from "@/lib/scenes/catalogue";
 import { dayClock } from "@/lib/time/day";
 
 describe("the goal options", () => {
+  it("names a first conversation that exists, and living here comes first", () => {
+    for (const reason of REASONS) {
+      if (reason.scene !== undefined) expect(sceneById(reason.scene), `${reason.id} names ${reason.scene}`).toBeDefined();
+    }
+    expect(firstSceneFor(["work", "living"])).toBe("poodi-piima");
+    expect(firstSceneFor(["curiosity"])).toBeUndefined();
+    expect(firstSceneFor([])).toBeUndefined();
+  });
+
   it("gives every reason a level it usually needs", () => {
     for (const reason of REASONS) {
       expect(BANDS).toContain(reason.implies);

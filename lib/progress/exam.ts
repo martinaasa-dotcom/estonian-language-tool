@@ -4,12 +4,15 @@ import { gradedLemmas, lemmaCountsByLevel } from "@/lib/dict/facts";
 import { caseByKey } from "@/lib/estonian/cases";
 import { caseAccuracy } from "@/lib/stats/history";
 import { buildPaper, type PoolWord, type Paper } from "@/lib/exam/paper";
+import { rng, seedFrom } from "@/lib/random/seeded";
+import { shuffle } from "@/lib/random/shuffle";
 import type { ExamResult } from "@/lib/exam/score";
 import type { ExamLevel } from "@/lib/exam/spec";
 import type { PastAttempt, ReadinessSignals, SkillEvidence } from "@/lib/exam/readiness";
 import { SKILLS, type SkillKey } from "@/lib/exam/types";
 import { latestFor } from "./assessment";
 import { deckSnapshot, type DeckSnapshot } from "./summary";
+import { caseReviewsFor } from "@/lib/progress/cases";
 
 /**
  * The database half of the mock examination.
@@ -28,45 +31,86 @@ const POOL_SIZE = 500;
 /**
  * The dictionary material a paper at this level can be built out of.
  *
- * Words at or below the level, preferring the ones that carry an attested
- * sentence, because three of the tasks cannot exist without one. Entries with
- * no CEFR tag are admitted from B1 upwards, which is where the untagged part of
- * the dictionary mostly sits.
+ * Words at or below the level. Entries with no CEFR tag are admitted from B1
+ * upwards, which is where the untagged part of the dictionary mostly sits.
+ *
+ * THE POOL IS DRAWN WITH THE PAPER'S OWN SEED, WHICH IS WHAT MAKES A PAPER
+ * REBUILDABLE.
+ *
+ * `submitExam` builds the paper again on the server to mark it, hours after it
+ * was sat, and `buildPaper` is deterministic in (level, seed, pool). Two of
+ * those three were promised and the third was not: this query used to take the
+ * first five hundred rows of an order beginning `fetchedAt desc`, and
+ * `fetchedAt` is rewritten by `runEnrich` and `runLookup` on *every* lookup of
+ * a word, including one that changes nothing about it. So any learner opening
+ * the dictionary during somebody's ninety-minute paper reordered the pool, the
+ * cut at five hundred took a different set, and the item ids are positional:
+ * the answers were marked against questions nobody had been asked. The comment
+ * that used to sit here named that as the thing this file exists to prevent.
+ *
+ * It was also picking badly. Every entry the seed writes carries an
+ * `ekilexWordId` and nearly every one carries a usage, so `fetchedAt` was the
+ * only column separating them, and on a deployment where nobody has looked
+ * anything up every value of it is null. The whole order then fell through to
+ * `lemma asc`, so the pool at B1 was the first five hundred words of the
+ * dictionary alphabetically: the `aberratsioon` fault the suggestion row was
+ * fixed for, in the one place that decides what somebody is examined on.
+ *
+ * So the eligible set is read as ids in an order nothing can move, the seed
+ * shuffles it, and the first `POOL_SIZE` are the pool. The paper is then a
+ * function of (level, seed) and of which words the dictionary holds at all,
+ * which changes when a word is added and not when one is read. It is also a
+ * fair draw across the level rather than the head of the alphabet.
+ *
+ * The preference for entries carrying a sentence is not expressed here and was
+ * not expressed by the ordering it replaces either: the sentence is what three
+ * tasks need, and `buildPaper` already refuses a task it cannot fill and
+ * reports the shortfall. Measured on the shipped dictionary, 95% of eligible
+ * entries carry one, so a draw of five hundred brings about four hundred and
+ * seventy-five of them.
+ *
+ * One deploy's worth of papers in flight are marked against a pool drawn the
+ * new way, which is the cost of changing this at all and is smaller than the
+ * fault: today a paper is mis-marked whenever anybody looks a word up.
  */
-export async function examPool(ownerId: string, level: ExamLevel): Promise<PoolWord[]> {
+export async function examPool(ownerId: string, level: ExamLevel, seed: string): Promise<PoolWord[]> {
   const ceiling = RANK[level] ?? 2;
   const levels = Object.entries(RANK)
     .filter(([, rank]) => rank <= ceiling)
     .map(([name]) => name);
 
-  const lexemes = await prisma.lexeme.findMany({
-    where: ceiling >= RANK.B1!
-      ? { OR: [{ cefr: { in: levels } }, { cefr: null }] }
-      : { cefr: { in: levels } },
+  const eligible = ceiling >= RANK.B1!
+    ? { OR: [{ cefr: { in: levels } }, { cefr: null }] }
+    : { cefr: { in: levels } };
+
+  /*
+    Ids only, on the primary key, which is the one ordering in this table that
+    nothing can move: `@@unique` is on `(lemma, pos)` so a lemma can hold two
+    entries, and every other column here is written by a lookup. One narrow
+    read of a few thousand ids, twice per sitting.
+  */
+  const ids = (await prisma.lexeme.findMany({
+    where: eligible,
+    select: { id: true },
+    orderBy: { id: "asc" },
+  })).map((row) => row.id);
+
+  /*
+    The app's one shuffle, handed the paper's own seed. A seed of its own
+    rather than the paper's exact string, so the draw of the pool and the draw
+    of the questions inside it are not the same walk; `lib/exam/paper.ts` is
+    the one module that keeps a private shuffle, and this is not it.
+  */
+  const drawn = shuffle(ids, rng(seedFrom(`pool:${level}:${seed}`))).slice(0, POOL_SIZE);
+
+  const rows = await prisma.lexeme.findMany({
+    where: { id: { in: drawn } },
     include: { forms: { orderBy: { orderIndex: "asc" } } },
-    /*
-      Words the dictionary knows most about first: an entry with retrieved
-      forms can carry a case question, one with usages can carry a sentence.
-
-      AND THEN ON THE PRIMARY KEY, WHICH IS THE ONLY TOTAL ORDER HERE.
-
-      `@@unique` is on `(lemma, pos)`, so one lemma can hold two entries, and
-      on a freshly seeded deployment every one of them has `fetchedAt` null.
-      Two rows for `hall` therefore tied on both keys and Postgres chose
-      between them. That is usually stable and it is not a promise, and this
-      is the one query in the app where a promise is being made: `submitExam`
-      rebuilds the paper from (level, seed, pool) to mark it, so a pool that
-      comes back in a different order is a learner marked on questions they
-      were never asked. `take` makes it worse, since a tie straddling the five
-      hundredth row decides which of the pair is in the paper at all.
-
-      Free, because the sort was happening anyway, and the answer stops
-      depending on the plan. The same reasoning as `bySubstance` ending on
-      `id` in lib/dict/search.ts.
-    */
-    orderBy: [{ fetchedAt: { sort: "desc", nulls: "last" } }, { lemma: "asc" }, { id: "asc" }],
-    take: POOL_SIZE,
   });
+  // `IN (…)` comes back in whatever order the plan likes, so the draw is put
+  // back by hand: the pool's order is part of what the seed decided.
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const lexemes = drawn.map((id) => byId.get(id)).filter((row): row is NonNullable<typeof row> => !!row);
 
   const cards = await prisma.card.findMany({
     where: { ownerId, suspended: false, lexemeId: { in: lexemes.map((l) => l.id) } },
@@ -108,7 +152,7 @@ export async function paperFor(
   level: ExamLevel,
   seed: string,
 ): Promise<Paper> {
-  return buildPaper(level, await examPool(ownerId, level), seed);
+  return buildPaper(level, await examPool(ownerId, level, seed), seed);
 }
 
 // ── The signals behind the confidence figure ─────────────────────────────────
@@ -170,12 +214,20 @@ export async function readinessSignals(
         orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
         take: 20_000,
       }),
-      prisma.review.findMany({
-        where: { ownerId, targetCase: { not: null } },
-        select: { targetCase: true, rating: true },
-        orderBy: [{ reviewedAt: "desc" }, { id: "asc" }],
-        take: 20_000,
-      }),
+      /*
+        THE SHARED QUERY, BECAUSE THIS WAS THE FOURTH ANSWER.
+
+        `lib/progress/cases.ts` exists because "your weakest cases" was drawn
+        from three different reads behind one calculation, so a learner who got
+        the partitive wrong three hundred times last year and right three
+        hundred times this month read 100% on one screen and 50% on another on
+        the same day. This was all-time where the others are a half-year, and
+        the hub prints the same case, by name and by percentage, in the gap
+        list beside the readiness figure. The invariant is scoped to `app/`, to
+        excuse the class roster rolling a whole class up in one query, so it
+        could not see a fourth reader here.
+      */
+      caseReviewsFor(ownerId),
       prisma.card.findMany({
         where: { ownerId },
         select: { id: true, cardType: true },

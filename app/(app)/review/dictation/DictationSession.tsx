@@ -104,7 +104,13 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
   const { hearing, voice: ownVoice } = useAudioPrefs();
   const [voiceStart] = useState(() => Math.floor(Math.random() * VOICES.length));
   const reader = VOICES[(voiceStart + index) % VOICES.length] ?? { id: ownVoice, name: ownVoice };
-  const condition = task ? conditionFor(task.reps, index, hearing) : undefined;
+  /*
+    Never a condition that removes words. `checkDictation` compares what was
+    typed against the whole sentence and `gradeCard` takes its verdict, so a
+    clip that began two fifths in was marking a learner down for words it had
+    not played and pushing the card back. See `removesWords`.
+  */
+  const condition = task ? conditionFor(task.reps, index, hearing, false) : undefined;
 
   useEffect(() => {
     setTyped("");

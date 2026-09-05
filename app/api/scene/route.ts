@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { requireUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
+import { authoriseCall, recordUsage, releaseReservation, type Reservation } from "@/lib/usage/ledger";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { reportError } from "@/lib/observability/report";
 import { openWithFallback, resolveProviders } from "@/lib/tutor/provider";
@@ -17,6 +17,7 @@ import { words } from "@/lib/scenes/lexicon";
 import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "@/lib/scenes/state";
 import { personaById, type PersonaSpec } from "@/lib/scenes/personas";
 import { DEFAULT_VOICE } from "@/lib/audio/voice";
+import { glossSentences } from "@/lib/dict/glossed";
 import { MAX_WORDS } from "@/lib/scenes/retrieval";
 
 /**
@@ -266,8 +267,39 @@ export async function POST(request: Request) {
     offer: response === "help" && answered ? offerFor(answered, card) : null,
     met: state.done.length,
   });
-  const answer = (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>
-    Response.json({ ...progress, lines, ...extra }, { headers: NO_STORE });
+  /*
+    THE OTHER SIDE'S LINE, WITH THE DICTIONARY UNDER IT.
+
+    `lib/dict/glossed.ts` argues that an attested sentence a beginner can read
+    one word of is the sentence doing the opposite of its job, and it was
+    built for the first meeting of a word. The screen that needed it most had
+    none: a receptionist says a sentence and the learner either knows it or
+    is stuck, in the one place in the app where being stuck is the point of
+    the exercise. So every Estonian line the other side says is glossed the
+    same way, by the same module, at the same standard: `matchEstonianForm`
+    decides at the confidence a photographed page has to clear (ADR-021), a
+    word it will not vouch for is printed plain, and what opens is the
+    dictionary's own headword rather than a reading of this sentence.
+
+    It cannot hand over the answer, and that is a property rather than a
+    hope: `bank.test.ts` and the drafter both refuse a line containing the
+    form the beat is about to ask for, so what is glossed is the question.
+
+    One query per turn, bounded by `WORD_BUDGET`, on a route that already
+    reads the run and may call a model.
+  */
+  const glossedLines = async (lines: readonly SpokenLine[]) => {
+    const spoken = lines.filter((l) => l.provenance !== "unspoken" && l.provenance !== "english");
+    if (spoken.length === 0) return lines;
+    const tokens = await glossSentences(spoken.map((l) => ({ et: l.text, form: null })));
+    const byText = new Map(spoken.map((l, i) => [l.text, tokens[i]]));
+    return lines.map((l) => {
+      const found = byText.get(l.text);
+      return found ? { ...l, tokens: found } : l;
+    });
+  };
+  const answer = async (lines: readonly SpokenLine[], extra: Record<string, unknown> = {}) =>
+    Response.json({ ...progress, lines: await glossedLines(lines), ...extra }, { headers: NO_STORE });
 
   /*
     Which beat the ladder is asked for: the hurdle where one stands, and once
@@ -338,6 +370,11 @@ export async function POST(request: Request) {
     const asking: typeof beat = { ...beat, id: `aside:${beat.id}`, move: "confirm", topic: [] };
     const drafted = await compose(chain, {
       ownerId,
+      // The booking this turn already made, so the settlement is a settlement
+      // rather than a second `CALL` at the full estimate. Required rather than
+      // optional for exactly this: a call site that has not thought about it
+      // does not compile, and this one arrived on a merge.
+      reservation: decision.reservation,
       move: "answer",
       they: "They were just asked a question they did not expect. They answer it briefly, as best they can from what they know, and no more.",
       register: scene.register,
@@ -381,6 +418,14 @@ export async function POST(request: Request) {
     */
     return answer(reply(cheap), { composed: false, note: decision?.message ?? null });
   }
+  /*
+    Held as a const so the narrowing the guard above just did survives into the
+    closures below: the settlement is written inside `compose`'s callback and
+    the release inside an `after`, and a property read in either place is
+    `Reservation | undefined` again to the compiler. The release used a `!` for
+    that reason and no longer needs one.
+  */
+  const reservation = decision.reservation;
 
   const line = await sceneLine({
     ...shared,
@@ -389,6 +434,9 @@ export async function POST(request: Request) {
     scripted: [],
     compose: (avoid) => compose(chain, {
       ownerId,
+      // The booking this turn was authorised under, so the settlement corrects
+      // it rather than being written down as a second call. See `compose`.
+      reservation,
       move: beat.move,
       they: stageFor(beat, card),
       register: scene.register,
@@ -417,7 +465,7 @@ export async function POST(request: Request) {
     an ordinary one here rather than an error.
   */
   if (line.provenance !== "composed") {
-    after(() => releaseReservation(decision.reservation!));
+    after(() => releaseReservation(reservation));
   }
 
   return answer(reply(line));
@@ -446,6 +494,18 @@ async function compose(
   chain: ReturnType<typeof resolveProviders>,
   input: {
     ownerId: string;
+    /**
+     * What `authoriseCall` booked for this turn. Required, because the
+     * settlement below is what corrects it, and it was not passed: `recordUsage`
+     * reads this field to decide whether a row is a `SETTLEMENT` or a `CALL`,
+     * so every composed turn wrote a second `CALL` at the full cost beside the
+     * reserve, and nothing ever settled the reserve. Both counting limits count
+     * `CALL` rows, so a scene spent the burst and daily SCENE allowances at
+     * twice the rate it should, and the deployment budget saw reserve plus
+     * actual rather than the difference. Required rather than optional so a
+     * caller that has not thought about it does not compile.
+     */
+    reservation: Reservation;
     move: string;
     /** What they are doing, in English, from their side: the beat's `they`. */
     they: string;
@@ -507,6 +567,7 @@ async function compose(
           model: config.model,
           inputTokens: usage.inputTokens,
           outputTokens: usage.outputTokens,
+          reservation: input.reservation,
         }));
       },
       live,

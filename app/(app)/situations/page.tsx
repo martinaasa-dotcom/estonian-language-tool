@@ -4,10 +4,11 @@ import { courseLevelFor } from "@/lib/progress/level";
 import { bandsAround } from "@/lib/collections/levels";
 import { SCENES } from "@/lib/scenes/catalogue";
 import { minutesFor } from "@/lib/scenes/run";
-import { unitById } from "@/lib/collections/syllabus";
+import { LEVELS, unitById } from "@/lib/collections/syllabus";
 import { Card, Chip, Empty, Page, Stack } from "@/components/ui";
 import { ButtonLink } from "@/components/Button";
 import { PLACES_TO_TALK } from "@/lib/collections/placesToTalk";
+import { errandForScene } from "@/lib/collections/errands";
 import { practises } from "@/lib/scenes/practises";
 import { sceneHistoryFor, type SceneHistory } from "@/lib/progress/scene";
 
@@ -36,8 +37,18 @@ export default async function SituationsPage() {
   const [level, history] = await Promise.all([courseLevelFor(ownerId), sceneHistoryFor(ownerId)]);
   const band = bandsAround(level);
 
-  const near = SCENES.filter((scene) => band.includes(scene.level));
-  const rest = SCENES.filter((scene) => !band.includes(scene.level));
+  /*
+    Ordered by level inside each group, because the catalog's order is the
+    order the scenes were written and with fourteen of them that reads as a
+    wall: an A1 learner saw A1, A2, A2, A1, A2, A1 down the page. The level is
+    on every tile, so the only thing sorting adds is that the ones a learner
+    can walk into come first. Ordering and never filtering, which is
+    `aroundFirst`'s rule about a learner's own deck one file over.
+  */
+  const byLevel = (a: (typeof SCENES)[number], b: (typeof SCENES)[number]) =>
+    LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level) || a.title.localeCompare(b.title);
+  const near = SCENES.filter((scene) => band.includes(scene.level)).sort(byLevel);
+  const rest = SCENES.filter((scene) => !band.includes(scene.level)).sort(byLevel);
 
   return (
     <Page
@@ -116,6 +127,7 @@ function SceneTile({ scene, history }: { scene: (typeof SCENES)[number]; history
   const unit = unitById(scene.tests);
   const objectives = scene.beats.filter((beat) => beat.required).length;
   const drills = practises(scene);
+  const errand = errandForScene(scene.id);
   return (
     <li>
       <Link href={`/situations/${scene.id}`} className="block h-full">
@@ -134,6 +146,16 @@ function SceneTile({ scene, history }: { scene: (typeof SCENES)[number]; history
           {drills.length > 0 && (
             <p className="text-xs" style={{ color: "var(--ink-2)" }}>
               Practices {drills.slice(0, 4).join(", ")}{drills.length > 4 ? " and more" : ""}.
+            </p>
+          )}
+          {/*
+            The real one, on the tile, so a scene is read as a rehearsal of
+            something rather than as a game: the errand this scene rehearses
+            is what the debrief offers once it has gone well.
+          */}
+          {errand && (
+            <p className="text-xs" style={{ color: "var(--ink-2)" }}>
+              Then for real: {errand.says}
             </p>
           )}
           <p className="mt-auto text-xs" style={{ color: "var(--ink-3)" }}>

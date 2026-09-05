@@ -105,17 +105,42 @@ measured by. So Today asks whether any Estonian was spoken to anybody yesterday,
 errand where the answer is no, which is also the only kind moment to offer one (ADR-027 amendment 1).
 
 Two things follow and both are asserted. **`Encounter.errandId` is nullable and Today writes none**,
-because a conversation with a neighbor is not this app's to file under a unit and the research
-export groups that column by the unit an errand drew its words from; that table now says out loud
-that it covers the reports tied to an errand rather than speaking for all of them. And **a day that
+because a conversation with a neighbor is not this app's to file under a unit. The research export
+used to group that column by the unit an errand drew its words from, and once nothing wrote the
+column that table was empty by construction, in a file sent to people outside the project; it
+groups by the month of the report now, which is the one dimension a report honestly carries and the
+one a pilot is measured on, conversations and the share that switched to English, start of term
+against end. It may not grow a unit back, asserted. And **a day that
 was answered is not a day that held a conversation**: `isConversation` is the one place that is
 decided, both readings in `lib/progress/outThere.ts` ask it, and counting rows instead would report
 a fortnight of honest noes back as a fortnight of real conversations and a run of fourteen days, on
 the panel whose own heading says it matters more than any chart on the page.
 
-**And eighteen errands is thin for the days the answer is no.** Thirteen are A1 and five A2, none
-above, and the pool is filtered to the units a deck has started: four on a starter deck, thirteen
-with A1 finished, eighteen for ever after. The walk is `dayIndex`, so the repeat interval is the
+**And a report was filed under the day it was made, which is the day after the one it is about.**
+A row written on Tuesday morning is a fact about Monday, and both readings keyed it on Tuesday, so
+the run of days on Progress read nought every morning until the card had been pressed, because the
+walk started at today and today's row is about yesterday. A report is keyed on the day it is about
+now and the run is walked back from yesterday, which is the last day anybody can have reported on;
+two rows on one morning, which only two tabs make, are one answer for both readers rather than two
+conversations on the panel; and the same query reads the thirty days before the window, so the
+sentence "the switch to English is the figure to watch" is printed over the figure it was to be
+watched against.
+
+**The rehearsal and the errand point at each other, and for a while neither did.** An `Errand`
+names the scene that rehearses it where one exists (`sceneForErrand`, `errandForScene`), asserted
+against the catalogue and against the scene declaring the errand's unit, since a rehearsal that
+could not vouch for the words the errand needs is a rehearsal of something else. The card offering
+the errand offers the rehearsal beside it, and a scene whose every required beat was met ends in the
+errand it rehearses and in where the people are, where it used to end in "have it again". Only
+where every required beat was met, because sending somebody out on the strength of a conversation
+they did not get through is the false confidence the readiness screen is built against. And the
+question about yesterday is asked from the first morning rather than from the first graded card: it
+is about the learner's own day and not about the deck, and the count it collects is the baseline a
+pilot compares the end of term against.
+
+**And twenty-four errands is thin for the days the answer is no.** Thirteen are A1, nine A2 and
+two B1, and the pool is filtered to the units a deck has started: four on a starter deck, thirteen
+with A1 finished, twenty-four for ever after. The walk is `dayIndex`, so the repeat interval is the
 pool size exactly. That is survivable while the errand appears on a minority of days and it is not
 a table to build a screen out of that shows several days at once. What it needs before it grows is
 somebody who knows how an Estonian counter actually works, in the shape `docs/20-contributed-sentences.md`
@@ -562,7 +587,7 @@ boundary between them, so the obvious spelling misses the words this language is
 **And Ekilex's own part of speech was being discarded**, so a deliberate coarsening could not be
 told from a mistake. `ekilexPos` records it. The table of legitimate coarsenings was set by
 narrowing until something honest complained rather than widening until nothing did, and with it
-written down the course's label and Ekilex's agree on all 1,437 words. `PRONOUN` is a part of speech for it, harvested as a nominal
+written down the course's label and Ekilex's agree on all 1,449 words. `PRONOUN` is a part of speech for it, harvested as a nominal
 because it declines like one (`kes`, `kelle`, `keda`), and a pronoun with no singular (`meie`,
 `nemad`) is kept the way an adverb is, attested and formless, rather than dropped.
 `lib/collections/syllabus/retired.ts` is the other half: the ten C2 units were cut in §19 of the
@@ -788,8 +813,8 @@ So the harvest stores what the rules miss, and it **asks the rules rather than c
 `unreachableSlots` in `conjugate.ts` and `unreachableCaseForms` in `derive.ts`, each living beside
 the rule it is the complement of. A list would be two copies of one fact and the copy in the
 builder is the one that rots, because a missing form does not look like an error, it looks like a
-word that inflects less. Asserted on the call in both builders. That is 1,672 forms across 352 of the
-1,437 course words. Four codes are nearly all of it, and the fact that they are the four is the
+word that inflects less. Asserted on the call in both builders. That is 1,684 forms across 355 of the
+1,449 course words. Four codes are nearly all of it, and the fact that they are the four is the
 argument: the simple past third person (310), the polite imperative (312) and both participles
 (313 past, 309 present), which are exactly the slots the two paragraphs below record the evals
 finding one at a time. The rest is `olema`'s present, `minema`'s imperative, `pole`, and the short
@@ -828,7 +853,7 @@ matching set while `formMap` keeps taking one, and the two infinitives joined `V
 their parallels alone. Safe because both sets belong to one `wordId`: a homonym is a different word
 with its own id, which is what the pinning is for, while two matching sets under one id are two
 ways the same word inflects, `haigus` with `haigusi` and `haiguseid`. 167 of the 2,057 sets the
-course reads have a second, and the three together are 814 more forms on the same 6,110 words.
+course reads have a second, and the three together are 814 more forms on the words already there.
 
 **And the tie-break in the scanner is a separate question that was measured and left alone.**
 `matchEstonianForm` scores a diacritic-folded lemma at 90 and a stored form at 88, so `oli` resolves
@@ -2678,6 +2703,30 @@ and the `take` means a tie at the five hundredth row decides which of a pair is 
 all. All eleven end on `{ id: "asc" }` now and an invariant reads the *last* key, because an
 order that is total in the middle and loose at the end is loose.
 
+**And a total order was not enough for the exam, because the column it began on moves.** Ending on
+the id made the pool stable at an instant and the paper is rebuilt hours later: `fetchedAt` is
+rewritten by `runEnrich` and `runLookup` on *every* lookup of a word, including one that changes
+nothing about it, so any learner opening the dictionary during somebody's ninety-minute paper
+reordered the pool, the cut at five hundred took a different set, and the item ids are positional.
+The answers were marked against questions nobody had been asked, which is the thing that paragraph
+says the ordering exists to prevent. It was picking badly too: every entry the seed writes carries
+an `ekilexWordId` and nearly every one carries a usage, so `fetchedAt` was the only column
+separating them, and where nobody has looked anything up every value of it is null and the order
+falls through to `lemma asc`. The B1 pool was the first five hundred words of the dictionary
+alphabetically, which is the `aberratsioon` fault in the one place that decides what somebody is
+examined on.
+
+So the eligible set is read as ids on the primary key, which nothing can move, `shuffle` draws with
+a seed of the paper's own, and the first five hundred are the pool. The paper is a function of
+(level, seed) and of which words the dictionary holds at all, which changes when a word is added
+and not when one is read, and the draw is a fair one across the level rather than the head of the
+alphabet. The preference for entries carrying a sentence is gone from the ordering and was never in
+it: `buildPaper` refuses a task it cannot fill and reports the shortfall, and 95% of eligible
+entries carry a usage anyway. `lib/exam/paper.ts` keeps its private shuffle and is untouched; this
+is one file out. One deploy's worth of papers in flight are marked against a pool drawn the new
+way, which is the cost of changing it at all and is smaller than a paper mis-marked whenever
+anybody looks a word up.
+
 **And the invariant behind it stopped at `lib/progress/`, so five reads outside it said nothing at
 all.** Not a loose order: no `orderBy` whatever, next to a `take`, which is the plan choosing the
 rows a screen is built from. Today's weakest cases took an arbitrary five thousand; `/review/government`
@@ -4450,8 +4499,22 @@ and the same refusals the drafter applies, is marked `authored`, and is `reviewe
 native speaker reads it. Two of the checks were corrected on the way, since the government check
 was refusing `Kust sa tuled?` and `See aeg ei sobi enam`, which are what people say.
 The other side repeats the learner's own word back before moving on, off `Evidence.matched`, and
-every line is spoken in the persona's voice. Seven scenes, and all seven play keyless from the
+every line is spoken in the persona's voice. Fourteen scenes, and all fourteen play keyless from the
 first line to the debrief. `docs/21-situations.md` §32 has the table and what it does not fix.
+
+**Seven more were written for the situations the purpose is measured on, and the bank is what
+made them a day's work rather than a project.** Forty-five of the course's claims are live
+exchanges and seven had a rehearsal. A pharmacy, a restaurant table, a shop rung before you go, the
+neighbor on the stairs, the first evening of a language course, a job interview and taking
+something back to a shop are scenes now, each testing a unit that already made the claim, each
+naming only words its declared units teach, each with an errand for the day after. `bank.test.ts`
+holds every beat and every admitted curveball of every scene to a line, so a scene arrives with its
+lines or fails, and the 137 lines those seven and the two curveballs needed were typed in a session
+through `npm run check:lines`, marked `authored` and `reviewed: false`, like the 53 before them. The
+two curveballs are `contradiction`, which was in the catalog and admitted by no scene, and
+`misheard`, admitted by one: both are admitted where the beat shape supports them now, and a
+curveball nobody admits is dead data. What the seven cannot do is what none of the fourteen can: a
+native speaker has read none of the 296 lines, and that is the next thing the module needs.
 
 **An offer names a day, and a yes is an answer.** The landlord asked `Kas küte on katki?`, heard
 "Millal teil on aeg?", and said `Jah. Kell 14:00?`: a yes to a question with no yes in it, then a

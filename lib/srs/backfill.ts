@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { generateCards, type LexemeForCards } from "@/lib/srs/cards";
+import { lockDeck } from "@/lib/srs/deck";
 import { emptyScheduling } from "@/lib/srs/scheduler";
 
 /**
@@ -15,7 +16,12 @@ import { emptyScheduling } from "@/lib/srs/scheduler";
  * - only for a word the learner already has cards for — it never grows the deck
  *   behind their back;
  * - only when they have no gap-fill card for it yet, so re-reading an entry
- *   cannot pile them up;
+ *   cannot pile them up, which is a promise the read and the write have to be
+ *   under one lock to keep: this is "is it already there" followed by an
+ *   insert, and it is reached from a dictionary page *render*, so two tabs on
+ *   one entry, or a prefetch on a settled pointer followed by the click, both
+ *   land in the gap. `lockDeck` is the same transaction advisory lock
+ *   `addCardsFor` and `addPlanToDeck` take, keyed on the learner;
  * - existing cards are never touched, so no scheduling is disturbed.
  */
 export async function backfillClozeCards(ownerId: string, lexemeId: string): Promise<number> {
@@ -42,7 +48,19 @@ export async function backfillClozeCards(ownerId: string, lexemeId: string): Pro
   */
   const source = lexeme.cards[0]?.source ?? "MANUAL";
   const scheduling = emptyScheduling(new Date());
-  await prisma.card.createMany({
+  /*
+    The check and the write under one lock. Reading "has it a gap-fill card
+    yet" and then inserting is check-then-act, and the gap is wide enough to
+    matter here because this is reached from a dictionary page *render*: a
+    prefetch on a settled pointer and the click behind it are two passes over
+    the same entry, as are two tabs. `addCardsFor` and `addPlanToDeck` take
+    the same transaction advisory lock, keyed on the learner.
+  */
+  return prisma.$transaction(async (tx) => {
+    await lockDeck(tx, ownerId);
+    const already = await tx.card.count({ where: { ownerId, lexemeId, cardType: "CLOZE" } });
+    if (already > 0) return 0;
+    await tx.card.createMany({
     data: generated.map((c) => ({
       ownerId,
       lexemeId,
@@ -58,7 +76,8 @@ export async function backfillClozeCards(ownerId: string, lexemeId: string): Pro
       difficulty: scheduling.difficulty,
       state: scheduling.state,
       learningSteps: scheduling.learningSteps,
-    })),
+      })),
+    });
+    return generated.length;
   });
-  return generated.length;
 }

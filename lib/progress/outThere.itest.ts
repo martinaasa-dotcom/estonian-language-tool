@@ -87,6 +87,40 @@ describe("what happened outside the app", () => {
     await report("BAILED", at(TODAY, "06"));
     await report("UNDERSTOOD", at(TODAY, "07"));
     expect((await outThereToday(OWNER, CLOCK, NOW)).answered).toBe("UNDERSTOOD");
+    // And the panel counts one answer for the day, not both.
+    const reading = await outThere(OWNER, CLOCK, NOW);
+    expect(reading.total).toBe(1);
+    expect(reading.byOutcome).toEqual({ UNDERSTOOD: 1, SWITCHED: 0, BAILED: 0 });
+  });
+
+  it("reads the run before this morning's question is answered", async () => {
+    // A report made yesterday is about the day before, so a run of reports
+    // ending yesterday is a run of days ending the day before yesterday, and
+    // this morning's unanswered question does not break it. It used to read
+    // nought every morning until the card had been pressed.
+    await report("UNDERSTOOD", at(YESTERDAY));
+    await report("SWITCHED", at("02"));
+    expect((await outThere(OWNER, CLOCK, NOW)).streak).toBe(2);
+  });
+
+  it("breaks the run on a morning the question went unanswered further back", async () => {
+    // Only the leading unreported day is stepped over. A gap behind it is a
+    // day nobody reported on, and a run across it would be conversations
+    // nobody claimed.
+    await report("UNDERSTOOD", at(YESTERDAY));
+    await report("SWITCHED", at("01"));
+    expect((await outThere(OWNER, CLOCK, NOW)).streak).toBe(1);
+  });
+
+  it("reads the thirty days before the window, so the switch has something to fall from", async () => {
+    await report("UNDERSTOOD", new Date("2026-07-20T10:00:00+03:00"));
+    await report("SWITCHED", new Date("2026-07-25T10:00:00+03:00"));
+    await report("BAILED", new Date("2026-08-01T10:00:00+03:00"));
+    await report("SWITCHED", at(YESTERDAY));
+    const reading = await outThere(OWNER, CLOCK, NOW);
+    expect(reading.previous).toEqual({ total: 2, switched: 1 });
+    expect(reading.total).toBe(1);
+    expect(reading.byOutcome.SWITCHED).toBe(1);
   });
 
   it("reads a report that names no errand, which is what Today writes", async () => {

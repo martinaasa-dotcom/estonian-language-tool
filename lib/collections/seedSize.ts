@@ -81,5 +81,18 @@
  * on, which is the shape of the gap: the course had `valu` and `haige` and no
  * `valutama`, a unit on housing and no `katki`, and no way at all to ask
  * whether a time suits you. Each went to the unit whose subject it is.
+ *
+ * The six after that are the same instrument run over the seven scenes added
+ * with the pharmacy and the job interview, and the gap it found is the one
+ * every counter ends on: the dictionary held `sent` and not `euro`, so the
+ * app could not vouch for the currency of the country it teaches. With it
+ * came `hetk`, which is what somebody behind a counter says while they look;
+ * `vastu`, which is how a pharmacist says what a medicine is for; `üksi` and
+ * `pärit`, which are the two questions a neighbor asks; `aeglaselt`, off an
+ * adjective the course already taught; and `tohtima`, `tablett`, `keeruline`,
+ * `tagastama` and `puuduma`, five of which the expansion already held and
+ * which only needed teaching. Eleven words were asked for and eleven arrived;
+ * a twelfth, `olemas`, was asked for and Ekilex holds no headword for it, so
+ * it is in no unit rather than written down here as a word we decided on.
  */
-export const SEED_SET_SIZE = { words: 6_110, forms: 39_421 };
+export const SEED_SET_SIZE = { words: 6_116, forms: 39_450 };

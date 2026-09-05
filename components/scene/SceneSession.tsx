@@ -8,7 +8,10 @@ import { EstonianInput } from "@/components/EstonianInput";
 import { Card } from "@/components/ui";
 import { SuggestFix } from "@/components/SuggestFix";
 import { Speak } from "@/components/Speak";
-import { CLEAN } from "@/lib/audio/conditions";
+import { conditionFor } from "@/lib/audio/conditions";
+import { GlossedSentence } from "@/components/GlossedSentence";
+import type { GlossedToken } from "@/lib/dict/glossed";
+import { useAudioPrefs } from "@/components/AudioPrefs";
 import { beginScene, finishScene, sceneHelp } from "@/app/actions";
 import type { SceneSpec } from "@/lib/scenes/types";
 import type { Difficulty } from "@/lib/scenes/curveballs";
@@ -50,6 +53,12 @@ interface Line {
   readonly text: string;
   readonly provenance: Provenance;
   readonly reaction?: true;
+  /**
+   * The line read word by word, so a learner can open any word the
+   * dictionary vouches for without leaving the conversation. Absent on a
+   * stage direction, and on any line the route could not gloss.
+   */
+  readonly tokens?: GlossedToken[];
 }
 
 /**
@@ -72,7 +81,9 @@ type Phase = "briefing" | "talking" | "debrief";
 
 interface Opened {
   runId: string;
-  card: { you: string; props: { slot: string; card: string; given: readonly string[] }[] };
+  /** Runs of this scene before this one, which opens the hearing pool. */
+  plays: number;
+  card: { you: string; props: { slot: string; card: string; given: readonly string[]; returned?: true }[] };
   persona: string;
   composed: boolean;
 }
@@ -128,7 +139,34 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   const [phase, setPhase] = useState<Phase>("briefing");
   const [difficulty, setDifficulty] = useState<Difficulty>("good");
   const [opened, setOpened] = useState<Opened | null>(null);
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [turns, setTurnsState] = useState<Turn[]>([]);
+  /*
+    THE TRANSCRIPT IS READ FROM A REF, BECAUSE THE DEBRIEF IS BUILT IN THE SAME
+    BREATH AS THE LAST TURN.
+
+    The reply arrives, `setTurns` appends it, and two lines later `data.over`
+    calls `hangUp`, all inside one continuation after `await response.json()`.
+    React batches updates scheduled there, so no render commits between them
+    and `hangUpRef.current` is still the closure from the previous commit,
+    whose `turns` does not hold the reply that just arrived. Every scene that
+    ends the ordinary way, on its last beat or on the persona running out of
+    patience, produced a debrief missing its final exchange: the sign-off, or
+    the moment they gave up, and the slips written onto the learner's last turn
+    with it. A scene that ended on the first server turn had no transcript at
+    all.
+
+    The ref is written by the same updater that writes the state, so the two
+    cannot come apart, and `hangUp` reads the ref. Grading was never affected:
+    `finishScene` is handed `finalTurns` as an argument, which is fresh.
+  */
+  const turnsRef = useRef<Turn[]>([]);
+  const setTurns = useCallback((update: (was: Turn[]) => Turn[]) => {
+    setTurnsState((was) => {
+      const next = update(was);
+      turnsRef.current = next;
+      return next;
+    });
+  }, []);
   const [sent, setSent] = useState<Sent[]>([]);
   const [beatId, setBeatId] = useState<string | null>(null);
   const [goal, setGoal] = useState<string | null>(null);
@@ -153,6 +191,23 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
   const [note, setNote] = useState<string | null>(null);
   /** The word the help button last handed over, shown until the next turn. */
   const [lent, setLent] = useState<{ lemma: string; gloss: string } | null>(null);
+  /*
+    HOW THE OTHER SIDE SOUNDS, WHICH IS THE ROOM THIS FEATURE WAS WRITTEN FOR.
+
+    `lib/audio/conditions.ts` opens with a counter, a clinic ringing back on a
+    bad line and a sentence caught from the middle of a conversation, and for
+    its whole life it reached two flashcard rounds and never a conversation:
+    the receptionist was the one voice in the app that always spoke from a
+    studio. The pool opens on how many times this learner has had *this*
+    conversation, which is the same claim the word pool makes one level down,
+    so a first visit to a health centre is a quiet room and the harder
+    deliveries arrive once the encounter itself has stopped being the hard
+    part. Skippable, because nothing marks the words of a line the other side
+    says: the learner answers the beat, and catching a sentence from halfway
+    is the thing the table exists to rehearse rather than a way to be marked
+    down.
+  */
+  const { hearing } = useAudioPrefs();
 
   const log = useRef<HTMLDivElement>(null);
   /*
@@ -257,7 +312,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     } finally {
       setBusy(false);
     }
-  }, [opened, used]);
+  }, [opened, used, setTurns]);
 
   async function start() {
     setBusy(true);
@@ -273,6 +328,7 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
     */
     setOpened({
       runId: result.runId,
+      plays: result.plays,
       card: { you: result.briefing.you, props: [...result.briefing.props] },
       persona: result.briefing.persona,
       composed: result.composed,
@@ -329,10 +385,22 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       gaps: result.gaps,
       graded: result.graded,
       review: result.review,
-      turns: turns.flatMap((turn): Debrief["turns"][number][] => {
-        if (turn.who === "you") return [{ who: "you", text: turn.text }];
-        const said = turn.lines.filter(spoken).map((line) => line.text).join(" ");
-        return said ? [{ who: "them", text: said }] : [];
+      turns: turnsRef.current.flatMap((turn): Debrief["turns"][number][] => {
+        if (turn.who === "you") return [{ who: "you", text: turn.text, lang: "et" }];
+        /*
+          Split by language rather than joined into one string, because the
+          other side does not only speak Estonian: where neither rung could put
+          their move into words the course teaches, `reply` says what they did
+          in English. Joining the two and marking the result `lang="et"` had a
+          screen reader saying the English with Estonian phonology.
+        */
+        const said = turn.lines.filter(spoken);
+        const et = said.filter(spokenEstonian).map((line) => line.text).join(" ");
+        const en = said.filter((line) => !spokenEstonian(line)).map((line) => line.text).join(" ");
+        return [
+          ...(et ? [{ who: "them" as const, text: et, lang: "et" as const }] : []),
+          ...(en ? [{ who: "them" as const, text: en, lang: "en" as const }] : []),
+        ];
       }),
     });
     setPhase("debrief");
@@ -438,6 +506,12 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                     {prop.given.join(" · ")}
                   </span>
                 )}
+                {/* The word came back because it was missing last time. Said, so the card reads as remembering rather than repeating. */}
+                {prop.returned && (
+                  <span className="block text-xs" style={{ color: "var(--ink-3)" }}>
+                    You reached for this one in a conversation recently and did not have it.
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -489,7 +563,26 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
         {turns.map((turn, index) => (
           turn.who === "you" ? (
             <div key={index} className="self-end text-right">
-              <Card className="inline-block max-w-full"><p lang="et">{turn.text}</p></Card>
+              {/*
+                What you typed, and a button to hear it said by a native
+                voice, which the design (§11) promised and nothing drew: a
+                learner who reads their own line back in a voice that is not
+                theirs hears where the stress falls, which is the half of
+                speaking a typed turn cannot rehearse. Never autoplayed, and
+                the speaker is the app's own, so a turn of English is read
+                with Estonian phonology and sounds exactly as wrong as it is.
+              */}
+              <Card className="inline-block max-w-full">
+                <p lang="et" className="flex items-center justify-end gap-2">
+                  <span>{turn.text}</span>
+                  <Speak
+                    text={turn.text}
+                    voice={voice}
+                    size={14}
+                    className="press inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-[var(--raised)]"
+                  />
+                </p>
+              </Card>
               {/*
                 Understood, and how the word is said. Under the learner's own
                 words and in the quiet ink, because it is not a verdict: the
@@ -522,27 +615,55 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
                 spoken(line) ? (
                   <div key={at} className="max-w-full">
                     <Card className="inline-block max-w-full">
+                      {/*
+                        Spoken in the persona's voice (§6), in the room this
+                        scene is heard in, and the newest line plays itself
+                        where the learner has autoplay on: a turn was just
+                        pressed, so the gesture the browser wants has
+                        happened. A second persona in a scene would be a
+                        second voice, which is how an interruption reads as a
+                        second person.
+
+                        The room and the pace go separately, because
+                        `playClip` takes the two apart: a condition with a
+                        room in it goes through the mixer, which cannot hold a
+                        pitch, so the persona's rate applies only where the
+                        delivery is otherwise clean.
+                      */}
+                      {line.tokens ? (
+                        /*
+                          The line with the dictionary under it, which is the
+                          same component a first meeting uses and at the same
+                          standard. A learner who cannot read what was said to
+                          them is stuck in the one place being stuck is not
+                          the exercise.
+                        */
+                        <GlossedSentence
+                          tokens={line.tokens}
+                          sentence={line.text}
+                          speak={{
+                            voice,
+                            condition: conditionFor(opened?.plays ?? 0, index, hearing, true),
+                            rate: speed,
+                            autoplay: index === turns.length - 1 && at === turn.lines.length - 1,
+                          }}
+                        />
+                      ) : (
                       <p lang={spokenEstonian(line) ? "et" : "en"} className="flex items-center gap-2">
                         <span>{line.text}</span>
-                        {/*
-                          Spoken in the persona's voice (§6), and the newest
-                          line plays itself where the learner has autoplay on:
-                          a turn was just pressed, so the gesture the browser
-                          wants has happened. A second persona in a scene
-                          would be a second voice, which is how an
-                          interruption reads as a second person.
-                        */}
                         {spokenEstonian(line) && (
                           <Speak
                             text={line.text}
                             voice={voice}
-                            condition={speed !== 1 ? { ...CLEAN, speed } : undefined}
+                            condition={conditionFor(opened?.plays ?? 0, index, hearing, true)}
+                            rate={speed}
                             size={14}
                             autoplay={index === turns.length - 1 && at === turn.lines.length - 1}
                             className="press inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-[var(--raised)]"
                           />
                         )}
                       </p>
+                      )}
                     </Card>
                     {/*
                       Where the line came from, in words rather than a chip

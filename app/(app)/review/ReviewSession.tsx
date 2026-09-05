@@ -47,6 +47,22 @@ export interface ReviewCard {
    * there is nothing to keep.
    */
   lexemeId: string | null;
+  /**
+   * Other forms of this word, so another ending is not marked as a slip.
+   *
+   * `checkAnswer` reads anything within one edit as a typo and marks it as
+   * produced, and every pair of Estonian cases is one letter apart: measured
+   * over the shipped dictionary, 47,982 of 51,513 case answers have another
+   * case of the same word one edit away. So the card told a learner who wrote
+   * the seestütlev that they had mistyped the seesütlev, graded it Hard, and
+   * wrote it into the append-only log as a recall. `lib/games/flash.ts` names
+   * this fault and fixes it for its own round by asking the word's forms
+   * first; these are those forms, on the screen a learner opens every day.
+   *
+   * Empty on a card with no entry behind it, and on a recognition card, whose
+   * answer is English.
+   */
+  rivals: string[];
   /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
   isNew: boolean;
@@ -683,7 +699,7 @@ export function ReviewSession({
   const checkTyped = useCallback(() => {
     if (!card || verdict) return;
     const language = card.cardType === "RECOGNITION" ? "en" : "et";
-    const result = checkAnswer(typed, card.back, language);
+    const result = checkAnswer(typed, card.back, language, card.rivals);
     setVerdict(result);
     setRevealed(true);
     cheer(countsAsRecalled(result.verdict));
@@ -706,7 +722,7 @@ export function ReviewSession({
   const checkRetype = useCallback(() => {
     if (!card || !verdict || retypeOk) return;
     const language = card.cardType === "RECOGNITION" ? "en" : "et";
-    const again = checkAnswer(retyped, card.back, language);
+    const again = checkAnswer(retyped, card.back, language, card.rivals);
     if (again.verdict === "correct") {
       setRetypeOk(true);
       setRetypeNote(null);

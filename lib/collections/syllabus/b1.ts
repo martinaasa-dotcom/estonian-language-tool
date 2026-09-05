@@ -440,6 +440,9 @@ export const B1 = [
       ["põhjustama", "to cause"],
       ["vältima", "to avoid"],
       ["hoiatama", "to warn"],
+      // What you actually want at a service desk: it back, or the money back.
+      ["tagastama", "to give back, to return"],
+      ["puuduma", "to be missing, to be absent"],
     ],
   }),
 

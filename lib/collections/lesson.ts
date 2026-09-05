@@ -43,6 +43,7 @@ import { CASES } from "@/lib/estonian/cases";
 import { caseFits, caseQuestionFor } from "@/lib/estonian/caseQuestion";
 import type { CaseKey } from "@/lib/estonian/types";
 import { shuffle } from "@/lib/random/shuffle";
+import { rng } from "@/lib/random/seeded";
 import { differentMeaning } from "@/lib/questions/distractors";
 
 export type StepKind =
@@ -220,24 +221,6 @@ const BLOCK = 3;
 export const LESSON_WORDS = 6;
 const DEFAULT_MAX_STEPS = 40;
 const OPTIONS = 4;
-
-/**
- * A small deterministic PRNG.
- *
- * The plan has to be identical every time it is computed for the same learner
- * and unit, because a Server Action refreshes the route on every grade and a
- * plan that re-shuffled would swap the question out from under the answer. The
- * page passes a seed derived from the unit; nothing here reads a clock.
- */
-function rng(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** Up to `count` distinct candidates, skipping anything already in `seen`. */
 function pickWrong(

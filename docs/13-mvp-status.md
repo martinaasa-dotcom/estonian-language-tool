@@ -320,6 +320,17 @@ The same rule shapes the worksheet: a gap-fill is a real sentence with one of it
 and a case table is a table with cells left out. Neither invents anything, which is also why an
 exercise simply does not appear when the material for it is missing.
 
+And the hidden word may not be the word printed beside the blank. The sheet gives the lemma in
+brackets after the gap under "Put the word in brackets into the right form", and `gapForms` includes
+the headword itself, correctly, because a nominative standing in a sentence is a form. Every other
+caller keeps that and none of them prints the lemma an inch away. Measured over the shipped
+dictionary, 1,519 of 4,214 buildable gaps were the word beside them: a third of every sheet a class
+works through, and the commonest shape rather than an edge, since a lexicographer illustrating a
+noun usually writes it in the nominative. 3,389 of those words have another sentence whose gap is
+inflected, which is the exercise the module's own comment has described since it was written; the
+rest get no gap and keep their meaning and their case table, because a question answered by its own
+hint is worth less than a line of paper.
+
 ### Known limitations, still
 
 1. **Oblique-case examples depend on Ekilex.** The seeded dictionary holds principal parts, so the
@@ -379,7 +390,7 @@ nothing said what the app cannot do.
 
 | Area | What it is |
 |---|---|
-| **Level check** (`/assess`) | Four skills, eighty questions, assembled out of the dictionary. Six reading and six writing at each level from A1 to C1, plus three listening and one spoken. Sized by simulation rather than by preference: the paper it replaced placed 43% of simulated learners correctly and put 57% below where they were, and this one places 72% to 98% depending on the level. Reading as meanings, sentences with a word taken out and recorded sentences to understand; listening as the same with nothing written down, plus dictation; writing as the same gap typed rather than chosen; speaking as shadowing. Take it whenever, as often as sensible |
+| **Level check** (`/assess`) | Four skills, eighty questions, assembled out of the dictionary. Six reading and six writing at each level from A1 to C1, plus three listening and one spoken. Sized by simulation rather than by preference: the paper it replaced placed 43% of simulated learners correctly and put 57% below where they were, and this one places 72% to 98% depending on the level, on the simulation that sized it; the instrument kept in the repository models a harsher learner and reports 69% to 87% for the same paper, which is the baseline a rule change is measured against. Reading as meanings, sentences with a word taken out and recorded sentences to understand; listening as the same with nothing written down, plus dictation; writing as the same gap typed rather than chosen; speaking as shadowing. Take it whenever, as often as sensible |
 | **A ladder that stops** | Questions climb the bands, a skill asks at most one band above the first it was not passed at, and nothing above one that came in under half. `lib/assessment/session.ts`, pure, so a test walks a whole sitting without a browser |
 | **A level you can set** | Settings holds the level the app is going on, changeable by hand. Whichever of the measurement and the learner's own answer was stated later is the one it uses, and it decides where the course opens and which band review, practice and the dictionary draw words from |
 | **A profile, not a number** | Per skill levels with the band breakdown, an overall that follows the weakest measured skill, and a stated confidence that names how few questions it came from |
@@ -1720,7 +1731,7 @@ it: Ekilex 213895 is the comparative of `hea`. Directions take the adverbs anywa
 
 ### The dictionary, stated plainly
 
-6,110 words in the seed, 1,405 of them the course harvest with attested sentences, Ekilex CEFR
+6,116 words in the seed, 1,415 of them the course harvest with attested sentences, Ekilex CEFR
 levels and, for most, the Institute's Russian and Ukrainian. More words come from the two live
 paths and never from a model.
 

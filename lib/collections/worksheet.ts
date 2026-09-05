@@ -118,10 +118,31 @@ function firstGap(word: WorksheetWord): GapItem | null {
     spelling. This is paper, so nobody can ask about it afterwards.
   */
   const opener = nominalOpener(word.pos, [word.lemma, ...word.forms.map((f) => f.value)]);
+  const lemma = word.lemma.toLocaleLowerCase("et");
   for (const example of usableExamples([...word.examples])) {
     if (!naturalSentence(example.et, opener)) continue;
     const cloze = buildCloze(example.et, forms);
     if (!cloze) continue;
+    /*
+      AND THE GAP MAY NOT BE THE WORD IN THE BRACKET BESIDE IT.
+
+      The sheet prints the lemma after the blank and heads the section "Put the
+      word in brackets into the right form", so a gap whose answer is the lemma
+      is answered by copying the bracket. `gapForms` includes the headword
+      itself, deliberately, because a nominative standing in a sentence is a
+      form; every other caller keeps that and none of them prints the lemma an
+      inch away. Measured over the shipped dictionary, 1,519 of 4,214 buildable
+      gaps were the word beside them, which is a third of every sheet a class
+      works through, and it is the commonest shape rather than an edge: a
+      lexicographer illustrating a noun usually writes it in the nominative.
+
+      3,389 of those words have another sentence whose gap is inflected, which
+      is the exercise this was always meant to be and what the comment above has
+      said since it was written. The rest get no gap: the sheet still prints
+      their meaning and their case table, and a question answered by its own
+      hint is worth less than a line of paper.
+    */
+    if (cloze.answer.toLocaleLowerCase("et") === lemma) continue;
     return {
       text: cloze.text,
       answer: cloze.answer,

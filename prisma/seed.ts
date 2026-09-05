@@ -90,6 +90,7 @@ async function main() {
     const existing = await prisma.lexeme.count();
     if (existing > 0) {
       console.log(`Dictionary already has ${existing} entries. Leaving it alone.`);
+      await clearDuplicatedNotes(prisma);
       return;
     }
     console.log("Dictionary is empty. Seeding it.");
@@ -241,27 +242,37 @@ async function main() {
     console.log(`Added ${expanded.added} entries and ${expanded.forms} forms from Ekilex and Wiktionary.`);
   }
 
-  /*
-    AFTER THE WRITES, BECAUSE IT COMPARES AGAINST WHAT THEY WROTE.
+  await clearDuplicatedNotes(prisma);
+}
 
-    `notes` held two languages until Ekilex's Estonian explanation was given a
-    column of its own, and the live lookup wrote the Estonian into the English
-    one. So every word anybody had looked up on an existing deployment carries
-    that sentence in `notes`, and the entry would print it twice: once as the
-    definition and once under a heading saying "other meanings".
-
-    Written above the early return first, which is where a correction that has
-    to reach an already-seeded database belongs, and it was a deploy behind:
-    the definitions it compares against are written by the lines above it, so
-    on the first run it matched nothing and the duplicates showed until the
-    next one. A run that writes definitions cleans up after itself instead, and
-    a run that writes none has nothing to clean.
-
-    The rule is exactly the rows the old code made and no others. Where the two
-    columns hold the same sentence, the note is that copy. A real English note
-    is never equal to an Estonian definition, so nothing a person wrote and
-    nothing the builder stored can be caught by this.
-  */
+/**
+ * Clears a note that is a copy of the Estonian definition beside it.
+ *
+ * `notes` held two languages until Ekilex's Estonian explanation was given a
+ * column of its own, and the live lookup wrote the Estonian into the English
+ * one. So every word anybody had looked up on an existing deployment carries
+ * that sentence in `notes`, and the entry would print it twice: once as the
+ * definition and once under a heading saying "other meanings".
+ *
+ * IT RUNS ON BOTH PATHS, WHICH IS THE WHOLE OF WHY IT IS A FUNCTION. It was
+ * written above the early return first, which is where a correction that has to
+ * reach an already-seeded database belongs, and it was a deploy behind: the
+ * definitions it compares against are written by the lines above it, so on the
+ * first run it matched nothing and the duplicates showed until the next one.
+ * Moving it below fixed that and broke the other half, because the rows it
+ * targets exist only on a database somebody has been looking words up on, and
+ * that is exactly the database `--only-if-empty` turns round and leaves. A
+ * deployment reseeded by the workflow would keep printing the sentence twice
+ * for ever. So the full run cleans up after what it just wrote, and the early
+ * return cleans up on its way out, where the definitions were written by a
+ * previous run and the comparison is just as valid.
+ *
+ * The rule is exactly the rows the old code made and no others. Where the two
+ * columns hold the same sentence, the note is that copy. A real English note is
+ * never equal to an Estonian definition, so nothing a person wrote and nothing
+ * the builder stored can be caught by this.
+ */
+async function clearDuplicatedNotes(prisma: PrismaClient): Promise<void> {
   const duplicated = await prisma.$executeRaw`
     UPDATE "Lexeme" SET notes = NULL
     WHERE notes IS NOT NULL AND notes = definition

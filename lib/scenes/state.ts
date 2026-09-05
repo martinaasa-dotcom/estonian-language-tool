@@ -336,7 +336,7 @@ export function raiseHurdle(
   if (state.hurdle || state.walkedOut || state.beat >= scene.beats.length) return state;
   const here = drawn.find((d) => d.at === state.beat);
   if (!here) return state;
-  const spec = curveballById(here.id as CurveballId);
+  const spec = curveballById(here.id);
   if (!spec || state.hurdles.some((h) => h.beat === state.beat)) return state;
   if (spec.silent) {
     return {

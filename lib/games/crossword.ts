@@ -161,8 +161,11 @@ function findSpot(
   grid: Map<string, string>, placed: readonly Placed[], candidate: Candidate,
 ): Placed | null {
   const letters = [...candidate.lemma];
-  // A word already on the board is not a word to place again, and a lemma
-  // that is a substring of one would read as an accident.
+  // A word already on the board is not a word to place again. Only the same
+  // word: this said "and a lemma that is a substring of one would read as an
+  // accident" and tested nothing of the kind, which is a comment describing a
+  // check somebody meant to write. A substring is not a clash on a criss-cross,
+  // where words meet at a letter rather than share a run of squares.
   if (placed.some((p) => p.lemma === candidate.lemma)) return null;
 
   for (const anchor of placed) {

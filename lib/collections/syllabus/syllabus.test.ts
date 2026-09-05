@@ -62,6 +62,56 @@ describe("the course", () => {
     expect(missing).toEqual([]);
   });
 
+  /*
+    AND CARRIES THE GLOSS THE UNIT WROTE, WHICH IS THE ONE AUTHORED COLUMN.
+
+    `harvestWord` reads the English off the syllabus entry and returns it
+    untouched, so `prisma/data/harvested.ts` is generated from these files and
+    the gloss cannot come apart from them the way a parsed one can. What
+    nothing checked is whether the generated file had been *regenerated*: the
+    test above keys on `lemma|pos` and never looks at the English, so a pass
+    over the syllabus that changed a gloss and did not re-run the harvest left
+    the two disagreeing in silence, and the seed writes the harvest's copy.
+
+    That had happened. Eight glosses were rewritten from British to American
+    spelling in the syllabus and the harvest still held the old ones, so the
+    shipped dictionary taught `hall` as "grey" while the course file said
+    "gray" and `korrus` as "storey" against "story". It is invisible on screen
+    and it is not harmless: `lib/collections/senses.ts` groups a production
+    card's prompt by the gloss, so two spellings of one English word are two
+    prompts, and the shared-prompt count moved by five when the harvest was
+    re-run.
+
+    Fails with the command that fixes it, because the fix is never to edit the
+    generated file.
+  */
+  it("carries the gloss the unit that introduces a word wrote", () => {
+    /*
+      The introducing unit, which is the first in course order to name the
+      word: a later unit may drill it again with a shorter gloss for its own
+      word list, and the harvest keeps one entry per `lemma|pos`, so the first
+      is the one the dictionary gets. Comparing against every unit reports
+      those two dozen re-drills as drift and would make this a check people
+      waive.
+    */
+    const harvested = new Map(HARVESTED.map((w) => [`${w.lemma}|${w.pos}`, w]));
+    const introduced = new Map<string, { unit: string; gloss: string }>();
+    for (const u of SYLLABUS) {
+      for (const v of u.vocabulary) {
+        const key = `${v.lemma}|${v.pos}`;
+        if (!introduced.has(key)) introduced.set(key, { unit: u.id, gloss: v.gloss });
+      }
+    }
+    const drifted: string[] = [];
+    for (const [key, first] of introduced) {
+      const word = harvested.get(key);
+      if (word && word.gloss !== first.gloss) {
+        drifted.push(`${first.unit}: ${key.split("|")[0]} is "${word.gloss}" in the harvest and "${first.gloss}" here`);
+      }
+    }
+    expect(drifted, "the harvest is out of date with the syllabus: run `npm run harvest`").toEqual([]);
+  });
+
   it("never repeats a word inside one unit", () => {
     for (const u of SYLLABUS) {
       const keys = u.vocabulary.map((v) => `${v.lemma}|${v.pos}`);

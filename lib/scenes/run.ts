@@ -32,6 +32,14 @@ export interface Recency {
   readonly curveballs: ReadonlySet<string>;
   /** Persona ids from the last three. */
   readonly personas: ReadonlySet<string>;
+  /**
+   * Words the learner reached for in a recent scene and did not have, as
+   * lemmas off `SceneGap`. A word prop whose pool holds one of them draws it
+   * first, so the word you could not say at the doctor's is the word on your
+   * card at the pharmacy. Optional, because the tests and the planner's
+   * callers that know nothing about a learner have nothing to put here.
+   */
+  readonly wanted?: ReadonlySet<string>;
 }
 
 export const NO_RECENCY: Recency = {
@@ -93,7 +101,7 @@ export function planRun(
   const random = rng(seedFrom(`${scene.id}:${level}:${difficulty}:${seed}`));
 
   const persona = drawPersona(random, recent.personas);
-  const card = drawCard(scene.role, scene.props, random, recent.props);
+  const card = drawCard(scene.role, scene.props, random, recent.props, recent.wanted ?? new Set());
 
   /*
     The leans go in as `prefer` rather than as an ordering of `admits`, because

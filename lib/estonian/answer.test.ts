@@ -202,3 +202,41 @@ describe("every shipped answer prints itself back", () => {
     expect(values.length).toBeGreaterThan(10_000);
   });
 });
+
+describe("checkAnswer — another form of the same word", () => {
+  /*
+    Every pair of Estonian cases is one letter apart, so the slip rule read
+    them all as typos and `countsAsRecalled` sent them to the scheduler as
+    recalls. Measured over the shipped dictionary, 47,982 of 51,513 case
+    answers have another case of the same word one edit away.
+  */
+  const rivals = ["toast", "toale", "toalt", "tuppa", "toa"];
+
+  it("is wrong rather than a slip, and does not count as recalled", () => {
+    const out = checkAnswer("toast", "toas", "et", rivals);
+    expect(out.verdict).toBe("wrong");
+    expect(out.suggestedRating).toBe(1);
+    expect(countsAsRecalled(out.verdict)).toBe(false);
+  });
+
+  it("does not claim a slip in the note", () => {
+    expect(checkAnswer("toast", "toas", "et", rivals).note).not.toMatch(/So close/);
+  });
+
+  it("still calls a real slip a slip", () => {
+    expect(checkAnswer("tooas", "toas", "et", rivals).verdict).toBe("typo");
+  });
+
+  it("never treats a second right spelling as a rival", () => {
+    // `tuppa / toasse` are both the illative and both right.
+    expect(checkAnswer("toasse", "tuppa / toasse", "et", ["tuppa", "toas"]).verdict).toBe("correct");
+  });
+
+  it("reads a wrong case with a dropped diacritic as the wrong case", () => {
+    expect(checkAnswer("roomust", "rõõmus", "et", ["rõõmust"]).verdict).toBe("wrong");
+  });
+
+  it("behaves exactly as before when no forms are supplied", () => {
+    expect(checkAnswer("toast", "toas", "et").verdict).toBe("typo");
+  });
+});

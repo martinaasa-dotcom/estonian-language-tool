@@ -393,12 +393,32 @@ export async function recencyFor(ownerId: string, sceneId: string): Promise<Rece
   const back = <T>(n: number, pick: (d: Drawn) => readonly T[]) =>
     new Set(drawn.slice(0, n).flatMap(pick));
 
+  /*
+    THE WORDS THE LEARNER REACHED FOR AND DID NOT HAVE, from any scene, not
+    only this one: a word missed at the doctor's is worth meeting again at the
+    pharmacy. `SceneGap` was written by every finished run and read by nothing
+    but the export, which left the design's own promise about it (§19) as a
+    sentence in a document. Ordered and cut, ending on `id`, for the reason
+    the run query above gives about `startedAt`.
+  */
+  const gaps = await prisma.sceneGap.findMany({
+    where: { ownerId, lemma: { not: null } },
+    select: { lemma: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: GAPS_REMEMBERED,
+  });
+  const wanted = new Set(gaps.map((g) => g.lemma).filter(isText));
+
   return {
     props: back(RECENCY_WINDOW.props, (d) => d.props),
     curveballs: back(RECENCY_WINDOW.curveballs, (d) => d.curveballs),
     personas: back(RECENCY_WINDOW.personas, (d) => (d.persona ? [d.persona] : [])),
+    wanted,
   };
 }
+
+/** How many recent gaps a card may draw from. A handful, so the card is about this scene and not a backlog. */
+const GAPS_REMEMBERED = 20;
 
 /** What a stored transcript says about its own draw. Defensive, because it is JSON. */
 interface Drawn {
@@ -504,6 +524,8 @@ export interface Briefing {
   readonly props: readonly {
     slot: string;
     card: string;
+    /** Drawn because the learner reached for this word in a recent scene and did not have it. */
+    returned?: true;
     /**
      * What you were dealt, **in English**, where the card says "the word below".
      *
@@ -560,6 +582,7 @@ function briefingOf(run: SceneRunPlan, glosses: ReadonlyMap<string, string>): Br
     props: run.card.props.filter((prop) => !prop.theirs).map((prop) => ({
       slot: prop.slot,
       card: prop.card,
+      ...(prop.returned ? { returned: true as const } : {}),
       /*
         A lemma the dictionary cannot gloss is left out rather than printed as
         itself: a scene names its words as a request the harvest either honors
@@ -593,12 +616,24 @@ export async function beginRun(input: {
   sceneId: string;
   level: string;
   difficulty: Difficulty;
-}): Promise<{ runId: string; seed: string; run: SceneRunPlan; briefing: Briefing } | null> {
+}): Promise<{ runId: string; seed: string; run: SceneRunPlan; plays: number; briefing: Briefing } | null> {
   const scene = sceneById(input.sceneId);
   if (!scene) return null;
 
   const seed = randomUUID();
-  const recent = await recencyFor(input.ownerId, scene.id);
+  /*
+    How many times this learner has had this conversation before, which is
+    what opens the hearing pool for it (`lib/audio/conditions.ts`). A word is
+    heard cleanly until it is nearly known and a scene is the same claim one
+    level up: the first time through a health centre is a quiet room, and the
+    café, the phone line and the sentence caught from the middle arrive as the
+    encounter itself stops being the hard part. Counted rather than derived
+    from the recency read, which takes only the last few rows.
+  */
+  const [recent, plays] = await Promise.all([
+    recencyFor(input.ownerId, scene.id),
+    prisma.sceneRun.count({ where: { ownerId: input.ownerId, sceneId: scene.id } }),
+  ]);
   const run = planRun(scene, seed, input.level, input.difficulty, recent);
 
   /*
@@ -634,7 +669,7 @@ export async function beginRun(input: {
     select: { id: true },
   });
 
-  return { runId: created.id, seed, run, briefing: briefingOf(run, glosses) };
+  return { runId: created.id, seed, run, plays, briefing: briefingOf(run, glosses) };
 }
 
 /**

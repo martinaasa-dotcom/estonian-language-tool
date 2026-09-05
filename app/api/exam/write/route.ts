@@ -3,7 +3,7 @@ import { requireUserId } from "@/lib/auth/session";
 import { bucketForOwner, checkRateLimit, rateLimited } from "@/lib/security/rateLimit";
 import { resolveProvider, TutorError } from "@/lib/tutor/provider";
 import { gradeComposition } from "@/lib/tutor/grader";
-import { verifyComment } from "@/lib/tutor/verify";
+import { verifyVerdict } from "@/lib/tutor/verify";
 import { authoriseCall, recordUsage, releaseReservation } from "@/lib/usage/ledger";
 import { reportError } from "@/lib/observability/report";
 
@@ -96,8 +96,8 @@ export async function POST(request: Request) {
       not, so `withheldReason` carries which of the two happened and the result
       screen says the one that is true.
     */
-    const verified = verifyComment(graded.comment, [], text, []);
-    if (verified.comment === null && graded.comment.trim()) {
+    const verified = verifyVerdict(graded, [], text, []);
+    if (verified.reason) {
       reportError(new Error("composition reader introduced an unverified Estonian form"), {
         at: "api/exam/write/verify",
         ownerId,
@@ -109,7 +109,9 @@ export async function POST(request: Request) {
       });
     }
 
-    return Response.json({ comment: verified.comment ?? "", rule: graded.rule, aiAvailable: true });
+    return Response.json({
+      comment: verified.graded.comment, rule: verified.graded.rule, aiAvailable: true,
+    });
   } catch (error) {
     const booking = decision.reservation;
     if (!settled && booking) after(() => releaseReservation(booking));

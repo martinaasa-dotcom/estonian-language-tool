@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { modeAt } from "./modes";
 import { WEEKDAY_LONG, type Weekday } from "./schedule";
-import { gameAfter, gameOn, WEEK_GAMES } from "./weekGames";
+import { DESTINATIONS } from "./nav";
+import { featuredTitle, gameAfter, gameOn, WEEK_GAMES } from "./weekGames";
 
 /**
  * The table, and the two things about it that can rot.
@@ -20,10 +21,18 @@ describe("the week's games", () => {
     }
   });
 
-  it("names a mode this app has, every day", () => {
+  it("names a mode or a place this app has, every day", () => {
     for (const featured of WEEK_GAMES) {
-      expect(modeAt(featured.href), `${featured.href} is not a practice mode`).toBeDefined();
+      const known = modeAt(featured.href) ?? DESTINATIONS.find((d) => d.href === featured.href);
+      expect(known, `${featured.href} is neither a practice mode nor a destination`).toBeDefined();
+      expect(featuredTitle(featured.href), featured.href).toBeTruthy();
     }
+  });
+
+  it("features a conversation on one day, since every other row is recall", () => {
+    // The purpose doc leads with the conversation; the week table led with
+    // none. Nothing is hidden by it: Target stays on /practice every day.
+    expect(WEEK_GAMES.some((g) => g.href === "/situations")).toBe(true);
   });
 
   it("gives every day a different one", () => {

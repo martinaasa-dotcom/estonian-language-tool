@@ -266,8 +266,13 @@ export const COMPUTE = {
  * what the University of Tartu is giving away: a neural voice, per character,
  * at a rate anybody can check.
  *
- * It is marked `notInvoiced` where it is used, so the page can say which part
- * of the total somebody would actually be billed for.
+ * WHAT IT IS NOT IS A CHARGE. This said the line was marked `notInvoiced`,
+ * which was the shape before a service could declare who pays: speech is
+ * `kind: "given"`, so this figure is `wouldCostUsd`, counted as credit and
+ * never into a total. Pricing a gift and adding it to the bill turns a thing to
+ * be grateful for into a line on an invoice nobody sent, which was tried and
+ * reverted; what the number is for is showing the scale of what is handed to
+ * this app.
  */
 export const SPEECH_MARKET = {
   ref: {

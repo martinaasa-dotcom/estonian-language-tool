@@ -23,8 +23,11 @@ outside it, which is the one number no learning app reports and the one that mat
 
 ## 2. What is built
 
-**Situations** (`lib/scenes/`, `/situations`). Three scenes: a health centre and an office counter
-at A2, a landlord on the phone at B1. Each is a machine authored in English that
+**Situations** (`lib/scenes/`, `/situations`). Fourteen scenes: the corner shop, a café counter,
+a bus ticket window and the neighbor on the stairs at A1; a health centre, a pharmacy, an office
+counter, a restaurant table, a shop rung before you go, asking the way and the first evening of a
+language course at A2; a landlord on the phone, a job interview and taking something back to a
+shop at B1. Each is a machine authored in English that
 knows the shape of an encounter and holds not one word of Estonian. The other side speaks in a
 sentence a lexicographer recorded where one fits the beat, and otherwise in a line composed inside
 the scene's own closed word list and checked four ways before anybody sees it: the shape, every
@@ -42,7 +45,12 @@ words never change, because a mumbled spelling would be this app writing Estonia
 does, made in the browser out of filtered noise and a band-pass, so nothing ships and nothing
 needs a licence.
 
-**Say it today** (`lib/collections/errands.ts`). Today asks each morning whether the learner spoke
+**Say it today** (`lib/collections/errands.ts`). The two above point at each other: an errand
+names the scene that rehearses it where one exists, the card offers the rehearsal, and a scene
+whose every required beat was met ends in the errand it rehearses and in where the people are,
+rather than in "have it again". A rehearsal that ends in another rehearsal keeps somebody inside.
+
+Today asks each morning whether the learner spoke
 any Estonian to anybody yesterday, and the answer is one press: yes and they understood, they
 switched to English, not yesterday. Where the answer is no it offers an errand for today, drawn
 from the units the learner has started and naming a unit id rather than a word. That report is an
@@ -54,8 +62,8 @@ what it buys. A card that sets a task in the morning and puts three answers unde
 a report on something that has not happened yet, and it can only ever see the conversations this
 app set: somebody who spent an hour with their Estonian mother-in-law and ignored the errand was
 recorded as having done nothing, in the one number this app says it is measured by. A report
-collected that way names no errand, which is why `Encounter.errandId` is nullable and why a
-conversation with a neighbor appears in no unit's row of the research file.
+collected that way names no errand, which is why `Encounter.errandId` is nullable and why the
+research file groups conversations by the month they were reported in and never by a unit.
 
 A day answered is not a day with a conversation in it, and both readings of the table count only
 the two answers that are one (`isConversation`). Counting every row would report a fortnight of
@@ -129,9 +137,14 @@ practicing, and it should fall as their Estonian holds. It is one press and it c
 Across a cohort it is still the only signal anybody has, and it is published under a disclosure
 gate that shows nothing resting on fewer than ten people.
 
-**The classroom has not been piloted.** It is built, and a language house can set a scene for a
-week and see who finished it and which objective the group missed most, and see no transcript at
-all. It should not be cited as a result until one class has run one course with it.
+**The classroom cannot set a scene, and this document said it could.** What is built is a class
+that a teacher can assign a *unit* or a piece of homework to (`assignUnit`, `assignHomework`), with
+a roster showing effort and each learner's weakest case as a roll-up, and no transcript and no
+deck. Nothing in `lib/classroom/` reads `SceneRun` or `SceneGap`, so neither "who finished the
+scene" nor "which objective the group missed most" exists. The boundary those would sit inside is
+drawn and holds (ADR-019, effort never contents); the reading itself is unbuilt, and it is the
+first thing to build for a language house pilot. It has also not been piloted: no real class has
+used any of it, and none of it should be cited as a result until one has.
 
 ## 5. What it costs, and what happens when the money stops
 
@@ -154,10 +167,12 @@ For a language house running one course with this beside it, the numbers worth a
 end of the term, all of which the app already produces without a survey:
 
 - conversations reported per learner per week, and the share in which the other person switched
-  to English, at the start of the course and at the end;
+  to English, at the start of the course and at the end, which is what the research file's
+  encounters table carries, by month, under the disclosure gate;
 - for each unit's "you can do this" claim, the share of learners who got every required beat of its
   situation done at least once;
-- which objective a class most often missed, which is what the class panel already shows a teacher;
+- which objective a class most often missed, which is the one figure on this list the app does not
+  yet produce: see §4, it is the first thing a pilot needs built;
 - the gate rejection rate on the deployment's own model, which says whether composition is
   carrying the encounter or the phrase bank is needed first.
 

@@ -1,4 +1,5 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
+import { sceneTesting } from "@/lib/scenes/catalogue";
 import { ArrowLeft } from "lucide-react";
 import { requireUserId } from "@/lib/auth/session";
 import { LEVELS, LEVEL_INFO, type Level } from "@/lib/collections/syllabus";
@@ -91,6 +92,19 @@ export default async function ReadinessPage() {
                   >
                     {r.situation.claim}
                   </Link>
+                  {/*
+                    The rehearsal, where a scene tests this very claim, on
+                    the card that sends somebody out: between "the log says
+                    you have enough" and the counter is the one place the
+                    scene is worth a line.
+                  */}
+                  {sceneTesting(r.situation.id) && (
+                    <p className="mt-2 text-sm" style={{ color: "var(--mint-ink)" }}>
+                      <Link href={`/situations/${sceneTesting(r.situation.id)!.id}`} className="underline underline-offset-2">
+                        Rehearse it first
+                      </Link>
+                    </p>
+                  )}
                 </Card>
               ))}
             </div>

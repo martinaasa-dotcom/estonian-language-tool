@@ -71,7 +71,31 @@ export async function applyGradeBatch(
     would try to insert twice and fail the whole batch. `orderForReplay` sorts
     by time then id, so the copy kept is the earliest.
   */
-  const ordered = orderForReplay(batch.filter(isValidPending));
+  /*
+    A ROW THAT CANNOT BE APPLIED IS STILL SETTLED, OR THE QUEUE NEVER EMPTIES.
+
+    An item failing `isValidPending` was filtered out here and so never reached
+    `settled`, which is the list the client drops from the outbox. The drain
+    loop in `OfflineProvider` stops as soon as a pass settles nothing, so one
+    corrupted or hand-edited IndexedDB row left the "grades pending" badge
+    non-zero for ever and made the flush on sign-out permanently incomplete:
+    the rail asks before losing a grade, so the learner was warned about a row
+    that could never land.
+
+    It is the same case as the deleted card below, which is settled with the
+    reason that settling it stops the client retrying for ever, and it is not a
+    probe: nothing is looked up, so it says nothing about whether anybody
+    else's review exists. The id is safe to name because it is the store's own
+    key, so every row that was written has one.
+  */
+  const usable = batch.filter(isValidPending);
+  for (const item of batch) {
+    if (usable.includes(item)) continue;
+    const id = (item as { id?: unknown })?.id;
+    if (typeof id === "string" && id.length > 0) settled.push(id);
+  }
+
+  const ordered = orderForReplay(usable);
   const wanted: typeof ordered = [];
   const seenIds = new Set<string>();
   for (const item of ordered) {

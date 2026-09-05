@@ -30,9 +30,9 @@ describe("stageOf", () => {
 });
 
 describe("shows", () => {
-  it("gives a beginner three things that are true on an empty log", () => {
+  it("gives a beginner four things that are true on an empty log", () => {
     const led = PANELS.filter((p) => shows("arriving", p));
-    expect(led).toEqual(["review", "next", "word"]);
+    expect(led).toEqual(["review", "next", "word", "errand"]);
   });
 
   it("holds the quest back until there is a weakness to name", () => {
@@ -53,8 +53,15 @@ describe("shows", () => {
     // The ones that read as a nought on day one, which is what this module is
     // for. Not the word of the day: that is a dictionary lookup keyed on the
     // date and it reads the same on the first morning as in the second year.
-    const furniture: Panel[] = ["streak", "tasks", "quest", "errand"];
+    const furniture: Panel[] = ["streak", "tasks", "quest"];
     for (const panel of furniture) expect(shows("arriving", panel)).toBe(false);
+  });
+
+  it("asks about yesterday from the first morning", () => {
+    // The question is about the learner's own day and not about the deck,
+    // and the count it collects is the number the app says it is measured
+    // by. Day one is the baseline, so day one is asked.
+    expect(shows("arriving", "errand")).toBe(true);
   });
 
   it("gives day one something to read that is not a nought", () => {

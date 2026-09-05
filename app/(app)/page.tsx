@@ -28,7 +28,7 @@ import { dateLine } from "@/lib/time/estonianDate";
 import type { TaskView } from "@/components/TaskRow";
 import { TodayPlan } from "@/components/TodayPlan";
 import { eventsOn, kindFrom, span, weekdayOf, KIND_LABEL, KIND_TONE, WEEKDAY_LONG } from "@/lib/ux/schedule";
-import { gameAfter, gameOn } from "@/lib/ux/weekGames";
+import { featuredTitle, gameAfter, gameOn } from "@/lib/ux/weekGames";
 import { WordOfDayCard } from "@/components/WordOfDay";
 import { SayItToday } from "@/components/SayItToday";
 import { errandForDay, startedUnits } from "@/lib/collections/errands";
@@ -677,24 +677,32 @@ export default async function TodayPage() {
     well. The cost is the "tomorrow" line one day in seven, which is the right
     way round.
   */
+  /*
+    A mode's title, or a place's label where the row is not a round: the
+    conversation on Wednesday is a destination in lib/ux/nav.ts, not a mode
+    in lib/ux/modes.ts, and `featuredTitle` reads whichever table owns the name.
+  */
   const featuredMode = modeAt(featured.href);
+  const featuredName = featuredTitle(featured.href);
   const tomorrow = gameAfter(weekdayOf(summary.dayKey));
-  const gameCard = featuredMode && featured.href !== "/quest" ? (
+  const gameCard = featuredName && featured.href !== "/quest" ? (
     <Card>
-      <SectionTitle hint={WEEKDAY_LONG[weekdayOf(summary.dayKey)]}>Today&apos;s game</SectionTitle>
+      <SectionTitle hint={WEEKDAY_LONG[weekdayOf(summary.dayKey)]}>
+        {featuredMode ? "Today's game" : "Today's conversation"}
+      </SectionTitle>
       <p className="mt-1 text-lg font-semibold" style={{ color: "var(--ink)" }}>
-        {featuredMode.title}
+        {featuredName}
       </p>
       <p className="mt-1 text-base leading-relaxed" style={{ color: "var(--ink-2)" }}>
         {featured.why}
       </p>
       <div className="mt-3">
         <ButtonLink href={featured.href} variant="primary">
-          {featuredMode.title} <ArrowRight size={15} aria-hidden />
+          {featuredName} <ArrowRight size={15} aria-hidden />
         </ButtonLink>
       </div>
       <p className="mt-3 text-sm" style={{ color: "var(--ink-3)" }}>
-        {tomorrow.weekday} is {modeAt(tomorrow.game.href)?.title ?? "another one"}.
+        {tomorrow.weekday} is {featuredTitle(tomorrow.game.href) ?? "another one"}.
       </p>
     </Card>
   ) : null;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bothSetsOrdinary, localCasesFor, takesOutsideCases } from "./place";
+import { bothSetsOrdinary, takesOutsideCases } from "./place";
 
 /**
  * The countries this app teaches at A1 are the words the rule exists for, so
@@ -26,11 +26,5 @@ describe("takesOutsideCases", () => {
 
   it("leaves maa alone, because both sets are ordinary Estonian for it", () => {
     expect(bothSetsOrdinary("maa")).toBe(true);
-    expect(localCasesFor("maa")).toEqual([]);
-  });
-
-  it("drills the outside trio for a country and the inside trio otherwise", () => {
-    expect(localCasesFor("Saksamaa")).toEqual(["ADESSIVE", "ABLATIVE", "ALLATIVE"]);
-    expect(localCasesFor("tuba")).toEqual(["INESSIVE", "ELATIVE", "ILLATIVE"]);
   });
 });

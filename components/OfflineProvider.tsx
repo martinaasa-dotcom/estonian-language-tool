@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { CloudOff, RefreshCw } from "lucide-react";
 import { replayGrades } from "@/app/actions";
 import { dropFromOutbox, outboxSize, readOutbox } from "@/lib/offline/db";
@@ -46,10 +46,27 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     void outboxSize().then(setPending);
   }, []);
 
+  /*
+    THE GUARD IS A REF BECAUSE THE HANDLER IS REGISTERED ONCE.
+
+    `sync` was memoised on `[syncing]` and captured by an effect with no
+    dependencies, so the copy wired to `online`, `visibilitychange` and the
+    thirty-second interval kept the `syncing === false` it was born with. Two
+    passes could overlap, read the same rows, and both miss the "already
+    replayed" check on the server; `prisma.review.create` is given the id the
+    client generated, so the second one raises a unique violation and fails the
+    whole batch, which the learner reads as having gone offline. A ref is the
+    same guard read at the moment it is asked rather than at the moment the
+    handler was made. The state stays for the banner's spinner, which is a
+    render and wants the render's value.
+  */
+  const syncingRef = useRef(false);
+
   const sync = useCallback(async () => {
-    if (syncing) return;
+    if (syncingRef.current) return;
     // Cheap guard so the retry interval costs nothing in the normal case.
     if ((await outboxSize()) === 0) { setPending(0); return; }
+    syncingRef.current = true;
     setSyncing(true);
     try {
       // Drain in batches until the queue is empty or a batch fails to land.
@@ -94,10 +111,11 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       // durable, so this simply happens again on the next `online` event.
       setOnline(false);
     } finally {
+      syncingRef.current = false;
       setSyncing(false);
       refresh();
     }
-  }, [syncing, refresh]);
+  }, [refresh]);
 
   useEffect(() => {
     setOnline(navigator.onLine);
@@ -182,7 +200,14 @@ function OfflineBanner({ online, pending, syncing }: {
       className="bottom-notice fixed inset-x-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-sm md:left-auto md:right-3 md:inset-x-auto md:rounded-md"
       style={{
         background: online ? "var(--accent-soft)" : "var(--raised)",
-        color: online ? "var(--accent)" : "var(--ink-2)",
+        // `--accent-deep` is the ink for the accent's tint and `--accent` is
+        // the fill. The fill measured 3.40:1 on `--accent-soft` in the light
+        // theme against a bar of 4.5, on the one message that has to be read
+        // at a glance, and no check could see it: the fill-as-ink invariant
+        // omitted `accent`, which the design system calls the trap, and a
+        // browser sweep can only reach a state a fixture arrives in, which
+        // "syncing" is not.
+        color: online ? "var(--accent-deep)" : "var(--ink-2)",
         boxShadow: "var(--shadow)",
       }}
     >

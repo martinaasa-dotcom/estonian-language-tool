@@ -29,12 +29,32 @@
  *
  * An errand is offered only where the learner has started its unit, because
  * "order a coffee" to somebody who has not met `kohv` is a dare rather than a
- * task. The two that need only greetings are always available. The walk over
- * the pool is `dayIndex`, so the same errand does not come round for weeks.
+ * task. The two that need only greetings are always available.
+ *
+ * THE WALK IS OVER THE WHOLE LIST AND THE FILTER COMES AFTER IT. This said the
+ * same errand "does not come round for weeks", which is true of somebody who
+ * has started every unit and false of everybody else: the pool is the units a
+ * learner has begun, four of them on a starter deck, and `dayIndex` over a pool
+ * of four repeats every four days. The interval is the pool size, which is a
+ * fact about how far in the learner is rather than a promise this file can
+ * make, and it is why the card appears on a minority of days.
+ *
+ * AND THE MODULUS IS THE POOL, WHICH MEANS STARTING A UNIT CHANGES TODAY'S. It
+ * renumbers the walk, so a learner who begins a unit at lunchtime can be shown
+ * a different errand from the one the card offered that morning. Walking the
+ * fixed list instead and stepping forward to the first available errand was
+ * tried and is worse where it matters: measured over twenty days on a starter
+ * deck it lands on `hello` eleven times in twelve, because stepping forward
+ * gives the errand with the most unavailable entries in front of it the largest
+ * catchment. An even walk over a pool needs the pool's size, so the two cannot
+ * both be had. Variety wins, because the learner with four errands is the one
+ * who would pay for the other choice, and because the card is only offered on a
+ * day the answer was no.
  *
  * Pure.
  */
 import { dayIndex } from "@/lib/random/dayHash";
+import { SCENES, sceneById } from "@/lib/scenes/catalogue";
 import { SYLLABUS } from "./syllabus";
 
 export interface Errand {
@@ -45,27 +65,48 @@ export interface Errand {
   readonly where: string;
   /** The unit whose words it takes. */
   readonly unit: string;
+  /**
+   * The scene that rehearses it, where one does. An id from
+   * `lib/scenes/catalogue.ts`, and the scene has to declare the errand's unit,
+   * which `errands.test.ts` asserts: a rehearsal that could not vouch for
+   * the words the errand needs would be a rehearsal of something else.
+   *
+   * THIS IS THE JOIN THE PURPOSE RESTS ON. Situations is where the encounter
+   * is played on somebody who wants something from you, and the errand is
+   * where it is played on somebody real. For a while the two were built side
+   * by side and never pointed at each other: the debrief ended in "have it
+   * again", and the card offering the errand linked to a unit's word list.
+   * `docs/22-real-life.md` says the app is to be left, and a rehearsal that
+   * does not end in the door is a rehearsal that keeps you inside.
+   */
+  readonly scene?: string;
 }
 
 export const ERRANDS: readonly Errand[] = [
   { id: "hello", says: "Say hello to the first person you deal with today, and thank them when you leave.", where: "Anywhere", unit: "tervitused" },
   { id: "sorry", says: "Apologize in Estonian for something small, and say you are learning.", where: "Anywhere", unit: "tervitused" },
-  { id: "coffee", says: "Order a coffee in Estonian, and say please.", where: "A café", unit: "sook-ja-jook" },
-  { id: "bread", says: "Ask for bread at the counter, and say how much you want.", where: "A shop or a market", unit: "sook-ja-jook" },
-  { id: "price", says: "Ask what something costs before you look at the label.", where: "A shop", unit: "ostmine" },
+  { id: "coffee", says: "Order a coffee in Estonian, and say please.", where: "A café", unit: "sook-ja-jook", scene: "kohvikus" },
+  { id: "bread", says: "Ask for bread at the counter, and say how much you want.", where: "A shop or a market", unit: "sook-ja-jook", scene: "poodi-piima" },
+  { id: "price", says: "Ask what something costs before you look at the label.", where: "A shop", unit: "ostmine", scene: "poodi-piima" },
   { id: "time", says: "Ask somebody what time it is, even if you know.", where: "A bus stop, a corridor", unit: "aeg" },
-  { id: "where", says: "Ask where something is, and follow the answer without asking again in English.", where: "Town", unit: "kus-ja-kuhu" },
+  { id: "where", says: "Ask where something is, and follow the answer without asking again in English.", where: "Town", unit: "kus-ja-kuhu", scene: "tee-kusimine" },
   { id: "weather", says: "Say one sentence about the weather to somebody waiting beside you.", where: "A queue, a lift", unit: "ilm" },
-  { id: "family", says: "Tell a colleague or a neighbor one thing about your family.", where: "Work, the stairwell", unit: "inimesed" },
+  { id: "family", says: "Tell a colleague or a neighbor one thing about your family.", where: "Work, the stairwell", unit: "inimesed", scene: "trepikoda" },
   { id: "day", says: "Tell somebody what you did today, in three sentences.", where: "Home, a friend", unit: "iga-paev" },
   { id: "number", says: "Give your phone number in Estonian, digit by digit, and have it read back.", where: "A form, a friend", unit: "arvud" },
   { id: "clothes", says: "Ask for a size or a color in a shop.", where: "A clothes shop", unit: "riided" },
-  { id: "call", says: "Make one phone call in Estonian, even a short one.", where: "The phone", unit: "suhtlemine" },
-  { id: "appointment", says: "Book or ask about an appointment in Estonian, and hold the line if they switch.", where: "A health center, a salon", unit: "keha-ja-tervis" },
+  { id: "call", says: "Make one phone call in Estonian, even a short one.", where: "The phone", unit: "suhtlemine", scene: "helistamine" },
+  { id: "appointment", says: "Book or ask about an appointment in Estonian, and hold the line if they switch.", where: "A health center, a salon", unit: "keha-ja-tervis", scene: "arsti-aeg" },
   { id: "plan", says: "Arrange to meet somebody, with a day and a time.", where: "Work, a friend", unit: "plaanid" },
-  { id: "flat", says: "Tell somebody one thing about your flat, or ask about theirs.", where: "A neighbor, a colleague", unit: "kodu" },
+  { id: "flat", says: "Tell somebody one thing about your flat, or ask about theirs.", where: "A neighbor, a colleague", unit: "kodu", scene: "uuri-remont" },
   { id: "help", says: "Ask somebody for help with one small thing, in Estonian.", where: "Anywhere", unit: "korraldused" },
-  { id: "post", says: "Post a letter or collect a parcel, and do the whole thing in Estonian.", where: "The post office", unit: "linn-ja-teenused" },
+  { id: "post", says: "Post a letter or collect a parcel, and do the whole thing in Estonian.", where: "The post office", unit: "linn-ja-teenused", scene: "ametiasutus" },
+  { id: "ticket", says: "Buy a bus ticket at the window, and say where you are going and when.", where: "A bus station", unit: "reisimine", scene: "bussipilet" },
+  { id: "meal", says: "Order a whole meal, and ask what is in one of the dishes.", where: "A restaurant", unit: "restoranis", scene: "restoranis-tellimine" },
+  { id: "pharmacy", says: "Ask at a pharmacy for something for a headache, and ask how often to take it.", where: "A pharmacy", unit: "keha-ja-tervis", scene: "apteek" },
+  { id: "meaning", says: "Ask somebody what an Estonian word means, and use it once before the day is out.", where: "Class, work, a friend", unit: "kool-ja-keel", scene: "keeletund" },
+  { id: "job", says: "Tell somebody what you do for a living and one thing you are good at.", where: "Work, a party", unit: "too-ja-raha", scene: "toovestlus" },
+  { id: "complain", says: "Take something back to a shop, or report a fault, and say what is wrong with it.", where: "A shop, a landlord, a helpdesk", unit: "probleemid", scene: "kaebus" },
 ];
 
 /**
@@ -115,6 +156,29 @@ export function errandForDay(dayKey: string, startedUnits: ReadonlySet<string>):
 
 export function errandById(id: string): Errand | undefined {
   return ERRANDS.find((e) => e.id === id);
+}
+
+/**
+ * The scene an errand rehearses, or nothing.
+ *
+ * Resolved here rather than by the screen so a stale id fails the test in
+ * this file rather than rendering a link to a page that is not there.
+ */
+export function sceneForErrand(errand: Errand) {
+  return errand.scene === undefined ? undefined : sceneById(errand.scene);
+}
+
+/**
+ * The errand a scene was rehearsing, for the debrief.
+ *
+ * The first one that names the scene, which is a choice only where two do
+ * (`bread` and `price` both go to the shop), and the first is the plainer
+ * ask. A scene with none returns nothing rather than the day's errand, since
+ * "now go and do it" has to be about the thing just rehearsed.
+ */
+export function errandForScene(sceneId: string): Errand | undefined {
+  if (!SCENES.some((s) => s.id === sceneId)) return undefined;
+  return ERRANDS.find((e) => e.scene === sceneId);
 }
 
 /** The units a deck has started: any of the unit's words with a card. */

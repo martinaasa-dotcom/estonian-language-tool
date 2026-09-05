@@ -61,21 +61,43 @@ export function gapForms(word: GapWord): Map<string, CaseKey | null> {
   for (const form of word.forms) parts[form.formType] = form.value;
 
   /*
-    A PRINCIPAL PART IS NOT LABELED AND THE SHORT ILLATIVE IS.
+    A PRINCIPAL PART IS NOT LABELED, AND NOR IS A SHORT ILLATIVE SPELLED LIKE
+    ONE.
 
     `tuba` is its own nominative and its own partitive, so a card built on it
     cannot say which case the sentence was using it in, and the label is what
     the accuracy chart counts: a guess there is a wrong row rather than a
-    missing one. `ILL_SG_SHORT` is the exception because it is not syncretic
-    by construction, the dictionary only promotes it where it differs from all
-    three principal parts, and it is the one case whose everyday form no rule
-    reaches. Where it does coincide with a stored part, that part is written
-    first and keeps the slot.
+    missing one.
+
+    `ILL_SG_SHORT` was the exception, on the argument that the dictionary only
+    promotes it where it differs from all three principal parts. That is not
+    what the dictionary holds. Measured over the shipped file, **1,934 of the
+    2,700 entries that store a short illative store one spelled exactly like a
+    principal part**, which is the same figure `lib/estonian/derive.ts` quotes
+    the other way round when it says the case does this to most words: `arsti`
+    is the short illative of `arst` and also its genitive and its partitive.
+    The old rule left the label to whichever row the database happened to
+    return first, since the first writer wins below, so `Läksin ____ juurde.`
+    gapped for a genitive could be written into the append-only log as an
+    illative.
+
+    So the strict rule the gap rung already states applies here too: exactly
+    one slot claims the spelling, or no slot is named. The form is still
+    gappable, because it is a real form of the word; what it no longer does is
+    claim a case it shares with another.
 
     A retrieved form names its own slot, which is what `morphCode` is.
   */
+  const principalValues = new Set(
+    ["NOM_SG", "GEN_SG", "PART_SG"]
+      .map((k) => parts[k]?.trim().toLowerCase())
+      .filter((v): v is string => !!v),
+  );
   for (const form of word.forms) {
-    add(form.value, form.formType === "ILL_SG_SHORT" ? "ILLATIVE" : caseFromMorphCode(form.morphCode));
+    const named = form.formType === "ILL_SG_SHORT"
+      ? (principalValues.has(form.value.trim().toLowerCase()) ? null : "ILLATIVE" as const)
+      : caseFromMorphCode(form.morphCode);
+    add(form.value, named);
   }
   add(word.lemma, null);
 

@@ -23,6 +23,7 @@ import {
 import { BANDS, type Band, type ChoiceItem, type DictationItem, type Item, type SpeakItem, type WriteItem } from "./types";
 import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 import { heardIndex, meaningsHeard, type HeardIndex } from "./heard";
+import { rng as seededRng } from "@/lib/random/seeded";
 
 /**
  * Turning the dictionary into a placement test.
@@ -63,21 +64,20 @@ function raise(a: Band, b: Band | undefined): Band {
 }
 
 /**
- * A deterministic shuffle.
+ * The seeded generator, under the name this file and its tests already use.
  *
  * Seeded rather than `Math.random` so a test asserts on a fixed paper, and so
  * two learners handed the same dictionary on the same day do not sit an
  * identical test.
+ *
+ * A RE-EXPORT RATHER THAN A COPY, AND THE SEQUENCE DID NOT MOVE. This was the
+ * fourth transcription of mulberry32 in the tree, byte for byte the same as
+ * `rng`, which was checked over five seeds and two thousand draws each before
+ * the body was deleted. It matters here more than anywhere: a paper is
+ * addressed by its seed, so a generator that quietly diverged would set a
+ * candidate one check and mark them against another.
  */
-export function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+export { seededRng as mulberry32 };
 
 
 
@@ -886,7 +886,7 @@ export interface Paper {
  * eight of the same question, and each kind gets its turn at each band.
  */
 export function buildPaper(words: readonly WordRow[], seed: number, heard: HeardIndex = new Map()): Paper {
-  const rng = mulberry32(seed);
+  const rng = seededRng(seed);
   const spent = new Set<string>();
 
   /*

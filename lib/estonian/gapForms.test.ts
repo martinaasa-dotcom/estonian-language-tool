@@ -79,6 +79,33 @@ describe("gapForms", () => {
     retrieved form outright. A suffix rule reaching the same string later must
     not relabel it, because the label is what the accuracy chart counts.
   */
+  it("names no case where the short illative is spelled like a principal part", () => {
+    /*
+      `arsti` is the short illative of `arst` and also its genitive and its
+      partitive, and 1,934 of the 2,700 entries that store a short illative
+      store one like that, because that is what the case does. Labelling it
+      ILLATIVE left `Läksin ____ juurde.` gapped for a genitive and written
+      into the append-only accuracy chart as an illative, and which label it
+      got depended on the order the forms came back in. The spelling is still
+      gappable; it just claims no case.
+    */
+    const arst = gapForms({
+      lemma: "arst",
+      pos: "NOUN",
+      forms: [
+        // The illative first, which is the order that used to decide it.
+        { formType: "ILL_SG_SHORT", value: "arsti" },
+        { formType: "NOM_SG", value: "arst" },
+        { formType: "GEN_SG", value: "arsti" },
+        { formType: "PART_SG", value: "arsti" },
+      ],
+    });
+    expect(arst.has("arsti")).toBe(true);
+    expect(arst.get("arsti")).toBeNull();
+    // And one that really is only the illative keeps it.
+    expect(gapForms(TUBA).get("tuppa")).toBe("ILLATIVE");
+  });
+
   it("keeps the slot the dictionary named over the one a rule would guess", () => {
     const forms = gapForms({
       ...TUBA,

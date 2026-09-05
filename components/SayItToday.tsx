@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { Footprints } from "lucide-react";
 import { recordEncounter } from "@/app/actions";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
+import { Button } from "@/components/Button";
 import { Card, SectionTitle } from "@/components/ui";
 import {
-  isConversation, OUTCOMES, OUTCOME_LABEL,
+  isConversation, OUTCOMES, OUTCOME_LABEL, sceneForErrand,
   type Conversation, type Errand, type Outcome,
 } from "@/lib/collections/errands";
 
@@ -41,16 +42,32 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
   unitTitle: string;
 }) {
   const [answer, setAnswer] = useState<Outcome | null>(answered);
+  const [failed, setFailed] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
 
   const report = (outcome: Outcome) => {
     setAnswer(outcome);
+    setFailed(false);
     start(async () => {
-      // No errand id: this is the learner's own day rather than our homework,
-      // and a conversation with a neighbor is not ours to take credit for.
-      await recordEncounter(null, outcome);
-      router.refresh();
+      /*
+        No errand id: this is the learner's own day rather than our homework,
+        and a conversation with a neighbor is not ours to take credit for.
+
+        A report is not a grade, so it is not queued for a train (ADR-015): a
+        press that did not land puts the three answers back with a line
+        saying so, which is the star button's answer to the same failure. It
+        used to throw into nothing and leave the card claiming the day was
+        answered when the server had heard nothing.
+      */
+      try {
+        const result = await recordEncounter(null, outcome);
+        if (!result.ok) throw new Error(result.error);
+        router.refresh();
+      } catch {
+        setAnswer(null);
+        setFailed(true);
+      }
     });
   };
 
@@ -64,6 +81,11 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
         <p className="mt-1 text-xs" style={{ color: "var(--ink-3)" }}>
           Anything counts. A shop, a colleague, one sentence at the door.
         </p>
+        {failed && (
+          <p className="mt-2 text-xs" role="status" style={{ color: "var(--hard-ink)" }}>
+            That did not save. Try again when you are back online.
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Whether you spoke Estonian yesterday">
           {OUTCOMES.map((o) => (
             <button
@@ -95,6 +117,7 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
     argument this card was rebuilt on.
   */
   if (!isConversation(answer)) {
+    const scene = sceneForErrand(errand);
     return (
       <Card>
         <SectionTitle>Say it today</SectionTitle>
@@ -111,6 +134,17 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
           <Link href={`/learn/${errand.unit}`} className="underline">{unitTitle}</Link>.
           {" "}Nobody will slow down for you, and that is the practice.
         </p>
+        {/*
+          The rehearsal, where the course has one. Situations plays this
+          same encounter on somebody with an agenda of their own, and for a
+          while the two never pointed at each other: the errand sent people
+          to a word list and the scene ended in "have it again".
+        */}
+        {scene && (
+          <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
+            Not sure of the words? <Link href={`/situations/${scene.id}`} className="underline">Rehearse it first</Link>, then go.
+          </p>
+        )}
       </Card>
     );
   }
@@ -122,11 +156,56 @@ export function SayItToday({ errand, answered, conversations, days, unitTitle }:
         <Footprints size={16} aria-hidden className="mt-1" /> {REPLY[answer]}
       </p>
       <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-        {conversations === 1
+        {/*
+          THE COUNT INCLUDES THE ANSWER THAT WAS JUST GIVEN.
+
+          `conversations` was counted on the server before this answer existed
+          and the reply renders straight away, so a learner reporting their
+          first ever conversation read "They understood you. That is the whole
+          point of all of this." over "0 in the last 30 days" until
+          `router.refresh()` landed: a zero directly under a confirmation of
+          one, on the panel this app says it is measured by. Counted the way
+          the server counts it, so a report that is a conversation adds one and
+          an honest no adds nothing, and the refresh then agrees rather than
+          correcting it.
+        */}
+        {conversations + 1 === 1
           ? `Your first in the last ${days} days. `
-          : `${conversations} in the last ${days} days. `}
+          : `${conversations + 1} in the last ${days} days. `}
         <Link href="/progress" className="underline">Progress keeps the count</Link>.
+        {/*
+          The switch is the thing being practised against, and every scene
+          has a moment where the other side gives up on Estonian. A learner
+          who was just switched on is the one person for whom that rehearsal
+          is worth a line.
+        */}
+        {answer === "SWITCHED" && (
+          <> Every <Link href="/situations" className="underline">conversation here</Link> has a moment where they switch, so you can rehearse holding the line.</>
+        )}
       </p>
+      {/*
+        THE ONE THING WORTH KEEPING FROM A CONVERSATION IS THE WORD YOU DID
+        NOT HAVE, and the card had nowhere to put it. It goes to the
+        dictionary search, which is where a word gets looked up, added to the
+        deck or reported as missing, and it is stored nowhere on the way:
+        /privacy says the answer and the day are kept and nothing else, and
+        that stays true.
+      */}
+      <form action="/dictionary" method="get" className="mt-3 flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="out-there-word" className="label-xs mb-1 block" style={{ color: "var(--ink-3)" }}>
+            A word you did not have?
+          </label>
+          <input
+            id="out-there-word"
+            name="q"
+            lang="et"
+            autoComplete="off"
+            className="field w-full text-sm"
+          />
+        </div>
+        <Button type="submit" size="sm">Look it up</Button>
+      </form>
     </Card>
   );
 }

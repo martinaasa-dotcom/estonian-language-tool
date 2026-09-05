@@ -126,10 +126,38 @@ export const OPENS_AT: Readonly<Record<ConditionId, number>> = {
   half: 15,
 };
 
-/** The conditions a word with this many reviews behind it may be heard in. */
-export function openConditions(reps: number): readonly Condition[] {
+/**
+ * WHETHER A CONDITION REMOVES WORDS OR ONLY COLOURS THEM.
+ *
+ * `half` starts two fifths of the way in, and the table above already says it
+ * is "the only one that removes words rather than coloring them". What
+ * followed from that was never drawn: both rounds that ask for a room mark
+ * what was played, so both were marking a learner on audio they had not been
+ * given. Dictation is the sharp end, since it compares the typed sentence
+ * against the whole of `task.et` and grades the card off the verdict: at
+ * fifteen reviews a learner was told they had spelled wrong the two words the
+ * clip began without, and the scheduler pushed the card back for it. The
+ * listening round is the same fault in a smaller room, since its clip is one
+ * word and losing the front of it loses the question.
+ *
+ * So a caller says whether its audio can lose its opening and still be the
+ * question. A line the other side says in a conversation can: nothing marks
+ * its words, the learner answers the beat, and catching a sentence from the
+ * middle is the thing this whole table exists to rehearse.
+ */
+export function removesWords(condition: Condition): boolean {
+  return condition.skip > 0;
+}
+
+/**
+ * The conditions a word with this many reviews behind it may be heard in.
+ *
+ * `skippable` is the caller's answer to the paragraph above: false where
+ * every word played is marked, or where the clip is one word.
+ */
+export function openConditions(reps: number, skippable: boolean): readonly Condition[] {
   const n = Math.max(0, Math.floor(reps));
-  return CONDITIONS.filter((c) => OPENS_AT[c.id] <= n);
+  return CONDITIONS.filter((c) => OPENS_AT[c.id] <= n && (skippable || !removesWords(c)));
 }
 
 /**
@@ -140,9 +168,21 @@ export function openConditions(reps: number): readonly Condition[] {
  * give back the same question rather than reshuffling under somebody who
  * refreshed. With the setting off every card is clean.
  */
-export function conditionFor(reps: number, position: number, hearing: Hearing): Condition {
+export function conditionFor(
+  reps: number,
+  position: number,
+  hearing: Hearing,
+  /**
+   * Whether losing the opening of this clip leaves the question intact.
+   * Required rather than defaulted, for the reason `illSgShort` is required
+   * on `NounStems`: a caller that has not thought about it does not compile,
+   * and the two that had not were marking answers against audio they never
+   * played.
+   */
+  skippable: boolean,
+): Condition {
   if (hearing === "off") return CLEAN;
-  const open = openConditions(reps);
+  const open = openConditions(reps, skippable);
   const i = (Math.max(0, Math.floor(reps)) + Math.max(0, Math.floor(position))) % open.length;
   return open[i] ?? CLEAN;
 }

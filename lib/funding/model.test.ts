@@ -382,3 +382,42 @@ describe("the speech cache, which is keyed by content rather than by person", ()
     expect(distinctClips(2_000)).toBeLessThan(2_000);
   });
 });
+
+/*
+ * TWO SENTENCES ON THE PAGE ARE ARITHMETIC, SO THEY ARE CHECKED.
+ *
+ * Both had gone stale and neither announced it. The page called the floor
+ * "about forty-six dollars before anybody arrives", which was the sum before
+ * transactional mail, error reporting and the tooling joined the bill; the real
+ * floor is over three hundred, and on a page whose whole argument is that its
+ * numbers are reproducible that is the worst line to be wrong. And it called
+ * turning the audio off "the single biggest saving available", which was
+ * written while speech was priced into the total: it is credited rather than
+ * charged now, so at the default shape it saves nothing whatever.
+ *
+ * These are bands and an ordering rather than equalities, because the point is
+ * which sentence the page can honestly write, and a test that pins a total to
+ * the cent fails on every vendor's price change without anybody learning
+ * anything.
+ */
+describe("the sentences the page writes about the bill", () => {
+  it("has a floor in the hundreds, not the tens", () => {
+    const floor = billFor(at({ learners: 0 })).totalUsd;
+    expect(floor).toBeGreaterThan(100);
+  });
+
+  it("saves more by turning the tutor off than by turning the audio off", () => {
+    for (const learners of [100, 100_000]) {
+      const on = billFor(at({ learners })).totalUsd;
+      const audioOff = on - billFor(at({ learners, audio: false })).totalUsd;
+      const tutorOff = on - billFor(at({ learners, tutor: "off" })).totalUsd;
+      expect(tutorOff, `at ${learners} learners`).toBeGreaterThan(audioOff);
+    }
+  });
+
+  it("saves nothing at all by turning the audio off at the default size", () => {
+    // Speech is given, and the traffic it removes sits inside allowances
+    // already paid for. The page says so rather than implying a saving.
+    expect(billFor(at({ audio: false })).totalUsd).toBe(billFor(at({})).totalUsd);
+  });
+});

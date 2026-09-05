@@ -13,7 +13,8 @@ import { Mascot } from "@/components/brand";
 import { icon } from "@/components/icons";
 import { ChoiceCard, ChoiceChip, ChoiceGroup } from "@/components/Choice";
 import { Chip, Meter, Note, SectionTitle } from "@/components/ui";
-import { DEADLINES, REASONS, TARGETS, deadlineFrom, impliedTarget, reasonsToStored, type Goals } from "@/lib/assessment/goals";
+import { DEADLINES, REASONS, TARGETS, deadlineFrom, firstSceneFor, impliedTarget, reasonsToStored, type Goals } from "@/lib/assessment/goals";
+import { sceneById } from "@/lib/scenes/catalogue";
 import { weeksToLearn, type Standing } from "@/lib/assessment/plan";
 import { PRE_A1, type Band, type Item, type Level, type Placement } from "@/lib/assessment/types";
 import { DEFAULT_LETTER_BAR, LETTER_BAR_CHOICES, type LetterBar } from "@/lib/ux/letterBar";
@@ -187,6 +188,8 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
     daysPerWeek,
     note: "",
   }), [reasons, target, deadlineId, daysPerWeek]);
+  const firstSceneId = firstSceneFor(reasons);
+  const firstScene = firstSceneId ? sceneById(firstSceneId) : undefined;
 
   const chooseLevel = (key: string) => {
     setEstimated(key);
@@ -725,6 +728,28 @@ export function WelcomeWizard({ starters, suggestedName, paper }: {
               )}
               Nothing here is locked in.
             </p>
+
+            {/*
+              THE FIRST CONVERSATION, OFF THE REASON. The wizard used to turn
+              "I live in Estonia" into a level and a number of hours, so the
+              one thing somebody ticked about their own life reached no
+              screen. The reason names the scene that living here starts with,
+              and this is the one place in first run that points out of the
+              deck: the words are the means, and this is what they are for.
+            */}
+            {firstScene && (
+              <div
+                className="mt-5 rounded-[var(--r-lg)] border px-4 py-3"
+                style={{ borderColor: "var(--rule)", background: "var(--mint-soft)" }}
+              >
+                <p className="label-xs" style={{ color: "var(--mint-ink)" }}>Your first conversation</p>
+                <p className="mt-1 text-base font-semibold" style={{ color: "var(--mint-ink)" }}>{firstScene.title}</p>
+                <p className="mt-1 text-sm" style={{ color: "var(--mint-ink)" }}>
+                  {firstScene.place}. Once these words are in, Situations plays it on somebody who
+                  wants something from you, and then there is a real one to go and do.
+                </p>
+              </div>
+            )}
 
             {/*
               The daily goal, as one row rather than a screen. It has a sane

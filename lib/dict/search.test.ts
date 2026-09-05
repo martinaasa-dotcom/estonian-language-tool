@@ -45,7 +45,18 @@ const DICT: Candidate[] = [
   ]),
   lexeme("raamat", "book", "NOUN", [
     ["NOM_SG", "raamat"], ["GEN_SG", "raamatu"], ["PART_SG", "raamatut"],
-    ["GEN_PL", "raamatute"],
+    // Stored, because the nominative plural is attested or nothing.
+    ["NOM_PL", "raamatud"], ["GEN_PL", "raamatute"],
+  ]),
+  /*
+    A pronoun, whose plural no ending reaches: `see` goes to `need`. It is here
+    to hold the search to matching a stored plural rather than deriving one,
+    which it did, at the score that means the dictionary vouches for the
+    spelling. `selled` is not a word.
+  */
+  lexeme("see", "this", "PRONOUN", [
+    ["NOM_SG", "see"], ["GEN_SG", "selle"], ["PART_SG", "seda"],
+    ["NOM_PL", "need"],
   ]),
   lexeme("lugema", "to read", "VERB", [
     ["INF_MA", "lugema"], ["INF_DA", "lugeda"],
@@ -69,9 +80,21 @@ describe("rankCandidates — inflected forms", () => {
     ["raamatuga", "raamat", /kaasaütlev/],
     ["tubadega", "tuba", /mitmuse kaasaütlev/],
     ["raamatud", "raamat", /mitmuse nimetav/],
+    ["need", "see", /mitmuse nimetav/],
   ])("finds %s as a form of %s", (query, lemma, why) => {
     expect(top(query)?.lemma).toBe(lemma);
     expect(top(query)?.matchedAs).toMatch(why);
+  });
+
+  it("does not vouch for a plural built by adding d to the genitive", () => {
+    /*
+      `lib/estonian/derive.ts` deleted this rule and says why: it is wrong for
+      every pronoun and invents a plural for words that have none. The search
+      kept it, at `VOUCHED_SCORE`, so `selled` was offered as the plural of
+      `see` and vouched for on a scanned page, in a headline and in the chat
+      guard, over an entry that stores the real one.
+    */
+    expect(top("selled")?.matchedAs).toBeUndefined();
   });
 
   it("names the form the way a class names it, English in brackets after", () => {
@@ -400,5 +423,31 @@ describe("oneEntryPerLemma", () => {
       lexeme("vanaadium", "vanadium", "NOUN", [["GEN_SG", "vanaadiumi"]]),
     ];
     expect(oneEntryPerLemma(rows, ["tuba"]).map((r) => r.lemma)).toEqual(["tuba"]);
+  });
+});
+
+describe("matchEstonianForm — what the dictionary will vouch for", () => {
+  /*
+    `createLexeme` writes a shared row from Anu's vocabulary bridge marked `AI`
+    and carrying no forms, because nobody has checked it. An exact headword
+    scores above any stored form, so such a row won every one of these matches:
+    the chat guard asked the dictionary whether Anu's Estonian was verified and
+    the dictionary held the words Anu had suggested, so the word the guard
+    exists to flag was the word that cleared it.
+  */
+  const suggested: Candidate = {
+    id: "ai-1", lemma: "veeta", translation: "He'd like", pos: "NOUN",
+    cefr: null, gradationNote: null, provenance: "AI", forms: [],
+  };
+
+  it("refuses a word a model suggested and nobody has checked", () => {
+    expect(matchEstonianForm([suggested], "veeta")).toBe(null);
+  });
+
+  it("still vouches for the real entry standing beside it", () => {
+    const real = lexeme("veetma", "to spend", "VERB", [
+      ["INF_MA", "veetma"], ["INF_DA", "veeta"], ["PRES_1SG", "veedan"],
+    ]);
+    expect(matchEstonianForm([suggested, real], "veeta")?.lemma).toBe("veetma");
   });
 });

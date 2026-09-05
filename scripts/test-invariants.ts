@@ -1396,7 +1396,45 @@ check("a withheld note claims Estonian only when it caught Estonian", () => {
     on the day it catches something real, and both screens used to say the
     stronger sentence unconditionally.
   */
+  /*
+    AND EVERY FIELD OF A VERDICT GOES THROUGH IT, NOT JUST THE COMMENT.
+
+    A verdict carries a `comment` and a `rule`, both of which are drawn on the
+    screen under the chip saying a model wrote this. All three graders verified
+    the comment and returned the rule untouched, so the one path where ADR-005
+    is enforced rather than asked for had a second field walking past the
+    enforcement, and two of the three emptied the comment and handed back the
+    same object, so the rule was still drawn beside a notice saying the note had
+    been held back for inventing an Estonian form.
+
+    Anchored on the call rather than on the fields, because the point is that a
+    route hands the whole verdict over and lets one function decide. A route
+    reaching for `verifyComment` again is a route checking whichever halves it
+    remembered.
+  */
+  for (const file of [
+    "app/api/write/route.ts",
+    "app/api/describe/route.ts",
+    "app/api/exam/write/route.ts",
+  ]) {
+    const src = code(file);
+    assert.match(
+      src, /verifyVerdict\(/,
+      `${file}: a grader's reply is verified one field at a time again. `
+      + `Hand the whole verdict to verifyVerdict, or the rule reaches the learner unchecked.`,
+    );
+    assert.ok(
+      !/verifyComment\(/.test(src),
+      `${file}: verifies a single field. verifyVerdict checks both halves and withholds them together.`,
+    );
+  }
+
   const verify = read("lib/tutor/verify.ts");
+  assert.match(
+    code("lib/tutor/verify.ts"),
+    /graded:\s*\{\s*\.\.\.graded,\s*comment:\s*"",\s*rule:\s*""\s*\}/,
+    "verifyVerdict stopped emptying both halves together",
+  );
   assert.match(
     verify,
     /reason:\s*certain \? "estonian-form" : "unvouched-word"/,
@@ -1662,6 +1700,42 @@ check("a mock exam is marked by the server, never by the client", () => {
   );
 });
 
+check("the paper's pool is drawn from its own seed, not from what was read last", () => {
+  /*
+    THE THIRD OF (LEVEL, SEED, POOL), WHICH WAS THE ONE NOBODY HELD.
+
+    The invariant above rests on `buildPaper` being deterministic in those
+    three, and the first two travel with the submission. The pool did not: it
+    was the first five hundred rows of an order beginning `fetchedAt desc`, and
+    `fetchedAt` is rewritten by `runEnrich` and `runLookup` on every lookup of a
+    word, including one that changes nothing. Any learner opening the dictionary
+    during somebody's paper reordered it, the cut at five hundred took a
+    different set, and item ids are positional, so the answers were marked
+    against questions nobody had been asked.
+
+    So the pool is read as ids on the primary key, which nothing can move,
+    shuffled with the paper's own seed, and cut. Two things are asserted: that
+    no mutable column orders it, and that the seed reaches it. The first is the
+    rule; the second is what makes the draw reproducible rather than merely
+    stable.
+  */
+  const source = code("lib/progress/exam.ts");
+  const pool = source.slice(source.indexOf("export async function examPool"), source.indexOf("export async function paperFor"));
+  assert.ok(pool.length > 0, "lib/progress/exam.ts no longer has an examPool to check");
+  assert.doesNotMatch(
+    pool, /fetchedAt|lookupMissAt|editedAt|updatedAt/,
+    "the exam pool is ordered by a column a lookup rewrites, so a paper cannot be rebuilt as it was sat",
+  );
+  assert.match(
+    pool, /export async function examPool\([^)]*seed[^)]*\)/,
+    "examPool no longer takes the paper's seed, so the pool is not a function of it",
+  );
+  assert.match(
+    pool, /shuffle\(/,
+    "the exam pool no longer draws with the seed",
+  );
+});
+
 check("a mock exam writes to the same review log as every other mode", () => {
   /*
     ADR-016. An examination is a mode, so the scheduler has to see it: a word
@@ -1697,7 +1771,9 @@ check("nothing about the mock exam decides an answer with a model", () => {
     );
   }
   const reader = read("app/api/exam/write/route.ts");
-  assert.match(reader, /verifyComment\(/, "the composition reader skips the form check");
+  // Either verifier: what the rule asks is that the model's Estonian is checked
+  // before it reaches a candidate, not which function does it.
+  assert.match(reader, /verify(Comment|Verdict)\(/, "the composition reader skips the form check");
   assert.match(reader, /authoriseCall\(/, "the composition reader is not metered");
   assert.match(reader, /checkRateLimit\(/, "the composition reader is not rate limited");
 });
@@ -2518,6 +2594,67 @@ check("there is one shuffle, and the sort-comparator kind is not a shuffle at al
     /rebuilds the paper from that seed to mark it/,
     `${EXCEPTION} keeps its own shuffle and its header stopped saying why`,
   );
+});
+
+check("what a word is advertised as drilling is asked of the builder", () => {
+  /*
+    The `objekt` fault, in the function written to prevent it. Its own comment
+    opens "ASKED OF THE BUILDER, NOT OF THE MORPHOLOGY" and then three of the
+    five lines under it asked the morphology. Gradation is where that diverged:
+    the builder also asks `caseFits("GENITIVE", subject)`, because the genitive
+    singular of a word with no singular belongs to another word, so
+    `kõrvaklapid`, `lihavõtted` and `eriväed` were listed as making a gradation
+    card and made none. The screen names the type, nothing appears, and nothing
+    says why.
+
+    Every type past the two every word has has to come from a `generateCards`
+    call, which is the only thing that can answer for certain.
+  */
+  const body = between(code("lib/srs/cards.ts"), "export function availableCardTypes");
+  const pushed = [...body.matchAll(/types\.push\("(\w+)"\)/g)].map((m) => m[1]!);
+  assert.ok(pushed.length > 0, "availableCardTypes no longer pushes any type");
+
+  for (const type of pushed) {
+    assert.ok(
+      new RegExp(`generateCards\\(lex, \\["${type}"\\]\\)[^;]*types\\.push\\("${type}"\\)`).test(body),
+      `lib/srs/cards.ts: availableCardTypes offers ${type} without asking generateCards for one. `
+      + `A type advertised and not built is a screen naming a card that never appears.`,
+    );
+  }
+});
+
+check("there is one seeded generator, and its two sequences live in one file", () => {
+  /*
+    `lib/random/seeded.ts` opens by saying a second copy is how two of them stop
+    agreeing, and there were three: `lib/collections/lesson.ts` and
+    `lib/collections/checkpoint.ts` had it byte for byte, and
+    `lib/progress/crossword.ts` had a version that pre-adds the constant and
+    keeps its state signed, which is a different stream from the first number
+    out. That last one is what the header warns about happening, and the reason
+    it is kept rather than deleted: `recordCrossword` rebuilds the day's grid
+    from the date to mark it, so swapping the sequence would mark somebody
+    against a grid they were never given. Both are exported from that file now,
+    with the difference written down where a reader meets it.
+
+    The tell is the constant, which is mulberry32's and appears nowhere else.
+  */
+  const HOME = "lib/random/seeded.ts";
+  assert.ok(existsSync(HOME), `the seeded generator has gone from ${HOME}`);
+
+  const home = code(HOME);
+  for (const name of ["export function rng(", "export function dayRng("]) {
+    assert.ok(home.includes(name), `${HOME} no longer exports ${name.slice(16, -1)}`);
+  }
+
+  for (const file of ALL) {
+    if (file === HOME) continue;
+    assert.ok(
+      !/0x6d2b79f5/i.test(code(file)),
+      `${file}: a second copy of the seeded generator. Import rng (or dayRng, for the `
+      + `crossword's own sequence) from ${HOME}. Two copies is how a caller that marks `
+      + `stored work against a seed stops agreeing with the one that built it.`,
+    );
+  }
 });
 
 check("a `take` beside a `distinct` bounds nothing, so it is scoped to one owner", () => {
@@ -4220,7 +4357,8 @@ check("a listening question never offers the meaning of another word it played",
   assert.match(sentenceQuestion, /const inPool = heardIndex\(pool\)/, "the pool's own meanings are no longer indexed");
   assert.match(
     between(items, "export function buildPaper"),
-    /listeningItems\(words,\s*rng,\s*heard\)/,
+    // The generator's local name is not part of the rule; the third argument is.
+    /listeningItems\(words,\s*\w+,\s*heard\)/,
     "buildPaper no longer hands the listening section the dictionary's meanings",
   );
 
@@ -5039,6 +5177,30 @@ check("nothing reaches a paid provider without going through the ledger", () => 
       `${file} opens a provider without asking the ledger first`,
     );
     assert.match(source, /recordUsage\(/, `${file} opens a provider and never files what it spent`);
+
+    /*
+      AND THE SETTLEMENT SETTLES THE BOOKING RATHER THAN MAKING A SECOND ONE.
+
+      `recordUsage` decides from the `reservation` field alone whether a row is
+      a `SETTLEMENT` or a `CALL`. The scene route booked at authorisation,
+      wrote its settlement without that field, and so filed a second `CALL` at
+      the full cost with the reserve left standing for ever: both counting
+      limits count `CALL` rows, so a conversation spent the burst and the daily
+      SCENE allowance at twice the rate, and the deployment budget saw the
+      reserve plus the actual instead of the difference between them. Its own
+      comment three lines above said it was settling the reservation.
+
+      The check above could not see it, because it asks only that the file
+      mentions the function. A file that books therefore has to hand the
+      booking back somewhere, either to settle it or to release it.
+    */
+    if (/authoriseCall\(/.test(source)) {
+      assert.match(
+        source,
+        /reservation[,:]/,
+        `${file} books a call and never passes the booking to recordUsage or releaseReservation, so the reserve stands and the settlement is filed as a second call`,
+      );
+    }
   }
 
   /*
@@ -9352,6 +9514,19 @@ check("a hue's fill is never used as its ink", () => {
   const fillAsInk = /(?:\bcolor:\s*[^;\n]*?|(?<!ink=)\btone=)"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
   const statAsFill = /\btone=\{?[^}]*?"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
   const offenders: string[] = [];
+  /*
+    `accent` is deliberately not in that list, and the sync banner is what the
+    absence cost: it wrote `--accent` on `--accent-soft` at 3.40:1 in the light
+    theme, on the one message that has to be read at a glance, and the design
+    system calls that pairing the trap. Adding it was tried and fires on honest
+    code: the only three places that write `--accent` as a colour are an
+    aria-hidden middot, an aria-hidden icon, and the 80px speaker glyph on the
+    pairs round, none of which are words and all of which clear the 3:1 a
+    graphical object is held to. A line-by-line regex cannot tell an icon from
+    a sentence, and a check that fires on honest code is a check people learn
+    to waive. The banner was corrected by hand; the guard for its shape is
+    `scripts/test-design.mjs`, which measures what it can reach.
+  */
   for (const file of [...APP, ...COMPONENTS]) {
     for (const line of read(file).split("\n")) {
       // A bar and its label side by side: the fill is the bar's, the ink is the
@@ -10406,6 +10581,19 @@ check("the research opt-out is applied in the query, and is where the page says"
     route,
     /const not = [\s\S]{0,60}Prisma\.sql`WHERE r\."ownerId" NOT IN/,
     "the corpus totals no longer exclude anybody, so the file reports a size that counts people who asked to be left out",
+  );
+  /*
+    And the third, which the two above could not see because both are anchored
+    on `r."ownerId"` and this one reads the `Encounter` table. It is the section
+    the pilot is measured on, the conversations somebody says they held outside
+    this app, and the clause could have been deleted with all 282 of these still
+    passing. Exactly the fault the paragraph above was written about, arriving
+    once the query it was written for had a neighbour.
+  */
+  assert.match(
+    route,
+    /const not = [\s\S]{0,60}Prisma\.sql`AND e\."ownerId" NOT IN/,
+    "the reported conversations no longer exclude anybody, so somebody who asked to be left out is published in the errand table",
   );
 
   const label = "Anonymous statistics";
@@ -11638,7 +11826,7 @@ check("the scene route marks mechanically before it reaches a provider", () => {
   );
   assert.match(
     src,
-    /verifyComment\(/,
+    /verify(Comment|Verdict)\(/,
     "the describe route no longer verifies what the model wrote (ADR-005).",
   );
 });
@@ -12119,26 +12307,30 @@ check("a conversation is counted by the one rule, never by counting rows", () =>
 });
 
 /*
-  AND A CONVERSATION THE LEARNER HAD ON THEIR OWN IS NOT OURS TO FILE UNDER AN
-  ERRAND. The card asks about yesterday in general, so the report it writes
-  names no errand: `Encounter.errandId` is nullable for that, and the research
-  export groups that column by the unit an errand drew its words from. Writing
-  today's errand id against a conversation with a neighbor would put a unit's
-  name on a table row that no unit earned, in a file published to people
-  outside this project.
+  AND A CONVERSATION THE LEARNER HAD ON THEIR OWN IS NOT OURS TO FILE UNDER A
+  UNIT. The card asks about yesterday in general, so the report it writes
+  names no errand: `Encounter.errandId` is nullable for that. The research
+  export used to group that column by the unit an errand drew its words from,
+  which was empty by construction once nothing wrote the column, and a table
+  that is always empty is a promise in a file sent to people outside this
+  project. It groups by the month of the report now, which is the one
+  dimension a report honestly carries, and it may not grow a unit back:
+  writing a unit's name against a conversation with a neighbor would put it
+  on a row no unit earned.
 */
-check("Today's report names no errand, and the research table says what it covers", () => {
+check("Today's report names no errand, and the research table files a conversation under no unit", () => {
   assert.match(
     code("components/SayItToday.tsx"), /recordEncounter\(\s*null\s*,/,
     "components/SayItToday.tsx credits an errand with a conversation the learner had on their own",
   );
+  const route = code("app/api/research/route.ts");
+  const tally = route.slice(route.indexOf("async function tallyEncounters"), route.indexOf("async function tally("));
+  assert.ok(tally.length > 0, "app/api/research/route.ts has no tallyEncounters");
+  assert.doesNotMatch(tally, /errandById|"errandId"|unit/, "the encounters section files a report under a unit or an errand");
+  assert.match(tally, /isConversation/, "the encounters section counts a day with no conversation in it as one");
   assert.match(
-    code("app/api/research/route.ts"), /"errandId"\s+IS\s+NOT\s+NULL/,
-    "app/api/research/route.ts groups reports by unit without excluding the ones that name no errand",
-  );
-  assert.match(
-    read("lib/research/sections.ts"), /REPORTS TIED TO AN ERRAND/,
-    "the encounters section no longer tells a reader that it counts errands rather than conversations",
+    read("lib/research/sections.ts"), /NOTHING HERE SAYS WHAT A CONVERSATION WAS ABOUT/,
+    "the encounters section no longer tells a reader that it does not know what a conversation was about",
   );
 });
 

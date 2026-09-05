@@ -392,7 +392,15 @@ export default async function ProgressPage() {
                   </div>
                   <p className="text-xs" style={{ color: "var(--ink-3)" }}>
                     {outside.streak > 1 ? `${outside.streak} days in a row with a real conversation in them. ` : ""}
-                    Self-reported, and the switch to English is the figure to watch: it falls as your Estonian holds.
+                    {/*
+                      The figure to watch, watched against the thirty days before,
+                      because "it falls as your Estonian holds" over one count is a
+                      promise with nothing to fall from. Only where there is a
+                      month behind this one to set it against.
+                    */}
+                    {outside.previous.total > 0
+                      ? `They switched in ${outside.byOutcome.SWITCHED} of ${outside.total} this month, against ${outside.previous.switched} of ${outside.previous.total} in the thirty days before. Self-reported, and that is the figure to watch: it falls as your Estonian holds.`
+                      : "Self-reported, and the switch to English is the figure to watch: it falls as your Estonian holds."}
                   </p>
                 </div>
               )}

@@ -138,25 +138,20 @@ export async function glossSentences(
   ));
 }
 
-/**
- * Whether an entry may stand under a word in somebody else's sentence.
- *
- * `matchEstonianForm` scores an exact headword above a stored form, which is
- * right for a search box and was wrong here: `veeta` is the da-infinitive of
- * `veetma`, to spend, and a formless entry spelled `veeta` that a model had
- * offered a learner won the panel with its own gloss, "He'd like". A word in
- * an attested sentence is glossed by an entry the dictionary can vouch for,
- * which means one carrying forms, or a seeded phrase, which has none because
- * it is already the sentence. An unverified entry is not a fact about this
- * sentence and is never offered as one (ADR-005).
- */
-function vouchable(candidate: Candidate): boolean {
-  if (candidate.provenance === "AI") return false;
-  return candidate.forms.length > 0 || candidate.provenance === "SEED" || candidate.provenance === "EKILEX";
-}
+/*
+  The rule this file found first, now inside `matchEstonianForm` itself.
+
+  `veeta` is the da-infinitive of `veetma`, to spend, and a formless entry
+  spelled `veeta` that a model had offered a learner won the panel with its own
+  gloss, "He'd like". A word in an attested sentence is glossed by an entry the
+  dictionary can vouch for, which means one carrying forms or a seeded phrase,
+  which has none because it is already the sentence. Filtering it here left the
+  chat guard, the headlines, the scanner and the scene importer taking the
+  model's word for it, so the filter moved to the one function all five ask.
+*/
 
 function entryFor(candidates: Candidate[], word: string): GlossedToken["entry"] {
-  const match = matchEstonianForm(candidates.filter(vouchable), word);
+  const match = matchEstonianForm(candidates, word);
   if (!match) return null;
   return {
     lexemeId: match.id,

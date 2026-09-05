@@ -39,3 +39,34 @@ export function rng(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/**
+ * The same generator with the constant added once before the first call.
+ *
+ * A SECOND SEQUENCE, KEPT BECAUSE SOMETHING IS ADDRESSED BY IT. This is the
+ * crossword's, written out again in `lib/progress/crossword.ts` on the argument
+ * that "a shared one would be shared state", which is not true of either of
+ * these: both return a fresh closure and neither holds anything between calls.
+ * What is true is that it is a different stream from `rng`, since it pre-adds
+ * `0x6d2b79f5` and keeps its state signed, so `dayRng(n)` and `rng(n)` disagree
+ * from the first number out.
+ *
+ * That is exactly what this file's own header warns a copy would do, and it is
+ * why the fix is to move it here rather than to delete it: `recordCrossword`
+ * rebuilds the day's puzzle from the date to mark it, the way `submitExam`
+ * rebuilds a paper (ADR-022), so swapping the sequence would mark somebody
+ * against a grid they were never given. Two sequences in one file, with the
+ * difference written down, beats two in two files with nothing saying so.
+ *
+ * Nothing new should reach for this. It exists for the puzzle that already
+ * uses it.
+ */
+export function dayRng(seed: number): () => number {
+  let a = (seed + 0x6d2b79f5) | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
+  };
+}

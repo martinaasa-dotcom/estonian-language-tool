@@ -127,7 +127,19 @@ export function borrowSentences(entries: readonly BorrowEntry[]): Map<string, Ex
       seen.add(k);
       return true;
     });
-    unique.sort((a, b) => (Number(Boolean(b.en)) - Number(Boolean(a.en))) || (a.et.length - b.et.length));
+    /*
+      And it ends on the sentence itself, because the two keys above are not a
+      total order: two sentences that both carry an English translation and are
+      the same length compared equal, `sort` is stable, and what it was handed
+      came out of a `findMany`. The `slice` below is what decides which
+      sentences a word is taught with, so that was the query plan choosing a
+      learner's cards. The text is unique here, since the list was just
+      deduplicated on its own lower-cased spelling.
+    */
+    unique.sort((a, b) =>
+      (Number(Boolean(b.en)) - Number(Boolean(a.en)))
+      || (a.et.length - b.et.length)
+      || a.et.localeCompare(b.et, "et"));
     out.set(key, unique.slice(0, MAX_BORROWED));
   }
   return out;

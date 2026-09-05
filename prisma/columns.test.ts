@@ -89,8 +89,19 @@ describe("the seed's Lexeme columns", () => {
  */
 describe("the built dictionary's own writer", () => {
   const source = readFileSync("prisma/expanded.ts", "utf8");
-  const entry = (JSON.parse(readFileSync("prisma/data/expanded.json", "utf8")) as
-    Record<string, unknown>[])[0]!;
+  /*
+    EVERY ENTRY, NOT THE FIRST ONE.
+
+    This read `[0]` and called it the shape of the file, which is only true
+    where every entry carries every key. They do not: `definition` is on the
+    fifteen entries a homonym pin re-read from Ekilex and on no others, the
+    first entry is not one of them, and the column was missing from the insert
+    for as long as it had existed with this check passing. The union is what the
+    file carries.
+  */
+  const entries = JSON.parse(readFileSync("prisma/data/expanded.json", "utf8")) as
+    Record<string, unknown>[];
+  const carriedKeys = new Set(entries.flatMap((row) => Object.keys(row)));
 
   /*
     The insert's own column list, read out of the statement rather than out of
@@ -112,7 +123,7 @@ describe("the built dictionary's own writer", () => {
 
   it("writes every column the built dictionary carries", () => {
     const columns = new Set(scalars);
-    const carried = Object.keys(entry).filter((key) => columns.has(key));
+    const carried = [...carriedKeys].filter((key) => columns.has(key));
     expect(carried.length, "expanded.json stopped carrying any Lexeme column").toBeGreaterThan(5);
     for (const column of carried) {
       expect(

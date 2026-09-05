@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Speak } from "@/components/Speak";
 import type { GlossedToken } from "@/lib/dict/glossed";
+import type { Condition } from "@/lib/audio/conditions";
 
 /**
  * AN ATTESTED SENTENCE YOU CAN READ, RATHER THAN ONE YOU CAN ONLY LOOK AT.
@@ -31,10 +32,25 @@ import type { GlossedToken } from "@/lib/dict/glossed";
  * reach the controls inside it, which is the half of this that a learner
  * actually presses.
  */
-export function GlossedSentence({ tokens, sentence }: {
+export function GlossedSentence({ tokens, sentence, speak }: {
   tokens: GlossedToken[];
   /** The sentence as recorded, for the speaker. Joining the tokens gives the same string. */
   sentence: string;
+  /**
+   * How the sentence is said, where the caller has an opinion about it.
+   *
+   * A first meeting has none and gets the app's own voice in a quiet room. A
+   * conversation has all of it: the persona's voice, the room the scene is
+   * heard in, their pace, and whether this is the line that just arrived and
+   * should play itself. Passed through rather than reimplemented, so the two
+   * screens cannot disagree about what a speaker button does.
+   */
+  speak?: {
+    voice?: string;
+    condition?: Condition;
+    rate?: number;
+    autoplay?: boolean;
+  };
 }) {
   const panelId = useId();
   const [open, setOpen] = useState<number | null>(null);
@@ -102,7 +118,7 @@ export function GlossedSentence({ tokens, sentence }: {
             );
           })}
         </p>
-        <Speak text={sentence} label="Hear the sentence" />
+        <Speak text={sentence} label="Hear the sentence" {...speak} />
       </div>
 
       <div id={panelId}>

@@ -256,3 +256,55 @@ export function chatEstonianTokens(reply: string): string[] {
     .join("\n");
   return estonianTokens(untagged).filter(isCandidateForm);
 }
+
+/** A grader's whole reply, once both of its halves have been checked. */
+export interface VerifiedVerdict<T extends { comment: string; rule: string }> {
+  /** The reply with both fields emptied where either failed. */
+  graded: T;
+  unverified: string[];
+  reason: WithholdReason | null;
+}
+
+/**
+ * BOTH HALVES OF A GRADER'S REPLY, BECAUSE ONLY ONE WAS EVER CHECKED.
+ *
+ * A verdict carries a `comment` and a `rule`, and the prompt asks the model to
+ * fill the second with the grammatical point at issue. Three routes verified
+ * the comment and returned the rule untouched, and every one of them renders it
+ * on the screen under the chip that says a model wrote this and it needs
+ * checking. So the one path in this app where ADR-005 is enforced rather than
+ * asked for had a second field going straight past the enforcement.
+ *
+ * Worse where it looks safest: two of the three set `comment` to the empty
+ * string when it is withheld and hand back the same object, so the rule was
+ * still drawn beside a notice saying the note had been held back for inventing
+ * an Estonian form. `Kaasaütlev: sõbraga` in that field reaches the learner
+ * exactly as it would have in the comment.
+ *
+ * They are withheld together because they are one note. A rule naming a form
+ * the comment was withheld over is the same claim in a shorter sentence, and a
+ * comment standing alone under a rule that has vanished reads as a rendering
+ * fault. The reason returned is whichever half was certain, since "it used an
+ * Estonian form" is a claim and the caller says so out loud.
+ */
+export function verifyVerdict<T extends { comment: string; rule: string }>(
+  graded: T,
+  knownForms: string[],
+  learnerSentence: string,
+  englishGlosses: string[] = [],
+): VerifiedVerdict<T> {
+  const comment = verifyComment(graded.comment, knownForms, learnerSentence, englishGlosses);
+  const rule = verifyComment(graded.rule, knownForms, learnerSentence, englishGlosses);
+
+  const unverified = [...comment.unverified, ...rule.unverified];
+  if (unverified.length === 0) return { graded, unverified: [], reason: null };
+
+  return {
+    graded: { ...graded, comment: "", rule: "" },
+    unverified,
+    // "estonian-form" is the certain one, so it wins where either half is sure.
+    reason: comment.reason === "estonian-form" || rule.reason === "estonian-form"
+      ? "estonian-form"
+      : (comment.reason ?? rule.reason),
+  };
+}

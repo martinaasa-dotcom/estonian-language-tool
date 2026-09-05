@@ -30,8 +30,19 @@ export type ErasureOutcome =
   | { erased: false; reason: "local" }
   /** Configured for sign-in, but this deployment holds no key that can erase. */
   | { erased: false; reason: "no-service-key" }
-  /** The call was made and refused. */
-  | { erased: false; reason: "failed"; message: string };
+  /**
+   * The call was made and refused.
+   *
+   * It carries no message, and that is the point rather than an omission. It
+   * used to hand back the provider's own error string, which nothing read: the
+   * one caller branches on `erased` and `reason`, and the note the learner sees
+   * is written from those. A raw provider error is the shape `safeMessage`
+   * exists for one directory over, since an initialization failure quotes the
+   * datasource, and a field returned in a type is a field the next caller
+   * renders. The error is already reported through `reportError`, which
+   * redacts, and that is where it belongs.
+   */
+  | { erased: false; reason: "failed" };
 
 export async function eraseAuthIdentity(userId: string): Promise<ErasureOutcome> {
   // No sign-in on this deployment means no identity anywhere but the rows we
@@ -51,13 +62,12 @@ export async function eraseAuthIdentity(userId: string): Promise<ErasureOutcome>
       // again, and telling them the second attempt failed would be a lie.
       if (/not.?found/i.test(error.message)) return { erased: true };
       reportError(new Error(error.message), { at: "auth/erase", ownerId: userId });
-      return { erased: false, reason: "failed", message: error.message };
+      return { erased: false, reason: "failed" };
     }
     return { erased: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
     reportError(error, { at: "auth/erase", ownerId: userId });
-    return { erased: false, reason: "failed", message };
+    return { erased: false, reason: "failed" };
   }
 }
 

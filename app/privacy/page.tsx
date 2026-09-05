@@ -114,10 +114,11 @@ export default function PrivacyPage() {
           closing the tab is kept on your device only, and goes nowhere until you finish it.
         </P>
         <P>
-          <strong>What you said happened out there.</strong> Today sets one small errand a day, order a
-          coffee, ask the time, and you can say how it went in one of three words: they understood
-          me, they switched to English, I did not manage it. That word and the errand it answers are
-          kept, and nothing else: not where you were, not who you spoke to, not what was said.
+          <strong>What you said happened out there.</strong> Today asks each morning whether you spoke
+          any Estonian to somebody yesterday, and you answer in one of three words: yes and they
+          understood, they switched to English, not yesterday. That word and the day are kept, and
+          nothing else: not where you were, not who you spoke to, not what was said. The errand it
+          offers on a day with none is not stored at all.
         </P>
         <P>
           <strong>Your class, if you are in one.</strong> Joining with a code stores which

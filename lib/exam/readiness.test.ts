@@ -456,3 +456,47 @@ describe("a placement check, which is the only thing that reaches listening and 
     expect(withSpeaking.expected.speaking).toBe(withoutAny.expected.speaking);
   });
 });
+
+/*
+ * The clamp above stops a weak model dragging a passed paper below the pass
+ * mark, and it clamps to exactly the pass mark, which is where `passChance` is
+ * exactly one half. So the climb, which wants sixty, refused the very level the
+ * row beside it said had been passed.
+ */
+describe("a paper the learner sat and passed clears its own level", () => {
+  const satB1 = (pct: number) => signals({
+    vocabulary: {
+      A1: { known: 95, available: 100 },
+      A2: { known: 92, available: 100 },
+      // Thin, which is the case the clamp exists for: somebody who learned
+      // Estonian elsewhere has no reason to have met this app's B1 word list.
+      B1: { known: 1, available: 100 },
+      B2: { known: 0, available: 100 },
+      C1: { known: 0, available: 100 },
+    },
+    accuracy: { pct: 30, reviews: 400 },
+    skills: {
+      writing: { attempts: 20, pct: 90 },
+      listening: { attempts: 20, pct: 90 },
+      reading: { attempts: 20, pct: 90 },
+      speaking: { attempts: 20, pct: 90 },
+    },
+    attempts: [{ level: "B1", pct, passed: pct >= 60, at: "2026-01-01T00:00:00.000Z", parts: {} }],
+    totalReviews: 400,
+  });
+
+  it("does not tell somebody to aim for the level they just passed", () => {
+    const r = assessReadiness(satB1(61));
+    const b1 = r.levels.find((l) => l.level === "B1")!;
+    expect(b1.measured).toBe(true);
+    expect(b1.confidence).toBeLessThan(60);
+    expect(r.assessed).toBe("B1");
+    expect(r.next).toBe("B2");
+  });
+
+  it("still ends the climb on a paper that was failed", () => {
+    const r = assessReadiness(satB1(40));
+    expect(r.assessed).toBe("A2");
+    expect(r.next).toBe("B1");
+  });
+});

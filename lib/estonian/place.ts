@@ -41,12 +41,3 @@ export const INSIDE_CASES: readonly CaseKey[] = ["INESSIVE", "ELATIVE", "ILLATIV
 
 /** Being on something, which is what a country, an island or a county takes. */
 export const OUTSIDE_CASES: readonly CaseKey[] = ["ADESSIVE", "ABLATIVE", "ALLATIVE"];
-
-/**
- * The local cases worth drilling for one word: the outside trio for a place
- * in `-maa`, the inside trio for everything else, and neither for `maa`.
- */
-export function localCasesFor(lemma: string): readonly CaseKey[] {
-  if (bothSetsOrdinary(lemma)) return [];
-  return takesOutsideCases(lemma) ? OUTSIDE_CASES : INSIDE_CASES;
-}

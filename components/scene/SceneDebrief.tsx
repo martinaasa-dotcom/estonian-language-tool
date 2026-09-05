@@ -8,6 +8,8 @@ import { DrillLink } from "@/components/DrillLink";
 import type { SceneSpec } from "@/lib/scenes/types";
 import { drillFor } from "@/lib/scenes/drills";
 import { curveballById } from "@/lib/scenes/curveballs";
+import { errandForScene } from "@/lib/collections/errands";
+import { PLACES_TO_TALK } from "@/lib/collections/placesToTalk";
 import type { SceneReview } from "@/lib/scenes/review";
 
 /** So "words your conversations needed" is a query and never a counter (ADR-014). */
@@ -32,7 +34,15 @@ export const SCENE_SOURCE = "SCENE";
  *    button, from the help button and from the beats that stalled.
  * 6. **One thing to work on**, as a `DrillLink` into the drill that addresses
  *    it, rather than advice this screen wrote itself.
- * 7. **Try it again**, which is one button, because the second run is where
+ * 7. **The real one.** The errand this scene rehearses, and where the people
+ *    are. This is the screen a learner is on the moment they have just proved
+ *    they can book the appointment, and it used to end in "have it again":
+ *    the purpose of the app is to be left (`docs/22-real-life.md`), and a
+ *    rehearsal that ends in another rehearsal keeps somebody inside. Shown
+ *    only where every required beat was met, because sending somebody out on
+ *    the strength of a conversation they did not get through is the false
+ *    confidence the readiness screen is built against.
+ * 8. **Try it again**, which is one button, because the second run is where
  *    most of the learning is.
  *
  * No score anywhere on this screen. That is not an omission.
@@ -47,7 +57,15 @@ export interface Debrief {
   review: SceneReview;
   graded: number;
   /** The conversation, both sides, in order. A stage direction is not a line and is left out. */
-  turns: readonly { who: "them" | "you"; text: string }[];
+  /*
+    `lang` because the other side does not only speak Estonian. Where neither
+    rung could put their move into words the course teaches, `reply` says what
+    they did in English, and the transcript kept those lines and marked the lot
+    `lang="et"`, so a screen reader read the English half with Estonian
+    phonology. The live conversation gets this right through `spokenEstonian`;
+    the debrief was the copy that did not.
+  */
+  turns: readonly { who: "them" | "you"; text: string; lang: "et" | "en" }[];
 }
 
 export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: () => void }) {
@@ -56,6 +74,8 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
   const required = scene.beats.filter((beat) => beat.required);
   const missed = objectives.missed.length > 0 ? byId.get(objectives.missed[0]!) : undefined;
   const drill = missed ? drillFor(missed.needs) : null;
+  const errand = objectives.missed.length === 0 ? errandForScene(scene.id) : undefined;
+  const cafe = PLACES_TO_TALK[0];
 
   return (
     <div className="flex flex-col gap-6">
@@ -98,7 +118,7 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
           */}
           <ul className="flex flex-col gap-1">
             {hurdles.map((hurdle) => {
-              const spec = curveballById(hurdle.id as never);
+              const spec = curveballById(hurdle.id);
               if (!spec) return null;
               return (
                 <li key={`${hurdle.id}-${hurdle.beat}`} className="flex items-start gap-2 text-sm">
@@ -128,7 +148,7 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
             {turns.map((turn, index) => (
               <li key={index} className={turn.who === "you" ? "self-end text-right" : "self-start"}>
                 <Card className="inline-block max-w-full text-sm">
-                  <span lang="et" style={turn.who === "them" ? { color: "var(--ink-2)" } : undefined}>
+                  <span lang={turn.lang} style={turn.who === "them" ? { color: "var(--ink-2)" } : undefined}>
                     {turn.text}
                   </span>
                 </Card>
@@ -243,6 +263,25 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
         <p className="text-xs" style={{ color: "var(--ink-3)" }}>
           {graded === 1 ? "One word" : `${graded} words`} you used went into your review schedule.
         </p>
+      )}
+
+      {errand && (
+        <section>
+          <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Now the real one</h3>
+          <Card tone="mint">
+            <p className="text-base font-semibold" style={{ color: "var(--mint-ink)" }}>{errand.says}</p>
+            <p className="mt-1.5 text-sm" style={{ color: "var(--mint-ink)" }}>
+              {errand.where}. Nobody there has read the card, and that is the practice.
+              Tomorrow, <Link href="/">Today</Link> asks how it went.
+            </p>
+            {cafe && (
+              <p className="mt-2 text-xs" style={{ color: "var(--mint-ink)" }}>
+                Nobody to say it to? <a href={cafe.href} target="_blank" rel="noopener noreferrer" className="underline">{cafe.name}</a> runs
+                language cafés where people came to be spoken to.
+              </p>
+            )}
+          </Card>
+        </section>
       )}
 
       <div className="flex flex-wrap gap-2">

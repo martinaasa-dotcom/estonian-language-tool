@@ -962,11 +962,15 @@ The offline scene is not in the suite because it is not in the build (§13).
 
 ## 22. For a language house pilot
 
-The classroom already draws the boundary this needs: effort, never contents (ADR-019). A teacher can
-set a scene for a week, see who finished it, and see which objective the group missed most often,
-and can see no transcript at all. That is the honest shape of what a language house wants, which is
-to know whether the class can book an appointment, and not to read twenty people's practice
-attempts.
+The classroom already draws the boundary this needs: effort, never contents (ADR-019), and a
+teacher can assign a unit or a piece of homework and read a roster of effort with no transcript and
+no deck in it. What it cannot do is the thing this section was written as though it already did:
+**nothing in `lib/classroom/` reads `SceneRun` or `SceneGap`**, so a teacher can set a unit and not
+a scene, and can see neither who finished one nor which objective the group missed most often. The
+boundary is the hard part and it is done; the reading is a roster query over the runs of a class's
+members, and it is the first thing to build for a language house. Written down here as unbuilt
+rather than left as a sentence in the present tense, because this is the paragraph a funding
+application would quote.
 
 One thing belongs here because it is easy to get wrong in a funding application: the classroom
 feature is built and no real class has used it. It should not be cited as a case study until one
@@ -1556,7 +1560,7 @@ and `haiguseid`, and both are Estonian.
 
 That is the whole value of running this before Phase 1 rather than after it. All three gaps were in
 the morphology the app can produce, all three were invisible from inside the app, and all three were
-found by watching a model try to hold a conversation. 814 forms, on the same 6,110 words.
+found by watching a model try to hold a conversation. 814 forms, and no new word with them.
 
 ### What this says about Phase 1
 
@@ -2435,3 +2439,35 @@ answer to its own question: "say what is wrong with you" took `valu` and not `va
 
 What is left, and it is the right silence: a word neither the scene nor the course knows is answered
 with "I did not catch that", which is what a person says about a word they have never heard.
+
+## 42. The thirteenth pass: the loop closes, and there are fourteen scenes
+
+**What was wrong.** The purpose doc says the app rehearses the conversation, sets one small thing
+to say to a real person and counts the conversations had outside. All three existed and none
+pointed at the others: the debrief ended in "have it again", the errand card linked to a word list,
+and the readiness table knew which unit a scene tested while the errand table knew nothing about
+scenes at all. Of the forty-five live claims the course makes, seven had a rehearsal.
+
+**What changed.**
+
+- An `Errand` names the scene that rehearses it (`lib/collections/errands.ts`), asserted against
+  the catalog and against the scene declaring the errand's unit. The card on Today offers the
+  rehearsal; a debrief whose every required beat was met offers the errand and the language cafés.
+  The scene tile says which errand it is a rehearsal of.
+- Seven scenes: a pharmacy, a restaurant table, a shop rung before you go, the neighbor on the
+  stairs, the first evening of a language course, a job interview and taking something back to a
+  shop. `bank.test.ts` holds every beat and every admitted curveball to a line, so the 137 lines
+  they needed went through `npm run check:lines` and into the bank marked `authored`, unreviewed.
+- `contradiction` was in the catalog and admitted by nobody; `misheard` by one scene. Both are
+  admitted where the beat shape fits.
+- `SceneGap` was written by every finished run and read by nothing. `recencyFor` reads the last
+  twenty, and a word prop whose pool holds one draws it first, so the word missed at the doctor's
+  is the word on the card at the pharmacy, and the card says so.
+- Wednesday on the week table is a conversation, and Today draws it, since every other day was
+  recall. First run names the first conversation off the reason the learner gave.
+- The learner's own turn carries the speaker, which §11 promised and nothing drew.
+
+**What this does not fix.** A native speaker has read none of the 296 lines in the bank, and every
+one is `reviewed: false`. And a scene is still typed: the spoken unmarked mode of §11 is the same
+distance away it was.
+

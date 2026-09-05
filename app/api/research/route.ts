@@ -18,7 +18,7 @@ import {
 } from "@/lib/research/corpus";
 import { toCsv } from "@/lib/research/csv";
 import { CAVEATS, CORRECT_FROM_RATING, MATURE_STATE, SECTIONS } from "@/lib/research/sections";
-import { errandById } from "@/lib/collections/errands";
+import { isConversation, OUTCOMES } from "@/lib/collections/errands";
 import { SETTING_KEYS } from "@/lib/settings/store";
 
 /**
@@ -168,39 +168,40 @@ interface GroupedRow {
  * conversation outside the app, under the same gate as everything else.
  * Reads Encounter rather than Review, honors the same opt-out, and hands
  * `buildSection` the same shape, so the thresholds and the rounding apply.
+ *
+ * GROUPED BY THE MONTH OF THE REPORT, AND NEVER BY A UNIT. It used to be
+ * grouped by the unit an errand drew its words from, on the argument that a
+ * table of conversations ought to say what they were about. Today asks
+ * whether any Estonian was spoken yesterday and files the answer under no
+ * errand, since a conversation with a neighbor is not this app's to put a
+ * unit's name on, so that table was empty by construction and always would
+ * be. What a pilot is measured on (`docs/22-real-life.md` §6) is the number
+ * of conversations reported and the share in which the other person switched
+ * to English, at the start of a term against the end, and the month is the
+ * dimension that reads. "correct" is understood; a day answered "not
+ * yesterday" is not a conversation and is not a row (`isConversation`).
+ *
+ * The month is read in UTC rather than in each learner's zone, because a
+ * deployment-wide bucket has no one zone to read, and a report made in the
+ * first hours of the first of the month landing in the month before is a
+ * fact about the bucket's edge rather than about anybody.
  */
 async function tallyEncounters(excluded: readonly string[]): Promise<Contribution[]> {
   const not = excluded.length > 0 ? Prisma.sql`AND e."ownerId" NOT IN (${Prisma.join([...excluded])})` : Prisma.empty;
-  /*
-    A report that names no errand is left out here, in the query rather than
-    by a lookup that happens to miss. Today asks whether any Estonian was
-    spoken yesterday, so most reports are the learner's own conversations and
-    carry no errand: this table is grouped by the unit an errand drew its
-    words from, and there is no honest unit to file a conversation with a
-    neighbor under. The section's own note says so, and the coverage line at
-    the top of the file is where a reader sees how much that is.
-  */
-  const rows = await prisma.$queryRaw<{ errandId: string; learner: string; reviews: number; correct: number }[]>`
-    SELECT e."errandId" AS "errandId",
+  const conversations = Prisma.join(OUTCOMES.filter(isConversation));
+  const rows = await prisma.$queryRaw<{ month: string; learner: string; reviews: number; correct: number }[]>`
+    SELECT TO_CHAR(e."createdAt" AT TIME ZONE 'UTC', 'YYYY-MM') AS "month",
            e."ownerId" AS "learner",
            COUNT(*)::int AS "reviews",
            COUNT(*) FILTER (WHERE e."outcome" = 'UNDERSTOOD')::int AS "correct"
     FROM "Encounter" e
-    WHERE e."errandId" IS NOT NULL
+    WHERE e."outcome" IN (${conversations})
     ${not}
-    GROUP BY e."errandId", e."ownerId"
+    GROUP BY 1, e."ownerId"
   `;
-  const byUnit = new Map<string, Contribution>();
-  for (const row of rows) {
-    const unit = errandById(row.errandId)?.unit;
-    if (!unit) continue;
-    const key = `${unit}|${row.learner}`;
-    const held = byUnit.get(key) ?? { keys: [unit], learner: row.learner, reviews: 0, correct: 0, matureReviews: 0, matureCorrect: 0 };
-    held.reviews += row.reviews;
-    held.correct += row.correct;
-    byUnit.set(key, held);
-  }
-  return [...byUnit.values()];
+  return rows.map((row) => ({
+    keys: [row.month], learner: row.learner, reviews: row.reviews, correct: row.correct, matureReviews: 0, matureCorrect: 0,
+  }));
 }
 
 async function tally(

@@ -34,6 +34,16 @@ export const GLOSS_LANGUAGES = [
   { id: "uk", label: "Ukrainian", native: "українська" },
 ] as const;
 
+/**
+ * The id is the BCP 47 tag, which is why a screen writes `lang={glossLanguage}`.
+ *
+ * There was a `glossLangAttr` here that returned its argument, on the reasoning
+ * that a screen should ask rather than assume. Nothing ever called it: all
+ * three screens that print an equivalent write the id straight into `lang`,
+ * correctly. A helper that returns what it was given is a fact about the ids
+ * dressed up as a function, so the fact is written down instead. Keep the ids
+ * as tags, or the three of them are wrong at once and nothing will say so.
+ */
 export type GlossLanguage = (typeof GLOSS_LANGUAGES)[number]["id"];
 
 export const DEFAULT_GLOSS_LANGUAGE: GlossLanguage = "en";
@@ -45,10 +55,6 @@ export function glossLanguageFrom(value: string | null | undefined): GlossLangua
     : DEFAULT_GLOSS_LANGUAGE;
 }
 
-/** The BCP 47 tag for a language, so a screen can mark what it prints. */
-export function glossLangAttr(language: GlossLanguage): string {
-  return language;
-}
 
 export interface Glosses {
   /** The authored English, which every entry has. */

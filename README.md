@@ -49,14 +49,15 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   again when you were not understood. Something goes wrong on the way at every difficulty above the
   easiest, and the debrief says whether you handled it. Every line is a phrase the course teaches
   or a line written for the scene inside its own words and checked word by word before you see it,
-  the screen says which, and all seven play without a model key. Whether you were understood is decided by the
+  the screen says which, and all fourteen play without a model key. Whether you were understood is decided by the
   dictionary, never by a model, so you cannot be marked wrong for being right. Difficulty is a
   budget of things that go wrong: the slot you asked for has gone, a queue forms, they switch to
   English. You can walk out. The debrief leads with what happened and never with a score.
-- **Say it today.** One small errand a day, order a coffee, ask the time, drawn from the units you
-  have started, and one press to say how it went: they understood me, they switched to English,
-  I did not manage it. Progress counts those ahead of every chart, because a conversation you had
-  is the only measure that matters here.
+- **Say it today.** Each morning, one press to say whether you spoke Estonian to anybody
+  yesterday: they understood, they switched to English, not yesterday. Where the answer is no,
+  one small errand for today, order a coffee, ask the time, drawn from the units you have
+  started, with the scene that rehearses it a link away. Progress counts the conversations ahead
+  of every chart, because a conversation you had is the only measure that matters here.
 - **Hearing the way people talk.** A word you know well comes back at speed, over café noise, down
   a phone line, from halfway through, in a different voice each time. The words never change; the
   delivery does, because nobody at a counter talks like a clean synthetic voice in a quiet room.
@@ -224,7 +225,7 @@ without saying so.
 
 Everything except the two things that need a model, Anu and reading a photograph of a page:
 
-- **Dictionary**, 6,110 words (A1 to C2) with principal parts, consonant gradation and the
+- **Dictionary**, 6,116 words (A1 to C2) with principal parts, consonant gradation and the
   full case table worked out from the genitive. Search an inflected form you met in class,
   `toas`, `lugesin`, `tubadega`, `helistab`, and it finds the word *and* tells you which form you
   typed.

@@ -56,6 +56,18 @@ interface ExpandedEntry {
    * word the Institute never typed rather than as a column nobody wrote.
    */
   semanticTypes: string | null;
+  /**
+   * Ekilex's own Estonian explanation of the sense this entry carries.
+   *
+   * Only the entries a homonym pin re-read from Ekilex have one, which is why
+   * it went missing: the field was never declared, the insert never named it,
+   * and every check passed, because `columns.test.ts` sampled the first entry
+   * in the file and the first entry has no definition. Fifteen do.
+   *
+   * The English half of the same pair lives in `notes`. One language per
+   * column, so a screen can mark what it prints.
+   */
+  definition: string | null;
   examples: { et: string; en: string | null }[];
   forms: { formType: string; value: string }[];
   ekilexWordId: number;
@@ -178,6 +190,7 @@ export async function writeExpanded(
         ${crypto.randomUUID()}, ${e.lemma}, ${e.pos}, ${e.translation},
         ${e.cefr}::text, ${e.gradation}, ${e.gradationNote}::text,
         ${e.government}::text, ${e.notes}::text, ${e.semanticTypes ?? null}::text,
+        ${e.definition ?? null}::text,
         ${JSON.stringify(e.examples ?? [])}::text,
         'EKILEX', ${e.ekilexWordId}, NOW(), NOW()
       )`,
@@ -188,7 +201,7 @@ export async function writeExpanded(
     const inserted = await prisma.$queryRaw<{ id: string; lemma: string; pos: string }[]>`
       INSERT INTO "Lexeme" (
         id, lemma, pos, translation, cefr, gradation, "gradationNote",
-        government, notes, "semanticTypes", examples, provenance, "ekilexWordId", "fetchedAt", "updatedAt"
+        government, notes, "semanticTypes", definition, examples, provenance, "ekilexWordId", "fetchedAt", "updatedAt"
       )
       VALUES ${Prisma.join(values)}
       ON CONFLICT (lemma, pos) DO NOTHING

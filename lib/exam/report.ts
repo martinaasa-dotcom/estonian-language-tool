@@ -137,11 +137,30 @@ export function buildReport(result: ExamResult): ExamReport {
   };
 }
 
-/** Which task inside a part did the damage, named. */
+/**
+ * Which task inside a part did the damage, named.
+ *
+ * MARKS LOST, NOT THE LOWEST PERCENTAGE. The sentence says "most of it went
+ * on", where "it" is the marks the part gave up, and this ranked by share
+ * instead. Tasks in a part are weighted very differently: B1 writing is a
+ * message worth 8, a composition worth 12, a case form worth 5 and a
+ * government question worth 4. So a candidate who lost eight marks on the
+ * composition and four on the government question was told most of it went on
+ * "Government", at 0 percent, and sent to practise the task that cost them a
+ * third of what the composition did.
+ *
+ * The share is still what is printed beside the name, because that is the
+ * useful thing to know about the task once it has been named. The tie ends on
+ * the title so the sentence does not depend on the order the parts were built
+ * in.
+ */
 function taskDetail(part: PartResult): string {
   const weakest = [...part.tasks]
     .filter((t) => t.rawAvailable > 0)
-    .sort((a, b) => a.raw / a.rawAvailable - b.raw / b.rawAvailable)[0];
+    .sort((a, b) =>
+      (b.rawAvailable - b.raw) - (a.rawAvailable - a.raw)
+      || a.raw / a.rawAvailable - b.raw / b.rawAvailable
+      || a.title.localeCompare(b.title))[0];
   if (!weakest) return "";
   const pct = Math.round((weakest.raw / weakest.rawAvailable) * 100);
   return `Most of it went on "${weakest.title}", at ${pct} percent.`;
