@@ -17,6 +17,17 @@ export const SETTING_KEYS = {
   matchBest: "matchBest",
   streakShields: "streakShields",
   streakShieldDates: "streakShieldDates",
+  /**
+   * The highest streak milestone a shield has been banked for.
+   *
+   * A shield used to arrive on the side of a badge: `streak_7`, `streak_30`
+   * and `streak_100` each paid one out, and the `Achievement` row was what
+   * stopped it being paid twice. The badges are gone and the shields are not,
+   * so this is the high-water mark that record used to be, and it is a number
+   * rather than a set for the same reason the milestones are a ladder: reaching
+   * 30 means 7 was reached on the way.
+   */
+  streakShieldsAwarded: "streakShieldsAwarded",
   displayName: "displayName",
   reviewMode: "reviewMode",
   onboardedAt: "onboardedAt",

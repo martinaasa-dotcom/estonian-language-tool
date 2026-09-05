@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { redirect } from "next/navigation";
 import { LEARN_BATCH } from "@/lib/learn/ladder";
@@ -34,7 +33,6 @@ import { WordOfDayCard } from "@/components/WordOfDay";
 import { SayItToday } from "@/components/SayItToday";
 import { errandForDay, startedUnits } from "@/lib/collections/errands";
 import { unitById } from "@/lib/collections/syllabus";
-import { BadgeCheck } from "./BadgeCheck";
 
 export const metadata = { title: "Today" };
 
@@ -120,7 +118,7 @@ export default async function TodayPage() {
   if (!settings[SETTING_KEYS.onboardedAt] && snapshot.totalCards === 0) redirect("/start");
 
   const [summary, units, tasks, events, weekReviews, learner, pace] = await Promise.all([
-    dailySummary(ownerId, snapshot, now, clock),
+    dailySummary(ownerId, now, clock),
     pathWithProgress(ownerId, snapshot),
     /*
       Enough to group and to count what is left over, not enough to be a
@@ -803,11 +801,6 @@ export default async function TodayPage() {
           }, todayOrderFrom(settings[SETTING_KEYS.todayOrder])).slice(0, TODAY_CARDS)}
         </Columns>
       </Stack>
-      {/* Behind a Suspense boundary so three round trips of badge checking do
-          not sit in front of the first byte of this page. See ./BadgeCheck. */}
-      <Suspense fallback={null}>
-        <BadgeCheck ownerId={ownerId} snapshot={snapshot} summary={summary} units={units} />
-      </Suspense>
     </Page>
   );
 }

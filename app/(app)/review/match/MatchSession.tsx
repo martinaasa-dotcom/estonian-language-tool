@@ -3,12 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Timer, Trophy, X } from "lucide-react";
-import { checkAchievements, gradeCard, recordMatchTime } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard, recordMatchTime } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Confetti } from "@/components/Confetti";
 import { Empty, Page, Stat } from "@/components/ui";
-import type { Badge } from "@/lib/achievements/badges";
 import { shuffle } from "@/lib/random/shuffle";
 import { OPTION_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
 
@@ -53,7 +51,6 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
   const [misses, setMisses] = useState<Record<string, number>>({});
   const [seconds, setSeconds] = useState(0);
   const [isNewBest, setIsNewBest] = useState(false);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const startedAt = useRef(0);
   const saved = useRef(false);
 
@@ -102,8 +99,6 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
 
     const result = await recordMatchTime(finalSeconds);
     setIsNewBest(result.ok && result.isNewBest);
-    const check = await checkAchievements(true);
-    if (check.ok) setNewBadges(check.newBadges);
   }, [pairs]);
 
   const pick = (tile: Tile) => {
@@ -207,7 +202,6 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
           <ButtonLink href="/practice">Other modes</ButtonLink>
           <ButtonLink href="/">Back to Today</ButtonLink>
         </div>
-        <AchievementToasts badges={newBadges} />
       </div>
     );
   }

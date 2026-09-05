@@ -41,8 +41,8 @@ export const dynamic = "force-dynamic";
  * what a student has no business acting on.
  *
  * A workplace group is the third seat and it does not share that query. It runs
- * `workplaceRoster`, which never reads a case, and renders a screen with no XP
- * column and no per-person weakness on it. The branch is here rather than
+ * `workplaceRoster`, which never reads a case, and renders a screen with no
+ * ranking column and no per-person weakness on it. The branch is here rather than
  * inside the roster so that the narrower read is the only one a sponsor's page
  * ever makes: a view that fetched the teacher's shape and then chose not to
  * print half of it would be one careless render away from printing it.
@@ -158,7 +158,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                     }}
                   >
                     <span className="tnum w-6 text-xs" style={{ color: "var(--ink-3)" }}>{i + 1}</span>
-                    {i === 0 && entry.weeklyXp > 0
+                    {i === 0 && entry.reviewsThisWeek > 0
                       ? <Trophy size={16} aria-hidden style={{ color: "var(--hard-ink)" }} />
                       : <span className="w-4" aria-hidden />}
                     <span className="min-w-0 flex-1">
@@ -190,8 +190,8 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
                     <span className="flex items-center gap-1 text-xs" style={{ color: "var(--ink-2)" }}>
                       {entry.streak}<Flame size={13} aria-hidden style={{ color: entry.streak > 0 ? "var(--hard-ink)" : "var(--ink-3)" }} />
                     </span>
-                    <span className="tnum w-20 text-right text-sm" style={{ color: "var(--ink)" }}>
-                      {entry.weeklyXp} XP
+                    <span className="tnum w-24 text-right text-sm" style={{ color: "var(--ink)" }}>
+                      {entry.reviewsThisWeek} review{entry.reviewsThisWeek === 1 ? "" : "s"}
                     </span>
                   </li>
                 );
@@ -200,8 +200,8 @@ export default async function ClassroomPage({ params }: { params: Promise<{ clas
           )}
           {you && leader && you.ownerId !== leader.ownerId && (
             <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
-              {leader.weeklyXp - you.weeklyXp} XP behind the top of the class, about{" "}
-              {Math.max(1, Math.ceil((leader.weeklyXp - you.weeklyXp) / 10))} more cards.
+              {leader.reviewsThisWeek - you.reviewsThisWeek} review
+              {leader.reviewsThisWeek - you.reviewsThisWeek === 1 ? "" : "s"} behind the top of the class this week.
             </p>
           )}
         </section>

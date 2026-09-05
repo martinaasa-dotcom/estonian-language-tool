@@ -107,6 +107,11 @@ describe("summariseCohort", () => {
       The boundary, asserted on the shape rather than on a screen. A percentage
       that never reaches this type cannot be printed by a view somebody writes
       next year, and neither can a case somebody keeps missing.
+
+      A third line here checked for `weeklyXp`, the teacher's ranking figure.
+      XP was withdrawn from the whole app, so what it guarded no longer exists
+      to be leaked: the ordering rule that kept it off this screen is in
+      `summariseCohort`'s own header and is asserted by the alphabetical sort.
     */
     const summary = summariseCohort(
       [member({ ownerId: "a", readiness: readinessAt(level, 73, "good") })],
@@ -115,7 +120,6 @@ describe("summariseCohort", () => {
     const keys = Object.keys(summary.members[0]!);
     expect(keys).not.toContain("confidence");
     expect(keys).not.toContain("weakestCase");
-    expect(keys).not.toContain("weeklyXp");
   });
 
   it("takes the group's evidence from its weakest member", () => {

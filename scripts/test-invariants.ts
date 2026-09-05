@@ -2827,28 +2827,60 @@ check("Today deals its cards in the learner's order, under the same cap", () => 
 });
 
 /*
-  AND WHAT CAME OFF TODAY MOVED RATHER THAN WENT.
+  XP, THE DAILY QUESTS AND THE BADGES ARE WITHDRAWN, NOT HALF-REMOVED.
 
-  The cut took the XP bar and the three daily quests off the home page on the
-  argument that they are a report on how much has been done, which is the
-  question `/progress` exists for. That argument is only honest while Progress
-  actually draws them: a panel nobody renders is a feature nobody has, and this
-  repository has shipped that exact fault twice, on `DangerZone` and
-  `UsagePanel`, both complete and imported by nothing.
+  They were a second scoring system beside the ones that mean something: a
+  learner opened Progress and was handed XP, a level, three quest meters, a
+  streak, mastery tiers, readiness rungs and an exam confidence figure, and
+  only the last four answer a question anybody can act on. All of it was
+  derived from the review log on every request and never stored (ADR-014), so
+  taking it out lost nothing that was anybody's: there is no column holding an
+  old total.
 
-  Anchored on the render rather than on the import for the reason those two
-  taught: a file being right is a different claim from a reader being able to
-  reach it.
+  What this check is for is the half-removal. A round that still books a badge
+  toast, a screen that still reads a level off the summary, a module left
+  behind for a caller that no longer exists: each of those is dead weight that
+  reads as a feature to whoever finds it next. So the property is that the
+  names are gone from the tree, not that one screen stopped drawing them.
+
+  The streak is deliberately not on that list. It answers a different question,
+  not how well but whether you turned up, and it kept the shields that protect
+  it: `resolveStreakFor` banks those now, off its own high-water mark, because
+  a badge used to and a shield that can no longer be earned is exactly the dead
+  feature this check is about.
+
+  Written as a sweep rather than a list of files, since what came back last
+  time these were removed anywhere would come back in a file nobody thought to
+  name here.
 */
-check("the XP bar and the daily quests are on Progress, where the cut sent them", () => {
-  const progress = code("app/(app)/progress/page.tsx");
-  assert.match(progress, /summary\.quests\.map\(/, "the daily quests are on no screen at all");
-  assert.match(progress, /summary\.level\.pct/, "the level bar is on no screen at all");
-  const today = code("app/(app)/page.tsx");
-  assert.doesNotMatch(today, /summary\.quests/, "the quest meters are back on Today");
-  assert.doesNotMatch(
-    today, /summary\.level/,
-    "the XP bar is back on Today, beside the run of days it was folded out of",
+check("XP, the daily quests and the badges are gone from the tree", () => {
+  const withdrawn: [RegExp, string][] = [
+    [/\bxpForRating\b|\bxpFromRatingCounts\b|\blevelFromXp\b|\bLEVEL_TITLES\b/, "XP"],
+    [/\bquestsForDay\b|summary\.quests\b|\bquestsDone\b/, "the daily quests"],
+    [/\bAchievementToasts\b|\bawardBadges\b|\bearnedBadgeKeys\b|\bBadgeShelf\b/, "the badges"],
+  ];
+  const offenders: string[] = [];
+  for (const file of ALL) {
+    const src = code(file);
+    for (const [pattern, what] of withdrawn) {
+      if (pattern.test(src)) offenders.push(`${file} still reaches for ${what}`);
+    }
+  }
+  assert.deepEqual(offenders, [], "a withdrawn scoring feature is half back");
+
+  for (const dir of ["lib/gamification", "lib/achievements", "components/achievements"]) {
+    assert.equal(
+      ALL.some((f) => f.startsWith(`${dir}/`)), false,
+      `${dir}/ is back; XP and the badges were withdrawn together`,
+    );
+  }
+
+  // And the streak kept what the badges used to pay it.
+  const summary = code("lib/progress/summary.ts");
+  assert.match(summary, /SHIELD_MILESTONES/, "nothing banks a streak shield any more, so nobody can earn one");
+  assert.match(
+    summary, /streakShieldsAwarded/,
+    "the shield milestones have no record, so one is paid out on every render",
   );
 });
 
@@ -2912,9 +2944,9 @@ check("where a screen lives is decided in one table", () => {
 
   for (const file of ALL) {
     if (file.startsWith("lib/ux/")) continue;
-    // The syllabus, the badges and the quests carry a route into their own
-    // page beside their own content. That is content with a link on it.
-    if (/^lib\/(collections|achievements|gamification)\//.test(file)) continue;
+    // The syllabus carries a route into its own page beside its own content.
+    // That is content with a link on it.
+    if (/^lib\/collections\//.test(file)) continue;
     for (const literal of code(file).match(/\[[^[\]]*\]/g) ?? []) {
       const routes = literal.match(/href:\s*"\/[a-z]/g)?.length ?? 0;
       const named = /\b(label|title):\s*"/.test(literal) && /\bicon:\s*"/.test(literal);
@@ -3071,7 +3103,7 @@ check("the pure modules stay free of React, Next and Prisma", () => {
     while the module under it can be imported without a framework.
   */
   const pure = [
-    "assessment", "collections", "copy", "estonian", "exam", "funding", "games", "gamification",
+    "assessment", "collections", "copy", "estonian", "exam", "funding", "games",
     "learn", "offline", "random", "research", "scan", "security", "stats", "time", "ux",
   ];
   for (const file of LIB) {
@@ -3854,7 +3886,7 @@ check("nothing fixed over content carries a backdrop filter", () => {
 
 check("a notice pinned to the bottom clears a measured dock, not a typed guess", () => {
   assert.match(CSS, /:root\[data-dock\]\s*\.bottom-notice/, "the measured clearance rule is gone");
-  for (const file of ["components/OfflineProvider.tsx", "components/InstallPrompt.tsx", "components/achievements/AchievementToasts.tsx"]) {
+  for (const file of ["components/OfflineProvider.tsx", "components/InstallPrompt.tsx"]) {
     const source = read(file);
     assert.match(source, /bottom-notice/, `${file} no longer uses the shared rule`);
     assert.equal(
@@ -5621,8 +5653,8 @@ check("a screen that names a case in Latin names it in Estonian too", () => {
  * A day boundary rendered on a server belongs to the learner, not to the box.
  *
  * Every day-shaped figure in this app is derived on the server: the streak,
- * the daily goal, the quests, the week strip, the heatmap, the two badges
- * about the hour of the day. `lib/time/day.ts` had a header saying its days
+ * the daily goal, the week strip, the heatmap, the errand of the day.
+ * `lib/time/day.ts` had a header saying its days
  * were "the learner's own calendar days" and a body reading
  * `date.getFullYear()`, which is the day boundary of whichever process is
  * running. On Vercel that process is UTC, so the shortcut the file was written
@@ -6691,7 +6723,7 @@ check("what is given to this app is credited rather than added to the bill", () 
  */
 check("the layers that promise to be pure import no database, React or Next", () => {
   const pure = [
-    "assessment", "estonian", "exam", "games", "gamification", "stats", "collections", "time",
+    "assessment", "estonian", "exam", "games", "stats", "collections", "time",
     "offline", "security", "scan", "questions", "ux", "random", "copy", "funding", "research",
     "learn", "scenes", "readiness",
   ];
@@ -7680,8 +7712,8 @@ check("a plan is built on a standing that says how the level was arrived at", ()
   they said instead is the app choosing not to look. `measuredPace` in
   `lib/stats/pace.ts` is the one reading of that, `lib/progress/plan.ts` is
   the one caller that fetches rows for it, and the sitting it counts in is the
-  same ten minutes `perfect_session` uses, defined once: a sitting cannot be
-  one length for a badge and another for a plan.
+  same ten minutes every other reader of a sitting uses, defined once: a
+  sitting cannot be one length on one screen and another on the next.
 */
 check("the plan's pace is read off the review log through one module, in one sitting length", () => {
   const progress = code("lib/progress/plan.ts");
@@ -7690,7 +7722,6 @@ check("the plan's pace is read off the review log through one module, in one sit
   assert.match(code("app/(app)/assess/page.tsx"), /measuredPaceFor\(/, "/assess no longer reads the learner's real pace");
   const gaps = ALL.filter((f) => /export const SESSION_GAP_MS\s*=/.test(code(f)));
   assert.deepEqual(gaps, ["lib/stats/pace.ts"], `the sitting length is defined in ${gaps.join(", ")}; it is one figure`);
-  assert.match(code("lib/progress/session.ts"), /from "@\/lib\/stats\/pace"/, "the badge's session stopped reading the shared sitting length");
 });
 
 /*
@@ -8118,10 +8149,8 @@ check("every screen that draws the weakest cases reads the one query behind them
     to agree with the other screens drawing it. Two modules under `lib/` score
     cases for different questions and each says so in its own header: the class
     roster rolls a whole class up at once, which one learner's query cannot
-    express, and the badge stats read all time on purpose, because a badge is a
-    claim about what somebody has done rather than about what to drill now.
-    Widening this to `lib/` would fire on both, and a check that fires on honest
-    code is a check people learn to waive.
+    express and says so in its own header. Widening this to `lib/` would fire on
+    it, and a check that fires on honest code is a check people learn to waive.
 
     Anchored on the call rather than on the import, because a file can import a
     function and go on using its own rows, which is exactly what happened.
@@ -8977,12 +9006,27 @@ check("a workplace group is a narrower query, never a hidden column", () => {
   const cohort = code("lib/classroom/cohort.ts");
   const member = between(cohort, "export interface CohortMember");
   assert.ok(member.length > 0, "CohortMember is gone");
-  for (const field of ["confidence", "weakestCase", "weeklyXp", "grammCase"]) {
+  for (const field of ["confidence", "weakestCase", "grammCase"]) {
     assert.ok(
       !member.includes(field),
       `CohortMember carries ${field}, which a sponsor has no reason to see`,
     );
   }
+  /*
+    And the list is ordered by name.
+
+    A fourth field used to be named here, `weeklyXp`, the teacher's ranking
+    figure, which the workplace view could not print because it never reached
+    this type. XP was withdrawn from the whole app and what the teacher's
+    roster ranks by now is the review count, which a sponsor legitimately sees
+    as activity. So what keeps a group of colleagues off a league table is the
+    sort rather than the absence of a column, and that is what is asserted.
+  */
+  assert.match(
+    between(cohort, "export function summariseCohort"),
+    /members\.sort\(\(a, b\) => a\.displayName\.localeCompare/,
+    "a workplace group is no longer ordered by name, which ranks colleagues for their employer",
+  );
 
   /*
     A band is a claim about somebody's chances, so it obeys the rule above it:
@@ -8998,7 +9042,7 @@ check("a workplace group is a narrower query, never a hidden column", () => {
       /EVIDENCE_(NOTE|LABEL)|\.evidence\b/,
       `${file} prints a readiness band with no account of what it rests on`,
     );
-    for (const leak of [".weakestCase", ".weeklyXp"]) {
+    for (const leak of [".weakestCase"]) {
       assert.ok(
         !source.includes(leak),
         `${file} prints ${leak} beside a colleague's name`,
@@ -9090,57 +9134,6 @@ check("a hue's fill is never used as its ink", () => {
   assert.deepEqual(offenders, [], "a hue's fill is being used to write words, where its ink belongs");
 });
 
-check("a badge is written idempotently, not just described as idempotent", () => {
-  /*
-    `awardBadges` reads what a learner already holds, filters, and inserts the
-    rest. That is check-then-act, and it runs on every render of Today, so two
-    requests inside the gap both see a badge as unearned and both insert it.
-    `Achievement` is keyed `@@id([ownerId, key])`, so the second insert
-    violates the primary key and the render throws, at the exact moment
-    somebody earned something.
-
-    `app/(app)/BadgeCheck.tsx` since moved that check behind a `Suspense`, so
-    what a throw takes out is the badge toast rather than the whole of Today.
-    That lowers the blast radius and does not touch the cause, and it makes
-    this check matter more rather than less: that component's own header says
-    Today checks on every load and "that is right and it is idempotent". This
-    is what makes the second half of that sentence true in the code.
-
-    It is not hypothetical. It is in this repository's own CI logs, twice, as
-    `duplicate key value violates unique constraint "Achievement_pkey"` on
-    `(local-single-user, deck_50)`, and nothing failed, because no suite
-    asserts that Today renders while a badge is being earned.
-
-    THIS IS AN INVARIANT RATHER THAN AN INTEGRATION TEST, and the reason is
-    worth writing down. The obvious test fires N concurrent awards and expects
-    none to reject, and it passes with the fix and *also* without it: measured
-    at 8 and at 40 concurrent against a real Postgres with a pool wide enough
-    for all of them, and the race never lost locally, because the first insert
-    commits before the later reads are served and they take the early return.
-    A check that cannot be made to fail reports nothing, which this repository
-    says about its own suites in several places. So the property is asserted
-    where it can fail: delete the flag and this breaks.
-
-    The function's doc comment has always claimed idempotence. This is the
-    claim being kept in the code.
-  */
-  const source = code("lib/progress/achievements.ts");
-  const at = source.indexOf("achievement.createMany");
-  assert.notEqual(at, -1, "awardBadges no longer writes badges with createMany, so this check is stale");
-  /*
-    A window rather than a balanced match: the call's own argument contains
-    `({ ownerId, key })`, so the obvious non-greedy `\{...\}\)` stops inside it
-    and reads the flag as missing however the code is written. Asked the wrong
-    way, this check failed on the fixed source.
-  */
-  const write = source.slice(at, at + 300);
-  assert.match(
-    write,
-    /skipDuplicates:\s*true/,
-    "the badge write can throw on a duplicate, which is a 500 on Today when two renders race",
-  );
-});
-
 check("every link into this app fetches the page on intent, not just its skeleton", () => {
   /*
     Every route here is `force-dynamic`, correctly: a deck, a streak and a due
@@ -9187,8 +9180,8 @@ check("a setting written outside the store tells the store it changed", () => {
 
     Each of those has to say so, or a request that writes and then reads is
     answered with what was there before it wrote. That is not hypothetical on
-    the page this was measured on: `resolveStreakFor` banks a shield and
-    `awardBadges` reads the count back, in one render of Today.
+    the page this was measured on: `resolveStreakFor` banks a shield and the
+    streak is read back, in one render of Today.
   */
   const writesSettings = /(?:prisma|tx)\.setting\.(?:upsert|create|createMany|update|updateMany|delete|deleteMany)\b/;
   const offenders: string[] = [];

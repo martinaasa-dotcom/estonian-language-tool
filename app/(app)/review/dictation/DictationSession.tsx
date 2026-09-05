@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, Check, Ear, X, Volume2 } from "lucide-react";
-import { checkAchievements, gradeCard } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
@@ -14,9 +13,7 @@ import { Speak } from "@/components/Speak";
 import { useAudioPrefs } from "@/components/AudioPrefs";
 import { conditionFor, describeHearing } from "@/lib/audio/conditions";
 import { VOICES } from "@/lib/audio/voice";
-import type { Badge } from "@/lib/achievements/badges";
 import { checkDictation, wordNote, type DictationResult, type WordStatus } from "@/lib/estonian/dictation";
-import { xpForRating } from "@/lib/gamification/xp";
 import type { RatingValue } from "@/lib/srs/scheduler";
 import { AI_TAG } from "@/lib/copy/values";
 import { VERDICT_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
@@ -92,12 +89,9 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
   const [noAudio, setNoAudio] = useState(false);
   const [done, setDone] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [xp, setXp] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const startedAt = useRef(Date.now());
   const shownAt = useRef(Date.now());
-  const checked = useRef(false);
 
   const task = round[index];
   const finished = !task;
@@ -118,14 +112,6 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
     shownAt.current = Date.now();
   }, [index]);
 
-  useEffect(() => {
-    if (!finished || round.length === 0 || checked.current) return;
-    checked.current = true;
-    void checkAchievements(true).then((r) => {
-      if (r.ok) setNewBadges(r.newBadges);
-    });
-  }, [finished, round.length, done, correct]);
-
   const submit = useCallback(async () => {
     if (!task || busy || result) return;
     setBusy(true);
@@ -133,7 +119,6 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
     setResult(marked);
     setDone((d) => d + 1);
     if (marked.verdict === "correct") setCorrect((c) => c + 1);
-    setXp((x) => x + xpForRating(marked.suggestedRating));
     if (marked.verdict === "wrong" && typeof navigator !== "undefined" && "vibrate" in navigator) {
       navigator.vibrate?.(60);
     }
@@ -174,10 +159,9 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
             this round was recorded by dictionary editors, not by this app.
           </p>
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatTile value={done} label="Written" tone="accent" />
           <StatTile value={`${accuracy}%`} label="Word perfect" tone={accuracy >= 50 ? "mint" : "butter"} />
-          <StatTile value={`+${xp}`} label="XP" tone="blush" />
           <StatTile value={`${minutes}m`} label="Time" tone="sky" />
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -185,7 +169,6 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
           <ButtonLink href="/practice" size="lg">Other modes</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
-        <AchievementToasts badges={newBadges} />
       </div>
     );
   }
@@ -360,7 +343,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
       </div>
 
       <p className="mt-4 text-center text-2xs" style={{ color: "var(--ink-3)" }}>
-        {correct} word-perfect of {done} · +{xp} XP · graded word by word, sentences from Ekilex
+        {correct} word-perfect of {done} · graded word by word, sentences from Ekilex
       </p>
     </div>
   );

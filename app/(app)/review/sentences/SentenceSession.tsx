@@ -3,15 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { ArrowRight, Check, Eye, RotateCcw, X } from "lucide-react";
-import { checkAchievements, gradeCard, translateExample } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard, translateExample } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
-import type { Badge } from "@/lib/achievements/badges";
 import { sentenceMatches, sentenceTiles } from "@/lib/estonian/cloze";
-import { xpForRating } from "@/lib/gamification/xp";
 import { OPTION_CLASS, VERDICT_CLASS } from "@/lib/ux/verdict";
 
 export interface SentenceTask {
@@ -51,13 +48,10 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
   const [checked, setChecked] = useState<null | "right" | "wrong">(null);
   const [attempts, setAttempts] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [xp, setXp] = useState(0);
   const [previewing, setPreviewing] = useState(false);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [busy, setBusy] = useState(false);
   const startedAt = useRef(Date.now());
   const shownAt = useRef(Date.now());
-  const graded = useRef(false);
 
   const task = tasks[index];
   const finished = !task;
@@ -109,14 +103,6 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
     return undefined;
   }, [index, task]);
 
-  useEffect(() => {
-    if (!finished || graded.current || initialTasks.length === 0) return;
-    graded.current = true;
-    void checkAchievements(true).then((r) => {
-      if (r.ok) setNewBadges(r.newBadges);
-    });
-  }, [finished, attempts, correct, initialTasks.length]);
-
   const answer = built.map((i) => tiles.find((t) => t.index === i)?.word ?? "");
 
   const check = useCallback(async () => {
@@ -129,7 +115,6 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
     if (!right && typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate?.(60);
 
     const rating = right ? 3 : 1;
-    setXp((x) => x + xpForRating(rating));
     try {
       await gradeCard(task.cardId, rating, Date.now() - shownAt.current);
     } catch {
@@ -167,10 +152,9 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
             dictionary editors, not by this app.
           </p>
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatTile value={attempts} label="Built" tone="accent" />
           <StatTile value={`${accuracy}%`} label="First time" tone={accuracy >= 70 ? "mint" : "butter"} />
-          <StatTile value={`+${xp}`} label="XP" tone="blush" />
           <StatTile value={`${minutes}m`} label="Time" tone="sky" />
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -178,7 +162,6 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
           <ButtonLink href="/practice" size="lg">Other modes</ButtonLink>
           <ButtonLink href="/" size="lg">Back to Today</ButtonLink>
         </div>
-        <AchievementToasts badges={newBadges} />
       </div>
     );
   }
@@ -354,7 +337,7 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
       </div>
 
       <p className="mt-4 text-center text-2xs" style={{ color: "var(--ink-3)" }}>
-        {correct} of {attempts} first time · +{xp} XP · sentences from Ekilex
+        {correct} of {attempts} first time · sentences from Ekilex
       </p>
     </div>
   );

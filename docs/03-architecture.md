@@ -58,7 +58,7 @@ lib/
     cloze.ts government.ts answer.ts dictation.ts terms.ts
   collections/syllabus/      # the 79-unit course: a request, never a copy
   srs/  scheduler.ts cards.ts grade.ts deck.ts queue.ts replay.ts
-  dict/ ekilex/ tutor/ exam/ assessment/ progress/ stats/ gamification/
+  dict/ ekilex/ tutor/ exam/ assessment/ progress/ stats/
   usage/ security/ offline/ audio/ news/ scan/ suggestions/ legal/ ux/
   db.ts
 prisma/schema.prisma
@@ -69,7 +69,7 @@ docs/
 `lib/estonian/` is deliberately framework-free and dependency-free: pure functions over plain data,
 unit-tested. It is the part of this codebase that is genuinely hard to get right, so it is isolated
 from React, Next.js and the database and can be tested without any of them. So are
-`lib/assessment/`, `lib/gamification/`, `lib/stats/`, `lib/collections/`, `lib/time/`,
+`lib/assessment/`, `lib/stats/`, `lib/collections/`, `lib/time/`,
 `lib/offline/`, `lib/security/`, `lib/scan/`, `lib/questions/`, `lib/ux/`, `lib/random/` and
 `lib/copy/`, and an invariant fails on a React, Next.js or Prisma import inside any of them: the
 unit suite gates every commit on being hermetic, and one `import { prisma }` there puts a database
@@ -339,18 +339,26 @@ an auth bypass. *Rejected:* a `DISABLE_AUTH` flag. A flag can be set on a hosted
 mistake, and a mistake there is everyone's data.
 
 **ADR-014: Progress is derived from the review log, never stored.**
-*Context:* XP, levels, daily quests and every chart on `/progress` are the kind of thing normally
+*Context:* streaks, XP, daily quests and every chart on `/progress` are the kind of thing normally
 kept in counter columns. *Problem:* a counter is a second source of truth for something the append
 -only `Review` table already knows, and the two drift: a failed write, a restored backup, a replayed
-offline batch, and the number on screen no longer describes anything that happened. *Decision:* XP is
-a pure function of the rating tally (`lib/gamification/xp.ts`); quests, streaks, heatmaps, forecasts
-and case accuracy are all recomputed per request from `Review` rows and card state
-(`lib/progress/summary.ts`, `lib/stats/history.ts`). Nothing about progress is written anywhere.
+offline batch, and the number on screen no longer describes anything that happened. *Decision:*
+streaks, heatmaps and case accuracy are all recomputed per request from `Review` rows and card state
+(`lib/progress/summary.ts`, `lib/stats/history.ts`, `lib/stats/streak.ts`). Nothing about progress is
+written anywhere.
 *Consequences:* progress applies retroactively to reviews done before the feature existed, survives a
 restore for free, and cannot be awarded for something that did not happen; the cost is a handful of
-aggregate queries per page, which is why Today and the achievement check share one snapshot rather
-than each loading their own. The only progress-shaped values that *are* stored are the ones no log
-can reconstruct: a personal best, and the streak-shield days already spent.
+aggregate queries per page, which is why Today reads one snapshot rather than one per panel. The only
+progress-shaped values that *are* stored are the ones no log can reconstruct: a personal best, the
+streak-shield days already spent, and the highest streak milestone a shield has been banked for.
+
+*Amendment 1 (2026-09-05):* XP, the levels built on it, the three daily quests and the 23 badges
+were withdrawn. The rule is unchanged and is what made withdrawing them cheap: none of it was ever
+in a column, so nothing had to be migrated and nothing was lost. `Achievement` stays in the schema,
+in the export and in the erasure, because a row somebody earned is theirs whether or not a screen
+draws it. The one thing that did not survive untouched is the streak shield, which used to be paid
+out beside a badge: `resolveStreakFor` banks it now, and the milestone it has already paid for is
+the third stored value above.
 
 **ADR-015: Offline grades queue in the page, not in the service worker.**
 *Context:* "Review must work offline" is a standing rule, and ADR-011 quietly broke it by putting the

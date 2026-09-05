@@ -3,12 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Crosshair, Timer, Trophy } from "lucide-react";
 import { plainAskLine } from "@/lib/estonian/plainAsk";
-import { gradeCard, checkAchievements } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { Chip, Page, StatTile } from "@/components/ui";
 import { useFeedbackSound } from "@/components/AudioPrefs";
-import type { Badge } from "@/lib/achievements/badges";
 import type { TargetQuestion } from "@/lib/progress/target";
 import { OPTION_CLASS, optionState } from "@/lib/ux/verdict";
 
@@ -49,7 +47,6 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
   const [streak, setStreak] = useState(0);
   const [best, setBest] = useState(0);
   const [left, setLeft] = useState(START_S);
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const sound = useFeedbackSound();
   const shownAt = useRef(Date.now());
 
@@ -87,12 +84,6 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
     const t = setTimeout(() => setLeft((s) => Math.max(0, Math.round((s - 0.1) * 10) / 10)), 100);
     return () => clearTimeout(t);
   }, [phase, left, picked, question, answer]);
-
-  useEffect(() => {
-    if (phase === "done") {
-      void checkAchievements().then((r) => { if (r.ok) setNewBadges(r.newBadges); });
-    }
-  }, [phase]);
 
   /* Keys 1 to 4, because a round measured in seconds is one a keyboard should
      win. The same keys the review screen's multiple choice uses. */
@@ -152,7 +143,6 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
             <ButtonLink href="/review/target" variant="primary" size="lg">Again</ButtonLink>
             <ButtonLink href="/practice" size="lg">Back to practice</ButtonLink>
           </div>
-          <AchievementToasts badges={newBadges} />
         </div>
       </Page>
     );

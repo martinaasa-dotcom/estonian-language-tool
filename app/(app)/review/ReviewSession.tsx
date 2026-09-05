@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { BookOpen, Check, Compass, Keyboard, MessageCircleQuestion, RotateCcw, Undo2, X, Zap } from "lucide-react";
-import { checkAchievements, gradeCard, undoGrade } from "@/app/actions";
-import { AchievementToasts } from "@/components/achievements/AchievementToasts";
+import { gradeCard, undoGrade } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { EstonianInput } from "@/components/EstonianInput";
 import { Chip, Empty, Meter, Page, StatTile } from "@/components/ui";
@@ -16,13 +15,11 @@ import { SuggestFix } from "@/components/SuggestFix";
 import { StarWord } from "@/components/StarWord";
 import { WordIntro } from "@/components/WordIntro";
 import type { GlossedToken } from "@/lib/dict/glossed";
-import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
 import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
 import { conjugationSlotFromFront, slotLabel } from "@/lib/srs/slots";
 import { BLANK } from "@/lib/estonian/cloze";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
-import { xpForRating } from "@/lib/gamification/xp";
 import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db";
 import { useOffline } from "@/components/OfflineProvider";
@@ -415,7 +412,6 @@ export function ReviewSession({
   const [retypeNote, setRetypeNote] = useState<string | null>(null);
   const [done, setDone] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [xp, setXp] = useState(0);
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<Done[]>([]);
   /*
@@ -440,10 +436,8 @@ export function ReviewSession({
   const [met, setMet] = useState<ReadonlySet<string>>(() => new Set());
   const [pendingOffline, setPendingOffline] = useState(0);
   const { pending: outboxPending, refresh: refreshOutbox } = useOffline();
-  const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const shownAt = useRef(Date.now());
   const startedAt = useRef(Date.now());
-  const checkedAchievements = useRef(false);
   const { voice } = useAudioPrefs();
   const sound = useFeedbackSound();
 
@@ -508,14 +502,6 @@ export function ReviewSession({
       if (stashed.length > 0) setQueue(stashed);
     });
   }, [initialCards]);
-
-  useEffect(() => {
-    if (!finished || wasEmptyAtStart || checkedAchievements.current) return;
-    checkedAchievements.current = true;
-    void checkAchievements(true).then((r) => {
-      if (r.ok) setNewBadges(r.newBadges);
-    });
-  }, [finished, done, correct, wasEmptyAtStart]);
 
   useEffect(() => {
     shownAt.current = Date.now();
@@ -635,7 +621,6 @@ export function ReviewSession({
     }
 
     setDone((d) => d + 1);
-    setXp((x) => x + xpForRating(rating));
     if (rating >= 3) setCorrect((c) => c + 1);
     setHistory((h) => [...h, { cardId: card.id, index, rating, before }]);
 
@@ -678,7 +663,6 @@ export function ReviewSession({
       scheduled.current.set(last.cardId, last.before);
       setHistory((h) => h.slice(0, -1));
       setDone((d) => Math.max(0, d - 1));
-      setXp((x) => Math.max(0, x - xpForRating(last.rating)));
       if (last.rating >= 3) setCorrect((c) => Math.max(0, c - 1));
       // Taking an answer back is not a run continuing.
       run.current = 0;
@@ -875,10 +859,9 @@ export function ReviewSession({
           </p>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatTile value={done} label="Reviewed" tone="accent" />
           <StatTile value={`${accuracy}%`} label="Recalled" tone={accuracy >= 85 ? "mint" : "butter"} />
-          <StatTile value={`+${xp}`} label="XP" tone="blush" />
           <StatTile value={`${minutes}m`} label="Time" tone="sky" />
         </div>
         {pendingOffline > 0 && (
@@ -895,7 +878,6 @@ export function ReviewSession({
           <ButtonLink href="/practice" size="lg"><Zap size={15} aria-hidden /> Play a round</ButtonLink>
           <ButtonLink href="/learn/new" size="lg">Learn new words</ButtonLink>
         </div>
-        <AchievementToasts badges={newBadges} />
       </div>
     );
   }
@@ -1294,7 +1276,6 @@ export function ReviewSession({
       <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-2xs" style={{ color: "var(--ink-3)" }}>
         <span className="flex items-center gap-1"><Check size={12} aria-hidden style={{ color: "var(--good-ink)" }} /> {correct} recalled</span>
         <span className="flex items-center gap-1"><RotateCcw size={12} aria-hidden /> {done} graded</span>
-        <span className="flex items-center gap-1"><Zap size={12} aria-hidden /> +{xp} XP</span>
         <button
           type="button"
           onClick={() => void undo()}

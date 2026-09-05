@@ -233,9 +233,12 @@ if (hasRound) {
   check("the sentence is shown back once it has been answered",
     (await page.locator('span[lang="et"]').count()) > 3);
   // Every mode grades through the same log (ADR-016), and the footer is where a
-  // dictation round says what it just wrote there.
+  // dictation round says what it just wrote there. It used to say it in XP,
+  // which was withdrawn along with the badges; what it counts now is the
+  // answers it has put through `gradeCard`, so the tally moving off nought is
+  // the same claim.
   const footer = await page.locator("text=/word-perfect of/").first().innerText();
-  check("the answer was graded, not just marked", /\+\d+ XP/.test(footer), footer.trim());
+  check("the answer was graded, not just marked", /\d+ word-perfect of [1-9]/.test(footer), footer.trim());
 
   check("and it is offered once the answer is in, when looking it up is the point",
     (await page.locator(lemmaLink).count()) > 0);

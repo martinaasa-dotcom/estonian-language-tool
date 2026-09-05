@@ -30,18 +30,25 @@ export async function GET() {
   const now = new Date();
   const snapshot = await deckSnapshot(ownerId, now);
   const [summary, settings] = await Promise.all([
-    dailySummary(ownerId, snapshot, now, await learnerDayClock(ownerId)),
+    dailySummary(ownerId, now, await learnerDayClock(ownerId)),
     readSettings(ownerId, [SETTING_KEYS.displayName]),
   ]);
 
   const name = settings[SETTING_KEYS.displayName]?.trim();
-  // Each figure keeps the hue it has inside the app — butter for the streak,
-  // mint for what is known, cornflower for XP — so a shared card reads as the
-  // same product, not a generic stat graphic.
+  /*
+    Each figure keeps the hue it has inside the app, butter for the streak,
+    mint for what is known, cornflower for the log itself, so a shared card
+    reads as the same product rather than as a generic stat graphic.
+
+    The third used to be an XP total under a level title. XP was withdrawn
+    along with the badges it was weighed in, and what stands in its place is
+    the thing the level was derived from all along: how many answers this
+    learner has actually given.
+  */
   const stats: [string, string, string][] = [
     [String(summary.streak), "day streak", "#cf9114"],
     [String(snapshot.knownCards), "cards known", "#1fb894"],
-    [String(summary.level.totalXp), "XP earned", "#7a6bf0"],
+    [String(summary.reviewsAllTime), "reviews", "#7a6bf0"],
   ];
 
   return new ImageResponse(
@@ -84,9 +91,6 @@ export async function GET() {
 
           <div style={{ display: "flex", marginTop: 44, fontSize: 54, fontWeight: 700, color: "#241f35", lineHeight: 1.1 }}>
             {name ? `${name} is learning Estonian` : "Learning Estonian"}
-          </div>
-          <div style={{ display: "flex", marginTop: 14, fontSize: 27, color: "#5b5470" }}>
-            {`Level ${summary.level.level} · ${summary.level.title}`}
           </div>
         </div>
 

@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
-import { computeStreak } from "@/lib/achievements/badges";
-import { xpFromRatingCounts } from "@/lib/gamification/xp";
+import { computeStreak } from "@/lib/stats/streak";
 import { caseAccuracy } from "@/lib/stats/history";
 import { dayClock } from "@/lib/time/day";
 import { SETTING_KEYS } from "@/lib/settings/store";
@@ -57,8 +56,6 @@ export interface RosterEntry {
   displayName: string;
   role: string;
   joinedAt: Date;
-  /** XP earned in the last seven days. */
-  weeklyXp: number;
   reviewsThisWeek: number;
   streak: number;
   wordsKnown: number;
@@ -122,21 +119,17 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
   const zoneByOwner = new Map(zones.map((z) => [z.ownerId, z.value]));
   const byOwner = new Map<string, {
     dates: Date[];
-    weekRatings: Record<number, number>;
     weekCount: number;
     caseReviews: { targetCase: string | null; rating: number }[];
   }>();
-  for (const id of ids) byOwner.set(id, { dates: [], weekRatings: {}, weekCount: 0, caseReviews: [] });
+  for (const id of ids) byOwner.set(id, { dates: [], weekCount: 0, caseReviews: [] });
 
   for (const review of reviews) {
     const entry = byOwner.get(review.ownerId);
     if (!entry) continue;
     entry.dates.push(review.reviewedAt);
     entry.caseReviews.push({ targetCase: review.targetCase, rating: review.rating });
-    if (review.reviewedAt >= weekAgo) {
-      entry.weekRatings[review.rating] = (entry.weekRatings[review.rating] ?? 0) + 1;
-      entry.weekCount++;
-    }
+    if (review.reviewedAt >= weekAgo) entry.weekCount++;
   }
 
   const entries: RosterEntry[] = members.map((member) => {
@@ -148,7 +141,6 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
       displayName: member.displayName,
       role: member.role,
       joinedAt: member.joinedAt,
-      weeklyXp: xpFromRatingCounts(stats.weekRatings),
       reviewsThisWeek: stats.weekCount,
       streak: computeStreak(stats.dates, now, dayClock(zoneByOwner.get(member.ownerId))),
       wordsKnown: knownByOwner.get(member.ownerId) ?? 0,
@@ -159,7 +151,13 @@ export async function classRoster(classroomId: string, now = new Date()): Promis
     };
   });
 
-  entries.sort((a, b) => b.weeklyXp - a.weeklyXp || a.displayName.localeCompare(b.displayName));
+  /*
+    Ordered by what somebody did this week, which is what this board was
+    counting all along. It used to be a weekly XP total, and XP was that same
+    count with a rating weighting over it, so the order barely moves and the
+    number now says what it is: answers given, in a week.
+  */
+  entries.sort((a, b) => b.reviewsThisWeek - a.reviewsThisWeek || a.displayName.localeCompare(b.displayName));
 
   return {
     entries,
