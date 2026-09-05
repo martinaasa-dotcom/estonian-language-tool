@@ -137,6 +137,29 @@ export function slotOfCard(card: { cardType: string; targetCase: string | null }
   return card.targetCase ?? card.cardType;
 }
 
+/**
+ * The slot a card is about, read off the card itself.
+ *
+ * `slotOfCard` above answers this from the columns, and it answers it for every
+ * card but one: a conjugation card carries no `targetCase`, because the column
+ * is for cases and widening it would put `indprsg3` on the Progress page beside
+ * `osastav`. So the row for `kohtuma → lihtminevik · ma` says only that it is a
+ * `CONJUGATION`, and a screen that wants to say in plain English what that card
+ * is asking for has nothing to key on.
+ *
+ * The front is generated as `${lemma} → ${slot.label}` and the labels are a
+ * closed table of ten, so the lookup is exact rather than a guess: a front
+ * whose tail is not one of the ten returns null and the screen prints what it
+ * always printed. It is a read of what the builder wrote, never a write, and it
+ * never reaches `Review.slot`, which is checked against `isKnownSlot` on the
+ * way into the one table that cannot be repaired.
+ */
+export function conjugationSlotFromFront(front: string): string | null {
+  const tail = front.split("\u2192").pop()?.trim();
+  if (!tail) return null;
+  return CONJUGATION_SLOTS.find((s) => s.label === tail)?.code ?? null;
+}
+
 /** What a slot is called on a screen. The Estonian name leads, as everywhere. */
 export function slotLabel(slot: string): string {
   const spec = caseByKey(slot);

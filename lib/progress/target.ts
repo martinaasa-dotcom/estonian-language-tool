@@ -67,6 +67,11 @@ export interface TargetQuestion {
   question: string | null;
   /** The case's Estonian name, for the note after an answer. */
   caseEt: string | null;
+  /**
+   * The case itself, so the screen can say in plain English what the question
+   * word is asking for (`lib/estonian/plainAsk.ts`). Null on a meaning question.
+   */
+  caseKey: string | null;
   options: string[];
   answer: number;
 }
@@ -132,7 +137,7 @@ export async function targetRound(ownerId: string): Promise<TargetQuestion[]> {
     usedLemmas.add(lexeme.lemma);
     questions.push({
       cardId: card.id, kind: "meaning", lemma: lexeme.lemma,
-      question: null, caseEt: null,
+      question: null, caseEt: null, caseKey: null,
       options: picked.options, answer: picked.answer,
     });
   }
@@ -229,6 +234,7 @@ export function caseQuestion(
     lemma: lexeme.lemma,
     question: caseQuestionFor(spec, subject),
     caseEt: grammarTerm(spec.key)?.et ?? spec.et,
+    caseKey: spec.key,
     options: picked.options,
     answer: picked.answer,
   };

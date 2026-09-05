@@ -16,6 +16,8 @@ import { SuggestFix } from "@/components/SuggestFix";
 import { WordIntro } from "@/components/WordIntro";
 import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
+import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
+import { conjugationSlotFromFront } from "@/lib/srs/slots";
 import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { BLANK } from "@/lib/estonian/cloze";
 import { xpForRating } from "@/lib/gamification/xp";
@@ -79,6 +81,18 @@ const TONE_SOFT: Record<number, string> = {
   1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
 };
 
+
+/**
+ * Which facet of a word this card is asking about.
+ *
+ * The case column where there is one, and the verb slot the card's own front
+ * names otherwise. `slotOfCard` in `lib/srs/slots.ts` is the same question
+ * answered from the columns alone, and it cannot reach a conjugation card,
+ * which is the one shape whose ask is hardest to read off the screen.
+ */
+function slotAsked(card: ReviewCard): string {
+  return card.targetCase ?? conjugationSlotFromFront(card.front) ?? card.cardType;
+}
 
 /**
  * "Why?", at the only moment anyone asks it.
@@ -876,6 +890,24 @@ export function ReviewSession({
               <Speak text={card.lemma ?? card.front} />
             )}
           </div>
+          )}
+
+          {/*
+            WHAT THE CARD IS ASKING, BEFORE WHAT IT IS CALLED.
+
+            A `CASE_FORM` card's front is `tuba → milles? kus?` and its hint
+            is `seesütlev · the inessive`, which is the naming rule this app
+            follows and is two names and no instruction. A learner drove the
+            flash round and reported that they could not tell what was being
+            asked of them; the same is true here, on the daily path, and it is
+            worth more here. So the plain sentence goes between the two: the
+            question stays where it was, the name stays where it was, and
+            somebody who has not met `seesütlev` yet can still answer the card.
+          */}
+          {!answerShown && plainAsk(slotAsked(card)) && (
+            <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+              {plainAskLine(slotAsked(card))}
+            </p>
           )}
 
           {card.hint && !answerShown && (

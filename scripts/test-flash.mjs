@@ -60,8 +60,8 @@ const KNOWN_SLOTS = new Set([...CASES, ...VERB_SLOTS, ...MEANING_SLOTS]);
 
 /** The five ways this round can ask, as the chip above the question spells them. */
 const ASK_LINES = [
-  /say it in estonian/i, /put it in the /i, /fill the gap/i,
-  /type the form you hear/i, /write a sentence using the /i,
+  /say it in estonian/i, /change the form/i, /fill the gap/i,
+  /type the form you hear/i, /write a sentence/i,
 ];
 
 /*
@@ -137,25 +137,32 @@ function wordOf(text) {
 
 /** Whether the question on screen wants a sentence rather than a form. */
 function marksSentence(text) {
-  return /write a sentence using the/i.test(text);
+  return /write a sentence/i.test(text);
 }
 
 /** Answers whatever is on screen and returns what the marking said. */
 async function answer(typed) {
   await page.fill("#answer", typed);
   await page.getByRole("button", { name: /Check it/ }).click();
-  await page.waitForSelector("main >> text=/That is it|Not this time/", { timeout: 10_000 });
+  // Three verdicts now rather than two: the panel says "Nearly" for the right
+  // word in the wrong ending, which is a near miss and not a blank.
+  await page.waitForSelector("main >> text=/That is it|Nearly|Not this time/", { timeout: 10_000 });
   const text = await page.locator("main").innerText();
+  /*
+    The form the panel prints and the slot it names, read off the two marked
+    elements rather than parsed out of a `slot label: form` line. It is how
+    this suite learns an answer it could not otherwise know without copying
+    the app's own derivation into the test, which would be a second rule to
+    keep in step with the first. The panel used to print that line and the
+    suite split it on the colon; the answer sits on a card of its own now,
+    with the name under it, so the pairing is carried by two attributes and
+    joined here into the shape the rest of this file already reads.
+  */
+  const form = (await page.locator("[data-flash-answer]").first().innerText().catch(() => "")).trim();
+  const slot = (await page.locator("[data-flash-slot]").first().innerText().catch(() => "")).trim();
   return {
     right: /That is it/.test(text),
-    /*
-      The line the feedback panel prints, which is `slot label: form`. It is
-      how this suite learns an answer it could not otherwise know without
-      copying the app's own derivation into the test, which would be a second
-      rule to keep in step with the first.
-    */
-    told: text.split("\n").map((l) => l.trim())
-      .find((l) => /^[^:]+:\s\S/.test(l) && !/it needs/.test(l)) ?? "",
+    told: form && slot ? `${slot}: ${form}` : "",
     text,
   };
 }
