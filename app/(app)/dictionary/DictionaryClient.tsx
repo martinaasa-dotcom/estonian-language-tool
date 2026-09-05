@@ -431,6 +431,16 @@ export function DictionaryClient({
           )}
           {matchedAs && (
             <p
+              /*
+                `scripts/test-polish.mjs` used to find this line by searching
+                the page for " is the ", which is a phrase and not an anchor: it
+                matched the moment any other copy on the entry used the same
+                three words, and Playwright's strict mode then returned nothing
+                at all rather than the wrong element. The suite read that as the
+                explanation having gone. This is the same anchor
+                `data-flash-answer` is one route over, and for the same reason.
+              */
+              data-matched-as=""
               className="rounded-[var(--r)] px-4 py-3 text-sm"
               style={{ background: "var(--accent-soft)", color: "var(--accent-deep)" }}
             >
