@@ -54,7 +54,7 @@ jobs:
       #
       # `restore-keys` rather than an exact match, because the useful cache is
       # the most recent one whatever week wrote it.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: prisma/data/.cache
           key: wiktionary-pages-${{ github.run_id }}
