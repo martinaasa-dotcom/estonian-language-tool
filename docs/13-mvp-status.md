@@ -320,6 +320,17 @@ The same rule shapes the worksheet: a gap-fill is a real sentence with one of it
 and a case table is a table with cells left out. Neither invents anything, which is also why an
 exercise simply does not appear when the material for it is missing.
 
+And the hidden word may not be the word printed beside the blank. The sheet gives the lemma in
+brackets after the gap under "Put the word in brackets into the right form", and `gapForms` includes
+the headword itself, correctly, because a nominative standing in a sentence is a form. Every other
+caller keeps that and none of them prints the lemma an inch away. Measured over the shipped
+dictionary, 1,519 of 4,214 buildable gaps were the word beside them: a third of every sheet a class
+works through, and the commonest shape rather than an edge, since a lexicographer illustrating a
+noun usually writes it in the nominative. 3,389 of those words have another sentence whose gap is
+inflected, which is the exercise the module's own comment has described since it was written; the
+rest get no gap and keep their meaning and their case table, because a question answered by its own
+hint is worth less than a line of paper.
+
 ### Known limitations, still
 
 1. **Oblique-case examples depend on Ekilex.** The seeded dictionary holds principal parts, so the
