@@ -4257,6 +4257,34 @@ plays every scene keyless against the shipped dictionary as a sloppy or a curiou
 prints the conversation; run it before touching the marker or the reply. `docs/21-situations.md`
 §36.
 
+**And any ending on a stem it knows is the word, because that is what hearing somebody works
+like.** §35 tolerated the wrong case only where the dictionary held the form. `ma tahan minna
+haiglat` is the partitive where the sisseütlev was due and `haiglasi` is a form of nothing, and
+both are perfectly clear to anybody who hears them. `nearlyInflected` reads a word the scene's
+whole list cannot vouch for, sharing four or more opening characters with a form of the word the
+beat is about and at least half its own length, as that word: measured on the street corner,
+`haiglat`, `haiglale`, `haiglaks`, `haiglasi` and `haigla` are all understood and recast to
+`haiglasse`, while `kooli` and `blorp` are still misses. **The guard is that a word the list can
+vouch for is never read as a mangled other one**, so `kohvik` is never a botched `kohv`. And in a
+slot that wants a case, a wrong ending is a case rather than a slip of the pen: only a folded
+diacritic reads as spelling there (`foldedOnly`), or the review sends somebody to the letter bar
+over a grammar point.
+
+**Running out of patience is said in Estonian, not in a stage direction.** `They let it go, and
+move on.` printed in the middle of the conversation, three times running on a learner who was
+stuck, which is the loudest machine tell the transcripts had left. It is an acknowledgment every
+scene teaches, and the move follows it.
+
+**And a conversation reviews itself afterwards, which is the reason anybody does a role-play.**
+`lib/scenes/review.ts` leads on being understood, because "every one of your seven turns was
+understood" and "you made two mistakes" describe one run and only one of them gets somebody to
+open the next scene. Under it a note per case that came out as something else, commonest first,
+named the way a class names it and carrying the line `CASE_NOTES` prints on the grammar
+reference, with the learner's own words beside the dictionary's. It holds **no Estonian at all**,
+which is `lib/estonian/grammar.ts`'s standing pointed at a conversation and asserted the same way,
+and it **never marks**: a count of things achieved is the debrief's and a claim about somebody's
+Estonian is the mock exam's alone. `docs/21-situations.md` §37.
+
 
 **Sõnad has seven tries and two clues, and both clues arrive late on purpose.** Six for six is the
 English game's ratio and not its game: Estonian has nine vowels where English is deducing among
@@ -5379,7 +5407,7 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `lacksFiniteVerb`, `answerForms`, `groupEndings`, `endingStrip`, `plainAsk`, `plainAskFor`,
 `conjugationSlotFromFront`, `VERDICT_CLASS`, `OPTION_CLASS`, `optionState`, `glossTokens`,
 `glossSentences`, `GlossedSentence`, `leafNeeds`, `caseForm`, `counterBeat`, `cardInPlay`,
-`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
+`addsEvidence`, `satisfiedBy`, `nearlySpelled`, `personSlip`, `recast`, `asideFor`, `asideOwed`, `answerBeatId`, `awaits`, `contextFromRows`, `nearlyInflected`, `foldedOnly`, `reviewOf`, `repairCaseFronts`, `unsentencedCaseCards`, `isBareCaseFront`, `hasSentence`, `borrowSentences`,
 `claimIndex`, `borrowedSentences`, `formSentencesFor`, `exceptionsFor`, `KIND_NOTES`,
 `drillable`, `markForm`, `exceptionIndex`. Most of them now
 have an invariant behind them; that list is what to check when adding one.

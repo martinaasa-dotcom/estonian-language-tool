@@ -24,6 +24,7 @@ import { currentBeat, hurdleBeat, hurdleSpec, isOver } from "../lib/scenes/state
 import { sceneLine } from "../lib/scenes/line";
 import { PERSONAS } from "../lib/scenes/personas";
 import { answerBeatId } from "../lib/scenes/scripted";
+import { reviewOf } from "../lib/scenes/review";
 import { caseKeyFor, words } from "../lib/scenes/lexicon";
 import { leafNeeds, type BeatSpec } from "../lib/scenes/types";
 import { propBySlot } from "../lib/scenes/props";
@@ -140,7 +141,16 @@ async function play(sceneId: string) {
     }
     const move = [...lines].reverse().find((l) => !l.reaction);
     if (move && move.provenance !== "unspoken") heard = move.text;
-    if (isOver(scene, state)) { console.log(`   -> over: ${state.done.join(", ")}`); break; }
+    if (isOver(scene, state)) {
+      console.log(`   -> over: ${state.done.join(", ")}`);
+      const review = reviewOf(scene, state);
+      console.log(`   REVIEW: ${review.lead}`);
+      for (const note of review.notes) {
+        console.log(`     - ${note.heading}: ${note.body}`);
+        for (const one of note.evidence) console.log(`         ${one.said} > ${one.form ?? "(as it stood)"}`);
+      }
+      break;
+    }
     const target = standing ?? beat;
     if (!target) break;
     const said = learnerTurn(target, card ?? draw.card, context.lexicon, n);

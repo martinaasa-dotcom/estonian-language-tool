@@ -39,6 +39,7 @@ import {
   advance, currentBeat, objectivesOf, outcomeOf, startScene, walkOut, type Objectives, type Response, type SceneState, type TurnRecord, advanceHurdle, hurdleBeat, raiseHurdle, type HurdleRecord,
 } from "@/lib/scenes/state";
 import { gradesFor, stalledWords, type SceneGrade } from "@/lib/scenes/grades";
+import { reviewOf, type SceneReview } from "@/lib/scenes/review";
 import { addsEvidence, readTurn } from "@/lib/scenes/turn";
 
 /**
@@ -452,6 +453,8 @@ export interface FinishedRun {
   readonly outcome: { id: string; says: string } | null;
   readonly turns: readonly TurnRecord[];
   readonly grades: readonly SceneGrade[];
+  /** What to do differently, in English, derived from the transcript. */
+  readonly review: SceneReview;
   /** Words the run needed and the learner did not have, for the debrief. */
   /**
    * Words the run needed and the learner did not have, for the debrief.
@@ -672,6 +675,7 @@ export async function finishRun(input: {
   const objectives = objectivesOf(scene, state);
   const outcome = outcomeOf(scene, state);
   const grades = gradesFor(scene, state);
+  const review = reviewOf(scene, state);
 
   await prisma.sceneRun.update({
     where: { id: row.id },
@@ -725,6 +729,7 @@ export async function finishRun(input: {
     outcome: outcome ? { id: outcome.id, says: outcome.says } : null,
     turns: state.turns,
     grades,
+    review,
     gaps: wanted.map((lemma) => ({ lemma, lexemeId: byLemma.get(lemma) ?? null })),
   };
 }

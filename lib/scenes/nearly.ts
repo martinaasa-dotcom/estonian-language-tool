@@ -18,6 +18,9 @@
  *   spelling   a diacritic folded away, or one letter out on a word of five
  *              or more; `koik` for `kõik`, `tuleen` for `tulen`
  *   case       the right word in the wrong case; `pood` where `poodi` was due
+ *   form       an ending the word does not have, on a stem that is plainly
+ *              its own; `haiglat` where `haiglasse` was due, and anything
+ *              else built on `haigla-`
  *   person     the infinitive where a person was due; `ma tulema` for `ma tulen`
  *
  * Every one of those is decided against the dictionary and nothing else, and
@@ -46,6 +49,21 @@ export const MIN_TYPO_LENGTH = 5;
 export const MAX_TYPO_DISTANCE = 1;
 
 /**
+ * How much of a word has to be a stem the dictionary knows before the ending
+ * on it stops mattering.
+ *
+ * Four characters, and at least half of what was typed. Estonian inflects by
+ * gluing an ending onto a stem, so a learner reaching for a form they do not
+ * have still writes the stem: `haiglat`, `haiglale`, `haiglaks` and
+ * `haiglasi` all say `haigla` to anybody who hears them, and only the last is
+ * not a form of the word. Four rather than three because `tea`, `tee` and
+ * `tea-` are three characters of several different words; half of what was
+ * typed because a long word sharing four letters with a short one shares an
+ * accident (`kohvik` and `kohv`).
+ */
+export const MIN_STEM = 4;
+
+/**
  * The form a typed word was one slip away from, or null.
  *
  * Folded first, because a missing diacritic is by far the commonest slip and
@@ -56,9 +74,10 @@ export const MAX_TYPO_DISTANCE = 1;
  * "did they mean this one".
  */
 export function nearlySpelled(word: string, candidates: ReadonlySet<string>): string | null {
-  const flat = fold(word);
-  for (const form of candidates) if (fold(form) === flat) return form;
+  const folded = foldedOnly(word, candidates);
+  if (folded) return folded;
   if (word.length < MIN_TYPO_LENGTH) return null;
+  const flat = fold(word);
   let best: string | null = null;
   for (const form of candidates) {
     if (form.length < MIN_TYPO_LENGTH) continue;
@@ -69,6 +88,24 @@ export function nearlySpelled(word: string, candidates: ReadonlySet<string>): st
     }
   }
   return best;
+}
+
+/**
+ * The same form with its diacritics folded away, and nothing looser.
+ *
+ * A dropped õ is a keyboard rather than a gap in anybody's Estonian, and it
+ * is the one slip that is unambiguous. Everything else at one edit is not:
+ * in a slot that wants a case, `kõrvat` is one letter from `kõrvas` and is
+ * an ending rather than a slip of the pen, and telling a learner they
+ * mistyped when they chose the wrong case sends them to the letter bar
+ * instead of to the case. So the case branch of the marker asks for this
+ * and the lemma branch, where any form counts and a wrong ending is not a
+ * category, asks for the wider `nearlySpelled`.
+ */
+export function foldedOnly(word: string, candidates: ReadonlySet<string>): string | null {
+  const flat = fold(word);
+  for (const form of candidates) if (fold(form) === flat) return form;
+  return null;
 }
 
 /**
@@ -120,4 +157,50 @@ export function editDistance(a: string, b: string, limit: number): number {
     [previous, current] = [current, previous];
   }
   return previous[b.length]!;
+}
+
+/**
+ * A FORM THE WORD DOES NOT HAVE, ON A STEM THAT IS PLAINLY ITS OWN.
+ *
+ * The rules above answer "did they mean this form"; this answers the thing a
+ * person actually does, which is hear the stem and stop caring about the
+ * ending. `ma tahan minna haiglat` is not Estonian and there is no doubt
+ * whatever about which building is meant. So a word the scene's whole list
+ * cannot vouch for, sharing a long enough opening with a form of the word the
+ * beat is asking about, is that word.
+ *
+ * **Only where the list cannot vouch for the word at all**, and that guard is
+ * the whole of why this is safe: `kohvik` is a word a café scene teaches, so
+ * it is never read as a mangled `kohv`, and neither is any other real word a
+ * learner might have reached for by mistake. What is left is a spelling
+ * nobody in Estonian uses, which is exactly the case where the stem is all
+ * the evidence there is and all a listener would need.
+ *
+ * Returns the form it was built on, so a caller can name the case that form
+ * is in or recast to the one the beat wanted.
+ */
+export function nearlyInflected(
+  word: string,
+  candidates: ReadonlySet<string>,
+  vouched: (word: string) => boolean,
+): string | null {
+  if (word.length < MIN_STEM || vouched(word)) return null;
+  const flat = fold(word);
+  let best: string | null = null;
+  let longest = 0;
+  for (const form of candidates) {
+    const shared = sharedPrefix(flat, fold(form));
+    if (shared < MIN_STEM || shared * 2 < flat.length) continue;
+    if (shared > longest) { longest = shared; best = form; }
+    // A tie goes to the shorter form, so a stem beats a longer form built on it.
+    else if (shared === longest && best && form.length < best.length) best = form;
+  }
+  return best;
+}
+
+function sharedPrefix(a: string, b: string): number {
+  const limit = Math.min(a.length, b.length);
+  let i = 0;
+  while (i < limit && a[i] === b[i]) i += 1;
+  return i;
 }

@@ -292,7 +292,7 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   */
   const askedThem = answered ? leafNeeds(answered.needs).some(({ need }) => need.kind === "question") : false;
   const landed = response === "answer" || response === "narrow";
-  if (!aside && landed && answered && answered.move !== "greet" && !askedThem && beat) {
+  if (!aside && response !== "moveOn" && landed && answered && answered.move !== "greet" && !askedThem && beat) {
     /*
       Never a number, which the confirm beat reads back in its own line, and
       never yes or no: "Jah." repeated back after "Jah, piimaga" is the
@@ -319,7 +319,19 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
     }
   }
 
-  if (response === "moveOn") out.push(stage("They let it go, and move on."));
+  /*
+    THEY LET IT GO IN ESTONIAN, NOT IN A STAGE DIRECTION. Running out of
+    patience is the commonest thing that happens to a learner who is stuck,
+    and it printed a line of English in the middle of the conversation, three
+    times in a row on the transcripts `npm run play:scenes` prints. A person
+    who decides not to press a point says so with a word and carries on, and
+    the word is one every scene teaches. The move follows it, so the
+    conversation is steered on rather than stopped and annotated.
+  */
+  if (response === "moveOn") {
+    const choices = REACTIONS.acknowledge;
+    out.push(reaction(choices[input.met % choices.length] ?? choices[0], "."));
+  }
 
   /*
     Over. If the learner said goodbye first, they are owed one back, and the

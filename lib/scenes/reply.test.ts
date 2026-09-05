@@ -232,11 +232,25 @@ describe("a turn in English", () => {
 });
 
 describe("running out of patience", () => {
-  it("says so in English and moves to the next beat's line, with no acknowledgment", () => {
+  /*
+    A person who decides not to press a point says a word and carries on.
+    This used to print a line of English in the middle of the conversation,
+    three times running on a learner who was stuck, which is the loudest
+    "you are talking to a machine" left in the transcripts.
+  */
+  it("lets it go in Estonian and moves to the next beat's line", () => {
     const lines = replyFor(input({ answered: ASK, beat: OFFER, response: "moveOn", reading: "offtarget", line: FRESH }));
-    expect(lines[0]?.provenance).toBe("unspoken");
+    expect(lines[0]?.provenance).toBe("attested");
+    expect(lines[0]?.reaction).toBe(true);
+    expect(REACTIONS.acknowledge).toContain(lines[0]!.text.toLowerCase().replace(".", ""));
     expect(lines[1]).toEqual(FRESH);
-    expect(lines.some((l) => l.reaction)).toBe(false);
+  });
+
+  it("does not also acknowledge the turn, since letting it go is the reaction", () => {
+    const lines = replyFor(input({
+      answered: ASK, beat: OFFER, response: "moveOn", reading: "offtarget", line: FRESH, echo: "pea",
+    }));
+    expect(lines).toHaveLength(2);
   });
 });
 

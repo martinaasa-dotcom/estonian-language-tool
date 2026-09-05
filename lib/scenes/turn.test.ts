@@ -457,6 +457,48 @@ describe("a turn that is nearly right", () => {
     expect(readTurn("ma tulen koju", asks, ctx2).slips).toEqual([]);
   });
 
+  /*
+    THE THING A PERSON ACTUALLY DOES, WHICH IS HEAR THE STEM AND STOP CARING.
+    `ma tahan minna haiglat` is not Estonian and there is no doubt whatever
+    about which building is meant, so every ending on a stem the dictionary
+    knows is that word.
+  */
+  it("understands any ending on a stem it knows, real or invented", () => {
+    const asks = beat({ needs: [{ kind: "case", lemma: "kõrv", grammCase: "INESSIVE" }], shape: "sentence" });
+    for (const said of ["kõrvat", "kõrvaks", "kõrvasi", "kõrvale"]) {
+      const seen = readTurn(`Mul on valu ${said}`, asks, ctx);
+      expect(seen.reading, said).toBe("complete");
+      expect(seen.slips[0], said).toMatchObject({ kind: "case", said, form: "kõrvas" });
+    }
+  });
+
+  it("recasts to a real form where the beat wanted the word rather than a case", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["valu"] }] });
+    const seen = readTurn("Mul on valumine", asks, ctx);
+    expect(seen.reading).toBe("complete");
+    expect(seen.slips[0]).toMatchObject({ kind: "form", said: "valumine", lemma: "valu" });
+    expect(seen.slips[0]?.form).toBeTruthy();
+  });
+
+  /*
+    And the guard that makes it safe: a word the scene's own list can vouch
+    for is a word, not a mangled other one. `tuba` is in the list, so it is
+    never read as a botched `tube`.
+  */
+  it("never reads a word the list vouches for as a mangled form of another", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["kõrv"] }] });
+    const seen = readTurn("kõrvad", asks, ctx);
+    expect(seen.slips).toEqual([]);
+    // And a different word is still a different word.
+    expect(readTurn("Ma lähen tuppa", asks, ctx).reading).not.toBe("complete");
+  });
+
+  it("does not read a short word as a stem of a longer one", () => {
+    const asks = beat({ needs: [{ kind: "lemma", oneOf: ["kõrv"] }] });
+    // Three characters of shared opening is an accident, not a stem.
+    expect(readTurn("kõr", asks, ctx).reading).not.toBe("complete");
+  });
+
   it("never records a slip on a requirement that was not met", () => {
     const asks = beat({ needs: [{ kind: "lemma", oneOf: ["valu"] }] });
     const seen = readTurn("xyzzy blorp", asks, ctx);

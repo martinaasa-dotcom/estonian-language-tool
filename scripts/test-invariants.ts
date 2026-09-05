@@ -11086,7 +11086,7 @@ check("a scene understands a slip before it marks one, and says so", () => {
   );
   assert.match(turn, /slips: readonly Slip\[\]/, "Evidence no longer carries the slips a turn was understood despite");
   assert.match(
-    turn, /kind: "case", said: other, form: context\.lexicon\.caseForm\.get\(key\)/,
+    turn, /kind: "case" as const, said, form: context\.lexicon\.caseForm\.get\(key\)/,
     "the right word in the wrong case is no longer understood, or the recast is not the dictionary's own form",
   );
   assert.match(
@@ -11130,12 +11130,80 @@ check("a question the scene did not anticipate is answered before the move", () 
   assert.match(turn, /readonly asked: string \| null/, "Evidence no longer says whether the learner asked something");
   const reply = code("lib/scenes/reply.ts");
   assert.match(reply, /if \(aside\) out\.push\(\{ \.\.\.aside, reaction: true \}\)/, "replyFor no longer says the aside first");
-  assert.match(reply, /!aside && landed/, "replyFor stacks an echo or a hästi on top of an aside");
+  assert.match(reply, /!aside &&[\s\S]{0,80}landed/, "replyFor stacks an echo or a hästi on top of an aside");
   const route = code("app/api/scene/route.ts");
   assert.match(route, /asideFor\(/, "the scene route no longer asks what to say about a question");
   assert.match(route, /spokenFor\.awaits && !standing/, "the scene route walks the ladder for a beat that opens with nothing, so the answer is said before the question");
   const scripted = code("lib/scenes/scripted.ts");
   assert.match(scripted, /export function answerBeatId\(/, "the bank has nowhere to hold a question-beat's answer");
+});
+
+check("a scene reviews itself in English, and the review teaches nothing it made up", () => {
+  /*
+    The debrief said what happened and never the thing a teacher says after a
+    role-play: here is the ending that kept coming out wrong and here is what
+    it is for. `lib/scenes/review.ts` is that, derived from the transcript,
+    and it holds no Estonian at all: the case names are read off `CASES`, the
+    explanations are `CASE_NOTES`, and every Estonian character on the screen
+    comes through `evidence`, which is the learner's own word or the
+    dictionary's recast. It is `lib/estonian/grammar.ts`'s standing pointed
+    at a conversation, and it is asserted the same way.
+  */
+  const review = code("lib/scenes/review.ts");
+  assert.match(review, /export function reviewOf\(/, "lib/scenes/review.ts lost reviewOf");
+  assert.doesNotMatch(
+    review, /[\u00f5\u00e4\u00f6\u00fc\u0161\u017e]/i,
+    "lib/scenes/review.ts is writing Estonian. Every form in a review is the learner's own or the dictionary's, "
+    + "and the case names are read off CASES (ADR-005).",
+  );
+  assert.match(
+    review, /caseByKey|CASES/,
+    "the review no longer names a case the way the learner's own class does",
+  );
+  /*
+    And it never marks. A count of things achieved is the debrief's and a
+    claim about somebody's Estonian is the mock exam's alone (ADR-022), so a
+    percentage here would be a third answer to how well somebody is doing.
+  */
+  assert.doesNotMatch(review, /percent|%`|toFixed/, "lib/scenes/review.ts is scoring a conversation");
+
+  const debrief = code("components/scene/SceneDebrief.tsx");
+  assert.match(debrief, /review\.lead/, "the debrief no longer prints the review's lead");
+  assert.match(debrief, /review\.notes\.map/, "the debrief no longer prints the review's notes");
+  assert.match(
+    code("lib/progress/scene.ts"), /reviewOf\(scene, state\)/,
+    "finishRun no longer derives the review from the run it just marked",
+  );
+});
+
+check("a scene understands any ending on a stem it knows", () => {
+  /*
+    `ma tahan minna haiglat` is not Estonian and there is no doubt whatever
+    about which building is meant. The marker reads a word the scene's list
+    cannot vouch for, sharing a long enough opening with a form of the word
+    the beat is about, as that word (`nearlyInflected`), and the guard that
+    makes it safe is that a word the list *can* vouch for is never read as a
+    mangled other one.
+  */
+  const nearly = code("lib/scenes/nearly.ts");
+  assert.match(nearly, /export function nearlyInflected\(/, "lib/scenes/nearly.ts lost the stem rule");
+  assert.match(
+    nearly, /vouched\(word\)/,
+    "the stem rule no longer stands down on a word the scene's list can vouch for, so a real word can be read as a mangled other one",
+  );
+  assert.match(
+    code("lib/scenes/turn.ts"), /inflected\(forms\)/,
+    "the marker no longer asks the stem rule, so an ending the word does not have is a miss again",
+  );
+  /*
+    And in a slot that wants a case, a wrong ending is a case rather than a
+    slip of the pen: only a folded diacritic is read as spelling there, or
+    the review sends somebody to the letter bar over a case.
+  */
+  assert.match(
+    code("lib/scenes/turn.ts"), /const near = folded\(accepted\)/,
+    "the case branch reads a one-edit ending as a typo again, which files a case slip under spelling",
+  );
 });
 
 check("nothing but the dictionary can advance a scene", () => {

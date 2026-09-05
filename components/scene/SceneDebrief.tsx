@@ -8,7 +8,7 @@ import { DrillLink } from "@/components/DrillLink";
 import type { SceneSpec } from "@/lib/scenes/types";
 import { drillFor } from "@/lib/scenes/drills";
 import { curveballById } from "@/lib/scenes/curveballs";
-import type { SlipNote } from "./SceneSession";
+import type { SceneReview } from "@/lib/scenes/review";
 
 /** So "words your conversations needed" is a query and never a counter (ADR-014). */
 export const SCENE_SOURCE = "SCENE";
@@ -22,10 +22,12 @@ export const SCENE_SOURCE = "SCENE";
  *    achieved, never a percentage, because a mark on a conversation is a claim
  *    about somebody's Estonian and only the mock exam may make one (ADR-022).
  * 3. **Your turns**, so a learner can read back what they actually said.
- * 4. **What was understood anyway**: the endings and spellings that were off
- *    and did not stop the conversation, each with the form the other side
- *    said back. Led by the fact that they were understood, because that is
- *    the fact a learner needs to take away, and the forms are for later.
+ * 4. **How it went**, which is the review a teacher gives after a role-play:
+ *    it leads on how much of what you said was understood, and then names
+ *    each ending that came out as something else, what that ending is for,
+ *    and your own words beside the ones the other side used. English, and
+ *    derived from the transcript rather than written here
+ *    (`lib/scenes/review.ts`).
  * 5. **The words you needed and did not have**, each with an add-to-deck
  *    button, from the help button and from the beats that stalled.
  * 6. **One thing to work on**, as a `DrillLink` into the drill that addresses
@@ -41,19 +43,19 @@ export interface Debrief {
   hurdles: readonly { id: string; beat: number; met: boolean }[];
   outcome: { id: string; says: string } | null;
   gaps: readonly { lemma: string; lexemeId: string | null }[];
+  /** What to do differently, in English, derived from the run (`lib/scenes/review.ts`). */
+  review: SceneReview;
   graded: number;
   /** The conversation, both sides, in order. A stage direction is not a line and is left out. */
-  turns: readonly { who: "them" | "you"; text: string; slips?: readonly SlipNote[] }[];
+  turns: readonly { who: "them" | "you"; text: string }[];
 }
 
 export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: () => void }) {
-  const { scene, objectives, hurdles, outcome, gaps, turns, graded } = debrief;
+  const { scene, objectives, hurdles, outcome, gaps, turns, graded, review } = debrief;
   const byId = new Map(scene.beats.map((beat) => [beat.id, beat]));
   const required = scene.beats.filter((beat) => beat.required);
   const missed = objectives.missed.length > 0 ? byId.get(objectives.missed[0]!) : undefined;
   const drill = missed ? drillFor(missed.needs) : null;
-  const yours = turns.filter((turn) => turn.who === "you");
-  const slipped = yours.filter((turn) => (turn.slips?.length ?? 0) > 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -136,39 +138,44 @@ export function SceneDebrief({ debrief, onAgain }: { debrief: Debrief; onAgain: 
         </section>
       )}
 
-      {slipped.length > 0 && (
-        <section>
-          <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>Understood anyway</h3>
-          {/*
-            The count of turns understood despite a slip leads, and the forms
-            follow, because the thing to take away from a conversation is
-            that it worked. Each row is what was written and what the other
-            side said back; nothing here is a mark, and the case behind a
-            slip has already gone to the review log as a `Hard` on that case.
-          */}
-          <p className="mb-2 text-sm" style={{ color: "var(--ink-2)" }}>
-            {slipped.length === 1
-              ? "One turn had an ending or a spelling off, and it was understood."
-              : `${slipped.length} of your ${yours.length} turns had an ending or a spelling off, and every one was understood.`}
-            {" "}The forms, for when you have a minute:
-          </p>
-          <ul className="flex flex-col gap-1 text-sm">
-            {slipped.flatMap((turn, index) => (turn.slips ?? []).map((slip, at) => (
-              <li key={`${index}-${at}`} className="flex flex-wrap items-baseline gap-x-2">
-                <span lang="et" style={{ color: "var(--ink-3)" }}>{slip.said}</span>
-                {slip.form ? (
-                  <>
-                    <span style={{ color: "var(--ink-3)" }}>is said</span>
-                    <span lang="et" className="font-medium">{slip.form}</span>
-                  </>
-                ) : (
-                  <span style={{ color: "var(--ink-3)" }}>was understood as it was</span>
+      <section>
+        <h3 className="label-xs mb-2" style={{ color: "var(--ink-3)" }}>How it went</h3>
+        {/*
+          The lead is the sentence a learner takes away, and it is about being
+          understood rather than about being right: those are the same run
+          described two ways, and only one of them gets somebody to open the
+          next scene. The notes under it are the teaching, in the quiet ink,
+          with the learner's own words beside the ones the other side used.
+        */}
+        <p className="text-sm">{review.lead}</p>
+        {review.notes.length > 0 && (
+          <ul className="mt-3 flex flex-col gap-3">
+            {review.notes.map((note) => (
+              <li key={note.id}>
+                <p className="text-sm font-medium">{note.heading}</p>
+                <p className="text-sm" style={{ color: "var(--ink-2)" }}>{note.body}</p>
+                {note.evidence.length > 0 && (
+                  <ul className="mt-1 flex flex-col gap-0.5 text-sm">
+                    {note.evidence.map((one) => (
+                      <li key={one.said} className="flex flex-wrap items-baseline gap-x-2">
+                        <span lang="et" style={{ color: "var(--ink-3)" }}>{one.said}</span>
+                        {one.form ? (
+                          <>
+                            <span style={{ color: "var(--ink-3)" }}>is said</span>
+                            <span lang="et" className="font-medium">{one.form}</span>
+                          </>
+                        ) : (
+                          <span style={{ color: "var(--ink-3)" }}>was understood as it stood</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </li>
-            )))}
+            ))}
           </ul>
-        </section>
-      )}
+        )}
+      </section>
 
       {gaps.length > 0 && (
         <section>

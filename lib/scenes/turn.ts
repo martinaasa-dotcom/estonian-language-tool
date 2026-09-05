@@ -30,7 +30,7 @@ import { fold } from "@/lib/estonian/fold";
 import type { CaseKey } from "@/lib/estonian/types";
 import { words, type Lexicon } from "./lexicon";
 import { caseKeyFor } from "./lexicon";
-import { nearlySpelled, personAsked } from "./nearly";
+import { foldedOnly, nearlyInflected, nearlySpelled, personAsked } from "./nearly";
 import type { BeatSpec, Requirement } from "./types";
 
 /**
@@ -76,7 +76,7 @@ export interface TurnWord {
  * so the review log can file it beside the same case missed on a card.
  */
 export interface Slip {
-  readonly kind: "spelling" | "case" | "person";
+  readonly kind: "spelling" | "case" | "form" | "person";
   readonly said: string;
   readonly form: string | null;
   readonly lemma: string;
@@ -382,6 +382,33 @@ function satisfies(
     }
     return null;
   };
+  /*
+    A diacritic folded away, and nothing looser. What the case branch asks
+    for, since there a wrong ending is a case rather than a slip of the pen.
+  */
+  const folded = (forms: ReadonlySet<string> | undefined): { said: string; form: string } | null => {
+    if (forms === undefined) return null;
+    for (const said of spoken) {
+      const form = foldedOnly(said, forms);
+      if (form) return { said, form };
+    }
+    return null;
+  };
+  /*
+    An ending the word does not have, on a stem that is plainly its own.
+    Asked last, and only of words the scene's whole list cannot vouch for,
+    which is what keeps a real word from being read as a mangled other one.
+  */
+  const vouched = (word: string) =>
+    context.lexicon.forms.has(word) || context.lexicon.folded.has(fold(word));
+  const inflected = (forms: ReadonlySet<string> | undefined): { said: string; form: string } | null => {
+    if (forms === undefined) return null;
+    for (const said of spoken) {
+      const form = nearlyInflected(said, forms, vouched);
+      if (form) return { said, form };
+    }
+    return null;
+  };
 
   switch (need.kind) {
     case "any":
@@ -394,17 +421,23 @@ function satisfies(
         const near = nearly(forms);
         if (near) return { word: near.form, slip: { kind: "spelling", said: near.said, form: near.form, lemma } };
       }
+      /*
+        A pass of its own after every candidate has been tried exactly,
+        because a stem match is the weakest evidence here and a word one
+        candidate holds outright beats a stem the next one shares.
+      */
+      for (const lemma of need.oneOf) {
+        const built = inflected(context.lexicon.byLemma.get(lemma));
+        if (built) return { word: built.form, slip: { kind: "form", said: built.said, form: built.form, lemma } };
+      }
       return null;
     }
     case "case": {
       const key = caseKeyFor(need.lemma, need.grammCase);
       const accepted = context.lexicon.byCase.get(key);
+      const forms = context.lexicon.byLemma.get(need.lemma);
       const hit = exact(accepted);
       if (hit) return { word: hit };
-      const near = nearly(accepted);
-      if (near) {
-        return { word: near.form, slip: { kind: "spelling", said: near.said, form: near.form, lemma: need.lemma } };
-      }
       /*
         THE RIGHT WORD IN THE WRONG CASE IS UNDERSTOOD. `Ma lähen pood` is
         not Estonian and nobody who hears it wonders where the person is
@@ -412,18 +445,33 @@ function satisfies(
         slip, and the other side says `poodi` back, off the same table every
         case card reads. Nothing is derived here: a case the table holds no
         form for is understood and not recast.
+
+        **Before the typo rung**, because a real form of the word is a case
+        rather than a slip of the pen even where the two spellings are one
+        edit apart: `kõrvat` is the osastav and is one letter from `kõrvas`,
+        and calling it a typo would hand the review a note about spelling
+        where the learner needs one about the case.
       */
-      const forms = context.lexicon.byLemma.get(need.lemma);
-      const other = exact(forms) ?? nearly(forms)?.said ?? null;
-      if (other) {
-        return {
-          word: other,
-          slip: {
-            kind: "case", said: other, form: context.lexicon.caseForm.get(key) ?? null,
-            lemma: need.lemma, grammCase: need.grammCase,
-          },
-        };
+      const otherForm = exact(forms);
+      const cased = (said: string) => ({
+        word: said,
+        slip: {
+          kind: "case" as const, said, form: context.lexicon.caseForm.get(key) ?? null,
+          lemma: need.lemma, grammCase: need.grammCase,
+        },
+      });
+      if (otherForm) return cased(otherForm);
+      const near = folded(accepted);
+      if (near) {
+        return { word: near.form, slip: { kind: "spelling", said: near.said, form: near.form, lemma: need.lemma } };
       }
+      /*
+        A form of the word in another case, a stem with an ending it does not
+        have, or a spelling one letter out: all three are the word, and in a
+        slot that wants a case all three are the case being wrong.
+      */
+      const other = folded(forms)?.said ?? inflected(forms)?.said ?? nearly(forms)?.said ?? null;
+      if (other) return cased(other);
       return null;
     }
     /*
@@ -445,18 +493,23 @@ function satisfies(
       const lemmas = need.grammCase ? context.dataLemmas?.get(need.slot) ?? [] : [];
       for (const lemma of lemmas) {
         const key = caseKeyFor(lemma, need.grammCase!);
+        const forms = context.lexicon.byLemma.get(lemma);
+        const cased = (said: string) => ({
+          word: said,
+          slip: {
+            kind: "case" as const, said, form: context.lexicon.caseForm.get(key) ?? null,
+            lemma, grammCase: need.grammCase!,
+          },
+        });
         const inCase = exact(context.lexicon.byCase.get(key));
         if (inCase) return { word: inCase };
-        const nearCase = nearly(context.lexicon.byCase.get(key));
+        // A real form of the word before a slip of the pen, for the reason the `case` branch gives.
+        const otherForm = exact(forms);
+        if (otherForm) return cased(otherForm);
+        const nearCase = folded(context.lexicon.byCase.get(key));
         if (nearCase) return { word: nearCase.form, slip: { kind: "spelling", said: nearCase.said, form: nearCase.form, lemma } };
-        const forms = context.lexicon.byLemma.get(lemma);
-        const other = exact(forms) ?? nearly(forms)?.said ?? null;
-        if (other) {
-          return {
-            word: other,
-            slip: { kind: "case", said: other, form: context.lexicon.caseForm.get(key) ?? null, lemma, grammCase: need.grammCase! },
-          };
-        }
+        const other = folded(forms)?.said ?? inflected(forms)?.said ?? nearly(forms)?.said ?? null;
+        if (other) return cased(other);
       }
       const hit = exact(accepted);
       if (hit) return { word: hit };

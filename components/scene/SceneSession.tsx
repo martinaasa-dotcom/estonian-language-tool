@@ -328,8 +328,9 @@ export function SceneSession({ scene }: { scene: SceneSpec }) {
       outcome: result.outcome,
       gaps: result.gaps,
       graded: result.graded,
+      review: result.review,
       turns: turns.flatMap((turn): Debrief["turns"][number][] => {
-        if (turn.who === "you") return [{ who: "you", text: turn.text, slips: turn.slips ?? [] }];
+        if (turn.who === "you") return [{ who: "you", text: turn.text }];
         const said = turn.lines.filter(spoken).map((line) => line.text).join(" ");
         return said ? [{ who: "them", text: said }] : [];
       }),

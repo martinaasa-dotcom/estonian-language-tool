@@ -1190,6 +1190,7 @@ export async function finishScene(input: {
     outcome: finished.outcome,
     turns: finished.turns,
     gaps: finished.gaps,
+    review: finished.review,
     graded,
   };
 }

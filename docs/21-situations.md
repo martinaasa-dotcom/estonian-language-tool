@@ -2170,3 +2170,73 @@ the phone saying `Ei tea.` to "and where then?" is a stranger's shrug in a frien
 persona-flavoured off-guard reaction is a table of parts away and was left for a native speaker's
 pass, since "what a friend says when you ask them something odd" is not a thing this app should
 guess at.
+
+
+## 37. The eighth pass: any ending, no dead ends, and a review at the end
+
+Three things a learner asked for after playing the scenes, and each is a rule the module was
+missing rather than a scene that needed rewriting.
+
+### Any ending on a stem it knows
+
+§35 tolerated four shapes of nearly-right, and the fourth of them, the wrong case, only reached a
+form the dictionary happens to hold. `ma tahan minna haiglat` is not one of those: the partitive
+where the sisseütlev was due is a form of the word, and `haiglasi` is not a form of anything. Both
+are perfectly clear to anybody who hears them, and both were misses.
+
+**`nearlyInflected` is the rule and it is the thing a person actually does, which is hear the stem
+and stop caring about the ending.** A word the scene's whole list cannot vouch for, sharing four
+or more opening characters with a form of the word the beat is about, and at least half its own
+length, is that word. Measured on the street-corner scene against the shipped dictionary:
+`haiglat`, `haiglale`, `haiglaks`, `haiglasi` and `haigla` are all understood and all recast to
+`haiglasse`, while `kooli` and `blorp` are still misses.
+
+**The guard is the whole of why it is safe: a word the list can vouch for is never read as a
+mangled other one.** `kohvik` is a word the café scene teaches, so it is never read as a botched
+`kohv`, and neither is any other real word a learner reached for by mistake. What is left is a
+spelling nobody in Estonian uses, which is exactly where the stem is all the evidence there is and
+all a listener would need. Four characters rather than three because `tea`, `tee` and `tea-` open
+several different words; half the typed length because a long word sharing four letters with a
+short one shares an accident.
+
+**And in a slot that wants a case, a wrong ending is a case rather than a slip of the pen.**
+`kõrvat` is one letter from `kõrvas`, and reading it as a typo files a case under spelling and
+sends the learner to the letter bar over a grammar point. Only a folded diacritic is read as
+spelling there (`foldedOnly`), which is the one slip that is unambiguous; the lemma branch keeps
+the wider rule, since there any form counts and a wrong ending is not a category.
+
+### No dead ends in English
+
+Running out of patience printed `They let it go, and move on.` in the middle of the conversation,
+three times in a row on a learner who was stuck, which is the loudest "you are talking to a
+machine" the transcripts had left. A person who decides not to press a point says a word and
+carries on, and the word is one every scene teaches. It is an acknowledgment now, in Estonian, and
+the move follows it, so the conversation is steered on rather than stopped and annotated.
+
+### A review at the end
+
+The debrief said what happened and what got done, and never the thing a teacher says after a
+role-play, which is the reason anybody does one. `lib/scenes/review.ts` is that, and it is
+**deliberately after the conversation rather than inside it**, because a correction mid-turn is
+what stops people talking.
+
+It leads on being understood: "Every one of your seven turns was understood. Two endings were off,
+and not one of them stopped the conversation." That sentence and "you made two mistakes" describe
+the same run, and only one of them gets somebody to open the next scene. Under it, a note per case
+that came out as something else, commonest first, named the way a class names it
+(`seesütlev · kelles? milles? kus?`), with the line `CASE_NOTES` already prints for that case on
+the grammar reference, and the learner's own words beside the ones the other side used. Then the
+verb rule that is worth having, the invented endings, the spellings, what was left undone, and
+turns taken in English, counted and never scolded.
+
+**It holds no Estonian at all**, which is `lib/estonian/grammar.ts`'s standing pointed at a
+conversation and is asserted the same way: the case names are read off `CASES`, the explanations
+are `CASE_NOTES`, and every Estonian character on the screen arrives through `evidence`, which is
+either a form the learner typed or the dictionary's own recast. **And it never marks**: no score,
+no percentage, no ranking. A count of things achieved is the debrief's and a claim about somebody's
+Estonian is the mock exam's alone (ADR-022).
+
+What it does not do: it cannot say why a learner reached for the case they reached for, which is
+the thing a teacher standing there would say. Every note is derived from a row in the transcript,
+so a clean run produces the one note that says so, and nothing here is ever invented about
+somebody's Estonian.
