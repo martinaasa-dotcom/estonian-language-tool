@@ -211,3 +211,32 @@ describe("a curveball in the way", () => {
     expect(state.hurdles[0]?.met).toBe(true);
   });
 });
+
+describe("waiting", () => {
+  it("waits once for the rest of a sentence, and the second fragment in a row spends a try", () => {
+    const start = advance(SCENE, startScene(SCENE), evidence("complete"), "Tere!").state;
+    const first = advance(SCENE, start, evidence("fragment", [false]), "valu");
+    expect(first.response).toBe("wait");
+    expect(first.state.patience).toBe(2);
+    const second = advance(SCENE, first.state, evidence("fragment", [false]), "valu");
+    expect(second.response).not.toBe("wait");
+    expect(second.state.patience).toBe(1);
+    // And a scene is never held for ever by one word repeated at it.
+    let state = second.state;
+    for (let i = 0; i < 20 && !isOver(SCENE, state); i += 1) {
+      state = advance(SCENE, state, evidence("fragment", [false]), "valu").state;
+    }
+    expect(isOver(SCENE, state)).toBe(true);
+  });
+});
+
+describe("a curveball echoed at", () => {
+  it("is asked again once, and the second echo in a row spends a try", () => {
+    const raised = { ...startScene(SCENE), beat: 1, hurdle: { id: "missing-document" as const, beat: 1, tries: 0 } };
+    const first = advanceHurdle(SCENE, raised, evidence("echo", [false]), "Kas teil on dokument?");
+    expect(first.response).toBe("repeat");
+    expect(first.state.hurdle?.tries).toBe(0);
+    const second = advanceHurdle(SCENE, first.state, evidence("echo", [false]), "Kas teil on dokument?");
+    expect(second.state.hurdle?.tries ?? HURDLE_TRIES).toBeGreaterThan(0);
+  });
+});

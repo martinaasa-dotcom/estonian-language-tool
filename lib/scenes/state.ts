@@ -157,7 +157,18 @@ export function advance(
     };
   }
 
-  if (evidence.reading === "fragment" || evidence.reading === "echo") {
+  /*
+    A look and a wait costs nothing the first time. It cost nothing every
+    time, and a learner who kept typing one word at a beat that wanted a
+    sentence was waited for for ever: seventy turns of `Tere!` and the scene
+    never moved, which the fuzz harness found in four scenes out of seven. A
+    person waits once. The second fragment in a row on the same beat is read
+    as a turn that missed, and spends a try like one.
+  */
+  const previous = state.turns[state.turns.length - 1];
+  const waitedAlready = previous?.beatId === beat.id
+    && (previous.reading === "fragment" || previous.reading === "echo");
+  if ((evidence.reading === "fragment" || evidence.reading === "echo") && !waitedAlready) {
     return {
       state: { ...state, turns },
       response: evidence.reading === "echo" ? "repeat" : "wait",
@@ -332,7 +343,10 @@ export function advanceHurdle(
       response: "answer",
     };
   }
-  if (evidence.reading === "fragment" || evidence.reading === "echo") {
+  const previous = state.turns[state.turns.length - 1];
+  const waitedAlready = previous?.beatId === `hurdle:${hurdle.id}`
+    && (previous.reading === "fragment" || previous.reading === "echo");
+  if ((evidence.reading === "fragment" || evidence.reading === "echo") && !waitedAlready) {
     return { state: { ...state, turns }, response: evidence.reading === "echo" ? "repeat" : "wait" };
   }
   const tries = hurdle.tries + 1;

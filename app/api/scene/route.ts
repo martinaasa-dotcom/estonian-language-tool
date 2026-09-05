@@ -268,6 +268,17 @@ export async function POST(request: Request) {
       they: stageFor(beat, draw?.card ?? null),
       register: scene.register,
       words: [...context.lexicon.byLemma.keys()],
+      /*
+        The scene's own banked lines, for tone: a model shown six sentences
+        this receptionist has said writes a seventh in the same register and
+        length, where one shown a word list alone writes a paragraph. They are
+        examples of the voice and never of the answer, since none is for this
+        beat.
+      */
+      examples: [...context.scripted.entries()]
+        .filter(([id]) => id !== beat.id)
+        .flatMap(([, lines]) => lines.slice(0, 1))
+        .slice(0, 6),
       said,
       avoid,
     }),
@@ -315,6 +326,8 @@ async function compose(
     they: string;
     register: string;
     words: readonly string[];
+    /** Lines this character has said on other beats, for tone. Never for this beat. */
+    examples: readonly string[];
     said: readonly string[];
     avoid: readonly string[];
   },
@@ -332,6 +345,9 @@ async function compose(
     `Your move: ${input.move}.`,
     `What you are doing, in English: ${input.they}`,
     `Address them as "${input.register}".`,
+    input.examples.length > 0
+      ? `Lines this character has said at other moments, for tone and length: ${input.examples.join(" | ")}`
+      : "",
     input.avoid.length > 0
       ? `Your last attempt used words that are not allowed here: ${input.avoid.join(", ")}.`
       : "",
