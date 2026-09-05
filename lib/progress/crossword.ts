@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db";
 import { bandsAround } from "@/lib/collections/levels";
 import type { Level } from "@/lib/collections/syllabus/types";
-import { crosswordPool } from "@/lib/dict/facts";
+import { clueClashes, crosswordPool } from "@/lib/dict/facts";
+import { clueFrom, clueKey } from "@/lib/games/clue";
 import { compile, type Candidate, type Crossword } from "@/lib/games/crossword";
 import { dayOrdinal } from "@/lib/random/dayHash";
 import { shuffle } from "@/lib/random/shuffle";
 import type { DayKey } from "@/lib/time/day";
-import { mentions } from "@/lib/estonian/cloze";
 
 /**
  * WHICH WORDS TODAY'S CROSSWORD IS MADE OF.
@@ -24,9 +24,16 @@ import { mentions } from "@/lib/estonian/cloze";
  * server has to be able to rebuild the puzzle to mark it.
  *
  * NOTHING HERE WRITES A CLUE. The clue is the English gloss already beside the
- * word, trimmed to its first sense or two. A model writing crossword clues
- * would be a model writing about Estonian words a learner then acts on, and
- * this app has one answer to that (ADR-005).
+ * word, trimmed to its first sense or two, with the kind of word named. A
+ * model writing crossword clues would be a model writing about Estonian words
+ * a learner then acts on, and this app has one answer to that (ADR-005).
+ *
+ * AND A CLUE THIS DICTIONARY HAS TWO ANSWERS TO IS NOT SET. `lib/games/clue.ts`
+ * holds both halves of that rule and the report that produced it; what this
+ * file adds is the reading it is done against, which is the **whole**
+ * dictionary rather than the day's band. The word that made `3 down: human`
+ * unanswerable was A1 and the grid was B1, so a clash read off the pool would
+ * have found nothing to complain about.
  */
 
 export interface DailyCrossword extends Crossword {
@@ -36,13 +43,6 @@ export interface DailyCrossword extends Crossword {
 
 /** Enough words to compile from without dragging the dictionary onto the page. */
 const POOL = 90;
-
-/**
- * A clue is one line. A gloss like "a devil, an evil spirit, the deuce" is
- * three, and a crossword clue that is longer than the grid is a paragraph
- * with a box under it.
- */
-const MAX_CLUE = 46;
 
 export async function crosswordFor(
   ownerId: string, day: DayKey, level: Level,
@@ -54,7 +54,15 @@ export async function crosswordFor(
     same 2,039 rows, and this page fetched all of them on every render and
     again inside the action that marks the grid.
   */
-  const rows = await crosswordPool(bandsAround(level));
+  const [rows, clashes] = await Promise.all([
+    crosswordPool(bandsAround(level)),
+    /*
+      Over every entry the dictionary holds rather than over the day's pool,
+      because a learner knows words outside their own band and a clue with two
+      answers is a trick whichever band the other answer is graded at.
+    */
+    clueClashes(),
+  ]);
   if (rows.length === 0) return null;
 
   /*
@@ -65,7 +73,12 @@ export async function crosswordFor(
   */
   const random = seededRandom(dayOrdinal(day));
   const pool: Candidate[] = shuffle(rows, random)
-    .map((row) => ({ lemma: row.lemma, clue: clueFrom(row.translation, row.lemma), lexemeId: row.id }))
+    .filter((row) => !clashes.has(clueKey(row.lemma, row.pos)))
+    .map((row) => ({
+      lemma: row.lemma,
+      clue: clueFrom(row.translation, row.lemma, row.pos),
+      lexemeId: row.id,
+    }))
     .filter((c) => c.clue.length > 0)
     .slice(0, POOL);
 
@@ -82,34 +95,6 @@ export async function crosswordFor(
     ...puzzle,
     inDeck: puzzle.entries.flatMap((entry, index) => (ids.has(entry.lexemeId) ? [index] : [])),
   };
-}
-
-/**
- * A gloss cut down to a clue, or nothing where it will not go.
- *
- * Two senses at most, because a comma-separated list of five is the
- * lexicographer being thorough and a crossword clue being useless. Dropped
- * rather than truncated mid-word where it is still too long: a clue cut off in
- * the middle is worse than one word fewer in the grid.
- *
- * AND NOTHING WHERE THE CLUE IS THE ANSWER, which is the case this could not
- * see while it was handed a gloss and no word. The clue is the English beside
- * the entry and a few dozen Estonian words are spelled the same in English:
- * the clue for `film` was "film", and for `sport` it was "sport, sports", so
- * the answer was written across the grid above the squares it goes in.
- * Measured on the shipped dictionary, 34 of the 5,329 words with a usable
- * clue, 23 of them the answer exactly.
- *
- * `answer` is required rather than optional for the reason `illSgShort` is:
- * a caller that has not thought about this should not compile. Whole words
- * and case-insensitive, because a crossword is typed without case and
- * "August" over `august` gives away every letter of it.
- */
-export function clueFrom(translation: string, answer: string): string {
-  const senses = translation.split(/[;/]/)[0]?.split(",").map((s) => s.trim()).filter(Boolean) ?? [];
-  const clue = senses.slice(0, 2).join(", ");
-  if (clue.length === 0 || clue.length > MAX_CLUE) return "";
-  return mentions(clue, answer) ? "" : clue;
 }
 
 /**

@@ -259,7 +259,7 @@ export interface DeckResult {
  * takes to be true.
  */
 export async function addUnitsToDeck(
-  ownerId: string, unitIds: readonly string[], source = "DICTIONARY",
+  ownerId: string, unitIds: readonly string[], source = "COURSE",
 ): Promise<DeckResult> {
   return addPlanToDeck(ownerId, planUnits(unitIds), source);
 }

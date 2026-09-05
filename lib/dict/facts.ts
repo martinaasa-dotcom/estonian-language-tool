@@ -2,6 +2,7 @@ import { singleFlight } from "@/lib/cache/singleFlight";
 import { prisma } from "@/lib/db";
 import { unitIntroducing } from "@/lib/collections/syllabus";
 import { bandOf, glossOption, type GlossOption } from "@/lib/questions/distractors";
+import { clueClashes as clashingClues } from "@/lib/games/clue";
 import { MAX_LETTERS, MIN_LETTERS } from "@/lib/games/crossword";
 import {
   alsoAcceptedByLemma as sharedAlsoAccepted, sharedPrompts,
@@ -363,13 +364,16 @@ export function guessableWords(length: number): Promise<string[]> {
  * The lengths are the compiler's own (`lib/games/crossword.ts`), so a rule
  * about what crosses well is not written down twice. The part of speech is
  * one with a case table behind it, so the entry the finish screen links to is
- * worth opening, and a gloss is required because the gloss is the clue.
+ * worth opening, and a gloss is required because the gloss is the clue. It is
+ * selected as well as filtered on, because the clue names it: English does not
+ * mark a part of speech and Estonian derivation does, so "human" over seven
+ * squares is `inimene` and `inimlik` both.
  */
 export function crosswordPool(bands: readonly string[]): Promise<CrosswordWord[]> {
   const key = [...bands].sort().join(",");
   return remember(`crossword-pool:${key}`, FACTS_TTL_MS, async () => {
     return prisma.$queryRaw<CrosswordWord[]>`
-      SELECT DISTINCT ON (lemma) id, lemma, translation FROM "Lexeme"
+      SELECT DISTINCT ON (lemma) id, lemma, pos, translation FROM "Lexeme"
       WHERE char_length(lemma) BETWEEN ${MIN_LETTERS} AND ${MAX_LETTERS}
         AND lemma ~ ${"^[a-zäöüõšž]+$"}
         AND cefr = ANY(${[...bands]})
@@ -384,6 +388,8 @@ export function crosswordPool(bands: readonly string[]): Promise<CrosswordWord[]
 export interface CrosswordWord {
   id: string;
   lemma: string;
+  /** Named on the clue, because English does not mark one and Estonian does. */
+  pos: string;
   translation: string;
 }
 
@@ -408,5 +414,28 @@ export function borrowedSentences(): Promise<Map<string, Example[]>> {
     return borrowSentences(rows.map((r) => ({
       key: r.id, lemma: r.lemma, pos: r.pos, forms: r.forms, examples: parseExamples(r.examples),
     })));
+  });
+}
+
+/**
+ * Every entry whose crossword clue another entry answers just as well.
+ *
+ * Over the whole dictionary rather than over a band, which is what makes this
+ * a fact about the shared dictionary and therefore something this file may
+ * hold: the rival that made `3 down: human` unanswerable was graded A1 and the
+ * grid was B1, so a clash read off the day's pool would have found nothing.
+ * `lib/games/clue.ts` is the rule and this is the reading it is done against.
+ *
+ * The same query `alsoAcceptedByLemma` makes, and deliberately not the same
+ * cache entry: that one groups on the whole gloss for a production card, this
+ * one on the senses a clue prints, and two questions sharing an answer by
+ * coincidence is how one of them stops being asked.
+ */
+export function clueClashes(): Promise<Set<string>> {
+  return remember("clue-clashes", FACTS_TTL_MS, async () => {
+    const rows = await prisma.lexeme.findMany({
+      select: { lemma: true, pos: true, translation: true },
+    });
+    return clashingClues(rows);
   });
 }

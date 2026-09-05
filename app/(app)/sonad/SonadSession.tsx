@@ -476,7 +476,7 @@ function Finish({ puzzle, outcome, at, kept, onKeep }: {
           disabled={pending}
           onClick={async () => {
             setPending(true);
-            const result = await addToDeck(puzzle.lexemeId, ["RECOGNITION", "PRODUCTION"], "DICTIONARY");
+            const result = await addToDeck(puzzle.lexemeId, ["RECOGNITION", "PRODUCTION"], "LOOKUP");
             setPending(false);
             if (result.ok) onKeep();
           }}
