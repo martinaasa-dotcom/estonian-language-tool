@@ -246,10 +246,19 @@ Small, physical, and never blocking:
   rolls. No two share a period, so a set of them falls back into step about once an hour.
   **The travel goes along the edge a letter hangs off, not across it.** A letter tucked over the
   top of a card has about four pixels before it is sitting on a word and most of the card's width
-  sideways, so the one that used to wander six pixels towards the card now slides forty along it
-  and crosses the edge by one. What the small budget buys instead is the rock and the squash, and
-  `room` scales both per placement: a rotated square is wider than its side, so eight degrees on
-  the tightest letter costs more than fifteen on the one with a gutter under it.
+  sideways, so the one that used to wander six pixels towards the card now slides about forty
+  along it and crosses the edge by one. What the small budget buys instead is the rock and the
+  squash, and `room` scales both per placement: a rotated square is wider than its side, so eight
+  degrees on the tightest letter costs more than fifteen on the one with a gutter under it.
+  **And it has to be quick enough to catch.** At 26 to 30px over periods of up to seven seconds
+  the four were measured moving and reported as still, which is the same fault as the six pixels
+  in a different unit: nobody sees a square cross a hand's width in six seconds unless they are
+  already watching it. The periods are 2.9 to 5.3 seconds now, the rock and the squash a third
+  bigger, and the travel 38 to 44px.
+  **They hop when the word changes.** The explorer says so on `document` (`LETTER_CHEER_EVENT`)
+  and each tile hops once, in the order they were placed, as `scale` and `rotate` on the wrapper
+  so the wander underneath is never restarted. It is the one thing the four do as a set, and it
+  happens only when something on the card happened.
   **They answer a pointer.** Coming near one slides it towards the cursor along that same free axis
   and settles it further onto the card, which is `leanFor()` and is the same rule as the wander:
   either way along the edge, inward only across it. They stay `pointer-events-none`, so none of it
@@ -263,6 +272,13 @@ Small, physical, and never blocking:
 - `.letter-key`: the six keys that type õ, ä, ö, ü, š and ž. The one place a letter is a control
   rather than an ornament, so it grows under a pointer and shakes once on the way in. `.press`
   still supplies the dip, so a key is one control with one set of states.
+- The case explorer walks itself once, a word every few seconds while it is on screen and
+  untouched, and stops the moment anybody presses, types or focuses inside it; not at all under
+  reduced motion. Under a pointer its stem row and its endings point at each other through
+  `:has()`, and the word chips grow and shake like the app's own letter keys.
+- `.word-in.grad-sweep`: the headline's last word arrives, is pressed onto the page once like a
+  sticker (`word-stick`, `scale` alone), and then its gradient pans. The two classes each set
+  `animation` and the pan had never run.
 - `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
 - The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pane that says where you are,

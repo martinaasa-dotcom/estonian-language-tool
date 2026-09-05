@@ -68,12 +68,21 @@ export interface LetterCharacter {
  * ambles and returns by another route, the hopper crouches and springs and
  * lands heavily, the swinger is a pendulum that barely goes anywhere, and the
  * tumbler rolls: most of its budget is spent on the rotation.
+ *
+ * THE PERIODS ARE SHORT ENOUGH TO CATCH. The first table had the wanderer on
+ * 5.5 seconds and the tumbler on 6.7, over a travel of 26 to 30 pixels, and
+ * the page was measured moving and reported as still: a square covering a
+ * hand's width in six seconds is a square nobody sees move unless they are
+ * already watching it. Every period came down by a fifth and every rock and
+ * squash went up by about a third, so a glance catches one mid-hop. The
+ * periods still share no common measure, which is what keeps four letters
+ * from falling into step.
  */
 export const LETTER_CHARACTERS: readonly LetterCharacter[] = [
-  { name: "wander", keyframes: "letter-wander", time: 5.5, turn: 7, pop: 0.05, ease: "ease-in-out", origin: "50% 50%" },
-  { name: "hop", keyframes: "letter-hop", time: 3.4, turn: 6, pop: 0.12, ease: "cubic-bezier(0.34, 1.56, 0.64, 1)", origin: "50% 80%" },
-  { name: "swing", keyframes: "letter-swing", time: 4.3, turn: 11, pop: 0.04, ease: "cubic-bezier(0.37, 0, 0.63, 1)", origin: "50% 12%" },
-  { name: "tumble", keyframes: "letter-tumble", time: 6.7, turn: 14, pop: 0.07, ease: "cubic-bezier(0.45, 0.05, 0.55, 0.95)", origin: "50% 50%" },
+  { name: "wander", keyframes: "letter-wander", time: 4.6, turn: 9, pop: 0.07, ease: "ease-in-out", origin: "50% 50%" },
+  { name: "hop", keyframes: "letter-hop", time: 2.9, turn: 8, pop: 0.16, ease: "cubic-bezier(0.34, 1.56, 0.64, 1)", origin: "50% 80%" },
+  { name: "swing", keyframes: "letter-swing", time: 3.7, turn: 14, pop: 0.05, ease: "cubic-bezier(0.37, 0, 0.63, 1)", origin: "50% 12%" },
+  { name: "tumble", keyframes: "letter-tumble", time: 5.3, turn: 18, pop: 0.09, ease: "cubic-bezier(0.45, 0.05, 0.55, 0.95)", origin: "50% 50%" },
 ];
 
 /** One character by name, or the wanderer, which is the quietest of the four. */
@@ -233,4 +242,37 @@ export function leanFor(opts: {
   return freeAxis(opts.edge) === "x"
     ? { x: round(slide + push.x * settle), y: round(push.y * settle), turn }
     : { x: round(push.x * settle), y: round(slide + push.y * settle), turn };
+}
+
+/**
+ * THE ONE THING ALL FOUR DO TOGETHER, AND ONLY WHEN SOMETHING HAPPENS.
+ *
+ * The characters above are what keeps the letters from moving as a set, and
+ * a set moving together is exactly right for one moment: the word under them
+ * changing. The case explorer says so on `document`, every tile hears it, and
+ * each hops once, a beat after the one before it, which is the ornament
+ * noticing the card it is tucked over rather than looping beside it. It is a
+ * scale and a rotation and never a translation, because a keyframe cannot
+ * know which edge a letter hangs off (see `returnLeg`), and a hop that went
+ * "up" would carry the letter on the bottom edge onto the card and the one
+ * on the top edge off the page.
+ *
+ * The event's name lives here rather than in either component, so the side
+ * that fires it and the side that hears it read one string.
+ */
+export const LETTER_CHEER_EVENT = "kodukeel:word-changed";
+
+/** The keyframes in `app/globals.css` that carry the hop, and how long. */
+export const LETTER_CHEER = { keyframes: "letter-cheer", time: 0.62 } as const;
+
+/**
+ * When a letter joins the cheer, in seconds, from its own head start.
+ *
+ * The four are handed out with head starts of about three quarters of a
+ * second apart, so the same ordering scaled down is a stagger of about ninety
+ * milliseconds: the letters hop in the order they were placed, round the card,
+ * and the last has started before the first has landed.
+ */
+export function cheerDelay(headStart: number): number {
+  return round(Math.max(0, headStart) * 0.12);
 }

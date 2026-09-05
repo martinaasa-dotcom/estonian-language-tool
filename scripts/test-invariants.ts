@@ -39,7 +39,7 @@ import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
 import { DESTINATIONS } from "../lib/ux/nav";
 import { rungOf } from "../lib/learn/ladder";
-import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
+import { LETTER_CHARACTERS, LETTER_CHEER, LETTER_CHEER_EVENT } from "../lib/ux/letterMotion";
 import { DEMO_STEMS } from "../lib/collections/demoWords";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
@@ -9000,6 +9000,13 @@ check("every way a letter moves is declared in both the table and the stylesheet
   // The shake a key does under a pointer belongs to the control rather than to
   // a character, so it is declared and deliberately unnamed by the table.
   declared.delete("letter-wiggle");
+  // The hop all four do when the word changes is one set of keyframes for the
+  // set rather than a character of anybody's, and the table names it once
+  // under `LETTER_CHEER`, which is checked for below rather than here.
+  declared.delete(LETTER_CHEER.keyframes);
+  assert.match(css, new RegExp(`@keyframes\\s+${LETTER_CHEER.keyframes}\\b`),
+    "the cheer LETTER_CHEER names has no keyframes in app/globals.css, so the letters "
+    + "hear the word change and do nothing");
 
   const asked = new Set(LETTER_CHARACTERS.map((c) => c.keyframes));
   const missing = [...asked].filter((k) => !declared.has(k));
@@ -9067,6 +9074,28 @@ check("a decorative letter is hidden, untouchable and placed", () => {
     "a screen draws its own drifting letter instead of using components/LetterTile.tsx, "
     + "which is where the three properties above and the pointer listener live",
   );
+});
+
+/**
+ * THE CARD AND ITS LETTERS AGREE ON ONE STRING, AND NEITHER TYPES IT.
+ *
+ * The case explorer says the word changed on `document` and every tile hears
+ * it, which is two files agreeing about an event name, and an event name
+ * retyped in one of them is the quietest failure there is: the explorer fires
+ * a `CustomEvent` nobody listens for, the tiles listen for one nobody fires,
+ * and the letters sit there looking exactly like letters that were never
+ * meant to answer. So both read `LETTER_CHEER_EVENT` off the motion table and
+ * the literal appears in the tree exactly once, in that table.
+ */
+check("the word-changed event is named once and read by both sides", () => {
+  const tile = code("components/LetterTile.tsx");
+  const explorer = code("app/(chromeless)/welcome/LandingDemo.tsx");
+  assert.match(tile, /LETTER_CHEER_EVENT/, "components/LetterTile.tsx no longer listens for LETTER_CHEER_EVENT");
+  assert.match(explorer, /dispatchEvent\(new CustomEvent\(LETTER_CHEER_EVENT/,
+    "the case explorer no longer tells the letters the word changed");
+  const literal = new RegExp(`["'\`]${LETTER_CHEER_EVENT}["'\`]`);
+  const retyped = ALL.filter((f) => !f.endsWith("lib/ux/letterMotion.ts") && literal.test(code(f)));
+  assert.deepEqual(retyped, [], "the event name is typed out somewhere other than lib/ux/letterMotion.ts");
 });
 
 /**
