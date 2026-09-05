@@ -1659,6 +1659,42 @@ check("a mock exam is marked by the server, never by the client", () => {
   );
 });
 
+check("the paper's pool is drawn from its own seed, not from what was read last", () => {
+  /*
+    THE THIRD OF (LEVEL, SEED, POOL), WHICH WAS THE ONE NOBODY HELD.
+
+    The invariant above rests on `buildPaper` being deterministic in those
+    three, and the first two travel with the submission. The pool did not: it
+    was the first five hundred rows of an order beginning `fetchedAt desc`, and
+    `fetchedAt` is rewritten by `runEnrich` and `runLookup` on every lookup of a
+    word, including one that changes nothing. Any learner opening the dictionary
+    during somebody's paper reordered it, the cut at five hundred took a
+    different set, and item ids are positional, so the answers were marked
+    against questions nobody had been asked.
+
+    So the pool is read as ids on the primary key, which nothing can move,
+    shuffled with the paper's own seed, and cut. Two things are asserted: that
+    no mutable column orders it, and that the seed reaches it. The first is the
+    rule; the second is what makes the draw reproducible rather than merely
+    stable.
+  */
+  const source = code("lib/progress/exam.ts");
+  const pool = source.slice(source.indexOf("export async function examPool"), source.indexOf("export async function paperFor"));
+  assert.ok(pool.length > 0, "lib/progress/exam.ts no longer has an examPool to check");
+  assert.doesNotMatch(
+    pool, /fetchedAt|lookupMissAt|editedAt|updatedAt/,
+    "the exam pool is ordered by a column a lookup rewrites, so a paper cannot be rebuilt as it was sat",
+  );
+  assert.match(
+    pool, /export async function examPool\([^)]*seed[^)]*\)/,
+    "examPool no longer takes the paper's seed, so the pool is not a function of it",
+  );
+  assert.match(
+    pool, /shuffle\(/,
+    "the exam pool no longer draws with the seed",
+  );
+});
+
 check("a mock exam writes to the same review log as every other mode", () => {
   /*
     ADR-016. An examination is a mode, so the scheduler has to see it: a word

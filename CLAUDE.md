@@ -2621,6 +2621,30 @@ and the `take` means a tie at the five hundredth row decides which of a pair is 
 all. All eleven end on `{ id: "asc" }` now and an invariant reads the *last* key, because an
 order that is total in the middle and loose at the end is loose.
 
+**And a total order was not enough for the exam, because the column it began on moves.** Ending on
+the id made the pool stable at an instant and the paper is rebuilt hours later: `fetchedAt` is
+rewritten by `runEnrich` and `runLookup` on *every* lookup of a word, including one that changes
+nothing about it, so any learner opening the dictionary during somebody's ninety-minute paper
+reordered the pool, the cut at five hundred took a different set, and the item ids are positional.
+The answers were marked against questions nobody had been asked, which is the thing that paragraph
+says the ordering exists to prevent. It was picking badly too: every entry the seed writes carries
+an `ekilexWordId` and nearly every one carries a usage, so `fetchedAt` was the only column
+separating them, and where nobody has looked anything up every value of it is null and the order
+falls through to `lemma asc`. The B1 pool was the first five hundred words of the dictionary
+alphabetically, which is the `aberratsioon` fault in the one place that decides what somebody is
+examined on.
+
+So the eligible set is read as ids on the primary key, which nothing can move, `shuffle` draws with
+a seed of the paper's own, and the first five hundred are the pool. The paper is a function of
+(level, seed) and of which words the dictionary holds at all, which changes when a word is added
+and not when one is read, and the draw is a fair one across the level rather than the head of the
+alphabet. The preference for entries carrying a sentence is gone from the ordering and was never in
+it: `buildPaper` refuses a task it cannot fill and reports the shortfall, and 95% of eligible
+entries carry a usage anyway. `lib/exam/paper.ts` keeps its private shuffle and is untouched; this
+is one file out. One deploy's worth of papers in flight are marked against a pool drawn the new
+way, which is the cost of changing it at all and is smaller than a paper mis-marked whenever
+anybody looks a word up.
+
 **And the invariant behind it stopped at `lib/progress/`, so five reads outside it said nothing at
 all.** Not a loose order: no `orderBy` whatever, next to a `take`, which is the plan choosing the
 rows a screen is built from. Today's weakest cases took an arbitrary five thousand; `/review/government`
