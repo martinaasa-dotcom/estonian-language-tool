@@ -8364,6 +8364,80 @@ check("Sonad decides nothing on the client but what to type", () => {
   );
 });
 
+check("a crossword clue has one answer and says what kind of word it wants", () => {
+  /*
+    A LEARNER READ `3 down: human`, TYPED `inimene`, AND WAS MARKED WRONG.
+
+    `inimene` is what a human is, it is seven letters, and the row was seven
+    squares. The grid wanted `inimlik`, the adjective, which is glossed
+    "human"; `inimene` is glossed "human being". Two entries, two parts of
+    speech, two glosses, and nothing this app had could see that one English
+    word was standing over both of them: English does not mark a part of
+    speech and Estonian derivation does.
+
+    A CARD WIDENS AND A GRID CANNOT, which is what makes this its own rule
+    rather than `acceptedAnswers` one screen further out. A production card
+    with two right answers puts both on the back. A crossword square takes one
+    string, crossing other words, so a clue with two honest answers is a trick
+    rather than a question and the clue has to narrow instead.
+
+    TWO RULES AND THEY CATCH DIFFERENT THINGS. The clue names the kind of word,
+    which is the hint a production card has carried since the deck was built
+    and the one screen that had never printed it; and a clue another entry
+    answers just as well is refused on both sides, because which of `kena` and
+    `ilus` a grid ought to have is not a question the dictionary can answer.
+    Measured on the shipped dictionary: 3,991 clues where there were 5,295, and
+    a full seven-word grid on every day of a year at every level.
+  */
+  const clue = code(join("lib", "games", "clue.ts"));
+  const signature = /export function clueFrom\(([^)]*)\)/.exec(clue)?.[1] ?? "";
+  assert.ok(signature, "clueFrom has gone, or changed shape past recognition");
+  /*
+    Required rather than optional, for the reason `illSgShort` is: a caller
+    that has not thought about which word its clue is about should not compile.
+    An optional parameter is the shape this fault arrives in again.
+  */
+  assert.match(
+    signature, /\bpos\s*:\s*string\b/,
+    "clueFrom no longer takes the part of speech, so the clue does not say what kind of word it wants",
+  );
+  assert.doesNotMatch(
+    signature, /pos\s*\?/,
+    "the part of speech is optional on clueFrom, which is a clue that names a kind only when somebody remembered to",
+  );
+
+  /*
+    Anchored on the call rather than on the import, because a file that reads
+    the clash set and then clues every row it was handed satisfies any check
+    that only looks for the import. This is the fault Today had with
+    `caseAccuracy`.
+  */
+  const picker = code(join("lib", "progress", "crossword.ts"));
+  assert.match(
+    picker, /clashes\.has\(clueKey\(/,
+    "the crossword no longer refuses a clue another entry answers",
+  );
+  assert.match(
+    picker, /clueFrom\([^)]*\bpos\b/,
+    "the crossword builds a clue without saying which kind of word it wants",
+  );
+
+  /*
+    AND THE CLASH IS READ OVER THE WHOLE DICTIONARY, WHICH IS THE HALF THAT
+    WOULD HAVE CAUGHT THE REPORT. `inimene` is graded A1 and the grid was B1,
+    so the rival was never in the day's pool: a clash read off `crosswordPool`
+    would have passed on the very clue this exists for. A band in that query is
+    the regression.
+  */
+  const facts = code(join("lib", "dict", "facts.ts"));
+  const reading = /export function clueClashes\(\)[\s\S]*?\n\}/.exec(facts)?.[0] ?? "";
+  assert.ok(reading, "lib/dict/facts.ts no longer reads the clue clashes");
+  assert.doesNotMatch(
+    reading, /cefr|bands|MIN_LETTERS|char_length/,
+    "the clue clashes are read over a band or a length, so a rival outside the day's pool is invisible",
+  );
+});
+
 check("the commonest words are counted, gated, and never written down twice", () => {
   /*
     A corpus proposes and the dictionary decides, which is ADR-021's rule about
