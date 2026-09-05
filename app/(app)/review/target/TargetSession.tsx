@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Crosshair, Timer, Trophy } from "lucide-react";
+import { plainAskLine } from "@/lib/estonian/plainAsk";
 import { gradeCard, checkAchievements } from "@/app/actions";
 import { AchievementToasts } from "@/components/achievements/AchievementToasts";
 import { Button, ButtonLink } from "@/components/Button";
@@ -9,6 +10,7 @@ import { Chip, Page, StatTile } from "@/components/ui";
 import { useFeedbackSound } from "@/components/AudioPrefs";
 import type { Badge } from "@/lib/achievements/badges";
 import type { TargetQuestion } from "@/lib/progress/target";
+import { OPTION_CLASS, optionState } from "@/lib/ux/verdict";
 
 /** Seconds for the first shot. */
 const START_S = 8;
@@ -175,7 +177,7 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
               {streak} in a row
             </span>
           )}
-          <Chip tone="hard">{hits} hit</Chip>
+          <Chip tone="good">{hits} hit</Chip>
         </span>
       </div>
 
@@ -193,9 +195,19 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
           {question.lemma}
         </p>
         {question.question ? (
-          <p lang="et" className="text-xl font-semibold" style={{ color: "var(--peach-ink)" }}>
-            {question.question}
-          </p>
+          <>
+            <p lang="et" className="text-xl font-semibold" style={{ color: "var(--peach-ink)" }}>
+              {question.question}
+            </p>
+            {/* The question word is what an Estonian says; the line under it is
+                what it means, for somebody who has not learned that yet. Kept
+                to one line, since this round is timed. */}
+            {question.caseKey && plainAskLine(question.caseKey) && (
+              <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+                {plainAskLine(question.caseKey)}
+              </p>
+            )}
+          </>
         ) : (
           <p className="text-sm" style={{ color: "var(--ink-3)" }}>What does it mean?</p>
         )}
@@ -211,14 +223,7 @@ export function TargetSession({ questions: initialQuestions }: { questions: Targ
               type="button"
               disabled={answered}
               onClick={() => answer(i)}
-              className="choice-btn flex min-h-[3.75rem] items-center gap-3 rounded-[var(--r-lg)] px-4 text-left"
-              style={
-                answered && isAnswer
-                  ? { ["--choice-bg" as string]: "var(--good-soft)", color: "var(--good-ink)" }
-                  : answered && chose
-                    ? { ["--choice-bg" as string]: "var(--again-soft)", color: "var(--again-ink)" }
-                    : undefined
-              }
+              className={`choice-btn ${answered ? OPTION_CLASS[optionState(isAnswer, chose)] : ""} flex min-h-[3.75rem] items-center gap-3 rounded-[var(--r-lg)] border px-4 text-left`}
             >
               <kbd className="rounded-md px-1.5 py-0.5 text-2xs font-semibold key-cap">{i + 1}</kbd>
               <span

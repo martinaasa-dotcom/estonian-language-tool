@@ -38,8 +38,11 @@ describe("the room a placement has", () => {
     const tight = letterVars({
       character: letterCharacter("tumble"), edge: "left", tilt: 0, travel: { x: 4, y: 1 }, room: 0.5,
     });
-    expect(tight["--drift-turn"]).toBe("7deg");
-    expect(tight["--drift-pop"]).toBe("0.04");
+    // Read off the character rather than typed, so a bolder table does not
+    // fail a test about the scaling.
+    const tumble = letterCharacter("tumble");
+    expect(parseFloat(tight["--drift-turn"]!)).toBeCloseTo(tumble.turn * 0.5, 1);
+    expect(parseFloat(tight["--drift-pop"]!)).toBeCloseTo(tumble.pop * 0.5, 1);
   });
 });
 
@@ -119,5 +122,30 @@ describe("answering a pointer", () => {
     const far = leanFor({ edge: "top", pointer: { x: 660, y: 300 }, centre, reach: 200, pull: 14 });
     const near = leanFor({ edge: "top", pointer: { x: 520, y: 300 }, centre, reach: 200, pull: 14 });
     expect(Math.abs(far.x)).toBeLessThan(Math.abs(near.x));
+  });
+});
+
+describe("the cheer", () => {
+  it("hands the letters out in the order of their head starts, a beat apart", async () => {
+    const { cheerDelay } = await import("./letterMotion");
+    const order = [0, 0.7, 1.5, 2.2].map(cheerDelay);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+    expect(order[0]).toBe(0);
+    // The last has started before the first has landed.
+    const { LETTER_CHEER } = await import("./letterMotion");
+    expect(order[3]!).toBeLessThan(LETTER_CHEER.time);
+  });
+
+  it("never sends a letter backwards in time for a negative head start", async () => {
+    const { cheerDelay } = await import("./letterMotion");
+    expect(cheerDelay(-3)).toBe(0);
+  });
+});
+
+describe("being seen", () => {
+  it("keeps every period short enough for a glance to catch a letter mid-move", async () => {
+    const { LETTER_CHARACTERS } = await import("./letterMotion");
+    // The first table ran to 6.7 seconds and was reported as not moving.
+    for (const c of LETTER_CHARACTERS) expect(c.time).toBeLessThanOrEqual(5.5);
   });
 });

@@ -14,6 +14,7 @@ import type { GradedSentence } from "@/lib/tutor/grader";
 import type { WithholdReason } from "@/lib/tutor/verify";
 import { CASES } from "@/lib/estonian/cases";
 import { grammarTerm } from "@/lib/estonian/terms";
+import { VERDICT_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
 
 export interface ScenePrompt {
   sceneId: string;
@@ -177,7 +178,7 @@ export function DescribeSession({ prompts: initialPrompts, aiAvailable }: {
           <Stat
             value={`${Math.round((right / prompts.length) * 100)}%`}
             label="Right case"
-            tone={right === prompts.length ? "var(--good)" : "var(--hard)"}
+            tone={VERDICT_INK[right === prompts.length ? "right" : "nearly"]}
           />
           <Stat value={`${minutes}m`} label="Time" />
         </div>
@@ -331,13 +332,7 @@ function Feedback({ marked, prompt }: { marked: Marked; prompt: ScenePrompt }) {
 
   return (
     <div className="mt-6 flex flex-col gap-3" aria-live="polite">
-      <div
-        className="flex items-start gap-2.5 rounded-md px-3.5 py-3"
-        style={{
-          background: mark.rightCase ? "var(--good-soft)" : "var(--again-soft)",
-          color: mark.rightCase ? "var(--good)" : "var(--again)",
-        }}
-      >
+      <div className={`${VERDICT_CLASS[mark.rightCase ? "right" : wrote ? "nearly" : "wrong"]} flex items-start gap-2.5 rounded-md px-3.5 py-3`}>
         {mark.rightCase
           ? <Check size={16} className="mt-0.5 shrink-0" aria-hidden />
           : <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />}
@@ -385,7 +380,7 @@ function Feedback({ marked, prompt }: { marked: Marked; prompt: ScenePrompt }) {
               <strong lang="et" style={{ color: "var(--ink)" }}>{word.lemma}</strong>
               <span style={{ color: "var(--ink-3)" }}>{word.translation}</span>
               {mark.used[i] && (
-                <Check size={13} aria-label="you used this one" style={{ color: "var(--mint-ink)" }} />
+                <Check size={13} aria-label="you used this one" style={{ color: VERDICT_INK.right }} />
               )}
             </li>
           ))}

@@ -7,10 +7,12 @@ import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
 import { DiacriticBar } from "@/components/DiacriticBar";
 import { Chip, Stat } from "@/components/ui";
+import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
 import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import type { GradedSentence } from "@/lib/tutor/grader";
 import type { WithholdReason } from "@/lib/tutor/verify";
 import { AI_TAG } from "@/lib/copy/values";
+import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
 
 export interface WritingPrompt {
   /** The card this exercise practises, so the round feeds the scheduler. */
@@ -93,11 +95,14 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
 
       /*
         ADR-016: this writes to the same review log as everything else. The
-        dictionary check decides the rating, not the model — a form that is
-        right is Good, a form that is wrong is Again, and Anu's opinion of the
-        surrounding sentence never moves anybody's schedule.
+        dictionary check decides the rating, not the model. A form that is
+        right is Good; the right word in the wrong case is Hard, which is the
+        reading the picture round already gives the same situation, since the
+        app can tell that middle case apart with certainty; a sentence without
+        the word is Again. Anu's opinion of the surrounding sentence never
+        moves anybody's schedule.
       */
-      void gradeCard(prompt.cardId, result.formCheck.used ? 3 : 1, Date.now() - startedAt.current)
+      void gradeCard(prompt.cardId, writeRating(result.formCheck), Date.now() - startedAt.current)
         .catch(() => {});
     } catch {
       setError("Marking needs a connection. Your sentence is still here.");
@@ -132,7 +137,7 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
           <Stat
             value={`${Math.round((correct / prompts.length) * 100)}%`}
             label="Right form"
-            tone={correct === prompts.length ? "var(--good)" : "var(--hard)"}
+            tone={VERDICT_INK[correct === prompts.length ? "right" : "nearly"]}
           />
           <Stat value={`${minutes}m`} label="Time" />
         </div>
@@ -186,14 +191,41 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
             <strong lang="et" className="text-lg" style={{ color: "var(--ink)" }}>
               {prompt.lemma}
             </strong>{" "}
-            <span style={{ color: "var(--ink-3)" }}>({prompt.translation})</span> in the
+            <span style={{ color: "var(--ink-3)" }}>({prompt.translation})</span> in a sentence.
           </p>
-          <p lang="et" className="mt-1 text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
-            {prompt.caseEt}
-          </p>
-          <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
-            <span lang="et">{prompt.caseQuestion}</span> · the {prompt.caseEn.toLowerCase()}
-          </p>
+          {/*
+            The ask, then what it is called. This led with `seesütlev` at 24px
+            in the accent and put the question and the English name in grey
+            underneath, which is three names and no instruction: somebody who
+            has not met the word `seesütlev` had nothing on the screen telling
+            them what sentence to write. `plainAsk` is the one table of what a
+            case means in plain English, and the names stay on the card as the
+            cross-reference they have always been.
+          */}
+          {plainAsk(prompt.caseKey) ? (
+            <>
+              <p className="mt-2 text-[22px] font-semibold leading-snug" style={{ color: "var(--ink)" }}>
+                {plainAskLine(prompt.caseKey)}
+              </p>
+              {/* The Estonian name carries the line's `lang`, since it is the
+                  part a screen reader has to pronounce as Estonian and the part
+                  `smoke-interact.mjs` reads the task off; the English name is
+                  marked back as English inside it. */}
+              <p lang="et" className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+                {prompt.caseEt} · {prompt.caseQuestion}
+                <span lang="en"> · the {prompt.caseEn.toLowerCase()}</span>
+              </p>
+            </>
+          ) : (
+            <>
+              <p lang="et" className="mt-1 text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
+                {prompt.caseEt}
+              </p>
+              <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+                <span lang="et">{prompt.caseQuestion}</span> · the {prompt.caseEn.toLowerCase()}
+              </p>
+            </>
+          )}
 
           <div className="mt-6">
             <label htmlFor="sentence" className="label-xs block" style={{ color: "var(--ink-3)" }}>
@@ -259,18 +291,17 @@ export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
  * is certain; Anu's note is a model's opinion. Blending them into one score
  * would borrow the dictionary's authority for the model's guess.
  */
+/** Good, Hard or Again off the dictionary's own check, read once for the grade and the paint. */
+function writeRating(formCheck: Marked["formCheck"]): 1 | 2 | 3 {
+  return formCheck.used ? 3 : formCheck.usedAnotherForm ? 2 : 1;
+}
+
 function Feedback({ marked }: { marked: Marked }) {
   const { formCheck, graded, quotaMessage, withheld, withheldReason } = marked;
 
   return (
     <div className="mt-6 flex flex-col gap-3" aria-live="polite">
-      <div
-        className="flex items-start gap-2.5 rounded-md px-3.5 py-3"
-        style={{
-          background: formCheck.used ? "var(--good-soft)" : "var(--again-soft)",
-          color: formCheck.used ? "var(--good)" : "var(--again)",
-        }}
-      >
+      <div className={`${VERDICT_CLASS[verdictOfRating(writeRating(formCheck))]} flex items-start gap-2.5 rounded-md px-3.5 py-3`}>
         {formCheck.used
           ? <Check size={16} className="mt-0.5 shrink-0" aria-hidden />
           : <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />}

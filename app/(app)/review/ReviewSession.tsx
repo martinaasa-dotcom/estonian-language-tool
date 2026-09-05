@@ -16,8 +16,10 @@ import { SuggestFix } from "@/components/SuggestFix";
 import { WordIntro } from "@/components/WordIntro";
 import type { Badge } from "@/lib/achievements/badges";
 import { caseByKey } from "@/lib/estonian/cases";
-import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
+import { plainAsk, plainAskLine } from "@/lib/estonian/plainAsk";
+import { conjugationSlotFromFront, slotLabel } from "@/lib/srs/slots";
 import { BLANK } from "@/lib/estonian/cloze";
+import { checkAnswer, countsAsRecalled, type AnswerCheck } from "@/lib/estonian/answer";
 import { xpForRating } from "@/lib/gamification/xp";
 import { SAME_SPELLING, sameSpelling } from "@/lib/copy/values";
 import { enqueueGrade, readStashedSession, stashSession } from "@/lib/offline/db";
@@ -25,6 +27,7 @@ import { useOffline } from "@/components/OfflineProvider";
 import type { ReviewMode } from "@/lib/settings/store";
 import { previewIntervals, SELF_GRADES, type RatingValue, type SchedulingState } from "@/lib/srs/scheduler";
 import { requeue } from "@/lib/srs/queue";
+import { OPTION_CLASS, VERDICT_CLASS, optionState, verdictOfCheck, verdictOfRating } from "@/lib/ux/verdict";
 
 export interface ReviewCard {
   id: string;
@@ -33,6 +36,8 @@ export interface ReviewCard {
   back: string;
   hint: string | null;
   targetCase: string | null;
+  /** The conjugation slot a CONJUGATION card is about, as `CONJUGATION_SLOTS` spells it. */
+  slot: string | null;
   lemma: string | null;
   isNew: boolean;
   /**
@@ -70,15 +75,31 @@ export interface ReviewCard {
   scheduling: Omit<SchedulingState, "due" | "lastReview"> & { due: string; lastReview: string | null };
 }
 
-// The ink of each grade, not the hue: these are set as text on the matching
-// soft tint, where the hue itself is barely 2.5:1 (globals.css).
-const TONE: Record<number, string> = {
-  1: "var(--again-ink)", 2: "var(--hard-ink)", 3: "var(--good-ink)", 4: "var(--easy-ink)",
-};
-const TONE_SOFT: Record<number, string> = {
-  1: "var(--again-soft)", 2: "var(--hard-soft)", 3: "var(--good-soft)", 4: "var(--easy-soft)",
-};
 
+
+/**
+ * Which facet of a word this card is asking about.
+ *
+ * The case column where there is one, then `Card.slot`, which a conjugation
+ * card carries since its front became a sentence with the form taken out, and
+ * then the slot the front names, for a card built before the column existed
+ * whose front is still `lugema → olevik · ta`. `slotOfCard` in
+ * `lib/srs/slots.ts` is the same question answered from the columns alone.
+ */
+function slotAsked(card: ReviewCard): string {
+  return card.targetCase ?? card.slot ?? conjugationSlotFromFront(card.front) ?? card.cardType;
+}
+
+/**
+ * A front that is a sentence with the form taken out.
+ *
+ * The plain clause below is printed before the answer on a card whose front
+ * already names what it wants (`hammas → kelle?`), where it cashes the name in.
+ * On a gap it would name the case in front of the gap, which is the answer in
+ * two pieces; the sentence is the ask there, and the clause is printed after
+ * the answer instead, where it explains.
+ */
+const isGap = (card: ReviewCard) => card.front.includes(BLANK);
 
 /**
  * "Why?", at the only moment anyone asks it.
@@ -94,15 +115,26 @@ function WhyRow({ card }: { card: ReviewCard }) {
   // who is told to answer in the same words (lib/tutor/prompt.ts).
   const named = card.targetCase ? caseByKey(card.targetCase) : undefined;
   const caseName = named?.et ?? card.targetCase?.toLowerCase() ?? "";
+  // A conjugation card names its slot the same way, off `Card.slot`: the front
+  // is a sentence now and carries no label, and the label is what the learner
+  // wants the moment the answer appears and is not what they thought.
+  const verbSlot = card.slot ? slotLabel(card.slot) : null;
   const question = card.targetCase
     ? `Why is the ${caseName} of "${card.lemma ?? card.front}" what it is? I keep getting this form wrong.`
-    : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
+    : verbSlot
+      ? `Why is "${card.lemma ?? card.front}" in the ${verbSlot} what it is? I keep getting this form wrong.`
+      : `Explain "${card.lemma ?? card.front}" to me, what does it mean and when would an Estonian use it?`;
 
   const pill =
     "press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px";
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+      {verbSlot && !card.targetCase && (
+        <span className={pill} style={{ background: "var(--raised)", color: "var(--ink-2)" }} lang="et">
+          {verbSlot}
+        </span>
+      )}
       {card.targetCase && (
         <Link
           href={`/grammar/${card.targetCase.toLowerCase()}`}
@@ -190,7 +222,8 @@ const spoken = (side: string) => side.split(" / ")[0]!.trim();
 const estonianSide = (type: string, side: "front" | "back") =>
   side === "front"
     ? type !== "PRODUCTION"
-    : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION" || type === "CLOZE";
+    : type === "PRODUCTION" || type === "CASE_FORM" || type === "GRADATION" || type === "CLOZE"
+      || type === "CONJUGATION";
 
 /**
  * Card types whose answer is a single Estonian form, and so can be typed and
@@ -198,7 +231,12 @@ const estonianSide = (type: string, side: "front" | "back") =>
  * sentence-ish gloss ("partitive — aitan sind"), and marking that wrong on a
  * word order difference would be punishing the learner for the card's format.
  */
-const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE"]);
+/*
+  `CONJUGATION` joined the set when the card became a sentence with a form
+  taken out: its answer was always a single vouched form and `checkAnswer`
+  could always have marked it, and for a year it was a flip anyway.
+*/
+const TYPEABLE = new Set(["PRODUCTION", "CASE_FORM", "GRADATION", "CLOZE", "CONJUGATION"]);
 
 type Ask = "intro" | "type" | "choice" | "flip";
 
@@ -878,6 +916,24 @@ export function ReviewSession({
           </div>
           )}
 
+          {/*
+            WHAT THE CARD IS ASKING, BEFORE WHAT IT IS CALLED.
+
+            A `CASE_FORM` card's front is `tuba → milles? kus?` and its hint
+            is `seesütlev · the inessive`, which is the naming rule this app
+            follows and is two names and no instruction. A learner drove the
+            flash round and reported that they could not tell what was being
+            asked of them; the same is true here, on the daily path, and it is
+            worth more here. So the plain sentence goes between the two: the
+            question stays where it was, the name stays where it was, and
+            somebody who has not met `seesütlev` yet can still answer the card.
+          */}
+          {(isGap(card) ? answerShown : !answerShown) && plainAsk(slotAsked(card)) && (
+            <p className="text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+              {plainAskLine(slotAsked(card))}
+            </p>
+          )}
+
           {card.hint && !answerShown && (
             <p className="text-xs" style={{ color: "var(--ink-3)" }}>{card.hint}</p>
           )}
@@ -902,13 +958,7 @@ export function ReviewSession({
           {ask === "type" && verdict && (
             <div className="w-full max-w-sm">
               <p
-                className={`${verdict.verdict === "correct" ? "pop-in" : "shake"} rounded-md px-4 py-2.5 text-sm`}
-                style={{
-                  background: verdict.verdict === "correct" ? "var(--good-soft)"
-                    : verdict.verdict === "wrong" ? "var(--again-soft)" : "var(--hard-soft)",
-                  color: verdict.verdict === "correct" ? "var(--good-ink)"
-                    : verdict.verdict === "wrong" ? "var(--again-ink)" : "var(--hard-ink)",
-                }}
+                className={`${verdict.verdict === "correct" ? "pop-in" : "shake"} ${VERDICT_CLASS[verdictOfCheck(verdict.verdict)]} rounded-md px-4 py-2.5 text-sm`}
               >
                 {verdict.verdict === "correct" ? "Õige!" : verdict.note}
               </p>
@@ -970,20 +1020,15 @@ export function ReviewSession({
           {ask === "choice" && chosen && (
             <div className="mt-2 grid w-full max-w-md gap-2">
               {card.choices?.map((choice) => {
-                const isAnswer = choice === card.back;
-                const picked = choice === chosen;
+                const state = optionState(choice === card.back, choice === chosen);
                 return (
                   <div
                     key={choice}
-                    className="rounded-[var(--r)] px-4 py-3.5 text-left text-base font-medium"
-                    style={{
-                      background: isAnswer ? "var(--good-soft)" : picked ? "var(--again-soft)" : "var(--raised)",
-                      color: isAnswer ? "var(--good-ink)" : picked ? "var(--again-ink)" : "var(--ink-3)",
-                      outline: isAnswer ? "2px solid var(--good)" : "none",
-                      outlineOffset: -2,
-                    }}
+                    className={`${OPTION_CLASS[state]} flex items-center gap-3 rounded-[var(--r)] border px-4 py-3.5 text-left text-base font-medium`}
                   >
-                    {choice}
+                    <span className="flex-1">{choice}</span>
+                    {state === "right" && <Check size={16} aria-label="Right" />}
+                    {state === "wrong" && <X size={16} aria-label="Your pick" />}
                   </div>
                 );
               })}
@@ -1116,8 +1161,7 @@ export function ReviewSession({
                   disabled={busy}
                   onClick={() => void submit(g.rating)}
                   aria-label={intervals ? `${g.label}, next in ${intervals[g.rating]}` : g.label}
-                  className="press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40"
-                  style={{ background: TONE_SOFT[g.rating], color: TONE[g.rating] }}
+                  className={`${VERDICT_CLASS[verdictOfRating(g.rating)]} press flex flex-col items-center gap-0.5 rounded-[var(--r)] px-2 py-3.5 transition-ui hover:-translate-y-0.5 disabled:opacity-40`}
                 >
                   <span className="text-base font-bold">{g.label}</span>
                   <span className="tnum text-2xs">{intervals?.[g.rating]}</span>

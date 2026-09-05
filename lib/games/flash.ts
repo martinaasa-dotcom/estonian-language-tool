@@ -8,6 +8,7 @@ import { derivedVerbForms, pres1sgFrom } from "@/lib/estonian/conjugate";
 import { caseAnswer, shownForms, stemsFrom } from "@/lib/estonian/derive";
 import { gapForms } from "@/lib/estonian/gapForms";
 import { caseIndex, tidyForm } from "@/lib/estonian/whichCase";
+import { plainAsk } from "@/lib/estonian/plainAsk";
 import { looksLikeSentence } from "@/lib/estonian/writing";
 import { attestedForms, conjugationAnswer } from "@/lib/srs/cards";
 import { CONJUGATION_SLOTS, isFormSlot, slotLabel } from "@/lib/srs/slots";
@@ -593,11 +594,45 @@ function slotOf(task: FlashTask, written: string): string | null {
 export function askLine(task: FlashTask): string {
   switch (task.shape) {
     case "recall": return "Say it in Estonian";
-    case "inflect": return `Put it in the ${task.label}`;
+    case "inflect": return "Change the form";
     case "gap": return "Fill the gap";
     case "heard": return "Type the form you hear";
-    case "build": return `Write a sentence using the ${task.label}`;
+    case "build": return "Write a sentence";
   }
+}
+
+/**
+ * What the task is asking, said the way somebody would say it out loud.
+ *
+ * A learner reported the first version of this round and their words were that
+ * the ask "was presented so poorly I didn't even know what it wanted me to do":
+ * the card read "Put it in the lihtminevik · ma" over `kohtuma`, and the answer
+ * was `kohtusin`, which is how you say it about yourself in the past. Every
+ * word of that ask was true and none of it was actionable by somebody who had
+ * not already met the name.
+ *
+ * So the name is no longer the ask. `plainAsk` in `lib/estonian/plainAsk.ts` is
+ * the one table of what a slot means in plain English, the card leads with it,
+ * and the Estonian name sits under it as the cross-reference it always was.
+ * Null where the slot is a question about meaning rather than about a form: the
+ * `recall` shape asks "how do you say this", which is already the whole
+ * question, and a clause under it would be the question twice.
+ */
+export function plainAskFor(task: Pick<FlashTask, "shape" | "slot">): string | null {
+  if (task.shape === "recall") return null;
+  const clause = plainAsk(task.slot);
+  if (!clause) return null;
+  /*
+    And nothing for `gap` and `heard`, which is a decision rather than a gap in
+    the table. Those two shapes exist because the *sentence* is what says which
+    form is wanted, which is the thing a learner has to do in a conversation,
+    and a clause naming the form beside the gap answers the question the gap is
+    asking. They are already legible: a sentence with a hole in it and a
+    meaning beside it is not a screen anybody has to decode.
+  */
+  if (task.shape === "gap" || task.shape === "heard") return null;
+  if (task.shape === "build") return `Write a sentence using it ${clause}.`;
+  return `How do you say this ${clause}?`;
 }
 
 /** True where the slot is a grammatical form rather than a question about meaning. */

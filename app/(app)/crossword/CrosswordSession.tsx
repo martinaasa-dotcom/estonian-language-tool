@@ -10,6 +10,7 @@ import { cellsOf, solvedEntries, wrongCells, type Entry } from "@/lib/games/cros
 import type { DailyCrossword } from "@/lib/progress/crossword";
 import { recordCrossword } from "@/app/actions";
 import { loadGrid, saveGrid } from "./resume";
+import { OPTION_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
 
 /**
  * THE DAILY CROSSWORD'S GRID.
@@ -173,6 +174,10 @@ export function CrosswordSession({ puzzle, day }: { puzzle: DailyCrossword; day:
             )?.number;
             const inWord = activeCells.includes(cell);
             const isWrong = wrong.has(cell);
+            /* Check marks the right cells as well as the wrong ones. It used
+               to paint only the wrong, so a full grid with one slip read as
+               one peach square in a field of nothing. */
+            const isRight = checked.includes(cell) && Boolean(typed[cell]) && !isWrong;
             return (
               <span key={cell} className="relative h-9 w-9 sm:h-10 sm:w-10">
                 {number !== undefined && (
@@ -199,12 +204,10 @@ export function CrosswordSession({ puzzle, day }: { puzzle: DailyCrossword; day:
                   onClick={() => pick(cell)}
                   lang="et"
                   aria-label={`Row ${Math.floor(cell / puzzle.cols) + 1}, column ${(cell % puzzle.cols) + 1}`}
-                  className="h-full w-full rounded-[var(--r-sm)] border-0 text-center text-base font-bold uppercase transition-ui"
-                  style={{
-                    background: isWrong
-                      ? "var(--again-soft)"
-                      : inWord ? "var(--accent-soft)" : "var(--raised)",
-                    color: isWrong ? "var(--again-ink)" : "var(--ink)",
+                  className={`${isWrong ? OPTION_CLASS.wrong : isRight ? OPTION_CLASS.right : ""} h-full w-full rounded-[var(--r-sm)] border-0 text-center text-base font-bold uppercase transition-ui`}
+                  style={isWrong || isRight ? undefined : {
+                    background: inWord ? "var(--accent-soft)" : "var(--raised)",
+                    color: "var(--ink)",
                     boxShadow: `inset 0 0 0 1px var(--rule-soft)`,
                   }}
                 />
@@ -293,7 +296,7 @@ function Clues({ puzzle, active, solved, onPick }: {
                 >
                   <span className="font-bold" style={{ color: "var(--ink-3)" }}>{e.number}</span>
                   <span>{e.clue}</span>
-                  {solved.has(i) && <Check size={13} aria-hidden style={{ color: "var(--mint-ink)" }} />}
+                  {solved.has(i) && <Check size={13} aria-hidden style={{ color: VERDICT_INK.right }} />}
                 </button>
               </li>
             ))}

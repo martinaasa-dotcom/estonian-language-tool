@@ -159,7 +159,7 @@ export function CopyCode({ code }: { code: string }) {
         });
       }}
       className="press inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-ui hover:-translate-y-px"
-      style={{ borderColor: "var(--rule)", background: "var(--surface)", color: copied ? "var(--good)" : "var(--ink-2)" }}
+      style={{ borderColor: "var(--rule)", background: "var(--surface)", color: copied ? "var(--good-ink)" : "var(--ink-2)" }}
     >
       {copied ? <><Check size={13} aria-hidden /> Copied</> : <><Copy size={13} aria-hidden /> Copy code</>}
     </button>

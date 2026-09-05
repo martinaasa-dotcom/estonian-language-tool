@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Grid2x2, Timer, Trophy } from "lucide-react";
 import { ButtonLink, Button } from "@/components/Button";
 import { Chip, Page, StatTile } from "@/components/ui";
 import { Speak } from "@/components/Speak";
 import { useFeedbackSound } from "@/components/AudioPrefs";
+import { plainAsk } from "@/lib/estonian/plainAsk";
 import { shuffle } from "@/lib/random/shuffle";
 import { gradeCard } from "@/app/actions";
+import { OPTION_CLASS } from "@/lib/ux/verdict";
 
 export interface EmojiPair {
   id: string;
@@ -25,6 +27,8 @@ export interface EmojiPair {
   /** The question the case answers, which is how a class names it. */
   question: string | null;
   caseEt: string | null;
+  /** The case itself, for the plain-English key under the board. */
+  caseKey: string | null;
 }
 
 type Side = "picture" | "word";
@@ -58,13 +62,22 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
   // Snapshotted once on mount, like every session here: a Server Action
   // refreshing this route must not swap the board mid-round.
   const [pairs] = useState(initialPairs);
+  // One entry per distinct question word on this board, with what it asks for.
+  const askedOnBoard = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const p of pairs) {
+      const clause = p.caseKey ? plainAsk(p.caseKey) : null;
+      if (p.question && clause && !seen.has(p.question)) seen.set(p.question, clause);
+    }
+    return [...seen.entries()];
+  }, [pairs]);
   // Laid out once on mount: a board that re-shuffled under a tap would be a
   // different game. `layOut` is called in the initialiser rather than on every
   // render for the same reason.
   const [tiles] = useState<Tile[]>(() => layOut(initialPairs));
   const [picked, setPicked] = useState<Tile | null>(null);
   const [matched, setMatched] = useState<ReadonlySet<string>>(() => new Set());
-  const [wrong, setWrong] = useState<string | null>(null);
+  const [wrong, setWrong] = useState<readonly string[]>([]);
   const [misses, setMisses] = useState(0);
   /** Pairs a wrong try has already touched, so a match after one grades Hard. */
   const missedPairs = useRef<Set<string>>(new Set());
@@ -110,9 +123,9 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
     setMisses((n) => n + 1);
     missedPairs.current.add(picked.pairId);
     missedPairs.current.add(tile.pairId);
-    setWrong(tile.key);
+    setWrong([picked.key, tile.key]);
     setPicked(null);
-    window.setTimeout(() => setWrong(null), 420);
+    window.setTimeout(() => setWrong([]), 420);
   }, [phase, picked, matched, pairs, sound]);
 
   if (phase === "ready") {
@@ -174,6 +187,7 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
                   <span className="text-sm" style={{ color: "var(--ink-3)" }}>
                     {" "}from <span lang="et">{p.lemma}</span>
                     {p.caseEt && <>, <span lang="et">{p.caseEt}</span></>}
+                    {p.caseKey && plainAsk(p.caseKey) && <>: the form you use {plainAsk(p.caseKey)}</>}
                   </span>
                 </span>
                 <Speak text={p.form} />
@@ -198,7 +212,7 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
         <span className="flex items-center gap-2 text-sm font-semibold tabular-nums" style={{ color: "var(--ink-2)" }}>
           <Timer size={15} aria-hidden /> {elapsed}s
         </span>
-        <Chip tone={matched.size === pairs.length ? "good" : "hard"}>
+        <Chip tone={matched.size === pairs.length ? "good" : "neutral"}>
           {matched.size} of {pairs.length}
         </Chip>
       </div>
@@ -229,13 +243,19 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
                 by somebody for whom the picture is nothing at all.
               */
               aria-label={tile.side === "word" ? pair.form : undefined}
-              className={`choice-btn flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-[var(--r-lg)] p-3 ${
-                wrong === tile.key ? "emoji-shake" : ""}`}
+              /*
+                A solved pair turns mint and then leaves; a wrong pair turns
+                peach and shakes. Both used to be motion alone, a fade and a
+                shake with no colour on either, on the one board in the app
+                that said nothing in the palette's own words for right and
+                wrong. The fade waits long enough for the mint to be seen.
+              */
+              className={`choice-btn ${gone ? `pop-in ${OPTION_CLASS.right}` : wrong.includes(tile.key) ? `emoji-shake ${OPTION_CLASS.wrong}` : ""} flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-[var(--r-lg)] p-3`}
               style={{
                 opacity: gone ? 0 : 1,
                 pointerEvents: gone ? "none" : undefined,
-                transition: "opacity 220ms ease",
-                ...(chosen
+                transition: gone ? "opacity 260ms ease 480ms" : "opacity 220ms ease",
+                ...(chosen && !gone
                   ? { ["--choice-bg" as string]: "var(--accent-soft)", color: "var(--accent-deep)" }
                   : {}),
               }}
@@ -258,6 +278,27 @@ export function EmojiSession({ pairs: initialPairs }: { pairs: EmojiPair[] }) {
           );
         })}
       </div>
+
+      {/*
+        WHAT THE QUESTION WORDS MEAN, once each, under the board.
+
+        A tile says `kus?` over `majas`, which is what an Estonian says and is
+        the right thing on a tile with room for two words. Somebody who has not
+        learned what `kus?` asks for yet had nothing on the screen to tell
+        them, so the board was a matching game about letters. One line per
+        distinct question on this board, in plain English, rather than a clause
+        on every tile: six tiles saying the same sentence is furniture.
+      */}
+      {askedOnBoard.length > 0 && (
+        <ul className="mt-5 flex flex-col gap-1 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
+          {askedOnBoard.map(([question, clause]) => (
+            <li key={question}>
+              <span lang="et" className="font-semibold" style={{ color: "var(--ink)" }}>{question}</span>
+              {" "}is the form you use {clause}.
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

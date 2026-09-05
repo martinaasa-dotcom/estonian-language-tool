@@ -1022,83 +1022,70 @@
   }
 
   /*
-    THE LANDING HERO IS AS TALL AS THE SCREEN, LESS A DELIBERATE PEEK.
+    ONE GAP BETWEEN EVERY TWO BEATS OF THE LANDING PAGE, AND THE HERO IS ONE
+    OF THE BEATS.
 
-    It used to be 483px whatever it was drawn on, because its height was two
-    paddings and whatever the copy came to. Measured: on a 1080px screen that
-    left 558px of window under the last line of the hero, which the browser
-    filled with the next section, so the first thing anybody saw was the hero
-    sitting in the top half and the whole of "You didn't fail Estonian" and its
-    paragraph crowded in under it. Two openings arguing at once, and a band of
-    dead air between them wide enough to read as a mistake. On a 780px phone
-    the same fault was 207px of it.
+    The hero used to be as tall as the window less the nav and a "peek" band,
+    on the argument that a hero ending exactly at the fold looks like a page
+    with nothing after it. The argument was right and the shape was wrong:
+    the column is about 450px of copy, so on a 900px window it sat in a 697px
+    box with 120px of leftover under it, and then the next section added its
+    own 80px on top of that, which was 230px of nothing between the claims
+    and the first eyebrow while every other pair of sections stood 160 apart.
+    A page reads as smooth when the distances repeat, and that one did not.
 
-    So the hero takes the window and centres its column in it, and the leftover
-    space goes above and below the copy in equal measure rather than into one
-    gap under it. What it does not take is `--hero-peek`, which is the point of
-    the whole rule: a hero that ends exactly at the fold is a page that looks
-    like it has nothing after it, and the honest way to say there is more is to
-    let the next section start where you can see it. The band is sized to clear
-    that section's own top padding and show its eyebrow with the heading rising
-    into the last of it, which is a beginning rather than an ornament. No arrow
-    and no second link: the page already made its one loud action, and the rule
-    the button primitive is written under is one per screen.
+    So there is one distance, `--section-gap`, and it lives on the page rather
+    than on any section: `main` is a column with that gap, no section carries
+    vertical padding of its own, the hero is as tall as what is in it, and the
+    footer stands the same distance off the close as the close stands off the
+    questions. Where the fold falls is then a fact about the window rather
+    than about the page, and it comes out where the old rule wanted it on the
+    laptops this is read on: at 1280 by 800 the next eyebrow is on screen.
 
-    `svh` rather than `vh` or `dvh`. `vh` is the tall viewport on a phone, so
-    the peek would be hidden under the browser's own toolbar exactly when the
-    toolbar is showing, which is on arrival. `dvh` re-lays the page out as the
-    toolbar retracts, which moves the copy under the reader's thumb mid-scroll.
-    `svh` is the small one: the peek is honest with the toolbar there and grows
-    a little when it goes, which is the direction that costs nothing.
-
-    `--landing-nav` is measured rather than reasoned about, and it is the same
-    79px at every width this app is drawn at, because the nav pill's height is
-    set by the button in it rather than by anything that reflows.
-    `scripts/test-design.mjs` measures the real nav against it, since a typed
-    constant standing in for something on screen is a constant that drifts.
+    `--landing-nav` stays declared and measured, because the hero's top
+    padding is the only thing between the pill and the headline and the pill
+    is 79px at every width this app is drawn at; `scripts/test-design.mjs`
+    reads the real nav against it. The padding is a `clamp` on `svh` for the
+    reason the three gaps below give: a tall window has air to spend and a
+    phone held sideways has none.
 
     Both numbers sit on the rule that reads them rather than in `:root` with
     the palette. They are two facts about one page, and a name in the token
     block is an invitation to the rest of the app to build on them.
   */
-  .hero-screen {
+  .landing { --section-gap: 5.5rem; }
+  .landing-flow { display: flex; flex-direction: column; gap: var(--section-gap); }
+  .landing-foot { margin-top: var(--section-gap); }
+  .hero-open {
     --landing-nav: 79px;
-    --hero-peek: 96px;
-
-    min-height: calc(100svh - var(--landing-nav) - var(--hero-peek));
+    padding-top: clamp(2.5rem, 8svh, 5.5rem);
   }
 
   @media (min-width: 768px) {
-    .hero-screen {
-      --hero-peek: 124px;
-    }
+    .landing { --section-gap: 8.5rem; }
   }
 
   /*
-    The three gaps down the hero grow with the window the hero now fills.
+    The three gaps down the hero grow with the window.
 
     Centring a fixed 363px column in an 877px box is the first fault wearing a
     better hat: the copy stops being piled at the top and becomes a postage
     stamp with a void over it and a void under it. What a tall screen is for is
     letting the three beats stand apart, so the space goes between them rather
-    than around them, and the block grows until the air left over is a margin
-    instead of a gap.
+    than around them.
 
     They keep their proportions to each other while they do it, which is the
     half that took two passes. Scaled apart, the gap over the button grew to
     four times the one over the paragraph and the button stopped belonging to
     the sentence that argues for it: a column read from the top down is one
     thing with air in it rather than three things with distance between them.
-    So all three step up together, by about a third on a tall screen, and the
-    rest of the height stays in the margins, which is where a hero's air is
-    supposed to be.
+    So all three step up together, by about a third on a tall screen.
 
     Every one of these is a `clamp`, and the floor is the spacing the hero had
     before any of this: on a short laptop or a phone held sideways nothing
     grows at all, which is the case where there is no room to spend. `svh`
-    rather than `vh` for the reason `.hero-screen` gives, and the same unit as
-    the box these sit in, since a gap measured against a taller viewport than
-    its own container is a gap that overflows it.
+    rather than `vh` because `vh` is the tall viewport on a phone, so a gap
+    sized to it is sized to a window that is not there while the toolbar is.
   */
   .hero-lead { margin-top: clamp(1.25rem, 3.2svh, 2.5rem); }
   .hero-action { margin-top: clamp(1.75rem, 6.4svh, 4.5rem); }
@@ -1237,6 +1224,60 @@
   .choice-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
 
   /*
+    A VERDICT, PAINTED ONCE.
+
+    Three words for what happened to an answer and three states for an option
+    once the answer is known, named in `lib/ux/verdict.ts` and painted here and
+    nowhere else. Every screen that marks an answer wears one of these rather
+    than reaching for the tokens itself, because twenty screens reaching for
+    them by hand produced four verdicts written in the fill at 2.2:1, one round
+    that never marked the option the learner pressed, and a near miss painted
+    the same peach as a blank.
+
+    The tint and the ink, always: the fill paints a bar or a button, the tint
+    paints a panel, and the ink is the hue walked down until it clears 4.5:1 on
+    that tint (docs/14-design-system.md, "Every hue has an ink"). In the dark
+    theme the ink is the hue, and these flip with the tokens.
+
+    An option reads the semantic aliases (`--good`, `--again`) rather than the
+    hue names, so the rating scale and the marked answer can never drift apart.
+    The right one carries an edge in the fill as well as the tint, since it is
+    the one thing on the screen worth reading twice; the one the learner
+    pressed instead carries the tint and a thin edge and nothing more, so the
+    two are never the same weight. The rest step back. They set `--choice-bg`
+    and `--choice-border` as well as the properties, so a `.choice-btn` and a
+    bare box both read them; a settled option is disabled, which is what keeps
+    the hover rule above out of the way.
+  */
+  .verdict-right { background: var(--good-soft); color: var(--good-ink); }
+  .verdict-nearly { background: var(--hard-soft); color: var(--hard-ink); }
+  .verdict-wrong { background: var(--again-soft); color: var(--again-ink); }
+  .option-right {
+    --choice-bg: var(--good-soft);
+    --choice-border: var(--good);
+    background: var(--good-soft);
+    border-color: var(--good);
+    color: var(--good-ink);
+    box-shadow: inset 0 0 0 1px var(--good);
+  }
+  .option-wrong {
+    --choice-bg: var(--again-soft);
+    --choice-border: var(--again);
+    background: var(--again-soft);
+    border-color: var(--again);
+    color: var(--again-ink);
+    box-shadow: none;
+  }
+  .option-other {
+    --choice-bg: var(--raised);
+    --choice-border: transparent;
+    background: var(--raised);
+    border-color: transparent;
+    color: var(--ink-3);
+    box-shadow: none;
+  }
+
+  /*
     An option that stays chosen, which a multiple-choice answer never is.
 
     `components/Choice.tsx` asks the settings and first-run questions, where
@@ -1349,18 +1390,24 @@
   /* Scroll-driven reveal, done in CSS so the content is never hidden behind a
      script. Browsers without scroll timelines simply get the finished state.
 
-     The range ends at `entry 100%`, which is the moment a section is wholly on
-     screen, and it ends there because that is the last moment a page can still
-     reach. This read `cover 20%` and left the bottom of the landing page
-     permanently dimmed: at maximum scroll the final call to action measured
-     opacity 0.51 and the last three questions above it 0.72, 0.77 and 0.82,
-     because completing a cover-based range needs scrolling that a page which
-     has hit its end has no more of. Every element in the last screenful was
-     affected, not just the last one. Anything ending at or before `entry 100%`
-     is reachable by construction, and the tallest section here is 745px
-     against a 780px phone viewport, so the fade still finishes as the section
-     lands rather than early. */
-  .reveal { animation: fade-up linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+     The range ends at `entry 100%`, which is the moment a section is wholly
+     inside the timeline's port, and it ends there because that is the last
+     moment a page can still reach. This read `cover 20%` and left the bottom
+     of the landing page permanently dimmed: at maximum scroll the final call
+     to action measured opacity 0.51, because completing a cover-based range
+     needs scrolling that a page which has hit its end has no more of.
+
+     THE PORT IS THE WINDOW AND FOUR TENTHS OF ONE MORE, which is the second
+     fault the first fix left behind. Against the window alone, a block is
+     wholly inside it only when its bottom edge has crossed the fold, and the
+     case explorer is 857px tall: on a 900px window it sat at half opacity and
+     a few pixels low until the reader had scrolled nearly all of it past, and
+     the page read as still loading. A negative end inset extends the port
+     below the fold, so a tall block finishes arriving while its top third is
+     on screen and a short one still fades in over its own height. Still
+     reachable at the end of the page, because the footer under the close is
+     taller than the extension. */
+  .reveal { animation: fade-up linear both; animation-timeline: view(block 0 -40%); animation-range: entry 0% entry 100%; }
   @supports not (animation-timeline: view()) { .reveal { animation: none; } }
   .float { animation: float 6s ease-in-out infinite; }
   /*
@@ -1431,6 +1478,20 @@
   }
 
   /*
+    THE HOP WHEN THE WORD CHANGES, on the wrapper and on the two properties
+    the lean leaves alone. `scale` and `rotate` are separate from `transform`,
+    so the wrapper can lean towards a pointer and hop at the same time, and
+    neither touches the tile inside, whose own animation carries on
+    underneath. Put on the tile it would replace the wander for its duration
+    and restart it after, which is a letter snapping back to the start of its
+    amble on every press. `components/LetterTile.tsx` sets the attribute when
+    `LETTER_CHEER_EVENT` lands and clears it when this ends.
+  */
+  .letter-lean[data-cheer] {
+    animation: letter-cheer 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) var(--cheer-delay, 0s) both;
+  }
+
+  /*
     THE SIX KEYS THAT TYPE THE LETTERS AN ENGLISH KEYBOARD HAS NOT GOT.
 
     The one place in the app where a letter is a control rather than an
@@ -1473,6 +1534,24 @@
   .ending-row:hover .ending, .ending-row:focus-within .ending { transform: translateY(-2px); }
 
   /*
+    THE STEM AND ITS ENDINGS POINT AT EACH OTHER.
+
+    The card's whole argument is that the eleven on the right are the second
+    form on the left with a few letters on the end, and the two columns sat
+    there making the argument in silence. So a pointer over any ending lights
+    the omastav it was built on, and a pointer over the omastav lifts every
+    ending at once. `:has()` rather than state, because it is a hover and a
+    hover is the stylesheet's to answer; a device with no pointer never sees
+    it and loses nothing, since the endings are already underlined.
+  */
+  .case-explorer:has(.ending-row:hover) .stem-row,
+  .case-explorer:has(.ending-row:focus-within) .stem-row {
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+  .case-explorer:has(.stem-row:hover) .ending { transform: translateY(-2px); }
+  .stem-row { transition: box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+  /*
     THE LANDING PAGE'S MOTION, AND WHAT EACH PIECE IS FOR.
 
     A value arriving in a row that does not move. The case explorer draws the
@@ -1511,6 +1590,25 @@
     display: inline-block;
     animation: word-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
     animation-delay: var(--w, 0ms);
+  }
+  /*
+    THE LAST WORD ARRIVES, STICKS, AND THEN ITS GRADIENT PANS.
+
+    `sticks` wore `.word-in` and `.grad-sweep` together and each sets
+    `animation`, so whichever the build emitted later won: the arrival won
+    and the pan never ran, on the one word the headline is about. Three
+    animations on three different properties, listed once. The press in the
+    middle is `scale` alone, which `word-in` does not touch, so the word lands
+    from its arrival and then gets pushed down onto the page like a sticker,
+    which is what the word says. It waits for the arrival to finish and the
+    pan waits for the press, so nothing on the first sentence anybody reads
+    is doing two things at once.
+  */
+  .word-in.grad-sweep {
+    animation:
+      word-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) var(--w, 0ms) both,
+      word-stick 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--w, 0ms) + 0.7s) both,
+      grad-sweep 9s ease-in-out calc(var(--w, 0ms) + 1.2s) infinite;
   }
   .feature-icon { transform-origin: 50% 50%; }
   .lift:hover .feature-icon { animation: letter-wiggle 520ms ease-in-out; }
@@ -1617,6 +1715,14 @@
 @keyframes word-in {
   from { opacity: 0; transform: translateY(0.4em) rotate(-2deg); }
   to { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+/* A sticker pressed onto the page: a swell and a settle, size only. */
+@keyframes word-stick {
+  0% { scale: 1; }
+  40% { scale: 1.09; }
+  70% { scale: 0.97; }
+  100% { scale: 1; }
 }
 
 /* One hop with a squash on landing, the way the tilde already does it. */
@@ -1750,6 +1856,18 @@
   25% { rotate: -9deg; }
   55% { rotate: 7deg; }
   80% { rotate: -3deg; }
+}
+
+/* One hop, all four in turn, when the word under them changes. A squash on
+   the way down and a stretch at the top, and no translation at all: the
+   wrapper does not know which edge it hangs off, and a hop that went up
+   would carry the bottom letter onto the card. See lib/ux/letterMotion.ts. */
+@keyframes letter-cheer {
+  0% { scale: 1 1; rotate: 0deg; }
+  18% { scale: 1.12 0.88; rotate: -4deg; }
+  48% { scale: 0.92 1.24; rotate: 9deg; }
+  72% { scale: 1.08 0.94; rotate: -5deg; }
+  100% { scale: 1 1; rotate: 0deg; }
 }
 
 @keyframes pop-in {

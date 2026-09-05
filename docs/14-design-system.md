@@ -104,6 +104,32 @@ The vertical spread is set by the element's height, so no angle short of
 horizontal avoids it on something short and wide. `.grad-text` keeps its tilt,
 being clipped to letterforms that have no caps to discolour.
 
+### A verdict is painted once
+
+Correct is green and wrong is red, and the table above has said so since the palette was drawn.
+What decides whether a screen honours it is not the table but who reaches for the tokens, and
+twenty screens reaching for them by hand produced four verdicts written in the fill, one round
+that never marked the option the learner pressed, and a near miss painted the same peach as a
+blank. `lib/ux/verdict.ts` is the vocabulary and `app/globals.css` is the paint:
+
+| Word | Class | Paint |
+|---|---|---|
+| right | `.verdict-right` | `--good-soft` under `--good-ink` |
+| nearly | `.verdict-nearly` | `--hard-soft` under `--hard-ink` |
+| wrong | `.verdict-wrong` | `--again-soft` under `--again-ink` |
+| the answer, among options | `.option-right` | the tint and the ink, and an edge in `--good` |
+| what was pressed instead | `.option-wrong` | the tint and the ink, and a thin edge in `--again` |
+| the rest | `.option-other` | `--raised` under `--ink-3` |
+
+A panel, a chip, a self-grade button or a marked word wears one of the first three; an option
+once the answer is known wears one of the last three, whichever the learner pressed. The
+classes read the grading aliases and never the hue names, so `--again` and a wrong answer are
+one token. A screen that marks an answer reads the module or fails the invariant, and a verdict
+tint written inline in one of those screens fails it too. Nearly is the middle case the app can
+tell apart with certainty, a dropped diacritic or the right word in the wrong ending, and it is
+graded Hard wherever it is painted butter, since a colour that disagrees with the grade under it
+is a small dishonesty a learner catches once.
+
 ## 2. Tokens
 
 Defined twice in `app/globals.css`, deliberately:
@@ -168,8 +194,15 @@ alone gets wrong. The width is what the longest line needs, since "Estonian that
 this size against the 704px the column has at 768; gating it at `lg` instead left a portrait
 tablet with 216px of air over a headline two steps too small for it. The height is what the
 column needs: 88px over a 19px paragraph is about 490px of copy, and a 1024x600 laptop has 397px
-to put it in, so the hero would outgrow the window and take its own peek band under the fold.
+to put it in, so the hero would push the next section clean off the first screen.
 Measured at the boundary: 740 leaves 64px over the headline, 739 falls back to 68px.
+
+**The hero is as tall as what is in it, and the page has one gap.** It used to fill the window
+less the nav and a peek band, and the leftover air under the column plus the next section's own
+padding was 230px of nothing on a 900px window while every other pair of sections stood 160
+apart. `--section-gap` on `.landing` is the one distance now, 88px on a phone and 136px from
+`md`: `main` is a column with that gap, no section carries vertical padding, and the footer
+stands the same distance off the close. `test-design.mjs` measures every seam against it.
 
 11.5px is a floor, not a suggestion: below it an uppercase label stops being readable on a phone
 held at arm's length in the evening, which is when this app is actually used. `.label-xs` sits on
@@ -239,10 +272,19 @@ Small, physical, and never blocking:
   rolls. No two share a period, so a set of them falls back into step about once an hour.
   **The travel goes along the edge a letter hangs off, not across it.** A letter tucked over the
   top of a card has about four pixels before it is sitting on a word and most of the card's width
-  sideways, so the one that used to wander six pixels towards the card now slides forty along it
-  and crosses the edge by one. What the small budget buys instead is the rock and the squash, and
-  `room` scales both per placement: a rotated square is wider than its side, so eight degrees on
-  the tightest letter costs more than fifteen on the one with a gutter under it.
+  sideways, so the one that used to wander six pixels towards the card now slides about forty
+  along it and crosses the edge by one. What the small budget buys instead is the rock and the
+  squash, and `room` scales both per placement: a rotated square is wider than its side, so eight
+  degrees on the tightest letter costs more than fifteen on the one with a gutter under it.
+  **And it has to be quick enough to catch.** At 26 to 30px over periods of up to seven seconds
+  the four were measured moving and reported as still, which is the same fault as the six pixels
+  in a different unit: nobody sees a square cross a hand's width in six seconds unless they are
+  already watching it. The periods are 2.9 to 5.3 seconds now, the rock and the squash a third
+  bigger, and the travel 38 to 44px.
+  **They hop when the word changes.** The explorer says so on `document` (`LETTER_CHEER_EVENT`)
+  and each tile hops once, in the order they were placed, as `scale` and `rotate` on the wrapper
+  so the wander underneath is never restarted. It is the one thing the four do as a set, and it
+  happens only when something on the card happened.
   **They answer a pointer.** Coming near one slides it towards the cursor along that same free axis
   and settles it further onto the card, which is `leanFor()` and is the same rule as the wander:
   either way along the edge, inward only across it. They stay `pointer-events-none`, so none of it
@@ -256,6 +298,13 @@ Small, physical, and never blocking:
 - `.letter-key`: the six keys that type õ, ä, ö, ü, š and ž. The one place a letter is a control
   rather than an ornament, so it grows under a pointer and shakes once on the way in. `.press`
   still supplies the dip, so a key is one control with one set of states.
+- The case explorer walks itself once, a word every few seconds while it is on screen and
+  untouched, and stops the moment anybody presses, types or focuses inside it; not at all under
+  reduced motion. Under a pointer its stem row and its endings point at each other through
+  `:has()`, and the word chips grow and shake like the app's own letter keys.
+- `.word-in.grad-sweep`: the headline's last word arrives, is pressed onto the page once like a
+  sticker (`word-stick`, `scale` alone), and then its gradient pans. The two classes each set
+  `animation` and the pan had never run.
 - `.reveal`: the landing page's scroll-driven section reveal, done with CSS scroll timelines so
   no content is ever hidden behind a script; browsers without them get the finished state.
 - The navigation's marker (`app/nav.css`, `lib/ux/navMotion.ts`): one pane that says where you are,

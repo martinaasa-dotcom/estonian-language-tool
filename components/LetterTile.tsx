@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, type CSSProperties } from "react";
 import {
-  leanFor, letterCharacter, letterVars, type LetterEdge,
+  LETTER_CHEER, LETTER_CHEER_EVENT, cheerDelay, leanFor, letterCharacter, letterVars,
+  type LetterEdge,
 } from "@/lib/ux/letterMotion";
 
 /**
@@ -41,6 +42,16 @@ import {
  * of the element itself rather than of its ancestors, so a letter whose tile
  * sat statically inside a placed wrapper would be walked as ordinary text
  * lying across a card. `inset-0` is what keeps it a decoration.
+ *
+ * IT HEARS THE CARD. When the word under the letters changes the explorer
+ * says so on `document` (`LETTER_CHEER_EVENT`), and every tile hops once, a
+ * beat after the one before it. The hop is on the wrapper rather than the
+ * tile, as `scale` and `rotate`, which are the two properties the wrapper's
+ * lean does not use: put on the tile it would replace the wander's animation
+ * for its duration and restart it after, and a letter that jumps back to the
+ * start of its amble every time somebody presses a chip is a letter on a
+ * spring. The attribute goes on when the event lands and comes off when the
+ * hop ends, so a second press mid-hop restarts it rather than being lost.
  *
  * `aria-hidden` and `pointer-events-none`, always. These are letters lying on
  * a page, not content and not controls: a screen reader that reads them out
@@ -164,14 +175,29 @@ export function LetterTile({
       settling = requestAnimationFrame(() => { settling = 0; measure(); });
     };
 
+    const onCheer = () => {
+      el.removeAttribute("data-cheer");
+      // Reflow between the two, or the browser never sees the attribute leave
+      // and a press during a hop does nothing.
+      void el.offsetWidth;
+      el.setAttribute("data-cheer", "");
+    };
+    const onLanded = (e: AnimationEvent) => {
+      if (e.animationName === LETTER_CHEER.keyframes) el.removeAttribute("data-cheer");
+    };
+
     measure();
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("scroll", remeasure, { passive: true });
     window.addEventListener("resize", remeasure, { passive: true });
+    document.addEventListener(LETTER_CHEER_EVENT, onCheer);
+    el.addEventListener("animationend", onLanded);
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("scroll", remeasure);
       window.removeEventListener("resize", remeasure);
+      document.removeEventListener(LETTER_CHEER_EVENT, onCheer);
+      el.removeEventListener("animationend", onLanded);
       if (frame) cancelAnimationFrame(frame);
       if (settling) cancelAnimationFrame(settling);
     };
@@ -186,7 +212,7 @@ export function LetterTile({
       ref={ref}
       aria-hidden
       className={`letter-lean pointer-events-none absolute ${className}`}
-      style={style}
+      style={{ "--cheer-delay": `${cheerDelay(delay)}s`, ...style } as CSSProperties}
     >
       <span
         className="drift absolute inset-0 flex items-center justify-center rounded-[var(--r-sm)] font-bold"

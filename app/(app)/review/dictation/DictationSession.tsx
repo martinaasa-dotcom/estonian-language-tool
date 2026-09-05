@@ -18,6 +18,7 @@ import { checkDictation, wordNote, type DictationResult, type WordStatus } from 
 import { xpForRating } from "@/lib/gamification/xp";
 import type { RatingValue } from "@/lib/srs/scheduler";
 import { AI_TAG } from "@/lib/copy/values";
+import { VERDICT_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
 
 export interface DictationTask {
   /** The card this counts against — every mode grades through the same log. */
@@ -40,17 +41,13 @@ export interface DictationTask {
  * on a phone. The visible note now comes from `wordNote`, and this string is
  * what the chip is announced as.
  */
-const WORD_TONE: Record<WordStatus, { background: string; color: string; label: string }> = {
-  right: { background: "var(--good-soft)", color: "var(--good-ink)", label: "exactly right" },
-  diacritics: {
-    background: "var(--hard-soft)",
-    color: "var(--hard-ink)",
-    label: "the right word, without its Estonian letters",
-  },
-  typo: { background: "var(--hard-soft)", color: "var(--hard-ink)", label: "one keystroke out" },
-  wrong: { background: "var(--again-soft)", color: "var(--again-ink)", label: "a different word" },
-  missing: { background: "var(--again-soft)", color: "var(--again-ink)", label: "left out" },
-  extra: { background: "var(--raised)", color: "var(--ink-3)", label: "not in the sentence" },
+const WORD_TONE: Record<WordStatus, { className: string; label: string }> = {
+  right: { className: VERDICT_CLASS.right, label: "exactly right" },
+  diacritics: { className: VERDICT_CLASS.nearly, label: "the right word, without its Estonian letters" },
+  typo: { className: VERDICT_CLASS.nearly, label: "one keystroke out" },
+  wrong: { className: VERDICT_CLASS.wrong, label: "a different word" },
+  missing: { className: VERDICT_CLASS.wrong, label: "left out" },
+  extra: { className: "", label: "not in the sentence" },
 };
 
 /**
@@ -368,14 +365,7 @@ export function DictationSession({ tasks: initialTasks }: { tasks: DictationTask
 function Marked({ result }: { result: DictationResult }) {
   return (
     <div className="flex flex-col gap-3">
-      <p
-        className="label-xs text-center"
-        style={{
-          color: result.verdict === "correct"
-            ? "var(--good-ink)"
-            : result.verdict === "wrong" ? "var(--again-ink)" : "var(--hard-ink)",
-        }}
-      >
+      <p className="label-xs text-center" style={{ color: VERDICT_INK[result.verdict === "correct" ? "right" : result.verdict === "wrong" ? "wrong" : "nearly"] }}>
         {result.note}
       </p>
       <div className="pop-in flex flex-wrap justify-center gap-1.5">
@@ -396,16 +386,13 @@ function Marked({ result }: { result: DictationResult }) {
               aria-label={`${shown}, ${tone.label}${
                 word.typed && word.typed !== shown ? `. You typed ${word.typed}` : ""
               }`}
-              className="flex flex-col items-center rounded-[var(--r-sm)] px-2 py-1"
-              style={{ background: tone.background }}
+              className={`${tone.className} flex flex-col items-center rounded-[var(--r-sm)] px-2 py-1`}
+              style={word.status === "extra" ? { background: "var(--raised)", color: "var(--ink-3)" } : undefined}
             >
               <span
                 lang="et"
                 className="text-md"
-                style={{
-                  color: tone.color,
-                  textDecoration: word.status === "extra" ? "line-through" : undefined,
-                }}
+                style={{ textDecoration: word.status === "extra" ? "line-through" : undefined }}
               >
                 {shown}
               </span>

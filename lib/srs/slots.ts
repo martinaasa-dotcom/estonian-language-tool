@@ -133,8 +133,37 @@ export function isFormSlot(slot: string): boolean {
  * The card's case where it has one, which keeps every review written before
  * this reading the same way it always did, and the card's type otherwise.
  */
-export function slotOfCard(card: { cardType: string; targetCase: string | null }): string {
-  return card.targetCase ?? card.cardType;
+export function slotOfCard(
+  card: { cardType: string; targetCase: string | null; slot?: string | null },
+): string {
+  // The case where it has one, then the conjugation slot where it has one, then
+  // the type. A card built before `Card.slot` existed reads exactly as it did.
+  return card.targetCase ?? card.slot ?? card.cardType;
+}
+
+/**
+ * The slot a card is about, read off the card itself.
+ *
+ * `slotOfCard` above answers this from the columns, and it answers it for every
+ * card but one: a conjugation card carries no `targetCase`, because the column
+ * is for cases and widening it would put `indprsg3` on the Progress page beside
+ * `osastav`. So the row for `kohtuma → lihtminevik · ma` says only that it is a
+ * `CONJUGATION`, and a screen that wants to say in plain English what that card
+ * is asking for has nothing to key on.
+ *
+ * The front was generated as `${lemma} → ${slot.label}` and the labels are a
+ * closed table of ten, so the lookup is exact rather than a guess: a front
+ * whose tail is not one of the ten returns null and the screen prints what it
+ * always printed. A conjugation card built since carries `Card.slot` and its
+ * front is a sentence with the form taken out, so `slotOfCard` answers for it
+ * and this reaches only the cards in a deck built before the column existed. It is a read of what the builder wrote, never a write, and it
+ * never reaches `Review.slot`, which is checked against `isKnownSlot` on the
+ * way into the one table that cannot be repaired.
+ */
+export function conjugationSlotFromFront(front: string): string | null {
+  const tail = front.split("\u2192").pop()?.trim();
+  if (!tail) return null;
+  return CONJUGATION_SLOTS.find((s) => s.label === tail)?.code ?? null;
 }
 
 /** What a slot is called on a screen. The Estonian name leads, as everywhere. */

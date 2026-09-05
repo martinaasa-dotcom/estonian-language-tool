@@ -55,17 +55,31 @@ const HISTORIES: number[][] = [
 const SLOW_SLOT = "TRANSLATIVE";
 /** How many words the demo deck holds, and how many of them get every card type. */
 const DECK_WORDS = 30;
-const RICH_WORDS = 4;
+const RICH_WORDS = 5;
 /**
  * The case slots this fixture has to be able to demonstrate.
  *
  * A browser suite cannot conjure a card, so a slot a suite drills has to be in
  * the deck the fixture lays down. `INESSIVE` is what `test-teaching.mjs` opens
  * at `/review?case=INESSIVE`; `SLOW_SLOT` is the one the answer-time panel
- * needs to be slow before it draws at all.
+ * needs to be slow before it draws at all; `IndPrSg3` is a conjugation card, so
+ * every suite that walks the deck meets a verb asked in a sentence.
  */
-const DEMO_SLOTS = ["INESSIVE", SLOW_SLOT] as const;
+const DEMO_SLOTS = ["INESSIVE", SLOW_SLOT, "IndPrSg3"] as const;
 const SLOW_HISTORY = [3, 3, 4, 3, 3, 3];
+/**
+ * THE VERB THE FLASH ROUND HAS TO REACH IS THE HARDEST WORD IN THE DECK.
+ *
+ * `test-flash.mjs` asserts that a verb form is recorded as itself, which it can
+ * only see if the round asks a verb, and the round asks the ten hardest words
+ * with ties broken by lemma. Whether a verb fell inside those ten was luck: the
+ * first was `elama` at position ten, one place out, after two nouns lost their
+ * comitative cards to the sentence rule and slotted in ahead of it. A suite
+ * covered by luck is a suite that fails the day the dictionary shifts under it,
+ * so the verb this fixture names for its conjugation slot is given a history
+ * that makes it `struggling`, which sorts first, and the round opens on it.
+ */
+const STRUGGLE_HISTORY = [3, 1, 3, 1, 3, 1];
 const SLOT_MS: Record<string, number> = {
   TRANSLATIVE: 9_400,
   ILLATIVE: 5_100,
@@ -195,13 +209,14 @@ async function main() {
     says which.
   */
   const caseCards = new Map(
-    pool.map((lex) => [lex.id, generateCards(lex as LexemeForCards, ["CASE_FORM"])] as const),
+    pool.map((lex) => [lex.id, generateCards(lex as LexemeForCards, ["CASE_FORM", "CONJUGATION"])] as const),
   );
   const caseCapable = pool.filter((lex) => (caseCards.get(lex.id)?.length ?? 0) > 0);
 
   const rich = new Map<string, (typeof pool)[number]>();
   for (const slot of DEMO_SLOTS) {
-    const found = caseCapable.find((lex) => caseCards.get(lex.id)!.some((c) => c.targetCase === slot));
+    const found = caseCapable.find((lex) =>
+      caseCards.get(lex.id)!.some((c) => c.targetCase === slot || c.slot === slot));
     if (!found) {
       console.error(
         `No A1 course word builds a ${slot} card, so the suites that read one would have ` +
@@ -213,6 +228,7 @@ async function main() {
     }
     rich.set(found.id, found);
   }
+  const struggling = [...rich.values()].find((lex) => lex.pos === "VERB")?.id ?? null;
   for (const lex of caseCapable) {
     if (rich.size >= RICH_WORDS) break;
     rich.set(lex.id, lex);
@@ -240,14 +256,18 @@ async function main() {
 
   for (const [i, lex] of lexemes.entries()) {
     const types = rich.has(lex.id)
-      ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "GRADATION", "GOVERNMENT"] as const)
+      ? (["RECOGNITION", "PRODUCTION", "CASE_FORM", "CONJUGATION", "GRADATION", "GOVERNMENT"] as const)
       : (["RECOGNITION", "PRODUCTION"] as const);
     const cards = generateCards(lex as LexemeForCards, [...types]);
     for (const c of cards) {
       // Eight weeks of history rather than two, so the heatmap, the forecast and
       // the accuracy trend on /progress all have something real to draw.
       let s = emptyScheduling(new Date(Date.now() - 56 * 86400000));
-      const history = c.targetCase === SLOW_SLOT ? SLOW_HISTORY : HISTORIES[i % HISTORIES.length]!;
+      const history = c.targetCase === SLOW_SLOT
+        ? SLOW_HISTORY
+        : lex.id === struggling
+          ? STRUGGLE_HISTORY
+          : HISTORIES[i % HISTORIES.length]!;
       const reviews: { rating: number; at: Date; stateBefore: number }[] = [];
       history.forEach((r, n) => {
         const daysAgo = Math.max(0, 54 - n * 6 - (i % 5));
@@ -261,7 +281,7 @@ async function main() {
       const card = await prisma.card.create({
         data: {
           ownerId, lexemeId: lex.id, cardType: c.cardType, front: c.front, back: c.back,
-          hint: c.hint, targetCase: c.targetCase, source: "DICTIONARY",
+          hint: c.hint, targetCase: c.targetCase, slot: c.slot, source: "DICTIONARY",
           due: history.length ? s.due : new Date(Date.now() - 3600000),
           stability: s.stability, difficulty: s.difficulty, reps: s.reps,
           lapses: s.lapses, state: s.state, learningSteps: s.learningSteps,

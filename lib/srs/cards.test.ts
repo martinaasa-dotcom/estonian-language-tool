@@ -338,103 +338,96 @@ describe("generateCards — CASE_FORM", () => {
 });
 
 describe("generateCards — CONJUGATION", () => {
-  const lugema: LexemeForCards = {
-    lemma: "lugema",
-    translation: "to read",
-    pos: "VERB",
-    gradation: "QUALITATIVE",
-    gradationNote: "g : ∅",
-    government: null,
-    semanticTypes: null,
+  /*
+    A PERSON OF A VERB IS DRILLED IN A SENTENCE THAT USES IT, OR IT IS NOT
+    DRILLED. These fixtures carry the sentences the shipped dictionary holds
+    for these verbs, because that is now the thing under test: the card used
+    to be `lugema → olevik · ta` over a stem, 4,747 of them, with a sentence
+    behind 421.
+  */
+  const drinking: LexemeForCards = {
+    lemma: "jooma", translation: "to drink", pos: "VERB",
+    gradation: "NONE", gradationNote: null, government: null, semanticTypes: null,
+    examples: JSON.stringify([
+      { et: "Jõin tassi kohvi.", source: "EKILEX" },
+      { et: "Ta ei joo ega suitseta.", source: "EKILEX" },
+    ]),
     forms: [
-      { formType: "INF_MA", value: "lugema", morphCode: "Sup" },
-      { formType: "PRES_1SG", value: "loen", morphCode: "IndPrSg1" },
-      { formType: "EKILEX:IndPrSg3", value: "loeb", morphCode: "IndPrSg3" },
-      { formType: "PAST_1SG", value: "lugesin", morphCode: "IndIpfSg1" },
-      { formType: "EKILEX:KndPrSg1", value: "loeksin", morphCode: "KndPrSg1" },
+      { formType: "INF_MA", value: "jooma" },
+      { formType: "PRES_1SG", value: "joon" },
+      { formType: "PAST_1SG", value: "jõin" },
     ],
   };
 
-  it("asks by the name a class uses, and answers with the stored form where there is one", () => {
-    const cards = generateCards(lugema, ["CONJUGATION"]);
-    const third = cards.find((c) => c.front.includes("olevik · ta"));
-    expect(third?.back).toBe("loeb");
-    const conditional = cards.find((c) => c.front.includes("tingiv kõneviis · ma"));
-    expect(conditional?.back).toBe("loeksin");
+  it("builds the card out of the sentence that uses the form, and names its slot", () => {
+    const cards = generateCards(drinking, ["CONJUGATION"]);
+    const past = cards.find((c) => c.slot === "IndIpfSg1");
+    // Spelled as the lexicographer spelled it, capital and all: the marker
+    // folds case, and rewriting the form would be this app editing Estonian.
+    expect(past?.back).toBe("Jõin");
+    expect(past?.front).toBe(`${BLANK} tassi kohvi.`);
+    // No label on the front: `lihtminevik · ma` beside `jooma` is `jõin`
+    // written out in two pieces. The slot travels on the card instead.
+    expect(past?.front).not.toMatch(/lihtminevik|→/);
+    expect(past?.hint).toBe("jooma, to drink");
+    expect(past?.targetCase).toBeNull();
   });
 
   /*
-    `pole`. Estonian contracts `ei ole`, the contraction is what people say and
-    write, and a learner typing it was marked wrong on the commonest verb in
-    the language. One word in the course has one, so this is not a rule about
-    negatives, it is the dictionary holding a form and the card carrying it.
+    THE `ei` IS IN THE SENTENCE, SO THE SENTENCE SETTLES THE PAIR. `joo` is
+    the negative and the imperative in one spelling; `Ta ei joo` has the `ei`
+    a lexicographer wrote, so it is the negative, gapped whole, and it is not
+    an imperative card as well.
   */
-  it("accepts pole beside ei ole, where the dictionary holds one", () => {
+  it("gaps the negative with its ei, and never reads it as an imperative", () => {
+    const cards = generateCards(drinking, ["CONJUGATION"]);
+    const negative = cards.find((c) => c.slot === "IndPrPs_");
+    expect(negative?.back).toBe("ei joo");
+    expect(negative?.front).toBe(`Ta ${BLANK} ega suitseta.`);
+    expect(cards.some((c) => c.slot === "ImpPrSg2")).toBe(false);
+  });
+
+  it("reads a bare form with no ei as the imperative, and never as the negative", () => {
+    const sitting: LexemeForCards = {
+      ...drinking, lemma: "istuma", translation: "to sit",
+      examples: JSON.stringify([{ et: "Istu minu kõrvale.", source: "EKILEX" }]),
+      forms: [{ formType: "INF_MA", value: "istuma" }, { formType: "PRES_1SG", value: "istun" }],
+    };
+    const cards = generateCards(sitting, ["CONJUGATION"]);
+    expect(cards.find((c) => c.slot === "ImpPrSg2")?.back).toBe("Istu");
+    expect(cards.some((c) => c.slot === "IndPrPs_")).toBe(false);
+  });
+
+  /*
+    `pole`. Estonian contracts `ei ole`, the contraction is what people say
+    and write, and the card carries both the way the illative carries two, so
+    a sentence written with either builds the card and the marker takes both.
+  */
+  it("accepts pole beside ei ole where the dictionary holds one", () => {
     const olema: LexemeForCards = {
-      lemma: "olema", translation: "to be", pos: "VERB",
-      gradation: "NONE", gradationNote: null, government: null, semanticTypes: null,
+      ...drinking, lemma: "olema", translation: "to be",
+      examples: JSON.stringify([{ et: "Mul pole aega.", source: "EKILEX" }]),
       forms: [
-        { formType: "INF_MA", value: "olema", morphCode: "Sup" },
-        { formType: "PRES_1SG", value: "olen", morphCode: "IndPrSg1" },
-        { formType: "PAST_1SG", value: "olin", morphCode: "IndIpfSg1" },
+        { formType: "INF_MA", value: "olema" },
+        { formType: "PRES_1SG", value: "olen" },
         { formType: "EKILEX:IndPrPs_", value: "ole", morphCode: "IndPrPs_" },
         { formType: "EKILEX:IndPrPsN", value: "pole", morphCode: "IndPrPsN" },
       ],
     };
-    const negative = generateCards(olema, ["CONJUGATION"]).find((c) => c.front.includes("eitus"));
-    expect(negative?.back).toBe("ei ole / pole");
+    const negative = generateCards(olema, ["CONJUGATION"]).find((c) => c.slot === "IndPrPs_");
+    expect(negative?.back).toBe("pole / ei ole");
+    expect(negative?.front).toBe(`Mul ${BLANK} aega.`);
   });
 
-  it("carries one answer where the dictionary holds no contraction", () => {
-    const negative = generateCards(lugema, ["CONJUGATION"]).find((c) => c.front.includes("eitus"));
-    expect(negative?.back).toBe("ei loe");
+  it("builds nothing from a stem alone, however regular the verb", () => {
+    expect(generateCards({ ...drinking, examples: null }, ["CONJUGATION"])).toEqual([]);
   });
 
-  it("derives the present, the negative, the conditional and the imperative for a seeded verb", () => {
-    // Every seeded verb holds five principal parts and nothing else. The
-    // simple past third person has no rule and is left out; the rest come
-    // from lib/estonian/conjugate.ts, checked against Ekilex for every verb.
-    const seeded: LexemeForCards = {
-      ...lugema,
-      forms: [
-        { formType: "PRES_1SG", value: "loen" },
-        { formType: "PAST_1SG", value: "lugesin" },
-      ],
-    };
-    const cards = generateCards(seeded, ["CONJUGATION"]);
-    expect(cards.map((c) => c.back)).toEqual([
-      "loen", "loeb", "loeme", "ei loe", "lugesin", "loeksin", "loe",
-    ]);
-    expect(cards.find((c) => c.back === "ei loe")?.front).toBe("lugema → eitus · ma ei");
-  });
-
-  it("prefers an attested form over the rule, and leaves olema's present to Ekilex", () => {
-    const olema: LexemeForCards = {
-      ...lugema,
-      lemma: "olema",
-      translation: "to be",
-      forms: [
-        { formType: "PRES_1SG", value: "olen" },
-        { formType: "PAST_1SG", value: "olin" },
-        { formType: "EKILEX:IndPrSg3", value: "on", morphCode: "IndPrSg3" },
-      ],
-    };
-    const cards = generateCards(olema, ["CONJUGATION"]);
-    expect(cards.find((c) => c.front.includes("olevik · ta"))?.back).toBe("on");
-    expect(cards.find((c) => c.front.includes("olevik · me"))).toBeUndefined();
-    expect(cards.find((c) => c.front.includes("tingiv"))?.back).toBe("oleksin");
-  });
-
-  it("makes nothing for a noun", () => {
-    expect(generateCards({ ...lugema, pos: "NOUN" }, ["CONJUGATION"])).toEqual([]);
-  });
-
-  it("is offered only for a verb whose forms are actually held", () => {
-    expect(availableCardTypes(lugema)).toContain("CONJUGATION");
-    expect(availableCardTypes({ ...lugema, forms: [] })).not.toContain("CONJUGATION");
+  it("is only offered when it can produce something", () => {
+    expect(availableCardTypes(drinking)).toContain("CONJUGATION");
+    expect(availableCardTypes({ ...drinking, examples: null })).not.toContain("CONJUGATION");
   });
 });
-
 describe("inTeachingOrder", () => {
   const card = (lexemeId: string | null, cardType: string) => ({ lexemeId, cardType });
 

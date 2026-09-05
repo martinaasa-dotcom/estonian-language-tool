@@ -26,6 +26,8 @@ import { ACTION_LIMITS } from "../lib/security/actionLimits";
 import { NOT_EXPORTED } from "../lib/legal/exportCoverage";
 import { CATEGORY_KEYS } from "../lib/suggestions/model";
 import { CASES } from "../lib/estonian/cases";
+import { plainAsk } from "../lib/estonian/plainAsk";
+import { CONJUGATION_SLOTS } from "../lib/srs/slots";
 import { SYLLABUS } from "../lib/collections/syllabus";
 import { PRACTICE_MODES } from "../lib/ux/modes";
 import { CARD_TYPES } from "../lib/srs/cards";
@@ -37,7 +39,7 @@ import { TOPIC_GROUPS } from "../lib/estonian/grammar";
 import { NAV_MOTION } from "../lib/ux/navMotion";
 import { DESTINATIONS } from "../lib/ux/nav";
 import { rungOf } from "../lib/learn/ladder";
-import { LETTER_CHARACTERS } from "../lib/ux/letterMotion";
+import { LETTER_CHARACTERS, LETTER_CHEER, LETTER_CHEER_EVENT } from "../lib/ux/letterMotion";
 import { DEMO_STEMS } from "../lib/collections/demoWords";
 import { grammarGroupTerm, grammarTerm } from "../lib/estonian/terms";
 import { CLOSED_CLASS_EXAMPLES, WORKED_FORMS, buildSystemPrompt } from "../lib/tutor/prompt";
@@ -1800,6 +1802,42 @@ check("the forged-request gate runs before anything else looks at the request", 
   );
 });
 
+check("a request on the wrong host is sent home before anything reads it", () => {
+  /*
+    Google sign-in starts on the origin the learner is on and comes back to
+    the project's Site URL wherever that origin is not on Supabase's list, so
+    a deployment answering on two names had sign-ins finishing on the one
+    that never started them, with no verifier to finish them with. With
+    `NEXT_PUBLIC_SITE_URL` set there is one origin, and the redirect has to
+    be the first thing the middleware does: after the forged-request gate it
+    would refuse a legitimate mutation for arriving on the wrong name, and
+    after the auth branch a signed-out visitor would be sent to sign in on
+    the host the sign-in cannot complete on. The callback is the other half:
+    a code arriving with no verifier cookie is told apart from a spent link
+    before the exchange is attempted, because the two need different
+    sentences and the same failure reads as either.
+  */
+  const middleware = code("middleware.ts");
+  const redirect = middleware.indexOf("canonicalRedirect(");
+  const gate = middleware.indexOf("isSameOriginMutation(request)");
+  assert.ok(redirect > 0, "the middleware no longer sends a request on the wrong host home");
+  assert.ok(redirect < gate, "the canonical redirect runs after the forged-request gate");
+  assert.match(middleware, /NextResponse\.redirect\(home, 308\)/, "the canonical redirect is not permanent");
+
+  const canonical = code("lib/auth/canonical.ts");
+  assert.match(canonical, /VERCEL_ENV !== "production"/, "a Vercel preview is being sent to production");
+  assert.match(canonical, /isLoopback\(/, "a developer's own machine is being sent to production");
+
+  const callback = code("app/auth/callback/route.ts");
+  const verifier = callback.indexOf("-code-verifier");
+  const exchange = callback.indexOf("exchangeCodeForSession(");
+  assert.ok(verifier > 0, "the callback no longer looks for the verifier cookie");
+  assert.ok(verifier < exchange, "the verifier check runs after the exchange it exists to explain");
+  assert.match(callback, /sign-in\?bounced=1/, "a bounced sign-in is no longer told apart from a spent link");
+  const signIn = code("app/(chromeless)/sign-in/page.tsx");
+  assert.match(signIn, /params\.bounced/, "the sign-in page no longer reads the bounced refusal");
+});
+
 check("every response carries a policy", () => {
   /*
     A Content Security Policy that only covers the happy path is a policy with
@@ -2622,6 +2660,45 @@ check("Today draws at most TODAY_CARDS under the hero, and every card goes throu
     loose, [],
     `Today draws ${loose.join(", ")} outside the capped list, so the page can grow past ${"TODAY_CARDS"} again`,
   );
+});
+
+/*
+  AND THE ORDER IS THE LEARNER'S, READ THROUGH ONE MODULE, WITH THE CAP STILL
+  APPLIED AFTER IT.
+
+  A home page's reading order is a fact about the reader, so Settings lets
+  them set it. Three things have to stay true for that to be safe. Today has to
+  deal through `orderTodayCards`, so a card cannot be added to the page
+  outside the order the learner set; the cap has to be applied to what comes
+  out of it, so an order can never grow a seventh box; and the key has to be
+  declared once, in the settings store, like the goal keys, so a typo in a
+  page cannot store an order nobody reads.
+*/
+check("Today deals its cards in the learner's order, under the same cap", () => {
+  const today = code("app/(app)/page.tsx");
+  assert.match(
+    today, /orderTodayCards\(/,
+    "Today no longer deals through orderTodayCards, so the order in Settings changes nothing",
+  );
+  assert.match(
+    today, /todayOrderFrom\(settings\[SETTING_KEYS\.todayOrder\]\)/,
+    "Today reads the order from somewhere other than the settings row the panel writes",
+  );
+  // The cap on the deal, not on the candidates: an order must not grow the page.
+  assert.match(
+    today, /orderTodayCards\([\s\S]*?\)\.slice\(0, TODAY_CARDS\)/,
+    "the cap is no longer applied to what orderTodayCards returns",
+  );
+
+  const panel = code("app/(app)/settings/TodayOrderPanel.tsx");
+  assert.match(panel, /setTodayOrder\(/, "the Settings panel no longer writes the order");
+  assert.match(panel, /TODAY_CARDS/, "the panel stopped saying which rows fall past the cut");
+
+  assert.match(read("lib/settings/store.ts"), /todayOrder:/, "todayOrder is not declared in the settings store");
+  for (const file of ALL) {
+    if (file === "lib/settings/store.ts") continue;
+    assert.doesNotMatch(read(file), /["']todayOrder["']/, `${file} writes the todayOrder key as a literal`);
+  }
 });
 
 /*
@@ -5102,6 +5179,108 @@ check("every grammar point the course can name carries the name a class uses", (
   assert.ok(verb, "the grammar reference no longer groups the verb");
   for (const id of verb!.ids) {
     assert.ok(grammarTerm(id)?.et, `the verb point "${id}" has only an English name`);
+  }
+});
+
+/**
+ * A NAME IS NOT AN INSTRUCTION, AND THE CARD LEADS WITH THE INSTRUCTION.
+ *
+ * The rule above is about which *name* leads, and it is right and unchanged. It
+ * is also not the whole of what a card owes somebody. A learner drove the flash
+ * round and reported that the ask "was presented so poorly I didn't even know
+ * what it wanted me to do": the card read "Put it in the lihtminevik · ma" over
+ * `kohtuma`, and the answer was `kohtusin`, which is how you say it about
+ * yourself in the past. Both names were on the screen, in the right order, and
+ * neither is something a beginner can act on. A name is a thing you look up,
+ * and somebody who has to look one up mid card has lost the sentence they were
+ * building.
+ *
+ * `lib/estonian/plainAsk.ts` is the one table of what a slot means said out
+ * loud, and this is the pair of claims that keeps it useful. First, that it is
+ * total over the forms a card can ask for: a fourteenth case or an eleventh
+ * verb slot arriving without a plain reading would ship a card nobody can read,
+ * silently, since the screens fall back to the name they used to print. And
+ * second, that the screens that ask for a form actually read it, anchored on
+ * the call rather than on the import, which is the fault `code()` exists for.
+ */
+check("every form a card can ask for says in plain English what it is asking", () => {
+  for (const spec of CASES) {
+    assert.ok(
+      plainAsk(spec.key),
+      `the ${spec.et} has no plain reading, so a card asking for it prints only its name`,
+    );
+  }
+  for (const slot of CONJUGATION_SLOTS) {
+    assert.ok(
+      plainAsk(slot.code),
+      `the verb slot "${slot.label}" has no plain reading`,
+    );
+  }
+  // And it says nothing where there is nothing to add. "How do you say this"
+  // is already the whole of a production card, and a clause under it would be
+  // the question printed twice.
+  assert.equal(plainAsk("PRODUCTION"), null, "a question about meaning has been given a clause");
+});
+
+check("a screen that asks for a form reads the plain table rather than only naming it", () => {
+  const ASKS = [
+    "app/(app)/review/ReviewSession.tsx",
+    "app/(app)/review/flashcards/FlashSession.tsx",
+    "app/(app)/review/write/WriteSession.tsx",
+    "app/(app)/review/target/TargetSession.tsx",
+    "app/(app)/review/emoji/EmojiSession.tsx",
+  ];
+  for (const file of ASKS) {
+    const source = code(file);
+    assert.match(
+      source,
+      /plainAsk\w*\(/,
+      `${file} asks a learner for a named form and never says in plain English what it wants`,
+    );
+  }
+});
+
+/**
+ * A HUE'S FILL IS NOT A PANEL, AND ITS INK IS NOT FOR ITS FILL.
+ *
+ * Every hue in this palette is a pair, and `docs/14-design-system.md` calls the
+ * pairing the trap: the fill is what a bar, a dot or a button is painted, the
+ * tint is what a panel is painted, and the ink is the same hue walked down
+ * until it clears 4.5:1 *on its own tint*. The flash round's feedback box set
+ * `background: var(--butter)` with `color: var(--butter-ink)`, which is a slab
+ * of gold in the light theme and, in the dark, where `--butter-ink` resolves to
+ * `var(--butter)` exactly, the same colour written on itself.
+ *
+ * That pairing cannot be right in any theme and it is cheap to spot, which is
+ * what makes it worth a check rather than a paragraph: the browser suite
+ * measures contrast, and it can only measure a state it can reach, and a
+ * feedback panel is a state a fixture arrives in only by answering a card
+ * wrongly. Made to fail on the real line before it was fixed.
+ */
+check("no screen writes a hue's ink on that hue's own fill", () => {
+  const HUES = ["mint", "peach", "butter", "sky", "blush", "accent", "good", "hard", "again", "easy"];
+  for (const file of [...APP, ...COMPONENTS]) {
+    const source = code(file);
+    for (const hue of HUES) {
+      /*
+        WITHIN ONE PANEL, WHICH IS WHAT THE WINDOW STANDS IN FOR. The two
+        declarations are rarely in one object: the box paints the background
+        and the heading inside it takes the colour, which is what the original
+        of this fault looked like, so a window narrow enough to mean "one style
+        object" reads straight past it. 400 characters is a panel and its first
+        child, measured against the real line rather than guessed at, and it is
+        far short of a fill set on a bar and an ink set on the caption under it.
+      */
+      const fill = new RegExp(`background:[^;}\n]*var\\(--${hue}\\)`, "g");
+      for (const hit of source.matchAll(fill)) {
+        const window = source.slice(hit.index ?? 0, (hit.index ?? 0) + 400);
+        assert.equal(
+          new RegExp(`color:[^;}\n]*var\\(--${hue}-ink\\)`).test(window),
+          false,
+          `${file} writes --${hue}-ink on the solid --${hue} fill, which is one colour on itself in the dark theme`,
+        );
+      }
+    }
   }
 });
 
@@ -8469,7 +8648,20 @@ check("a hue's fill is never used as its ink", () => {
     `Diagnosis` passes both, a fill for its bar and an ink for its label, which
     is the pairing this is protecting rather than a violation of it.
   */
-  const fillAsInk = /(?:color:\s*|(?<!ink=)\btone=)"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
+  /*
+    AND A TERNARY IS NOT A DISGUISE. The first version of this matched a fill
+    only where it sat immediately after `color:` or `tone=`, so
+    `color: right ? "var(--good)" : "var(--again)"` walked straight past it,
+    and that is exactly the shape a verdict takes. Four rounds were writing
+    their verdict in the fill at 2.2:1 with this check green: cloze, write,
+    describe, and the sprint's clock. The `color:` rule reads the whole
+    declaration now. `tone=` is different, because `Ring` and `Meter` take a
+    fill for a bar and a ternary there is the correct shape; what is asked of
+    `tone=` is the bare literal, and `Stat`, which writes its value as text,
+    is read as a whole element below, ternary and all.
+  */
+  const fillAsInk = /(?:\bcolor:\s*[^;\n]*?|(?<!ink=)\btone=)"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
+  const statAsFill = /\btone=\{?[^}]*?"var\(--(mint|peach|butter|sky|blush|good|hard|again|easy)\)"/;
   const offenders: string[] = [];
   for (const file of [...APP, ...COMPONENTS]) {
     for (const line of read(file).split("\n")) {
@@ -8477,6 +8669,9 @@ check("a hue's fill is never used as its ink", () => {
       // label's, and naming both on one line is the correct shape.
       if (/\bink=/.test(line)) continue;
       if (fillAsInk.test(line)) offenders.push(`${file}: ${line.trim().slice(0, 90)}`);
+    }
+    for (const stat of read(file).matchAll(/<Stat\b[\s\S]*?\/>/g)) {
+      if (statAsFill.test(stat[0])) offenders.push(`${file}: ${stat[0].replace(/\s+/g, " ").slice(0, 90)}`);
     }
   }
   assert.deepEqual(offenders, [], "a hue's fill is being used to write words, where its ink belongs");
@@ -8821,6 +9016,13 @@ check("every way a letter moves is declared in both the table and the stylesheet
   // The shake a key does under a pointer belongs to the control rather than to
   // a character, so it is declared and deliberately unnamed by the table.
   declared.delete("letter-wiggle");
+  // The hop all four do when the word changes is one set of keyframes for the
+  // set rather than a character of anybody's, and the table names it once
+  // under `LETTER_CHEER`, which is checked for below rather than here.
+  declared.delete(LETTER_CHEER.keyframes);
+  assert.match(css, new RegExp(`@keyframes\\s+${LETTER_CHEER.keyframes}\\b`),
+    "the cheer LETTER_CHEER names has no keyframes in app/globals.css, so the letters "
+    + "hear the word change and do nothing");
 
   const asked = new Set(LETTER_CHARACTERS.map((c) => c.keyframes));
   const missing = [...asked].filter((k) => !declared.has(k));
@@ -8888,6 +9090,28 @@ check("a decorative letter is hidden, untouchable and placed", () => {
     "a screen draws its own drifting letter instead of using components/LetterTile.tsx, "
     + "which is where the three properties above and the pointer listener live",
   );
+});
+
+/**
+ * THE CARD AND ITS LETTERS AGREE ON ONE STRING, AND NEITHER TYPES IT.
+ *
+ * The case explorer says the word changed on `document` and every tile hears
+ * it, which is two files agreeing about an event name, and an event name
+ * retyped in one of them is the quietest failure there is: the explorer fires
+ * a `CustomEvent` nobody listens for, the tiles listen for one nobody fires,
+ * and the letters sit there looking exactly like letters that were never
+ * meant to answer. So both read `LETTER_CHEER_EVENT` off the motion table and
+ * the literal appears in the tree exactly once, in that table.
+ */
+check("the word-changed event is named once and read by both sides", () => {
+  const tile = code("components/LetterTile.tsx");
+  const explorer = code("app/(chromeless)/welcome/LandingDemo.tsx");
+  assert.match(tile, /LETTER_CHEER_EVENT/, "components/LetterTile.tsx no longer listens for LETTER_CHEER_EVENT");
+  assert.match(explorer, /dispatchEvent\(new CustomEvent\(LETTER_CHEER_EVENT/,
+    "the case explorer no longer tells the letters the word changed");
+  const literal = new RegExp(`["'\`]${LETTER_CHEER_EVENT}["'\`]`);
+  const retyped = ALL.filter((f) => !f.endsWith("lib/ux/letterMotion.ts") && literal.test(code(f)));
+  assert.deepEqual(retyped, [], "the event name is typed out somewhere other than lib/ux/letterMotion.ts");
 });
 
 /**
@@ -9943,6 +10167,35 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
     and built one on 914, which is the `objekt` fault: the unit page lists the
     type, no card appears, and nothing says why.
   */
+  /*
+    AND THE VERB IS HELD TO THE SAME RULE. `lugema → olevik · ta` over a stem
+    was 4,747 cards with a sentence behind 421, and the negative and the
+    singular imperative are one spelling, `loe`, which the sentence settles
+    because the `ei` is in it: a lexicographer wrote `Ma ei loe` and `Loe!`.
+  */
+  const verbBlock = builder.slice(
+    builder.indexOf('case "CONJUGATION"'),
+    builder.indexOf('case "CLOZE"'),
+  );
+  assert.match(
+    verbBlock,
+    /naturalSentencesFor\(lex\)/,
+    "lib/srs/cards.ts builds a conjugation card without a sentence to build it out of, " +
+    "which is `lugema → olevik · ta` again: a suffix on a stem with nothing saying why.",
+  );
+  assert.match(
+    verbBlock,
+    /slot\.negative && !ei/,
+    "lib/srs/cards.ts stopped reading the `ei` in front of a gapped verb form, so `loe` " +
+    "can be filed as the negative where the sentence says it is the imperative.",
+  );
+  assert.match(
+    verbBlock,
+    /slot: slot\.code/,
+    "a conjugation card no longer carries its slot, so a review of `loeb` is written down " +
+    "as CONJUGATION rather than as IndPrSg3 and eight facets of a verb count as one.",
+  );
+
   const available = builder.slice(builder.indexOf("export function availableCardTypes"));
   assert.doesNotMatch(
     available,
@@ -9954,6 +10207,11 @@ check("a case is drilled in a sentence that uses it, or it is not drilled", () =
     available,
     /generateCards\(lex, \["CASE_FORM"\]\)\.length > 0/,
     "availableCardTypes stopped asking the builder whether a case card can be made.",
+  );
+  assert.match(
+    available,
+    /generateCards\(lex, \["CONJUGATION"\]\)\.length > 0/,
+    "availableCardTypes stopped asking the builder whether a conjugation card can be made.",
   );
 });
 
@@ -9974,6 +10232,12 @@ check("a card this app can mark is never marked by the learner", () => {
     them, on the learner's own say-so.
   */
   const session = code("app/(app)/review/ReviewSession.tsx");
+  assert.match(
+    session,
+    /const TYPEABLE = new Set\(\[[^\]]*"CONJUGATION"[^\]]*\]\)/,
+    "CONJUGATION left TYPEABLE, so a card whose answer is a single vouched verb form is " +
+    "back to being marked by the learner.",
+  );
   const askFor = session.slice(session.indexOf("function askFor("));
   const body = askFor.slice(0, askFor.indexOf("\n}"));
   assert.match(
@@ -10009,6 +10273,12 @@ check("a card this app can mark is never marked by the learner", () => {
     "accepts. A back can be `tuppa / toasse` and both are right.",
   );
   const questPool = code("lib/progress/quest.ts");
+  assert.match(
+    questPool,
+    /verbFormChoices\(/,
+    "lib/progress/quest.ts stopped building options for a conjugation card, so the round " +
+    "asks the learner whether they had it on the verbs it selected them for.",
+  );
   assert.match(
     questPool,
     /caseFormChoices\(/,
@@ -10841,7 +11111,16 @@ check("readiness is derived on every request and never written down", () => {
     /prisma\.\w+\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\b/,
     "lib/progress/readiness.ts writes to the database, and a stored readiness is a second source of truth that drifts",
   );
-  assert.doesNotMatch(SCHEMA, /readiness|\brung\b/i, "the schema grew a readiness column; it is derived, never stored");
+  /*
+    The schema's code and not its prose, which is the oldest recurring mistake
+    in this file: `Card.slot`'s doc comment explains what the mastery counter
+    and the readiness reading do with it, and this fired on the word.
+  */
+  assert.doesNotMatch(
+    code(join("prisma", "schema.prisma")),
+    /readiness|\brung\b/i,
+    "the schema grew a readiness column; it is derived, never stored",
+  );
 });
 
 /**
@@ -10934,6 +11213,74 @@ check("Today's report names no errand, and the research table says what it cover
     read("lib/research/sections.ts"), /REPORTS TIED TO AN ERRAND/,
     "the encounters section no longer tells a reader that it counts errands rather than conversations",
   );
+});
+
+/*
+  A VERDICT IS PAINTED ONCE.
+
+  Correct is green and wrong is red, and the palette had said so since it was
+  drawn (docs/14-design-system.md §1). What it had not done was hold twenty
+  screens to it. Each round marked an answer out of the tokens by hand, and
+  the copies disagreed: four wrote the verdict in the fill at 2.2:1, one
+  never marked the option the learner had pressed, two painted a near miss
+  the same peach as a blank, the picture board said nothing in colour at all,
+  and the exam's list of wrong answers was two bare coloured words on a card.
+
+  `lib/ux/verdict.ts` is the one vocabulary, three words for a verdict and
+  three states for an option, and `app/globals.css` is the one place they are
+  painted. Three things hold it: every class the module names is a rule in
+  the stylesheet, painting the tint and writing in the ink of the semantic
+  alias rather than the hue; every screen that marks an answer reads the
+  module; and none of them paints a verdict tint by hand any more, which is
+  the shape every one of the faults above took.
+*/
+check("a verdict is painted once, in the tint and the ink", () => {
+  const vocabulary = code("lib/ux/verdict.ts");
+  const classes = [...vocabulary.matchAll(/:\s*"((?:verdict|option)-[a-z]+)"/g)].map((m) => m[1]!);
+  assert.ok(classes.length >= 6, "lib/ux/verdict.ts stopped naming its classes");
+
+  for (const name of classes) {
+    const rule = CSS.match(new RegExp(`\\.${name}\\s*\\{([^}]*)\\}`));
+    assert.ok(rule, `.${name} is named in lib/ux/verdict.ts and painted nowhere in app/globals.css`);
+    const body = rule![1]!;
+    const bg = body.match(/(?:^|[\s;])background:\s*var\(--([a-z0-9-]+)\)/)?.[1];
+    const ink = body.match(/(?:^|[\s;])color:\s*var\(--([a-z0-9-]+)\)/)?.[1];
+    assert.ok(bg && ink, `.${name} paints no tint or writes in no ink`);
+    // The semantic aliases, so the rating scale and a marked answer cannot drift
+    // apart, and the raised surface for an option nobody chose.
+    assert.match(bg!, /^(good|hard|again)-soft$|^raised$/, `.${name} paints ${bg}, which is not a verdict tint`);
+    assert.match(ink!, /^(good|hard|again)-ink$|^ink-3$/, `.${name} writes in ${ink}, which is not an ink`);
+  }
+
+  // The screens that mark an answer are the ones that call the app's markers.
+  const marks = /\b(gradeCard|checkAnswer|gradeChoice|gradeDictation|gradeWrite|markFlash|markDescription|isClozeCorrect|wrongCells|allMarks)\(/;
+  // Sõnad is not on this list and is not exempt from it: it marks letters with
+  // three kinds of object rather than three tints, by a design argued at the
+  // top of its own file, and it calls none of the markers above.
+  const exempt: Record<string, string> = {
+    // Marks a paper whole and shows no per-answer verdict, on purpose (line 22).
+    "app/(app)/learn/checkpoint/[level]/CheckpointSession.tsx": "no per-answer verdict by design",
+  };
+  // Screens, not the server actions and page files that call the same markers and draw nothing.
+  const marking = [...APP, ...COMPONENTS].filter(
+    (file) => file.endsWith(".tsx") && !file.endsWith("page.tsx") && marks.test(code(file)),
+  );
+  assert.ok(marking.length >= 20, `only ${marking.length} marking screens found; the marker list has rotted`);
+  for (const file of marking) {
+    const body = code(file);
+    if (file in exempt) {
+      assert.doesNotMatch(body, /lib\/ux\/verdict/, `${file} reads the vocabulary now; drop its exemption`);
+      continue;
+    }
+    assert.match(body, /from "@\/lib\/ux\/verdict"/, `${file} marks an answer without reading lib/ux/verdict.ts`);
+    assert.doesNotMatch(
+      body, /"var\(--(good|again)-soft\)"/,
+      `${file} paints a verdict tint by hand; wear VERDICT_CLASS or OPTION_CLASS instead`,
+    );
+  }
+  for (const file of Object.keys(exempt)) {
+    assert.ok(marking.includes(file), `${file} is exempted and no longer marks anything`);
+  }
 });
 
 console.log(

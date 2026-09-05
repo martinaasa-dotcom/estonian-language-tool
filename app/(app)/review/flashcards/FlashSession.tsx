@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, CircleAlert, X } from "lucide-react";
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { gradeCard } from "@/app/actions";
 import { Button, ButtonLink } from "@/components/Button";
@@ -12,10 +12,11 @@ import { Chip, Meter, Stat } from "@/components/ui";
 import { useOffline } from "@/components/OfflineProvider";
 import { enqueueGrade } from "@/lib/offline/db";
 import { splitOnForm } from "@/lib/dict/examples";
-import { askLine, markFlash, type FlashMark, type FlashTask } from "@/lib/games/flash";
+import { askLine, markFlash, plainAskFor, type FlashMark, type FlashTask } from "@/lib/games/flash";
 import { MAX_SENTENCE_CHARS } from "@/lib/estonian/writing";
 import { englishName } from "@/lib/games/flash";
 import { caseByKey } from "@/lib/estonian/cases";
+import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
 
 /** A task, plus where the word stands, which is the thing the round is moving. */
 export interface FlashPrompt extends FlashTask {
@@ -160,7 +161,7 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
           <Stat
             value={`${Math.round((right / prompts.length) * 100)}%`}
             label="Right"
-            tone={right === prompts.length ? "var(--good)" : "var(--hard)"}
+            tone={VERDICT_INK[right === prompts.length ? "right" : "nearly"]}
           />
           <Stat value={`${minutes}m`} label="Time" />
         </div>
@@ -350,7 +351,7 @@ function Question({
       {word}
       {meaning}
       <SlotLine task={task} />
-      {shape === "build" && (
+      {shape === "build" && !plainAskFor(task) && (
         <p className="mt-4 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
           Write one sentence of your own with it in that form.
         </p>
@@ -359,53 +360,124 @@ function Question({
   );
 }
 
-/** The form being asked for, Estonian name first, as everywhere else. */
+/**
+ * What the card wants, and then what that thing is called.
+ *
+ * IN THAT ORDER, WHICH IS THE WHOLE OF WHAT CHANGED. This used to lead with
+ * `lihtminevik · ma` at 24px in the accent, with the English name under it, and
+ * a learner drove a round and reported that they could not tell what it wanted
+ * them to do. Both names were on the screen and neither is an instruction: a
+ * name is a thing you look up, and somebody who has to look it up mid card has
+ * already lost the sentence they were building.
+ *
+ * So the plain sentence leads and the names sit under it, in one quiet line, as
+ * the cross-reference CLAUDE.md has always said they are. Nothing is dropped:
+ * a learner who is also sitting a course still reads `lihtminevik · ma` and
+ * `the simple past` on the same card, which is what lets them follow their own
+ * teacher. Where a slot has no plain reading the name leads exactly as before,
+ * because `plainAsk` is deliberately partial and an invented sentence would be
+ * worse than the name it replaced.
+ */
 function SlotLine({ task }: { task: FlashPrompt }) {
   const english = englishName(task.slot);
+  const plain = plainAskFor(task);
   return (
     <div className="mt-5">
-      <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
-        {task.label}
-      </p>
-      {english && (
-        <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>the {english}</p>
+      {plain ? (
+        <>
+          <p className="text-[22px] font-semibold leading-snug" style={{ color: "var(--ink)" }}>
+            {plain}
+          </p>
+          <p lang="et" className="mt-1.5 text-[13.5px]" style={{ color: "var(--ink-3)" }}>
+            {task.label}
+            {english && <span lang="en"> · the {english}</span>}
+          </p>
+        </>
+      ) : (
+        <>
+          <p lang="et" className="text-2xl font-semibold" style={{ color: "var(--accent-deep)" }}>
+            {task.label}
+          </p>
+          {english && (
+            <p className="mt-1 text-[13.5px]" style={{ color: "var(--ink-3)" }}>the {english}</p>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-/** What happened, and what the sentence was. */
+/**
+ * WHAT HAPPENED, PAINTED THE WAY THE REST OF THE APP PAINTS IT.
+ *
+ * This was a solid `--butter` panel with `--ink-2` running across it, which is
+ * two rules broken at once and one of them only in the dark. Every hue in this
+ * palette is a pair: the fill is what a bar or a button is painted, the tint is
+ * what a panel is painted, and each has an ink drawn to sit on its own tint
+ * (docs/14-design-system.md). `--butter` is the fill, #cf9114, so the box was a
+ * slab of gold with body text set in a colour chosen for a white card; in the
+ * dark theme `--butter` is #ffcd6e and `--butter-ink` resolves to the same
+ * value, so the heading was bright yellow on bright yellow. Every other
+ * feedback panel in the app was already right: the cloze round, listening,
+ * sprint and pairs all paint `<hue>-soft` and write in `<hue>-ink`.
+ *
+ * AND THREE OUTCOMES RATHER THAN TWO, because the round already knew about
+ * three. `markFlash` returns a middle rating for the right word in the wrong
+ * ending, which is the near miss this round exists to catch, and the screen
+ * flattened it into the same box as a blank. The palette has one colour for
+ * "nearly" and one for "missed" and they mean exactly those two things, so the
+ * box now says which without anybody reading a word. It says it in words too,
+ * since a hue is never the only thing carrying a distinction here.
+ */
 function Feedback({ task, mark }: { task: FlashPrompt; mark: FlashMark }) {
   const spec = caseByKey(task.slot);
+  const english = englishName(task.slot);
+  /*
+    Recalled, nearly, or missed. `mark.right` with the middle rating is a
+    diacritic somebody dropped or a slip of one letter, which `checkAnswer`
+    counts as produced, so it reads as the recall it was.
+  */
+  const verdict = mark.right ? "right" : verdictOfRating(mark.rating);
+  const head = { right: "That is it", nearly: "Nearly", wrong: "Not this time" }[verdict];
+
   return (
-    <div
-      className="mt-6 rounded-lg border p-4"
-      style={{
-        borderColor: mark.right ? "var(--good)" : "var(--hard)",
-        background: mark.right ? "var(--mint)" : "var(--butter)",
-      }}
-    >
-      <p
-        className="flex items-center gap-2 text-sm font-semibold"
-        style={{ color: mark.right ? "var(--mint-ink)" : "var(--butter-ink)" }}
+    <div className="mt-6" aria-live="polite">
+      <div className={`${VERDICT_CLASS[verdict]} flex items-start gap-2.5 rounded-md px-3.5 py-3`}>
+        {mark.right
+          ? <Check size={16} className="mt-0.5 shrink-0" aria-hidden />
+          : <CircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />}
+        <p className="text-[15px]">
+          <strong className="font-semibold">{head}.</strong>
+          {mark.note && <> {mark.note}</>}
+        </p>
+      </div>
+
+      {/* The answer itself, on the card rather than on the tint: it is the one
+          thing worth reading twice, and a form is read letter by letter. */}
+      <div
+        className="mt-4 rounded-md border px-3.5 py-3"
+        style={{ borderColor: "var(--rule)", background: "var(--raised)" }}
       >
-        {mark.right ? <Check size={15} aria-hidden /> : <X size={15} aria-hidden />}
-        {mark.right ? "That is it" : "Not this time"}
-      </p>
-
-      {mark.note && (
-        <p className="mt-2 text-[13.5px]" style={{ color: "var(--ink-2)" }}>{mark.note}</p>
-      )}
-
-      <p className="mt-3 text-[13.5px]" style={{ color: "var(--ink-2)" }}>
-        {task.label}:{" "}
-        <strong lang="et" className="text-[17px]" style={{ color: "var(--ink)" }}>
+        {/* `data-flash-answer` and `data-flash-slot` are how `scripts/test-flash.mjs`
+            learns the form the dictionary holds without copying the app's own
+            derivation into the test. They used to be read off a `label: form`
+            line the panel no longer prints. */}
+        <p
+          lang="et"
+          data-flash-answer=""
+          className="text-[22px] font-semibold leading-tight"
+          style={{ color: "var(--ink)" }}
+        >
           {task.shown.join(" / ")}
-        </strong>
-      </p>
+        </p>
+        <p className="mt-1 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+          <span lang="et" data-flash-slot="">{task.label}</span>
+          {english && <> · the {english}</>}
+        </p>
+      </div>
 
       {task.sentence && (
-        <p lang="et" className="mt-3 text-[15px] leading-snug" style={{ color: "var(--ink-2)" }}>
+        <p lang="et" className="mt-4 text-[15px] leading-snug" style={{ color: "var(--ink-2)" }}>
           {/* The spelling the sentence itself carries, which is not always the
               one the slot leads with: `tuppa` and `toasse` are both the
               illative and a lexicographer writes whichever the sentence
@@ -419,7 +491,7 @@ function Feedback({ task, mark }: { task: FlashPrompt; mark: FlashMark }) {
         </p>
       )}
 
-      <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
+      <p className="mt-4 text-[12.5px]" style={{ color: "var(--ink-3)" }}>
         {task.provenance === "ekilex"
           ? "This form is the one the dictionary records."
           : "This form is worked out from the stem the dictionary records."}{" "}

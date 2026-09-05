@@ -1,8 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CASES } from "@/lib/estonian/cases";
+import { LETTER_CHEER_EVENT } from "@/lib/ux/letterMotion";
 import { ArrowRight } from "lucide-react";
+
+/**
+ * How long each word stays up while the card walks itself, in milliseconds.
+ *
+ * Long enough to read three forms and glance down eleven, short enough that
+ * somebody who has just scrolled to the card sees it change before they
+ * decide it is a table. The forms settle in over about half a second and
+ * the endings draw in a beat behind, so most of this is the card at rest.
+ */
+export const LAP_STEP_MS = 4200;
 
 /**
  * How many, in words, because the two headings inside the card are prose and
@@ -76,6 +87,70 @@ export interface DemoWord {
  */
 export function CaseExplorer({ words }: { words: DemoWord[] }) {
   const [active, setActive] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+  /*
+    THE CARD WALKS ITSELF ONCE, UNTIL SOMEBODY TOUCHES IT.
+
+    The line over the card says "press a word and watch", and a visitor who
+    does not press sees a table. So while the card is on screen and nobody
+    has touched it, it presses the next chip itself every few seconds, once
+    round the five words and back to the first, and stops. One lap rather
+    than for ever, because a card that keeps changing under somebody trying
+    to read a form is a card arguing with its reader. The first press, a key
+    on any chip or focus landing inside the card ends it for good, since a
+    reader who has taken hold of the card does not want it moving on its own.
+
+    It runs only while the card is mostly on screen, through an observer
+    rather than a scroll listener, and not at all for a reader who asked for
+    less motion, for whom a table that changes by itself is exactly the thing
+    they asked not to have. The tab being hidden stops it too: a timer
+    ticking over a page nobody is looking at would come back mid-lap.
+  */
+  const touched = useRef(false);
+  const stepped = useRef(0);
+  useEffect(() => {
+    const el = root.current;
+    if (!el || words.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let timer = 0;
+    const stop = () => { if (timer) { window.clearInterval(timer); timer = 0; } };
+    const stepOnce = () => {
+      if (touched.current || document.hidden) return;
+      if (stepped.current >= words.length) { stop(); return; }
+      stepped.current += 1;
+      setActive((n) => (n + 1) % words.length);
+    };
+    const start = () => { if (!timer && !touched.current) timer = window.setInterval(stepOnce, LAP_STEP_MS); };
+    const hold = () => { touched.current = true; stop(); };
+
+    const seen = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) start(); else stop();
+    }, { threshold: 0.6 });
+    seen.observe(el);
+    // `click` as well as `pointerdown`, because assistive technology and a
+    // scripted press dispatch a click with no pointer in front of it.
+    for (const ev of ["pointerdown", "keydown", "focusin", "click"]) el.addEventListener(ev, hold);
+    return () => {
+      stop();
+      seen.disconnect();
+      for (const ev of ["pointerdown", "keydown", "focusin", "click"]) el.removeEventListener(ev, hold);
+    };
+  }, [words.length]);
+
+  /*
+    Whenever the word changes, whoever changed it, the letters round the card
+    are told. They are the page's, not this component's, so it is an event on
+    `document` rather than a prop, and the name is the motion table's so the
+    two sides cannot spell it differently. Not on mount: a page arriving is
+    not a word changing.
+  */
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return; }
+    document.dispatchEvent(new CustomEvent(LETTER_CHEER_EVENT, { detail: { index: active } }));
+  }, [active]);
+
   const word = words[active] ?? words[0];
   if (!word) return null;
 
@@ -85,7 +160,8 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
 
   return (
     <div
-      className="overflow-hidden rounded-[var(--r-xl)] border"
+      ref={root}
+      className="case-explorer overflow-hidden rounded-[var(--r-xl)] border"
       style={{ background: "var(--surface)", borderColor: "var(--rule)", boxShadow: "var(--shadow)" }}
     >
       <div className="flex flex-wrap items-center gap-2 border-b px-5 py-4" style={{ borderColor: "var(--rule-soft)" }}>
@@ -97,7 +173,7 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
             onClick={() => setActive(n)}
             aria-pressed={active === n}
             lang="et"
-            className={`press rounded-full px-3.5 py-1.5 text-base transition-ui ${active === n ? "chip-spring" : "tap-tint"}`}
+            className={`press letter-key rounded-full px-3.5 py-1.5 text-base transition-ui ${active === n ? "chip-spring" : "tap-tint"}`}
             style={{
               background: active === n ? "var(--accent-deep)" : "var(--raised)",
               color: active === n ? "var(--accent-ink)" : "var(--ink-2)",
@@ -149,7 +225,10 @@ export function CaseExplorer({ words }: { words: DemoWord[] }) {
             {word.principal.map((p, n) => (
               <div
                 key={p.label}
-                className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-[var(--r)] px-4 py-2.5"
+                /* The omastav is the stem every ending on the right is built
+                   on, and `.stem-row` is how the stylesheet points the two
+                   columns at each other under a pointer. */
+                className={`flex min-w-0 flex-1 items-center justify-between gap-3 rounded-[var(--r)] px-4 py-2.5 ${p.value === word.genitive ? "stem-row" : ""}`}
                 style={{ background: "var(--raised)" }}
               >
                 <span lang="et" className="text-xs" style={{ color: "var(--ink-3)" }}>{p.label}</span>

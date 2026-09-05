@@ -12,6 +12,7 @@ import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
 import { sentenceMatches, sentenceTiles } from "@/lib/estonian/cloze";
 import { xpForRating } from "@/lib/gamification/xp";
+import { OPTION_CLASS, VERDICT_CLASS } from "@/lib/ux/verdict";
 
 export interface SentenceTask {
   /** The card this counts against — every mode grades through the same log. */
@@ -264,11 +265,8 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
 
           {/* What has been built so far. */}
           <div
-            className="flex min-h-[68px] flex-wrap content-start items-start gap-2 rounded-[var(--r)] border border-dashed p-3 transition-colors"
-            style={{
-              borderColor: checked === "right" ? "var(--good)" : checked === "wrong" ? "var(--again)" : "var(--rule)",
-              background: checked === "right" ? "var(--good-soft)" : checked === "wrong" ? "var(--again-soft)" : "transparent",
-            }}
+            className={`${checked ? OPTION_CLASS[checked] : ""} flex min-h-[68px] flex-wrap content-start items-start gap-2 rounded-[var(--r)] border border-dashed p-3 transition-colors`}
+            style={checked ? undefined : { borderColor: "var(--rule)", background: "transparent" }}
           >
             {built.length === 0 && (
               <span className="text-xs" style={{ color: "var(--ink-3)" }}>Tap the words in order…</span>
@@ -319,11 +317,8 @@ export function SentenceSession({ tasks: initialTasks }: { tasks: SentenceTask[]
           </div>
 
           {checked && (
-            <div
-              className="pop-in rounded-[var(--r)] px-4 py-3 text-center"
-              style={{ background: checked === "right" ? "var(--good-soft)" : "var(--again-soft)" }}
-            >
-              <p className="label-xs" style={{ color: checked === "right" ? "var(--good-ink)" : "var(--again-ink)" }}>
+            <div className={`${VERDICT_CLASS[checked]} pop-in rounded-[var(--r)] px-4 py-3 text-center`}>
+              <p className="label-xs">
                 {checked === "right" ? "Õige, exactly right." : "Not the order Estonian uses. It goes:"}
               </p>
               <p className="mt-1 flex items-center justify-center gap-2">

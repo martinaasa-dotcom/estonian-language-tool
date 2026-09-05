@@ -10,6 +10,7 @@ import { Chip, Empty, Page, StatTile } from "@/components/ui";
 import { Mascot } from "@/components/brand";
 import { Speak } from "@/components/Speak";
 import type { Badge } from "@/lib/achievements/badges";
+import { OPTION_CLASS, optionState } from "@/lib/ux/verdict";
 import { VOICES } from "@/lib/audio/voice";
 import { conditionFor, describeHearing } from "@/lib/audio/conditions";
 import { useAudioPrefs } from "@/components/AudioPrefs";
@@ -259,21 +260,15 @@ export function ListeningSession({ cards: initialCards }: { cards: ListeningCard
           {card.choices.map((choice, i) => {
             const isCorrectChoice = choice === card.correct;
             const isPicked = choice === selected;
-            const tone = !answered
-              ? { background: "var(--raised)", color: "var(--ink)" }
-              : isCorrectChoice
-                ? { background: "var(--good-soft)", color: "var(--good-ink)" }
-                : isPicked
-                  ? { background: "var(--again-soft)", color: "var(--again-ink)" }
-                  : { background: "var(--raised)", color: "var(--ink-3)" };
+            const state = answered ? OPTION_CLASS[optionState(isCorrectChoice, isPicked)] : "";
             return (
               <button
                 key={choice}
                 type="button"
                 disabled={answered || busy}
                 onClick={() => void pick(choice)}
-                className="press flex items-center gap-2 rounded-[var(--r)] px-4 py-3 text-left text-base font-semibold transition-ui hover:-translate-y-0.5 disabled:cursor-default disabled:hover:translate-y-0"
-                style={tone}
+                className={`${state} press flex items-center gap-2 rounded-[var(--r)] border px-4 py-3 text-left text-base font-semibold transition-ui hover:-translate-y-0.5 disabled:cursor-default disabled:hover:translate-y-0`}
+                style={answered ? undefined : { background: "var(--raised)", borderColor: "transparent", color: "var(--ink)" }}
               >
                 {/* One character, so axe files it as "too short to determine"
                     and the sweep used to drop the measurement on the floor.

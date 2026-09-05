@@ -10,6 +10,7 @@ import { Confetti } from "@/components/Confetti";
 import { Empty, Page, Stat } from "@/components/ui";
 import type { Badge } from "@/lib/achievements/badges";
 import { shuffle } from "@/lib/random/shuffle";
+import { OPTION_CLASS, VERDICT_INK } from "@/lib/ux/verdict";
 
 export interface MatchPair {
   cardId: string;
@@ -199,7 +200,7 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
         >
           <Stat value={`${seconds}s`} label="Time" tone="var(--accent-deep)" />
           <Stat value={pairs.length} label="Pairs" />
-          <Stat value={missed} label="Wrong taps" tone={missed === 0 ? "var(--good)" : undefined} />
+          <Stat value={missed} label="Wrong taps" tone={missed === 0 ? VERDICT_INK.right : undefined} />
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
           <ButtonLink href="/review/match" variant="primary">Another round</ButtonLink>
@@ -250,26 +251,17 @@ export function MatchSession({ pairs: initialPairs, best }: { pairs: MatchPair[]
               disabled={isMatched}
               lang={tile.side === "et" ? "et" : "en"}
               aria-pressed={isSelected}
-              className={`${tile.side === "et" ? "text-md font-semibold " : "text-base "}${isMatched ? "pop-in " : isWrong ? "shake " : ""}press flex min-h-[84px] items-center justify-center rounded-[var(--r-lg)] px-3 py-3 text-center transition-ui hover:-translate-y-0.5 disabled:hover:translate-y-0`}
-              style={{
-                background: isMatched
-                  ? "var(--mint-soft)"
-                  : isWrong
-                    ? "var(--again-soft)"
-                    : isSelected
-                      ? "var(--accent-deep)"
-                      : tile.side === "et" ? "var(--accent-soft)" : "var(--surface)",
-                color: isMatched
-                  ? "var(--good-ink)"
-                  : isWrong
-                    ? "var(--again-ink)"
-                    : isSelected
-                      ? "var(--accent-ink)"
-                      : tile.side === "et" ? "var(--accent-deep)" : "var(--ink)",
-                boxShadow: isMatched || isSelected ? "none" : "var(--shadow-sm)",
-                outline: isWrong ? "2px solid var(--again)" : "none",
-                outlineOffset: -2,
+              className={`${tile.side === "et" ? "text-md font-semibold " : "text-base "}${isMatched ? `pop-in ${OPTION_CLASS.right} ` : isWrong ? `shake ${OPTION_CLASS.wrong} ` : ""}press flex min-h-[84px] items-center justify-center rounded-[var(--r-lg)] px-3 py-3 text-center transition-ui hover:-translate-y-0.5 disabled:hover:translate-y-0`}
+              style={isMatched || isWrong ? {
                 opacity: isMatched ? 0.5 : 1,
+              } : {
+                background: isSelected
+                  ? "var(--accent-deep)"
+                  : tile.side === "et" ? "var(--accent-soft)" : "var(--surface)",
+                color: isSelected
+                  ? "var(--accent-ink)"
+                  : tile.side === "et" ? "var(--accent-deep)" : "var(--ink)",
+                boxShadow: isSelected ? "none" : "var(--shadow-sm)",
                 transform: isSelected ? "scale(0.97)" : undefined,
               }}
             >
