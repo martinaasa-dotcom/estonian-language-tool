@@ -34,6 +34,7 @@
     "test:mobile": "node scripts/test-mobile.mjs",
     "test:containment": "node scripts/test-containment.mjs",
     "wordlist": "tsx scripts/build-wordlist.ts",
+    "forms": "tsx scripts/build-forms.ts",
     "harvest": "tsx scripts/harvest-ekilex.ts",
     "harvest:semantics": "tsx scripts/harvest-semantics.ts",
     "build:frequency": "tsx scripts/build-frequency.ts",

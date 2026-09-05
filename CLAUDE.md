@@ -208,6 +208,56 @@ list of Estonian words. Inserted and never updated, outside `--only-if-empty`'s 
 reason `ensureSearchIndexes` is, because a deployment seeded before this has a full dictionary and
 an empty word list.
 
+**And knowing a word exists is not the same as knowing the spelling in front of you.** `KnownWord`
+holds headwords, and nobody meets Estonian in its headwords: a learner typed `põhjas` into Sõnad,
+which is the seesütlev of `põhi`, and the game told them it was not a word. A headword list does
+that to every case of every noun and every person of every verb, and no amount of adding headwords
+fixes it, because the shape of the question is wrong.
+
+`prisma/data/forms/` is the forms list and `scripts/build-forms.ts` builds it from three sources,
+each openly licensed and each credited in `LICENSE`, on sign-in, in the landing footer and on
+/terms: the Ekilex enumeration this repository already had, Ekilex's own inflection tables for
+160,000 words as published in `KristjanPikhof/Estonian-Wordlist-Enriched-Ekilex` (CC BY 4.0 for the
+Institute's data, CC BY-SA 4.0 for the repository, so the share-alike reaches the built list the way
+Wiktionary's already does), and Vabamorf, Filosoft's open-source analyser and synthesiser (LGPL),
+run over the union with **guessing off on both sides**. That last is the whole of what makes the
+third source safe: `analyze(guess=False)` answers only for a headword the lexicon holds and
+`synthesize(guess=False)` produces a form only from the set of endings the lexicon assigned that
+word, so nothing in the file is a rule applied to a spelling nobody has ever classified. 5,755,280 spellings over 6,044,103
+form-headword pairs; at six letters, which is the length Sõnad plays, 60,812 where the headwords
+gave 7,134.
+
+**It is an accept list, and that is a stronger claim than "not a dictionary".** It holds a spelling
+and the headwords it belongs to, and no gloss, no level, no case label and no sentence, so there is
+nothing in it that could become a card answer, an exam answer, a marking target or a scanned word
+the app vouches for. That is what keeps ADR-005 whole with a synthesiser in the build: on the accept
+side a wrong form costs a non-word being let through on a word game, and on the answer side the same
+form would be drilled. `lib/srs`, `lib/exam`, `lib/assessment`, `lib/scan`, `lib/tutor`, the
+scanner's resolver, the dictionary search and the upsert may not import `lib/dict/forms.ts`, and
+that is asserted rather than described. **Never widen it into the dictionary.** A form the app is
+going to teach still comes from Ekilex or from a rule over a stored stem, exactly as before.
+
+**Files rather than rows, and both halves of that were measured.** The 6,044,103 pairs in Postgres,
+keyed and with the folded index the search would need, are **789 MB**: 333 MB of table and 456 MB of
+index, measured with `pg_total_relation_size` after a `\copy` into a local cluster. That is more than
+the whole rest of this database for a question whose answer never changes and which two screens ask,
+and it is the number the instance ladder on `/funding` is priced against. It is gzipped shards keyed on a form's folded first
+three letters, 3,857 files and 15 MB, read one at a time and indexed by folded spelling on the way
+in. Two letters was tried first and is the wrong depth: 552 files, a median shard of 322 bytes and
+`ka` at 698 KB, which took 449ms to read, decompress and index on the dictionary's own miss path,
+which is exactly where somebody is waiting. Three gives a median of 291 bytes, a worst case of
+170 KB, and a cold lookup of 37 to 99 ms against nothing at all once the shard is held. `outputFileTracingIncludes` is what carries the files onto a deployment, since a bundler
+traces what a module imports rather than what it opens, and without it a hosted Sõnad refuses every
+guess in silence.
+
+**The dictionary asks it before it asks Ekilex, which is the half a learner notices.** A search that
+misses used to go straight to the live lookup with whatever was typed, so `põhjas` was asked of
+Ekilex as a headword, found nothing there either, and came back as "nothing found" about the
+seesütlev of a word the dictionary has a full entry for. The forms list names the headwords first,
+the local search is retried on each, and only then is Ekilex asked, for the word rather than for the
+form. The screen says which word the spelling belongs to. The spelling suggestion stays over the
+headwords, because a suggestion is a link to an entry and an entry is named by its headword.
+
 **The built-in dictionary is built, not typed.** `scripts/expand-seed.ts` produces
 `prisma/data/expanded.json` from two sources with a strict division of labor: every Estonian
 form and every example sentence comes from Ekilex, every English gloss from Wiktionary, and the
@@ -3179,21 +3229,46 @@ every speaker button and every round reads one answer. `lib/audio/clip.ts` is th
 clip's cache key is built, since three copies of "text, voice" is where two of them stop
 agreeing about what is in the cache.
 
-**Slow is the same clip played slower with the pitch held, never a second clip asked of the
-model.** The slow half of every speaker pill used to ask TartuNLP for the sentence again at speed
-0.6, and the service applies that number inside its acoustic model as a duration regulator: each
-phoneme's predicted length is multiplied and the extra frames are copies of the one before, then
-the vocoder renders the lot. Measured on the live service, the pitch does not move (240 Hz against
-237) and the speech is 1.6 times longer, and what a learner hears is every vowel held flat with a
-buzz under it, which was reported as robotic and is. No speaker ever said anything that slowly, so
-a model asked to has nothing to imitate. A pitch-preserving time stretch over real speech keeps
-the recording's own pitch contour and its formants, which is how a video player's 0.75x sounds like
-the same person speaking slowly, and every browser ships one behind `playbackRate` with
-`preservesPitch`. So there is one clip per word and voice, `SLOW_RATE` in `lib/audio/clip.ts` is
-the rate it plays at, and the route no longer accepts a speed at all: one clip rather than two
-halves what is asked of a free service and what three caches hold, and a slow play works offline
-wherever the normal one does. 0.7 rather than 0.6 because that is where the stretch stays clean on
-consonants, which is the part of Estonian a slow play exists to make audible.
+**Every rate is the one clip, stretched in the browser, the way a person is slower.** The slow half
+of every speaker pill used to ask TartuNLP for the sentence again at speed 0.6, and the service
+applies that number inside its acoustic model as a duration regulator: each phoneme's predicted
+length is multiplied and the extra frames are copies of the one before, then the vocoder renders
+the lot. Measured on the live service, the pitch does not move (240 Hz against 237) and the speech
+is 1.6 times longer, and what a learner hears is every vowel held flat with a buzz under it, which
+was reported as robotic and is. The second answer was the browser's own `playbackRate` with
+`preservesPitch`, and it was reported the same way, for two reasons worth keeping apart. The
+browser stretches every part of a word by the same amount, and a person does not: vowels get
+longer, the pauses between words get much longer, and a `t` stays the burst it was, because a slow
+`t` is the same burst after a longer wait; multiplied by 1.4 it is a smeared double click and an
+`s` takes on a hum at the grain rate. And which algorithm does it is each browser's to change in a
+release, so two phones gave two answers to how slow is done.
+
+So `lib/audio/stretch.ts` is the one stretch, pure and measured against the real clips in Node. It
+is WSOLA over the decoded samples, so every output sample is one of the recording's and the pitch,
+the formants and the voice are exactly its own; a short analysis pass marks each ten milliseconds
+as a pause, a burst, hiss or a steady sound, the slowing is spent on the steady sounds and the
+pauses and none of it on the bursts, and a window that would cover a burst is copied straight
+through with no search, because the search that makes a stretched vowel one continuous sound is
+what copied a click twice a few milliseconds apart (three milliseconds long in the clip, eight in
+the stretched copy, before that rule). The lead and the trail are padding and keep their length: a
+longer wait for the word is not a slower word. `lib/audio/clip.ts` is its one caller, asserted, and
+remembers the stretched clip beside the original in the same bounded cache, so a replay and a
+prefetch cost no work at all, and a slow play works offline wherever the normal one does. Nothing
+in `app/`, `lib/` or `components/` may set `playbackRate` again.
+
+**And the normal play is a little under the recording's pace.** TartuNLP reads at a newsreader's
+clip, which was reported as too quick to be clear for a word somebody is meeting for the first
+time, and the report is right about the recording. `NORMAL_RATE` is 0.9, which is a person
+speaking clearly rather than slowly, and every screen that has not asked for a rate gets it; the
+stretch at that rate is inaudible as a stretch. `SLOW_RATE` is 0.65 of the recording, about seven
+tenths of the normal play, with the vowels about 1.6 times as long and the pauses about 2.5 and
+the consonants untouched, which is the part of Estonian a slow play exists to make audible; it
+could not have been that slow on the browser's stretch, which smeared consonants from about 0.7
+down. The rates are of the recording, not of one another, so a condition's `speed` in
+`lib/audio/conditions.ts` still says what it always said. Measured over six real clips at 0.7: the
+median pitch of the voiced frames moved by at most 5 Hz on a 230 Hz voice and not at all on an 86 Hz
+one, every consonant onset in the clip is one onset in the stretched copy, and a two-second
+sentence takes about 30 ms to stretch in Node.
 
 **And what the service sends is not what is kept.** The worker pads every sentence with half a
 second of digital silence on each side, so a word on a card arrived as 0.85 seconds of nothing,
@@ -3201,17 +3276,37 @@ second of digital silence on each side, so a word on a card arrived as 0.85 seco
 the delay that makes a voice feel like a machine warming up, and it was being stored, shipped and
 slowed with the rest. `lib/audio/wav.ts` is what happens to a clip between the service and the
 cache, pure and unit tested: the dead air is cut to 40 ms in front and a natural release behind,
-the cuts are faded so nothing clicks, every voice is leveled to one peak so switching from Mari to
-Kalev in Settings does not mean reaching for the volume key, and the 32-bit float is written as
-16-bit PCM, which halves the store, the egress and the phone's cache for a signal that never
-carried more than sixteen bits out of a vocoder. Nothing in it touches what is said or how fast,
-and a response it cannot read is kept as it came and reported rather than lost. The cache key
-carries a version for it, since a clip under the old key is the untrimmed float. Two voices left
-the allowlist on the same day, `lee` and `luukas`, because the live service answers a request for
-either with a 408 after thirty seconds and the listening round cycles every voice, so two words in
-twelve waited out the route's timeout: a voice is on the list because it answers. Asserted: the
-route forwards no speed and prepares every clip before writing it, and `playbackRate` is set in one
-file.
+the cuts are faded so nothing clicks, every voice is leveled so switching from Mari to Kalev in
+Settings does not mean reaching for the volume key, and the 32-bit float is written as 16-bit PCM,
+which halves the store, the egress and the phone's cache for a signal that never carried more than
+sixteen bits out of a vocoder. Nothing in it touches what is said or how fast, and a response it
+cannot read is kept as it came and reported rather than lost. The cache key carries a version for
+it, since a clip under an old key is a different shape of clip. Two voices left the allowlist on
+the same day, `lee` and `luukas`, because the live service answers a request for either with a 408
+after thirty seconds and the listening round cycles every voice, so two words in twelve waited out
+the route's timeout: a voice is on the list because it answers. Asserted: the route forwards no
+speed and prepares every clip before writing it.
+
+**Three of those rules were wrong about the clip in front of them, and the frame dump said so.**
+The vocoder does not render a pause as digital zero: it renders about a third of a second of hiss
+at -50 dB before the first sound and after the last, inside the worker's pad of true zeros. The
+first trimmer looked at single samples against a floor of -44 dB, and the peaks of that hiss reach
+-40, so it stopped at the hiss and kept the lot. Measured on `tuba`, the "40 ms lead" was 390 ms,
+on every word, on every press, which is the delay the trimmer was written to remove. Silence is
+decided frame by frame now, ten milliseconds of RMS against the loudest frame, at -42 dB, which
+takes the hiss at -50 and keeps a word-final `s` at -34 to -38 and a word-initial `h` at -37; a run
+under three frames over the floor with silence either side is a blip in the hiss, since nothing
+anybody says is twenty milliseconds long on its own. The first sound is at 40 ms on every clip
+measured. Second, a text of two sentences comes back as two renderings joined with half a second
+of zeros and a hiss ramp on each side, so the gap between "Kuidas läheb?" and "Ma lähen poodi"
+measured 0.8 seconds where a speaker leaves about 0.4: `capPauses` cuts a pause inside the clip to
+450 ms, from its middle, faded at the cut, and touches nothing a word is made of. Third, the voices
+were leveled by peak, and a peak is one sample: Kylli's clips came out 2.6 dB louder than Tambet's
+at the same peak, because one voice is smoother and the other has a sharper plosive.
+`normaliseLoudness` brings the RMS of the frames that hold sound to -16 dBFS under a ceiling on the
+peak, and all five voices measured land within a tenth of a decibel of one another. The worker's
+cache version moved with the route's key, because a phone holding the old clips would otherwise
+keep the hiss until it evicted them.
 
 **A response built out of one learner's own rows says it is theirs and is never kept.** The
 framework's silence is not a cache policy: `ImageResponse` stamps `public, immutable,
@@ -5479,7 +5574,8 @@ after any merge that touched its files. `NO_VALUE`, `formatHour`,
 `PrefetchLink`, `lemmasByCardLexeme`, `dictionaryLemmas`, `decoyGlosses`, `forgetSettings`,
 `staleTimes`, `BadgeCheck`, `letterVars`, `leanFor`, `LetterTile`, `letter-key`, `derivedVerbForms`,
 `conjugatedForms`, `pres1sgFrom`, `useAudioPrefs`, `fetchClip`, `playFeedback`, `VOICES`,
-`nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`, `prepareClip`, `SLOW_RATE`,
+`nomPl`, `EMOJI_LEMMAS`, `acceptedUses`, `markDescription`, `prepareClip`, `SLOW_RATE`, `NORMAL_RATE`,
+`stretchedClip`, `stretchMap`, `capPauses`, `normaliseLoudness`,
 `billFor`, `reserveMicros`, `distinctClips`, `MEASURED`, `PRICE_REFS`, `SERVICES`, `.range`,
 `MIN_LEARNERS`, `buildSection`, `researchOptOut`, `participationFrom`, `rungOf`,
 `LADDER_CARD_TYPE`, `pastTheLadder`, `challengeFirst`, `WordIntro`, `caseFits`,
@@ -5530,6 +5626,7 @@ npm run build:frequency  # recount the commonest words (cached corpus, --refresh
 npm run scenes:template  # write the spreadsheet a native speaker fills in, one sentence per scene
 npm run scenes:import    # read it back, gated word by word through the dictionary
 npm run wordlist         # rebuild the 155k headword list in 32 requests (cached, needs EKILEX_API_KEY)
+npm run forms            # rebuild the forms list: every spelling of every word, from Ekilex and Vabamorf (cached, needs python3 with estnltk)
 npm run report:impact    # people, study, retention and conversations outside the app, as text for a funder
 npm run measure:scenes   # how much of a conversation the dictionary can already carry
 npm run eval:scene       # what a model reaches for in a scene, and what the gate withholds (three runs so far; read the ranked list)

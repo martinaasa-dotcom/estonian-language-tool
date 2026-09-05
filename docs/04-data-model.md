@@ -25,7 +25,7 @@ comment on every model that needs one; what belongs here is the map and the reas
 |---|---|
 | `Lexeme` | A dictionary word. **Shared by every learner**: the built-in set plus the Ekilex cache, not anybody's deck. |
 | `Form` | An inflected form. Principal parts are the unpredictable ones a learner memorizes; anything Ekilex retrieved keeps its own slot. |
-| `KnownWord` | Every Estonian headword there is, and nothing else about it. Shared reference data, like `Lexeme`: it answers "is this a word" for the search screen and for a word game's guesses. |
+| `KnownWord` | Every Estonian headword there is, and nothing else about it. Shared reference data, like `Lexeme`. It answered "is this a word" for the search screen and for a word game's guesses until a learner typed `põhjas`; the forms list below answers that now, and this stays as the enumeration the forms list is built from. |
 | `StarredWord` | One learner bookmarking a word. Per learner, unlike the word. |
 | `Card` | One thing to answer about one word, in one of seven shapes, with its FSRS scheduling. |
 | `Review` | Every grade ever given. Append-only, and the one table whose loss cannot be undone. |
@@ -44,6 +44,23 @@ comment on every model that needs one; what belongs here is the map and the reas
 | `SceneGap` | A word a conversation needed and the learner did not have. A child table so "the words my conversations keep needing" is one indexed query rather than a scan over every transcript. |
 | `Encounter` | One day's answer to whether the learner spoke any Estonian to somebody outside the app, in one of three words. Names the errand where the report was about one, and nothing where the conversation was the learner's own. Append-only. |
 | `RateLimit` | One fixed window of one rate limit, counted where every instance can see it, for the four routes the spend ledger does not price. Holds a digest of the caller-and-endpoint key rather than the key, so there is no owner id in it, and every row is deleted once its window has passed. |
+
+### The forms list, which is files rather than rows
+
+`prisma/data/forms/` is every spelling of every one of those headwords and which headword each
+belongs to: 5.8 million spellings over 6.0 million form-headword pairs, built by
+`scripts/build-forms.ts` from Ekilex's own inflection tables and from Vabamorf's synthesiser with
+guessing off. It is what answers "is this a word" for the search screen and for Sonad's guesses,
+because a headword list cannot: `põhjas` is the seesütlev of `põhi` and was refused to a learner as
+not a word.
+
+It is not a table for the reason it is not a dictionary. Those 6,044,103 pairs measured 789 MB in
+Postgres, 333 MB of table and 456 MB of index, for a question whose answer never changes and which
+two screens ask; as gzipped shards keyed on a form's folded first three letters they are 15 MB in
+the repository and one small read per lookup, 37 to 99 ms cold and nothing at all warm. And it holds a spelling and a headword
+and nothing else: no gloss, no level, no case label, so nothing read from it can become a card, a
+paper, a marking target or a scanned word the app vouches for. `lib/srs`, `lib/exam`,
+`lib/assessment`, `lib/scan` and the scanner's resolver may not import it, which is asserted.
 
 ## The values a string column may take
 

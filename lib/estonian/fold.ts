@@ -43,8 +43,14 @@ export const FOLD: Readonly<Record<string, string>> = {
 
 /** Strips Estonian diacritics, so `sona` finds `sõna`. Lowercases on the way. */
 export function fold(text: string): string {
-  return [...text.toLowerCase()].map((ch) => FOLD[ch] ?? ch).join("");
+  // One regex pass rather than a spread, a map and a join: the forms list
+  // folds a quarter of a million lines when a shard is first read, and the
+  // spread was most of that time.
+  return text.toLowerCase().replace(FOLDABLE, (ch) => FOLD[ch] ?? ch);
 }
+
+/** The six letters, as one character class built off the table above. */
+const FOLDABLE = new RegExp(`[${Object.keys(FOLD).join("")}]`, "g");
 
 /** The same table for Postgres's `translate()`: the characters to replace. */
 export const FOLD_FROM = Object.keys(FOLD).join("");

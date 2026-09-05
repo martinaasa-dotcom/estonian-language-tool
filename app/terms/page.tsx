@@ -131,6 +131,24 @@ export default function TermsPage() {
           licensed <strong>CC BY-SA 4.0</strong>. It decides nothing but an order: every
           word shown is the dictionary&rsquo;s own.
         </P>
+        <P>
+          Whether a spelling is an Estonian word at all, and which word it is a form of,
+          is answered by a forms list built from Ekilex&rsquo;s own inflection tables, as
+          published in <a
+            href="https://github.com/KristjanPikhof/Estonian-Wordlist-Enriched-Ekilex"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+          >Estonian-Wordlist-Enriched-Ekilex</a> (<strong>CC BY-SA 4.0</strong>), and
+          from <a
+            href="https://github.com/Filosoft/vabamorf"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+          >Vabamorf</a>, Filosoft&rsquo;s open-source morphological tools for Estonian
+          (<strong>LGPL</strong>). That list decides whether a word is accepted and never
+          what a card teaches: no form from it is ever drilled or marked against.
+        </P>
       </S>
 
       <S title="Ending it">

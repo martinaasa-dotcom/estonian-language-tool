@@ -571,17 +571,22 @@ check("the mock paper's minutes and marks are the ones the exam doc cites", () =
 });
 
 /*
-  SLOW IS PLAYBACK, NOT A SECOND CLIP.
+  EVERY RATE IS THE ONE CLIP, STRETCHED IN ONE PLACE, AND NEVER BY THE BROWSER.
 
   TartuNLP's `speed` is a duration regulator inside the acoustic model, and a
   clip asked for at 0.6 is every phoneme held on repeated frames: flat, buzzing,
-  and reported as robotic. The route forwards no speed, the one clip is played
-  slower with the pitch held in lib/audio/clip.ts, and every clip is trimmed,
-  leveled and written as 16-bit by lib/audio/wav.ts before it is cached. A
-  second file setting `playbackRate` would be a second answer to how slow is
-  done, and a `speed` reappearing in the route would be the model doing it.
+  and reported as robotic. The browser's `playbackRate` with `preservesPitch`
+  was the second answer and was reported the same way, because it stretches a
+  consonant burst by as much as a vowel and each browser does it differently.
+  So the route forwards no speed, every clip is trimmed, its pauses capped and
+  its voices leveled by lib/audio/wav.ts before it is cached, and the one clip
+  is stretched by lib/audio/stretch.ts, which spends the slowing on the vowels
+  and the pauses and keeps the consonants whole, from lib/audio/clip.ts alone.
+  A `playbackRate` anywhere would be the browser's stretch back beside ours, a
+  `speed` in the route would be the model doing it, and a second importer of
+  the stretch would be a second answer to how slow is done.
 */
-check("slow is the same clip played slower, and every clip is prepared before it is kept", () => {
+check("every rate is the one clip stretched in one place, and every clip is prepared before it is kept", () => {
   const route = code("app/api/tts/route.ts");
   assert.doesNotMatch(route, /\bspeed\b/, "the speech route is asking the model to slow down again");
   assert.match(route, /prepareClip\(raw\)/, "the route stopped calling prepareClip on what the service sent");
@@ -591,13 +596,21 @@ check("slow is the same clip played slower, and every clip is prepared before it
     "a clip reaches the cache without going through prepareClip",
   );
   const player = code("lib/audio/clip.ts");
-  assert.match(player, /preservesPitch\s*=\s*true/, "the slow play stopped holding the pitch");
-  assert.match(player, /playbackRate\s*=\s*SLOW_RATE/, "the slow play stopped reading SLOW_RATE");
-  const others = ["app", "lib", "components"]
+  assert.match(player, /stretch\(decodeWav\(/, "the player stopped stretching the clip it plays");
+  assert.match(player, /request\.slow\) return SLOW_RATE/, "the slow play stopped reading SLOW_RATE");
+  assert.match(player, /return NORMAL_RATE/, "the everyday play stopped reading NORMAL_RATE");
+  assert.match(player, /stretchedClip\(request, rateFor\(request\)\)/, "playClip plays a clip at a rate it did not work out through rateFor");
+  const browserStretch = ["app", "lib", "components"]
     .flatMap((dir) => sourceFiles(dir))
-    .filter((file) => file !== join("lib", "audio", "clip.ts"))
     .filter((file) => /playbackRate|preservesPitch/.test(code(file)));
-  assert.deepEqual(others, [], "a second file decides how slow a clip plays");
+  assert.deepEqual(browserStretch, [], "the browser's own stretch is back beside ours");
+  const importers = ALL
+    .filter((file) => !/\.(test|itest)\.tsx?$/.test(file))
+    .filter((file) => /from "(\.\/stretch|@\/lib\/audio\/stretch)"/.test(code(file)))
+    .sort();
+  assert.deepEqual(importers, ["lib/audio/clip.ts"], "a second file decides how a clip is stretched");
+  const stretcher = code("lib/audio/stretch.ts");
+  assert.doesNotMatch(stretcher, /AudioContext|window\.|document\.|import /, "the stretch stopped being pure");
 });
 
 check("nothing plays a clip outside lib/audio/clip.ts", () => {
@@ -644,9 +657,9 @@ check("the room a clip is heard in is made in one module, and only the rounds th
     "an AudioContext is opened somewhere other than the mixer and the feedback tones",
   );
   assert.match(code("lib/audio/clip.ts"), /playThrough\(/, "playClip stopped routing a condition through the mixer");
-  // The rate is a playback rate on the element with the pitch held, never a
-  // number sent to the service, which is the rule the slow play states.
-  assert.match(code("lib/audio/clip.ts"), /playbackRate\s*=\s*condition\.speed/, "the player stopped reading the condition's speed");
+  // The rate is the one stretch over the one clip, never a number sent to the
+  // service, which is the rule the slow play states.
+  assert.match(code("lib/audio/clip.ts"), /return request\.condition\.speed/, "the player stopped reading the condition's speed");
   assert.doesNotMatch(code("lib/audio/clip.ts"), /speed:/, "a speed is being sent to the speech service again");
 
   for (const file of [
@@ -6951,6 +6964,27 @@ check("every cache the service worker writes to is bounded, except the one that 
     /keys\.filter\(\(k\) => k\.startsWith\("kodukeel-"\) && !k\.startsWith\(VERSION\)\)/,
     "activate stopped deleting the caches of previous versions",
   );
+
+  /*
+    AND NO SUITE TYPES THAT VERSION OUT AGAIN.
+
+    `smoke-offline.mjs` opened `kodukeel-v3-audio` by name in both halves of
+    its trim check, so bumping VERSION to v4 left it filling one cache with
+    420 entries and asking a different one whether it had been trimmed: 420
+    in, 420 out, reported as a worker that does not trim, on a worker that
+    trims perfectly. A failure that misnames its cause sends the reader into
+    the wrong file, which is the rule test-restore.mjs has a paragraph about,
+    and the cause here is the fault the build cache already has one layer
+    down: a name typed by hand drifts from the thing it names. A suite reads
+    the version off a cache the worker actually opened.
+  */
+  for (const file of sourceFiles("scripts", /\.mjs$/)) {
+    assert.doesNotMatch(
+      code(file),
+      /"kodukeel-v\d/,
+      `${file} types the worker's cache version, which drifts the day VERSION is bumped`,
+    );
+  }
 });
 
 /**
@@ -8638,10 +8672,11 @@ check("Sonad decides nothing on the client but what to type", () => {
 
     TWO WORD LISTS, AND THEY ARE NOT THE SAME LIST. The answers are graded
     dictionary entries, because an answer has to be a word the app can teach
-    and link to. The guesses are `KnownWord`, the 154,995 headwords the Ekilex
-    enumeration brought back, because telling somebody an ordinary Estonian
-    word is not a word is the one thing a game like this must never do, and the
-    built dictionary alone would do it several times a round.
+    and link to. The guesses are the forms list, every spelling of every
+    headword Ekilex holds, because telling somebody an ordinary Estonian word
+    is not a word is the one thing a game like this must never do, and the
+    built dictionary alone would do it several times a round. The headword
+    list did it too: `põhjas` was refused to a learner as not a word.
   */
   const action = /export async function recordSonad\(([\s\S]*?)\n\}/.exec(code("app/actions.ts"))?.[1] ?? "";
   assert.ok(action, "recordSonad has gone, or changed shape past recognition");
@@ -8665,11 +8700,12 @@ check("Sonad decides nothing on the client but what to type", () => {
     "Sonad no longer takes its guesses from the whole language",
   );
   assert.match(picker, /bandsAround\(/, "Sonad's answer is no longer banded on the learner's level");
-  // And the far end of that: the wide list really is the enumeration's table
-  // and not the built dictionary, which would refuse a real word every round.
+  // And the far end of that: the wide list really is the forms list and not
+  // the built dictionary or the headword table, either of which refuses a
+  // real word every round.
   assert.match(
-    code("lib/dict/facts.ts"), /guessableWords[\s\S]{0,600}"KnownWord"/,
-    "the guess list is no longer read from KnownWord",
+    code("lib/dict/facts.ts"), /guessableWords[\s\S]{0,600}formsOfLength\(/,
+    "the guess list is no longer read from the forms list",
   );
 
   /*
@@ -8694,6 +8730,57 @@ check("Sonad decides nothing on the client but what to type", () => {
     /prefers-reduced-motion[\s\S]{0,400}sonad-settle/,
     "Sonad's movements are not held under prefers-reduced-motion",
   );
+});
+
+check("the forms list is an accept list and never an answer", () => {
+  /*
+    `põhjas` WAS REFUSED AS NOT A WORD, and the fix is a list of 5.8 million
+    spellings from every source that may be used: Ekilex's own inflection
+    tables and Vabamorf's synthesiser with guessing off (`scripts/build-forms.ts`).
+    What keeps that inside ADR-005 is which side of the app reads it. On the
+    accept side a synthesised form costs a non-word being let through on a
+    word game; on the answer side the same form would be drilled, or marked
+    against, or confirmed off a photograph as a word with principal parts it
+    does not have. So the list decides "is that a word" and "which word", and
+    nothing that builds a card, marks a paper, scores a level or vouches for a
+    scanned word may reach it.
+  */
+  const store = "lib/dict/forms.ts";
+  assert.ok(existsSync(store), "the forms list reader has gone");
+  const forbidden = ["lib/srs", "lib/exam", "lib/assessment", "lib/scan", "lib/tutor"]
+    .flatMap((dir) => sourceFiles(dir))
+    .concat(["lib/dict/resolveScan.ts", "lib/dict/search.ts", "lib/dict/upsert.ts"])
+    .filter((file) => /from "(@\/lib\/dict\/forms|\.\/forms)"/.test(code(file)));
+  assert.deepEqual(forbidden, [], "a module on the answer side reads the forms list");
+
+  // And the reader is a file read, never a table: six million rows in Postgres
+  // is half a gigabyte on the ladder /funding measures, for a yes or no.
+  assert.doesNotMatch(code(store), /@\/lib\/db|@prisma\/client|\bprisma\./, "the forms list has become a database read");
+
+  // The game's length is one the builder wrote a file for, because the list
+  // is read off that file and a length nobody built answers with nothing,
+  // which on a word game is every guess refused.
+  const sonad = code("lib/games/sonad.ts");
+  const length = /export const SONAD_LENGTH = (\d+);/.exec(sonad)?.[1];
+  assert.ok(length, "SONAD_LENGTH has gone");
+  const manifest = JSON.parse(read("prisma/data/forms/manifest.json")) as { lengths?: Record<string, number> };
+  assert.ok(
+    (manifest.lengths?.[length] ?? 0) > 7_134,
+    `the forms list holds no file for length ${length}, or fewer spellings than the headword list had; run npm run forms`,
+  );
+  assert.ok(existsSync(join("prisma/data/forms", `length-${length}.txt.gz`)), "the length file the game reads is missing");
+
+  // And the deployment carries the files, which a bundler does not do for a
+  // path only ever built at runtime.
+  assert.match(
+    read("next.config.ts"), /outputFileTracingIncludes[\s\S]{0,300}prisma\/data\/forms/,
+    "the forms list is not traced into the deployment, so a hosted Sõnad refuses every guess",
+  );
+
+  // Every source is credited where the others are.
+  for (const file of ["LICENSE", "app/(chromeless)/sign-in/page.tsx", "app/(chromeless)/welcome/page.tsx", "app/terms/page.tsx"]) {
+    assert.match(read(file), /Vabamorf/, `${file} does not credit Vabamorf`);
+  }
 });
 
 check("a crossword clue has one answer and says what kind of word it wants", () => {

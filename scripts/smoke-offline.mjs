@@ -197,19 +197,32 @@ check(
   cacheNames.join(", ") || "none",
 );
 
-const trimmed = await page.evaluate(async () => {
+/*
+  THE VERSION IS READ OFF THE WORKER, NEVER TYPED HERE.
+
+  Both halves of this named `kodukeel-v3-audio` outright, so the day the
+  worker's own `VERSION` went to v4 they filled one cache and asked about
+  another: 420 entries in, 420 entries out, reported as a trim that does not
+  run, on a worker that was trimming perfectly. That is the fault the build
+  cache has one layer down, where the name is typed by hand and drifts from
+  the thing it names, arriving in the suite that exists to catch it. The name
+  is derived from a cache the worker actually opened.
+*/
+const audioCache = `${(cacheNames[0] ?? "kodukeel-vX-none").replace(/-[^-]+$/, "")}-audio`;
+
+const trimmed = await page.evaluate(async (name) => {
   /*
     The worker's own `trim`, exercised through the worker rather than copied:
     entries are put into the real cache and the worker is asked to serve a
     tts request, whose handler trims after writing. Playwright cannot call
     into a worker's scope, so this fills the cache and then plays a clip.
   */
-  const cache = await caches.open("kodukeel-v3-audio");
+  const cache = await caches.open(name);
   for (let i = 0; i < 420; i++) {
     await cache.put(new Request(`/api/tts?k=filler-${i}`), new Response("x"));
   }
   return (await cache.keys()).length;
-});
+}, audioCache);
 check("a cache can be filled past its ceiling to prove the trim runs", trimmed >= 420, `${trimmed}`);
 
 await page.evaluate(async () => {
@@ -223,8 +236,8 @@ await page.evaluate(async () => {
   }).catch(() => undefined);
 });
 await page.waitForTimeout(2500);
-const afterTrim = await page.evaluate(async () =>
-  (await caches.open("kodukeel-v3-audio")).keys().then((k) => k.length));
+const afterTrim = await page.evaluate(async (name) =>
+  (await caches.open(name)).keys().then((k) => k.length), audioCache);
 check("the audio cache is trimmed back to its ceiling", afterTrim <= 400, `${afterTrim} entries`);
 
 /*

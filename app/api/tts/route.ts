@@ -96,7 +96,7 @@ export async function POST(request: Request) {
   }
 
   const speaker = voice ?? voiceFrom(process.env.TTS_SPEAKER ?? DEFAULT_VOICE);
-  // `v2` because a clip under the old key is float32 with half a second of
+  // `v4` because a clip under the old key is float32 with half a second of
   // silence on each end, and the key has to say which shape is behind it.
   const hash = createHash("sha256").update(`v3|${text}|${speaker}`).digest("hex");
   // Content-addressed and shared across instances and users: a clip fetched

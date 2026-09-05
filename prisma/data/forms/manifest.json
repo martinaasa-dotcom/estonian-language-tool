@@ -1,0 +1,25 @@
+{
+  "builtOn": "2026-09-05",
+  "sources": {
+    "headwords": {
+      "rows": 164111,
+      "from": "prisma/data/wordlist.txt and the inflection file's own headwords"
+    },
+    "inflectionFile": {
+      "pairs": 5360521,
+      "from": "https://raw.githubusercontent.com/KristjanPikhof/Estonian-Wordlist-Enriched-Ekilex/main/data/est_inflected_forms.tsv",
+      "licence": "CC BY 4.0 (EKI), CC BY-SA 4.0 (repository)"
+    },
+    "vabamorf": {
+      "pairs": 678822,
+      "from": "scripts/lib/synthesize-forms.py, guessing off",
+      "licence": "LGPL"
+    }
+  },
+  "spellings": 5755280,
+  "pairs": 6044103,
+  "shards": 3857,
+  "lengths": {
+    "6": 60812
+  }
+}

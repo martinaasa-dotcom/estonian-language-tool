@@ -53,6 +53,19 @@ const config: NextConfig = {
     is the same argument, and the cost is a few seconds on a deploy.
   */
   eslint: { ignoreDuringBuilds: false },
+
+  /*
+    THE FORMS LIST TRAVELS WITH THE DEPLOYMENT.
+
+    `lib/dict/forms.ts` reads `prisma/data/forms/` at runtime, and a bundler
+    traces what a module imports rather than what it opens, so without this a
+    hosted function has the reader and none of the files: every dictionary
+    miss says "nothing found" and Sõnad refuses every guess, silently, on the
+    one platform the app is measured on. Traced into every function, since the
+    two readers are a page and a Server Action and the list is one set of
+    files either way.
+  */
+  outputFileTracingIncludes: { "/**": ["./prisma/data/forms/**"] },
   serverExternalPackages: ["@prisma/client"],
   experimental: {
     /*
