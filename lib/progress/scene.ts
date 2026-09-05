@@ -535,7 +535,7 @@ function briefingOf(run: SceneRunPlan, glosses: ReadonlyMap<string, string>): Br
       card: prop.card,
       /*
         A lemma the dictionary cannot gloss is left out rather than printed as
-        itself: a scene names its words as a request the harvest either honours
+        itself: a scene names its words as a request the harvest either honors
         or reports, so this is a gap to notice and not a place to fall back to
         Estonian on a card that says it is English.
       */

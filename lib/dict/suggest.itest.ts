@@ -52,7 +52,7 @@ afterAll(async () => { await wipe(); await prisma.$disconnect(); });
  * One word per headline and no filler around it, which was learned here rather
  * than assumed: the first version wrote `<word> ja veel` and the row came back
  * carrying `vesi`, because `veel` is the adessive of it and the matcher
- * recognised the case. That is the gate working, and it is also why a stub for
+ * recognized the case. That is the gate working, and it is also why a stub for
  * it cannot pad its headlines with real Estonian.
  */
 function feedSays(words: string[]) {
@@ -164,7 +164,7 @@ describe("the suggestion row", () => {
     feedIsDown();
     for (let i = 0; i < 10; i += 1) {
       const row = await suggestWords(OWNER, new Date(), () => 0);
-      expect(row.source, "a dead feed still labelled the row as news").not.toBe("news");
+      expect(row.source, "a dead feed still labeled the row as news").not.toBe("news");
       expect(row.words.length).toBe(12);
       expect(row.label).not.toBe("");
     }

@@ -7,7 +7,7 @@ import {
 import { CASES, caseByKey } from "@/lib/estonian/cases";
 import { mulberry32 } from "@/lib/assessment/items";
 
-/** The A1 colours, which is what a question about `must` should be built from. */
+/** The A1 colors, which is what a question about `must` should be built from. */
 const colour = (text: string): GlossOption => glossOption({ text, pos: "ADJECTIVE", band: "A1", theme: "varvid" });
 const COLOURS = ["black", "white", "red", "blue", "green", "yellow"].map(colour);
 
@@ -29,7 +29,7 @@ const pickGlosses = (seed: number, candidates: GlossOption[]) =>
   });
 
 describe("a wrong answer is picked for being hard to cross out", () => {
-  it("keeps a beginner's colour among colours rather than among C1 nouns", () => {
+  it("keeps a beginner's colour among colors rather than among C1 nouns", () => {
     for (let seed = 1; seed < 40; seed++) {
       const set = pickGlosses(seed, [...COLOURS, ...FAR]);
       expect(set).not.toBeNull();
@@ -97,7 +97,7 @@ describe("what counts as the same answer", () => {
   it("prefers a sentence that has to be read to one that can be scanned", () => {
     const answer = sentenceOption("I am in the room right now.");
     const overlapping = sentenceOption("The room is cold today.");
-    const unrelated = sentenceOption("He sold his bicycle to a neighbour last year.");
+    const unrelated = sentenceOption("He sold his bicycle to a neighbor last year.");
     expect(sentenceNearness(overlapping, answer)).toBeGreaterThan(sentenceNearness(unrelated, answer));
   });
 });

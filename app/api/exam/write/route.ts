@@ -67,7 +67,7 @@ export async function POST(request: Request) {
   }
 
   // As in /api/write: tells a reader that never ran from one that ran and was
-  // then withheld. Only the first is owed its authorisation back.
+  // then withheld. Only the first is owed its authorization back.
   let settled = false;
   try {
     const { graded, usage } = await gradeComposition(config, text, level);
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       quote, so any Estonian form in the reply that the learner did not write is
       a form the model reached for on its own. The note is withheld whole in that
       case, because a correction spelled out of a model's own knowledge is the
-      single failure this codebase is organised to prevent.
+      single failure this codebase is organized to prevent.
 
       That empty allowlist is also why this is the route where the check is most
       likely to withhold over an English word: with no glosses and no forms to

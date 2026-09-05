@@ -6,7 +6,7 @@
  * `provenance: EKILEX`; nothing here is generated.
  *
  * Dictionary data is CC BY 4.0, so the UI credits it on every entry — attribution
- * is a condition of the licence, not a courtesy.
+ * is a condition of the license, not a courtesy.
  */
 const BASE = "https://ekilex.ee/api";
 

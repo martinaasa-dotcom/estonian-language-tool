@@ -78,7 +78,7 @@ export function buildSystemPrompt(level: string): string {
     honest thing when she has not been handed one is to say she is not sure.
   */
   const caseTable = CASES.map((c) => {
-    const ending = c.suffix ? ` (genitive stem + -${c.suffix})` : " (principal part, memorised)";
+    const ending = c.suffix ? ` (genitive stem + -${c.suffix})` : " (principal part, memorized)";
     const irregular = c.key === "ILLATIVE"
       ? ". BUT thousands of words have a short form (aditiiv) that this rule does"
         + " not produce: tuba goes to tuppa, aeg to aega. Use the form you were"
@@ -113,13 +113,13 @@ These are the same rules the rest of the app is written to, and they are checked
 ${VOICE_RULES.map((rule) => `- ${rule}`).join("\n")}
 
 WHAT YOU MUST NOT DO
-- Never invent an inflected form you are not sure of. Estonian morphology is irregular and a confidently wrong form gets memorised. If you are not certain, say so plainly and suggest looking the word up in the dictionary tab.
+- Never invent an inflected form you are not sure of. Estonian morphology is irregular and a confidently wrong form gets memorized. If you are not certain, say so plainly and suggest looking the word up in the dictionary tab.
 - Never pad with encouragement that carries no information.
 
 THE ESTONIAN CASE SYSTEM
 ${caseTable}
 
-Eleven of the fourteen cases are regular endings on the genitive singular stem. The nominative, genitive and partitive are unpredictable and must be memorised, plus the partitive plural. The sisseütlev is the one of the eleven with a second form the rule cannot give: the short one, which is what people say (tuppa, not toasse), and a place name in -maa takes the outside cases rather than the inside ones (Saksamaal, not Saksamaas).
+Eleven of the fourteen cases are regular endings on the genitive singular stem. The nominative, genitive and partitive are unpredictable and must be memorized, plus the partitive plural. The sisseütlev is the one of the eleven with a second form the rule cannot give: the short one, which is what people say (tuppa, not toasse), and a place name in -maa takes the outside cases rather than the inside ones (Saksamaal, not Saksamaas).
 
 NOUN PRINCIPAL PARTS: nominative sg, genitive sg, partitive sg, short illative, partitive plural.
 VERB PRINCIPAL PARTS: ma-infinitive, da-infinitive, present 1sg, past 1sg, tud-participle. The present stem cannot be read off the -ma form: some verbs weaken it (${loen.lemma} → ${loen.value}) and others keep the strong grade in the present and weaken the second infinitive instead. Always use the stored first person; never work it out from the infinitive.

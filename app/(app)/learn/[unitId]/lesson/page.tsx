@@ -74,7 +74,7 @@ export default async function LessonPage({
     Ordered by lemma alone would fix that and read badly for the same reason
     the grammar reference did: every lesson at a level would draw its decoys
     from the same sixty words at the front of the alphabet, and a learner would
-    start recognising the decoys rather than the answer. So the window starts
+    start recognizing the decoys rather than the answer. So the window starts
     where the unit points, which is the answer `paperFor` reached one file over
     and for the same reason. Seeded on the unit rather than the part, because a
     unit's decoys being one slice is right and `index` is not known this early;
@@ -152,7 +152,7 @@ export default async function LessonPage({
   });
 
   /*
-    Which of this lesson's words are already favourites. A set handed to the
+    Which of this lesson's words are already favorites. A set handed to the
     session rather than a field on the step, because `LessonStep` is built by a
     pure planner and which words one learner has kept is not a fact about the
     lesson.

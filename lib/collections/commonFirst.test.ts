@@ -40,7 +40,7 @@ describe("commonFirst", () => {
     expect(order(none)).toEqual(none);
   });
 
-  it("recognises exactly what the generated table holds", () => {
+  it("recognizes exactly what the generated table holds", () => {
     expect(isCommonWord(COMMON_WORDS[0]!.lemma)).toBe(true);
     expect(isCommonWord(COMMON_WORDS[COMMON_WORDS.length - 1]!.lemma)).toBe(true);
     expect(isCommonWord("aberratsioon")).toBe(false);

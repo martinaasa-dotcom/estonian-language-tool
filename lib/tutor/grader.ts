@@ -240,7 +240,7 @@ async function callForJson(
  * used, both settled by `lib/exam/score.ts` against the dictionary. Nothing this
  * returns can move a mark. A model that decided whether somebody's Estonian was
  * good enough would be deciding whether they are ready to sit a real
- * examination, which is exactly the judgement it is least qualified to make.
+ * examination, which is exactly the judgment it is least qualified to make.
  *
  * So the prompt asks for the thing a model is genuinely good at: reading a text
  * and saying what a teacher would say about it, in English, without spelling a
@@ -306,7 +306,7 @@ export async function gradeComposition(
  * nothing else, so the most it can say about a sentence is whether it hangs
  * together. Here the model is told what the picture is, so it can say the
  * thing a teacher would say first: that the sentence is fine Estonian and is
- * not about the picture. That is a judgement about meaning rather than about
+ * not about the picture. That is a judgment about meaning rather than about
  * morphology, which is the half a model is actually good at.
  *
  * The scene's words are given in English as well as Estonian, and the Estonian

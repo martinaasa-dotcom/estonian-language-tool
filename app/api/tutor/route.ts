@@ -70,10 +70,10 @@ export async function POST(request: Request) {
   /*
     NOTHING IS BOOKED UNTIL THE REQUEST IS WORTH ANSWERING.
 
-    The ledger writes a call down when it authorises it, which is what stops
+    The ledger writes a call down when it authorizes it, which is what stops
     ten tabs reading the same "under the limit"; the cost of that is that a
     booking made before the body is read is a booking nothing hands back.
-    This route authorised first, so four POSTs of `{"messages":[]}` left four
+    This route authorized first, so four POSTs of `{"messages":[]}` left four
     pending calls against the global budget and spent four of the learner's
     ten for the day, having answered nothing. /api/scan and /api/write
     validate first and this now matches them.
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
       }));
     }, live);
   } catch (error) {
-    // Nothing was spent and nothing was answered, so the authorisation is
+    // Nothing was spent and nothing was answered, so the authorization is
     // handed back: a deployment with a bad key must not ration its learners
     // over calls none of them received.
     const booking = decision.reservation;
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
  * fact: any Estonian-looking word in Anu's own prose (never a FIX: or VOCAB:
  * line, both already boxed and tagged in the UI, so `chatEstonianTokens`
  * skips them) is looked up the dictionary the same way a word read off a
- * scanned page is (ADR-021), and anything it does not recognise gets named
+ * scanned page is (ADR-021), and anything it does not recognize gets named
  * in a trailing line the learner actually sees, rather than trusted in
  * silence.
  *

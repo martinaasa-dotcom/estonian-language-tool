@@ -2,7 +2,7 @@
  * WHICH LANGUAGE A MEANING IS GIVEN IN.
  *
  * English is the default and stays the default, because a missing row has to
- * read as the behaviour everybody already had. It is not the right answer for
+ * read as the behavior everybody already had. It is not the right answer for
  * most people learning Estonian in Estonia, though, which is the reason this
  * exists: a learner who already speaks Russian or Ukrainian and is told that
  * `kohv` is "coffee" has to go through a third language to reach a word their

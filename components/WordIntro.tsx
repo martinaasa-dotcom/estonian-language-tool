@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Languages, Loader2 } from "lucide-react";
 import { Chip } from "@/components/ui";
 import { Speak } from "@/components/Speak";
@@ -167,6 +167,37 @@ function SentenceEnglish({ lexemeId, et, en, canTranslate }: {
   const [got, setGot] = useState<string | null>(en);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const asked = useRef(false);
+
+  const translate = () => {
+    if (!lexemeId) return;
+    setError(null);
+    start(async () => {
+      const result = await translateExample(lexemeId, et);
+      if (result.ok) setGot(result.en);
+      else setError(result.error);
+    });
+  };
+
+  /*
+    ASKED FOR ON ARRIVAL, NOT ON A PRESS.
+
+    The sentence a word is taught with is the one line on the screen a
+    beginner most needs in English and it used to sit behind a button, so
+    most people met the word glossed and the sentence not. The call is made
+    once per sentence per deployment: `translateExample` stores what comes
+    back, so the second learner to meet this word reads it for free, and it is
+    metered like every other call. A deployment with no model is offered
+    nothing rather than promised something (`canTranslate`).
+  */
+  useEffect(() => {
+    if (got || !canTranslate || !lexemeId || asked.current) return;
+    asked.current = true;
+    translate();
+    // Once per sentence: the ref is the guard, and the sentence is the key
+    // the parent mounts this on.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (got) {
     return (
@@ -184,19 +215,12 @@ function SentenceEnglish({ lexemeId, et, en, canTranslate }: {
       <button
         type="button"
         disabled={pending}
-        onClick={() => {
-          setError(null);
-          start(async () => {
-            const result = await translateExample(lexemeId, et);
-            if (result.ok) setGot(result.en);
-            else setError(result.error);
-          });
-        }}
+        onClick={translate}
         className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-semibold disabled:opacity-50"
         style={{ color: "var(--accent-deep)" }}
       >
         {pending
-          ? <><Loader2 size={12} className="animate-spin" aria-hidden /> Translating…</>
+          ? <><Loader2 size={12} className="animate-spin" aria-hidden /> Putting it into English…</>
           : <><Languages size={12} aria-hidden /> Say the whole thing in English</>}
       </button>
       {error && <p role="alert" className="mt-1 text-xs" style={{ color: "var(--again-ink)" }}>{error}</p>}

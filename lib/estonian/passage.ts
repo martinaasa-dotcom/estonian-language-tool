@@ -15,7 +15,7 @@ import { fold } from "@/lib/estonian/fold";
  * The trick that makes this safe is that nothing is generated. The answer to a
  * cloze is the word that was already sitting in the learner's own text, so it is
  * authoritative by construction — more so than a derived form, because a native
- * writer put it there. The app's only job is to notice which words it recognises
+ * writer put it there. The app's only job is to notice which words it recognizes
  * and blank them.
  *
  * This module is pure. It knows nothing about the database; the caller supplies

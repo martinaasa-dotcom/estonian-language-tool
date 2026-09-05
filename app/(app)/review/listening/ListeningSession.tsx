@@ -41,9 +41,9 @@ export interface ListeningCard {
    * speed, over noise or down a phone line (lib/audio/conditions.ts).
    */
   reps: number;
-  /** The dictionary entry behind the card, for the favourite button. */
+  /** The dictionary entry behind the card, for the favorite button. */
   lexemeId: string | null;
-  /** Whether this word is already one of the learner's favourites. */
+  /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
 }
 

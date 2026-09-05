@@ -98,7 +98,7 @@ describe("which parts of speech gradate", () => {
       weakened, it was replaced.
 
       This used to name `kes : kelle`, which now reads NONE because the
-      nominative -s is peeled before the centres are compared (see
+      nominative -s is peeled before the centers are compared (see
       `isDeclensionTypeNotGradation`). That is a better answer and not one to
       lean on: `kõik : kõige` still reads as k : g, so the guard is what keeps
       the chip off a pronoun rather than the classifier's good luck.
@@ -125,11 +125,11 @@ describe("a nominative -s is an ending, not a grade", () => {
     ["hammas", "hamba", "mm : mb"],
     ["ratas", "ratta", "t : tt"],
     ["saabas", "saapa", "b : p"],
-  ])("names the centre's own alternation for %s : %s", (nom, gen, note) => {
+  ])("names the center's own alternation for %s : %s", (nom, gen, note) => {
     expect(classifyGradation(nom, gen).note).toBe(note);
   });
 
-  it("leaves a word with no consonant centre alone", () => {
+  it("leaves a word with no consonant center alone", () => {
     // `uus` peels to `uu`, which has nothing to compare, so it keeps s : ∅.
     expect(classifyGradation("uus", "uue").note).toBe("s : ∅");
   });

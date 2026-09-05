@@ -17,7 +17,7 @@ import { DEFAULT_DAYS_PER_WEEK } from "@/lib/assessment/goals";
  * dictionary, hands it over, and writes the result back. Same split as
  * `lib/estonian/` and `lib/progress/caseExamples.ts`.
  *
- * The one judgement call worth stating is which words the paper is built from:
+ * The one judgment call worth stating is which words the paper is built from:
  * **words the learner does not already have in their deck**, wherever there are
  * enough of them. A test made of cards somebody has been drilling for a month
  * measures their deck rather than their Estonian, and would hand back a level
@@ -255,7 +255,7 @@ export const latestFor = cache(async (ownerId: string): Promise<StoredAssessment
   return first ?? null;
 });
 
-/** The goal answers, normalised, with the daily goal that goes with them. */
+/** The goal answers, normalized, with the daily goal that goes with them. */
 export async function goalsFor(ownerId: string): Promise<Goals & { dailyGoal: number }> {
   const settings = await readSettings(ownerId, [...GOAL_KEYS, SETTING_KEYS.dailyGoal]);
   const goals = normaliseGoals({

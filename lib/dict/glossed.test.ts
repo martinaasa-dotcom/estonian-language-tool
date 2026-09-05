@@ -4,7 +4,7 @@ import { glossTokens, type GlossedToken } from "./glossed";
 /**
  * The pure half of putting a dictionary under a teaching sentence.
  *
- * What is asserted here is the division of labour rather than any Estonian:
+ * What is asserted here is the division of labor rather than any Estonian:
  * every character of the sentence comes back in order, the taught form is
  * marked exactly as the screen marked it before this existed, and a word the
  * lookup will not vouch for comes back plain rather than guessed at.
@@ -70,7 +70,7 @@ describe("the form's name on the panel", () => {
       .toBe("omastav (genitive)");
   });
 
-  it("keeps a label it does not recognise rather than losing it", async () => {
+  it("keeps a label it does not recognize rather than losing it", async () => {
     const { __test } = await import("./glossed");
     expect(__test.withoutLemma("genitive of something else", "kaitsevägi"))
       .toBe("genitive of something else");

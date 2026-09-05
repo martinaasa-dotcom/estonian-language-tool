@@ -15,7 +15,7 @@ export interface Forms {
 
 
 /**
- * The forms a person enters by hand: the unpredictable parts they must memorise.
+ * The forms a person enters by hand: the unpredictable parts they must memorize.
  *
  * Named as a set because it is the boundary between *user-managed* and
  * *authoritative* data on a Lexeme. Everything else in `Form` is a row Ekilex

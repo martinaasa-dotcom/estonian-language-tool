@@ -146,7 +146,7 @@ in §2 is not a micro-optimisation.
 
 ## 7. Failure handling
 
-| Failure | Behaviour |
+| Failure | Behavior |
 |---|---|
 | 429 rate limit | Typed `RateLimitError` → "Anu is busy, retrying…" with automatic backoff |
 | 5xx | Retry twice, then a clear error with the message preserved for resend |

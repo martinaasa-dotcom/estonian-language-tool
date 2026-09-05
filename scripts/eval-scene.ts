@@ -21,7 +21,7 @@
  *
  * The gate rejection rate needs a real model saying real things, so it needs a
  * provider. The government check does not: §2 proposes it and marks it
- * "unmeasured", and the labelled set it wants can be built out of the shipped
+ * "unmeasured", and the labeled set it wants can be built out of the shipped
  * dictionary alone, because Ekilex recorded both the government and the
  * sentences. So this runs its second half on any machine and says what it could
  * not do rather than refusing to start.
@@ -211,7 +211,7 @@ async function partA() {
  * ------------------------------------------------------------------ */
 
 /**
- * A labelled set built out of what Ekilex already recorded.
+ * A labeled set built out of what Ekilex already recorded.
  *
  * The good lines are attested usages of a governed verb: real Estonian nobody
  * here wrote. The bad ones are the same sentence with one nominal moved into a
@@ -272,7 +272,7 @@ function partB() {
   console.log("\n=== Part B: the government check, on a set built from attested lines ===\n");
   const { good, bad } = labelledSet();
   if (good.length === 0) {
-    console.log("  No labelled pair could be built, so this says nothing.");
+    console.log("  No labeled pair could be built, so this says nothing.");
     return;
   }
   const flaggedGood = good.filter((l) => suspect(words(l))).length;

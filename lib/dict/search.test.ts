@@ -107,7 +107,7 @@ describe("rankCandidates — inflected forms", () => {
     expect(rankCandidates(DICT, "   ")).toEqual([]);
   });
 
-  it("honours the limit", () => {
+  it("honors the limit", () => {
     expect(rankCandidates(DICT, "a", 2).length).toBeLessThanOrEqual(2);
   });
 

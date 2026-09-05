@@ -25,7 +25,7 @@ export interface DayBucket {
   /** `YYYY-MM-DD`. */
   day: string;
   count: number;
-  /** 0 (nothing) to 4 (a heavy day), for the heatmap's colour ramp. */
+  /** 0 (nothing) to 4 (a heavy day), for the heatmap's color ramp. */
   level: 0 | 1 | 2 | 3 | 4;
 }
 

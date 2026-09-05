@@ -48,7 +48,7 @@ import type { DayClock, DayKey } from "@/lib/time/day";
  * word arrives at whatever level the meaning happens to live at, which is the
  * honest answer to "here is a word for today".
  *
- * `pickAny` has no meaning to honour and is where the fault actually was: it
+ * `pickAny` has no meaning to honor and is where the fault actually was: it
  * filtered on nothing at all, so its skip landed anywhere in six thousand
  * entries. It bands.
  *

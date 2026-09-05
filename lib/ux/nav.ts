@@ -242,11 +242,11 @@ export const SECTIONS: NavSection[] = [
           you are already on is worth more than a row you have to go and find.
         */
         href: "/words/mastery", label: "Word mastery",
-        blurb: "Your favourites, and what is mastered or needs work", icon: "Trophy", tone: "mint",
+        blurb: "Your favorites, and what is mastered or needs work", icon: "Trophy", tone: "mint",
         // The starred words are on this page too, and a learner looking for
-        // them types "favourites" rather than "mastery".
+        // them types "favorites" rather than "mastery".
         keywords: "mastered known struggling almost progress words list stuck weak "
-          + "favourites favorites starred star saved bookmarks kept",
+          + "favorites favorites starred star saved bookmarks kept",
       },
       {
         /*
@@ -296,7 +296,7 @@ export const SECTIONS: NavSection[] = [
         href: "/grammar/exceptions", label: "Exceptions",
         blurb: "The words the endings do not reach", icon: "TriangleAlert",
         tone: "butter", within: "/grammar",
-        keywords: "irregular exception gradation stem change tuppa illative unpredictable memorise astmevaheldus",
+        keywords: "irregular exception gradation stem change tuppa illative unpredictable memorize astmevaheldus",
       },
       {
         href: "/dictionary/common", label: "Commonest words",
@@ -307,7 +307,7 @@ export const SECTIONS: NavSection[] = [
       {
         href: "/scan", label: "Scan a page", blurb: "Photograph a word list and study what is on it",
         icon: "Camera", tone: "sky", within: "/dictionary",
-        keywords: "camera photo picture ocr homework textbook handout import paper digitise digitize",
+        keywords: "camera photo picture ocr homework textbook handout import paper digitize digitize",
       },
       {
         href: "/tutor", label: "Ask Anu", blurb: "Grammar questions, explained", icon: "MessageCircleQuestion",

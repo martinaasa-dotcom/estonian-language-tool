@@ -68,7 +68,7 @@ check("the drill opens and says what it is",
   (await page.getByText(/drill/i).count()) > 0, href);
 // Derived from the link rather than hard-coded: which case is weakest depends
 // on the review history, so pinning one name here makes the test fail on data
-// rather than on behaviour.
+// rather than on behavior.
 const drilledCase = new URL(href, B).searchParams.get("case")?.toLowerCase() ?? "";
 // The drill's own heading names the case in both languages, so the English
 // name read off the link is still the way to check the drill was filtered.
@@ -97,7 +97,7 @@ check("that link lands on the entry", page.url().includes("/dictionary?q="), pag
   Two entries for one word, and both of them reachable.
 
   A lemma can hold more than one entry, because `@@unique` is on `(lemma, pos)`:
-  `hall` is grey and also frost. The entry page shows one of them, listed the
+  `hall` is gray and also frost. The entry page shows one of them, listed the
   rest under "other matches", and navigated those chips to `?q=<lemma>` — which
   searched the same word, opened the same winner, and left the second entry
   unreachable from anywhere in the app. The chips also read lemma and gloss

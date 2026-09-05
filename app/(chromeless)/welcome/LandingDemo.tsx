@@ -51,7 +51,7 @@ export interface DemoCase {
 export interface DemoWord {
   lemma: string;
   genitive: string | null;
-  /** Principal parts: the forms that genuinely have to be memorised. */
+  /** Principal parts: the forms that genuinely have to be memorized. */
   principal: { label: string; value: string }[];
   cases: DemoCase[];
 }
@@ -76,8 +76,8 @@ export interface DemoWord {
  * is always the eleven other cases in the order every schoolbook lists them,
  * with the sisseütlev first and on a row of its own across both columns. It is
  * the one case Estonian has two answers for, and the one that sometimes has to
- * be learnt rather than worked out, so its row is where that is said: `tuppa`
- * beside `toasse`, and a chip saying this one is learnt. Every other word puts
+ * be learned rather than worked out, so its row is where that is said: `tuppa`
+ * beside `toasse`, and a chip saying this one is learned. Every other word puts
  * `raamatusse` there with its ending lit, and the row is the same height
  * either way. Six rows on the right, three on the left, at every word.
  *

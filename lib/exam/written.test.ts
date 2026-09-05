@@ -101,7 +101,7 @@ describe("whether a required word was used", () => {
 });
 
 describe("the forms behind the marking", () => {
-  it("gives every shipped word more than its headword to be recognised by", () => {
+  it("gives every shipped word more than its headword to be recognized by", () => {
     // A set of one would mark somebody down for writing the word in a sentence
     // rather than in the nominative, which is the opposite fault to the one
     // this replaced. Measured: the thinnest entry in the dictionary has ten.

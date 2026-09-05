@@ -15,7 +15,7 @@ import {
 } from "@/lib/install/offer";
 
 const MEMORY_KEY = "kodukeel:install";
-/** The flag this used to keep. Read once, so an old dismissal is still honoured. */
+/** The flag this used to keep. Read once, so an old dismissal is still honored. */
 const LEGACY_KEY = "kodukeel:install-dismissed";
 
 /** iOS has no install event, so the hint waits for somebody to settle into the page. */

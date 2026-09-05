@@ -165,7 +165,7 @@ async function addCardsFor(
 
     The answer is `lib/usage/ledger.ts`'s, for the reasons its own header gives:
     a *transaction* advisory lock, so a connection pooler cannot strand it, and
-    the blocking form, since the non-blocking one serialises nothing.
+    the blocking form, since the non-blocking one serializes nothing.
 
     The key is `lockDeck`'s and is the learner rather than the learner and the
     word, which is a widening this path did not need on its own and the batched
@@ -361,7 +361,7 @@ export async function replayGrades(batch: ReplayItem[]) {
  * Puts a card back the way it was before the last grade.
  *
  * The Review row stays. `Review` is append-only and is the input to FSRS
- * parameter optimisation, so deleting a row to make a mistake disappear would
+ * parameter optimization, so deleting a row to make a mistake disappear would
  * corrupt the one table we cannot rebuild — and it would also be a lie: the
  * card really was shown, and really was answered. What undo restores is the
  * *scheduling*, which is derived state and safe to rewind.
@@ -680,7 +680,7 @@ export async function toggleStar(lexemeId: string) {
   }
   /*
     The dictionary is where a star used to be set from and the only place it
-    could be read; the mastery page is where the favourites are listed now,
+    could be read; the mastery page is where the favorites are listed now,
     and the star sits on a review card, on the flash round and on the learn
     ladder as well, so a word kept mid-session shows up on the list without a
     reload.
@@ -999,7 +999,7 @@ export async function recordSonad(day: string, guesses: unknown) {
  * turn**, on the argument that running out of allowance halfway through a
  * conversation is the worst failure available here, and that half of it is
  * right and is not what a booking buys: the ledger writes a call down when it
- * authorises one because two of its three limits count `CALL` rows, so a dozen
+ * authorizes one because two of its three limits count `CALL` rows, so a dozen
  * turns behind one booking is eleven calls the allowance never saw. The route
  * books each composed turn instead, and the mid-scene refusal is survivable for
  * the reason it was always survivable: the rung below the model is a real
@@ -1037,7 +1037,7 @@ export async function beginScene(sceneId: unknown, difficulty: unknown) {
     every turn on the server anyway. `Briefing` is where that is written down.
 
     And nothing is booked here either. A run is many turns and the ledger books
-    a call when it authorises one, so one booking at the door would let a whole
+    a call when it authorizes one, so one booking at the door would let a whole
     conversation through on the burst allowance for a single call, which is the
     limit's own arithmetic broken rather than bent. The route books each
     composed turn and hands the booking back where nothing was composed. What
@@ -1055,7 +1055,7 @@ export async function beginScene(sceneId: unknown, difficulty: unknown) {
 /**
  * One word the current beat is about, for the "I need a word" button.
  *
- * A LEARNER WHO ASKS IS NOT PENALISED, and this is where that is paid for: the
+ * A LEARNER WHO ASKS IS NOT PENALIZED, and this is where that is paid for: the
  * scene's own beats declare what they are about as lemmas, so the help is a
  * word out of the closed list rather than anything a model wrote, and the whole
  * cost is that `advance` sees the next turn as helped. Nothing is deducted, no
@@ -1108,7 +1108,7 @@ export async function sceneHelp(runId: unknown, turns: unknown) {
   /*
     Through `oneEntryPerLemma`, because a lemma can hold two entries and this
     hands one of them to a button that keeps it. `hall` is a noun meaning frost
-    and an adjective meaning grey; a word confirmed off a photograph makes a
+    and an adjective meaning gray; a word confirmed off a photograph makes a
     pair for any lemma at all, with no forms behind it. `bySubstance` is the
     rule the dictionary itself leads with, so the entry the help offers and the
     entry a search would show are the same entry.
@@ -1373,7 +1373,7 @@ export async function setGlossLanguage(value: string) {
 /**
  * The order the cards on Today are dealt in.
  *
- * Normalised through the one reader on the way in, so a request cannot store
+ * Normalized through the one reader on the way in, so a request cannot store
  * an id Today does not know or leave a slot out: what is written is every
  * slot, once, in the order asked for. Revalidated on Today and on Settings,
  * which are the two screens that read it.
@@ -1397,7 +1397,7 @@ export async function setFeedbackSounds(value: string) {
 
 /**
  * Whether the listening rounds vary the delivery, or keep the studio.
- * Normalised on the way in like the other three; the shell publishes it.
+ * Normalized on the way in like the other three; the shell publishes it.
  */
 export async function setHearing(value: string) {
   const ownerId = await requireUserId();
@@ -1412,7 +1412,7 @@ export async function setHearing(value: string) {
  *
  * Revalidated at the settings path rather than at the layout, because nothing
  * outside this screen reads it: the export reads the table directly, at the
- * moment it runs, so a change here is honoured by the next export whether or
+ * moment it runs, so a change here is honored by the next export whether or
  * not any page has re-rendered. See lib/research/participation.ts.
  */
 export async function setResearchParticipation(value: string) {
@@ -1442,7 +1442,7 @@ export async function setClassDisplayName(input: { displayName: string }) {
   const ownerId = await requireUserId();
   const name = cleanDisplayName(input?.displayName);
   if (!name) {
-    return { ok: false as const, error: "Pick a name your class will recognise." };
+    return { ok: false as const, error: "Pick a name your class will recognize." };
   }
   await writeSetting(ownerId, SETTING_KEYS.displayName, name);
   revalidatePath("/progress");
@@ -1688,7 +1688,7 @@ const LESSON_RESULT_LIMIT = 80;
  * one way: a lesson creates the cards first, because teaching a word is how it
  * enters the deck, while a checkpoint creates nothing. Sitting an exam is not a
  * request to start studying every word it happened to ask about, so a word with
- * no card is simply not graded — the answer still counts towards the mark, it
+ * no card is simply not graded — the answer still counts toward the mark, it
  * just has nowhere in the scheduler to land.
  *
  * Not exported: this file is `"use server"`, so an exported ownerId parameter
@@ -1887,7 +1887,7 @@ export async function recordCheckpoint(
 
   // Twenty typed productions on cards the learner owns is real retrieval
   // practice, and ADR-016 wants the scheduler to see what was actually
-  // practised. It grades what has a card and silently skips what does not: a
+  // practiced. It grades what has a card and silently skips what does not: a
   // checkpoint may ask about words from units the learner has never opened, and
   // sitting an exam is not a request to start studying them.
   const graded = z.array(LessonResultSchema).max(LESSON_RESULT_LIMIT).safeParse(answers);
@@ -1897,7 +1897,7 @@ export async function recordCheckpoint(
     // crafted call could post a Good against any card in the caller's deck and
     // move its schedule without anybody having answered anything. The damage
     // would be self-inflicted, but `Review` is append-only and feeds FSRS
-    // optimisation, so a grade for a review that never happened is a lie that
+    // optimization, so a grade for a review that never happened is a lie that
     // cannot be taken back out.
     const taughtHere = new Set(wordsAtLevel(parsed.data.level).map((w) => w.lemma));
     const own = graded.data.filter((a) => taughtHere.has(a.lemma));
@@ -2002,7 +2002,7 @@ export async function joinClassroom(code: string, displayName?: string) {
   }
 
   const name = cleanDisplayName(displayName) || await resolveDisplayName(ownerId);
-  if (!name) return { ok: false as const, error: "Pick a name your class will recognise." };
+  if (!name) return { ok: false as const, error: "Pick a name your class will recognize." };
 
   await prisma.classroomMember.upsert({
     where: { classroomId_ownerId: { classroomId: classroom.id, ownerId } },
@@ -2190,7 +2190,7 @@ export async function classworkHistory(classroomId: string) {
  *
  * `\p{C}` is every control, format and unassigned code point, which is the
  * category both of those are in, and NFC first so a name is compared and
- * stored in one normalisation. At least one letter or digit, because a row
+ * stored in one normalization. At least one letter or digit, because a row
  * of punctuation is the same "renders as nothing" fault wearing a visible
  * character.
  */
@@ -2686,7 +2686,7 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
         // dictionary and must never be wiped by one person's restore.
         //
         // Reviews are deliberately untouched. They are append-only facts about
-        // what happened, they are the input to FSRS optimisation, and they are
+        // what happened, they are the input to FSRS optimization, and they are
         // the one thing a restore cannot recreate. A replace rebuilds the deck;
         // it does not rewrite history. Rows whose card is gone stay as orphans,
         // which is why Review carries its own ownerId and no foreign key.
@@ -2958,7 +2958,7 @@ export async function restoreBackup(json: string, mode: "merge" | "replace") {
  *
  * THE ERRAND IS OPTIONAL AND TODAY SENDS NONE. The question is about the
  * learner's own day rather than about our homework, so a conversation with a
- * neighbour carries no errand id: writing one in would credit this app with a
+ * neighbor carries no errand id: writing one in would credit this app with a
  * conversation it did not set, and the research export groups that column by
  * unit. The parameter stays because a report genuinely about an errand is
  * still a thing this table can hold, and it is checked against the table
@@ -2981,7 +2981,7 @@ export async function recordEncounter(errandId: string | null, outcome: string) 
  * A photographed page, once a person has looked at what came back.
  *
  * WHAT MAKES THIS SAFE IS THE TICK, not the transcription. A model read the
- * picture and the dictionary vouched for the words it recognised, but the
+ * picture and the dictionary vouched for the words it recognized, but the
  * confirmation screen is where somebody holding the actual paper agrees that
  * this is what is on it. That is the same standard the paste importer has
  * always met (a human copied the list), and it is why a word the dictionary

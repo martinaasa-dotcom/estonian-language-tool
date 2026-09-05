@@ -41,7 +41,7 @@ import { parseExamples, type Example } from "@/lib/dict/examples";
  * that goes stale the first time somebody adds a seventh and does not know to,
  * and that failure is silent and permanent. A minute is self-healing, needs no
  * call sites to stay in step, and is measured against what it costs: a word
- * added by hand is counted towards a readiness percentage, and towards which
+ * added by hand is counted toward a readiness percentage, and toward which
  * of a unit's words the dictionary can show, up to sixty seconds later than it
  * used to be. Nothing a reader could notice, and nothing that decides anything.
  *
@@ -278,7 +278,7 @@ export function decoyOptions(): Promise<GlossOption[]> {
  * answers is kept: 372 groups out of 6,083 entries, nearly all of them pairs.
  *
  * Keyed `lemma|pos`, which is what `Lexeme` is unique on, because a lemma alone
- * would merge the noun `hall` meaning frost with the adjective meaning grey.
+ * would merge the noun `hall` meaning frost with the adjective meaning gray.
  */
 export function alsoAcceptedByLemma(): Promise<Map<string, string[]>> {
   return remember("also-accepted", FACTS_TTL_MS, async () => {

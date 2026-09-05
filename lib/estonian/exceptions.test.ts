@@ -192,7 +192,7 @@ describe("the notes", () => {
   /*
     A screen prints the pattern's own answer only where that answer is a real
     Estonian word. Anywhere else it would be this app writing a form and hoping
-    nobody memorises it, which is the whole of ADR-005.
+    nobody memorizes it, which is the whole of ADR-005.
   */
   it("only ever calls a rule form right for the illative, where both are", () => {
     for (const w of [tuba, aeg, lugema]) {

@@ -17,7 +17,7 @@ export const A1 = [
     icon: "Hand",
     level: "A1",
     module: "Esimesed sammud",
-    canDo: "Greet someone, thank them, apologise, and say you do not understand.",
+    canDo: "Greet someone, thank them, apologize, and say you do not understand.",
     blurb: "The phrases that get you through a first conversation without grammar.",
     grammar: ["politeness"],
     cardTypes: ["RECOGNITION", "PRODUCTION"],
@@ -157,7 +157,7 @@ export const A1 = [
       ["pilt", "picture"],
       ["sein", "wall"],
       ["põrand", "floor"],
-      ["korrus", "floor, storey"],
+      ["korrus", "floor, story"],
     ],
   }),
 
@@ -353,24 +353,24 @@ export const A1 = [
   unit({
     id: "varvid",
     title: "Värvid",
-    subtitle: "Colours",
+    subtitle: "Colors",
     icon: "Paintbrush",
     level: "A1",
     module: "Kirjeldamine",
-    canDo: "Name colours and describe what something looks like.",
+    canDo: "Name colors and describe what something looks like.",
     blurb: "Short, concrete, and every one of them declines like an ordinary adjective.",
     grammar: ["adjective-agreement"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
     requires: ["omadussonad"],
     words: [
-      ["värv", "colour"],
+      ["värv", "color"],
       ["punane", "red", "ADJECTIVE"],
       ["sinine", "blue", "ADJECTIVE"],
       ["roheline", "green", "ADJECTIVE"],
       ["kollane", "yellow", "ADJECTIVE"],
       ["must", "black", "ADJECTIVE"],
       ["valge", "white", "ADJECTIVE"],
-      ["hall", "grey", "ADJECTIVE"],
+      ["hall", "gray", "ADJECTIVE"],
       ["pruun", "brown", "ADJECTIVE"],
       ["roosa", "pink", "ADJECTIVE"],
       ["lilla", "purple", "ADJECTIVE"],
@@ -386,7 +386,7 @@ export const A1 = [
     icon: "Shirt",
     level: "A1",
     module: "Kirjeldamine",
-    canDo: "Say what you are wearing and shop for clothes by size and colour.",
+    canDo: "Say what you are wearing and shop for clothes by size and color.",
     blurb: "A shop conversation you will have in your first week, and a pile of easy nouns.",
     grammar: ["adjective-agreement", "partitive"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
@@ -495,7 +495,7 @@ export const A1 = [
     requires: ["ostmine", "kodu"],
     words: [
       ["koht", "place"],
-      ["kesklinn", "town centre"],
+      ["kesklinn", "town center"],
       ["väljak", "square"],
       ["sild", "bridge"],
       ["nurk", "corner"],
@@ -511,7 +511,7 @@ export const A1 = [
       /*
         The can-do promises "understand the directions you are given", and
         neither this unit nor Kohasõnad had a word for left, right or straight
-        on. Somebody who has met every building in the town centre and cannot
+        on. Somebody who has met every building in the town center and cannot
         follow "vasakule, siis otse" has not been taught to follow directions.
         Requests, like every other lemma here.
       */
@@ -543,7 +543,7 @@ export const A1 = [
     dictionary altogether. These six are appended after the fourteen so that
     the first three units at A1, which is what first run builds a deck from,
     stay what they were. Every lemma is still a request the harvest either
-    honours or reports, and a pronoun is harvested as a nominal because it
+    honors or reports, and a pronoun is harvested as a nominal because it
     declines like one: `kes`, `kelle`, `keda`, and the case table follows.
   */
   unit({
@@ -739,7 +739,7 @@ export const A1 = [
     level: "A1",
     module: "Maailm ümber",
     canDo: "Say where you are from, what you are, and which language you speak.",
-    blurb: "The neighbours first. A nationality ends in -lane. Eesti and Soome take the inside cases, Eestist; the countries ending in -maa take the outside ones, the way the islands do: Saksamaal, Saksamaale, Saksamaalt.",
+    blurb: "The neighbors first. A nationality ends in -lane. Eesti and Soome take the inside cases, Eestist; the countries ending in -maa take the outside ones, the way the islands do: Saksamaal, Saksamaale, Saksamaalt.",
     grammar: ["elative", "nominative"],
     cardTypes: ["RECOGNITION", "PRODUCTION", "CASE_FORM", "CLOZE"],
     requires: ["kus-ja-kuhu"],
@@ -779,7 +779,7 @@ export const A1 = [
     hold a sentence together, which a learner meets in their first hour and
     could not look up.
 
-    They are labelled ADVERB for the reason `scripts/harvest-ekilex.ts`
+    They are labeled ADVERB for the reason `scripts/harvest-ekilex.ts`
     already gives about the connectives it had: an Estonian adverb does not
     inflect, so demanding a set of forms for one would drop every connective
     in the course, and existing in Ekilex is the whole check that matters.
@@ -846,12 +846,12 @@ export const A1 = [
       ["kindlasti", "definitely", "ADVERB"],
       ["vist", "probably, I think", "ADVERB"],
       ["äkki", "maybe, suddenly", "ADVERB"],
-      ["küll", "indeed, do (an emphasising word)", "ADVERB", 191080],
+      ["küll", "indeed, do (an emphasizing word)", "ADVERB", 191080],
       ["eks", "right? (asking for agreement)", "ADVERB"],
       ["tõesti", "really", "ADVERB"],
       ["tegelikult", "actually", "ADVERB"],
       // An adjective, not a particle, and the one word in this unit that
-      // declines: `õige, õige, õiget`. Labelled ADVERB it would be harvested
+      // declines: `õige, õige, õiget`. Labeled ADVERB it would be harvested
       // formless, get no case table and no case cards, and `npm run
       // audit:senses` says so, because Ekilex calls it `adj`.
       ["õige", "right, correct", "ADJECTIVE"],

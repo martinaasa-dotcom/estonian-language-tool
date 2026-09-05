@@ -24,10 +24,10 @@ export const dynamic = "force-dynamic";
  * few hundred kilobytes of a file nobody had looked at.
  *
  * And "standalone" was not the property it sounded like. The dictionary is a
- * build artefact of this repository: `npm run db:seed` loads it, every
+ * build artifact of this repository: `npm run db:seed` loads it, every
  * installation has it, and `restoreBackup` merges with `ON CONFLICT DO
  * NOTHING`, so on any real deployment those 6,050 words were bytes that
- * travelled and then did nothing. What a backup is for is the half that cannot
+ * traveled and then did nothing. What a backup is for is the half that cannot
  * be rebuilt, which is exactly the argument `Review` is append-only for.
  *
  * So the file carries the lexemes this learner's own rows reference, with their

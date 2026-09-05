@@ -20,7 +20,7 @@
  * ever imitated it; "several words I know, none of them the point" is a
  * learner who said something real that the scene did not anticipate, and it
  * gets a narrower re-ask and a report button rather than "say again"; and a
- * turn written in English is recognised as English, because telling somebody
+ * turn written in English is recognized as English, because telling somebody
  * "I did not understand" when they wrote a clear English sentence is a lie.
  *
  * Pure: no React, no Next, no Prisma, no network, no clock.
@@ -122,7 +122,7 @@ export interface TurnContext {
 /**
  * English function words, for telling English from unreadable Estonian.
  *
- * §8 says a turn with no Estonian in it is recognised as English rather than
+ * §8 says a turn with no Estonian in it is recognized as English rather than
  * as Estonian nobody could read, because those are different things. Nothing
  * else in this module can tell them apart: an unvouched word is unvouched
  * whichever language it is in.

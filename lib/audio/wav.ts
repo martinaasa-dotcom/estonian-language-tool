@@ -13,7 +13,7 @@
  * clip, stored for ever and shipped to every phone.
  *
  * So a clip is trimmed to a short lead and a natural release, faded at the
- * cuts so no edge clicks, levelled so every voice sits at the same loudness
+ * cuts so no edge clicks, leveled so every voice sits at the same loudness
  * (Kalev's clips peaked at 0.74 and Mari's at 0.66 for the same word, and a
  * learner switching voice in Settings should not have to reach for the volume
  * key), and written as 16-bit PCM, which halves the store, the egress and the
@@ -34,21 +34,30 @@ export interface Pcm {
   readonly samples: Float32Array;
 }
 
-/** How much silence stays before the first sound and after the last. */
+/**
+ * How much silence stays before the first sound and after the last.
+ *
+ * The trail is longer than the lead on purpose. A final `s` is quiet, long
+ * and falls away slowly, so a trail measured from the last loud sample has to
+ * reach past the whole of it: at 160 ms `tingimus` came back as `tingimu`,
+ * reported by a learner on the word's own first meeting, and a word cut short
+ * is a form this app never taught.
+ */
 export const LEAD_MS = 40;
-export const TRAIL_MS = 160;
+export const TRAIL_MS = 320;
 /** A cut at a sample that is not zero clicks; this many milliseconds of ramp hides it. */
 export const FADE_MS = 6;
 /**
- * Below this share of the clip's own peak is silence. About -34 dB, which is
- * well under the quietest consonant a vocoder produces and well over the
- * noise floor of one, and it is relative rather than absolute so a quiet voice
- * is trimmed the same as a loud one.
+ * Below this share of the clip's own peak is silence. About -44 dB, which is
+ * under the quietest consonant a vocoder produces (a word-final `s` sits
+ * around -35 dB against the vowel before it, and 0.02 was cutting it) and
+ * still well over the noise floor of one. It is relative rather than absolute
+ * so a quiet voice is trimmed the same as a loud one.
  */
-export const SILENCE_SHARE = 0.02;
+export const SILENCE_SHARE = 0.006;
 /** -1 dBFS: as loud as a clip can be without a resampler clipping it. */
 export const TARGET_PEAK = 0.89;
-/** A clip that is nearly silent is not turned into noise by levelling it. */
+/** A clip that is nearly silent is not turned into noise by leveling it. */
 export const MAX_GAIN = 4;
 
 export class WavError extends Error {}

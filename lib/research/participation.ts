@@ -11,7 +11,7 @@
  *
  * It exists anyway. This app is for people whose data is the reason they are
  * careful, and "we aggregated it, so it is fine" is a sentence they have heard
- * before from somebody who was wrong. The cost of honouring it is one `NOT IN`,
+ * before from somebody who was wrong. The cost of honoring it is one `NOT IN`,
  * and the difference between a promise and a setting is that a setting can be
  * checked.
  *

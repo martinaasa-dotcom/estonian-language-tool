@@ -193,13 +193,13 @@ export const CASE_NOTES: readonly CaseNote[] = [
     summary: "Not having something. The exact opposite of the ending under it.",
     uses: ["The absence of a thing", "Doing something without a tool, a person or permission"],
     watchOut:
-      "Rare on its own in speech, where people put the word for without in front of it anyway. Worth recognising more than producing.",
+      "Rare on its own in speech, where people put the word for without in front of it anyway. Worth recognizing more than producing.",
     englishHook: "without a coat. Without asking.",
   },
   {
     key: "COMITATIVE",
     plain: "with",
-    summary: "With a person, with a tool, and how you travelled.",
+    summary: "With a person, with a tool, and how you traveled.",
     uses: ["Together with somebody", "The tool you did it with", "How you got there"],
     watchOut:
       "It covers with a friend and with a knife, which many languages keep apart. It also never changes shape, so it is the easiest ending in the language to spot.",
@@ -239,7 +239,7 @@ export function allCaseReferences(): CaseReference[] {
  */
 export const CASE_GROUPS: readonly { title: string; blurb: string; keys: readonly CaseKey[] }[] = [
   {
-    title: "Three to memorise",
+    title: "Three to memorize",
     blurb: "No endings on these three. They are stored per word, and the second one is what everything else is built on.",
     keys: ["NOMINATIVE", "GENITIVE", "PARTITIVE"],
   },
@@ -424,12 +424,12 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
     summary: "A whole mood for what you are repeating rather than vouching for.",
     marker: "-vat",
     points: [
-      "Reported speech, rumour and hearsay",
+      "Reported speech, rumor and hearsay",
       "Common in news writing, where the source matters",
       "Can carry doubt, depending on delivery",
     ],
     watchOut:
-      "English needs a word like apparently. Estonian does it with a verb ending, so it is easy to read straight past and take a rumour as fact.",
+      "English needs a word like apparently. Estonian does it with a verb ending, so it is easy to read straight past and take a rumor as fact.",
   },
   {
     id: "impersonal",
@@ -729,7 +729,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
       "Word order stands in for the stress English puts in the voice",
     ],
     watchOut:
-      "English stresses with the voice and keeps the order fixed. An English-shaped sentence read with English stress emphasises nothing here.",
+      "English stresses with the voice and keeps the order fixed. An English-shaped sentence read with English stress emphasizes nothing here.",
   },
   {
     id: "rhetorical-questions",
@@ -815,7 +815,7 @@ export const TOPIC_NOTES: readonly TopicNote[] = [
       "Rarely flagged, so it has to be inferred",
     ],
     watchOut:
-      "The last thing a learner hears and the easiest to get wrong. Irony nobody recognises as irony reads as rudeness or as a mistake.",
+      "The last thing a learner hears and the easiest to get wrong. Irony nobody recognizes as irony reads as rudeness or as a mistake.",
   },
   {
     id: "nuance",

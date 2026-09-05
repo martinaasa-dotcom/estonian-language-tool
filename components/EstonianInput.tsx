@@ -10,7 +10,7 @@ import { DiacriticBar } from "@/components/DiacriticBar";
  * its own row from its own list of letters, so the two could disagree about
  * which letters exist, and now do about whether they are drawn at all.
  *
- * `fallbackRef` is this field, which is what preserves the behaviour the copy
+ * `fallbackRef` is this field, which is what preserves the behavior the copy
  * had. The shared bar types into whatever has focus, and a learner who presses
  * õ before clicking anywhere would otherwise be typing into nothing.
  *

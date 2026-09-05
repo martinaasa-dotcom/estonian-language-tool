@@ -54,7 +54,7 @@ export function voiceFrom(value: string | null | undefined): string {
  * Whether a card reads itself aloud when it appears.
  *
  * **Off by default**, and that is a reversal worth writing down, because the
- * usual rule here is that a missing row reads as the behaviour everybody
+ * usual rule here is that a missing row reads as the behavior everybody
  * already had. This one deliberately changes under existing learners.
  *
  * The argument for `on` was that hearing a word every time it is met is the
@@ -74,9 +74,9 @@ export function voiceFrom(value: string | null | undefined): string {
  * did not want it and gets it is startled in a library.
  *
  * What pays for the flip is that the speaker is easy to reach rather than that
- * the sound is easy to stop: `SpeakPair` is a labelled control on the card, not
+ * the sound is easy to stop: `SpeakPair` is a labeled control on the card, not
  * a hover target, and the setting is one chip in Settings for anybody who wants
- * the old behaviour back.
+ * the old behavior back.
  */
 export type Autoplay = "on" | "off";
 export const DEFAULT_AUTOPLAY: Autoplay = "off";
@@ -85,7 +85,7 @@ export const DEFAULT_AUTOPLAY: Autoplay = "off";
  * An unset row and an unrecognised value both read as the default, which is
  * why this tests for `"on"` rather than against `"off"`. Written the other way
  * round, flipping the constant above would have left every existing learner on
- * the old behaviour and only new spellings on the new one.
+ * the old behavior and only new spellings on the new one.
  */
 export function autoplayFrom(value: string | null | undefined): Autoplay {
   return value === "on" ? "on" : "off";

@@ -8,7 +8,7 @@ import type { WordEvidence, Tally } from "./evidence";
 
 /**
  * A word's evidence, written in the terms a scenario is: how many times it was
- * recognised, how many produced, at what pace, and whether the last answer
+ * recognized, how many produced, at what pace, and whether the last answer
  * held. Everything right unless said otherwise.
  */
 function word(over: {
@@ -116,7 +116,7 @@ describe("a situation, rung by rung", () => {
     expect(r.tryThis).toBeNull();
   });
 
-  it("names the freeze: recognised throughout, produced nowhere", () => {
+  it("names the freeze: recognized throughout, produced nowhere", () => {
     const r = readSituation(DOCTOR, everyWord(DOCTOR, word({ rec: 3 })));
     expect(r.struggles.some((s) => s.id === "freeze" && s.blocks === "takePart")).toBe(true);
   });

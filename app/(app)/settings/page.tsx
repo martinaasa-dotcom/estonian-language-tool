@@ -507,7 +507,7 @@ export default async function SettingsPage() {
                   <p className="mt-2 text-xs" style={{ color: "var(--ink-3)" }}>
                     Anything you grade offline is saved on the device and sent as soon as you are back
                     online, with the time you actually answered, so an offline session still counts
-                    towards the right day&rsquo;s streak.
+                    toward the right day&rsquo;s streak.
                   </p>
                   <InstallPanel />
                 </div>

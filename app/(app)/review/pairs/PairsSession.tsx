@@ -15,7 +15,7 @@ import { OPTION_CLASS, VERDICT_INK, optionState } from "@/lib/ux/verdict";
 export interface PairQuestion {
   /** The form that is actually played. */
   heard: string;
-  /** The card this practises, when the word heard is already in the deck. */
+  /** The card this practices, when the word heard is already in the deck. */
   cardId: string | null;
   options: { value: string; lemma: string; translation: string; formLabel: string }[];
   sameWord: boolean;

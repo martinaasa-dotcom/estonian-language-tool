@@ -125,7 +125,7 @@ English line per situation ("Order a coffee and something to eat, and stay in Es
 answer") and, for a live exchange, what will come back ("A question you did not plan for: here or
 to take away, with milk, anything else"). The `expect` line is shown at every rung, since knowing
 what is coming is useful before you are ready for it; the `tryThis` line is not, since an app
-telling somebody to go and book a doctor's appointment on the strength of recognising nine words
+telling somebody to go and book a doctor's appointment on the strength of recognizing nine words
 is the false confidence this whole thing is against.
 
 And on every live situation, one line: nothing on this page has heard you speak, and how you sound

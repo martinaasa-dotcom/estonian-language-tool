@@ -22,7 +22,7 @@
  *
  * WHAT IT MAY WRITE. English, in a stage direction, and nothing else. Every
  * Estonian word in a reaction is a lemma out of `REACTIONS` or the repair
- * phrase, both of which are requests against the course the catalogue test
+ * phrase, both of which are requests against the course the catalog test
  * checks word by word (ADR-005). A stage direction is what the other side did,
  * in English, off the beat's own `they`, and it is printed only where no
  * Estonian line could be built or where a helpful persona is translating for
@@ -80,7 +80,7 @@ export interface ReplyInput {
    * that is not a word (a question, a no) or where nothing was met.
    */
   readonly echo: string | null;
-  /** How many beats have been met, which is what rotates the acknowledgement. */
+  /** How many beats have been met, which is what rotates the acknowledgment. */
   readonly met: number;
   /**
    * Whether this persona says "hästi" before moving on. The brisk one does
@@ -225,7 +225,7 @@ export function replyFor(input: ReplyInput): SpokenLine[] {
   }
 
   /*
-    An acknowledgement after an answer that landed, rotating so the same word
+    An acknowledgment after an answer that landed, rotating so the same word
     does not come back six times. Not after a greeting, since the greeting is
     answered by the next line, and not once the scene is over.
   */
@@ -326,7 +326,7 @@ export function stageFor(beat: BeatSpec, card: RoleCard | null): string {
 }
 
 /**
- * One course word as a line: capitalised, with the mark that makes it the
+ * One course word as a line: capitalized, with the mark that makes it the
  * move. The word is the dictionary's; the mark says whether it is said or
  * asked, which is the difference between "Jah." and "Jah?".
  */

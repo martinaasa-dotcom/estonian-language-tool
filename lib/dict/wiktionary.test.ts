@@ -12,7 +12,7 @@ const page = (body: string) => `==Estonian==\n\n===Noun===\n{{et-noun}}\n\n${bod
 
 describe("extractEstonianSenses", () => {
   it("reads a plain wikilinked definition", () => {
-    expect(extractEstonianSenses(page("# [[harbour]]"))).toEqual(["harbour"]);
+    expect(extractEstonianSenses(page("# [[harbor]]"))).toEqual(["harbor"]);
   });
 
   it("keeps the order the page gives", () => {
@@ -140,11 +140,11 @@ describe("extractEstonianSenses", () => {
     });
 
     it("ignores a page with no Estonian section", () => {
-      expect(extractEstonianSenses("==Finnish==\n\n===Noun===\n\n# [[harbour]]")).toEqual([]);
+      expect(extractEstonianSenses("==Finnish==\n\n===Noun===\n\n# [[harbor]]")).toEqual([]);
     });
 
     it("does not read past the end of the Estonian section", () => {
-      expect(extractEstonianSenses(page("# [[harbour]]"))).toEqual(["harbour"]);
+      expect(extractEstonianSenses(page("# [[harbor]]"))).toEqual(["harbor"]);
     });
   });
 });
@@ -184,7 +184,7 @@ describe("extractEstonianEntries", () => {
   });
 
   it("reads a template that declares no stems as silence, not disagreement", () => {
-    const wikitext = "==Estonian==\n\n===Noun===\n{{et-noun}}\n\n# [[harbour]]\n\n==Finnish==\n";
+    const wikitext = "==Estonian==\n\n===Noun===\n{{et-noun}}\n\n# [[harbor]]\n\n==Finnish==\n";
     expect(extractEstonianEntries(wikitext)[0]?.stems).toBe(null);
   });
 

@@ -69,7 +69,7 @@ describe("prompts more than one word answers", () => {
 
   /*
     The Institute's other way of saying "synonym": where it has nothing to add
-    beyond naming the neighbours, the definition is a list of them. Two such
+    beyond naming the neighbors, the definition is a list of them. Two such
     definitions are two different strings saying one thing.
   */
   it("reads two definitions that name each other as one meaning", () => {
@@ -83,7 +83,7 @@ describe("prompts more than one word answers", () => {
   /*
     And one-way naming is not that, which is the whole reason the rule is
     mutual. Ekilex defines konkurents as a võistlus for supremacy and võistlus
-    as an organised event: the first explains itself with the second word and
+    as an organized event: the first explains itself with the second word and
     is not it. Measured over the shipped dictionary, one-way naming would have
     excused this pair and to justify, both of which are real faults.
   */

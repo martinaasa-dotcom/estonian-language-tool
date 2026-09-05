@@ -39,7 +39,7 @@ export const RETIRED_WORDS: readonly WordSpec[] = [
   ["hagiavaldus", "statement of claim", "NOUN"],
   ["harjuma", "to get used to", "VERB"],
   ["harjumuspärane", "habitual", "ADJECTIVE"],
-  ["huumor", "humour", "NOUN"],
+  ["huumor", "humor", "NOUN"],
   ["häbistav", "shaming", "ADJECTIVE"],
   ["hääldus", "pronunciation", "NOUN"],
   ["igapäevane", "everyday (happening daily)", "ADJECTIVE"],

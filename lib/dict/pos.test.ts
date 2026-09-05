@@ -29,7 +29,7 @@ describe("resolvePos", () => {
       `lamp` is in Wiktionary's adjectives category for a colloquial sense
       meaning "random", and `mari` for the Mari people. Both ship the noun
       gloss, so a rule reading the category rather than the line would have
-      labelled them against their own answer side.
+      labeled them against their own answer side.
     */
     expect(resolvePos(inputs({ sensePos: "NOUN", headwordPos: "NOUN", fallback: "ADJECTIVE" }))).toBe("NOUN");
   });

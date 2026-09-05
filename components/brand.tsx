@@ -3,7 +3,7 @@ import { useId, type CSSProperties } from "react";
 /**
  * Õ — the mascot.
  *
- * Estonian's most recognisable letter is already a round face with a squiggle on
+ * Estonian's most recognizable letter is already a round face with a squiggle on
  * top, so the mascot is just that letter taken literally: a soft ring, two eyes,
  * a tilde for hair. It carries the brand in the sidebar, on the landing page and
  * in every empty state, which is why it is a component and not an asset.
@@ -149,13 +149,13 @@ export function Mascot({
  *
  * It does not shrink and the name does not break, which is two declarations
  * rather than a preference. `overflow-wrap: anywhere` is inherited from the
- * body and counts towards min-content, so the automatic minimum of a flex item
+ * body and counts toward min-content, so the automatic minimum of a flex item
  * holding this is one character wide: put the wordmark in a row beside anything
  * that wants the space and it gives up all of it. The landing footer is that
  * row, and it read "Kodukee" with the "l" on the line under it, which is the
  * one word on the page that may never be hyphenated or wrapped, because it is
  * a name rather than a sentence. Fixed here rather than at each caller: a
- * wordmark squeezed by its neighbour is a property of the wordmark, and the
+ * wordmark squeezed by its neighbor is a property of the wordmark, and the
  * next row somebody puts it in would break it again.
  */
 export function Wordmark({ size = 34, subtitle }: { size?: number; subtitle?: string }) {

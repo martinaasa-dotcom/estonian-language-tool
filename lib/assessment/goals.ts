@@ -6,7 +6,7 @@ import { BANDS, type Band, type HourRange } from "./types";
  *
  * Asked once, at the start, and asked properly. "Which level do you want" on
  * its own is a question most learners cannot answer, because CEFR letters mean
- * nothing until somebody tells you that B1 is the exam naturalisation asks for
+ * nothing until somebody tells you that B1 is the exam naturalization asks for
  * and that B2 is where you stop translating in your head. So the reason comes
  * first, each reason carries the level it usually implies, and the level is
  * described by what a person can do at it rather than by its letter.
@@ -57,7 +57,7 @@ export const REASONS: readonly Reason[] = [
     id: "living",
     icon: "House",
     label: "I live in Estonia",
-    detail: "Shops, doctors, the bus, neighbours, forms. Everyday life in the language around you.",
+    detail: "Shops, doctors, the bus, neighbors, forms. Everyday life in the language around you.",
     implies: "B1",
     // Errands, forms, the bus: real and shallow, and easy to live beside without using.
     exposure: { low: 1, high: 3 },
@@ -221,7 +221,7 @@ export const TARGETS: readonly TargetLevel[] = [
   {
     band: "B1",
     label: "Live in the language",
-    can: "Manage most situations that come up, follow a clear conversation, write a straightforward letter. This is the level the naturalisation exam asks for.",
+    can: "Manage most situations that come up, follow a clear conversation, write a straightforward letter. This is the level the naturalization exam asks for.",
     cannot: "Keep up with fast speech between natives, or write anything that has to be exactly right.",
   },
   {
@@ -351,7 +351,7 @@ export interface Goals {
   target: Band | null;
   /** ISO date, or null for no deadline. */
   deadline: string | null;
-  /** Days a week they expect to practise. */
+  /** Days a week they expect to practice. */
   daysPerWeek: number;
   /** Their own words, kept verbatim and shown back to them. */
   note: string;

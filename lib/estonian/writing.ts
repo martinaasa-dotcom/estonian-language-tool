@@ -9,7 +9,7 @@ import type { CaseKey } from "./types";
  * This is the half of the feature that does not involve a model, and it is
  * deliberately the half that decides whether the learner was right about the
  * *form*. ADR-005 forbids the model supplying an Estonian form, and the reason
- * generalises: a model is not trustworthy about Estonian morphology, so it must
+ * generalizes: a model is not trustworthy about Estonian morphology, so it must
  * not be the thing that says whether a morpheme is correct either.
  *
  * So the split is:

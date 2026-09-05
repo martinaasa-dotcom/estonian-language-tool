@@ -538,7 +538,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
   // Ekilex hands over every form, so when we have them there is nothing to
   // derive — we show the authoritative forms, including irregular plurals and the
   // parallel forms Estonian genuinely has (raamatutes / raamatuis).
-  // Every form Ekilex labelled, principal parts included: the 1sg present is
+  // Every form Ekilex labeled, principal parts included: the 1sg present is
   // both a principal part *and* the "ma" row of the conjugation table, and
   // leaving it out left a hole in the middle of the table.
   const retrieved = entry.forms.filter((f) => f.morphCode);
@@ -681,7 +681,7 @@ function Entry({ entry, tutorReady, glossLanguage }: {
       {entry.forms.length > 0 && (
         <div>
           <h3 className="label-xs mb-3" style={{ color: "var(--ink-3)" }}>
-            Principal parts, the forms you have to memorise
+            Principal parts, the forms you have to memorize
           </h3>
           <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(124px, 1fr))" }}>
             {parts.map(([type, label, et]) => {

@@ -123,7 +123,7 @@ describe("verifyComment", () => {
 /*
   The two withholds are not the same claim, and the screen makes one of them out
   loud. A word carrying an Estonian letter is Estonian and nothing else; a long
-  quoted word that nothing supplied is a guess, biased towards withholding, and
+  quoted word that nothing supplied is a guess, biased toward withholding, and
   on the composition route (no glosses, no forms, an allowlist of the
   learner's own text) an English word is exactly what it usually catches. Both
   drop the note. Only one of them may be reported as Anu writing Estonian.

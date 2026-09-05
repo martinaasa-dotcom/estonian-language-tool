@@ -24,7 +24,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
   `getClaims()` replaces `getUser()`. A Supabase access token is a signed JWT,
   so with asymmetric signing keys the signature can be verified here, against
   a key set cached in the process, and no round trip happens at all. The
-  fallback is the old behaviour rather than a weaker one: on a project still
+  fallback is the old behavior rather than a weaker one: on a project still
   using the legacy shared secret there is no public key to verify against, so
   `getClaims()` calls `getUser()` itself and the answer is exactly as
   authoritative as before. Migrating the project to signing keys is what turns

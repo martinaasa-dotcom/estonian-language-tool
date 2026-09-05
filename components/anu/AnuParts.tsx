@@ -31,7 +31,7 @@ import { AnuProse } from "./Prose";
  * are the same pairing for the same reason.
  */
 export const CHIPS = [
-  { label: "Break this sentence down", short: "Break it down", prompt: "Break this Estonian sentence down piece by piece, labelling each case: " },
+  { label: "Break this sentence down", short: "Break it down", prompt: "Break this Estonian sentence down piece by piece, labeling each case: " },
   { label: "Which case, and why?", short: "Which case?", prompt: "Which case should I use here, and what is the rule? " },
   { label: "Object case check", short: "Object case", prompt: "Is the object case right in this sentence, total or partial? Explain why: " },
   { label: "Explain this gradation", short: "Gradation", prompt: "Explain the consonant gradation in this word and name the pattern: " },
@@ -76,7 +76,7 @@ export function sentenceCheckPrompt(estonian: string, meaning: string): string {
  * with a fallback chain configured is not always the same thing.
  *
  * `compact` is the floating panel, and it keeps only the half that is a fact
- * about something on screen. Three things were being said in one grey block
+ * about something on screen. Three things were being said in one gray block
  * under the box a learner types into: where Estonian forms come from, which is
  * a standing fact about Anu rather than about any answer; which provider the
  * deployment *would* ask, which is a prediction about a reply that does not
@@ -322,7 +322,7 @@ function UnverifiedNotice({ words }: { words: string[] }) {
       <Chip tone="again" title="Not a stored form, so the dictionary could not confirm it">
         {AI_TAG}
       </Chip>
-      <span>{plural ? "Anu used words above" : "Anu used a word above"} the dictionary does not recognise yet:</span>
+      <span>{plural ? "Anu used words above" : "Anu used a word above"} the dictionary does not recognize yet:</span>
       <span>
         {words.map((w, i) => (
           <span key={w}>

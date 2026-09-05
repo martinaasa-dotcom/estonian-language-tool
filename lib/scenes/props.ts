@@ -22,7 +22,7 @@
  * module could collect that nobody could ever take back.
  *
  * WHAT THIS FILE MAY WRITE. English, and a lemma. That is the standing the
- * scene catalogue already has: a lemma is a *request* against the dictionary,
+ * scene catalog already has: a lemma is a *request* against the dictionary,
  * so a misspelled one fails to arrive rather than becoming a wrong Estonian
  * word, and `catalogue.test.ts` checks every one against the units its scene
  * declares. What it may never write is a form or a sentence, which is why a
@@ -268,7 +268,7 @@ function digits(random: () => number, count: number): string {
  * person says and what a card printing `11:30` should accept. Estonian tells
  * the time on a twelve-hour clock in speech, so 13:00 is `üks`. Lemmas rather
  * than forms, every one of them a word the numbers unit teaches, so a
- * misspelling here fails the catalogue test rather than reaching a marker; the
+ * misspelling here fails the catalog test rather than reaching a marker; the
  * half hour is two lemmas that have to appear together, which `dataFor` joins
  * with a space and the marker looks for in the text.
  */

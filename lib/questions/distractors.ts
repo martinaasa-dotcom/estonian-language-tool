@@ -25,7 +25,7 @@ import { shuffle } from "@/lib/random/shuffle";
   So a wrong answer is chosen for how near it is to the right one. Near means
   what a learner cannot use to eliminate it: the same part of speech, the same
   CEFR band, the same shape on the page, and, where the course teaches the
-  word, the same unit, which is how "black" ends up beside "white", "grey" and
+  word, the same unit, which is how "black" ends up beside "white", "gray" and
   "brown" rather than beside a plastic bag. For a case it means the cases that
   answer the same question word, since `kus?` is answered by two of them and
   telling those two apart is the whole of what the question asks.
@@ -172,7 +172,7 @@ export function sameMeaning(a: string, b: string): boolean {
  * shorter sentence says is also said by the longer one, a learner who picks
  * either is right and the question is unmarkable. Overlap short of that is the
  * whole point, because it forces the sentence to be read rather than scanned
- * for the one word that was recognised.
+ * for the one word that was recognized.
  */
 export function sameSentence(a: string, b: string): boolean {
   if (a.trim().toLowerCase() === b.trim().toLowerCase()) return true;
@@ -239,7 +239,7 @@ function shapeOf(text: string): Shape {
  * The four signals are the four ways the old options gave themselves away,
  * weighted by how cheap each one is to spot. A shared course unit is worth
  * most because it is the only signal that puts the answer among its own
- * neighbours: "black" against "white" and "grey" cannot be reasoned out at
+ * neighbors: "black" against "white" and "gray" cannot be reasoned out at
  * all, it has to be known. The part of speech is next, since an adjective
  * standing among three nouns is one glance. The band is what kept a C1 noun
  * out of an A1 question, and shape is the giveaway nobody notices they are
@@ -359,7 +359,7 @@ const familiar = (spec: CaseSpec) => !LATE_CASES.includes(spec.key);
  * This is the only part of the case ranking that survived the level check
  * dropping its case-name questions: what asks one now is `buildOptions` in
  * `lib/estonian/government.ts`, which is a question about a verb rather than
- * about a form, so it needs the scoring and none of the labelling that went
+ * about a form, so it needs the scoring and none of the labeling that went
  * with it.
  */
 export function caseNearness(candidate: CaseSpec, answer: CaseSpec): number {

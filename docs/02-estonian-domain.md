@@ -24,7 +24,7 @@ a class has no settled one.
 
 Estonian has 14 cases. Only a handful of forms are unpredictable; the rest are regular suffixes on a
 known stem. The unpredictable ones are the **principal parts** (*põhivormid*), and they are the only
-thing worth memorising.
+thing worth memorizing.
 
 ### 1.1 The six noun principal parts
 
@@ -71,7 +71,7 @@ plural, which is why #6 is stored. The nominative plural looks like a rule and i
 why it is #5 and stored rather than derived: see §1.1.
 
 The dictionary UI renders this as a **generated table clearly marked as derived**, alongside the
-five stored forms marked as authoritative. The learner sees which forms they must memorise and which
+five stored forms marked as authoritative. The learner sees which forms they must memorize and which
 they get for free. That framing *is* the pedagogy.
 
 ### 1.2a Two sets of local cases, and which one a word takes
@@ -181,7 +181,7 @@ Estonian encodes **aspect and completeness in the case of the object**:
 The rule of thumb: **partitive** for ongoing, negated, partial or unbounded events; **total object**
 (genitive sg / nominative pl) for completed, bounded, whole ones. Negation always takes partitive.
 
-Modelled as:
+Modeled as:
 - a `GrammarConcept` record with worked examples and a canonical explanation,
 - a dedicated **minimal-pair card type**: the learner picks the case and gets told which reading
   their choice produced,
@@ -235,6 +235,6 @@ The learner is in a structured class, so the app tracks where they are.
 - **CEFR levels** A1, A2, B1, B2, C1 on the profile and, where Ekilex supplies it, per lexeme.
 - Estonian state language exams (*eesti keele tasemeeksam*) are offered at A2, B1, B2 and C1. Deck
   and progress views can be filtered to a target exam level, which gives the dashboard a goal to
-  organise around rather than an open-ended word list.
+  organize around rather than an open-ended word list.
 - Vocabulary is additionally tagged by **class week**, linking the deck to the syllabus and joining
   Feature 1 (tasks) to Feature 6 (cards), the concrete fix for gap D4.

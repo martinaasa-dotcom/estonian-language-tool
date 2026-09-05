@@ -61,7 +61,7 @@ export function gapForms(word: GapWord): Map<string, CaseKey | null> {
   for (const form of word.forms) parts[form.formType] = form.value;
 
   /*
-    A PRINCIPAL PART IS NOT LABELLED AND THE SHORT ILLATIVE IS.
+    A PRINCIPAL PART IS NOT LABELED AND THE SHORT ILLATIVE IS.
 
     `tuba` is its own nominative and its own partitive, so a card built on it
     cannot say which case the sentence was using it in, and the label is what

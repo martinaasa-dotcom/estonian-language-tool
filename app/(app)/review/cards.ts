@@ -189,7 +189,7 @@ function toReviewCard(c: CardRow, glossLanguage: GlossLanguage): ReviewCard {
  * effect was that half a deck could never be asked properly: `askFor` routes to
  * a pick whenever options exist, and neither review mode overrides it, so the
  * one question this app is named for, what does this Estonian word mean, was
- * always answered with the answer already on the screen. Recognising a gloss
+ * always answered with the answer already on the screen. Recognizing a gloss
  * among four is a different and much weaker memory than producing it, and a
  * schedule built on the easier one says a word is known when it is not.
  *
@@ -217,10 +217,10 @@ function wantsChoices(card: ReviewCard): boolean {
  *
  * All of them, and that is the difference from the rule above. A recognition
  * card is offered options only while the memory is minutes old, because
- * recognising a gloss among four is a much weaker memory than producing one
+ * recognizing a gloss among four is a much weaker memory than producing one
  * and a schedule built on the easier question says a word is known when it is
  * not. A case card is not in that position: the options are four forms of the
- * *same word*, so there is no vocabulary to be recognised and nothing is
+ * *same word*, so there is no vocabulary to be recognized and nothing is
  * given away. What is being asked is which ending the sentence wants, and
  * `toast`, `toasse` and `toale` beside `toas` ask exactly that.
  *
@@ -310,7 +310,7 @@ export async function withChoices(
   rows: CardRow[], glossLanguage: GlossLanguage, ownerId: string,
 ): Promise<ReviewCard[]> {
   /*
-    WHICH OF THESE WORDS ARE ALREADY FAVOURITES, AND THE GLOSSED SENTENCE.
+    WHICH OF THESE WORDS ARE ALREADY FAVORITES, AND THE GLOSSED SENTENCE.
 
     Two reads that do not need each other, so they go together: on the
     deployment's own pooler each `await` is a round trip, and this is the
@@ -324,7 +324,7 @@ export async function withChoices(
     a caller that has not thought about it does not compile. Optional was the
     first version and a third caller arrived one commit later without it, from
     a branch that had never heard of stars, which would have drawn every star
-    on that round empty for a word that is a favourite. Every route rendering
+    on that round empty for a word that is a favorite. Every route rendering
     this session resolves an owner already.
   */
   const [glossed, starred] = await Promise.all([

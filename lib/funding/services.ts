@@ -1,7 +1,7 @@
 /**
  * EVERY THING THIS APP RUNS ON, DECLARED ONCE, WITH ITS PRICE.
  *
- * There used to be three lists. A catalogue said what the app depends on, a
+ * There used to be three lists. A catalog said what the app depends on, a
  * set of hand-written functions in the cost model said what each one costs,
  * and the page rendered whichever of them it had been told about. Adding a
  * service meant remembering all three, and the one certain to go stale is the
@@ -16,9 +16,9 @@
  * chart, the ladder and the page's own description all read this array, and
  * `scripts/test-invariants.ts` fails if any of them stops.
  *
- * NO SERVICE ANYBODY BILLS US FOR IS MODELLED AS FREE. A free tier is a plan
+ * NO SERVICE ANYBODY BILLS US FOR IS MODELED AS FREE. A free tier is a plan
  * that pauses when nobody is on it, forbids commercial use, or hands out an
- * allowance the day somebody launches, and modelling one made this page
+ * allowance the day somebody launches, and modeling one made this page
  * cheerful and wrong. Every vendor here is on the plan a real deployment is on.
  *
  * WHAT IS GIVEN IS CREDITED, NOT PRICED. Ekilex, Wiktionary and TartuNLP are

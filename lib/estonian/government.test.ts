@@ -16,7 +16,7 @@ describe("parseGovernment", () => {
     });
   });
 
-  it("recognises an experiencer construction", () => {
+  it("recognizes an experiencer construction", () => {
     const g = parseGovernment(
       "allative experiencer — mulle meeldib see (I like it), literally 'to me it pleases'",
     );
@@ -74,7 +74,7 @@ describe("parseGovernment", () => {
   the primary government first. Read with the rule written for the seed, the
   case came out of the app's own list order instead of the entry's, so a verb
   governing the allative was drilled as taking the partitive. The learner
-  memorises whatever the drill says, which makes a confidently wrong answer
+  memorizes whatever the drill says, which makes a confidently wrong answer
   the worst thing this screen can do.
 */
 describe("parseGovernment, on the shape Ekilex writes", () => {

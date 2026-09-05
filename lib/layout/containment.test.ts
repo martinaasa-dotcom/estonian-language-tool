@@ -46,7 +46,7 @@ describe("a word that will not fit", () => {
   it("is `anywhere` rather than `break-word`, which is the whole point", () => {
     /*
       Both break a word that has already overflowed. Only `anywhere` counts
-      towards min-content, which is what a flex or grid item's automatic
+      toward min-content, which is what a flex or grid item's automatic
       minimum is: with `break-word` a single long word is a floor under the
       whole row and the row pushes out of the card it is in, having broken
       nothing. Estonian is the reason this is not academic. The dictionary

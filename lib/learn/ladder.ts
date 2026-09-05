@@ -4,7 +4,7 @@
  * A word arrives knowing nothing about you and leaves as something you can
  * use, and the distance between those two is not one question. Meeting a word
  * is not answering it, picking its meaning out of four is not producing it, and
- * producing it in a sentence is not the same as recognising it on a card. So
+ * producing it in a sentence is not the same as recognizing it on a card. So
  * Learn walks each word up three rungs before it is handed to Practice:
  *
  *   meet    the word, what it means, and an attested sentence with it in

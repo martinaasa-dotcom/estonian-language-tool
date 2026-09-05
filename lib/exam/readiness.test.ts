@@ -56,7 +56,7 @@ describe("how sure the app is allowed to be", () => {
     expect(evidenceFrom(signals({ totalReviews: 20 }))).toBe("thin");
   });
 
-  it("will not call anything good until several skills have been practised", () => {
+  it("will not call anything good until several skills have been practiced", () => {
     const many = signals({ totalReviews: 5000 });
     expect(evidenceFrom(many)).toBe("thin");
   });
@@ -96,7 +96,7 @@ describe("the pass chance", () => {
     expect(passChance(40, 12)).toBeLessThan(passChance(60, 12));
   });
 
-  it("is pulled towards the middle when the spread is wide", () => {
+  it("is pulled toward the middle when the spread is wide", () => {
     const narrow = passChance(80, 6);
     const wide = passChance(80, 24);
     expect(wide).toBeLessThan(narrow);
@@ -240,7 +240,7 @@ describe("a paper actually sat", () => {
   });
 });
 
-describe("the level it puts you at, and the one it points you towards", () => {
+describe("the level it puts you at, and the one it points you toward", () => {
   /*
     ONE HOLE IN THE LADDER USED TO PROMOTE SOMEBODY PAST IT. The hub took the
     highest passable level anywhere in the list and the lowest unpassable one,
@@ -313,7 +313,7 @@ describe("the level it puts you at, and the one it points you towards", () => {
 });
 
 describe("the advice", () => {
-  it("names a skill that has never been practised, because a zero fails the paper", () => {
+  it("names a skill that has never been practiced, because a zero fails the paper", () => {
     const readiness = assessReadiness(established());
     const missing = assessReadiness(signals({
       ...established(),
@@ -373,7 +373,7 @@ describe("naming the worst part", () => {
     expect(claiming?.id).toBe("weak-listening");
   });
 
-  it("does not claim a skill was never practised when it simply cannot tell", () => {
+  it("does not claim a skill was never practiced when it simply cannot tell", () => {
     const blind = assessReadiness(signals({
       ...established(),
       skills: { ...established().skills, speaking: { attempts: 0, pct: 0 } },
@@ -406,7 +406,7 @@ describe("a placement check, which is the only thing that reaches listening and 
     },
   });
 
-  it("counts towards the evidence tier, because it measured the skill", () => {
+  it("counts toward the evidence tier, because it measured the skill", () => {
     const without = { ...placedAtB1, placement: null };
     expect(evidenceFrom(without)).not.toEqual("good");
     expect(evidenceFrom(placedAtB1)).toBe("good");

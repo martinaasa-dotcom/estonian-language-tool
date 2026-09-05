@@ -23,7 +23,7 @@ import { slotLabel } from "@/lib/srs/slots";
  * nothing else: `toasse` is correct Estonian and is accepted everywhere the
  * short form is shown, and the partitive the ending rule would build for `aeg`
  * is not a word at all. Printing one with a line through it would be this app
- * writing Estonian and hoping nobody memorised it (ADR-005).
+ * writing Estonian and hoping nobody memorized it (ADR-005).
  *
  * The slot's Estonian name and the question it answers lead, and the plain
  * clause from `lib/estonian/plainAsk.ts` sits under it, which is the order

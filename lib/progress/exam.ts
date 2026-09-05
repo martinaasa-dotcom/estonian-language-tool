@@ -261,7 +261,7 @@ function emptyVocabulary(): ReadinessSignals["vocabulary"] {
  * convenience, which is a bad trade. So listening and speaking rest on the one
  * source that does separate them: the parts of the mock papers already sat. Until
  * a paper has been sat they read as no evidence, and the advice says exactly
- * that rather than claiming the learner has never practised.
+ * that rather than claiming the learner has never practiced.
  */
 async function skillEvidence(
   ownerId: string,

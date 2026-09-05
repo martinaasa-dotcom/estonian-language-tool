@@ -180,7 +180,7 @@ function Nav() {
  * Their four checks in `scripts/test-design.mjs` went too, and the suite's
  * floor came down by exactly four.
  *
- * So one centred column, which is the shape a hero takes when it has no second
+ * So one centered column, which is the shape a hero takes when it has no second
  * half: the eye goes down the middle to the button rather than across to a card
  * and back.
  */
@@ -492,7 +492,7 @@ function Features() {
 
     Three of the original eight said what the hero, the FAQ or another card was
     already saying: a portability card beside an offline tick, a progress card
-    beside an XP card, and a "four ways to practise" card that had been wrong
+    beside an XP card, and a "four ways to practice" card that had been wrong
     since the third practice mode shipped. Then the speech card, which is not a
     thing of its own: it is what the dictionary entry does when you press a
     form, so it is a clause on the dictionary card.
@@ -532,7 +532,7 @@ function Features() {
         <div className="mx-auto max-w-[52ch] text-center">
           <p className="label-xs" style={{ color: "var(--blush-ink)" }}>What you get</p>
           <h2 className="mt-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl" style={{ color: "var(--ink)" }}>
-            Someone to ask, something to practise, and a date to aim at
+            Someone to ask, something to practice, and a date to aim at
           </h2>
           <p className="mx-auto mt-5 max-w-[48ch] text-md leading-relaxed" style={{ color: "var(--ink-2)" }}>
             Three parts, and they work together. A word you ask Anu about becomes a card, and the
@@ -578,7 +578,7 @@ function Features() {
  *
  * Anu's card used to be a hand-written copy of this with its icon beside the
  * heading instead of above it, which is how it came to be the only card in the
- * grid laid out differently from its neighbours. A slot under the body is the
+ * grid laid out differently from its neighbors. A slot under the body is the
  * whole of what it needed, and the icon it was laying out its own way is the
  * arrangement every card takes now: a circle stacked over a heading spends 52px
  * of a phone on saying nothing the heading does not, once per card.
@@ -629,7 +629,7 @@ function Feature({ tone, icon, title, body, children }: {
  * So the columns are the real ones, and every claim in the table is written to
  * survive being read by the people it is about: a fact taken from that
  * product's own public pages, checked on a stated date, with a third state for
- * the cells we could not confirm rather than a guess in our own favour. No
+ * the cells we could not confirm rather than a guess in our own favor. No
  * logos, no borrowed branding, nothing about price beyond what their own store
  * listing says, and a credit line under the table for what each of them does
  * better than Kodukeel does. On most of these rows somebody else ticks too,
@@ -678,7 +678,7 @@ const ROWS: readonly { label: string; cells: readonly [Verdict, Verdict, Verdict
 const COUNTED = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"] as const;
 const shared = ROWS.filter((row) => row.cells.slice(1).includes("yes")).length;
 /**
- * Capitalised at the source and lowered at the one call site that needs it
+ * Capitalized at the source and lowered at the one call site that needs it
  * mid-sentence, rather than the other way about: this is the count of claims
  * in the table and is the kind of thing a second caller wants to open with.
  */
@@ -909,7 +909,7 @@ const FAQS = [
   ],
   [
     "Will it actually get me talking to people?",
-    "That is what it is for. Situations puts you in front of somebody with an agenda of their own, a receptionist, a landlord, a clerk, and marks you against the dictionary rather than a model, so you cannot be told you were wrong when you were right. Today sets one small errand to do out loud, and Progress counts how those went, including the times somebody switched to English. Nothing here scores your pronunciation, because the only recogniser available gets native speakers wrong, and we would rather say so than pretend.",
+    "That is what it is for. Situations puts you in front of somebody with an agenda of their own, a receptionist, a landlord, a clerk, and marks you against the dictionary rather than a model, so you cannot be told you were wrong when you were right. Today sets one small errand to do out loud, and Progress counts how those went, including the times somebody switched to English. Nothing here scores your pronunciation, because the only recognizer available gets native speakers wrong, and we would rather say so than pretend.",
   ],
   [
     "What happens to my data?",
@@ -1104,9 +1104,9 @@ function FinalCta() {
  * The footer, with room in it.
  *
  * It was one row: the wordmark, a four-source credit run together as a single
- * sentence with the licences inside it, and three links, all at 12px, all on
+ * sentence with the licenses inside it, and three links, all at 12px, all on
  * one line at 1280 and wrapping into a lump under it. Crowded, and the credit
- * was the worst of it, because four institutions and three licences in one
+ * was the worst of it, because four institutions and three licenses in one
  * sentence is a sentence nobody can find their way back into. Each source has
  * a line now, with what it gives and the terms it gives it under, the links
  * have a column, and the whole thing is set a size up with the air a last
@@ -1236,9 +1236,9 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
         nomSg: form("NOM_SG") ?? null,
       };
 
-      // Labelled the way a course labels them. The three noun parts are the
+      // Labeled the way a course labels them. The three noun parts are the
       // three questions every Estonian schoolbook drills them by, and a visitor
-      // who has been to one lesson recognises them.
+      // who has been to one lesson recognizes them.
       const principal = (isVerb
         ? [["ma-tegevusnimi", form("INF_MA")], ["da-tegevusnimi", form("INF_DA")], ["olevik · ma", form("PRES_1SG")], ["lihtminevik · ma", form("PAST_1SG")]]
         : [
@@ -1281,7 +1281,7 @@ async function loadDemo(): Promise<{ words: DemoWord[]; stats: { words: number; 
  * The stems are copied verbatim from the checked seed data and live in
  * `lib/collections/demoWords.ts` beside the list of words to ask for; the rest
  * is derived by `buildCaseTable()`, exactly as the live path does it, down to
- * the short illative going in with the forms you memorise. Nothing here is a
+ * the short illative going in with the forms you memorize. Nothing here is a
  * hand-written Estonian form, and `scripts/test-invariants.ts` checks the copy
  * against the built dictionary rather than trusting that it was copied.
  */
@@ -1308,8 +1308,8 @@ const FALLBACK_WORDS: DemoWord[] = DEMO_STEMS.map((w) => {
  * One row of the card, from one row of the case table.
  *
  * THE SHORT ILLATIVE STAYS IN ITS OWN ROW. It used to be promoted into the
- * left column, with the forms you memorise, on the argument that `tuppa` is
- * not `toa` with an ending on it and so has to be learnt. True, and it made
+ * left column, with the forms you memorize, on the argument that `tuppa` is
+ * not `toa` with an ending on it and so has to be learned. True, and it made
  * the card a different shape for `tuba` than for `raamat`: four rows against
  * three on the left, ten against eleven on the right, and a card that changed
  * height under the pointer on every press. The claim is kept and the shape is

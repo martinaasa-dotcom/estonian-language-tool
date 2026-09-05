@@ -9,7 +9,7 @@
  *
  * Web Audio rather than a second file, because a café is a filter over noise
  * the browser can generate for nothing, and a phone line is one band-pass.
- * Nothing ships, nothing is fetched twice, nothing needs a licence, and it
+ * Nothing ships, nothing is fetched twice, nothing needs a license, and it
  * works with the network off exactly as far as the clip itself does.
  *
  * THIS IS NOT A SECOND PLAY PATH. `playClip` in `lib/audio/clip.ts` is the

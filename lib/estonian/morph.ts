@@ -9,9 +9,9 @@ import type { CaseKey } from "./types";
  * to an English speaker mid-exercise, so this is the one place that turns a code
  * into something a learner can read — and into the case key the rest of the app
  * already reasons about, which is what lets a cloze built from a real sentence
- * count towards the weak-case breakdown.
+ * count toward the weak-case breakdown.
  *
- * Pure data. Codes we do not recognise fall through as `null` rather than being
+ * Pure data. Codes we do not recognize fall through as `null` rather than being
  * guessed at.
  */
 

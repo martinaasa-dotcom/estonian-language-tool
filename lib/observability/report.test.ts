@@ -86,7 +86,7 @@ describe("buildRecord", () => {
     expect(record.message).not.toContain("sk-proj-");
   });
 
-  it("produces something JSON can serialise", () => {
+  it("produces something JSON can serialize", () => {
     const record = buildRecord(new Error("boom"), { at: "x", extra: { a: 1 } });
     expect(() => JSON.stringify(record)).not.toThrow();
   });
@@ -97,7 +97,7 @@ describe("safeMessage", () => {
     The two operations that end in "and nothing was changed" both quote the
     database, which is right: they are where somebody is owed a reason. What
     the database says is the problem. Prisma names the datasource in an
-    initialisation failure, and a restore runs a two-minute transaction, which
+    initialization failure, and a restore runs a two-minute transaction, which
     is exactly the window a connection drops in.
   */
   it("scrubs a connection string out of a database error", () => {

@@ -133,7 +133,7 @@ export default async function ConjugationPage() {
   }
 
   /*
-    Which of the round's verbs are already favourites, in one read rather than
+    Which of the round's verbs are already favorites, in one read rather than
     one per question. After the round is picked rather than before it, because
     the pool this draws from is up to a few hundred verbs and the round is ten.
   */

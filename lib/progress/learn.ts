@@ -143,7 +143,7 @@ export interface LearnWord {
   } | null;
   /** Four glosses, one of them right, ranked rather than shuffled. */
   choices: string[] | null;
-  /** Whether this word is already one of the learner's favourites. */
+  /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
   rung: Rung;
   scheduling: LearnScheduling;
@@ -259,7 +259,7 @@ export async function learnBatch(
   const pool = await decoyOptions();
 
   /*
-    Which of the batch are already favourites, so the star in the corner of
+    Which of the batch are already favorites, so the star in the corner of
     each card is drawn in the state it is actually in. One query for the batch
     rather than one per word, and it is here rather than in the page because
     the batch is assembled here and a second read would be a second answer.

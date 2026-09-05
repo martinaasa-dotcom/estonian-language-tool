@@ -6,7 +6,7 @@ import type { CaseKey } from "@/lib/estonian/types";
  *
  * "You would understand 81 percent of everyday situations" is the number a
  * vocabulary app can compute and it answers the least useful question. Knowing
- * the words for a health centre is what lets you follow the receptionist. It
+ * the words for a health center is what lets you follow the receptionist. It
  * is not what lets you answer her, and it is nothing like what lets you open
  * the exchange, steer it and recover when she says one sentence too fast. Most
  * apps sell the first as the third, and the person who believed them finds out
@@ -25,7 +25,7 @@ import type { CaseKey } from "@/lib/estonian/types";
  * no Estonian at all: a situation names a **unit id**, never a word, exactly
  * as `lib/collections/topical.ts` names units rather than words for the
  * seasonal row. The words come out of the course, where a lemma is already a
- * request the Ekilex harvest either honoured or reported. The cases a
+ * request the Ekilex harvest either honored or reported. The cases a
  * situation turns on are keys of `CASES`, so a typo fails a test rather than
  * silently asking about nothing. `situations.test.ts` checks both.
  *
@@ -123,8 +123,8 @@ export const SITUATION_FACTS: Record<string, SituationFacts> = {
   },
   varvid: {
     live: true, needs: ["questions"], cases: ["GENITIVE", "PARTITIVE"],
-    tryThis: "Ask for something in a particular colour in a shop and understand which one they offer.",
-    expect: "A colour you did not ask for, offered instead, and a question about size.",
+    tryThis: "Ask for something in a particular color in a shop and understand which one they offer.",
+    expect: "A color you did not ask for, offered instead, and a question about size.",
   },
   riided: {
     live: true, needs: ["numbers", "questions", "replies"], cases: ["PARTITIVE", "GENITIVE"],

@@ -26,7 +26,7 @@ actual products:
 | API requires a key | `GET https://ekilex.ee/api/word/search/raamat` → **403** unauthenticated. **VERIFIED** |
 | Key source | Issued from the API section of an Ekilex account profile |
 | Data model | A word has one or more sets of *forms* (their JSON calls a set by the linguist's word), each carrying orthographic representations, transcriptions and sound-file links, which is exactly the shape our principal-parts model needs |
-| Licence | Ekilex standard licence is **CC BY 4.0**: attribution is a *condition*, not a courtesy |
+| License | Ekilex standard licence is **CC BY 4.0**: attribution is a *condition*, not a courtesy |
 
 ### 1.3 Consequences for the build
 

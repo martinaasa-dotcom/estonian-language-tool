@@ -13,9 +13,9 @@
  * WHY NO ARTWORK IS SHIPPED. What the table holds is the emoji *character*,
  * rendered by whatever font the reader's own device has. A codepoint is not
  * copyrightable; a vendor's artwork is, and Apple's in particular is licensed
- * and enforced. So there is no image file in this repository and no licence to
+ * and enforced. So there is no image file in this repository and no license to
  * carry: a learner on a Mac sees Apple's picture, one on Android sees Google's,
- * and Kodukeel ships neither. Unicode's data file is under the Unicode licence,
+ * and Kodukeel ships neither. Unicode's data file is under the Unicode license,
  * which is permissive and asks for attribution; the README credits it.
  *
  * TWO RULES KEEP A PICTURE FROM TEACHING THE WRONG WORD.

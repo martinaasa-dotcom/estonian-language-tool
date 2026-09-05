@@ -22,7 +22,7 @@
  * it has almost nothing vertically and the whole width of the card sideways.
  * `freeAxis` is that fact, and it is what lets these move far enough to be
  * worth watching: sliding thirty pixels along an edge is visible from across a
- * room and costs the placement nothing, where three pixels towards the card is
+ * room and costs the placement nothing, where three pixels toward the card is
  * invisible and spends the whole budget.
  *
  * NOTHING HERE READS THE DOM. It is arithmetic on numbers a component
@@ -203,10 +203,10 @@ export const NO_LEAN: Lean = { x: 0, y: 0, turn: 0 };
  * How a letter answers a pointer that has come near it.
  *
  * The rule is the same one the travel follows and for the same reason: it
- * slides along its own edge towards the pointer, and the only thing it ever
+ * slides along its own edge toward the pointer, and the only thing it ever
  * does on the other axis is move further onto the card. A letter that leant
  * away from a pointer would leave the card at exactly the moment somebody was
- * looking at it, and one that leant towards a pointer on both axes would hang
+ * looking at it, and one that leant toward a pointer on both axes would hang
  * off the edge of the page on the letters that have no gutter left.
  *
  * Nearness is squared on purpose. Linear falloff means every letter within

@@ -91,7 +91,7 @@ describe("what happened outside the app", () => {
 
   it("reads a report that names no errand, which is what Today writes", async () => {
     // The column is nullable on purpose: the question is about the learner's
-    // own day, so a conversation with a neighbour carries no errand id.
+    // own day, so a conversation with a neighbor carries no errand id.
     await report("UNDERSTOOD", at(YESTERDAY), null);
     expect((await outThere(OWNER, CLOCK, NOW)).total).toBe(1);
   });

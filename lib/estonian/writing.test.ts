@@ -134,7 +134,7 @@ describe("checkForm", () => {
     });
   });
 
-  it("accepts the form at the start of a sentence, capitalised", () => {
+  it("accepts the form at the start of a sentence, capitalized", () => {
     expect(checkForm("Toas on soe.", task, OTHER_FORMS).used).toBe(true);
   });
 

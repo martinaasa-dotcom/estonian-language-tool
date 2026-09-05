@@ -154,7 +154,7 @@ describe("planning a run", () => {
       too thin is reported the way `paper.ts` reports a shortfall rather than
       papered over, so `repeats` is what this asserts against. A repeat that
       nothing named would be the quiet cycle the design forbids, and asserting
-      the flat promise here would be asserting something no catalogue this size
+      the flat promise here would be asserting something no catalog this size
       can do.
     */
     const history: { persona: string; props: string[]; curveballs: string[] }[] = [];

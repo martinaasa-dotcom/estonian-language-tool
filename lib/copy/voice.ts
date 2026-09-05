@@ -201,7 +201,7 @@ const BROCHURE: Tell[] = [
     instead: "'Use'. Nobody has ever leveraged a flashcard.",
   },
   {
-    name: "utilise",
+    name: "utilize",
     find: /\butili[sz](e|es|ed|ing|ation)\b/i,
     instead: "'Use'. It is the same word with fewer letters.",
   },
@@ -358,10 +358,10 @@ export const OPENER_REWRITES: readonly [RegExp, string][] = TELLS.flatMap((t) =>
   is written as an arrow on nine screens, the keyboard hints draw a real return
   key and a real command key, the daily strip ticks a day with a check mark and
   Anu's connection failure is marked with a warning sign. Those are typographic
-  glyphs doing a job no word does as well, in one colour, matching the text
+  glyphs doing a job no word does as well, in one color, matching the text
   around them. What is banned is the pictographic kind: the block that holds
   the rocket and the party popper, the variation selector that is what turns a
-  monochrome dingbat into a coloured picture, and the few dingbats that are
+  monochrome dingbat into a colored picture, and the few dingbats that are
   never anything but emoji.
 */
 export const EMOJI = /[\u{1F300}-\u{1FAFF}\u{FE0F}\u{2728}\u{2705}\u{274C}\u{2764}\u{2B50}\u{2B55}]/u;
@@ -382,7 +382,7 @@ export const VOICE_RULES: readonly string[] = [
   `Never use an em dash (${EM_DASH}) or an en dash (${EN_DASH}). Use a comma, a full stop, or a pair of brackets. A dash used as a clause break is the loudest sign a sentence was generated rather than written, and this learner is being taught by a person. Write a range as "2 to 3 weeks" or "2028-2029".`,
   `Never open with "It's important to note that", "At the end of the day", "In essence", "Great question", "Moreover", "Furthermore" or anything else that carries no information. Start with the answer.`,
   `Never inflate a small claim by denying it first. "Not just a rule, but a pattern" is "a rule, and a pattern". Say what a thing is.`,
-  `Never reach for a brochure word: delve, leverage, utilise, seamless, cutting-edge, groundbreaking, holistic, bespoke, meticulously, a plethora of, embark on, unleash, empower, elevate. Use the plain word a teacher would use out loud.`,
+  `Never reach for a brochure word: delve, leverage, utilize, seamless, cutting-edge, groundbreaking, holistic, bespoke, meticulously, a plethora of, embark on, unleash, empower, elevate. Use the plain word a teacher would use out loud.`,
   `Never say "paradigm". A learner has met "the forms of a word", "the case endings" and "the table" in class and has not met that one, so use theirs. The same goes for any other word that belongs to writing about a language rather than to teaching it.`,
   `No emoji. No exclamation-mark praise. "Six days in a row" is warmer than "amazing", because it is about the learner and not about you.`,
   `Be warm, and be short. Warmth is attention: notice what they got right, name the specific thing, and stop. It is not enthusiasm, and it is never padding. Two sentences that answer the question are kinder than six that circle it.`,

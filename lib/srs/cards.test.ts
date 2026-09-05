@@ -207,7 +207,7 @@ describe("generateCards — CLOZE", () => {
     expect(asLemma?.hint?.toLowerCase()).not.toContain("kohv");
   });
 
-  it("tags the case, so a gap-fill counts towards the weak-case breakdown", () => {
+  it("tags the case, so a gap-fill counts toward the weak-case breakdown", () => {
     const cards = generateCards(drinking, ["CLOZE"]);
     expect(cards.some((c) => c.targetCase !== null)).toBe(true);
   });
@@ -300,7 +300,7 @@ describe("generateCards — CASE_FORM", () => {
   /*
     AND THE SENTENCE HAS TO NAME THE CASE ON ITS OWN. `kohvi` is the omastav,
     the osastav and the short sisseütlev all at once, so gapping it out of
-    `Ostsin paki kohvi.`, where it is a genitive, and labelling the card
+    `Ostsin paki kohvi.`, where it is a genitive, and labeling the card
     `sisseütlev` would teach the wrong case and write the wrong one into
     `Review.slot`, which every case figure in the app is derived from.
     `readCase` is the strict rule that already existed for this.

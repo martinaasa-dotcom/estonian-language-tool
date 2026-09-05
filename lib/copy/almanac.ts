@@ -516,7 +516,7 @@ const BY_MONTH: Record<number, Occasion> = {
   1: {
     key: "january",
     name: "January",
-    note: "January here is snow if you are lucky and grey if you are not.",
+    note: "January here is snow if you are lucky and gray if you are not.",
     glosses: ["snow", "winter", "cold"],
   },
   2: {

@@ -67,7 +67,7 @@ import {
  * solid button, and the ink for a word on `--accent-soft` is `--accent-deep`.
  * A tile that built its own token names would have painted that one white on
  * lilac. Peach is not here at all: it means "missed" on every other screen in
- * the app, and a decoration may not spend a colour that carries a meaning.
+ * the app, and a decoration may not spend a color that carries a meaning.
  */
 const HUES = {
   blush: { fill: "var(--blush-soft)", ink: "var(--blush-ink)" },

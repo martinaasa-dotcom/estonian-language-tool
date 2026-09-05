@@ -78,15 +78,28 @@ function hours1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-const VERDICT: Record<Projection["verdict"], { tone: "neutral" | "good" | "warn"; headline: string }> = {
-  arrived: { tone: "good", headline: "You are already there, on this measurement." },
-  comfortable: { tone: "good", headline: "Your own pace covers it, with room to spare." },
-  tight: { tone: "warn", headline: "It fits, but only with study outside this app." },
-  possible: { tone: "warn", headline: "It could fit, if you use the Estonian already around you." },
-  short: { tone: "warn", headline: "Not by that date, at that pace. Here is what would change it." },
-  open: { tone: "neutral", headline: "No deadline set, so here is what the distance looks like." },
-  passed: { tone: "neutral", headline: "That date has gone by. Set a new one and this is a plan again." },
-};
+/**
+ * The headline, which leads with the hours a week rather than with a caveat.
+ *
+ * "It fits, but only with study outside this app" was true of nearly every
+ * plan and read as a no. What somebody who has set a date wants is the
+ * number: B2 in a year is about five hours a week, all in, and that is a
+ * thing a person can decide to do.
+ */
+function verdictFor(plan: Projection): { tone: "neutral" | "good" | "warn"; headline: string } {
+  const allIn = plan.otherHoursPerWeek
+    ? formatDurationRange(plan.appHoursPerWeek + plan.otherHoursPerWeek.low, plan.appHoursPerWeek + plan.otherHoursPerWeek.high, "long")
+    : formatDuration(plan.appHoursPerWeek, "long");
+  switch (plan.verdict) {
+    case "arrived": return { tone: "good", headline: "You are already there, on this measurement." };
+    case "comfortable": return { tone: "good", headline: "Your own pace covers it, with room to spare." };
+    case "tight": return { tone: "good", headline: `It fits. Plan on about ${allIn} a week, all in.` };
+    case "possible": return { tone: "neutral", headline: `It fits if you commit to it: about ${allIn} a week, all in.` };
+    case "short": return { tone: "warn", headline: "Not by that date at any normal pace. Here is what would change it." };
+    case "open": return { tone: "neutral", headline: "No deadline set, so here is what the distance looks like." };
+    default: return { tone: "neutral", headline: "That date has gone by. Set a new one and this is a plan again." };
+  }
+}
 
 export function PlanPanel({ standing, goals, dailyGoal, pace = null, now = new Date(), compact = false }: {
   /** Where the learner is, and whether a paper measured it or they guessed. */
@@ -148,7 +161,7 @@ export function PlanPanel({ standing, goals, dailyGoal, pace = null, now = new D
     found: foundHours(reasons),
     pace,
   });
-  const verdict = VERDICT[plan.verdict];
+  const verdict = verdictFor(plan);
   const spec = targetByBand(target);
   const newCards = sustainableNewCardsPerDay(dailyGoal);
   const bySkill = countedBySkill(standing, target);
@@ -180,11 +193,16 @@ export function PlanPanel({ standing, goals, dailyGoal, pace = null, now = new D
           tone="sky"
           hint={paceHint(plan, goals, dailyGoal)}
         />
+        {/* What the date asks for, all in, rather than how long the app alone
+            would take: the second is a number nobody can act on and the first
+            is the whole plan in one figure. */}
         <StatTile
-          value={plan.weeksOnAppAlone.low === 0 ? "0" : range(plan.weeksOnAppAlone.low, plan.weeksOnAppAlone.high, "")}
-          label="Weeks on the app alone"
+          value={plan.otherHoursPerWeek
+            ? formatDurationRange(plan.appHoursPerWeek + plan.otherHoursPerWeek.low, plan.appHoursPerWeek + plan.otherHoursPerWeek.high)
+            : plan.weeksOnAppAlone.low === 0 ? "0" : range(plan.weeksOnAppAlone.low, plan.weeksOnAppAlone.high, "")}
+          label={plan.otherHoursPerWeek ? "A week, all in" : "Weeks on the app alone"}
           tone="blush"
-          hint="which is why it is not the whole plan"
+          hint={plan.otherHoursPerWeek ? "this app plus everything else, to make your date" : "set a date and this becomes hours a week"}
         />
         <StatTile
           value={weeks === null ? "open" : `${weeks}`}
@@ -363,11 +381,14 @@ function foundNote(plan: Projection, reasons: readonly Reason[]): string {
   const need = formatDurationRange(other.low, other.high, "long");
   const lands = range(plan.weeksWithFound.low, plan.weeksWithFound.high, "weeks");
   const where = situation(reasons);
-  if (where) {
-    const held = formatDurationRange(plan.found.low, plan.found.high, "long");
-    return `To make that date, you would need roughly ${need} a week of Estonian beyond this app. You ${where}, which usually puts ${held} a week within reach without booking anything. Use it, and the distance is about ${lands}.`;
+  const held = formatDurationRange(plan.found.low, plan.found.high, "long");
+  if (plan.verdict === "short") {
+    return `That date asks for roughly ${need} a week of Estonian beyond this app, which is more than a week holds beside a life. At ${held} a week beyond the app the distance is about ${lands}: move the date to there, or raise the daily goal, and this is a plan again.`;
   }
-  return `To make that date, you would need roughly ${need} a week of Estonian beyond this app: a class, a conversation partner, reading, a film without subtitles. Find ${formatDuration(plan.found.low, "long")} a week on top of your daily goal, and that distance drops to about ${lands}.`;
+  if (where) {
+    return `Put in roughly ${need} a week of Estonian beyond this app and you make the date. You ${where}, which usually puts ${held} a week within reach without booking anything, so most of it is already there to be used.`;
+  }
+  return `Put in roughly ${need} a week of Estonian beyond this app and you make the date: a class, a conversation partner, reading, a film without subtitles. ${held} a week is what a normal week holds for that, and the distance at that pace is about ${lands}.`;
 }
 
 function sentence(
@@ -408,9 +429,9 @@ function sentence(
     return `${distance} In ${weeks} weeks ${whose} alone puts in about ${covered} hours, which covers it.`;
   }
   const rest = plan.verdict === "tight"
-    ? "The rest is a class and some reading, which a normal week holds."
+    ? "The rest is a class, some reading and the Estonian around you, which a normal week holds."
     : plan.verdict === "possible"
-      ? "The rest is about what your week already holds, if you use it."
-      : "The rest has to come from somewhere else, or the date has to move.";
+      ? "The rest is a real commitment beyond this app, every week, and people who make that commitment get there."
+      : "The rest is more than a week holds beside a life, so the date or the pace has to move.";
   return `${distance} In ${weeks} weeks ${whose} puts in about ${covered} of those hours. ${rest}`;
 }

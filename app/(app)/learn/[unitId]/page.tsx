@@ -69,7 +69,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
     What the unit will build, not what it asked for.
 
     `cardTypes` is a request and the generator only produces what a word can
-    support, so a unit of colours asks for a gradation card and no colour
+    support, so a unit of colors asks for a gradation card and no color
     gradates. Only that one type is checked here, because the column is already
     selected and the honest check for the others would be fetching every
     example sentence to see whether a gap can be made, which is the query this

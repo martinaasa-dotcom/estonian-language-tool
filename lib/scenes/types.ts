@@ -17,7 +17,7 @@
  * token.
  *
  * The design doc's first invariant said "no Estonian letter in a scene file",
- * modelled on the tripwire over `lib/estonian/grammar.ts`. That was wrong and
+ * modeled on the tripwire over `lib/estonian/grammar.ts`. That was wrong and
  * building this is what showed it: a rule keyed on `õäöüšž` would allow `valu`
  * and reject `küte`, which is not a distinction about anything. The rule that
  * holds is stronger and is the one asserted: **every lemma a scene names is a
@@ -114,7 +114,7 @@ export type LeafRequirement = Exclude<Requirement, { kind: "anyOf" }>;
  * index of the requirement it belongs to in `needs`, which is what a
  * `TurnRecord.met` row is indexed by. The readers that want to know which
  * words or cases a beat is about (the grades, the drills, the tile, the
- * catalogue test) read this rather than `needs`, so a choice is one
+ * catalog test) read this rather than `needs`, so a choice is one
  * requirement to the marker and each of its options to everybody else.
  */
 export function leafNeeds(
@@ -173,7 +173,7 @@ export interface BeatSpec {
    * longer takes every usage under a topic word. A person may still pick one
    * out where it happens to be exactly the line: `Kuhu sa lähed?` is recorded
    * under `kuhu` and is what a friend on the phone asks. Naming a sentence a
-   * lexicographer wrote is choosing, not writing (ADR-005): the catalogue
+   * lexicographer wrote is choosing, not writing (ADR-005): the catalog
    * test fails on a line that is not a usage of one of the beat's own topic
    * words in the shipped dictionary, and the context builder drops one the
    * live dictionary no longer holds rather than trusting the text here.
@@ -215,7 +215,7 @@ export interface BeatSpec {
   };
   /** What counts as the learner's turn being complete. */
   readonly needs: readonly Requirement[];
-  /** Required beats are the objectives; optional ones are the colour. */
+  /** Required beats are the objectives; optional ones are the color. */
   readonly required: boolean;
   /** How many times they try again before moving on. */
   readonly patience: number;

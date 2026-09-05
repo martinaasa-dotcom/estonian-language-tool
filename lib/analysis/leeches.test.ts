@@ -79,7 +79,7 @@ describe("rankLeeches", () => {
     expect(ranked.map((l) => l.cardId)).toEqual(["many", "few"]);
   });
 
-  it("honours the limit", () => {
+  it("honors the limit", () => {
     const many = Array.from({ length: 20 }, (_, i) => candidate({ cardId: `c${i}`, lapses: 5 + i }));
     expect(rankLeeches(many, 3)).toHaveLength(3);
   });
@@ -107,7 +107,7 @@ describe("findConfusable", () => {
     expect(findConfusable("tuba", ["raamat", "sõiduk"])).toEqual([]);
   });
 
-  it("honours the limit", () => {
+  it("honors the limit", () => {
     const deck = ["kirjeldama", "kirjutaja", "kirjanik", "kirjand", "kirjastus", "kirju"];
     expect(findConfusable("kirjutama", deck, 2)).toHaveLength(2);
   });
@@ -135,7 +135,7 @@ describe("buildClinicQuestion", () => {
     expect(q).toContain("INESSIVE".toLowerCase());
   });
 
-  it("asks a regressed card which neighbour is interfering", () => {
+  it("asks a regressed card which neighbor is interfering", () => {
     expect(buildClinicQuestion(leech, ["tuli"])).toMatch(/tell them apart/);
   });
 

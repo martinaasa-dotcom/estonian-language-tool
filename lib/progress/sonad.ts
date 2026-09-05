@@ -78,7 +78,7 @@ export async function puzzleFor(
     Ordered and counted, then skipped into, which is the shape the word of the
     day uses and for the same reason: it is stable through the learner's day
     from the one thing that changes at midnight, and it spreads across the pool
-    rather than favouring the front of the alphabet.
+    rather than favoring the front of the alphabet.
 
     The length filter is in SQL rather than in JavaScript because the pool is
     six thousand rows and the answer is one of them.

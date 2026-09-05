@@ -194,7 +194,7 @@ export function DiacriticBar({
  * text box, so the question that offers it shows it. Solid and accented when
  * the row would be drawn, dashed and quieter when it would not: the difference
  * is a border style as well as a tone, because the design system does not let
- * a colour carry a distinction on its own.
+ * a color carry a distinction on its own.
  *
  * Quieter is a different ink and not a fade. It used to be `--ink-3` at 55%,
  * which is the tone doing the border's job over again at the price of the one

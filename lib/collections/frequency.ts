@@ -6,7 +6,7 @@
  * over the OpenSubtitles corpus and keeps only what a dictionary entry vouches
  * for by exact spelling, so the order is measured and the words are the
  * dictionary's own. See that script's header for the two rules that decide
- * what a form counts towards, and for the licence, which is CC BY-SA 4.0 and
+ * what a form counts toward, and for the license, which is CC BY-SA 4.0 and
  * is credited in the running app.
  *
  * 400 words (SMALL:100 VERB:100 ADJECTIVE:100 NOUN:100), most used first within each group.

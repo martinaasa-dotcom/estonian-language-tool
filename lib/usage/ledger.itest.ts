@@ -47,12 +47,12 @@ describe("authoriseCall", () => {
     expect(await spend()).toBeGreaterThan(0);
   });
 
-  it("counts concurrent authorisations against each other", async () => {
+  it("counts concurrent authorizations against each other", async () => {
     /*
       Twelve at once from one account, which is more than the daily allowance
       for the tutor at any sane configuration. Under the old shape every one of
       them read an empty ledger and every one was allowed. Now each is written
-      as it is authorised, so the ones behind see the ones in front.
+      as it is authorized, so the ones behind see the ones in front.
 
       Asserted as "fewer than all of them" rather than as an exact number: the
       allowance is configurable and this test is about the race, not about
@@ -92,7 +92,7 @@ describe("authoriseCall", () => {
 
     await releaseReservation(decision.reservation!);
 
-    // Nothing was spent, and the record that it was authorised stays: this is
+    // Nothing was spent, and the record that it was authorized stays: this is
     // a release row, not a deletion, because the table is append-only.
     expect(await spend()).toBe(0);
     expect(await prisma.usageEvent.count({ where: { ownerId: MINE } })).toBe(2);
@@ -146,7 +146,7 @@ describe("authoriseCall", () => {
   });
 
   it("charges nothing at all for a refusal", async () => {
-    // A call that was never authorised is not a call. Whatever number the
+    // A call that was never authorized is not a call. Whatever number the
     // allowance is, the ledger must not grow on the way to saying no.
     const results = await Promise.all(
       Array.from({ length: 12 }, () => authoriseCall(MINE, "TUTOR")),

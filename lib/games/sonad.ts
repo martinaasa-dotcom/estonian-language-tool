@@ -9,7 +9,7 @@
  * Mastermind sold it in 1970 and Bulls and Cows was a pencil game before that.
  *
  * So: a different name, a different length, circles rather than squares, this
- * app's own three hues rather than green and yellow and grey, its own
+ * app's own three hues rather than green and yellow and gray, its own
  * animations, no line of anybody else's code and no shared word list.
  *
  * SIX LETTERS, WHICH IS A FACT ABOUT ESTONIAN AND ABOUT THIS DICTIONARY. Five
@@ -49,7 +49,7 @@ export const SONAD_GUESSES = 7;
 /**
  * What one letter of a guess turned out to be.
  *
- * Named for the app's hues rather than for colours, because
+ * Named for the app's hues rather than for colors, because
  * `docs/14-design-system.md` fixes what each hue means and these three already
  * are those meanings: mint is "recalled", butter is "nearly", peach is
  * "missed". A fourth state would want a sixth hue and there is not one.

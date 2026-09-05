@@ -4,7 +4,7 @@ import type { MeasuredPace } from "@/lib/assessment/plan";
 /**
  * HOW MUCH OF THIS APP A LEARNER ACTUALLY DOES, READ OFF THE LOG.
  *
- * The plan asked "days a week you will really practise" and built a year on
+ * The plan asked "days a week you will really practice" and built a year on
  * the answer, and the answer is a hope. Every grade a learner gives is written
  * down with the moment it landed and how long the card was on screen, so once
  * there is a fortnight of log the app knows the real figure and quoting the

@@ -18,7 +18,7 @@ import type { SkillKey } from "./types";
  *
  * The **tasks** are the app's stand-ins. The real paper sets a 400 word
  * magazine article and a live examiner; this one has a dictionary and a speech
- * synthesiser. So each task declares, in `standsFor`, which official task type
+ * synthesizer. So each task declares, in `standsFor`, which official task type
  * it is standing in for, and the exam screen prints that. An imitation that
  * does not say where it stops imitating is a lie about how ready somebody is,
  * which is the one thing a mock exam must never be.
@@ -46,8 +46,8 @@ export function isExamLevel(value: string): value is ExamLevel {
  * The A2, B1 and C1 specifications all say each listening text is heard twice,
  * with a pause before the task so the candidate can read the questions first.
  * This app played every recording as often as you liked, which is the single
- * biggest difference between practising listening and sitting a listening test:
- * a candidate who can get there on the fifth play has learnt nothing about
+ * biggest difference between practicing listening and sitting a listening test:
+ * a candidate who can get there on the fifth play has learned nothing about
  * whether they can get there on the second. Both plays are offered, the count
  * is on screen, and the paper says why.
  *
@@ -72,7 +72,7 @@ export const READ_QUESTIONS_SECONDS = 30;
  *
  * The Board publishes that the written parts are sat first and the spoken part
  * follows "after a short break", without putting a number on it, so ten minutes
- * is the app's own figure and is labelled as such. It can be ended early. It is
+ * is the app's own figure and is labeled as such. It can be ended early. It is
  * here because a paper that runs the speaking part straight off the back of
  * ninety minutes of writing is not the paper anybody actually sits.
  */
@@ -130,7 +130,7 @@ export interface TaskSpec {
    * default install is the one a stranger gets.
    *
    * So a task that cannot be set falls back to one built from what the
-   * dictionary always has: words, forms, glosses and a speech synthesiser that
+   * dictionary always has: words, forms, glosses and a speech synthesizer that
    * needs no key. The fallback is declared here rather than chosen in the
    * builder, it is recorded on the built task, and the briefing and the result
    * both say when one was used. A substitution nobody is told about would make
@@ -258,7 +258,7 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     would mean a model deciding whether somebody's ending was right (ADR-005,
     ADR-022), so the accuracy that carries marks in the hall is asked directly
     here instead. That is a defensible substitution and an indefensible thing to
-    leave undeclared: a candidate who practises two grammar exercises in place of
+    leave undeclared: a candidate who practices two grammar exercises in place of
     a letter arrives having rehearsed the wrong half of the part.
   */
   "case-form": {
@@ -331,7 +331,7 @@ const BLUEPRINTS: Record<TaskKind, Omit<TaskSpec, "id" | "items" | "raw">> = {
     title: "Speak",
     instruction:
       "Record yourself answering, then listen back and mark yourself against the criteria. " +
-      "There is no verified Estonian speech recogniser available to this app, so nothing here " +
+      "There is no verified Estonian speech recognizer available to this app, so nothing here " +
       "scores your pronunciation and nothing pretends to.",
     standsFor: "suuline esinemine ja dialoog, the spoken part with an examiner",
   },
@@ -505,7 +505,7 @@ export function writtenMinutes(spec: ExamSpec): number {
  *
  * They are deliberately about things you can hear rather than things you can
  * only know: "somebody Estonian would have understood me first time" is a
- * judgement a learner can make; "my pronunciation was accurate" is not.
+ * judgment a learner can make; "my pronunciation was accurate" is not.
  */
 export const SPEAKING_CRITERIA: readonly string[] = [
   "I answered the question that was actually asked.",

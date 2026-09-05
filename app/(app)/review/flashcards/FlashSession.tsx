@@ -22,7 +22,7 @@ import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
 /** A task, plus where the word stands, which is the thing the round is moving. */
 export interface FlashPrompt extends FlashTask {
   progress: { correct: number; needCorrect: number; slots: number; needSlots: number };
-  /** Whether this word is already one of the learner's favourites. */
+  /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
 }
 
@@ -154,7 +154,7 @@ export function FlashSession({ prompts: initialPrompts }: { prompts: FlashPrompt
           Round complete
         </h1>
         <p className="mt-2 text-[15px]" style={{ color: "var(--ink-2)" }}>
-          Every answer counted towards the word it was about.
+          Every answer counted toward the word it was about.
         </p>
         <div
           className="mt-8 grid grid-cols-3 gap-6 rounded-lg border p-6"
@@ -423,7 +423,7 @@ function SlotLine({ task }: { task: FlashPrompt }) {
  * palette is a pair: the fill is what a bar or a button is painted, the tint is
  * what a panel is painted, and each has an ink drawn to sit on its own tint
  * (docs/14-design-system.md). `--butter` is the fill, #cf9114, so the box was a
- * slab of gold with body text set in a colour chosen for a white card; in the
+ * slab of gold with body text set in a color chosen for a white card; in the
  * dark theme `--butter` is #ffcd6e and `--butter-ink` resolves to the same
  * value, so the heading was bright yellow on bright yellow. Every other
  * feedback panel in the app was already right: the cloze round, listening,
@@ -432,7 +432,7 @@ function SlotLine({ task }: { task: FlashPrompt }) {
  * AND THREE OUTCOMES RATHER THAN TWO, because the round already knew about
  * three. `markFlash` returns a middle rating for the right word in the wrong
  * ending, which is the near miss this round exists to catch, and the screen
- * flattened it into the same box as a blank. The palette has one colour for
+ * flattened it into the same box as a blank. The palette has one color for
  * "nearly" and one for "missed" and they mean exactly those two things, so the
  * box now says which without anybody reading a word. It says it in words too,
  * since a hue is never the only thing carrying a distinction here.
@@ -525,7 +525,7 @@ function Standing({ task }: { task: FlashPrompt }) {
   );
   return (
     <div className="mt-4">
-      <Meter pct={pct} label={`${task.lemma} towards mastered`} />
+      <Meter pct={pct} label={`${task.lemma} toward mastered`} />
       {/*
           Two facts, and each carries its target only while it is unmet. It read
           "6 of 5 right" on the first word of the first real round, which is a

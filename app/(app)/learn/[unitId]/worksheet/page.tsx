@@ -184,7 +184,7 @@ export default async function WorksheetPage({ params }: { params: Promise<{ unit
               </h2>
               <p className="mb-4 text-xs" style={{ color: "var(--ink-3)" }}>
                 Fill in the missing principal parts. These three are the ones you have to
-                memorise. Every other case is built from the second one.
+                memorize. Every other case is built from the second one.
               </p>
               {/*
                 A blank to write on is 110px wide because that is what a hand

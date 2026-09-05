@@ -133,7 +133,7 @@ function SceneTile({ scene, history }: { scene: (typeof SCENES)[number]; history
           */}
           {drills.length > 0 && (
             <p className="text-xs" style={{ color: "var(--ink-2)" }}>
-              Practises {drills.slice(0, 4).join(", ")}{drills.length > 4 ? " and more" : ""}.
+              Practices {drills.slice(0, 4).join(", ")}{drills.length > 4 ? " and more" : ""}.
             </p>
           )}
           <p className="mt-auto text-xs" style={{ color: "var(--ink-3)" }}>

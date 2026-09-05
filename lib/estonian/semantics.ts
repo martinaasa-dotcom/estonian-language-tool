@@ -64,7 +64,7 @@ export const SEMANTIC_GROUPS: readonly SemanticGroup[] = ["ANIMATE", "THING", "M
  * tongue": a rule that classified a language as a being would have taken the
  * commonest form of that word off the card and put `emakeelele` on it.
  *
- * The neighbours that are deliberately absent are worth as much as the
+ * The neighbors that are deliberately absent are worth as much as the
  * entries. `kehaosa_loom` is an animal's tail rather than the animal.
  * `organism` is on `keha` and `sugu` as well as on `loom`, and a body is
  * something you are inside. `taim` is a plant, which is a `mis` in Estonian

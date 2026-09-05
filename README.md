@@ -78,7 +78,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   a typo and from a genuinely wrong word, and each verdict suggests a grade you can override. New
   words are introduced with their answer rather than guessed at, and multiple choice covers
   recognition. `u` undoes the last grade without touching the review log.
-- **22 ways to practise, over one deck.** Six rounds against the clock (a 60-second Case
+- **22 ways to practice, over one deck.** Six rounds against the clock (a 60-second Case
   Sprint, Match, Sentences, Listening, Dictation and Speaking), two passes over the words you are
   working on (flash cards over the whole deck, and the hundred commonest words of each kind,
   counted over film and television subtitles rather than chosen by anybody), five games (a picture
@@ -90,7 +90,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   table, the words the endings cannot reach, the cards you keep failing, and the words you looked
   up yourself rather than met in a unit, which the queue is otherwise slowest to reach. Everything
   writes to the same review log, so a game still moves the schedule forward.
-- **Where the endings stop.** Three forms memorised and eleven worked out is most of the language
+- **Where the endings stop.** Three forms memorized and eleven worked out is most of the language
   and not all of it: `tuba` goes to `tuppa`, not `toasse`, and its stem is `toa`, which no rule
   predicts. The exception area is every word in the dictionary whose stored form disagrees with the
   pattern, grouped by what breaks, with a drill that shows you the form, asks for it, and then asks
@@ -111,7 +111,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
   case endings onto the stem, so hearing a sentence perfectly and writing the wrong ending is a
   specific failure worth naming.
 - **Speaking that does not lie to you.** Say the word, then hear a native voice and your own
-  recording back to back. It is not scored: there is no verified Estonian speech recogniser this app
+  recording back to back. It is not scored: there is no verified Estonian speech recognizer this app
   can use, and an invented confidence number would be believed.
 - **A level check that measures rather than asks.** Eighty questions across A1 to C1: six reading
   and six writing at each level, three listening, one spoken. Assembled entirely out of the
@@ -156,7 +156,7 @@ To stop it, press Ctrl-C in the terminal. To start again later, just `npm run de
 - **How ready you actually are, in situations rather than a percentage.** Every unit of the course
   makes a claim, "describe a symptom to a doctor and understand the advice", and the app reads each
   one on three rungs off your own answers: whether you would follow it, take part in it, or lead
-  it. Recognising words on cards never clears the second rung. It names what stands in the way,
+  it. Recognizing words on cards never clears the second rung. It names what stands in the way,
   the endings that encounter turns on, how many seconds a word takes you to reach, whether anything
   has ever tested your ear, and it offers a real thing to go and try only once your record supports
   answering. `docs/22-readiness.md`.
@@ -354,13 +354,13 @@ because sign-up is open by default. If you would rather run a private instance, 
 
 ### What it costs to run
 
-`/funding` is the whole bill, itemised, with a slider on it. It is a public page, like `/privacy`
+`/funding` is the whole bill, itemized, with a slider on it. It is a public page, like `/privacy`
 and `/terms`, because the people most likely to want it (somebody deciding whether to fund this,
 and somebody wondering what a free app is selling instead) have no account here.
 
 **Nothing anybody bills for is counted as free.** A free tier is a plan that pauses when nobody is
 on it, forbids commercial use, or hands out an allowance that goes the week you launch, so
-modelling one would describe a deployment nobody runs. Every vendor is on the plan a real
+modeling one would describe a deployment nobody runs. Every vendor is on the plan a real
 deployment is on.
 
 **What is given is credited, not priced.** Ekilex, Wiktionary and TartuNLP are public institutions
@@ -602,7 +602,7 @@ Four rules the code holds to, all explained in `docs/`:
 - Speech synthesis: [TartuNLP](https://tartunlp.ai), University of Tartu (MIT).
 - The plan this was built from, including the audit of the original spec, is in `docs/`.
 
-## Licence
+## License
 
 The code is MIT, in `LICENSE`. The language data is not, and the difference matters if you
 redistribute rather than merely run this: Ekilex is CC BY 4.0 and Wiktionary is CC BY-SA 4.0,

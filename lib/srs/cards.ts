@@ -84,7 +84,7 @@ export function inTeachingOrder<T extends { lexemeId: string | null; cardType: s
  *
  * Eight, not sixty. These are the ones a beginner has to produce out loud in a
  * conversation; the rest of the forms are on the dictionary entry to be read,
- * not memorised. An attested form always answers first: Ekilex's, by its
+ * not memorized. An attested form always answers first: Ekilex's, by its
  * morph code, or the seeded principal part. Where the dictionary holds only
  * the principal parts, which is every seeded verb on a deployment without a
  * key, the present, the negative, the conditional and the singular imperative
@@ -378,7 +378,7 @@ export function generateCards(lex: LexemeForCards, types: readonly CardType[]): 
 
           THE SENTENCE HAS TO NAME THE CASE ON ITS OWN, TOO. `aadressi` is the
           short illative, the omastav and the osastav all at once, so gapping
-          it out of a sentence where it is a genitive and labelling the card
+          it out of a sentence where it is a genitive and labeling the card
           `sisseütlev` would teach the wrong case and write the wrong one into
           `Review.slot`, which is what `caseAccuracy` and the weakest-case
           panel are built from. `readCase` is the strict rule that already

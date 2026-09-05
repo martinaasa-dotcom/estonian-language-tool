@@ -12,7 +12,7 @@ function seeded(seed: number): () => number {
 
 const ALL = CURVEBALLS.map((c) => c.id);
 
-describe("the curveball catalogue", () => {
+describe("the curveball catalog", () => {
   it("gives every entry a cost, a way out, and a way to mark the way out", () => {
     for (const ball of CURVEBALLS) {
       expect(ball.cost, `${ball.id} is free`).toBeGreaterThan(0);
@@ -114,8 +114,8 @@ describe("the draw", () => {
   it("prefers one the last runs did not have", () => {
     /*
       §5 promises no curveball repeats within five runs, and the promise is
-      kept by preference rather than by refusing to draw: a catalogue thinner
-      than the window is a fact about the catalogue and not a reason for a run
+      kept by preference rather than by refusing to draw: a catalog thinner
+      than the window is a fact about the catalog and not a reason for a run
       to have nothing in it.
     */
     const recent = new Set(["small-talk", "queue", "faster"]);

@@ -47,8 +47,8 @@ export const MAX_EN_CHARS = 90;
  * What the model is asked to do, and the three things it is told not to.
  *
  * The instruction is a request rather than a guarantee, which is why the
- * checking happens after: this prompt makes good behaviour likely, and
- * `parseScanReply` plus the dictionary make bad behaviour harmless.
+ * checking happens after: this prompt makes good behavior likely, and
+ * `parseScanReply` plus the dictionary make bad behavior harmless.
  */
 export const SCAN_PROMPT = [
   "You are reading a photograph of a page from an Estonian course: a vocabulary list, a",

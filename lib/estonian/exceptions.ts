@@ -17,7 +17,7 @@ import { classifyGradation } from "./gradation";
  *
  * FIRST, GETTING TO THE STEM. `tuba : toa`, `aeg : aja`, `aken : akna`,
  * `asi : asja`. No rule in the language reaches the genitive from the
- * nominative: the consonant centre grades, or a vowel drops out of the middle,
+ * nominative: the consonant center grades, or a vowel drops out of the middle,
  * or the stem is simply another word. Everything else in the table is built on
  * that stem, so a learner who guesses it wrong gets all eleven cases wrong at
  * once. This is the exception that costs the most and it is the one the
@@ -50,7 +50,7 @@ import { classifyGradation } from "./gradation";
  * short illative is shown, so it can be shown as the other half of a pair. The
  * partitive the ending rule would build for `aeg` is not a word at all, and
  * putting it on a screen with a line through it is this app writing Estonian
- * and hoping nobody memorises it. `ruleForm` carries it for the audit, which is
+ * and hoping nobody memorizes it. `ruleForm` carries it for the audit, which is
  * read by whoever maintains the rules; `ruleFormIsAlsoRight` is what a screen
  * asks before printing one.
  *
@@ -159,7 +159,7 @@ function nominalExceptions(word: ExceptionInput): WordException[] {
     Regular is the genitive being the nominative with an ending on it, plus the
     two declension types a course teaches as classes rather than as
     irregularities: `inimene : inimese` and `kapsas : kapsa`, where the
-    consonant centre does not move at all. `gradation.ts` already draws exactly
+    consonant center does not move at all. `gradation.ts` already draws exactly
     that line for exactly that reason, and the note is read off it, so the chip
     on the entry and this cannot disagree about what alternates.
   */

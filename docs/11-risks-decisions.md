@@ -22,7 +22,7 @@ Ordered by expected damage. "Status" reflects what was verified during the audit
 R10 deserves a note: the most likely way this project fails is not a technical one. It is a
 beautifully architected dashboard that gets opened twice. That is why Today is the default route,
 why every phase ships something usable, and why the success criteria in `01-product-spec.md` §5
-measure behaviour rather than feature count.
+measure behavior rather than feature count.
 
 ## 2. Decisions
 
@@ -51,5 +51,5 @@ Honest triggers for revisiting, rather than defending, these decisions:
   (Q1).
 - **AI cost exceeds comfort** → route routine chips to a cheaper model and reserve `claude-opus-5`
   for genuine explanation. Measure before switching; the ledger already provides the data.
-- **Daily use does not materialise after Phase 3** → stop building features and investigate why.
+- **Daily use does not materialize after Phase 3** → stop building features and investigate why.
   Adding Phase 4 to an unused app is the expensive mistake.

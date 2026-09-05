@@ -30,7 +30,7 @@ function word(over: Partial<PoolWord> & { lemma: string }): PoolWord {
  * A distinct lemma made only of letters.
  *
  * Digits would be simpler and are wrong: the word pattern these modules share
- * matches letters and combining marks only, so `sona7` tokenises as `sona` and
+ * matches letters and combining marks only, so `sona7` tokenizes as `sona` and
  * every builder that looks a form up in a sentence quietly finds nothing. A
  * fixture that cannot be found is a fixture that tests the empty path.
  */

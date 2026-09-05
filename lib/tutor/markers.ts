@@ -2,7 +2,7 @@
   THE TWO LINES IN A REPLY THAT ARE ESTONIAN BY CONSTRUCTION.
 
   `FIX:` carries a corrected sentence and `VOCAB:` a word pair that can become
-  a flashcard. Three modules have to recognise them, for three different
+  a flashcard. Three modules have to recognize them, for three different
   reasons, and each used to carry its own regex: `humanize.ts` so it never
   rewrites punctuation inside one, `verify.ts` so it does not flag a word the
   UI already boxes and tags, and `AnuParts.tsx` so it can lift the line out

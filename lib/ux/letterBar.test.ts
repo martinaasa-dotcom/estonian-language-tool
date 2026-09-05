@@ -22,7 +22,7 @@ describe("letterBarFrom", () => {
     expect(letterBarFrom("on")).toBe("on");
   });
 
-  it("reads anything it does not recognise as the default", () => {
+  it("reads anything it does not recognize as the default", () => {
     // A settings value is a string column, so a typo or a value from an older
     // shape of this setting has to land somewhere. It lands on the side that
     // leaves somebody able to type.

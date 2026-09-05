@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { reportError } from "@/lib/observability/report";
 
 /**
- * Content-addressed storage for synthesised speech.
+ * Content-addressed storage for synthesized speech.
  *
  * A word's pronunciation never changes, so a clip is worth fetching exactly once
  * — for everyone, forever. The previous implementation wrote to `/tmp` when
@@ -88,7 +88,7 @@ export async function writeAudio(hash: string, body: Buffer): Promise<void> {
   if (store) {
     const { error } = await store.storage.from(BUCKET).upload(`${hash}.wav`, body, {
       contentType: "audio/wav",
-      // Two instances can synthesise the same word at the same moment; the
+      // Two instances can synthesize the same word at the same moment; the
       // second upload losing the race is the correct outcome, not an error.
       upsert: true,
       cacheControl: "31536000",

@@ -159,7 +159,7 @@ export function CrosswordSession({ puzzle, day }: { puzzle: DailyCrossword; day:
 
             Wrapping each row in a `role="row"` with `display: contents` is the
             other fix and buys nothing here: the navigation this actually
-            offers is a real `<input>` per cell, each labelled with its own row
+            offers is a real `<input>` per cell, each labeled with its own row
             and column, which is what a screen reader user needs and is already
             there. A group says "these controls belong together", which is
             exactly what is true.
@@ -315,7 +315,7 @@ function Finish({ puzzle, helped }: { puzzle: DailyCrossword; helped: number }) 
       </p>
       <p className="mt-2 text-sm" style={{ color: "var(--ink-2)" }}>
         {puzzle.inDeck.length > 0
-          ? `${puzzle.inDeck.length} of these are in your deck, so the round counted towards them.`
+          ? `${puzzle.inDeck.length} of these are in your deck, so the round counted toward them.`
           : "None of these are in your deck yet. Open one and keep it."}
       </p>
       <ul className="mt-4 flex flex-wrap gap-2">

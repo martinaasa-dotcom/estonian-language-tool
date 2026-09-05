@@ -3,7 +3,7 @@
  *
  * `lib/scan/extract.ts` produces candidates: strings a model claims are
  * printed on a page. This is where the app decides whether it believes any of
- * them, and the answer is only ever "the dictionary recognises this exact
+ * them, and the answer is only ever "the dictionary recognizes this exact
  * spelling, one of its stored forms, or a regular case built on its stem".
  * Nothing looser, because a fuzzy match would silently hand somebody a
  * flashcard for a word that is not the one on their paper, and the scheduler
@@ -13,7 +13,7 @@
  * worth doing rather than a plain string equality. A textbook exercise says
  * `toas` and `lugesin`, not `tuba` and `lugema`, and the inflected-form search
  * this app already had (`matchEstonianForm`) resolves both and says which case
- * or person it recognised. So the photograph of an exercise becomes a set of
+ * or person it recognized. So the photograph of an exercise becomes a set of
  * headwords with real forms behind them, and the learner is told, per word,
  * what they were actually looking at.
  */

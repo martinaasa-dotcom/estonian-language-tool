@@ -12,7 +12,7 @@ import { isIosSafari, isStandalone, runInstall, useInstallEvent } from "@/compon
  * is the right trade for something nobody wants asked twice. The cost of that
  * is that the offer has to exist somewhere else, on the day they change their
  * mind, and that place is here: a button when the browser will give us one, the
- * Share menu when it is an iPhone, and a plain acknowledgement when the app is
+ * Share menu when it is an iPhone, and a plain acknowledgment when the app is
  * already installed and there is nothing to do.
  */
 export function InstallPanel() {

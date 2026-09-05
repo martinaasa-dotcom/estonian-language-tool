@@ -72,7 +72,7 @@ describe("trimming", () => {
   });
 });
 
-describe("levelling", () => {
+describe("leveling", () => {
   it("puts a quiet voice and a loud one at the same peak", () => {
     const quiet = normalisePeak(decodeWav(tartuLike(0, 0.2, 0.3)));
     const loud = normalisePeak(decodeWav(tartuLike(0, 0.2, 0.9)));
@@ -92,8 +92,8 @@ describe("prepareClip", () => {
   it("halves the bytes and takes the dead air off in one pass", () => {
     const raw = tartuLike(0.5, 0.4);
     const out = prepareClip(raw);
-    // 16-bit rather than 32, and 1.4 seconds down to about 0.6.
-    expect(out.byteLength).toBeLessThan(raw.byteLength / 4);
+    // 16-bit rather than 32, and 1.4 seconds down to about 0.76.
+    expect(out.byteLength).toBeLessThan(raw.byteLength / 3);
     const pcm = decodeWav(out);
     expect(pcm.samples.length / RATE).toBeCloseTo(0.4 + (LEAD_MS + TRAIL_MS) / 1000, 2);
   });

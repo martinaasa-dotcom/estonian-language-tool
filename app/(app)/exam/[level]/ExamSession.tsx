@@ -612,7 +612,7 @@ function Brief({ paper, fillRate, resumable, onResume, onDiscard, onStart }: {
         </Note>
         <Note tone="neutral">
           <Mic size={14} className="mr-1.5 inline" aria-hidden />
-          You mark the spoken part yourself. We tested a speech recogniser for Estonian and it
+          You mark the spoken part yourself. We tested a speech recognizer for Estonian and it
           wasn&apos;t accurate enough, so instead you record yourself, listen back, and tick off what
           you managed. Your result will show which quarter of your score came from this part. The
           real spoken exam opens with a few minutes of chat with the examiner before the tasks
@@ -1215,7 +1215,7 @@ function LengthMeter({ text, minWords }: { text: string; minWords: number }) {
  * The short message, which is the task the real writing part opens with.
  *
  * `teate koostamine`: a situation, and the points the message has to cover. The
- * points are printed because the real task prints them and somebody practising
+ * points are printed because the real task prints them and somebody practicing
  * this needs to learn to answer all three; they are not marked, and the screen
  * says so rather than implying a machine read them.
  */

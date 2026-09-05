@@ -7,7 +7,7 @@ card comes back from the history of that card, and `Review` is append-only for t
 A side effect of that is a dataset nobody else has. Which grammatical case learners actually fail,
 on which kind of stem, at which level, on which word, measured over thousands of answers from
 people studying Estonian for real reasons. A textbook's ordering of difficulty is somebody's
-judgement. A classroom's is twenty-five people and one teacher's memory. A corpus of written
+judgment. A classroom's is twenty-five people and one teacher's memory. A corpus of written
 Estonian records what natives produce, which is a different question again. None of them can
 answer this one, and this can, because the collecting already happened.
 
@@ -43,7 +43,7 @@ the same cut for one learner, on their own Progress page.
 `word` is the table with no equivalent anywhere, and the one to hand over with the most care. It
 says which of the words learners meet are hard. It does not say which words in Estonian are hard,
 and the difference is the sampling: a word is in the table only if enough different people met it
-often enough, which favours what the course teaches early.
+often enough, which favors what the course teaches early.
 
 ## 2. Why it is safe to send
 
@@ -67,7 +67,7 @@ reconstruct. So a group that hides one cell hides a second, the smallest of the 
 table publishes a total of its own.
 
 **Deliberate imprecision.** Answer counts are rounded to the nearest ten and head counts are given
-as bands. This is the only defence against the one attack the other three do not touch: two
+as bands. This is the only defense against the one attack the other three do not touch: two
 vintages of this file, differenced, describe what happened in between. It costs a reader nothing,
 since a proportion resting on 4,830 answers and one resting on 4,834 are the same finding.
 
@@ -136,7 +136,7 @@ one.
 
 ## 5. What it changes about asking
 
-The letters to TartuNLP and to the Institute were, structurally, a favour: thank you for the free
+The letters to TartuNLP and to the Institute were, structurally, a favor: thank you for the free
 thing, may we have some of your time. This makes them an offer instead. An anonymised account of
 where real learners fail, at a size no single classroom or textbook pilot reaches, is something
 neither an applied language-technology group nor a lexicographic institute can easily get, because

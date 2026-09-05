@@ -18,11 +18,11 @@ import { splitOnForm } from "./examples";
  *
  * THE SAME GATE AS A PHOTOGRAPHED PAGE AND A HEADLINE (ADR-021). Nothing here
  * proposes a meaning: `matchEstonianForm` decides, at `VOUCHED_SCORE`, so a
- * word is offered a gloss only because the dictionary recognises that exact
+ * word is offered a gloss only because the dictionary recognizes that exact
  * spelling, a stored form of an entry, or a regular case of its genitive stem.
  * What is shown is the dictionary's own headword and the dictionary's own
  * English, never a reading of this sentence: `kohvi` opens as `kohv, coffee`
- * and says which form it recognised. A word it will not vouch for is printed
+ * and says which form it recognized. A word it will not vouch for is printed
  * plain, exactly as a headline's names are, because leaving it out would be
  * editing an attested sentence and guessing at it would be worse.
  *
@@ -51,7 +51,7 @@ export interface GlossedToken {
     lexemeId: string;
     lemma: string;
     gloss: string;
-    /** Which form it recognised, when the sentence's spelling is not the headword. */
+    /** Which form it recognized, when the sentence's spelling is not the headword. */
     matchedAs: string | null;
   } | null;
 }
@@ -138,8 +138,25 @@ export async function glossSentences(
   ));
 }
 
+/**
+ * Whether an entry may stand under a word in somebody else's sentence.
+ *
+ * `matchEstonianForm` scores an exact headword above a stored form, which is
+ * right for a search box and was wrong here: `veeta` is the da-infinitive of
+ * `veetma`, to spend, and a formless entry spelled `veeta` that a model had
+ * offered a learner won the panel with its own gloss, "He'd like". A word in
+ * an attested sentence is glossed by an entry the dictionary can vouch for,
+ * which means one carrying forms, or a seeded phrase, which has none because
+ * it is already the sentence. An unverified entry is not a fact about this
+ * sentence and is never offered as one (ADR-005).
+ */
+function vouchable(candidate: Candidate): boolean {
+  if (candidate.provenance === "AI") return false;
+  return candidate.forms.length > 0 || candidate.provenance === "SEED" || candidate.provenance === "EKILEX";
+}
+
 function entryFor(candidates: Candidate[], word: string): GlossedToken["entry"] {
-  const match = matchEstonianForm(candidates, word);
+  const match = matchEstonianForm(candidates.filter(vouchable), word);
   if (!match) return null;
   return {
     lexemeId: match.id,

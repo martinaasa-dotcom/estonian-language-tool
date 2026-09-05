@@ -19,7 +19,7 @@
  * singular imperative is the stem again. That is ADR-005 amendment 1 exactly:
  * a deterministic rule over a form already stored, wrong the same way for
  * every word that takes the ending, which is one bug found once. It is the
- * same licence `derive.ts` takes for the ten regular cases on the genitive.
+ * same license `derive.ts` takes for the ten regular cases on the genitive.
  *
  * WHAT IT DOES NOT DERIVE. The simple past has to be stored per verb, because
  * the third person is not readable from the first: `lugesin` goes to `luges`

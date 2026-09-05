@@ -51,7 +51,7 @@ export function launchChromium(options = {}) {
  * A Server Action is a round trip and then a router refresh, and how long
  * that takes is a fact about the machine. Every check in these suites that
  * follows a fixed `waitForTimeout` is asserting the runner's speed as much as
- * the app's behaviour: e2e's `task is created and persists` slept 2000ms and
+ * the app's behavior: e2e's `task is created and persists` slept 2000ms and
  * failed on a CI runner while passing everywhere else, on an app that had
  * created the task correctly. The sleeps that happened to be 2500ms passed in
  * the same run, which is the whole argument.

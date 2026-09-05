@@ -61,7 +61,7 @@ describe("stock openers", () => {
     );
   });
 
-  it("does not capitalise a line that deliberately continues the one above", () => {
+  it("does not capitalize a line that deliberately continues the one above", () => {
     expect(humanizeLine("and that is why it is partitive.")).toBe("and that is why it is partitive.");
   });
 });

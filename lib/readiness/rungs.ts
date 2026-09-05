@@ -280,7 +280,7 @@ export function readSituation(situation: Situation, ctx: Context): Reading {
   // ── Take part ─────────────────────────────────────────────────────────
   const takesPart = follows && share(at.takePart) >= TAKE_PART_SHARE;
   if (follows && !takesPart) {
-    // The gap this whole screen exists to name: recognised, not produced.
+    // The gap this whole screen exists to name: recognized, not produced.
     struggles.push({
       id: "freeze",
       title: "You would follow this, and freeze when it is your turn",

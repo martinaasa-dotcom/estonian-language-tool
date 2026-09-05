@@ -8,7 +8,7 @@
  * suite is named after, because it happens *inside* a card that is itself the
  * right size. A word runs over the border and onto the ground behind it; a
  * label meets an icon in a flex row and squeezes the icon into an oval; a
- * count reaches three digits and paints outside the circle it was centred in.
+ * count reaches three digits and paints outside the circle it was centered in.
  * The page never scrolls sideways for any of that, so `test-mobile.mjs` reads
  * a clean pass and the screen looks broken.
  *
@@ -83,7 +83,7 @@ const WIDTHS = [360, 768, 1280];
  * Dark is measured once, at the width where containment fails first.
  *
  * It is one sweep rather than a third of the suite, because containment is
- * layout and the two themes differ in colour. Not none, though: "bleeds over a
+ * layout and the two themes differ in color. Not none, though: "bleeds over a
  * border" is answered by looking for the nearest ancestor that paints a border
  * or a fill, and whether a token paints anything is exactly the thing a theme
  * changes.
@@ -188,7 +188,7 @@ const ROUTES = [
 
   /*
     The conversations. The briefing at 360 is a role card, a four-cell dial of
-    labelled buttons and a start button, and the scene behind it is a log of
+    labeled buttons and a start button, and the scene behind it is a log of
     Estonian in a fixed-height scroller with a text field, a letter bar and four
     controls under it, which at 360 is the tightest row of buttons in the app
     after the rating keys. The talking screen itself is not reached from a URL,
@@ -233,7 +233,7 @@ const SPARSE = new Map([
   widths, plus the landing page with its disclosures open and the paper being
   sat at each of them, plus three asked-for states at the two ends, plus the
   whole list again in the dark at 360. Every pass reports five things: cut off,
-  bled over a border, drawn into a neighbour, deformed, and then the same four
+  bled over a border, drawn into a neighbor, deformed, and then the same four
   again with every word turned into one with nothing to break on.
 
   Raise this when you add a route; never lower it to make a run go green. What
@@ -305,7 +305,7 @@ const SPARSE = new Map([
 // from the other. Each side set its own floor from its own two, which is
 // exactly the arithmetic the line above warns about, so this is measured on the
 // merged tree rather than added. The briefing at 360 is a role card over a
-// two-column dial of labelled buttons; the talking screen behind it is a log of
+// two-column dial of labeled buttons; the talking screen behind it is a log of
 // Estonian in a fixed-height scroller with a text field, the letter bar and four
 // controls under it, which is the tightest row of buttons in the app after the
 // rating keys; and `/review/common/noun` is a whole round.
@@ -951,7 +951,7 @@ async function measure(page, label, atLeast = 25) {
       : rest.counted < atLeast ? `only ${rest.counted} things on the page, expected ${atLeast}` : "",
   );
   check(`nothing bleeds over a border on ${label}`, rest.bled === 0, rest.say.bled);
-  check(`nothing is drawn into its neighbour on ${label}`, rest.collided === 0, rest.say.collided);
+  check(`nothing is drawn into its neighbor on ${label}`, rest.collided === 0, rest.say.collided);
   check(`no icon is deformed on ${label}`, rest.deformed === 0, rest.say.deformed);
 
   const hard = await page.evaluate(survey, { stress: true });

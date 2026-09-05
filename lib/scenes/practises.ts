@@ -6,7 +6,7 @@
  * scene that asks for `pood` in three cases says so, and one that asks for
  * the time off the card says that. The case is named the way a class names
  * it (`CASES[].et`, ADR on Estonian terms leading), which is the name a
- * learner sitting in a course will recognise on a tile.
+ * learner sitting in a course will recognize on a tile.
  *
  * Pure: no React, no Next, no Prisma.
  */

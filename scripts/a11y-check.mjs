@@ -11,7 +11,7 @@
  * failures sat in the app unseen. The hand-rolled contrast pass this replaces
  * was wrong in two ways that are obvious once named and were invisible while
  * it was the only thing looking: it scoped to `main`, so the navigation rail
- * on every signed-in screen was outside it, and it read a colour's own alpha
+ * on every signed-in screen was outside it, and it read a color's own alpha
  * but not an `opacity` inherited from a parent, so a locked badge faded to
  * three quarters reported as passing while its description sat at 3.27.
  *
@@ -66,9 +66,9 @@ const AXE = readFileSync(createRequire(import.meta.url).resolve("axe-core/axe.mi
  * is a violation here. Two things are still let through, and neither is a
  * length. A node axe could not put a number on stays incomplete, which covers
  * `elmPartiallyObscured` and anything else arriving with `contrastRatio: 0`
- * and no colours: that is a genuine "cannot tell" rather than an answer being
- * withheld. And `data-ornament` is honoured exactly as `test-design.mjs`
- * honours it, because the two suites have to agree about what counts as text:
+ * and no colors: that is a genuine "cannot tell" rather than an answer being
+ * withheld. And `data-ornament` is honored exactly as `test-design.mjs`
+ * honors it, because the two suites have to agree about what counts as text:
  * a 92px step numeral in a hue's own tint, behind a card that says the same
  * thing in words, is decoration and the markup says so out loud. `aria-hidden`
  * is not that exemption and never stands in for it, since the tick on the week
@@ -88,7 +88,7 @@ async function axeViolations(page) {
       for (const node of rule.nodes) {
         const data = node.any?.find((c) => c.data?.messageKey === "shortTextContent")?.data;
         if (!data) continue;
-        // A measurement, not a shrug: axe reports 0 with no colours where it
+        // A measurement, not a shrug: axe reports 0 with no colors where it
         // could not resolve a background at all.
         if (!data.fgColor || !data.bgColor || !(data.contrastRatio > 0)) continue;
         const want = parseFloat(String(data.expectedContrastRatio));
@@ -380,7 +380,7 @@ for (const route of ROUTES) {
   And the same sweep in the other theme, which is where it kept biting.
 
   Light and dark are two palettes, not one palette with a filter over it, so a
-  colour that clears the bar in one says nothing about the other. The first
+  color that clears the bar in one says nothing about the other. The first
   batch of contrast failures this suite found was entirely in dark mode:
   `--ink-3` on the four soft tints, between 4.07 and 4.45 against a bar of 4.5,
   four near misses that no reading of the token list would show. The second

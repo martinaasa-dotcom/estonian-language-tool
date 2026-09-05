@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
   /*
     One row per learner per day they reviewed. Grouping in Postgres rather than
     streaming every review into Node keeps this proportional to active days
-    rather than to the size of the log, and it never materialises an individual
+    rather than to the size of the log, and it never materializes an individual
     review here.
   */
   const rows = await prisma.$queryRaw<{ ownerId: string; day: string }[]>`

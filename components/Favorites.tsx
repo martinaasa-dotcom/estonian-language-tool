@@ -1,7 +1,7 @@
 import { PrefetchLink as Link } from "@/components/PrefetchLink";
 import { Card, Chip, SectionTitle } from "@/components/ui";
 import { StarWord } from "@/components/StarWord";
-import { FAVOURITE_LIMIT, type Favourite } from "@/lib/progress/stars";
+import { FAVOURITE_LIMIT, type Favorite } from "@/lib/progress/stars";
 
 /**
  * THE WORDS THE LEARNER KEPT, WHICH IS THE ONE LIST ON THIS PAGE THEY WROTE
@@ -22,12 +22,12 @@ import { FAVOURITE_LIMIT, type Favourite } from "@/lib/progress/stars";
  * The star is beside the link rather than inside it: a button nested in a link
  * is neither, and a press on it would follow the link on some browsers.
  */
-export function Favourites({ words, total }: { words: readonly Favourite[]; total: number }) {
+export function Favorites({ words, total }: { words: readonly Favorite[]; total: number }) {
   if (words.length === 0) return null;
 
   return (
     <Card>
-      <SectionTitle hint={`${total} ${total === 1 ? "word" : "words"}`}>Favourites</SectionTitle>
+      <SectionTitle hint={`${total} ${total === 1 ? "word" : "words"}`}>Favorites</SectionTitle>
       <p className="text-sm" style={{ color: "var(--ink-3)" }}>
         The words you starred, newest first. The star on any card keeps a word here.
       </p>

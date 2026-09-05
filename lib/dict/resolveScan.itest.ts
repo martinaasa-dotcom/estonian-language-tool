@@ -131,7 +131,7 @@ describe("resolveOneWord", () => {
 
 describe("candidatesFor", () => {
   /*
-    The narrowing is the test, not an optimisation detail.
+    The narrowing is the test, not an optimization detail.
 
     This used to read the whole dictionary with `take: 4000` and no ordering,
     which is the same fault `searchLexemes` was fixed for: past four thousand

@@ -250,7 +250,7 @@ export function ExceptionsSession({ tasks: initialTasks }: { tasks: ExceptionTas
  * form is also right: `toasse` is correct Estonian and is printed, and the
  * partitive the ending rule would build for `aeg` is not a word at all.
  * Printing one with a line through it would be this app writing Estonian and
- * hoping nobody memorised it (ADR-005).
+ * hoping nobody memorized it (ADR-005).
  */
 function Meeting({ task }: { task: ExceptionTask }) {
   return (

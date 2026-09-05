@@ -66,7 +66,7 @@ const POOL = 120;
  * `helistama`, which means to telephone, against 💍. See `scripts/build-emoji.ts`.
  *
  * The emoji are characters rather than artwork, drawn by the reader's own font,
- * so nothing is shipped and no licence is carried.
+ * so nothing is shipped and no license is carried.
  */
 export default async function EmojiPage() {
   const ownerId = await requireUserId();
@@ -75,7 +75,7 @@ export default async function EmojiPage() {
     THE LEARNER'S OWN CARDS FIRST, AND THAT IS WHAT MAKES THIS A PRACTICE MODE.
 
     Every mode grades through `gradeCard` (ADR-016) so the scheduler sees what
-    was actually practised, and a round that only ever drew from the dictionary
+    was actually practiced, and a round that only ever drew from the dictionary
     would be a side game with a score of its own. So the board is filled from
     the learner's own case cards wherever it can be: a matched pair is a
     recognition of that exact form, and it is graded.

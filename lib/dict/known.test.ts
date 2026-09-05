@@ -66,7 +66,7 @@ describe("nearest", () => {
   });
 
   it("rules a candidate out on length before measuring it", () => {
-    // Not a behaviour test so much as the shape the shortcut has to preserve:
+    // Not a behavior test so much as the shape the shortcut has to preserve:
     // a word four letters longer is never a typo of this one.
     expect(nearest("kass", ["kassiomanik"])).toEqual([]);
   });

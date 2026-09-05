@@ -16,7 +16,7 @@ import { AI_TAG } from "@/lib/copy/values";
 import { VERDICT_CLASS, VERDICT_INK, verdictOfRating } from "@/lib/ux/verdict";
 
 export interface WritingPrompt {
-  /** The card this exercise practises, so the round feeds the scheduler. */
+  /** The card this exercise practices, so the round feeds the scheduler. */
   cardId: string;
   lexemeId: string;
   lemma: string;
@@ -27,7 +27,7 @@ export interface WritingPrompt {
   caseQuestion: string;
   provenance: "ekilex" | "derived";
   weak: boolean;
-  /** Whether this word is already one of the learner's favourites. */
+  /** Whether this word is already one of the learner's favorites. */
   starred: boolean;
 }
 
@@ -49,7 +49,7 @@ interface Marked {
  * The result is shown in two clearly separate parts, because they have different
  * authorities behind them: whether the required form was used is checked against
  * the dictionary and is certain; what Anu says about the rest of the sentence is
- * a model's opinion and is labelled as one.
+ * a model's opinion and is labeled as one.
  */
 export function WriteSession({ prompts: initialPrompts, aiAvailable }: {
   prompts: WritingPrompt[]; aiAvailable: boolean;

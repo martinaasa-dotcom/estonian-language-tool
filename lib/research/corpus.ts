@@ -11,7 +11,7 @@
  * gradation pattern, which word, and how often it comes back right.
  *
  * That number does not exist anywhere else. A textbook's difficulty ordering is
- * somebody's judgement, a classroom's is twenty-five people, and a corpus of
+ * somebody's judgment, a classroom's is twenty-five people, and a corpus of
  * written Estonian records what natives produce rather than where learners
  * fail. This records the second thing at a size no single course reaches, and
  * it costs nothing to collect because it was collected already: not one row is
@@ -95,7 +95,7 @@ export const MIN_REVIEWS = 50;
  * The largest share of one cell's answers that may come from one person.
  *
  * The threshold rule counts heads and the dominance rule weighs them, and
- * without the second the first is theatre: a cell can clear ten learners while
+ * without the second the first is theater: a cell can clear ten learners while
  * being one person's evening plus nine people's single answers, and its
  * accuracy is then that person's accuracy. Half is the classic cut, and it is
  * strict in practice, since a cell that passes the other two rules is usually
@@ -136,7 +136,7 @@ export const NO_LEARNERS = "0";
  * answerable at all.
  *
  * The database groups to this before anything reaches Node, so no individual
- * review is ever materialised here, and `learner` is an opaque key used for
+ * review is ever materialized here, and `learner` is an opaque key used for
  * counting and for nothing else. It is never read, never compared against
  * anything outside its own cell, and never reaches an output field.
  */

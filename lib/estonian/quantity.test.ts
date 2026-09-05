@@ -35,7 +35,7 @@ describe("isLengthPair", () => {
     ["kapi", "kappi"],
     ["koli", "kolli"],
     ["sada", "saada"],
-  ])("recognises %s / %s as a length contrast", (a, b) => {
+  ])("recognizes %s / %s as a length contrast", (a, b) => {
     expect(isLengthPair(a, b)).toBe(true);
     expect(isLengthPair(b, a)).toBe(true);
   });
@@ -114,7 +114,7 @@ describe("findQuantityPairs", () => {
     ])).toEqual([]);
   });
 
-  it("honours the limit", () => {
+  it("honors the limit", () => {
     const many: FormRef[] = [];
     for (let i = 0; i < 40; i++) {
       many.push(form(`kal${"a".repeat(1)}${i}`, `w${i}`, `A${i}`));

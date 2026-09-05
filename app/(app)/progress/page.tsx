@@ -409,7 +409,7 @@ export default async function ProgressPage() {
               </div>
               {breakdown.total === 0 && (
                 <p className="mt-3 text-xs" style={{ color: "var(--ink-3)" }}>
-                  No reviews yet. Each bar is a day, coloured by how much you recalled.
+                  No reviews yet. Each bar is a day, colored by how much you recalled.
                 </p>
               )}
               <div className="mt-3 flex flex-wrap gap-2">
